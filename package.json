@@ -1,0 +1,23 @@
+{
+  "name": "street-fight-uk",
+  "private": true,
+  "version": "0.1.0",
+  "description": "STREET FIGHT UK - a gritty 2.5D street-fighting action RPG set in modern Britain.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/sim.test.ts"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0"
+  }
+}
