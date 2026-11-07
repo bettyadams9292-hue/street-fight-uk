@@ -433,9 +433,11 @@ input[type='range'].focused, input[type='range']:focus { filter: drop-shadow(0 0
 /* Phones held sideways: put the title beside the menu so everything fits. */
 @media (max-height: 500px) and (orientation: landscape) {
   .main-menu { flex-direction: row; align-items: center; justify-content: center; gap: 6vw; padding-top: calc(12px + var(--safe-t)); padding-bottom: calc(28px + var(--safe-b)); }
-  .main-menu .title-block { margin-bottom: 0; }
+  .main-menu { overflow-x: hidden; padding-left: calc(20px + var(--safe-l)); padding-right: calc(20px + var(--safe-r)); }
+  .main-menu .title-block { margin-bottom: 0; flex-shrink: 0; }
+  .main-menu .hazard { width: 230px; }
   .main-menu .title-street, .main-menu .title-fight { font-size: 58px; }
-  .main-menu .menu-list { min-width: 300px; gap: 6px; }
+  .main-menu .menu-list { min-width: 0; width: min(380px, 52vw); gap: 6px; }
   .main-menu .menu-btn { font-size: 18px; padding: 8px 14px; }
   .main-menu .footer { bottom: calc(6px + var(--safe-b)); }
 }
