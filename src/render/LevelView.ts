@@ -550,7 +550,7 @@ export class LevelView {
     for (const st of this.level.stations ?? []) {
       if (st.id !== 'mirror' || st.x < f.x0 || st.x > f.x1) continue;
       this.box(0.7, 1.7, 0.04, st.x, 1.15, this.back + 0.03, this.mat('#3a2a1a', 0.6), false);
-      this.box(0.6, 1.6, 0.03, st.x, 1.15, this.back + 0.05, this.mat('#c8d8e8', 0.02, 1), false);
+      this.box(0.6, 1.6, 0.03, st.x, 1.15, this.back + 0.05, this.mat('#a8b8c8', 0.05, 0.2, { emissive: 0x6a7a8a, emissiveIntensity: 0.5 }), false);
     }
     if (f.label === 'Garage') {
       const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
@@ -558,7 +558,7 @@ export class LevelView {
     }
     if (f.label === 'Gym') {
       // Mirror wall.
-      this.box(3, 1.6, 0.03, cx - 1.2, 1.4, this.back + 0.02, this.mat('#9ab0c0', 0.02, 1), false);
+      this.box(3, 1.6, 0.03, cx - 1.2, 1.4, this.back + 0.02, this.mat('#a8b8c8', 0.05, 0.2, { emissive: 0x5a6a7a, emissiveIntensity: 0.45 }), false);
     }
     // Room name, painted small above the door gap like a nameplate.
     if (f.label) {
@@ -571,7 +571,8 @@ export class LevelView {
     if (w.visual === 'none') return;
     const home = this.level.theme === 'home';
     const h = home ? 3 : 1.1;
-    const m = home ? this.mat('#d8d0c0', 0.9) : this.mat('#3a3d42', 0.5, 0.6);
+    // Room dividers are see-through enough that you never lose yourself behind one.
+    const m = home ? this.mat('#d8d0c0', 0.9, 0, { transparent: true, opacity: 0.45, depthWrite: false }) : this.mat('#3a3d42', 0.5, 0.6);
     this.box(w.maxX - w.minX, h, w.maxZ - w.minZ, (w.minX + w.maxX) / 2, h / 2, (w.minZ + w.maxZ) / 2, m);
     if (home) {
       // Door frame on the open end.
