@@ -204,8 +204,8 @@ export class FighterAI {
 
     // ---- attack -------------------------------------------------------------------------------
     if (frame < this.nextAttackAt || Math.abs(dz) > 0.35) return cmd;
-    this.nextAttackAt = frame + Math.round((30 + this.rng.next() * 50) / (aggression + 0.3));
-    if (!this.rng.chance(aggression + 0.2)) return cmd;
+    this.nextAttackAt = frame + Math.round((55 + this.rng.next() * 75) / (aggression + 0.3));
+    if (!this.rng.chance(aggression + 0.1)) return cmd;
     cmd.moveX = 0;
 
     if (me.canFinish(foe)) {

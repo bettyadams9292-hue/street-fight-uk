@@ -22,7 +22,7 @@ export const TRAINING_MODE_LABELS: Record<TrainingOpponent, string> = {
   stand: 'Stand still',
   block: 'Always block',
   spar: 'Spar',
-  group: 'Group of three',
+  group: 'Group',
 };
 
 /**

@@ -46,14 +46,14 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
   thug: {
     id: 'thug', name: 'Street Thug', description: 'Swings wild, gives up when it goes wrong.',
     style: 'street', attributes: attrs(6, 5, 5, 4, 4, 3), level: 1,
-    aggression: 0.5, blockChance: 0.2, dodgeChance: 0.05, parryChance: 0, range: 0.95, comboLength: 2,
+    aggression: 0.35, blockChance: 0.15, dodgeChance: 0.05, parryChance: 0, range: 0.95, comboLength: 2,
     grabChance: 0.06, specialChance: 0.05, retreatsWhenTired: false, reactionFrames: 22,
     look: () => ({ top: 'hoodie', bottoms: 'trackies' }),
   },
   hothead: {
     id: 'hothead', name: 'Hothead', description: 'Fast and aggressive. Never stops coming.',
     style: 'street', secondaryStyle: 'kickboxing', attributes: attrs(5, 9, 6, 8, 3, 4), level: 2,
-    aggression: 0.85, blockChance: 0.1, dodgeChance: 0.2, parryChance: 0.02, range: 0.9, comboLength: 3,
+    aggression: 0.7, blockChance: 0.1, dodgeChance: 0.2, parryChance: 0.02, range: 0.9, comboLength: 3,
     grabChance: 0.03, specialChance: 0.12, retreatsWhenTired: false, reactionFrames: 14,
     look: () => ({ muscle: 0.3, weight: 0.1, top: 'tracksuit', bottoms: 'trackies' }),
   },
