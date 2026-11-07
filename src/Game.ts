@@ -474,6 +474,14 @@ export class Game {
     this.input.flush();
     this.updateTouchVisibility();
     if (area !== from || !opts.at) this.hud.showBanner(level.district, level.name);
+    // Point out shop doors on this street (they're easy to walk past).
+    if (area !== from) {
+      const shops = level.exits.filter((e) => e.kind === 'door' && ['clothes_shop', 'pawn_shop', 'pub'].includes(e.to));
+      for (const e of shops) {
+        const where = e.x < (level.bounds.minX + level.bounds.maxX) / 2 ? 'west end' : 'east end';
+        this.hud.toast(`${LEVELS[e.to].name} is on this street (${where}). Walk up to its door.`, 'item');
+      }
+    }
     if (area === 'home' && p.save.cash.pocket > 0) this.hud.toast(`£${p.save.cash.pocket} in your pocket: put it in the biscuit tin (bedroom desk)`, 'cash');
   }
 

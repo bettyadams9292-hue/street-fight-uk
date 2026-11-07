@@ -55,7 +55,11 @@ const pawnShop: LevelDef = {
   theme: 'pawn',
   bounds: { minX: 0, maxX: 14, ...ROOM },
   entries: [{ id: 'door', x: 12.6, z: 0.4, facing: -1 }],
-  exits: [{ id: 'out', kind: 'door', x: 13.4, z: 0.9, to: 'city', toEntry: 'pawn', label: 'Back out to Market Square' }],
+  exits: [
+    { id: 'out', kind: 'door', x: 13.4, z: 0.9, to: 'city', toEntry: 'pawn', label: 'Back out to Market Square' },
+    // Lets you come here by cab before you've fought your way to Market Square.
+    { id: 'cab_home', kind: 'door', x: 0.8, z: 0.9, to: 'home', toEntry: 'door', label: 'Back door: Dave’s cab home' },
+  ],
   facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'PAWN & GOLD — WE BUY GOLD', colour: '#3a3428' }],
   props: [
     { kind: 'display_cabinet', x: 1.6, z: -1.25 },

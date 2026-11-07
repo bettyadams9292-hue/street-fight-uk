@@ -233,6 +233,13 @@ export const TAXI_STOPS: { area: AreaId; entry: string; requires?: string; requi
   { area: 'mall', entry: 'left', requires: 'boss_precinct', requiresText: 'Beat Dean Pryce first' },
 ];
 
+/** Straight to the shop door. Pawn & Gold has a back door with a cab home, so it's safe to visit early. */
+export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: string }[] = [
+  { area: 'pawn_shop', entry: 'door', where: 'Sell valuables. Market Square, City Centre', shop: 'pawn' },
+  { area: 'clothes_shop', entry: 'door', where: 'Clothes and bags. High Street', shop: 'threads' },
+  { area: 'pub', entry: 'door', where: 'Food, drink, pool. High Street' },
+];
+
 export function contactsScreen(progress: Progress, close: () => void, travel: (area: AreaId, entry: string) => void, changed: () => void): Screen {
   return panelScreen('Phone', progress, (msg) => {
     const s = progress.save;
@@ -242,6 +249,20 @@ export function contactsScreen(progress: Progress, close: () => void, travel: (a
       h('p', { text: next ? `Mo: "${hintFor(next.flag)}"` : 'Mo: "You did it. Nobody runs these streets now. Mad."' }),
       h('h3', { text: `Dave’s Cabs: £${TAXI_COST} a ride, paid from the tin` }),
     ];
+    rows.push(h('p', { class: 'hint', text: 'Shops (dropped at the door):' }));
+    for (const stop of SHOP_STOPS) {
+      const lvl = LEVELS[stop.area];
+      const shut = !!stop.shop && !progress.isShopOpen(stop.shop);
+      rows.push(
+        shopRow(lvl.name, shut ? 'Shutters down after the robbery' : stop.where, shut ? 'Closed' : `£${TAXI_COST}`, shut ? null : () => {
+          if (s.cash.bank < TAXI_COST) return msg(`Need £${TAXI_COST} in the tin`, true);
+          s.cash.bank -= TAXI_COST;
+          changed();
+          travel(stop.area, stop.entry);
+        }),
+      );
+    }
+    rows.push(h('p', { class: 'hint', text: 'Streets:' }));
     for (const stop of TAXI_STOPS) {
       const lvl = LEVELS[stop.area];
       const locked = !!stop.requires && !progress.has(stop.requires);

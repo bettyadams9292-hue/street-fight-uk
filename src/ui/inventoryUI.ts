@@ -96,6 +96,7 @@ function detailLines(d: ItemDef, st: ItemStack | null): HTMLElement[] {
   out.push(statLine('Value', d.value > 0 ? `£${d.value}${st && st.qty > 1 ? ` each (£${d.value * st.qty} total)` : ''}` : 'Worthless'));
   out.push(statLine('Space', `1 slot${d.stack > 1 ? `, stacks to ${d.stack}` : ''}`));
   if (st?.stolen) out.push(h('p', { class: 'warn-line', text: 'Stolen. The pawn shop pays less, and the police will take it if they catch you.' }));
+  if (d.category === 'valuable' || d.category === 'collectible') out.push(h('p', { class: 'hint', text: 'Sell it at Pawn & Gold (Market Square). Phone → cabs can drop you at the door.' }));
   if (d.questFlag) out.push(h('p', { class: 'warn-line', text: 'Quest item: can’t be dropped or sold.' }));
   return out;
 }

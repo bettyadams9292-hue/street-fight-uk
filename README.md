@@ -255,6 +255,7 @@ Every visual asset, with where it appears, its status and collision, is listed i
   - It raises your heat, sets off the alarm, and the police arrive 12 seconds later.
   - The shop is shut for 8 trips, prices for you go up 25% per robbery (up to double), and each robbery yields fewer goods and less cash.
   - Being beaten by the police, or beaten anywhere while your heat is 60 or more, gets you **nicked**: stolen goods are seized from your pockets, clothes and hands, you pay a 15% fine (at least £25), and your heat is cleared. Heat cools as you move between areas.
+- **Getting to the shops.** Pawn & Gold is on Market Square; Threads and the Red Lion are on the High Street. The phone's cab list can drop you at any shop door (Pawn & Gold has a back-door cab home, so you can sell before you've reached Market Square), and walking onto a street with a shop puts a pointer in the HUD.
 - **Pawn & Gold.** Mr Kaur offers 55% of value for valuables and collectibles, 35–60% for other things, and 40% less for anything stolen. You can sell one, several, or the whole stack, with a confirm before selling everything. Quest items are refused.
 - **Robbing Pawn & Gold.** It works like Threads, but you grab from the display cabinets (watches, chains, rings, phones, gadgets) and the till opens if you get past Mr Kaur. Afterwards it's shut for 8 trips, and when it reopens his offers to you are cut by the same margin Threads raises its prices.
 - **The Red Lion.** Food and drink at the bar, a game of pool, a DJ booth, and an optional lock-in fight.
