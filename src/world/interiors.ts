@@ -109,7 +109,7 @@ const pub: LevelDef = {
   ],
   stations: [
     {
-      id: 'bar', x: 6.5, z: 0.2, label: 'Order at the bar (Ray)',
+      id: 'bar', x: 6.5, z: 0.2, label: 'Order at the bar (Ray)', shop: 'pub',
       npc: { name: 'Ray', seed: 2210, body: 'male', top: 'tshirt', topColour: '#2b2e35', dz: -1.65 },
     },
   ],
@@ -119,6 +119,7 @@ const pub: LevelDef = {
   ],
   containers: [
     { id: 'fruit', kind: 'till', x: 10.2, z: -0.8, label: 'Shake the fruit machine', fixed: [{ id: 'coin_rare' }], cash: 12 },
+    { id: 'pub_till', kind: 'till', x: 7.8, z: 0.2, label: 'Empty the till', loot: 'till', requires: 'pub_robbable', lockedText: 'Ray’s got one eye on the till.' },
   ],
   breakables: [
     { id: 'chair1', kind: 'chair', x: 2.4, z: 0.2, hp: 1, drops: 'chair' },

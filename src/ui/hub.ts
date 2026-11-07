@@ -174,19 +174,31 @@ export const BAR_MENU: { id: string; price: number }[] = [
   { id: 'first_aid', price: 18 },
 ];
 
-export function barScreen(progress: Progress, close: () => void, changed: () => void): Screen {
-  return panelScreen('The Red Lion', progress, (msg) => {
+export function barScreen(progress: Progress, close: () => void, changed: () => void, rob?: () => void): Screen {
+  let confirmRob = false;
+  return panelScreen('The Red Lion', progress, (msg, rebuild) => {
     const rows: HTMLElement[] = [h('p', { class: 'hint', text: '"What can I get you? Kitchen\u2019s open till ten. And there\u2019s a first aid kit behind the bar, if you\u2019re after a fight."' })];
+    // Ray remembers a robbery: prices go up by the same margin as at Threads.
+    const mult = progress.shop('pub').priceMult;
+    if (mult > 1) rows.push(h('p', { class: 'warn-line', text: 'Ray hasn\u2019t forgotten. Everything costs you more now.' }));
     for (const m of BAR_MENU) {
       const d = ITEMS[m.id];
+      const price = Math.round(m.price * mult);
       rows.push(
-        shopRow(d.name, d.use?.text ?? d.text, `\u00a3${m.price}`, () => {
+        shopRow(d.name, d.use?.text ?? d.text, `\u00a3${price}`, () => {
           if (progress.spaceFor(m.id) < 1) return msg('Your pockets are full', true);
-          if (!progress.pay(m.price)) return msg(`You need \u00a3${m.price}`, true);
+          if (!progress.pay(price)) return msg(`You need \u00a3${price}`, true);
           progress.giveItem(m.id);
           changed();
           msg(`${d.name}. In your pocket.`);
         }),
+      );
+    }
+    if (rob) {
+      rows.push(
+        confirmRob
+          ? shopRow('Do it: rob the pub', 'Grab the takings. Alarm, police and heat follow.', 'Rob', () => rob())
+          : shopRow('Rob the pub\u2026', 'Think about it first', 'Rob?', () => { confirmRob = true; rebuild(); }),
       );
     }
     return rows;
@@ -237,7 +249,7 @@ export const TAXI_STOPS: { area: AreaId; entry: string; requires?: string; requi
 export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: string }[] = [
   { area: 'pawn_shop', entry: 'door', where: 'Sell valuables. Market Square, City Centre', shop: 'pawn' },
   { area: 'clothes_shop', entry: 'door', where: 'Clothes and bags. High Street', shop: 'threads' },
-  { area: 'pub', entry: 'door', where: 'Food, drink, pool. High Street' },
+  { area: 'pub', entry: 'door', where: 'Food, drink, pool. High Street', shop: 'pub' },
 ];
 
 export function contactsScreen(progress: Progress, close: () => void, travel: (area: AreaId, entry: string) => void, changed: () => void): Screen {

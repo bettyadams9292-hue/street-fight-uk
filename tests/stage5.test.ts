@@ -306,6 +306,18 @@ test('the pawn shop can be robbed too: valuables grabbed, door shut, offers drop
   assert(till.requires === 'pawn_robbable', 'till not tied to the robbery');
 });
 
+test('the Red Lion can be robbed: takings grabbed, Ray fights, the pub shuts', () => {
+  const p = fresh();
+  const w = new World(LEVELS.pub, p, { entry: 'door', seed: 3 });
+  const ray = [...w.npcs.entries()].find(([st]) => st.id === 'bar')![1];
+  const r = robShop(p, w, 'pub', ray, () => 0.1);
+  assert(r.resisted && ray.team === 'enemy' && p.has('pub_robbable'), 'Ray did not fight back');
+  assert(r.grabbed.length === 3 && p.save.inventory.filter((s) => s.stolen).length >= 1, `grabbed ${r.grabbed}`);
+  const door = LEVELS.high_street.exits.find((e) => e.to === 'pub')!;
+  assert(exitLocked(door, p) && !p.isShopOpen('pub'), 'pub still open');
+  assert(LEVELS.pub.containers!.some((c) => c.requires === 'pub_robbable'), 'no till to empty');
+});
+
 test('arrest: stolen goods seized (pockets, worn, hands), fine paid, heat wiped', () => {
   const p = fresh();
   p.giveItem('puffer_red', 1, { stolen: true });

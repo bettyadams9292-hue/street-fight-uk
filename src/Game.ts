@@ -760,7 +760,7 @@ export class Game {
         screen = pawnScreen(p, this.ui, saved, close, { rob: () => this.robShop('pawn', at ?? { x: 7.2, z: 0.6 }), priceMult: p.shop('pawn').priceMult });
         break;
       case 'bar':
-        screen = barScreen(p, close, saved);
+        screen = barScreen(p, close, saved, () => this.robShop('pub', at ?? { x: 6.5, z: 0.6 }));
         break;
       default:
         this.resume();
@@ -864,7 +864,7 @@ export class Game {
    * way the alarm goes, the police come, your heat goes up, the shop shuts
    * for a while and she charges you more afterwards. Each robbery pays less.
    */
-  private robShop(shopId: 'threads' | 'pawn', at: { x: number; z: number }): void {
+  private robShop(shopId: 'threads' | 'pawn' | 'pub', at: { x: number; z: number }): void {
     const p = this.progress!;
     const spec = ROBBABLE[shopId];
     this.enterArea(spec.area, 'door', { at });
@@ -874,7 +874,7 @@ export class Game {
     this.hud.notify('ROBBERY', 'big');
     this.audio.guardBreak();
     if (r.resisted) {
-      this.hud.toast(shopId === 'pawn' ? '"Wrong shop, son." Mr Kaur reaches under the counter for a cosh.' : '"Not again. Not in my shop." Priya comes over the counter.', 'warn');
+      this.hud.toast(shopId === 'pawn' ? '"Wrong shop, son." Mr Kaur reaches under the counter for a cosh.' : shopId === 'pub' ? '"In my pub?" Ray vaults the bar.' : '"Not again. Not in my shop." Priya comes over the counter.', 'warn');
       if (r.guard) this.hud.toast('A security guard steps out from the back.', 'warn');
     } else {
       this.hud.toast(`"Take it! Just take it!" ${spec.keeper} empties the till: £${r.till}.`, 'cash');

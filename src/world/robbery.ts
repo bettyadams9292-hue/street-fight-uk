@@ -30,7 +30,7 @@ export interface RobberyOutcome {
 }
 
 /** The shops you can rob, who's behind the counter, and what you can grab. */
-export const ROBBABLE: Record<string, { area: 'clothes_shop' | 'pawn_shop'; counter: string; keeper: string; grab: readonly string[] }> = {
+export const ROBBABLE: Record<string, { area: 'clothes_shop' | 'pawn_shop' | 'pub'; counter: string; keeper: string; grab: readonly string[] }> = {
   threads: {
     area: 'clothes_shop',
     counter: 'clothes_counter',
@@ -43,6 +43,13 @@ export const ROBBABLE: Record<string, { area: 'clothes_shop' | 'pawn_shop'; coun
     keeper: 'Mr Kaur',
     // Out of the display cabinets.
     grab: ['watch_basic', 'watch_silver', 'chain_silver', 'chain_gold', 'ring_signet', 'phone_cheap', 'headphones', 'coin_silver', 'earring_silver', 'smartwatch', 'handheld'].filter((id) => ITEMS[id]),
+  },
+  pub: {
+    area: 'pub',
+    counter: 'bar',
+    keeper: 'Ray',
+    // The night's takings bagged up behind the bar, and whatever's in the lost-property box.
+    grab: ['cash_bundle', 'cash_bundle', 'lighter', 'phone_cheap'].filter((id) => ITEMS[id]),
   },
 };
 

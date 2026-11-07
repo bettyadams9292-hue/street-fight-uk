@@ -258,7 +258,7 @@ Every visual asset, with where it appears, its status and collision, is listed i
 - **Getting to the shops.** Pawn & Gold is on Market Square; Threads and the Red Lion are on the High Street. The phone's cab list can drop you at any shop door (Pawn & Gold has a back-door cab home, so you can sell before you've reached Market Square), and walking onto a street with a shop puts a pointer in the HUD.
 - **Pawn & Gold.** Mr Kaur offers 55% of value for valuables and collectibles, 35–60% for other things, and 40% less for anything stolen. You can sell one, several, or the whole stack, with a confirm before selling everything. Quest items are refused.
 - **Robbing Pawn & Gold.** It works like Threads, but you grab from the display cabinets (watches, chains, rings, phones, gadgets) and the till opens if you get past Mr Kaur. Afterwards it's shut for 8 trips, and when it reopens his offers to you are cut by the same margin Threads raises its prices.
-- **The Red Lion.** Food and drink at the bar, a game of pool, a DJ booth, and an optional lock-in fight.
+- **The Red Lion.** Food and drink at the bar, a game of pool, a DJ booth, and an optional lock-in fight. It can be robbed too (the night's takings), with the same alarm, police, closure and price consequences.
 
 **Weapons (melee only)**
 - **36 weapons.** 16 conventional (bottle, broken bottle, cricket bat, baseball bat, lead pipe, metal bar, crowbar, claw hammer, machete, kitchen knife, bike chain, pipe wrench, club, pool cue, scaffold pole, heavy torch). 20 improvised everyday objects (mop, broom, road sign, traffic cone, plank, chair leg, table leg, pub chair, telly, monitor, skateboard, golf umbrella, shelving upright, shovel, garden fork, rake, half brick, frying pan, golf club, bin lid). **There are no guns or firearms**, and a test enforces it.
@@ -294,7 +294,7 @@ Every visual asset, with where it appears, its status and collision, is listed i
 - Heavily changed: World, levels, LevelTypes, Progress, SaveStore, Weapons, Fighter, CombatSystem, bosses, archetypes, LevelView, weaponMesh, CharacterRig, GameRenderer, Game, Hud, hub, InputManager, styles.css.
 
 **Tests.**
-- **New Stage 5 suite.** `npm test` now includes `tests/stage5.test.ts`, which has 28 tests:
+- **New Stage 5 suite.** `npm test` now includes `tests/stage5.test.ts`, which has 29 tests:
   - no firearms;
   - weapon, item and loot data integrity;
   - stacking and capacity;
@@ -305,7 +305,7 @@ Every visual asset, with where it appears, its status and collision, is listed i
   - weapons moving between hands and pockets;
   - clothes buying (including when broke, or with full pockets);
   - pawn offers and selling;
-  - robbery consequences, repeat robbery, the pawn shop robbery and arrest;
+  - robbery consequences, repeat robbery, the pawn shop and pub robberies, and arrest;
   - heat decay;
   - enemy item drops;
   - boss drops and quest gating;
@@ -332,4 +332,3 @@ Every visual asset, with where it appears, its status and collision, is listed i
 - No real 3D asset files (see above). Characters, buildings and props are procedural and stylised, not photoreal.
 - The Stage 5 visuals (new clothing, facades, props, weapon models, rain, interiors) type-check and are wired in. The new areas loaded without errors in the live build, but they have **not** been screenshot-checked. The browser pane was hidden during testing, so screenshots weren't possible.
 - Animation is still the code-driven pose system; there are no animation clips.
-- The pub can't be robbed (Threads and Pawn & Gold can).

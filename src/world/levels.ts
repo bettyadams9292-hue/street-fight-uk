@@ -182,7 +182,7 @@ const highStreet: LevelDef = {
   ],
   exits: [
     { id: 'to_estate', kind: 'edge', side: 'left', x: 0, z: 0, to: 'estate', toEntry: 'right', label: 'Estate' },
-    { id: 'pub_door', kind: 'door', x: 30.5, z: -1.6, to: 'pub', toEntry: 'door', label: 'Into the Red Lion' },
+    { id: 'pub_door', kind: 'door', x: 30.5, z: -1.6, to: 'pub', toEntry: 'door', shop: 'pub', label: 'Into the Red Lion' },
     { id: 'threads_door', kind: 'door', x: 49, z: -1.6, to: 'clothes_shop', toEntry: 'door', shop: 'threads', label: 'Into Threads (clothes shop)' },
     { id: 'to_alleys', kind: 'edge', side: 'right', x: 92, z: 0, to: 'alleys', toEntry: 'left', label: 'Back alleys', requires: 'boss_gaffer', lockedText: 'Gaffer’s lads block the way. Deal with him first.' },
   ],
