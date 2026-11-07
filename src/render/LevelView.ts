@@ -185,11 +185,11 @@ export class LevelView {
     this.box(W, 0.12, 0.25, (X0 + X1) / 2, 0.06, front + 0.12, this.mat('#77787c', 0.9), false);
     this.ground(X0, X1, front + 0.25, front + 14, new THREE.MeshStandardMaterial({ map: roadTexture(W / 8), roughness: 0.55, metalness: 0.05 }), -0.02);
     // Puddles pick up the lamps.
-    const puddle = this.mat('#0c0d10', 0.04, 0.6);
-    for (let i = 0; i < Math.floor(W / 9); i++) {
+    const puddle = this.mat('#2a2e36', 0.05, 0.4, { transparent: true, opacity: 0.55 });
+    for (let i = 0; i < Math.floor(W / 12); i++) {
       const p = new THREE.Mesh(new THREE.CircleGeometry(1, 20), puddle);
       p.rotation.x = -Math.PI / 2;
-      p.scale.set(0.6 + this.rnd() * 0.9, 0.3 + this.rnd() * 0.4, 1);
+      p.scale.set(0.4 + this.rnd() * 0.5, 0.2 + this.rnd() * 0.2, 1);
       p.position.set(X0 + this.rnd() * W, 0.004, this.back + 0.8 + this.rnd() * (front - this.back - 1));
       this.group.add(p);
     }
@@ -197,9 +197,9 @@ export class LevelView {
     if (theme === 'high_street' || theme === 'city') {
       const rail = this.mat('#2b2e33', 0.4, 0.7);
       for (let x = X0 + 3; x < X1 - 3; x += 9) {
-        this.box(3, 0.05, 0.05, x + 1.5, 0.95, front + 0.05, rail, false);
-        this.box(3, 0.05, 0.05, x + 1.5, 0.25, front + 0.05, rail, false);
-        for (let k = 0; k <= 3; k += 0.25) this.box(0.025, 0.7, 0.025, x + k, 0.6, front + 0.05, rail, false);
+        this.box(3, 0.04, 0.04, x + 1.5, 0.7, front + 0.05, rail, false);
+        this.box(3, 0.04, 0.04, x + 1.5, 0.15, front + 0.05, rail, false);
+        for (let k = 0; k <= 3; k += 0.5) this.box(0.02, 0.55, 0.02, x + k, 0.42, front + 0.05, rail, false);
       }
     }
   }
@@ -301,6 +301,33 @@ export class LevelView {
   }
 
   private litWindows: THREE.MeshStandardMaterial[] = [];
+  private pubGlassMat: THREE.MeshStandardMaterial | null = null;
+
+  private pubGlass(): THREE.MeshStandardMaterial {
+    if (!this.pubGlassMat) {
+      const [c, g] = canvas(128, 128);
+      const grad = g.createLinearGradient(0, 0, 0, 128);
+      grad.addColorStop(0, '#5a2a0a');
+      grad.addColorStop(0.5, '#e8902a');
+      grad.addColorStop(1, '#7a3a10');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 128, 128);
+      // Silhouettes of drinkers at the bar.
+      g.fillStyle = 'rgba(30,12,4,0.7)';
+      for (let i = 0; i < 3; i++) {
+        const x = 14 + i * 40 + this.rnd() * 10;
+        g.beginPath();
+        g.arc(x, 52, 9, 0, Math.PI * 2);
+        g.fill();
+        g.fillRect(x - 14, 62, 28, 66);
+      }
+      // Frosted lower half.
+      g.fillStyle = 'rgba(255,230,190,0.35)';
+      g.fillRect(0, 84, 128, 44);
+      this.pubGlassMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, emissive: 0xffffff, emissiveMap: toTexture(c), emissiveIntensity: 0.6 });
+    }
+    return this.pubGlassMat;
+  }
 
   /** Dark glass, or a lit room behind net curtains. */
   private windowMat(lit: number): THREE.MeshStandardMaterial {
@@ -356,8 +383,12 @@ export class LevelView {
     for (let x = f.x0 + 1.6; x < f.x1 - 0.5; x += 2.8) this.windowAt(x, 5.4, 1.3, 1.5, this.windowMat(this.rnd() < 0.5 ? 0.5 : 0.1));
     // Painted ground floor with frosted, glowing windows.
     this.box(w - 0.2, 3.3, 0.12, cx, 1.65, this.back + 0.06, this.mat(colour, 0.35));
-    const frosted = this.mat('#2a2014', 0.3, 0.1, { emissive: 0xffa040, emissiveIntensity: 0.9 });
-    for (let x = f.x0 + 1.6; x < f.x1 - 1.5; x += 2.6) this.box(1.8, 1.6, 0.06, x, 1.5, this.back + 0.14, frosted, false);
+    // Etched, glowing pub windows with glazing bars.
+    for (let x = f.x0 + 1.6; x < f.x1 - 1.5; x += 2.6) {
+      this.box(1.8, 1.6, 0.06, x, 1.5, this.back + 0.14, this.pubGlass(), false);
+      this.box(0.05, 1.6, 0.08, x, 1.5, this.back + 0.16, this.mat(colour, 0.4), false);
+      this.box(1.8, 0.05, 0.08, x, 1.9, this.back + 0.16, this.mat(colour, 0.4), false);
+    }
     this.box(1.1, 2.3, 0.06, f.x1 - 1.2, 1.15, this.back + 0.14, this.mat('#2a1a0e', 0.4));
     if (f.label) {
       const tex = signTexture(f.label, colour, '#d9b65a', { serif: true });
