@@ -1,16 +1,16 @@
 import type { SettingsStore, Settings, Quality, TouchMode } from '../save/Settings';
 import { h } from './dom';
+import { cycleRow, menuButton, sliderRow } from './controls';
 import type { Screen, UIManager } from './UIManager';
 
-export const VERSION = '0.1.0';
-
-function menuButton(label: string, onClick: () => void, sub?: string): HTMLButtonElement {
-  return h('button', { class: 'menu-btn', 'data-nav': true, onclick: () => onClick() }, h('span', { class: 'label', text: label }), sub ? h('span', { class: 'sub', text: sub }) : null);
-}
+export const VERSION = '0.2.0';
 
 // ---------------------------------------------------------------- main menu --
 
-export function mainMenu(actions: { start: () => void; settings: () => void; controls: () => void }): Screen {
+export function mainMenu(
+  hasCharacter: boolean,
+  actions: { newGame: () => void; continue: () => void; character: () => void; settings: () => void; controls: () => void },
+): Screen {
   const el = h(
     'div',
     { class: 'screen main-menu' },
@@ -25,46 +25,19 @@ export function mainMenu(actions: { start: () => void; settings: () => void; con
     h(
       'nav',
       { class: 'menu-list' },
-      menuButton('Training Ground', actions.start, 'Back alley sparring'),
+      hasCharacter ? menuButton('Continue', actions.continue, 'Back to the training ground') : null,
+      menuButton('New Game', actions.newGame, 'Create a new fighter'),
+      hasCharacter ? menuButton('Character', actions.character, 'Stats and look') : null,
       menuButton('Settings', actions.settings),
       menuButton('Controls', actions.controls),
     ),
-    h('div', { class: 'footer', text: `Stage 1 build · v${VERSION} · temporary art and sound` }),
+    h('div', { class: 'footer', text: `Stage 2 build \u00b7 v${VERSION} \u00b7 temporary art and sound` }),
   );
   // The main menu has nowhere to go back to.
   return { el, onBack: () => undefined };
 }
 
 // ---------------------------------------------------------------- settings ---
-
-function sliderRow(label: string, value: number, onChange: (v: number) => void): HTMLElement {
-  const out = h('span', { class: 'value', text: `${Math.round(value * 100)}%` });
-  const input = h('input', { type: 'range', min: 0, max: 100, step: 5, value: Math.round(value * 100), 'data-nav': true, 'aria-label': label }) as HTMLInputElement;
-  const set = (v: number) => {
-    const clamped = Math.max(0, Math.min(100, v));
-    input.value = String(clamped);
-    out.textContent = `${clamped}%`;
-    onChange(clamped / 100);
-  };
-  input.addEventListener('input', () => set(Number(input.value)));
-  input.addEventListener('nav-adjust', (e) => set(Number(input.value) + 5 * (e as CustomEvent<number>).detail));
-  return h('div', { class: 'setting-row' }, h('span', { class: 'name', text: label }), input, out);
-}
-
-function cycleRow<T extends string | boolean>(label: string, options: { value: T; label: string }[], current: T, onChange: (v: T) => void): HTMLElement {
-  let i = Math.max(0, options.findIndex((o) => o.value === current));
-  const btn = h('button', { class: 'cycle', 'data-nav': true, 'aria-label': label }) as HTMLButtonElement;
-  const render = () => (btn.textContent = `‹  ${options[i].label}  ›`);
-  const step = (d: number) => {
-    i = (i + d + options.length) % options.length;
-    render();
-    onChange(options[i].value);
-  };
-  btn.addEventListener('click', () => step(1));
-  btn.addEventListener('nav-adjust', (e) => step((e as CustomEvent<number>).detail));
-  render();
-  return h('div', { class: 'setting-row' }, h('span', { class: 'name', text: label }), btn);
-}
 
 export function settingsScreen(store: SettingsStore, ui: UIManager): Screen {
   const el = h('div', { class: 'screen panel-screen' });

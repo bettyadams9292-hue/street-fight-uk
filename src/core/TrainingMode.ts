@@ -1,4 +1,6 @@
 import { DummyBrain, type DummyMode } from '../ai/DummyBrain';
+import { sparringPartnerAppearance } from '../character/Appearance';
+import { finalAttributes, type PlayerCharacter } from '../character/Character';
 import { STREET_MOVES, STREET_STARTERS } from '../data/moves/street';
 import { Fighter } from '../fighter/Fighter';
 import type { CommandFrame } from '../input/Commands';
@@ -22,20 +24,23 @@ export class TrainingMode {
   readonly dummyBrain: DummyBrain;
   private respawnAt = new Map<Fighter, number>();
 
-  constructor(opts: { touch?: boolean } = {}) {
+  constructor(opts: { touch?: boolean; character?: PlayerCharacter | null } = {}) {
+    const c = opts.character ?? null;
     this.sim = new Simulation(createTrainingArena(), Date.now() & 0xffff);
     const moveSet = { moves: STREET_MOVES, starters: STREET_STARTERS };
 
     this.player = this.sim.add(
       new Fighter({
         id: PLAYER_ID,
-        name: 'You',
+        name: c?.name ?? 'You',
         team: 'player',
-        attributes: defaultAttributes(5),
+        attributes: c ? finalAttributes(c.allocated, c.background) : defaultAttributes(5),
+        level: c?.level ?? 1,
         moveSet,
         x: -2,
         z: 0,
-        look: 'player',
+        appearance: c?.appearance,
+        styleRanks: c?.styleRanks,
         inputBufferFrames: opts.touch ? 12 : undefined,
       }),
     );
@@ -48,7 +53,7 @@ export class TrainingMode {
         moveSet,
         x: 2,
         z: 0,
-        look: 'dummy',
+        appearance: sparringPartnerAppearance(),
       }),
     );
     this.dummy.facing = -1;

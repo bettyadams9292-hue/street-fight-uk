@@ -4,6 +4,7 @@ import type { GameEvents } from '../core/GameEvents';
 import { cancelFrame, startMove, totalFrames, type ActiveMove, type MoveData } from '../combat/MoveData';
 import { ATTACK_BUTTONS, type AttackButton, type CommandFrame } from '../input/Commands';
 import { Stats, type Attributes } from '../stats/Stats';
+import { defaultAppearance, type CharacterAppearance } from '../character/Appearance';
 import { Vitals, type FatigueState } from '../stats/Vitals';
 
 export type FighterState =
@@ -37,8 +38,10 @@ export interface FighterConfig {
   moveSet: MoveSet;
   x?: number;
   z?: number;
-  /** Visual identity key used by the renderer (Stage 2 replaces this with full appearance data). */
-  look: string;
+  /** How the fighter looks. Data only: the simulation never reads it. */
+  appearance?: CharacterAppearance;
+  /** Mastery rank per style id, e.g. { street: 2 }. Defaults to rank 1. */
+  styleRanks?: Record<string, number>;
   inputBufferFrames?: number;
 }
 
@@ -60,7 +63,8 @@ export class Fighter {
   readonly id: number;
   readonly name: string;
   readonly team: Team;
-  readonly look: string;
+  readonly appearance: CharacterAppearance;
+  styleRanks: Record<string, number>;
   readonly stats: Stats;
   readonly vitals: Vitals;
   moveSet: MoveSet;
@@ -95,7 +99,8 @@ export class Fighter {
     this.id = cfg.id;
     this.name = cfg.name;
     this.team = cfg.team;
-    this.look = cfg.look;
+    this.appearance = cfg.appearance ?? defaultAppearance();
+    this.styleRanks = { ...(cfg.styleRanks ?? {}) };
     this.stats = new Stats(cfg.attributes, cfg.level ?? 1);
     this.vitals = new Vitals(this.stats);
     this.moveSet = cfg.moveSet;
@@ -132,6 +137,11 @@ export class Fighter {
   /** Reeling from a hit: further hits count as a combo. */
   get isReeling(): boolean {
     return this.state === 'hitstun' || this.state === 'stagger' || this.state === 'guardbreak';
+  }
+
+  /** Damage bonus from style mastery: +5% per rank above 1. */
+  masteryMultiplier(style: string): number {
+    return 1 + 0.05 * Math.max(0, (this.styleRanks[style] ?? 1) - 1);
   }
 
   isFacing(other: Fighter): boolean {

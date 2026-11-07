@@ -70,6 +70,18 @@ export class InputManager {
 
   private onKeyDown(e: KeyboardEvent): void {
     const code = e.code;
+    // Typing in a text box (e.g. your fighter's name): only Enter, Escape and up/down navigate.
+    const t = e.target as HTMLElement | null;
+    if (t && t.tagName === 'INPUT' && (t as HTMLInputElement).type === 'text') {
+      if (code === 'Enter' || code === 'NumpadEnter') {
+        e.preventDefault();
+        (t as HTMLInputElement).blur();
+        this.emitMenu('down');
+      } else if (code === 'Escape') this.emitMenu('back');
+      else if (code === 'ArrowUp') this.emitMenu('up');
+      else if (code === 'ArrowDown') this.emitMenu('down');
+      return;
+    }
     const gameKey = Object.values(KEY_BINDINGS).some((codes) => (codes as readonly string[]).includes(code));
     // Enter is handled by the menu system; stop the browser also "clicking" the focused button.
     if (gameKey || code === 'Enter' || code === 'NumpadEnter') e.preventDefault();

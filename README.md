@@ -2,7 +2,7 @@
 
 A gritty 2.5D street-fighting action RPG set in modern Britain. Browser game built with TypeScript and Three.js, playable on PC and iPhone.
 
-**Current build: Stage 1 (Foundation)**, a back-alley training ground with one sparring partner.
+**Current build: Stage 2 (Character)**: create your own fighter, then take them to the back-alley training ground.
 
 ## Run it
 
@@ -48,12 +48,13 @@ src/
   combat/            Move data types, damage formula, hit detection and resolution
   fighter/           Fighter: the one class shared by the player and every enemy
   ai/                Sparring partner brain (full enemy AI comes in Stage 3)
+  character/         Appearance data, backgrounds, attribute allocation rules
   world/             Arena bounds
   data/moves/        Street Fighting moves and combo graph (pure data)
   render/            Three.js: renderer, alley, temporary fighter rig, camera, hit FX
   ui/                Menus, settings, controls, HUD, touch controls, styles
   audio/             Web Audio engine
-  save/              Settings persistence
+  save/              Settings and character persistence (browser storage)
   debug/             Hitbox overlay
 tests/               Headless simulation tests
 ```
@@ -64,7 +65,7 @@ The simulation (`core`, `stats`, `combat`, `fighter`, `ai`, `world`, `data`) has
 
 | What | Where | Replaced in |
 | --- | --- | --- |
-| Capsule fighter rig and code-driven poses | `src/render/FighterView.ts`, `src/render/poses.ts` | Stage 2 (Blender GLB characters, real animation clips) |
+| Procedural fighter model and code-driven poses | `src/render/CharacterRig.ts`, `src/render/poses.ts` | Blender GLB characters and real animation clips (needs animation files, see Stage 2 report) |
 | Alley built from boxes and procedural textures | `src/render/ArenaView.ts`, `src/render/textures.ts` | Stage 5 (Blender-modelled locations) |
 | Synthesised impact, swing and ambience sounds | `src/audio/AudioManager.ts` | Stage 7 (recorded audio) |
 
@@ -90,3 +91,22 @@ The simulation (`core`, `stats`, `combat`, `fighter`, `ai`, `world`, `data`) has
 - Performance on your iPhone at each quality setting.
 
 **Next: Stage 2 (Character)**: character creation with live preview, modular appearance, shared skeleton, real animation clips replacing the capsule rig.
+
+## Stage 2 report
+
+**Built**
+- Character creator with a live 3D preview in a photo studio: drag (or use the arrow buttons) to turn the model; the camera moves in for face and hair.
+- Appearance: male/female body, muscle, weight, height; head width, jaw, nose, brow, eye spacing, ears; 12 hairstyles, hair colour, greying; 6 facial hair styles; 12 skin tones; tattoos in 6 places (6 designs plus full sleeves) with ink colour; face and arm scars; tops, bottoms, shoes in any colour; hand wraps, chain, cap, watch, earring, head guard.
+- Name, five backgrounds (bonus attributes, perk, starting cash) and 10 attribute points to spend, with a live readout of what your stats do in a fight.
+- Your fighter is saved in the browser. Main menu now has Continue, New Game (with a warning before replacing your fighter) and Character.
+- Character sheet: attributes with their breakdown, fight stats, style rank, cash and perk; "Change look" reopens the creator.
+- The training ground uses your fighter: your name, attributes, look and style rank. Estate scrapper's Street Fighting rank 2 gives +5% damage with Street Fighting moves; other background perks say which stage they start working in.
+- 9 new automated tests (32 in total).
+
+**Needs testing on a real device**
+- The creator's layout on your iPhone (portrait and landscape) and on PC.
+- How the hairstyles, beards, tattoos and clothes look on the model.
+
+**Not done yet: real animation clips.** The fighters still move with code-driven poses. Proper animation needs animation files (for example from Mixamo, which needs a free Adobe account to download, or made in Blender). Once there are files in `public/assets/animations/`, the animation controller can switch to them without touching the combat code.
+
+**Next: Stage 3 (Combat expansion)**: the other six fighting styles, parry and counters, dodging and sidestepping, grapples and takedowns, and enemy AI for eight fighter types.

@@ -9,8 +9,20 @@ import { Hud } from './ui/Hud';
 import { TouchControls } from './ui/TouchControls';
 import { UIManager } from './ui/UIManager';
 import { controlsScreen, mainMenu, pauseMenu, settingsScreen } from './ui/screens';
+import { characterCreator } from './ui/CharacterCreator';
+import { characterSheet, confirmScreen } from './ui/CharacterSheet';
+import { CharacterStore } from './save/CharacterStore';
+import type { PlayerCharacter } from './character/Character';
+import { randomAppearance, type CharacterAppearance } from './character/Appearance';
+import { Simulation } from './core/Simulation';
+import { Fighter } from './fighter/Fighter';
+import { Arena } from './world/Arena';
+import { STREET_MOVES, STREET_STARTERS } from './data/moves/street';
+import { defaultAttributes } from './stats/Stats';
+import { emptyCommand, type AttackButton } from './input/Commands';
+import type { StudioFraming } from './render/StudioView';
 
-type GameState = 'menu' | 'playing' | 'paused';
+type GameState = 'menu' | 'studio' | 'playing' | 'paused';
 const MAX_STEPS_PER_FRAME = 5;
 
 /**
@@ -26,6 +38,10 @@ export class Game {
   private hud: Hud;
   private touch: TouchControls;
   private mode: TrainingMode | null = null;
+  private characters = new CharacterStore();
+  private character: PlayerCharacter | null = null;
+  /** Character creator / sheet preview: a one-fighter simulation on the studio set. */
+  private studio: { sim: Simulation; fighter: Fighter; framing: StudioFraming; nextDemo: number; pending: CharacterAppearance | null } | null = null;
   private state: GameState = 'menu';
   private unsubscribe: (() => void)[] = [];
   private accumulator = 0;
@@ -66,9 +82,8 @@ export class Game {
     this.settings.onChange((next) => this.applySettings(next));
     this.applySettings(s);
 
-    // The alley sits behind the main menu.
-    this.mode = new TrainingMode();
-    this.renderer.attach(this.mode.sim);
+    this.character = this.characters.load();
+    window.addEventListener('resize', () => this.updateStudioPanel());
     this.showMainMenu();
 
     document.addEventListener('visibilitychange', () => {
@@ -82,22 +97,151 @@ export class Game {
 
   private showMainMenu(): void {
     this.state = 'menu';
+    this.studio = null;
+    this.unwire();
+    // The alley, with your fighter in it, sits behind the main menu.
+    this.mode = new TrainingMode({ character: this.character });
+    this.renderer.attach(this.mode.sim);
     this.hud.el.style.display = 'none';
     this.updateTouchVisibility();
     this.ui.replaceAll(
-      mainMenu({
-        start: () => this.startTraining(),
+      mainMenu(!!this.character, {
+        newGame: () => this.newGame(),
+        continue: () => this.startTraining(),
+        character: () => this.openSheet(),
         settings: () => this.ui.push(settingsScreen(this.settings, this.ui)),
         controls: () => this.ui.push(controlsScreen(this.ui)),
       }),
     );
   }
 
+  private newGame(): void {
+    if (!this.character) {
+      this.openCreator('new');
+      return;
+    }
+    this.ui.push(
+      confirmScreen(
+        'Start again?',
+        `This replaces ${this.character.name}. Your current fighter will be lost.`,
+        'Start a new fighter',
+        'Keep my fighter',
+        () => this.openCreator('new'),
+        () => this.ui.pop(),
+      ),
+    );
+  }
+
+  // ---- studio: character creator and sheet ------------------------------------
+
+  private enterStudio(appearance: CharacterAppearance): void {
+    const sim = new Simulation(new Arena({ minX: -0.5, maxX: 0.5, minZ: -0.3, maxZ: 0.3 }, 'Studio'), 99);
+    const fighter = sim.add(
+      new Fighter({
+        id: 1,
+        name: 'Preview',
+        team: 'player',
+        attributes: defaultAttributes(5),
+        moveSet: { moves: STREET_MOVES, starters: STREET_STARTERS },
+        appearance,
+      }),
+    );
+    fighter.facing = 1;
+    this.mode = null;
+    this.unwire();
+    this.renderer.attachStudio(sim);
+    this.studio = { sim, fighter, framing: 'full', nextDemo: 120, pending: null };
+    this.state = 'studio';
+    this.hud.el.style.display = 'none';
+    this.updateTouchVisibility();
+    this.updateStudioPanel();
+  }
+
+  private updateStudioPanel(): void {
+    if (!this.studio) return;
+    const portrait = window.innerHeight > window.innerWidth && window.innerWidth < 760;
+    this.renderer.setStudioPanel(portrait ? 'bottom' : 'left');
+  }
+
+  private openCreator(mode: 'new' | 'edit'): void {
+    const existing = mode === 'edit' ? this.character ?? undefined : undefined;
+    const startLook = existing?.appearance ?? characterCreatorDefault();
+    this.enterStudio(startLook);
+    const screen = characterCreator(
+      mode,
+      {
+        preview: (a) => {
+          // Batch rebuilds to once per frame while sliders are dragged.
+          if (this.studio) this.studio.pending = a;
+        },
+        frame: (f) => {
+          if (!this.studio) return;
+          this.studio.framing = f;
+          this.renderer.setStudioFraming(f);
+        },
+        rotate: (d) => this.renderer.rotateStudio(d),
+        done: ({ character, appearance }) => {
+          if (mode === 'new' && character) {
+            this.character = character;
+          } else if (this.character) {
+            this.character = { ...this.character, appearance };
+          }
+          if (this.character && !this.characters.save(this.character)) {
+            this.hud.notify('Couldn\u2019t save: your browser blocked storage', 'warn');
+          }
+          if (mode === 'new') this.startTraining();
+          else this.openSheet();
+        },
+        cancel: () => (mode === 'edit' ? this.openSheet() : this.showMainMenu()),
+      },
+      existing,
+      startLook,
+    );
+    this.ui.replaceAll(screen);
+  }
+
+  private openSheet(): void {
+    if (!this.character) return this.showMainMenu();
+    this.enterStudio(this.character.appearance);
+    this.renderer.setStudioFraming('full');
+    this.ui.replaceAll(characterSheet(this.character, { editLook: () => this.openCreator('edit'), back: () => this.showMainMenu() }));
+  }
+
+  /** Scripted shadow-boxing for the preview model, so you see your fighter move. */
+  private stepStudio(dt: number): void {
+    const st = this.studio;
+    if (!st) return;
+    if (st.pending) {
+      this.renderer.setPreviewAppearance(st.fighter, st.pending);
+      st.pending = null;
+    }
+    this.accumulator += dt;
+    let steps = 0;
+    while (this.accumulator >= DT && steps < MAX_STEPS_PER_FRAME) {
+      const cmd = emptyCommand();
+      if (st.sim.frame >= st.nextDemo) {
+        st.nextDemo = st.sim.frame + 150 + Math.floor(Math.random() * 90);
+        if (st.framing === 'full') {
+          const buttons: AttackButton[] = ['lp', 'lp', 'hp', 'lk', 'hk'];
+          cmd.pressed[buttons[Math.floor(Math.random() * buttons.length)]] = true;
+        }
+      }
+      st.sim.step(new Map([[st.fighter.id, cmd]]));
+      st.fighter.vitals.reset();
+      st.fighter.pos.x = 0;
+      st.fighter.pos.z = 0;
+      this.accumulator -= DT;
+      steps++;
+    }
+    if (steps === MAX_STEPS_PER_FRAME) this.accumulator = 0;
+  }
+
   private startTraining(): void {
     this.audio.unlock();
     this.audio.startAmbience();
     this.unwire();
-    this.mode = new TrainingMode({ touch: this.touchWanted() });
+    this.studio = null;
+    this.mode = new TrainingMode({ touch: this.touchWanted(), character: this.character });
     this.renderer.attach(this.mode.sim);
     this.wire(this.mode);
     this.setDummyMode('stand');
@@ -136,9 +280,6 @@ export class Game {
   }
 
   private quitToMenu(): void {
-    this.unwire();
-    this.mode = new TrainingMode();
-    this.renderer.attach(this.mode.sim);
     this.showMainMenu();
   }
 
@@ -196,6 +337,7 @@ export class Game {
   }
 
   private updateTouchVisibility(): void {
+    document.body.classList.toggle('in-fight', this.state === 'playing' || this.state === 'paused');
     this.touch.visible = this.state === 'playing' && this.touchWanted();
     this.uiRoot.classList.toggle('touch-ui', this.touchWanted());
   }
@@ -280,14 +422,22 @@ export class Game {
         steps++;
       }
       if (steps === MAX_STEPS_PER_FRAME) this.accumulator = 0;
+    } else if (this.state === 'studio') {
+      this.input.flush();
+      this.stepStudio(dt);
     } else {
       this.input.flush();
     }
 
-    const inFight = this.state !== 'menu' && !!this.mode;
+    const inFight = (this.state === 'playing' || this.state === 'paused') && !!this.mode;
     this.renderer.render(dt, this.time, inFight ? this.mode!.player : null);
     if (inFight && this.mode) this.hud.update(dt, this.mode.player, this.mode.dummy);
 
     requestAnimationFrame((n) => this.frame(n));
   }
+}
+
+function characterCreatorDefault(): CharacterAppearance {
+  // A fresh random look each time you start a new fighter.
+  return randomAppearance();
 }

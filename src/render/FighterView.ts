@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import type { CharacterAppearance } from '../character/Appearance';
 import type { Fighter } from '../fighter/Fighter';
+import { buildCharacterRig, type Rig } from './CharacterRig';
 import {
   BLOCK,
   GUARD,
@@ -16,141 +18,6 @@ import {
   type Pose,
 } from './poses';
 
-/** Colour schemes for the temporary rig. Stage 2 replaces this with full character appearance. */
-const LOOKS: Record<string, { top: number; legs: number; shoes: number; skin: number; hands: number; hair: number; headgear?: number }> = {
-  player: { top: 0x2b2e35, legs: 0x1b1e25, shoes: 0xe6e6e6, skin: 0xc68e6b, hands: 0xe2ddd2, hair: 0x1a1410 },
-  dummy: { top: 0x7d1a1a, legs: 0x111111, shoes: 0x2a2a2a, skin: 0x8d5a3b, hands: 0x9b1c1c, hair: 0x0e0b09, headgear: 0x9b1c1c },
-};
-
-interface Rig {
-  root: THREE.Group;
-  pitch: THREE.Group;
-  joints: Record<JointName, THREE.Object3D>;
-  materials: THREE.MeshStandardMaterial[];
-}
-
-function limb(radius: number, length: number, mat: THREE.Material, y: number): THREE.Mesh {
-  const m = new THREE.Mesh(new THREE.CapsuleGeometry(radius, length, 4, 10), mat);
-  m.position.y = y;
-  m.castShadow = true;
-  return m;
-}
-
-/** TEMPORARY procedural humanoid made of capsules, posed in code. */
-function buildRig(lookKey: string): Rig {
-  const look = LOOKS[lookKey] ?? LOOKS.player;
-  const mat = (color: number, rough = 0.8) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0 });
-  const top = mat(look.top, 0.9);
-  const legs = mat(look.legs, 0.85);
-  const shoes = mat(look.shoes, 0.6);
-  const skin = mat(look.skin, 0.6);
-  const hands = mat(look.hands, 0.7);
-  const hair = mat(look.hair, 0.9);
-  const materials = [top, legs, shoes, skin, hands, hair];
-
-  const root = new THREE.Group();
-  const pitch = new THREE.Group();
-  root.add(pitch);
-
-  const hips = new THREE.Group();
-  hips.position.y = 0.95;
-  pitch.add(hips);
-  const pelvis = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.2, 0.2), legs);
-  pelvis.castShadow = true;
-  hips.add(pelvis);
-
-  const spine = new THREE.Group();
-  spine.position.y = 0.08;
-  hips.add(spine);
-  const torso = limb(0.16, 0.3, top, 0.25);
-  torso.scale.set(1.15, 1, 0.78);
-  spine.add(torso);
-
-  const head = new THREE.Group();
-  head.position.y = 0.55;
-  spine.add(head);
-  const neck = limb(0.05, 0.06, skin, 0.03);
-  head.add(neck);
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), skin);
-  skull.scale.set(0.9, 1.08, 1);
-  skull.position.y = 0.13;
-  skull.castShadow = true;
-  head.add(skull);
-  if (look.headgear !== undefined) {
-    const gearMat = mat(look.headgear, 0.5);
-    materials.push(gearMat);
-    const gear = new THREE.Mesh(new THREE.SphereGeometry(0.125, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), gearMat);
-    gear.position.y = 0.14;
-    gear.castShadow = true;
-    head.add(gear);
-  } else {
-    const cut = new THREE.Mesh(new THREE.SphereGeometry(0.113, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.45), hair);
-    cut.position.set(0, 0.145, -0.008);
-    head.add(cut);
-  }
-  // A nose so you can tell which way the head faces.
-  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 0.04), skin);
-  nose.position.set(0, 0.12, 0.105);
-  head.add(nose);
-
-  const makeArm = (side: 1 | -1) => {
-    const shoulder = new THREE.Group();
-    shoulder.position.set(0.2 * side, 0.44, 0);
-    spine.add(shoulder);
-    shoulder.add(limb(0.055, 0.17, top, -0.13));
-    const elbow = new THREE.Group();
-    elbow.position.y = -0.28;
-    shoulder.add(elbow);
-    elbow.add(limb(0.048, 0.16, top, -0.12));
-    const fist = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), hands);
-    fist.scale.set(0.9, 1.1, 1);
-    fist.position.y = -0.28;
-    fist.castShadow = true;
-    elbow.add(fist);
-    return { shoulder, elbow };
-  };
-
-  const makeLeg = (side: 1 | -1) => {
-    const hip = new THREE.Group();
-    hip.position.set(0.1 * side, -0.06, 0);
-    hips.add(hip);
-    hip.add(limb(0.075, 0.27, legs, -0.21));
-    const knee = new THREE.Group();
-    knee.position.y = -0.44;
-    hip.add(knee);
-    knee.add(limb(0.062, 0.26, legs, -0.2));
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.08, 0.25), shoes);
-    foot.position.set(0, -0.41, 0.06);
-    foot.castShadow = true;
-    knee.add(foot);
-    return { hip, knee };
-  };
-
-  const lArm = makeArm(1);
-  const rArm = makeArm(-1);
-  const lLeg = makeLeg(1);
-  const rLeg = makeLeg(-1);
-
-  return {
-    root,
-    pitch,
-    materials,
-    joints: {
-      hips,
-      spine,
-      head,
-      lShoulder: lArm.shoulder,
-      lElbow: lArm.elbow,
-      rShoulder: rArm.shoulder,
-      rElbow: rArm.elbow,
-      lHip: lLeg.hip,
-      lKnee: lLeg.knee,
-      rHip: rLeg.hip,
-      rKnee: rLeg.knee,
-    },
-  };
-}
-
 /**
  * Draws one Fighter from the simulation. Reads state only; never changes it.
  */
@@ -165,17 +32,29 @@ export class FighterView {
   private lastX: number;
   private lastZ: number;
   private flashTime = 0;
+  /** Extra rotation on top of facing (the character creator's turntable). */
+  extraYaw = 0;
   /** Fires when a foot hits the ground while walking (for footstep audio). */
   onStep: (() => void) | null = null;
 
-  constructor(readonly fighter: Fighter) {
-    this.rig = buildRig(fighter.look);
-    this.root = this.rig.root;
+  constructor(readonly fighter: Fighter, appearance: CharacterAppearance = fighter.appearance) {
+    this.root = new THREE.Group();
+    this.rig = buildCharacterRig(appearance);
+    this.root.add(this.rig.root);
     this.current = Object.fromEntries(JOINTS.map((j) => [j, new THREE.Vector3()])) as Record<JointName, THREE.Vector3>;
     this.yaw = (fighter.facing * Math.PI) / 2;
     this.lastX = fighter.pos.x;
     this.lastZ = fighter.pos.z;
     this.applyPose(GUARD, 1);
+  }
+
+  /** Rebuild the model with a new look (character creator, clothes changes). Keeps the current pose. */
+  setAppearance(appearance: CharacterAppearance): void {
+    this.root.remove(this.rig.root);
+    this.rig.dispose();
+    this.rig = buildCharacterRig(appearance);
+    this.root.add(this.rig.root);
+    this.applyPose({ joints: {} }, 0);
   }
 
   /** Brief white flash when hit. */
@@ -190,7 +69,7 @@ export class FighterView {
     // Turn smoothly to face left/right.
     const targetYaw = (f.facing * Math.PI) / 2;
     this.yaw += (targetYaw - this.yaw) * (1 - Math.exp(-28 * dt));
-    this.root.rotation.y = this.yaw;
+    this.root.rotation.y = this.yaw + this.extraYaw;
 
     const moved = Math.hypot(f.pos.x - this.lastX, f.pos.z - this.lastZ);
     this.lastX = f.pos.x;
@@ -202,7 +81,7 @@ export class FighterView {
     // Hit flash.
     this.flashTime = Math.max(0, this.flashTime - dt);
     const e = this.flashTime > 0 ? 0.6 : 0;
-    for (const m of this.rig.materials) m.emissive.setScalar(e);
+    for (const m of this.rig.flashMaterials) m.emissive.setScalar(e);
   }
 
   private targetPose(moved: number, time: number): { pose: Pose; speed: number } {
@@ -290,9 +169,7 @@ export class FighterView {
   }
 
   dispose(): void {
-    this.root.traverse((o: THREE.Object3D) => {
-      if (o instanceof THREE.Mesh) o.geometry.dispose();
-    });
-    for (const m of this.rig.materials) m.dispose();
+    this.root.remove(this.rig.root);
+    this.rig.dispose();
   }
 }

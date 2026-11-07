@@ -74,7 +74,7 @@ export function resolveHit(
   const move = m.data;
   const dir = Math.sign(target.pos.x - attacker.pos.x) || attacker.facing;
   const repeat = repetitionMultiplier(attacker.repeatCount);
-  const baseDamage = computeDamage(move.damage, attacker.stats, target.stats, repeat);
+  const baseDamage = computeDamage(move.damage, attacker.stats, target.stats, repeat, 1, attacker.masteryMultiplier(move.style));
 
   attacker.vitals.markCombat(frame);
   target.vitals.markCombat(frame);

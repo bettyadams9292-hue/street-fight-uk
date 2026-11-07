@@ -6,7 +6,7 @@ export function repetitionMultiplier(consecutiveUses: number): number {
 }
 
 /**
- * Damage = Base x (1 + 0.03 STR) x fatigue/gear x counter x repetition
+ * Damage = Base x (1 + 0.03 STR) x fatigue/gear x mastery x counter x repetition
  *          x (1 - DEF / (DEF + 40)) x target damage-taken effects
  * (clean hits are applied by the caller).
  */
@@ -16,10 +16,12 @@ export function computeDamage(
   target: Stats,
   repeatMult = 1,
   counterMult = 1,
+  masteryMult = 1,
 ): number {
   return (
     base *
     attacker.damageMultiplier *
+    masteryMult *
     counterMult *
     repeatMult *
     (1 - target.defenceReduction) *

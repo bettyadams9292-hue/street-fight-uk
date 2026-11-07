@@ -36,8 +36,8 @@ const moveSet = { moves: STREET_MOVES, starters: STREET_STARTERS };
 
 function setup(gap = 1.0, dz = 0, seed = 7) {
   const sim = new Simulation(createTrainingArena(), seed);
-  const a = sim.add(new Fighter({ id: 1, name: 'A', team: 'player', attributes: defaultAttributes(5), moveSet, x: 0, z: 0, look: 'player' }));
-  const b = sim.add(new Fighter({ id: 2, name: 'B', team: 'enemy', attributes: { ...defaultAttributes(5), technique: 0 }, moveSet, x: gap, z: dz, look: 'dummy' }));
+  const a = sim.add(new Fighter({ id: 1, name: 'A', team: 'player', attributes: defaultAttributes(5), moveSet, x: 0, z: 0, appearance: undefined }));
+  const b = sim.add(new Fighter({ id: 2, name: 'B', team: 'enemy', attributes: { ...defaultAttributes(5), technique: 0 }, moveSet, x: gap, z: dz, appearance: undefined }));
   a.stats.base.technique = 0; // no random clean hits in tests
   const hits: HitInfo[] = [];
   const blocks: HitInfo[] = [];
