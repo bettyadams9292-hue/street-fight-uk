@@ -198,6 +198,18 @@ The simulation (`core`, `stats`, `combat`, `fighter`, `ai`, `world`, `data`) has
 - A full loop: home → out → boss → home → bank → train → save → reload → next district.
 - A 40-second AI soak in every area that checks nobody ends up inside an obstacle or out of bounds.
 
+**Balance pass (after Stage 4).**
+- New **Difficulty** setting (Settings → Game) for story mode: Easy, Normal or Hard. It changes how much damage you deal and take, and takes effect immediately.
+- Each level now gives +5% damage, −2.5% damage taken and +4 max health.
+- Grappling is fairer on you in story mode. After a hold ends you can't be grabbed again for 2.5 s, submissions build more slowly, and a tap-out costs 22% of max health instead of 35%.
+- The late fights are lighter. City square and Pit gauntlet waves were trimmed, and the Ratcatcher and Big Dunc toned down.
+- `npm run balance` has bots play every main fight at the progression you'd roughly have by then. On Normal:
+  - The early districts are won 80–100% of the time.
+  - Sully and the subway: 50–90%.
+  - The Ratcatcher: about 40–60%.
+  - Big Dunc: about 20–25%, the hardest fight, as intended.
+- The bots are cruder than a human, so treat these numbers as a floor.
+
 **Known limits.**
 - Art is still built from simple shapes and procedural textures.
 - Audio reuses the Stage 1 synthesised sounds.

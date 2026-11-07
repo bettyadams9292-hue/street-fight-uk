@@ -502,7 +502,7 @@ input[type='range'].focused, input[type='range']:focus { filter: drop-shadow(0 0
 .xp-fill { height: 100%; background: var(--yellow); width: 0; }
 .objective { font-size: 16px; color: var(--text); opacity: 0.9; }
 .objective::before { content: '\25B8  '; color: var(--yellow); }
-.hud.story .area-banner { display: block; position: absolute; top: 38%; left: 0; right: 0; text-align: center; opacity: 0; pointer-events: none; }
+.hud.story .area-banner { display: block; position: absolute; top: 56%; left: 0; right: 0; text-align: center; opacity: 0; pointer-events: none; }
 .area-banner.show { animation: banner 3.2s ease-out forwards; }
 .area-banner .district { font-family: var(--display); font-size: clamp(40px, 7vw, 84px); color: var(--yellow); -webkit-text-stroke: 2px #000; letter-spacing: 0.04em; }
 .area-banner .place { font-size: 22px; letter-spacing: 0.2em; text-transform: uppercase; text-shadow: 0 2px 8px #000; }
