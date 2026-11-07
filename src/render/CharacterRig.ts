@@ -368,21 +368,21 @@ export function buildCharacterRig(a: CharacterAppearance): Rig {
   };
 }
 
-/** Which garment mesh in characters.glb each clothing style uses. */
-const TOP_MESH: Record<CharacterAppearance['top'], string | null> = {
-  none: null,
-  vest: 'top_vest',
-  tshirt: 'top_short',
-  football: 'top_short',
-  hoodie: 'top_long',
-  designer_hoodie: 'top_long',
-  tracksuit: 'top_long',
-  bomber: 'top_long',
-  puffer: 'top_long',
-  leather: 'top_long',
-  denim: 'top_long',
-  coat: 'top_long',
-  workwear: 'top_long',
+/** Which garment meshes in characters.glb each clothing style uses. */
+const TOP_MESHES: Record<CharacterAppearance['top'], string[]> = {
+  none: [],
+  vest: ['top_vest'],
+  tshirt: ['top_short'],
+  football: ['top_short', 'collar'],
+  hoodie: ['top_long', 'hood'],
+  designer_hoodie: ['top_long', 'hood'],
+  tracksuit: ['top_long', 'collar'],
+  bomber: ['top_long', 'collar'],
+  puffer: ['top_puffer', 'collar'],
+  leather: ['top_long', 'collar'],
+  denim: ['top_long', 'collar'],
+  coat: ['top_long', 'coat_skirt', 'collar'],
+  workwear: ['top_long'],
 };
 
 /**
@@ -417,11 +417,11 @@ function buildModelRig(a: CharacterAppearance): Rig | null {
   const topMat = std({ color: a.topColour, roughness: topRough[a.top] ?? 0.9, metalness: a.top === 'leather' ? 0.05 : 0, side: THREE.DoubleSide });
   const bottomsMat = std({ color: a.bottomsColour, roughness: a.bottoms === 'jeans' ? 0.95 : 0.85, side: THREE.DoubleSide });
   const shoeMat = std({ color: a.shoesColour, roughness: 0.55 });
-  const byMaterial: Record<string, THREE.MeshStandardMaterial> = { Skin: skinMat, Top: topMat, Bottoms: bottomsMat, Shoes: shoeMat };
+  const trimMat = std({ color: darken(a.topColour, 0.3), roughness: 0.8, side: THREE.DoubleSide });
+  const byMaterial: Record<string, THREE.MeshStandardMaterial> = { Skin: skinMat, Top: topMat, Bottoms: bottomsMat, Shoes: shoeMat, Trim: trimMat };
 
   const wanted = new Set<string>(['Body', 'shoes', a.bottoms === 'shorts' ? 'bottoms_shorts' : 'bottoms_long']);
-  const top = TOP_MESH[a.top];
-  if (top) wanted.add(top);
+  for (const m of TOP_MESHES[a.top]) wanted.add(m);
   const bones: Record<string, THREE.Object3D> = {};
   const hidden: THREE.Object3D[] = [];
   model.traverse((o: THREE.Object3D) => {

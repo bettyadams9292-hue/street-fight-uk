@@ -332,3 +332,24 @@ Every visual asset, with where it appears, its status and collision, is listed i
 - No real 3D asset files (see above). Characters, buildings and props are procedural and stylised, not photoreal.
 - The Stage 5 visuals (new clothing, facades, props, weapon models, rain, interiors) type-check and are wired in. The new areas loaded without errors in the live build, but they have **not** been screenshot-checked. The browser pane was hidden during testing, so screenshots weren't possible.
 - Animation is still the code-driven pose system; there are no animation clips.
+
+
+## Blender characters (Stage 6, in progress)
+
+- **Skinned models.** Fighters are now a skinned model made in Blender: `assets-src/sfuk_characters.blend` is exported to `public/models/characters.glb`.
+- **Skeleton.** It has the game's 11 joints at exactly the old positions with identity rest rotations. Every existing pose, move and finisher drives it without changes.
+- **The body.** One continuous mesh with hands, fingers and thumbs.
+- **Shape keys.** Muscle, weight and female shape keys follow the creator's sliders.
+- **Clothing.** These garments are skinned to the same skeleton and carry the same shape keys:
+  - long-sleeve, short-sleeve, vest and quilted puffer tops;
+  - a hood, a collar and a long-coat skirt;
+  - trousers and shorts;
+  - trainers.
+- **Head.** The face, hair and headwear are still the procedural head, attached to the head bone.
+- **Fallback.** The classic rig is still there: add `?classic` to the URL, and it's also used if the model file fails to load.
+- **Still to do.**
+  - A modelled head.
+  - UVs and painted textures.
+  - Boots, and the small style details (zips, stripes, logos).
+  - Accessories on the body (chains, belt, wraps).
+  - Environment and prop models.
