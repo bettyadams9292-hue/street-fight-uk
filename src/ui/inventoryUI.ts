@@ -276,7 +276,7 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
     onShow: () => build(),
     onBack: close,
     onAction: (a) => {
-      if (a === 'pause') {
+      if (a === 'pause' || a === 'inventory') {
         close();
         return true;
       }

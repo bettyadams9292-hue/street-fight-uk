@@ -306,7 +306,7 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
       'nav',
       { class: 'menu-list' },
       menuButton('Resume', actions.resume),
-      menuButton('Inventory', actions.inventory, 'I / RB / BAG'),
+      menuButton('Inventory', actions.inventory, 'B / right-stick click / BAG'),
       actions.home ? menuButton('Head home', actions.home, 'Back to your house. Fights here will still be waiting.') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
       menuButton('Save', actions.save),
       menuButton('Settings', actions.settings),

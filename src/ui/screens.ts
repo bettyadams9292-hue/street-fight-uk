@@ -120,6 +120,7 @@ export function controlsScreen(ui: UIManager): Screen {
     ['Swap style', 'Tab', 'Back / View', 'SWAP'],
     ['Jump', 'C', 'Left stick click', 'JUMP'],
     ['Pause', 'Esc / P', 'Start', '\u275a\u275a'],
+    ['Inventory (story)', 'B', 'Right-stick click', 'BAG'],
     ['Training ground: partner stand / block / spar / group', '1 / 2 / 3 / 4', '\u2014', 'Top bar'],
     ['Training ground: next opponent / reset', 'N / R', '\u2014', 'Top bar'],
     ['Hitboxes', 'F1', '\u2014', 'Settings'],

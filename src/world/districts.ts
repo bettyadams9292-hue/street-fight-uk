@@ -116,6 +116,7 @@ const leisure: LevelDef = {
     { kind: 'semi', x0: 54, x1: 80 },
   ],
   props: [
+    { kind: 'traffic_light', x: 8, z: -1.85 },
     { kind: 'bike_rack', x: 16, z: -1.7 },
     { kind: 'vending', x: 22, z: -1.55 },
     { kind: 'bench', x: 30, z: -1.65 },

@@ -2,14 +2,16 @@
 
 A gritty 2.5D street-fighting action RPG set in modern Britain. Browser game built with TypeScript and Three.js, playable on PC and iPhone.
 
-**Current build: Stage 3 (Combat expansion)**: create your fighter, then fight in the back-alley training ground: seven styles, parries, dodges, grappling, finishers and eight enemy types.
+**Current build: Stage 5 (expanded campaign, items and shops)**: 24 areas, 13 bosses, an inventory and stash, a clothes shop with try-on, a pawn shop, robbery with police consequences, and 36 melee and improvised weapons (no firearms). The training ground is still on the main menu.
 
 ## Run it
 
 ```bash
 npm install
 npm run dev        # local dev server with instant reload
-npm test           # headless combat and stats tests
+npm test           # headless tests (combat, character, grappling/AI, world, Stage 5 systems)
+npm run balance    # bots play every main fight; prints win rates
+npx tsx tests/assetRegister.ts   # regenerates docs/ASSET_REGISTER.md
 npm run typecheck  # TypeScript check
 npm run build      # production build into dist/
 ```
@@ -33,6 +35,9 @@ The full list (with combos) is on the in-game Controls screen.
 | Swap style | Tab | Back / View | SWAP |
 | Jump | C | Left stick click | JUMP |
 | Pause | Esc / P | Start | pause button |
+| Inventory (story) | B | Right-stick click | BAG |
+| Use / pick up / search / talk | E or U | LB | GRAB |
+| Throw held weapon (if throwable) | Grab while holding it | LB | GRAB |
 | Training partner: stand / block / spar / group | 1 / 2 / 3 / 4 | - | top bar |
 | Next opponent type / reset | N / R | - | top bar |
 
@@ -65,8 +70,11 @@ The simulation (`core`, `stats`, `combat`, `fighter`, `ai`, `world`, `data`) has
 
 | What | Where | Replaced in |
 | --- | --- | --- |
-| Procedural fighter model and code-driven poses | `src/render/CharacterRig.ts`, `src/render/poses.ts` | Blender GLB characters and real animation clips (needs animation files, see Stage 2 report) |
-| Alley built from boxes and procedural textures | `src/render/ArenaView.ts`, `src/render/textures.ts` | Stage 5 (Blender-modelled locations) |
+| Procedural fighter model and code-driven poses | `src/render/CharacterRig.ts`, `src/render/poses.ts` | Blender GLB characters and real animation clips (needs model and animation files) |
+| Locations, props and weapons built in code with canvas textures | `src/render/LevelView.ts`, `weaponMesh.ts`, `levelTextures.ts` | Modelled GLB sets and PBR texture sets (needs asset files) |
+| Item icons drawn on canvas | `src/ui/itemIcons.ts` | Painted or rendered icons |
+
+Every visual asset, with where it appears, its status and collision, is listed in [docs/ASSET_REGISTER.md](docs/ASSET_REGISTER.md).
 | Synthesised impact, swing and ambience sounds | `src/audio/AudioManager.ts` | Stage 7 (recorded audio) |
 
 ## Stage 1 report
@@ -215,3 +223,112 @@ The simulation (`core`, `stats`, `combat`, `fighter`, `ai`, `world`, `data`) has
 - Audio reuses the Stage 1 synthesised sounds.
 - The camera always faces side-on.
 - Bosses are tuned by numbers; nobody has played them through yet.
+
+
+## Stage 5 report: campaign, items, shops and weapons
+
+**The honest headline on graphics.** No external models or textures could be downloaded in this environment, so there are no GLB characters, scanned textures or motion-captured animations. Everything below was built in code. It's a big step up from Stage 4, but it is not a photoreal AAA look; getting there needs real asset files.
+
+**Graphics and assets**
+- **Characters.** 7 new tops (designer hoodie, football shirt, puffer, leather, denim, long coat, hi-vis workwear), 3 new bottoms (joggers, cargos, workwear) and runners each have their own geometry: cuffs, collars, lapels, zips, quilting, pockets, reflective bands, knee pads. Padded tops bulk out the body. New accessories: beanie, sunglasses, snood, ring, belt, mouthguard. Fists now have a palm, four curled fingers and a thumb (they were a single sphere).
+- **Weapons.** All 36 weapons have their own model. Stage 4 had 3 shapes shared by everything.
+- **Locations.** 13 new building types (1930s semis, shopping parade, mall fronts, football stand, leisure centre, dock warehouse, container stacks, Victorian market hall, car-park deck, derelict mill, underground platform, the Boss's compound, and shop/pawn/pub interiors) and 37 new prop models (dumpsters, buses, forklifts, market stalls, a pool table, a bar with pumps, display cabinets, mannequins and more).
+- **Per-area look.** Each theme sets its ground (paving, cobbles, concrete, markings, tiles, boards, carpet), skyline, fog, roofs and lighting. There's water at the docks and rain where an area's weather says so.
+- **World objects.** Breakables show debris when smashed. Items on the ground show their 3D model (weapons) or icon with a rarity ring. Unsearched containers glint.
+- **Asset register.** [docs/ASSET_REGISTER.md](docs/ASSET_REGISTER.md) lists all 181 assets with the 10 fields asked for. It is generated from the game data, so where each asset appears and its collision size are always accurate. It also says plainly which Stage 5 assets have not yet been looked at in a running build.
+
+**Campaign**
+- **24 areas.** The 8 Stage 4 areas are kept. 13 new districts: Hollins Estate, Kirkgate Leisure, Kirkgate Ground (stadium), Old Market, Canal Docks, Westgate Industrial Estate, the abandoned factory, Kingsway Precinct, the shopping centre, the multi-storey car park, the Neon Mile, the Deep Line and Hale House. Plus 3 interiors: Threads (clothes shop), Pawn & Gold and the Red Lion pub.
+- **Routes.** Quest items open the way on: the lock-up key, stadium key, VIP pass and Dunc's phone. Hale House needs Dunc's phone plus the Docks, Precinct, Neon Mile and Firm bosses.
+- **13 bosses.** 9 are new. Each has a look, intro and defeat lines, phases (summons, style swaps, weapons drawn mid-fight), cash/XP rewards and item drops. Optional districts are marked as optional in the phone's hints.
+- **Enemies.** 10 new types: hooded fighter, runner, knifeman, brawler, football casual, gang enforcer, docker, bouncer, security guard and police. Enemies can carry knives, bats, pipes and more.
+
+**Items, inventory and storage**
+- **Items.** 8 categories (weapons, clothing, accessories, consumables, valuables, collectibles, quest items, misc) and 5 rarities. Each has an icon, value, stack size and description.
+- **Pockets.** 12 slots, plus 4, 8 or 12 from a bag. You can pick up, inspect, use, wear, take off, hold, put away, drop, sort and filter, and compare against what you're wearing. A full inventory leaves the item on the floor and tells you; nothing is silently deleted. Quest items can't be dropped or sold. A bag can't be dropped while it's holding things.
+- **The stash.** A chest in the garage at home holds 60 slots, and shelving upgrades add 30 at a time up to 150 (paid from the tin). Deposit and withdraw *move* stacks; every stack has a unique id, so nothing can be duplicated. Carried, stashed, worn and held are kept separate.
+
+**Shops**
+- **Threads (clothes shop).** Walk in off the High Street. The catalogue has 45 lines in 5 sections. Selecting one previews it on your character, and you can turn and zoom. Paying takes your pocket money first, then the tin. If your pockets are full, it's delivered to your stash. What you buy is saved and worn from your inventory.
+- **Robbing Threads.** It needs a confirm.
+  - You grab up to 3 clothes, all marked STOLEN. The first time, Priya might empty the till or fight back. After that she always fights, and a security guard joins her.
+  - It raises your heat, sets off the alarm, and the police arrive 12 seconds later.
+  - The shop is shut for 8 trips, prices for you go up 25% per robbery (up to double), and each robbery yields fewer goods and less cash.
+  - Being beaten by the police, or beaten anywhere while your heat is 60 or more, gets you **nicked**: stolen goods are seized from your pockets, clothes and hands, you pay a 15% fine (at least £25), and your heat is cleared. Heat cools as you move between areas.
+- **Pawn & Gold.** Mr Kaur offers 55% of value for valuables and collectibles, 35–60% for other things, and 40% less for anything stolen. You can sell one, several, or the whole stack, with a confirm before selling everything. Quest items are refused.
+- **The Red Lion.** Food and drink at the bar, a game of pool, and an optional lock-in fight.
+
+**Weapons (melee only)**
+- **36 weapons.** 16 conventional (bottle, broken bottle, cricket bat, baseball bat, lead pipe, metal bar, crowbar, claw hammer, machete, kitchen knife, bike chain, pipe wrench, club, pool cue, scaffold pole, heavy torch). 20 improvised everyday objects (mop, broom, road sign, traffic cone, plank, chair leg, table leg, pub chair, telly, monitor, skateboard, golf umbrella, shelving upright, shovel, garden fork, rake, half brick, frying pan, golf club, bin lid). **There are no guns or firearms**, and a test enforces it.
+- **Stats.** Each weapon has damage, speed, reach, weight, durability and value. Breakable weapons wear out; a bottle becomes a broken bottle. Throwable weapons are thrown with Grab, fly, hit, and land where they can be picked up again. Your held weapon and its condition are saved.
+
+**Interactive world**
+- **Containers.** Bins, skips, dumpsters, cars, drawers, cupboards, lockers, crates and tills. Searching takes half a second. Random loot refills every 6 trips; fixed finds are once only. Locked ones need their key.
+- **Breakables.** Crates, pallets, chairs, tables, tellies and boxes break, stop blocking, drop a weapon or loot, and stay broken.
+- **Loot.** Enemies drop cash and items from loot tables by type. Everyday ground finds restock every 6 trips instead of on every visit, so they can't be farmed by walking in and out.
+- **No interacting through walls.** This was already tested in Stage 4 and still applies. Collision boxes and models share one size table.
+
+**HUD.** It shows pocket slots used, the held weapon's condition bar, and heat ("WANTED" at 60 or more, "POLICE" when they're on you). The toasts are colour-coded by rarity. The BAG button is on touch screens.
+
+**Saving.** Save v3 (`sfuk.save.v3` plus a backup).
+- A Stage 4 save converts on first load: gear, weapons and cosmetics become items, what you had equipped is worn or held, and money and flags are kept. The old v2 save is left untouched.
+- Loading removes duplicate item ids and never truncates storage.
+
+**Bugs fixed during Stage 5**
+- Wearing or holding one item from a stack of more than one could duplicate it.
+- Shopkeepers stood inside their counters.
+- Enemies could spawn inside furniture; they now use the nearest free spot.
+- The inventory key was I (heavy punch) and RB (special), so attacking opened the bag. It is now B, right-stick click, or BAG.
+- Loading an over-full save could drop stash items.
+
+**Files.**
+- New:
+  - `src/items/` (items, Inventory, loot, shops)
+  - `src/world/districts.ts`, `interiors.ts`, `robbery.ts`
+  - `src/ui/inventoryUI.ts`, `itemIcons.ts`
+  - `src/render/themes.ts`
+  - `tests/stage5.test.ts`, `tests/assetRegister.ts`
+  - `docs/ASSET_REGISTER.md`
+- Heavily changed: World, levels, LevelTypes, Progress, SaveStore, Weapons, Fighter, CombatSystem, bosses, archetypes, LevelView, weaponMesh, CharacterRig, GameRenderer, Game, Hud, hub, InputManager, styles.css.
+
+**Tests.**
+- **New Stage 5 suite.** `npm test` now includes `tests/stage5.test.ts`, which has 27 tests:
+  - no firearms;
+  - weapon, item and loot data integrity;
+  - stacking and capacity;
+  - overflow onto the floor;
+  - consumables;
+  - wearing and swapping without duplication;
+  - stash deposit, withdraw, capacity and upgrades;
+  - weapons moving between hands and pockets;
+  - clothes buying (including when broke, or with full pockets);
+  - pawn offers and selling;
+  - robbery consequences, repeat robbery and arrest;
+  - heat decay;
+  - enemy item drops;
+  - boss drops and quest gating;
+  - containers (timing, once only, locked, refill);
+  - breakables;
+  - thrown weapons;
+  - save v3 round trip;
+  - de-duplication;
+  - v2 migration;
+  - all 24 areas linked;
+  - every area and entry loading and running.
+- **Updated world tests.** They now run over all 24 areas, including the AI soak.
+- **Last full run.** It was during this stage, before the final bindings, HUD and clothing changes: 103 passed, 0 failed.
+- **Vercel build.** The build now type-checks first (`tsc --noEmit && vite build`). The Vercel build of the main Stage 5 commit passed.
+
+**Balance (bots, 6–8 runs each, Normal).**
+- **Core districts.** Similar to Stage 4.
+- **New fights.** Most are won 50–100% of the time.
+- **Toned down after the first run.** The Estate King, Dean Pryce, Simone Achebe, Victor Hale and the leisure centre fight were the outliers and have been eased.
+- **Re-run results.** Estate King 63–88%, Pryce 50–63%, Simone 75–88%, Hale 50–63%, leisure centre 50–75%.
+- **Caveat.** Fast, dodgy enemies (runners) are disproportionately hard for the bots.
+
+**Known limits and what's outstanding.**
+- No real 3D asset files (see above). Characters, buildings and props are procedural and stylised, not photoreal.
+- The Stage 5 visuals (new clothing, facades, props, weapon models, rain, interiors) type-check and are wired in. The new areas loaded without errors in the live build, but they have **not** been screenshot-checked. The browser pane was hidden during testing, so screenshots weren't possible.
+- Animation is still the code-driven pose system; there are no animation clips.
+- Only Threads can be robbed. The pawn shop and pub can't.
+- Two prop models (cooker, DJ booth) exist but aren't placed in any level.

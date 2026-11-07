@@ -22,10 +22,11 @@ export const KEY_BINDINGS = {
   special: ['KeyO'],
   swap: ['Tab'],
   pause: ['Escape', 'KeyP'],
+  inventory: ['KeyB'],
 } as const;
 
 /** Standard gamepad mapping (Xbox names). */
-const PAD = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, LS: 10, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+const PAD = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, LS: 10, RS: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 const PAD_BUTTONS: Record<GameButton, number> = { lp: PAD.X, hp: PAD.Y, lk: PAD.A, hk: PAD.B, jump: PAD.LS, dodge: PAD.LT, grab: PAD.LB, swap: PAD.BACK };
 const STICK_DEADZONE = 0.25;
 
@@ -99,7 +100,7 @@ export class InputManager {
       }
       if (code === 'Escape') this.emitMenu('back');
       else if (code === 'KeyP') this.emitMenu('pause');
-      else if (code === 'KeyI') this.emitMenu('inventory');
+      else if (code === 'KeyB') this.emitMenu('inventory');
     }
     // Menu navigation (arrow keys / WASD / Enter).
     if (code === 'ArrowUp' || code === 'KeyW') this.emitMenu('up');
@@ -127,7 +128,8 @@ export class InputManager {
 
     for (const b of PRESS_BUTTONS) if (edge(PAD_BUTTONS[b])) this.pressedQueue.add(b);
     if (edge(PAD.START)) this.emitMenu('pause', 'gamepad');
-    if (edge(PAD.RB)) this.emitMenu('inventory', 'gamepad');
+    // Right-stick click: I (heavy punch) and RB (special) are fight buttons.
+    if (edge(PAD.RS)) this.emitMenu('inventory', 'gamepad');
     if (edge(PAD.A)) this.emitMenu('confirm', 'gamepad');
     if (edge(PAD.B)) this.emitMenu('back', 'gamepad');
     if (edge(PAD.UP)) this.emitMenu('up', 'gamepad');
