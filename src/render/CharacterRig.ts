@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { CharacterAppearance, TattooSlot } from '../character/Appearance';
 import type { JointName } from './poses';
+import { characterModelsReady, cloneCharacterModel } from './characterModels';
 import { paintedSkinMaterial } from './skinPainter';
 
 /**
@@ -30,6 +31,10 @@ function darken(hex: string, amount: number): string {
 }
 
 export function buildCharacterRig(a: CharacterAppearance): Rig {
+  if (characterModelsReady()) {
+    const modelRig = buildModelRig(a);
+    if (modelRig) return modelRig;
+  }
   const disposables: { dispose(): void }[] = [];
   const flashMaterials: THREE.MeshStandardMaterial[] = [];
   const track = <T extends { dispose(): void }>(x: T): T => {
@@ -358,6 +363,130 @@ export function buildCharacterRig(a: CharacterAppearance): Rig {
       rKnee: rLeg.knee,
     },
     dispose() {
+      for (const d of disposables) d.dispose();
+    },
+  };
+}
+
+/** Which garment mesh in characters.glb each clothing style uses. */
+const TOP_MESH: Record<CharacterAppearance['top'], string | null> = {
+  none: null,
+  vest: 'top_vest',
+  tshirt: 'top_short',
+  football: 'top_short',
+  hoodie: 'top_long',
+  designer_hoodie: 'top_long',
+  tracksuit: 'top_long',
+  bomber: 'top_long',
+  puffer: 'top_long',
+  leather: 'top_long',
+  denim: 'top_long',
+  coat: 'top_long',
+  workwear: 'top_long',
+};
+
+/**
+ * The Blender-made skinned body and clothes, driven by the same joints as the
+ * procedural rig. The face, hair and headwear are still the procedural head,
+ * attached to the head bone. Returns null if the model isn't available.
+ */
+function buildModelRig(a: CharacterAppearance): Rig | null {
+  const model = cloneCharacterModel();
+  if (!model) return null;
+  const disposables: { dispose(): void }[] = [];
+  const flashMaterials: THREE.MeshStandardMaterial[] = [];
+  const track = <T extends { dispose(): void }>(x: T): T => {
+    disposables.push(x);
+    return x;
+  };
+  const std = (params: THREE.MeshStandardMaterialParameters) => {
+    const m = track(new THREE.MeshStandardMaterial({ roughness: 0.8, metalness: 0, ...params }));
+    flashMaterials.push(m);
+    return m;
+  };
+  const mesh = (geo: THREE.BufferGeometry, mat: THREE.Material, shadow = true) => {
+    track(geo);
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = shadow;
+    return m;
+  };
+  const female = a.body === 'female';
+  const hairCol = mixHair(a);
+  const topRough: Partial<Record<CharacterAppearance['top'], number>> = { bomber: 0.45, tracksuit: 0.55, leather: 0.32, puffer: 0.4, football: 0.5, workwear: 0.6 };
+  const skinMat = std({ color: a.skinTone, roughness: 0.6 });
+  const topMat = std({ color: a.topColour, roughness: topRough[a.top] ?? 0.9, metalness: a.top === 'leather' ? 0.05 : 0, side: THREE.DoubleSide });
+  const bottomsMat = std({ color: a.bottomsColour, roughness: a.bottoms === 'jeans' ? 0.95 : 0.85, side: THREE.DoubleSide });
+  const shoeMat = std({ color: a.shoesColour, roughness: 0.55 });
+  const byMaterial: Record<string, THREE.MeshStandardMaterial> = { Skin: skinMat, Top: topMat, Bottoms: bottomsMat, Shoes: shoeMat };
+
+  const wanted = new Set<string>(['Body', 'shoes', a.bottoms === 'shorts' ? 'bottoms_shorts' : 'bottoms_long']);
+  const top = TOP_MESH[a.top];
+  if (top) wanted.add(top);
+  const bones: Record<string, THREE.Object3D> = {};
+  const hidden: THREE.Object3D[] = [];
+  model.traverse((o: THREE.Object3D) => {
+    if ((o as THREE.Bone).isBone) bones[o.name] = o;
+    const sm = o as THREE.SkinnedMesh;
+    if (!sm.isSkinnedMesh && !(o as THREE.Mesh).isMesh) return;
+    if (!wanted.has(o.name)) {
+      hidden.push(o);
+      return;
+    }
+    const src = sm.material as THREE.Material;
+    sm.material = byMaterial[src.name] ?? skinMat;
+    sm.castShadow = true;
+    // Skinned meshes move away from their bind-pose bounds; don't let them get culled.
+    sm.frustumCulled = false;
+    // Body shape sliders are morph targets made in Blender.
+    const dict = sm.morphTargetDictionary;
+    const inf = sm.morphTargetInfluences;
+    if (dict && inf) {
+      if (dict.muscle !== undefined) inf[dict.muscle] = Math.max(0, Math.min(1, (a.muscle - 0.3) / 0.6));
+      if (dict.weight !== undefined) inf[dict.weight] = Math.max(0, Math.min(1, (a.weight - 0.2) / 0.6));
+      if (dict.female !== undefined) inf[dict.female] = female ? 1 : 0;
+    }
+  });
+  for (const o of hidden) o.removeFromParent();
+  const need = ['hips', 'spine', 'head', 'lShoulder', 'lElbow', 'rShoulder', 'rElbow', 'lHip', 'lKnee', 'rHip', 'rKnee'] as const;
+  if (need.some((n) => !bones[n])) return null;
+
+  const root = new THREE.Group();
+  root.scale.setScalar(a.height);
+  const pitch = new THREE.Group();
+  root.add(pitch);
+  pitch.add(model);
+
+  // Procedural head (face, hair, headwear) on the head bone.
+  const head = new THREE.Group();
+  bones.head.add(head);
+  const hairMat = std({ color: hairCol, roughness: 0.9 });
+  const darkMat = std({ color: '#101012', roughness: 0.4 });
+  const lipMat = std({ color: darken(a.skinTone, 0.25), roughness: 0.5 });
+  const metal = std({ color: a.chainColour === 'gold' ? '#d4af37' : '#c9ccd2', roughness: 0.25, metalness: 0.9 });
+  buildHead(head, a, {
+    std,
+    mesh,
+    skin: (p) => {
+      const m = track(paintedSkinMaterial(p));
+      flashMaterials.push(m);
+      return m;
+    },
+    hairMat,
+    lipMat,
+    darkMat,
+    metal,
+    topMat,
+    hairHex: '#' + hairCol.getHexString(),
+  });
+
+  const joints = Object.fromEntries(need.map((n) => [n, bones[n]])) as Record<JointName, THREE.Object3D>;
+  return {
+    root,
+    pitch,
+    flashMaterials,
+    joints,
+    dispose() {
+      // Geometry is shared with the loaded template; only per-fighter materials and head parts are freed.
       for (const d of disposables) d.dispose();
     },
   };
