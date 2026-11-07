@@ -132,3 +132,74 @@ The simulation (`core`, `stats`, `combat`, `fighter`, `ai`, `world`, `data`) has
 - Touch layout with the extra buttons (DODGE, GRAB, SP, SWAP).
 
 **Next: Stage 4 (RPG systems)**: inventory and equipment, XP and levelling, skill trees and style mastery, training sessions, full save and load.
+
+## Stage 4 report: arcade beat-'em-up world
+
+**What's new**
+- **Story mode.** New Game creates a fighter and starts at home. Continue resumes where you last arrived. The training ground is still on the main menu.
+- **The neighbourhood.** It has eight connected areas: Home, Tanner Road Estate, the High Street, the Back Alleys, Canal Side Works, the Ring Road Subway, Market Square and The Pit.
+  - You move between areas by walking off an edge or using a door.
+  - Each district's exit opens once its boss is beaten.
+  - The subway lever opens a shortcut back to the estate.
+- **Collision.** Props, room walls and gates are solid for players and AI alike. Their boxes come from the same size table the renderer uses. AI steers round obstacles.
+- **Home hub.** These are rooms you walk around in, with walls and doorways between them:
+
+  | Room | What you can do |
+  |---|---|
+  | Bedroom | Wardrobe (change your look; clothes you haven't found yet stay locked); mirror (character sheet); biscuit tin (bank your pocket money) |
+  | Living room | Sofa (story so far, stats, save); phone (hints, and £5 cabs to unlocked districts); front door |
+  | Kitchen | Free full recovery; Full English buff |
+  | Gym | Upgrades (a training point plus banked cash each); move unlocks; style lessons; choose main and swap styles; Cousin Mo to spar |
+  | Garage | Choose a weapon to take out; choose gear |
+
+- **Encounters.**
+  - Trigger lines work from either direction. A fight walls you in until it's over, and enemies come in waves.
+  - Main fights pay out once; optional fights come back each visit at half pay.
+  - Beaten enemies drop cash.
+- **Bosses.** Each has a bottom-screen boss bar and an intro line, and changes at phase thresholds: summons, enrage, style swap.
+  - The defeat event fires once and pays once (`Progress.claim`), then sets the district flag.
+  - After it, the victory screen offers "Head home" or "Stay and explore".
+- **Combat additions.**
+  - Weapons: bottle, cricket bat, lead pipe. You can pick them up, swing them, wear them out (bottles smash), and you drop them when knocked down. The first one of each kind found also goes into the garage.
+  - Jump attacks and a dash strike.
+  - Enemies glow red while winding up heavy moves.
+- **Progression.**
+  - Pocket cash versus banked cash: getting battered loses 25% of your pocket and sends you home.
+  - XP, levels and training points.
+  - Secrets hold gear and clothes; one-time pickups stay collected.
+- **Saving.** Save v2 lives in `sfuk.save.v2`, with a backup copy. A corrupt save falls back to the backup, then to the Stage 1–3 fighter. The game saves when you enter an area, clear a fight, find something, beat a boss, buy at home, or close the page.
+- **Camera.** Has a dead zone, frames the fight, and is clamped to the area and to fight locks. Scenery runs past both ends of each area, so nothing beyond it is ever in view.
+- **HUD.** Money, level/XP, objective, held weapon, area name card, toasts, boss bar, and the interaction prompt (E or U on keyboard, LB on gamepad, GRAB on touch).
+
+**Files.**
+- New:
+  - `src/world/World.ts`, `LevelTypes.ts`, `levels.ts`
+  - `src/render/LevelView.ts`, `levelTextures.ts`, `weaponMesh.ts`
+  - `src/progress/Progress.ts`, `catalogue.ts`
+  - `src/save/SaveStore.ts`
+  - `src/ai/bosses.ts`
+  - `src/combat/Weapons.ts`
+  - `src/ui/hub.ts`
+  - `tests/world.test.ts`
+- Changed: Game, Arena, Fighter, FighterAI, archetypes, CombatSystem, Stats, styles, CameraRig, GameRenderer, FighterView, Hud, CharacterCreator, screens, InputManager, styles.css.
+
+**Tests.** `npm test` runs 75 tests: 23 + 9 + 24, plus 19 new world tests. The new tests cover:
+- Every exit leads to a real entry.
+- A flood-fill check that every entry, door, station, pickup, lever and fight trigger can be reached, and that a closed gate really blocks.
+- No walking through walls or props, and no interacting through walls.
+- Fight locks, waves and one-time pay.
+- Boss phases, a single defeat event, a single reward, and the next district unlocking.
+- Pickups staying collected.
+- Weapons.
+- The lever shortcut.
+- Defeat.
+- AI steering round obstacles.
+- Save round trip, backup recovery and sanitising bad data.
+- A full loop: home → out → boss → home → bank → train → save → reload → next district.
+- A 40-second AI soak in every area that checks nobody ends up inside an obstacle or out of bounds.
+
+**Known limits.**
+- Art is still built from simple shapes and procedural textures.
+- Audio reuses the Stage 1 synthesised sounds.
+- The camera always faces side-on.
+- Bosses are tuned by numbers; nobody has played them through yet.
