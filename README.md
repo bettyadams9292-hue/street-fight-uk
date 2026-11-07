@@ -256,7 +256,8 @@ Every visual asset, with where it appears, its status and collision, is listed i
   - The shop is shut for 8 trips, prices for you go up 25% per robbery (up to double), and each robbery yields fewer goods and less cash.
   - Being beaten by the police, or beaten anywhere while your heat is 60 or more, gets you **nicked**: stolen goods are seized from your pockets, clothes and hands, you pay a 15% fine (at least £25), and your heat is cleared. Heat cools as you move between areas.
 - **Pawn & Gold.** Mr Kaur offers 55% of value for valuables and collectibles, 35–60% for other things, and 40% less for anything stolen. You can sell one, several, or the whole stack, with a confirm before selling everything. Quest items are refused.
-- **The Red Lion.** Food and drink at the bar, a game of pool, and an optional lock-in fight.
+- **Robbing Pawn & Gold.** It works like Threads, but you grab from the display cabinets (watches, chains, rings, phones, gadgets) and the till opens if you get past Mr Kaur. Afterwards it's shut for 8 trips, and when it reopens his offers to you are cut by the same margin Threads raises its prices.
+- **The Red Lion.** Food and drink at the bar, a game of pool, a DJ booth, and an optional lock-in fight.
 
 **Weapons (melee only)**
 - **36 weapons.** 16 conventional (bottle, broken bottle, cricket bat, baseball bat, lead pipe, metal bar, crowbar, claw hammer, machete, kitchen knife, bike chain, pipe wrench, club, pool cue, scaffold pole, heavy torch). 20 improvised everyday objects (mop, broom, road sign, traffic cone, plank, chair leg, table leg, pub chair, telly, monitor, skateboard, golf umbrella, shelving upright, shovel, garden fork, rake, half brick, frying pan, golf club, bin lid). **There are no guns or firearms**, and a test enforces it.
@@ -292,7 +293,7 @@ Every visual asset, with where it appears, its status and collision, is listed i
 - Heavily changed: World, levels, LevelTypes, Progress, SaveStore, Weapons, Fighter, CombatSystem, bosses, archetypes, LevelView, weaponMesh, CharacterRig, GameRenderer, Game, Hud, hub, InputManager, styles.css.
 
 **Tests.**
-- **New Stage 5 suite.** `npm test` now includes `tests/stage5.test.ts`, which has 27 tests:
+- **New Stage 5 suite.** `npm test` now includes `tests/stage5.test.ts`, which has 28 tests:
   - no firearms;
   - weapon, item and loot data integrity;
   - stacking and capacity;
@@ -303,7 +304,7 @@ Every visual asset, with where it appears, its status and collision, is listed i
   - weapons moving between hands and pockets;
   - clothes buying (including when broke, or with full pockets);
   - pawn offers and selling;
-  - robbery consequences, repeat robbery and arrest;
+  - robbery consequences, repeat robbery, the pawn shop robbery and arrest;
   - heat decay;
   - enemy item drops;
   - boss drops and quest gating;
@@ -330,5 +331,4 @@ Every visual asset, with where it appears, its status and collision, is listed i
 - No real 3D asset files (see above). Characters, buildings and props are procedural and stylised, not photoreal.
 - The Stage 5 visuals (new clothing, facades, props, weapon models, rain, interiors) type-check and are wired in. The new areas loaded without errors in the live build, but they have **not** been screenshot-checked. The browser pane was hidden during testing, so screenshots weren't possible.
 - Animation is still the code-driven pose system; there are no animation clips.
-- Only Threads can be robbed. The pawn shop and pub can't.
-- Two prop models (cooker, DJ booth) exist but aren't placed in any level.
+- The pub can't be robbed (Threads and Pawn & Gold can).

@@ -291,6 +291,21 @@ test('robbing again is harder and pays less: she fights, a guard comes, fewer go
   assert(third.grabbed.length === 1 && p.shop('threads').robberies === 3, 'third robbery');
 });
 
+test('the pawn shop can be robbed too: valuables grabbed, door shut, offers drop afterwards', () => {
+  const p = fresh();
+  const w = new World(LEVELS.pawn_shop, p, { entry: 'door', seed: 3 });
+  const keeper = [...w.npcs.entries()].find(([st]) => st.id === 'pawn_counter')![1];
+  const r = robShop(p, w, 'pawn', keeper, () => 0.1); // 0.1: he fights back
+  assert(r.resisted && keeper.team === 'enemy' && p.has('pawn_robbable'), 'Mr Kaur did not fight back');
+  assert(r.grabbed.length === 3 && r.grabbed.every((id) => ['valuable', 'accessory'].includes(ITEMS[id].category)), `grabbed ${r.grabbed}`);
+  assert(p.save.inventory.filter((s) => s.stolen).length === 3, 'not marked stolen');
+  const door = LEVELS.city.exits.find((e) => e.to === 'pawn_shop')!;
+  assert(exitLocked(door, p) && !p.isShopOpen('pawn'), 'pawn shop still open');
+  assert(p.shop('pawn').priceMult > 1 && p.shop('threads').robberies === 0, 'robbery recorded against the wrong shop');
+  const till = LEVELS.pawn_shop.containers!.find((c) => c.id === 'pawn_till')!;
+  assert(till.requires === 'pawn_robbable', 'till not tied to the robbery');
+});
+
 test('arrest: stolen goods seized (pockets, worn, hands), fine paid, heat wiped', () => {
   const p = fresh();
   p.giveItem('puffer_red', 1, { stolen: true });

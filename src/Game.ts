@@ -30,7 +30,7 @@ import { xpForNextLevel } from './progress/catalogue';
 import { STARTER_ACCESSORIES, STARTER_BOTTOMS, STARTER_SHOES, STARTER_TOPS } from './character/Appearance';
 import { ITEMS, RARITY_COLOURS } from './items/items';
 import { clothesShopScreen, inventoryScreen, pawnScreen, storageScreen } from './ui/inventoryUI';
-import { arrest, ARREST_HEAT, robShop } from './world/robbery';
+import { arrest, ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
 import { World } from './world/World';
 import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
@@ -446,7 +446,8 @@ export class Game {
     this.pending = null;
     const from = p.save.area;
     const carry = opts.carry ? { ...opts.carry } : null;
-    delete p.save.flags['threads_robbable'];
+    // A till left open in a robbery doesn't stay open once you've gone.
+    for (const k of Object.keys(p.save.flags)) if (k.endsWith('_robbable')) delete p.save.flags[k];
     // Moving between areas is the game's clock: heat dies down, shops reopen.
     if (area !== from) p.tick();
     // Home: the trip's meal is used up.
@@ -748,7 +749,7 @@ export class Game {
         screen = tinScreen(p, close, saved);
         break;
       case 'pawn_counter':
-        screen = pawnScreen(p, this.ui, saved, close);
+        screen = pawnScreen(p, this.ui, saved, close, { rob: () => this.robShop('pawn', at ?? { x: 7.2, z: 0.6 }), priceMult: p.shop('pawn').priceMult });
         break;
       case 'bar':
         screen = barScreen(p, close, saved);
@@ -842,7 +843,7 @@ export class Game {
             this.renderer.setStudioFraming(framing);
           },
           changed: () => this.saveGame(),
-          rob: () => this.robClothesShop(at),
+          rob: () => this.robShop('threads', at),
           priceMult: shop.priceMult,
         },
         back,
@@ -855,19 +856,20 @@ export class Game {
    * way the alarm goes, the police come, your heat goes up, the shop shuts
    * for a while and she charges you more afterwards. Each robbery pays less.
    */
-  private robClothesShop(at: { x: number; z: number }): void {
+  private robShop(shopId: 'threads' | 'pawn', at: { x: number; z: number }): void {
     const p = this.progress!;
-    this.enterArea('clothes_shop', 'door', { at });
+    const spec = ROBBABLE[shopId];
+    this.enterArea(spec.area, 'door', { at });
     const w = this.world!;
-    const keeper = [...w.npcs.entries()].find(([st]) => st.id === 'clothes_counter')?.[1] ?? null;
-    const r = robShop(p, w, 'threads', keeper);
+    const keeper = [...w.npcs.entries()].find(([st]) => st.id === spec.counter)?.[1] ?? null;
+    const r = robShop(p, w, shopId, keeper);
     this.hud.notify('ROBBERY', 'big');
     this.audio.guardBreak();
     if (r.resisted) {
-      this.hud.toast('"Not again. Not in my shop." Priya comes over the counter.', 'warn');
+      this.hud.toast(shopId === 'pawn' ? '"Wrong shop, son." Mr Kaur reaches under the counter for a cosh.' : '"Not again. Not in my shop." Priya comes over the counter.', 'warn');
       if (r.guard) this.hud.toast('A security guard steps out from the back.', 'warn');
     } else {
-      this.hud.toast(`"Take it! Just take it!" Priya empties the till: £${r.till}.`, 'cash');
+      this.hud.toast(`"Take it! Just take it!" ${spec.keeper} empties the till: £${r.till}.`, 'cash');
     }
     this.hud.toast(`Grabbed: ${r.grabbed.map((id) => ITEMS[id].name).join(', ')} (stolen)`, 'item');
     this.hud.toast(`Alarm going off. Police in ${Math.round(r.alarmIn / 60)} seconds.`, 'warn');

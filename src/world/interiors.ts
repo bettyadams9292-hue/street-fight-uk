@@ -65,6 +65,9 @@ const pawnShop: LevelDef = {
     { kind: 'display_cabinet', x: 3.4, z: 1.05 },
     { kind: 'atm', x: 12.6, z: -1.35 },
   ],
+  containers: [
+    { id: 'pawn_till', kind: 'till', x: 8.4, z: 0.2, label: 'Empty the till', loot: 'till', requires: 'pawn_robbable', lockedText: 'Mr Kaur’s watching you like a hawk.' },
+  ],
   stations: [
     {
       id: 'pawn_counter', x: 7.2, z: 0.2, label: 'Talk to Mr Kaur (pawnbroker)', shop: 'pawn',
@@ -96,6 +99,7 @@ const pub: LevelDef = {
     { kind: 'fruit_machine', x: 10.2, z: -1.35 },
     { kind: 'pool_table', x: 14.2, z: 0.45 },
     { kind: 'jukebox', x: 17.2, z: -1.35 },
+    { kind: 'dj_booth', x: 20.6, z: -1.3 },
     { kind: 'pub_table', x: 3.4, z: 0.9 },
     { kind: 'pub_table', x: 20.2, z: 0.8 },
   ],

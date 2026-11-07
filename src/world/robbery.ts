@@ -29,6 +29,23 @@ export interface RobberyOutcome {
   alarmIn: number;
 }
 
+/** The shops you can rob, who's behind the counter, and what you can grab. */
+export const ROBBABLE: Record<string, { area: 'clothes_shop' | 'pawn_shop'; counter: string; keeper: string; grab: readonly string[] }> = {
+  threads: {
+    area: 'clothes_shop',
+    counter: 'clothes_counter',
+    keeper: 'Priya',
+    grab: SHOP_STOCK.filter((id) => ITEMS[id]?.category === 'clothing' && ITEMS[id].value >= 25),
+  },
+  pawn: {
+    area: 'pawn_shop',
+    counter: 'pawn_counter',
+    keeper: 'Mr Kaur',
+    // Out of the display cabinets.
+    grab: ['watch_basic', 'watch_silver', 'chain_silver', 'chain_gold', 'ring_signet', 'phone_cheap', 'headphones', 'coin_silver', 'earring_silver', 'smartwatch', 'handheld'].filter((id) => ITEMS[id]),
+  },
+};
+
 /** What robbing `shopId` would do right now (without doing it): for the confirm prompt. */
 export function robberyRisk(p: Progress, shopId: string): { times: number; heat: number } {
   const times = p.shop(shopId).robberies;
@@ -44,11 +61,11 @@ export function robShop(p: Progress, w: World, shopId: string, keeper: Fighter |
   p.save.stats.robberies++;
   const heat = 45 + times * 15;
   p.addHeat(heat);
-  // Grab clothes off the rails: fewer each time (they've moved the good stuff), all marked stolen.
-  const pool = SHOP_STOCK.filter((id) => ITEMS[id]?.category === 'clothing' && ITEMS[id].value >= 25);
+  // Grab what's on display: fewer each time (they've moved the good stuff), all marked stolen.
+  const pool = ROBBABLE[shopId]?.grab ?? [];
   const grabbed: string[] = [];
   const n = Math.max(1, 3 - times);
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n && pool.length; i++) {
     const id = pool[Math.floor(rng() * pool.length) % pool.length];
     const left = p.giveItem(id, 1, { stolen: true });
     if (left) w.dropOnGround(left, w.player.pos.x, w.player.pos.z);

@@ -370,18 +370,25 @@ export function storageScreen(progress: Progress, ui: UIManager, changed: () => 
 
 /** What the pawnbroker offers for one: about 55% of value, less if stolen or rare and hot. */
 
-export function pawnScreen(progress: Progress, ui: UIManager, changed: () => void, close: () => void): Screen {
+export function pawnScreen(progress: Progress, ui: UIManager, changed: () => void, close: () => void, opts: { rob?: () => void; priceMult?: number } = {}): Screen {
   const el = h('div', { class: 'screen inv-screen pawn' });
   let selected: string | null = null;
   let qty = 1;
   let message = '';
   let bad = false;
   let confirmAll = false;
+  let confirmRob = false;
+  // After you've robbed him he still buys, but he remembers: offers drop by the same margin.
+  const mult = opts.priceMult ?? 1;
+  const offerFor = (x: ItemStack) => {
+    const base = pawnOffer(defOf(x), x);
+    return base > 0 ? Math.max(1, Math.round(base / mult)) : 0;
+  };
   const say = (t: string, b = false) => {
     message = t;
     bad = b;
   };
-  const sellable = () => progress.save.inventory.filter((x) => pawnOffer(defOf(x), x) > 0);
+  const sellable = () => progress.save.inventory.filter((x) => offerFor(x) > 0);
 
   const build = (focusSel = false) => {
     const s = progress.save;
@@ -391,13 +398,13 @@ export function pawnScreen(progress: Progress, ui: UIManager, changed: () => voi
     if (!selected && list.length) selected = list[0].uid;
     const st = list.find((x) => x.uid === selected) ?? null;
     const valuables = list.filter((x) => ['valuable', 'collectible'].includes(defOf(x).category));
-    const allTotal = valuables.reduce((n, x) => n + pawnOffer(defOf(x), x) * x.qty, 0);
+    const allTotal = valuables.reduce((n, x) => n + offerFor(x) * x.qty, 0);
 
     let detail: HTMLElement = h('div', { class: 'detail-panel empty', text: 'Nothing he’ll buy. Watches, chains, phones, coins and collectibles turn up on the streets, in bins and on beaten enemies.' });
     if (st) {
       const d = defOf(st);
       qty = Math.max(1, Math.min(qty, st.qty));
-      const each = pawnOffer(d, st);
+      const each = offerFor(st);
       const offer = h(
         'div',
         { class: 'offer' },
@@ -424,10 +431,11 @@ export function pawnScreen(progress: Progress, ui: UIManager, changed: () => voi
     el.replaceChildren(
       h('div', { class: 'inv-top' }, h('h2', { text: 'Pawn & Gold' }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you` }), h('span', { class: 'cap', text: `Sold so far: ${s.pawn.itemsSold} items, £${s.pawn.earned}` })),
       h('p', { class: 'hint', text: '"Let’s see what you’ve got. I don’t ask questions, but I don’t pay full whack for hot gear either."' }),
+      h('p', { class: 'warn-line', text: mult > 1 ? `Mr Kaur hasn’t forgotten. He offers you ${Math.round((1 - 1 / mult) * 100)}% less than he would.` : '' }),
       h(
         'div',
         { class: 'inv-body' },
-        h('div', { class: 'inv-left' }, h('div', { class: 'item-grid' }, ...list.map((x) => itemTile(x, { selected: x.uid === selected, price: `£${pawnOffer(defOf(x), x)}`, onClick: () => { selected = x.uid; qty = 1; build(true); } })))),
+        h('div', { class: 'inv-left' }, h('div', { class: 'item-grid' }, ...list.map((x) => itemTile(x, { selected: x.uid === selected, price: `£${offerFor(x)}`, onClick: () => { selected = x.uid; qty = 1; build(true); } })))),
         h('div', { class: 'inv-right' }, detail, h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message })),
       ),
       h(
@@ -438,7 +446,7 @@ export function pawnScreen(progress: Progress, ui: UIManager, changed: () => voi
             ? menuButton(`Sell ${valuables.length} valuables for £${allTotal}: sure?`, () => {
                 let total = 0;
                 for (const x of valuables) {
-                  const each = pawnOffer(defOf(x), x);
+                  const each = offerFor(x);
                   const n = x.qty;
                   if (progress.sell(x.uid, n, each).ok) total += each * n;
                 }
@@ -448,6 +456,11 @@ export function pawnScreen(progress: Progress, ui: UIManager, changed: () => voi
                 build();
               }, 'Valuables and collectibles only', 'danger')
             : menuButton(`Sell all valuables (£${allTotal})`, () => { confirmAll = true; build(); })
+          : null,
+        opts.rob
+          ? confirmRob
+            ? menuButton('Do it: rob the shop', () => opts.rob!(), 'Grab from the cabinets. Alarm, police and heat follow.', 'danger')
+            : menuButton('Rob the shop…', () => { confirmRob = true; build(); }, 'Think about it first')
           : null,
         menuButton('Leave', close),
       ),

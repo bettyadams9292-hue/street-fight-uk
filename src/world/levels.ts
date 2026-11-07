@@ -52,6 +52,7 @@ const home: LevelDef = {
     { kind: 'table', x: -5.3, z: -1.3 },
     // kitchen
     { kind: 'counter', x: -1.2, z: -1.45 },
+    { kind: 'cooker', x: -3.2, z: -1.45 },
     { kind: 'fridge', x: 1.3, z: -1.45 },
     // gym
     { kind: 'weights', x: 3.4, z: -1.4 },
@@ -467,7 +468,7 @@ const city: LevelDef = {
   ],
   exits: [
     { id: 'to_subway', kind: 'edge', side: 'left', x: 0, z: 0, to: 'subway', toEntry: 'right', label: 'Subway' },
-    { id: 'pawn_door', kind: 'door', x: 67, z: -1.6, to: 'pawn_shop', toEntry: 'door', label: 'Into Pawn & Gold' },
+    { id: 'pawn_door', kind: 'door', x: 67, z: -1.6, to: 'pawn_shop', toEntry: 'door', shop: 'pawn', label: 'Into Pawn & Gold' },
     { id: 'precinct_walk', kind: 'door', x: 10, z: -1.6, to: 'precinct', toEntry: 'left', label: 'Walkway to Kingsway Precinct' },
     { id: 'neon_mile', kind: 'door', x: 38, z: -1.6, to: 'nightlife', toEntry: 'left', label: 'Through to the Neon Mile', requires: 'has_vip_pass', lockedText: 'The doormen want to see a VIP pass. Whoever runs the precinct hands them out.' },
     { id: 'to_territory', kind: 'edge', side: 'right', x: 92, z: 0, to: 'territory', toEntry: 'left', label: 'The Pit', requires: 'boss_ratcatcher', lockedText: 'The Ratcatcher’s crew won’t let you past' },

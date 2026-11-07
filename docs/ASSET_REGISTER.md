@@ -127,7 +127,7 @@ Collision boxes come from PROP_SIZE, the same table the renderer sizes each mode
 | tv | src/render/LevelView.ts buildProp | home | Kept (Stage 3–4) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 1.20 × 0.50 m box | Visually checked (Stage 4) |
 | table | src/render/LevelView.ts buildProp | home | Kept (Stage 3–4) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 1.00 × 0.80 m box | Visually checked (Stage 4) |
 | fridge | src/render/LevelView.ts buildProp | home | Kept (Stage 3–4) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 0.80 × 0.70 m box | Visually checked (Stage 4) |
-| cooker | src/render/LevelView.ts buildProp | not placed in a level | Kept (Stage 3–4) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 0.80 × 0.70 m box | Visually checked (Stage 4) |
+| cooker | src/render/LevelView.ts buildProp | home | Kept (Stage 3–4) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 0.80 × 0.70 m box | Visually checked (Stage 4) |
 | counter | src/render/LevelView.ts buildProp | home | Kept (Stage 3–4) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 2.40 × 0.70 m box | Visually checked (Stage 4) |
 | weights | src/render/LevelView.ts buildProp | home | Kept (Stage 3–4) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 1.60 × 0.80 m box | Visually checked (Stage 4) |
 | bag | src/render/LevelView.ts buildProp | home | Kept (Stage 3–4) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 0.50 × 0.50 m box | Visually checked (Stage 4) |
@@ -172,7 +172,7 @@ Collision boxes come from PROP_SIZE, the same table the renderer sizes each mode
 | pub_table | src/render/LevelView.ts buildProp | pub | New (Stage 5) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 0.90 × 0.90 m box | Integrated; not screenshot-checked |
 | fruit_machine | src/render/LevelView.ts buildProp | pub | New (Stage 5) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | lit reels | 0.70 × 0.60 m box | Integrated; not screenshot-checked |
 | jukebox | src/render/LevelView.ts buildProp | pub | New (Stage 5) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | glow | 0.90 × 0.60 m box | Integrated; not screenshot-checked |
-| dj_booth | src/render/LevelView.ts buildProp | not placed in a level | New (Stage 5) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 2.40 × 1.00 m box | Integrated; not screenshot-checked |
+| dj_booth | src/render/LevelView.ts buildProp | pub | New (Stage 5) | Baked textures / higher-poly models | Procedural model | PBR, canvas textures where needed | none | 2.40 × 1.00 m box | Integrated; not screenshot-checked |
 
 ## Buildings and environment (28)
 
