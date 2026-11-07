@@ -156,6 +156,20 @@ export class GameRenderer {
     this.scene.add(v.root);
   }
 
+  /** Add views for new fighters and drop views of fighters that left the simulation. */
+  syncFighters(): void {
+    if (!this.sim) return;
+    const ids = new Set(this.sim.fighters.map((f) => f.id));
+    for (const [id, v] of this.views) {
+      if (!ids.has(id) || v.fighter !== this.sim.fighters.find((f) => f.id === id)) {
+        this.scene.remove(v.root);
+        v.dispose();
+        this.views.delete(id);
+      }
+    }
+    for (const f of this.sim.fighters) if (!this.views.has(f.id)) this.addFighter(f);
+  }
+
   viewOf(f: Fighter): FighterView | undefined {
     return this.views.get(f.id);
   }
@@ -182,7 +196,7 @@ export class GameRenderer {
   /** @param focus the player fighter (camera follows), or null for the menu drift */
   render(dt: number, time: number, focus: Fighter | null): void {
     if (this.sim) {
-      for (const f of this.sim.fighters) if (!this.views.has(f.id)) this.addFighter(f);
+      if (this.views.size !== this.sim.fighters.length) this.syncFighters();
       for (const v of this.views.values()) v.update(dt, time);
       if (this.studio) {
         this.updateStudioCamera(dt);

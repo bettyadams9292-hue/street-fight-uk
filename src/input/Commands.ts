@@ -5,6 +5,7 @@
  */
 export type AttackButton = 'lp' | 'hp' | 'lk' | 'hk';
 export const ATTACK_BUTTONS: readonly AttackButton[] = ['lp', 'hp', 'lk', 'hk'];
+export type PressButton = AttackButton | 'jump' | 'dodge' | 'grab' | 'swap';
 
 export interface CommandFrame {
   /** -1 (left) .. 1 (right) */
@@ -13,10 +14,18 @@ export interface CommandFrame {
   moveZ: number;
   /** Held */
   block: boolean;
+  /** Held: turns attack buttons into specials (and Special + HP into a finisher). */
+  special: boolean;
   /** Pressed this frame */
-  pressed: Record<AttackButton | 'jump', boolean>;
+  pressed: Record<PressButton, boolean>;
 }
 
 export function emptyCommand(): CommandFrame {
-  return { moveX: 0, moveZ: 0, block: false, pressed: { lp: false, hp: false, lk: false, hk: false, jump: false } };
+  return {
+    moveX: 0,
+    moveZ: 0,
+    block: false,
+    special: false,
+    pressed: { lp: false, hp: false, lk: false, hk: false, jump: false, dodge: false, grab: false, swap: false },
+  };
 }

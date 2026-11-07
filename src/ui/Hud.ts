@@ -1,4 +1,5 @@
-import { DUMMY_MODE_LABELS, type DummyMode } from '../ai/DummyBrain';
+import { ARCHETYPES, type ArchetypeId } from '../ai/archetypes';
+import { TRAINING_MODE_LABELS, type TrainingOpponent } from '../core/TrainingMode';
 import type { Fighter } from '../fighter/Fighter';
 import { h } from './dom';
 
@@ -12,6 +13,7 @@ interface BarSet {
   stFill: HTMLElement;
   stText: HTMLElement;
   fatigue: HTMLElement;
+  style: HTMLElement;
   trail: number;
   trailHold: number;
   side: 'left' | 'right';
@@ -26,14 +28,16 @@ function bars(side: 'left' | 'right'): BarSet {
   const stText = h('span', { class: 'bar-text' });
   const name = h('div', { class: 'fighter-name' });
   const fatigue = h('span', { class: 'fatigue' });
+  const style = h('div', { class: 'style-row' });
   const root = h(
     'div',
     { class: `fighter-panel ${side}` },
     h('div', { class: 'name-row' }, name, fatigue),
     h('div', { class: 'bar health' }, hpTrail, hpRecover, hpFill, hpText),
     h('div', { class: 'bar stamina' }, stFill, h('i', { class: 'tick t30' }), h('i', { class: 'tick t10' }), stText),
+    style,
   );
-  return { root, name, hpFill, hpTrail, hpRecover, hpText, stFill, stText, fatigue, trail: 1, trailHold: 0, side };
+  return { root, name, hpFill, hpTrail, hpRecover, hpText, stFill, stText, fatigue, style, trail: 1, trailHold: 0, side };
 }
 
 /**
@@ -52,18 +56,26 @@ export class Hud {
   private fps: HTMLElement;
   private fpsAcc = 0;
   private fpsFrames = 0;
-  private modeButtons = new Map<DummyMode, HTMLButtonElement>();
+  private modeButtons = new Map<TrainingOpponent, HTMLButtonElement>();
+  private opponentButton: HTMLButtonElement;
+  private prompt: HTMLElement;
+  private subBar: HTMLElement;
+  private subFill: HTMLElement;
 
-  constructor(actions: { setMode: (m: DummyMode) => void; reset: () => void; pause: () => void }) {
-    const modes = (Object.keys(DUMMY_MODE_LABELS) as DummyMode[]).map((m, i) => {
-      const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, `${i + 1} · ${DUMMY_MODE_LABELS[m]}`) as HTMLButtonElement;
+  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void }) {
+    const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
+      const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, `${i + 1} \u00b7 ${TRAINING_MODE_LABELS[m]}`) as HTMLButtonElement;
       this.modeButtons.set(m, b);
       return b;
     });
+    this.opponentButton = h('button', { class: 'chip opponent', title: 'Key N: next opponent type', onclick: () => actions.nextOpponent() }) as HTMLButtonElement;
     this.notices = h('div', { class: 'notices' });
     this.combo = h('div', { class: 'combo' });
     this.floaters = h('div', { class: 'floaters' });
     this.fps = h('div', { class: 'fps' });
+    this.prompt = h('div', { class: 'prompt' });
+    this.subFill = h('div', { class: 'sub-fill' });
+    this.subBar = h('div', { class: 'sub-bar' }, this.subFill);
     this.el = h(
       'div',
       { class: 'hud' },
@@ -73,9 +85,11 @@ export class Hud {
         { class: 'training-bar' },
         h('span', { class: 'training-label', text: 'Partner:' }),
         ...modes,
-        h('button', { class: 'chip', title: 'Key R', onclick: () => actions.reset() }, 'R · Reset'),
+        this.opponentButton,
+        h('button', { class: 'chip', title: 'Key R', onclick: () => actions.reset() }, 'R \u00b7 Reset'),
       ),
-      h('button', { class: 'pause-btn', 'aria-label': 'Pause', onclick: () => actions.pause() }, '❚❚'),
+      h('button', { class: 'pause-btn', 'aria-label': 'Pause', onclick: () => actions.pause() }, '\u275a\u275a'),
+      h('div', { class: 'prompt-wrap' }, this.prompt, this.subBar),
       this.notices,
       this.combo,
       this.floaters,
@@ -83,8 +97,18 @@ export class Hud {
     );
   }
 
-  setMode(mode: DummyMode): void {
+  setMode(mode: TrainingOpponent, archetype: ArchetypeId): void {
     for (const [m, b] of this.modeButtons) b.classList.toggle('on', m === mode);
+    this.opponentButton.textContent = `N \u00b7 ${ARCHETYPES[archetype].name} \u203a`;
+    this.opponentButton.classList.toggle('on', mode === 'spar');
+  }
+
+  /** Context prompt above the training bar (grapple options, finisher, escapes). */
+  setPrompt(text: string, submission: number | null): void {
+    if (this.prompt.textContent !== text) this.prompt.textContent = text;
+    this.prompt.style.display = text ? 'block' : 'none';
+    this.subBar.style.display = submission === null ? 'none' : 'block';
+    if (submission !== null) this.subFill.style.width = `${submission}%`;
   }
 
   setFpsVisible(v: boolean): void {
@@ -152,6 +176,9 @@ export class Hud {
     }
 
     b.name.textContent = f.name.toUpperCase();
+    const second = f.secondaryStyle ? ` \u00b7 swap: ${(f.usingSecondary ? f.primaryStyle : f.secondaryStyle).name}` : '';
+    const styleText = f.style.name + second;
+    if (b.style.textContent !== styleText) b.style.textContent = styleText;
     b.hpFill.style.width = `${hp * 100}%`;
     // The recoverable segment sits just past the current health, on whichever side the bar fills from.
     b.hpRecover.style[b.side === 'left' ? 'left' : 'right'] = `${hp * 100}%`;

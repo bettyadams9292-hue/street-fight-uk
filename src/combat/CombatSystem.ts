@@ -2,15 +2,10 @@ import { BODY_HEIGHT, BODY_RADIUS } from '../core/constants';
 import type { EventBus } from '../core/EventBus';
 import type { GameEvents, HitInfo } from '../core/GameEvents';
 import type { Rng } from '../core/Rng';
-import type { Fighter } from '../fighter/Fighter';
-import {
-  BLOCK_CHIP_RATIO,
-  BLOCK_STAMINA_RATIO,
-  CLEAN_HIT_DAMAGE,
-  CLEAN_HIT_POISE,
-  computeDamage,
-  repetitionMultiplier,
-} from './Damage';
+import { COUNTER_WINDOW, type Fighter } from '../fighter/Fighter';
+import type { Arena } from '../world/Arena';
+import { BLOCK_STAMINA_RATIO, CLEAN_HIT_DAMAGE, CLEAN_HIT_POISE, computeDamage, repetitionMultiplier } from './Damage';
+import { endGrapple, resolveGrappleMove, startGrapple } from './Grapple';
 import { isActiveFrame, type ActiveMove } from './MoveData';
 
 export interface HitSphere {
@@ -19,6 +14,8 @@ export interface HitSphere {
   z: number;
   r: number;
 }
+
+export const COUNTER_MULTIPLIER = 1.5;
 
 /** Where the attacking limb's hit sphere is this frame. */
 export function hitSphereOf(f: Fighter, m: ActiveMove): HitSphere {
@@ -46,10 +43,21 @@ export function sphereHitsFighter(s: HitSphere, target: Fighter, depthTolerance:
 }
 
 /** Check every attacker's active frames against every opponent and resolve hits. */
-export function resolveCombat(fighters: Fighter[], frame: number, bus: EventBus<GameEvents>, rng: Rng): void {
+export function resolveCombat(fighters: Fighter[], frame: number, bus: EventBus<GameEvents>, rng: Rng, arena: Arena): void {
   for (const attacker of fighters) {
     const m = attacker.move;
     if (!m || attacker.state !== 'attack' || attacker.hitstop > 0 || !isActiveFrame(m)) continue;
+
+    // Clinch and ground moves land on the partner automatically.
+    if (m.data.kind === 'clinch') {
+      if (!m.connected && attacker.grapple?.role === 'holder') {
+        m.connected = true;
+        resolveGrappleMove(attacker, m.data, frame, bus, arena);
+      }
+      continue;
+    }
+    if (attacker.grapple) continue;
+
     const sphere = hitSphereOf(attacker, m);
     for (const target of fighters) {
       if (target === attacker || target.team === attacker.team) continue;
@@ -57,9 +65,25 @@ export function resolveCombat(fighters: Fighter[], frame: number, bus: EventBus<
       if (!sphereHitsFighter(sphere, target, m.data.depthTolerance)) continue;
       m.hitTargets.add(target.id);
       m.connected = true;
-      resolveHit(attacker, target, m, frame, bus, rng, sphere);
+      if (m.data.kind === 'grab') resolveGrab(attacker, target, m, frame, bus);
+      else resolveHit(attacker, target, m, frame, bus, rng, sphere);
+      if (m.data.kind === 'grab') break;
     }
   }
+}
+
+function resolveGrab(attacker: Fighter, target: Fighter, m: ActiveMove, frame: number, bus: EventBus<GameEvents>): void {
+  if (target.grapple || !target.grounded) return;
+  // Sprawl: a blocking wrestler can't be grabbed.
+  if (target.style.defence === 'sprawl' && target.isBlocking) {
+    attacker.enterParried(36);
+    attacker.knockVel = -attacker.facing * 1.2;
+    bus.emit('grapple:sprawl', { attacker, defender: target });
+    return;
+  }
+  attacker.hitstop = m.data.hitstop;
+  target.hitstop = m.data.hitstop;
+  startGrapple(attacker, target, m.data.anim === 'shoot' ? 'ground' : 'clinch', frame, bus);
 }
 
 export function resolveHit(
@@ -73,38 +97,61 @@ export function resolveHit(
 ): void {
   const move = m.data;
   const dir = Math.sign(target.pos.x - attacker.pos.x) || attacker.facing;
-  const repeat = repetitionMultiplier(attacker.repeatCount);
-  const baseDamage = computeDamage(move.damage, attacker.stats, target.stats, repeat, 1, attacker.masteryMultiplier(move.style));
 
   attacker.vitals.markCombat(frame);
   target.vitals.markCombat(frame);
   target.lastHitTakenFrame = frame;
 
-  const info: HitInfo = {
-    attacker,
-    target,
-    move,
-    damage: 0,
-    blocked: false,
-    clean: false,
-    reaction: 'flinch',
-    comboHits: 0,
-    x: at.x,
-    y: at.y,
-    z: at.z,
-  };
+  // Hitting someone held by somebody else breaks the hold.
+  if (target.grapple) endGrapple(target, bus, 'hit');
+
+  // ---- Finisher ------------------------------------------------------------------
+  if (move.kind === 'finisher') {
+    const dmg = target.vitals.health;
+    target.vitals.takeDamage(dmg, frame);
+    target.knockVel = dir * move.knockback;
+    target.knockOut();
+    attacker.hitstop = move.hitstop;
+    target.hitstop = move.hitstop;
+    bus.emit('hit:landed', baseInfo(attacker, target, move, at, { damage: dmg, reaction: 'ko', comboHits: attacker.comboHits + 1 }));
+    bus.emit('fighter:finished', { fighter: target, by: attacker, move });
+    bus.emit('fighter:ko', { fighter: target, by: attacker });
+    return;
+  }
+
+  const canDefend = !move.unblockable && target.grounded && target.isFacing(attacker);
+
+  // ---- Parry: block pressed just before impact ----------------------------------
+  const parryState = target.state === 'block' || target.state === 'idle' || target.state === 'walk' || target.state === 'blockstun';
+  if (canDefend && parryState && frame - target.lastBlockPressFrame <= target.parryWindow) {
+    attacker.enterParried(26);
+    attacker.knockVel = -dir * 1.5;
+    target.counterUntil = frame + COUNTER_WINDOW + (target.style.id === 'karate' ? 15 : 0);
+    target.setState('block');
+    attacker.hitstop = 6;
+    target.hitstop = 6;
+    bus.emit('hit:parried', { attacker, target, move });
+    return;
+  }
+
+  const repeat = repetitionMultiplier(attacker.repeatCount);
+  const counter = attacker.counterUntil >= frame;
+  const baseDamage = computeDamage(move.damage, attacker.stats, target.stats, repeat, counter ? COUNTER_MULTIPLIER : 1, attacker.masteryMultiplier(move.style));
 
   // ---- Blocked ---------------------------------------------------------------
-  if (target.isBlocking && target.grounded && target.isFacing(attacker)) {
-    const chip = baseDamage * BLOCK_CHIP_RATIO;
-    const staminaCost = baseDamage * (1 - BLOCK_CHIP_RATIO) * BLOCK_STAMINA_RATIO * target.stats.blockStaminaMultiplier;
+  if (canDefend && target.isBlocking) {
+    const absorb = target.style.blockAbsorb;
+    const kick = move.limb === 'leadFoot' || move.limb === 'rearFoot';
+    const checked = kick && target.style.defence === 'check';
+    const chip = checked ? 0 : baseDamage * (1 - absorb);
+    const staminaCost = baseDamage * absorb * BLOCK_STAMINA_RATIO * target.stats.blockStaminaMultiplier;
     const exhausted = target.stats.hasTag('state.exhausted');
     const broke = exhausted || staminaCost >= target.vitals.stamina;
     target.vitals.spendStamina(staminaCost, frame);
     target.vitals.takeDamage(chip, frame, true);
-    info.blocked = true;
-    info.damage = chip;
     target.knockVel = dir * move.knockback * 0.5;
+    if (checked && attacker.move) attacker.move.recovery += 10;
+    const info = baseInfo(attacker, target, move, at, { damage: chip, blocked: true, reaction: checked ? 'check' : 'block' });
 
     if (target.vitals.isKnockedOut) {
       target.knockOut();
@@ -120,7 +167,6 @@ export function resolveHit(
       bus.emit('guard:broken', { fighter: target, by: attacker });
     } else {
       target.enterBlockstun(move.blockstun);
-      info.reaction = 'block';
       bus.emit('hit:blocked', info);
     }
     const stop = Math.max(2, move.hitstop - 1);
@@ -132,7 +178,7 @@ export function resolveHit(
   // ---- Clean hit -------------------------------------------------------------
   const clean = rng.chance(attacker.stats.cleanHitChance);
   const damage = baseDamage * (clean ? CLEAN_HIT_DAMAGE : 1);
-  const poiseDamage = move.poiseDamage * attacker.stats.poiseDamageMultiplier * (clean ? CLEAN_HIT_POISE : 1);
+  const poiseDamage = move.poiseDamage * attacker.stats.poiseDamageMultiplier * (clean ? CLEAN_HIT_POISE : 1) * (counter ? 1.5 : 1);
   const wasReeling = target.isReeling;
   const wasStaggered = target.state === 'stagger' || target.state === 'guardbreak';
   const airborne = !target.grounded;
@@ -143,18 +189,19 @@ export function resolveHit(
   let reaction: 'flinch' | 'stagger' | 'knockdown' = move.reaction;
   if (airborne) reaction = 'knockdown';
   else if (reaction === 'knockdown' && !poiseBroken && !wasStaggered) reaction = 'stagger';
-  else if (reaction === 'flinch' && poiseBroken) reaction = 'stagger';
+  else if (reaction === 'flinch' && (poiseBroken || counter)) reaction = 'stagger';
+  if (counter) attacker.counterUntil = -1;
 
   target.vitals.takeDamage(damage, frame, false);
+  if (move.staminaDamage) target.vitals.spendStamina(move.staminaDamage * (clean ? 1.3 : 1), frame);
+  if (move.slowFrames) target.applySlow(move.slowFrames, frame);
   attacker.comboHits = wasReeling ? attacker.comboHits + 1 : 1;
 
   const kbScale = reaction === 'knockdown' ? 1.6 : reaction === 'stagger' ? 1.3 : 1;
   target.knockVel = dir * move.knockback * kbScale;
   if (airborne) target.vel.y = Math.max(target.vel.y, 2);
 
-  info.damage = damage;
-  info.clean = clean;
-  info.comboHits = attacker.comboHits;
+  const info = baseInfo(attacker, target, move, at, { damage, clean, counter, comboHits: attacker.comboHits });
 
   if (target.vitals.isKnockedOut) {
     target.knockOut();
@@ -168,8 +215,26 @@ export function resolveHit(
 
   target.enterHitReaction(reaction, move.hitstun);
   info.reaction = reaction;
-  attacker.hitstop = move.hitstop;
-  target.hitstop = move.hitstop;
+  attacker.hitstop = move.hitstop + (counter ? 3 : 0);
+  target.hitstop = move.hitstop + (counter ? 3 : 0);
   bus.emit('hit:landed', info);
   if (reaction === 'knockdown') bus.emit('fighter:knockdown', { fighter: target });
+}
+
+function baseInfo(attacker: Fighter, target: Fighter, move: HitInfo['move'], at: HitSphere, extra: Partial<HitInfo>): HitInfo {
+  return {
+    attacker,
+    target,
+    move,
+    damage: 0,
+    blocked: false,
+    clean: false,
+    counter: false,
+    reaction: 'flinch',
+    comboHits: 0,
+    x: at.x,
+    y: at.y,
+    z: at.z,
+    ...extra,
+  };
 }

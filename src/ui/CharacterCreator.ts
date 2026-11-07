@@ -22,6 +22,7 @@ import {
 } from '../character/Appearance';
 import {
   BACKGROUNDS,
+  CURRENT_STAGE,
   BACKGROUND_IDS,
   CREATION_BASE,
   CREATION_POINTS,
@@ -307,7 +308,7 @@ export function characterCreator(mode: 'new' | 'edit', cb: CreatorCallbacks, exi
       points.textContent = left > 0 ? `${left} of ${CREATION_POINTS} points left to spend` : 'All points spent';
       points.classList.toggle('done', left === 0);
       const bonus = Object.entries(bg.bonus).map(([k, v]) => `+${v} ${ATTRIBUTE_LABELS[k as AttributeName]}`).join(', ');
-      const pending = bg.perk.activeFromStage > 2 ? ` (takes effect from Stage ${bg.perk.activeFromStage})` : '';
+      const pending = bg.perk.activeFromStage > CURRENT_STAGE ? ` (takes effect from Stage ${bg.perk.activeFromStage})` : '';
       bgInfo.replaceChildren(
         h('p', { class: 'blurb', text: bg.blurb }),
         h('p', {}, h('b', { text: 'Bonus: ' }), bonus),

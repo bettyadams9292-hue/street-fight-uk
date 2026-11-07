@@ -29,8 +29,6 @@ export function computeDamage(
   );
 }
 
-/** Share of a blocked hit's damage that still gets through as recoverable chip. */
-export const BLOCK_CHIP_RATIO = 0.15;
 /** Stamina lost per point of blocked damage, before the Defence reduction. */
 export const BLOCK_STAMINA_RATIO = 0.3;
 export const CLEAN_HIT_DAMAGE = 1.3;

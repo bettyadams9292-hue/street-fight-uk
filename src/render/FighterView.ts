@@ -2,16 +2,26 @@ import * as THREE from 'three';
 import type { CharacterAppearance } from '../character/Appearance';
 import type { Fighter } from '../fighter/Fighter';
 import { buildCharacterRig, type Rig } from './CharacterRig';
+
+const BASE_GUARD = GUARD;
 import {
+  ANIM_POSES,
   BLOCK,
+  CLINCHED,
+  CLINCH_HOLD,
+  DODGE_BACK,
+  DODGE_SIDE,
   GUARD,
   GUARD_BREAK,
   HITSTUN,
   JOINTS,
   JUMP,
   LYING,
-  MOVE_POSES,
+  MOUNT,
+  PARRIED,
+  SLIP,
   STAGGER,
+  STANCES,
   easeInOut,
   lerpPose,
   type JointName,
@@ -31,6 +41,7 @@ export class FighterView {
   private walkPhase = 0;
   private lastX: number;
   private lastZ: number;
+  private zMotion = 0;
   private flashTime = 0;
   /** Extra rotation on top of facing (the character creator's turntable). */
   extraYaw = 0;
@@ -72,6 +83,7 @@ export class FighterView {
     this.root.rotation.y = this.yaw + this.extraYaw;
 
     const moved = Math.hypot(f.pos.x - this.lastX, f.pos.z - this.lastZ);
+    this.zMotion = Math.abs(f.pos.z - this.lastZ);
     this.lastX = f.pos.x;
     this.lastZ = f.pos.z;
 
@@ -86,10 +98,13 @@ export class FighterView {
 
   private targetPose(moved: number, time: number): { pose: Pose; speed: number } {
     const f = this.fighter;
+    const GUARD = STANCES[f.style.id] ?? BASE_GUARD;
     switch (f.state) {
       case 'attack': {
         const m = f.move!;
-        const poses = MOVE_POSES[m.data.id] ?? { chamber: GUARD, strike: GUARD };
+        const poses = ANIM_POSES[m.data.anim] ?? { chamber: GUARD, strike: GUARD };
+        // Clinch and ground moves return to their hold, not the stance.
+        const rest = f.grapple ? (f.grapple.phase === 'ground' ? MOUNT : CLINCH_HOLD) : GUARD;
         if (m.frame < m.startup) {
           const t = m.frame / m.startup;
           if (t < 0.6) return { pose: lerpPose(GUARD, poses.chamber, easeInOut(t / 0.6)), speed: 30 };
@@ -97,8 +112,22 @@ export class FighterView {
         }
         if (m.frame < m.startup + m.active) return { pose: poses.strike, speed: 55 };
         const t = (m.frame - m.startup - m.active) / Math.max(1, m.recovery);
-        return { pose: lerpPose(poses.strike, GUARD, easeInOut(Math.min(1, t))), speed: 30 };
+        return { pose: lerpPose(poses.strike, rest, easeInOut(Math.min(1, t))), speed: 30 };
       }
+      case 'dodge': {
+        const kind = f.style.defence === 'slip' ? SLIP : this.zMotion > 0.001 ? DODGE_SIDE : DODGE_BACK;
+        return { pose: kind, speed: 30 };
+      }
+      case 'parried':
+        return { pose: PARRIED, speed: 25 };
+      case 'clinch_hold':
+        return { pose: CLINCH_HOLD, speed: 18 };
+      case 'clinched':
+        return { pose: CLINCHED, speed: 18 };
+      case 'ground_top':
+        return { pose: MOUNT, speed: 12 };
+      case 'ground_bottom':
+        return { pose: LYING, speed: 10 };
       case 'block':
       case 'blockstun':
         return { pose: BLOCK, speed: 30 };

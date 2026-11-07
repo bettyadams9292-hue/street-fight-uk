@@ -300,9 +300,13 @@ input[type='range'].focused, input[type='range']:focus { filter: drop-shadow(0 0
 .attack-pad .hk { right: 0; top: 61px; }
 .attack-pad .lk { left: 61px; bottom: 0; }
 .attack-pad .hp, .attack-pad .hk { border-color: rgba(200, 16, 46, 0.7); }
-.side-pad { position: absolute; right: calc(222px + var(--safe-r)); bottom: calc(30px + var(--safe-b)); display: flex; flex-direction: column; gap: 14px; }
-.side-pad .touch-btn { position: static; width: 78px; height: 52px; border-radius: 12px; font-size: 16px; }
-.side-pad .block { height: 70px; }
+.side-pad { position: absolute; right: calc(214px + var(--safe-r)); bottom: calc(22px + var(--safe-b)); display: grid; grid-template-columns: 70px 70px; gap: 10px; }
+.side-pad .touch-btn { position: static; width: 70px; height: 50px; border-radius: 12px; font-size: 15px; }
+.side-pad .block { height: 62px; }
+.side-pad .dodge { height: 62px; }
+.extra-pad { position: absolute; right: calc(18px + var(--safe-r)); bottom: calc(226px + var(--safe-b)); display: flex; gap: 8px; }
+.extra-pad .touch-btn { position: static; width: 56px; height: 40px; border-radius: 10px; font-size: 14px; }
+.extra-pad .sp.armed { background: rgba(200, 16, 46, 0.75); border-color: #ff5a6e; color: #fff; }
 
 .touch-ui .training-bar { bottom: auto; top: calc(70px + var(--safe-t)); }
 .touch-ui .training-label { display: none; }
@@ -440,4 +444,47 @@ input[type='range'].focused, input[type='range']:focus { filter: drop-shadow(0 0
   .main-menu .menu-list { min-width: 0; width: min(380px, 52vw); gap: 6px; }
   .main-menu .menu-btn { font-size: 18px; padding: 8px 14px; }
   .main-menu .footer { bottom: calc(6px + var(--safe-b)); }
+}
+
+/* ------------------------------------------------------------ stage 3 --- */
+
+.style-row { font-size: 13px; letter-spacing: 0.06em; color: var(--muted); margin-top: 3px; text-shadow: 0 1px 3px #000; }
+.fighter-panel.right .style-row { text-align: right; }
+.chip.opponent { min-width: 150px; }
+
+.prompt-wrap {
+  position: absolute;
+  left: 50%;
+  bottom: calc(64px + var(--safe-b));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  width: min(92vw, 760px);
+}
+.prompt {
+  display: none;
+  background: rgba(10, 12, 18, 0.82);
+  border: 1px solid rgba(242, 194, 48, 0.45);
+  color: var(--text);
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+.sub-bar { display: none; width: 260px; height: 10px; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.2); }
+.sub-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--yellow), var(--red)); }
+
+.style-info { font-size: 16px; line-height: 1.4; margin-top: 10px; }
+.style-info p { margin: 5px 0; }
+.style-info .blurb { color: var(--muted); font-style: italic; }
+
+.touch-ui .prompt-wrap { bottom: auto; top: calc(110px + var(--safe-t)); }
+.touch-ui .prompt { font-size: 13px; }
+@media (max-height: 460px) {
+  .style-row { display: none; }
+  .training-bar .chip { font-size: 12px; padding: 3px 6px; }
 }

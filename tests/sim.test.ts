@@ -5,7 +5,7 @@
 import { Simulation } from '../src/core/Simulation';
 import { SIM_HZ } from '../src/core/constants';
 import type { HitInfo } from '../src/core/GameEvents';
-import { STREET_MOVES, STREET_STARTERS } from '../src/data/moves/street';
+import { STYLES } from '../src/data/styles';
 import { Fighter } from '../src/fighter/Fighter';
 import { emptyCommand, type CommandFrame } from '../src/input/Commands';
 import { defaultAttributes, Stats } from '../src/stats/Stats';
@@ -32,12 +32,12 @@ function near(a: number, b: number, eps = 1e-6): boolean {
   return Math.abs(a - b) <= eps;
 }
 
-const moveSet = { moves: STREET_MOVES, starters: STREET_STARTERS };
+const style = STYLES.street;
 
 function setup(gap = 1.0, dz = 0, seed = 7) {
   const sim = new Simulation(createTrainingArena(), seed);
-  const a = sim.add(new Fighter({ id: 1, name: 'A', team: 'player', attributes: defaultAttributes(5), moveSet, x: 0, z: 0, appearance: undefined }));
-  const b = sim.add(new Fighter({ id: 2, name: 'B', team: 'enemy', attributes: { ...defaultAttributes(5), technique: 0 }, moveSet, x: gap, z: dz, appearance: undefined }));
+  const a = sim.add(new Fighter({ id: 1, name: 'A', team: 'player', attributes: defaultAttributes(5), style, x: 0, z: 0, appearance: undefined }));
+  const b = sim.add(new Fighter({ id: 2, name: 'B', team: 'enemy', attributes: { ...defaultAttributes(5), technique: 0 }, style, x: gap, z: dz, appearance: undefined }));
   a.stats.base.technique = 0; // no random clean hits in tests
   const hits: HitInfo[] = [];
   const blocks: HitInfo[] = [];
@@ -274,10 +274,10 @@ console.log('Training mode');
 
 test('sparring partner closes in and attacks using the same commands as the player', () => {
   const mode = new TrainingMode();
-  mode.setDummyMode('spar');
+  mode.setMode('spar');
   let dummyAttacks = 0;
   mode.sim.bus.on('move:started', ({ fighter }) => {
-    if (fighter === mode.dummy) dummyAttacks++;
+    if (fighter === mode.enemies[0]) dummyAttacks++;
   });
   for (let i = 0; i < 10 * SIM_HZ; i++) mode.step(emptyCommand());
   assert(dummyAttacks > 0, 'dummy never attacked');
@@ -286,8 +286,9 @@ test('sparring partner closes in and attacks using the same commands as the play
 
 test('a knocked-out fighter gets back up after 3 seconds in training', () => {
   const mode = new TrainingMode();
-  mode.dummy.vitals.health = 1;
-  mode.dummy.pos.x = mode.player.pos.x + 1;
+  const dummy = mode.enemies[0];
+  dummy.vitals.health = 1;
+  dummy.pos.x = mode.player.pos.x + 1;
   let ko = false;
   mode.sim.bus.on('fighter:ko', () => (ko = true));
   for (let i = 0; i < 30; i++) {
@@ -297,7 +298,7 @@ test('a knocked-out fighter gets back up after 3 seconds in training', () => {
   }
   assert(ko, 'dummy KO');
   for (let i = 0; i < 3 * SIM_HZ + 5; i++) mode.step(emptyCommand());
-  assert(mode.dummy.state === 'idle' && mode.dummy.vitals.health === mode.dummy.vitals.maxHealth, `state ${mode.dummy.state}`);
+  assert(dummy.state === 'idle' && dummy.vitals.health === dummy.vitals.maxHealth, `state ${dummy.state}`);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

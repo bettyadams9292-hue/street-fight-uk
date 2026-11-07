@@ -49,10 +49,19 @@ export class TouchControls {
       'div',
       { class: 'side-pad' },
       btn('BLOCK', 'block', () => (input.touch.block = true), () => (input.touch.block = false)),
+      btn('DODGE', 'dodge', () => input.pressFromTouch('dodge')),
       btn('JUMP', 'jump', () => input.pressFromTouch('jump')),
+      btn('GRAB', 'grab', () => input.pressFromTouch('grab')),
     );
+    // SP arms the next attack as a special (and SP + HP finishes a beaten opponent).
+    const sp = btn('SP', 'sp', () => {
+      input.touch.specialArmed = !input.touch.specialArmed;
+      sp.classList.toggle('armed', input.touch.specialArmed);
+    });
+    input.onSpecialUsed = () => sp.classList.remove('armed');
+    const extras = h('div', { class: 'extra-pad' }, sp, btn('SWAP', 'swap', () => input.pressFromTouch('swap')));
 
-    this.el = h('div', { class: 'touch-controls' }, zone, side, pad);
+    this.el = h('div', { class: 'touch-controls' }, zone, side, pad, extras);
 
     zone.addEventListener('pointerdown', (e) => this.stickStart(e, zone));
     zone.addEventListener('pointermove', (e) => this.stickMove(e));
@@ -70,6 +79,8 @@ export class TouchControls {
     this.input.touch.moveX = 0;
     this.input.touch.moveZ = 0;
     this.input.touch.block = false;
+    this.input.touch.specialArmed = false;
+    this.el.querySelector('.sp')?.classList.remove('armed');
     this.stickBase.classList.remove('live');
     this.stickKnob.style.transform = 'translate(-50%, -50%)';
   }

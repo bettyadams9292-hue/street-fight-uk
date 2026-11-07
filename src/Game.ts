@@ -1,7 +1,10 @@
 import { AudioManager } from './audio/AudioManager';
 import { DT } from './core/constants';
 import { TrainingMode } from './core/TrainingMode';
-import type { DummyMode } from './ai/DummyBrain';
+import { ARCHETYPE_IDS, type ArchetypeId } from './ai/archetypes';
+import type { TrainingOpponent } from './core/TrainingMode';
+import type { StyleId } from './styles/StyleData';
+import { practiceScreen } from './ui/PracticeScreen';
 import { InputManager, type InputSource, type MenuAction } from './input/InputManager';
 import { GameRenderer } from './render/GameRenderer';
 import { SettingsStore, type Settings } from './save/Settings';
@@ -17,7 +20,7 @@ import { randomAppearance, type CharacterAppearance } from './character/Appearan
 import { Simulation } from './core/Simulation';
 import { Fighter } from './fighter/Fighter';
 import { Arena } from './world/Arena';
-import { STREET_MOVES, STREET_STARTERS } from './data/moves/street';
+import { STYLES } from './data/styles';
 import { defaultAttributes } from './stats/Stats';
 import { emptyCommand, type AttackButton } from './input/Commands';
 import type { StudioFraming } from './render/StudioView';
@@ -38,6 +41,13 @@ export class Game {
   private hud: Hud;
   private touch: TouchControls;
   private mode: TrainingMode | null = null;
+  /** Training-ground choices, kept for the session. */
+  private training: { mode: TrainingOpponent; archetype: ArchetypeId; primary: StyleId; secondary: StyleId | null } = {
+    mode: 'stand',
+    archetype: 'thug',
+    primary: 'street',
+    secondary: null,
+  };
   private characters = new CharacterStore();
   private character: PlayerCharacter | null = null;
   /** Character creator / sheet preview: a one-fighter simulation on the studio set. */
@@ -58,7 +68,8 @@ export class Game {
     this.ui.onConfirm = () => this.audio.uiConfirm();
 
     this.hud = new Hud({
-      setMode: (m) => this.setDummyMode(m),
+      setMode: (m) => this.setTrainingMode(m),
+      nextOpponent: () => this.nextOpponent(),
       reset: () => this.resetPositions(),
       pause: () => this.pause(),
     });
@@ -142,7 +153,7 @@ export class Game {
         name: 'Preview',
         team: 'player',
         attributes: defaultAttributes(5),
-        moveSet: { moves: STREET_MOVES, starters: STREET_STARTERS },
+        style: STYLES.street,
         appearance,
       }),
     );
@@ -241,10 +252,13 @@ export class Game {
     this.audio.startAmbience();
     this.unwire();
     this.studio = null;
-    this.mode = new TrainingMode({ touch: this.touchWanted(), character: this.character });
+    const t = this.training;
+    this.mode = new TrainingMode({ touch: this.touchWanted(), character: this.character, practice: { primary: t.primary, secondary: t.secondary } });
+    this.mode.archetype = t.archetype;
+    this.mode.setMode(t.mode);
     this.renderer.attach(this.mode.sim);
     this.wire(this.mode);
-    this.setDummyMode('stand');
+    this.hud.setMode(t.mode, t.archetype);
     this.ui.replaceAll(null);
     this.hud.el.style.display = 'block';
     this.state = 'playing';
@@ -265,6 +279,14 @@ export class Game {
         resume: () => this.resume(),
         settings: () => this.ui.push(settingsScreen(this.settings, this.ui)),
         controls: () => this.ui.push(controlsScreen(this.ui)),
+        practice: () =>
+          this.ui.push(
+            practiceScreen(this.training.primary, this.training.secondary, this.ui, (primary, secondary) => {
+              this.training.primary = primary;
+              this.training.secondary = secondary;
+              this.mode?.setPracticeStyles(primary, secondary);
+            }),
+          ),
         quit: () => this.quitToMenu(),
       }),
     );
@@ -283,15 +305,26 @@ export class Game {
     this.showMainMenu();
   }
 
-  private setDummyMode(m: DummyMode): void {
-    this.mode?.setDummyMode(m);
-    this.hud.setMode(m);
+  private setTrainingMode(m: TrainingOpponent): void {
+    this.training.mode = m;
+    this.mode?.setMode(m);
+    this.renderer.syncFighters();
+    this.hud.setMode(m, this.training.archetype);
+    this.hud.notify(m === 'spar' ? this.mode?.enemies[0]?.name.toUpperCase() ?? 'SPAR' : m === 'group' ? 'THREE OF THEM' : 'TRAINING', 'info');
+  }
+
+  private nextOpponent(): void {
+    const i = ARCHETYPE_IDS.indexOf(this.training.archetype);
+    this.training.archetype = ARCHETYPE_IDS[(i + 1) % ARCHETYPE_IDS.length];
+    if (this.mode) this.mode.archetype = this.training.archetype;
+    this.setTrainingMode('spar');
   }
 
   private resetPositions(): void {
     if (!this.mode) return;
     this.mode.player.respawn();
-    this.mode.dummy.respawn();
+    this.mode.setMode(this.mode.mode);
+    this.renderer.syncFighters();
     this.hud.notify('RESET', 'info');
   }
 
@@ -313,9 +346,11 @@ export class Game {
       return;
     }
     if (this.state !== 'playing' || e.repeat) return;
-    if (e.code === 'Digit1') this.setDummyMode('stand');
-    else if (e.code === 'Digit2') this.setDummyMode('block');
-    else if (e.code === 'Digit3') this.setDummyMode('spar');
+    if (e.code === 'Digit1') this.setTrainingMode('stand');
+    else if (e.code === 'Digit2') this.setTrainingMode('block');
+    else if (e.code === 'Digit3') this.setTrainingMode('spar');
+    else if (e.code === 'Digit4') this.setTrainingMode('group');
+    else if (e.code === 'KeyN') this.nextOpponent();
     else if (e.code === 'KeyR') this.resetPositions();
   }
 
@@ -365,7 +400,8 @@ export class Game {
         floatAt(hit.x, hit.y + 0.25, hit.z, `${Math.round(hit.damage)}`, hit.clean ? 'clean' : 'dmg');
         if (isPlayer(hit.attacker)) {
           this.hud.showCombo(hit.comboHits);
-          if (hit.clean) this.hud.notify('CLEAN HIT', 'info');
+          if (hit.counter) this.hud.notify('COUNTER', 'warn');
+          else if (hit.clean) this.hud.notify('CLEAN HIT', 'info');
         }
       }),
       bus.on('hit:blocked', (hit) => {
@@ -393,10 +429,72 @@ export class Game {
       bus.on('fighter:fatigue', ({ fighter, state }) => {
         if (isPlayer(fighter) && state === 'exhausted') this.hud.notify('EXHAUSTED — BACK OFF', 'warn');
       }),
+      bus.on('hit:parried', ({ target }) => {
+        this.audio.block();
+        this.renderer.fx.burst(target.pos.x + target.facing * 0.4, target.pos.y + 1.4, target.pos.z, target.facing, 'block');
+        if (isPlayer(target)) this.hud.notify('PARRY! COUNTER NOW', 'warn');
+        else this.hud.notify('PARRIED', 'info');
+      }),
+      bus.on('fighter:finished', ({ by }) => {
+        if (this.settings.get().screenShake) cam.addShake(0.35);
+        this.hud.notify(isPlayer(by) ? 'FINISHED!' : 'FINISHED', 'big');
+      }),
+      bus.on('grapple:start', ({ holder, phase }) => {
+        this.audio.impact(0.3, false);
+        if (phase === 'ground') this.hud.notify(isPlayer(holder) ? 'TAKEDOWN' : 'TAKEN DOWN', 'info');
+      }),
+      bus.on('grapple:takedown', () => {
+        this.audio.knockdown();
+        this.hud.notify('TAKEDOWN', 'info');
+      }),
+      bus.on('grapple:throw', ({ wall }) => {
+        this.audio.knockdown();
+        if (this.settings.get().screenShake) cam.addShake(0.15);
+        this.hud.notify(wall ? 'INTO THE WALL!' : 'THROWN', 'warn');
+      }),
+      bus.on('grapple:escape', ({ held }) => this.hud.notify(isPlayer(held) ? 'BROKE FREE' : 'THEY BROKE FREE', 'info')),
+      bus.on('grapple:sprawl', ({ defender }) => this.hud.notify(isPlayer(defender) ? 'SPRAWL!' : 'SPRAWLED', 'warn')),
+      bus.on('submission', ({ holder }) => {
+        this.audio.ko();
+        this.hud.notify(isPlayer(holder) ? 'TAPPED OUT' : 'YOU TAPPED', 'big');
+      }),
+      bus.on('fighter:sweep', ({ fighter }) => this.hud.notify(isPlayer(fighter) ? 'SWEEP!' : 'SWEPT', 'warn')),
+      bus.on('style:swapped', ({ fighter, style }) => {
+        if (isPlayer(fighter)) this.hud.notify(style.name.toUpperCase(), 'info');
+      }),
       bus.on('fighter:respawn', ({ fighter }) => {
         this.hud.notify(isPlayer(fighter) ? 'BACK ON YOUR FEET' : 'PARTNER’S BACK UP', 'info');
       }),
     );
+  }
+
+  /** Context help: grapple options, escapes, submissions, finishers. */
+  private updatePrompt(): void {
+    const p = this.mode!.player;
+    const touch = this.touchWanted();
+    const k = (key: string, pad: string, t: string) => (touch ? t : this.input.lastDevice === 'gamepad' ? pad : key);
+    const link = p.grapple;
+    let text = '';
+    let sub: number | null = null;
+    if (link?.role === 'holder') {
+      const s = p.style;
+      if (link.phase === 'ground') {
+        text = s.ground
+          ? `${k('J', 'X', 'LP')} ground strikes \u00b7 ${k('I', 'Y', 'HP')} ${s.moves[s.ground.submission].name} \u00b7 ${k('U', 'LB', 'GRAB')} let go`
+          : `${k('U', 'LB', 'GRAB')} let go`;
+        if (link.submitting) sub = link.subProgress;
+      } else {
+        text = `${k('J', 'X', 'LP')} ${s.moves[s.clinch.strike].name} \u00b7 ${k('K', 'A', 'LK')} ${s.moves[s.clinch.throw].name} \u00b7 ${k('L', 'B', 'HK')} ${s.moves[s.clinch.power].name} \u00b7 ${k('U', 'LB', 'GRAB')} let go`;
+      }
+    } else if (link?.role === 'held') {
+      text = link.submitting ? `SUBMISSION! Hold ${k('Space', 'RT', 'BLOCK')} to resist \u00b7 ${k('U', 'LB', 'GRAB')} to escape` : `${k('U', 'LB', 'GRAB')} to break free`;
+      if (link.submitting) sub = link.subProgress;
+    } else if (p.canFinish()) {
+      text = `FINISH IT: ${k('O + I', 'RB + Y', 'SP then HP')}`;
+    } else if (p.state === 'knockdown' && p.stateFrame > 10) {
+      text = `Get up: ${k('C', 'L3', 'JUMP')} quick \u00b7 ${k('W/S', 'up/down', 'stick up/down')} roll \u00b7 attack to get up swinging${p.style.defence === 'guard_pull' ? ` \u00b7 ${k('U', 'LB', 'GRAB')} sweep` : ''}`;
+    }
+    this.hud.setPrompt(text, sub);
   }
 
   private unwire(): void {
@@ -431,7 +529,10 @@ export class Game {
 
     const inFight = (this.state === 'playing' || this.state === 'paused') && !!this.mode;
     this.renderer.render(dt, this.time, inFight ? this.mode!.player : null);
-    if (inFight && this.mode) this.hud.update(dt, this.mode.player, this.mode.dummy);
+    if (inFight && this.mode) {
+      this.hud.update(dt, this.mode.player, this.mode.focusEnemy);
+      this.updatePrompt();
+    }
 
     requestAnimationFrame((n) => this.frame(n));
   }

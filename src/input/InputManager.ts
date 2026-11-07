@@ -1,6 +1,7 @@
-import { emptyCommand, type CommandFrame } from './Commands';
+import { emptyCommand, type CommandFrame, type PressButton } from './Commands';
 
-type GameButton = 'lp' | 'hp' | 'lk' | 'hk' | 'jump';
+type GameButton = PressButton;
+const PRESS_BUTTONS: readonly GameButton[] = ['lp', 'hp', 'lk', 'hk', 'jump', 'dodge', 'grab', 'swap'];
 export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause';
 export type InputSource = 'keyboard' | 'gamepad' | 'touch';
 
@@ -16,12 +17,16 @@ export const KEY_BINDINGS = {
   hk: ['KeyL'],
   block: ['Space'],
   jump: ['KeyC'],
+  dodge: ['ShiftLeft', 'ShiftRight'],
+  grab: ['KeyU'],
+  special: ['KeyO'],
+  swap: ['Tab'],
   pause: ['Escape', 'KeyP'],
 } as const;
 
 /** Standard gamepad mapping (Xbox names). */
-const PAD = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, START: 9, LS: 10, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
-const PAD_BUTTONS: Record<GameButton, number> = { lp: PAD.X, hp: PAD.Y, lk: PAD.A, hk: PAD.B, jump: PAD.LS };
+const PAD = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, LS: 10, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+const PAD_BUTTONS: Record<GameButton, number> = { lp: PAD.X, hp: PAD.Y, lk: PAD.A, hk: PAD.B, jump: PAD.LS, dodge: PAD.LT, grab: PAD.LB, swap: PAD.BACK };
 const STICK_DEADZONE = 0.25;
 
 /**
@@ -35,8 +40,10 @@ export class InputManager {
   private padPrev: boolean[] = [];
   private padAxesPrev = { x: 0, y: 0 };
   /** Set by the touch controls. */
-  touch = { moveX: 0, moveZ: 0, block: false };
+  touch = { moveX: 0, moveZ: 0, block: false, specialArmed: false };
   lastDevice: InputSource = 'keyboard';
+  /** Lets the touch UI un-highlight SP once it's been used. */
+  onSpecialUsed: (() => void) | null = null;
 
   constructor(target: Window = window) {
     target.addEventListener('keydown', (e) => this.onKeyDown(e));
@@ -87,7 +94,7 @@ export class InputManager {
     if (gameKey || code === 'Enter' || code === 'NumpadEnter') e.preventDefault();
     this.lastDevice = 'keyboard';
     if (!e.repeat) {
-      for (const b of ['lp', 'hp', 'lk', 'hk', 'jump'] as const) {
+      for (const b of PRESS_BUTTONS) {
         if ((KEY_BINDINGS[b] as readonly string[]).includes(code)) this.pressedQueue.add(b);
       }
       if (code === 'Escape') this.emitMenu('back');
@@ -108,8 +115,8 @@ export class InputManager {
   }
 
   /** Poll gamepads: queue presses, and fire menu actions on edges. Call once per rendered frame. */
-  pollGamepad(): { moveX: number; moveZ: number; block: boolean } {
-    const out = { moveX: 0, moveZ: 0, block: false };
+  pollGamepad(): PadState {
+    const out: PadState = { moveX: 0, moveZ: 0, block: false, special: false };
     const pads = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
     const pad = Array.from(pads).find((p): p is Gamepad => !!p && p.connected);
     if (!pad) return out;
@@ -117,7 +124,7 @@ export class InputManager {
     const pressed = (i: number) => !!pad.buttons[i]?.pressed;
     const edge = (i: number) => pressed(i) && !this.padPrev[i];
 
-    for (const b of ['lp', 'hp', 'lk', 'hk', 'jump'] as const) if (edge(PAD_BUTTONS[b])) this.pressedQueue.add(b);
+    for (const b of PRESS_BUTTONS) if (edge(PAD_BUTTONS[b])) this.pressedQueue.add(b);
     if (edge(PAD.START)) this.emitMenu('pause', 'gamepad');
     if (edge(PAD.A)) this.emitMenu('confirm', 'gamepad');
     if (edge(PAD.B)) this.emitMenu('back', 'gamepad');
@@ -141,6 +148,7 @@ export class InputManager {
     // Up = into the screen = negative z.
     out.moveZ = ay + (pressed(PAD.DOWN) ? 1 : 0) - (pressed(PAD.UP) ? 1 : 0);
     out.block = pressed(PAD.RT) || (pad.buttons[PAD.RT]?.value ?? 0) > 0.4;
+    out.special = pressed(PAD.RB);
 
     if (pad.buttons.some((b) => b.pressed) || ax !== 0 || ay !== 0) this.lastDevice = 'gamepad';
     this.padPrev = pad.buttons.map((b) => b.pressed);
@@ -148,15 +156,22 @@ export class InputManager {
   }
 
   /** Build the player's command for one simulation step and consume queued presses. */
-  sample(pad: { moveX: number; moveZ: number; block: boolean }): CommandFrame {
+  sample(pad: PadState): CommandFrame {
     const cmd = emptyCommand();
     const kx = (this.isHeld(KEY_BINDINGS.right) ? 1 : 0) - (this.isHeld(KEY_BINDINGS.left) ? 1 : 0);
     const kz = (this.isHeld(KEY_BINDINGS.down) ? 1 : 0) - (this.isHeld(KEY_BINDINGS.up) ? 1 : 0);
     cmd.moveX = clamp1(kx + pad.moveX + this.touch.moveX);
     cmd.moveZ = clamp1(kz + pad.moveZ + this.touch.moveZ);
     cmd.block = this.isHeld(KEY_BINDINGS.block) || pad.block || this.touch.block;
+    cmd.special = this.isHeld(KEY_BINDINGS.special) || pad.special;
     for (const b of this.pressedQueue) cmd.pressed[b] = true;
     this.pressedQueue.clear();
+    // Touch: SP arms the next attack as a special.
+    if (this.touch.specialArmed && (cmd.pressed.lp || cmd.pressed.hp || cmd.pressed.lk || cmd.pressed.hk)) {
+      cmd.special = true;
+      this.touch.specialArmed = false;
+      this.onSpecialUsed?.();
+    }
     return cmd;
   }
 
@@ -164,6 +179,13 @@ export class InputManager {
   flush(): void {
     this.pressedQueue.clear();
   }
+}
+
+export interface PadState {
+  moveX: number;
+  moveZ: number;
+  block: boolean;
+  special: boolean;
 }
 
 function clamp1(v: number): number {

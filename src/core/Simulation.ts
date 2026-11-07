@@ -1,4 +1,5 @@
 import { resolveCombat } from '../combat/CombatSystem';
+import { updateGrapples } from '../combat/Grapple';
 import type { Fighter } from '../fighter/Fighter';
 import { emptyCommand, type CommandFrame } from '../input/Commands';
 import type { Arena } from '../world/Arena';
@@ -40,10 +41,11 @@ export class Simulation {
 
     for (const f of this.fighters) f.update(commands.get(f.id) ?? emptyCommand(), this.frame, this.bus);
 
+    updateGrapples(this.fighters, commands, this.frame, this.bus, this.rng, this.arena);
     this.separate();
     for (const f of this.fighters) this.arena.clamp(f.pos);
 
-    resolveCombat(this.fighters, this.frame, this.bus, this.rng);
+    resolveCombat(this.fighters, this.frame, this.bus, this.rng, this.arena);
 
     for (const f of this.fighters) f.updateVitals(this.frame, this.bus);
   }
@@ -70,6 +72,7 @@ export class Simulation {
         const a = list[i];
         const b = list[j];
         if (a.isKO || b.isKO || a.state === 'knockdown' || b.state === 'knockdown') continue;
+        if (a.grapple?.partner === b) continue;
         if (Math.abs(a.pos.z - b.pos.z) > PUSH_DEPTH) continue;
         if (Math.abs(a.pos.y - b.pos.y) > 1.0) continue;
         const dx = b.pos.x - a.pos.x;

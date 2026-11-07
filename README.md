@@ -2,7 +2,7 @@
 
 A gritty 2.5D street-fighting action RPG set in modern Britain. Browser game built with TypeScript and Three.js, playable on PC and iPhone.
 
-**Current build: Stage 2 (Character)**: create your own fighter, then take them to the back-alley training ground.
+**Current build: Stage 3 (Combat expansion)**: create your fighter, then fight in the back-alley training ground: seven styles, parries, dodges, grappling, finishers and eight enemy types.
 
 ## Run it
 
@@ -18,24 +18,23 @@ On Vercel: import the repo, framework preset **Vite**, no extra settings. Every 
 
 ## Controls
 
+The full list (with combos) is on the in-game Controls screen.
+
 | Action | Keyboard | Gamepad | Touch |
 | --- | --- | --- | --- |
-| Move left / right | A / D or arrows | Left stick / D-pad | Left stick |
-| Move into / out of screen | W / S or arrows | Left stick / D-pad | Left stick |
-| Light punch | J | X | LP |
-| Heavy punch | I | Y | HP |
-| Light kick | K | A | LK |
-| Heavy kick | L | B | HK |
-| Block (hold) | Space | RT | BLOCK |
+| Move | WASD or arrows | Left stick / D-pad | Left stick |
+| Light / heavy punch | J / I | X / Y | LP / HP |
+| Light / heavy kick | K / L | A / B | LK / HK |
+| Block (hold), parry (tap just before a hit) | Space | RT | BLOCK |
+| Dodge (hold up/down to sidestep) | Shift | LT | DODGE |
+| Grab, break free, let go | U | LB | GRAB |
+| Special (hold, then attack) | O | RB | SP, then attack |
+| Finisher | O + I | RB + Y | SP, then HP |
+| Swap style | Tab | Back / View | SWAP |
 | Jump | C | Left stick click | JUMP |
 | Pause | Esc / P | Start | pause button |
-| Sparring partner: stand / block / spar | 1 / 2 / 3 | - | top bar |
-| Reset positions | R | - | top bar |
-| Show hitboxes | F1 | - | Settings |
-
-Jump moved from Ctrl (in the design doc) to C, because Ctrl combinations trigger browser shortcuts such as closing the tab.
-
-**Street Fighting combos:** LP, LP, LP, HP (jab, jab, hook, haymaker) and LP or LK, then HK (front kick into roundhouse).
+| Training partner: stand / block / spar / group | 1 / 2 / 3 / 4 | - | top bar |
+| Next opponent type / reset | N / R | - | top bar |
 
 ## How it's built
 
@@ -47,10 +46,11 @@ src/
   stats/             Attributes, modifiers and effects, health, stamina, fatigue
   combat/            Move data types, damage formula, hit detection and resolution
   fighter/           Fighter: the one class shared by the player and every enemy
-  ai/                Sparring partner brain (full enemy AI comes in Stage 3)
+  ai/                Enemy AI (FighterAI), eight archetypes, attack tokens, training dummy
   character/         Appearance data, backgrounds, attribute allocation rules
   world/             Arena bounds
-  data/moves/        Street Fighting moves and combo graph (pure data)
+  data/styles/       The seven fighting styles: moves, combo graphs, specials, grappling (pure data)
+  styles/            Style data types
   render/            Three.js: renderer, alley, temporary fighter rig, camera, hit FX
   ui/                Menus, settings, controls, HUD, touch controls, styles
   audio/             Web Audio engine
@@ -110,3 +110,25 @@ The simulation (`core`, `stats`, `combat`, `fighter`, `ai`, `world`, `data`) has
 **Not done yet: real animation clips.** The fighters still move with code-driven poses. Proper animation needs animation files (for example from Mixamo, which needs a free Adobe account to download, or made in Blender). Once there are files in `public/assets/animations/`, the animation controller can switch to them without touching the combat code.
 
 **Next: Stage 3 (Combat expansion)**: the other six fighting styles, parry and counters, dodging and sidestepping, grapples and takedowns, and enemy AI for eight fighter types.
+
+## Stage 3 report
+
+**Built**
+- Seven fighting styles, each with its own stance, moves, combo graph, two specials, clinch moves, finisher and defensive ability: Street Fighting (shove), Boxing (slip, no kicks, body shots drain stamina), Kickboxing (checks: blocked kicks do no chip), Muay Thai (teep, leg kicks slow you, deadly clinch), Karate (blitz dash, longer counter window), Wrestling (shoots from range, sprawl beats grabs) and BJJ (submissions, sweeps from the floor).
+- Stance swap between two styles mid-fight.
+- Parry (tap block just before a hit) opens a counter window: counter hits do 1.5x damage and always stagger.
+- Dodge with invulnerability frames: back-step, sidestep into or out of the screen, style versions (slip, blitz).
+- Knockdown options: stay down, quick rise, roll, get up swinging, or (BJJ) sweep.
+- Grappling: grab into a clinch; clinch strikes, throws (extra damage near a wall), takedowns to the ground, ground strikes and submissions; escapes are a stamina and skill contest, with a resist meter for submissions.
+- Finishers on opponents below 15% health who are reeling.
+- Enemy AI that uses the same controls as you: approaches, keeps its range, attacks along its style's combo graph, blocks, parries, dodges, grapples, backs off when tired, and swaps stance. Only two enemies attack at once; the rest circle.
+- Eight enemy types: Street Thug, Hothead, Heavy Bruiser, Skilled Boxer, Kickboxer, Grappler, Rival, and Big Dunc (boss: goes berserk below half health).
+- Training ground: stand / block / spar / group of three, opponent picker, practice any style from the pause menu, context prompts for grapples and finishers.
+- Rugby player and Dancer background perks now work.
+- 24 new automated tests (56 in total), plus a soak test of every style in every mode.
+
+**Needs testing on a real device**
+- How each style feels, and whether the AI is too hard or too easy.
+- Touch layout with the extra buttons (DODGE, GRAB, SP, SWAP).
+
+**Next: Stage 4 (RPG systems)**: inventory and equipment, XP and levelling, skill trees and style mastery, training sessions, full save and load.

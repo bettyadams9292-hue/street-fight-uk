@@ -1,6 +1,9 @@
 import { ATTRIBUTE_NAMES, defaultAttributes, type AttributeName, type Attributes } from '../stats/Stats';
 import { sanitiseAppearance, type CharacterAppearance } from './Appearance';
 
+/** The development stage this build is at; perks from later stages say so in the UI. */
+export const CURRENT_STAGE = 3;
+
 /** Rules for spending points at character creation (see design doc). */
 export const CREATION_BASE = 5;
 export const CREATION_POINTS = 10;

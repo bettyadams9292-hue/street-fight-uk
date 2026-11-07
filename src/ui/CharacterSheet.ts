@@ -1,4 +1,4 @@
-import { BACKGROUNDS, CREATION_BASE, finalAttributes, type PlayerCharacter } from '../character/Character';
+import { BACKGROUNDS, CREATION_BASE, CURRENT_STAGE, finalAttributes, type PlayerCharacter } from '../character/Character';
 import { ATTRIBUTE_NAMES, Stats } from '../stats/Stats';
 import { ATTRIBUTE_LABELS, derivedStats } from './CharacterCreator';
 import { menuButton } from './controls';
@@ -21,7 +21,7 @@ export function characterSheet(c: PlayerCharacter, actions: { editLook: () => vo
     return h('div', { class: 'derived-row' }, h('span', { text: ATTRIBUTE_LABELS[a] }), h('span', { class: 'muted', text: parts.join(', ') }), h('b', { text: String(attrs[a]) }));
   });
 
-  const perkLive = bg.perk.activeFromStage <= 2;
+  const perkLive = bg.perk.activeFromStage <= CURRENT_STAGE;
   const el = h(
     'div',
     { class: 'screen creator sheet' },
