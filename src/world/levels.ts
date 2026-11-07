@@ -45,13 +45,12 @@ const home: LevelDef = {
     { kind: 'wardrobe', x: -15.4, z: -1.45 },
     { kind: 'desk', x: -13.9, z: -1.45 },
     // living room
-    { kind: 'sofa', x: -10, z: 0.9 },
+    { kind: 'sofa', x: -12.4, z: -1.0, turned: true },
     { kind: 'tv', x: -11, z: -1.55 },
     { kind: 'table', x: -5.3, z: -1.3 },
     // kitchen
     { kind: 'counter', x: -1.2, z: -1.45 },
     { kind: 'fridge', x: 1.3, z: -1.45 },
-    { kind: 'table', x: -2, z: 0.9 },
     // gym
     { kind: 'weights', x: 3.4, z: -1.4 },
     { kind: 'bag', x: 8.6, z: -1.3 },
@@ -64,7 +63,7 @@ const home: LevelDef = {
   stations: [
     { id: 'wardrobe', x: -15.4, z: -0.8, label: 'Wardrobe: change your look' },
     { id: 'mirror', x: -16.9, z: -1.15, label: 'Mirror: check yourself' },
-    { id: 'sofa', x: -10, z: 0.15, label: 'Sofa: catch up and save' },
+    { id: 'sofa', x: -11.4, z: -0.9, label: 'Sofa: catch up and save' },
     { id: 'contacts', x: -5.3, z: -0.75, label: 'Phone: contacts' },
     { id: 'tin', x: -13.9, z: -0.9, label: 'Biscuit tin: your savings' },
     { id: 'kitchen', x: -1.2, z: -0.85, label: 'Kitchen: eat and recover' },

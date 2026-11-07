@@ -594,7 +594,7 @@ export class LevelView {
     // Room name, painted small above the door gap like a nameplate.
     if (f.label) {
       const t = signTexture(f.label.toUpperCase(), '#1a1a1a', '#e8e4d8', { w: 512, h: 96 });
-      this.panel(1.4, 0.26, f.x0 + 1.2, 2.55, new THREE.MeshStandardMaterial({ map: t }), 0.04);
+      this.panel(1.4, 0.26, cx, 2.35, new THREE.MeshStandardMaterial({ map: t }), 0.04);
     }
   }
 
@@ -808,8 +808,15 @@ export class LevelView {
       case 'sofa': {
         const fabric = this.mat(c ?? '#4a5a3a', 1);
         B(W, 0.42, D, 0, 0.21, 0, fabric);
-        B(W, 0.5, 0.22, 0, 0.6, D / 2 - 0.11, fabric);
-        for (const dx of [-W / 2 + 0.1, W / 2 - 0.1]) B(0.2, 0.62, D, dx, 0.31, 0, fabric);
+        if (p.turned) {
+          // Back against the wall on the left, arms at each end, facing into the room.
+          B(0.22, 0.5, D, -W / 2 + 0.11, 0.6, 0, fabric);
+          for (const dz of [-D / 2 + 0.1, D / 2 - 0.1]) B(W, 0.62, 0.2, 0, 0.31, dz, fabric);
+          B(W * 0.5, 0.12, D * 0.35, 0.05, 0.48, -D * 0.2, this.mat('#c9a227', 1), false);
+        } else {
+          B(W, 0.5, 0.22, 0, 0.6, D / 2 - 0.11, fabric);
+          for (const dx of [-W / 2 + 0.1, W / 2 - 0.1]) B(0.2, 0.62, D, dx, 0.31, 0, fabric);
+        }
         break;
       }
       case 'tv': {

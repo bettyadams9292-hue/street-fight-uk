@@ -157,6 +157,13 @@ test('the player cannot walk through walls or props', () => {
   assert(s.player.pos.x <= car.minX - BODY_RADIUS + 0.05 || s.player.pos.z > car.maxZ, `walked into the car: ${s.player.pos.x.toFixed(2)},${s.player.pos.z.toFixed(2)}`);
 });
 
+test('home: you can walk the front of the house end to end without snagging', () => {
+  const w = new World(LEVELS.home, freshProgress(), { entry: 'start', seed: 1 });
+  place(w, -19, 1.0);
+  run(w, 60 * 14, () => cmd({ moveX: 1, moveZ: 0.4 }));
+  assert(w.player.pos.x > 10.3, `got stuck at x=${w.player.pos.x.toFixed(2)}, z=${w.player.pos.z.toFixed(2)}`);
+});
+
 test('interaction prompts do not work through walls', () => {
   const w = new World(LEVELS.home, freshProgress(), { entry: 'start', seed: 1 });
   // Kitchen station is at x=-1.2; stand on the other side of the kitchen/living wall.
