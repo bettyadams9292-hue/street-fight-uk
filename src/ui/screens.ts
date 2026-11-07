@@ -3,13 +3,14 @@ import { h } from './dom';
 import { cycleRow, menuButton, sliderRow } from './controls';
 import type { Screen, UIManager } from './UIManager';
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.4.0';
 
 // ---------------------------------------------------------------- main menu --
 
 export function mainMenu(
   hasCharacter: boolean,
-  actions: { newGame: () => void; continue: () => void; character: () => void; settings: () => void; controls: () => void },
+  continueText: string | null,
+  actions: { newGame: () => void; continue: () => void; training: () => void; character: () => void; settings: () => void; controls: () => void },
 ): Screen {
   const el = h(
     'div',
@@ -25,13 +26,14 @@ export function mainMenu(
     h(
       'nav',
       { class: 'menu-list' },
-      hasCharacter ? menuButton('Continue', actions.continue, 'Back to the training ground') : null,
-      menuButton('New Game', actions.newGame, 'Create a new fighter'),
+      continueText ? menuButton('Continue', actions.continue, continueText) : null,
+      menuButton('New Game', actions.newGame, 'Create a new fighter and start the story'),
+      hasCharacter ? menuButton('Training Ground', actions.training, 'Spar, drill combos, try every style') : null,
       hasCharacter ? menuButton('Character', actions.character, 'Stats and look') : null,
       menuButton('Settings', actions.settings),
       menuButton('Controls', actions.controls),
     ),
-    h('div', { class: 'footer', text: `Stage 3 build \u00b7 v${VERSION} \u00b7 temporary art and sound` }),
+    h('div', { class: 'footer', text: `Stage 4 build \u00b7 v${VERSION} \u00b7 temporary art and sound` }),
   );
   // The main menu has nowhere to go back to.
   return { el, onBack: () => undefined };
@@ -106,14 +108,17 @@ export function controlsScreen(ui: UIManager): Screen {
     ['Block (hold) / parry (tap just before a hit)', 'Space', 'RT', 'BLOCK'],
     ['Dodge (hold up/down to sidestep)', 'Shift', 'LT', 'DODGE'],
     ['Grab / break free / let go', 'U', 'LB', 'GRAB'],
+    ['Use / pick up / open (doors, weapons, stations)', 'E or U', 'LB', 'GRAB'],
+    ['Weapon: swing light / heavy', 'J or K / I or L', 'X or A / Y or B', 'LP or LK / HP or HK'],
+    ['Dash strike (from neutral)', '\u2192 + I', '\u2192 + Y', '\u2192 + HP'],
+    ['Jump attack', 'C then any attack', 'L3 then any attack', 'JUMP then attack'],
     ['Special (hold, then attack)', 'O', 'RB', 'SP then attack'],
     ['Finisher (opponent nearly out and reeling)', 'O + I', 'RB + Y', 'SP then HP'],
     ['Swap style', 'Tab', 'Back / View', 'SWAP'],
     ['Jump', 'C', 'Left stick click', 'JUMP'],
     ['Pause', 'Esc / P', 'Start', '\u275a\u275a'],
-    ['Partner: stand / block / spar / group', '1 / 2 / 3 / 4', '\u2014', 'Top bar'],
-    ['Next opponent type', 'N', '\u2014', 'Top bar'],
-    ['Reset', 'R', '\u2014', 'Top bar'],
+    ['Training ground: partner stand / block / spar / group', '1 / 2 / 3 / 4', '\u2014', 'Top bar'],
+    ['Training ground: next opponent / reset', 'N / R', '\u2014', 'Top bar'],
     ['Hitboxes', 'F1', '\u2014', 'Settings'],
   ];
   const combos = [

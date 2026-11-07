@@ -19,6 +19,9 @@ export const DERIVED_STAT_NAMES = [
 ] as const;
 export type DerivedStatName = (typeof DERIVED_STAT_NAMES)[number];
 
+/** Flat additions (upgrades, gear, buffs). */
+export type FlatStatName = 'maxHealth' | 'maxStamina' | 'maxPoise' | 'parryFrames';
+
 export interface Modifier {
   /** Unique id; adding a modifier with an existing id replaces it. */
   id: string;
@@ -26,6 +29,8 @@ export interface Modifier {
   source: string;
   attribute?: AttributeName;
   stat?: DerivedStatName;
+  /** Flat bonus to a derived value, e.g. +20 max health. Uses `add`. */
+  flat?: FlatStatName;
   /** Flat amount added (attributes) before multipliers. */
   add?: number;
   /** Multiplier applied after adds. */
@@ -86,6 +91,12 @@ export class Stats {
     return Math.max(0, Math.min(ATTRIBUTE_CAP, (this.base[name] + add) * mul));
   }
 
+  flat(name: FlatStatName): number {
+    let add = 0;
+    for (const mod of this.modifiers.values()) if (mod.flat === name) add += mod.add ?? 0;
+    return add;
+  }
+
   derived(name: DerivedStatName): number {
     let mul = 1;
     for (const mod of this.modifiers.values()) if (mod.stat === name) mul *= mod.mul ?? 1;
@@ -95,11 +106,11 @@ export class Stats {
   // ---- derived gameplay values (see design doc: "What each attribute does") ----
 
   get maxHealth(): number {
-    return 80 + 4 * this.attr('defence') + 4 * this.attr('endurance') + 5 * this.level;
+    return 80 + 4 * this.attr('defence') + 4 * this.attr('endurance') + 5 * this.level + this.flat('maxHealth');
   }
 
   get maxStamina(): number {
-    return 100 + 8 * this.attr('endurance');
+    return 100 + 8 * this.attr('endurance') + this.flat('maxStamina');
   }
 
   /** Stamina recovered per second once the regen delay has passed. */
@@ -155,7 +166,7 @@ export class Stats {
   }
 
   get maxPoise(): number {
-    return 45 + 1.5 * this.attr('defence');
+    return 45 + 1.5 * this.attr('defence') + this.flat('maxPoise');
   }
 
   /** Frames shaved off getting up from a knockdown. */

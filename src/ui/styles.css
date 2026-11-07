@@ -488,3 +488,55 @@ input[type='range'].focused, input[type='range']:focus { filter: drop-shadow(0 0
   .style-row { display: none; }
   .training-bar .chip { font-size: 12px; padding: 3px 6px; }
 }
+
+/* ------------------------------------------------------------ story HUD --- */
+
+.story-info, .area-banner, .boss-bar, .toasts { display: none; }
+.hud.story .training-bar { display: none; }
+.hud.story .story-info { display: block; position: absolute; top: calc(78px + var(--safe-t)); left: calc(16px + var(--safe-l)); max-width: min(460px, 60vw); text-shadow: 0 2px 6px #000; }
+.story-row { display: flex; gap: 14px; align-items: baseline; font-size: 17px; font-weight: 700; letter-spacing: 0.06em; }
+.story-row .lvl { color: var(--yellow); }
+.story-row .money { color: #9fe08a; font-variant-numeric: tabular-nums; }
+.story-row .weapon-held { color: #ffb08a; }
+.xp-bar { height: 4px; background: rgba(0, 0, 0, 0.6); margin: 4px 0 6px; width: 70%; }
+.xp-fill { height: 100%; background: var(--yellow); width: 0; }
+.objective { font-size: 16px; color: var(--text); opacity: 0.9; }
+.objective::before { content: '\25B8  '; color: var(--yellow); }
+.hud.story .area-banner { display: block; position: absolute; top: 38%; left: 0; right: 0; text-align: center; opacity: 0; pointer-events: none; }
+.area-banner.show { animation: banner 3.2s ease-out forwards; }
+.area-banner .district { font-family: var(--display); font-size: clamp(40px, 7vw, 84px); color: var(--yellow); -webkit-text-stroke: 2px #000; letter-spacing: 0.04em; }
+.area-banner .place { font-size: 22px; letter-spacing: 0.2em; text-transform: uppercase; text-shadow: 0 2px 8px #000; }
+.hud.story .boss-bar.on { display: block; position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(18px + var(--safe-b)); width: min(720px, 80vw); }
+.boss-name { font-family: var(--display); font-size: 22px; letter-spacing: 0.06em; color: var(--yellow); text-shadow: 0 2px 6px #000; margin-bottom: 4px; text-align: center; }
+.boss-bar .bar.health { height: 16px; }
+.hud.story .toasts { display: flex; position: absolute; right: calc(16px + var(--safe-r)); top: calc(132px + var(--safe-t)); flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: none; }
+.toast { background: rgba(10, 12, 18, 0.8); border-left: 3px solid var(--yellow); padding: 5px 12px; font-size: 17px; font-weight: 600; animation: toast-in 0.2s ease-out; }
+.toast.cash { border-left-color: #6ad04a; color: #c8f5b8; }
+.toast.item { border-left-color: #6ab0ff; }
+.toast.warn { border-left-color: var(--red); color: #ffc0c0; }
+.touch-ui .hud.story .boss-bar.on { bottom: auto; top: calc(130px + var(--safe-t)); width: min(520px, 60vw); }
+.touch-ui .hud.story .story-info { top: calc(70px + var(--safe-t)); }
+.touch-ui .hud.story .toasts { top: calc(150px + var(--safe-t)); }
+.prompt.interact { border-color: var(--yellow); color: var(--yellow); }
+@keyframes banner { 0% { opacity: 0; transform: translateY(12px); } 12% { opacity: 1; transform: none; } 75% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes toast-in { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ------------------------------------------------------------ hub panels -- */
+
+.hub-screen .panel { max-width: 760px; }
+.hub-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.hub-head .wallet { color: #9fe08a; font-size: 19px; font-weight: 700; }
+.shop-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--edge); }
+.shop-row .what b { font-size: 19px; display: block; }
+.shop-row .what span { color: var(--muted); font-size: 15px; }
+.shop-row .menu-btn { min-width: 150px; padding: 8px 12px; margin: 0; }
+.shop-row .menu-btn .label { font-size: 17px; }
+.shop-row.owned .what b::after { content: '  \2713'; color: #6ad04a; }
+.shop-row .menu-btn[disabled] { opacity: 0.45; cursor: default; }
+.hub-msg { min-height: 22px; margin: 8px 0; color: var(--yellow); font-size: 16px; }
+.hub-msg.bad { color: #ff8a8a; }
+.reward-list { list-style: none; padding: 0; margin: 10px 0; font-size: 22px; }
+.reward-list li { padding: 4px 0; }
+.reward-list li.big { font-family: var(--display); font-size: 30px; color: var(--yellow); letter-spacing: 0.04em; }
+.fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; z-index: 50; }
+.fade.on { opacity: 1; pointer-events: auto; }

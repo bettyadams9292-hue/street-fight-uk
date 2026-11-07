@@ -81,7 +81,14 @@ export interface CreatorCallbacks {
  * Character creation (and look editing). The model on the right updates
  * live; drag it, or use the arrows under the panel, to turn it round.
  */
-export function characterCreator(mode: 'new' | 'edit', cb: CreatorCallbacks, existing?: PlayerCharacter, startLook?: CharacterAppearance): Screen {
+export function characterCreator(
+  mode: 'new' | 'edit',
+  cb: CreatorCallbacks,
+  existing?: PlayerCharacter,
+  startLook?: CharacterAppearance,
+  /** Clothes not found yet ('top:bomber', 'acc:chain'...). Anything already worn stays available. */
+  isLocked: (key: string) => boolean = () => false,
+): Screen {
   let appearance: CharacterAppearance = structuredClone(existing?.appearance ?? startLook ?? defaultAppearance('male'));
   let name = existing?.name ?? '';
   let background: BackgroundId = existing?.background ?? 'estate_scrapper';
@@ -269,21 +276,21 @@ export function characterCreator(mode: 'new' | 'edit', cb: CreatorCallbacks, exi
       case 'clothes': {
         const topLabels = { ...LABELS, none: 'Bare chest' };
         content.replaceChildren(
-          cycleRow('Top', opts(TOP_STYLES.filter((t) => a.body === 'male' || t !== 'none'), topLabels), a.top, (v) => set('top', v)),
+          cycleRow('Top', opts(TOP_STYLES.filter((t) => (a.body === 'male' || t !== 'none') && (!isLocked(`top:${t}`) || t === a.top)), topLabels), a.top, (v) => set('top', v)),
           swatchRow('Top colour', CLOTHING_COLOURS, a.topColour, (v) => set('topColour', v)),
           cycleRow('Bottoms', opts(BOTTOM_STYLES), a.bottoms, (v) => set('bottoms', v)),
           swatchRow('Bottoms colour', CLOTHING_COLOURS, a.bottomsColour, (v) => set('bottomsColour', v)),
           cycleRow('Shoes', opts(SHOE_STYLES), a.shoes, (v) => set('shoes', v)),
           swatchRow('Shoes colour', CLOTHING_COLOURS, a.shoesColour, (v) => set('shoesColour', v)),
           h('h3', { text: 'Accessories' }),
-          ...ACCESSORIES.map((acc) =>
+          ...ACCESSORIES.filter((acc) => !isLocked(`acc:${acc}`) || a.accessories.includes(acc)).map((acc) =>
             cycleRow(LABELS[acc], [{ value: false, label: 'Off' }, { value: true, label: 'On' }], a.accessories.includes(acc), (on) => {
               toggleAccessory(acc, on);
               if ((acc === 'cap' || acc === 'headguard') && on) render();
             }),
           ),
           cycleRow('Metal', [{ value: 'gold' as const, label: 'Gold' }, { value: 'silver' as const, label: 'Silver' }], a.chainColour, (v) => set('chainColour', v)),
-          h('p', { class: 'hint', text: 'From Stage 4, clothes you buy in shops can also change your stats.' }),
+          h('p', { class: 'hint', text: lockedCount() ? `${lockedCount()} more item${lockedCount() === 1 ? '' : 's'} to find around the neighbourhood.` : 'You\u2019ve found every item of clothing.' }),
         );
         break;
       }
@@ -291,6 +298,10 @@ export function characterCreator(mode: 'new' | 'edit', cb: CreatorCallbacks, exi
         content.replaceChildren(...fighterTab());
         break;
     }
+  }
+
+  function lockedCount(): number {
+    return [...TOP_STYLES.map((t) => `top:${t}`), ...ACCESSORIES.map((x) => `acc:${x}`)].filter((k) => isLocked(k)).length;
   }
 
   function fighterTab(): HTMLElement[] {

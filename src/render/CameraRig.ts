@@ -63,6 +63,65 @@ export class CameraRig {
     this.camera.lookAt(this.focus.x + sx * 0.5, this.focus.y + 0.15, this.focus.z - 0.4);
   }
 
+  private deadX = 0;
+  private worldReady = false;
+
+  /** Snap straight to the player (new area). */
+  resetWorld(): void {
+    this.worldReady = false;
+  }
+
+  /**
+   * Exploring the world: the camera holds still while you move about inside a
+   * dead zone, frames you and whoever you're fighting, and is clamped so it
+   * never looks past the ends of the area (or out of a locked fight).
+   */
+  updateWorld(dt: number, player: Fighter, target: Fighter | null, bounds: ArenaBounds, lock: { minX: number; maxX: number } | null): void {
+    const DEAD = 1.2;
+    if (!this.worldReady) {
+      this.deadX = player.pos.x;
+      this.focus.set(player.pos.x, 1.05, player.pos.z * 0.3);
+      this.distance = this.compact ? 7.2 : 8.5;
+    }
+    if (player.pos.x > this.deadX + DEAD) this.deadX = player.pos.x - DEAD;
+    if (player.pos.x < this.deadX - DEAD) this.deadX = player.pos.x + DEAD;
+    let cx = this.deadX;
+    let spread = 0;
+    if (target && !target.isKO && Math.abs(target.pos.x - player.pos.x) < 8) {
+      cx = (player.pos.x + target.pos.x) / 2;
+      spread = Math.abs(target.pos.x - player.pos.x);
+      this.deadX = cx;
+    }
+    const base = this.compact ? 7.2 : 8.5;
+    const wantDist = Math.min(base + 3, base + Math.max(0, spread - 3) * 0.5);
+    // Half the visible width where the fighters stand.
+    const halfW = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * wantDist * this.camera.aspect;
+    const clampTo = (lo: number, hi: number, slack: number) => {
+      const a = lo + halfW - slack;
+      const b = hi - halfW + slack;
+      cx = a <= b ? Math.min(b, Math.max(a, cx)) : (lo + hi) / 2;
+    };
+    if (lock) clampTo(lock.minX, lock.maxX, 1.5);
+    clampTo(bounds.minX, bounds.maxX, 1.0);
+
+    const k = this.worldReady ? 1 - Math.exp(-6 * dt) : 1;
+    this.worldReady = true;
+    this.focus.x += (cx - this.focus.x) * k;
+    this.focus.z += (player.pos.z * 0.3 - this.focus.z) * k;
+    this.distance += (wantDist - this.distance) * (1 - Math.exp(-3 * dt));
+
+    this.shakeSeed += dt * 60;
+    const sx = this.shake * (Math.sin(this.shakeSeed * 1.7) + Math.sin(this.shakeSeed * 3.1) * 0.5);
+    const sy = this.shake * (Math.cos(this.shakeSeed * 2.3) * 0.7);
+    this.shake = Math.max(0, this.shake - dt * 1.6);
+    this.camera.position.set(this.focus.x + sx, 2.35 + this.distance * 0.06 + sy, this.focus.z + this.distance);
+    this.camera.lookAt(this.focus.x + sx * 0.5, this.focus.y + 0.15, this.focus.z - 0.4);
+  }
+
+  get focusX(): number {
+    return this.focus.x;
+  }
+
   /** Gentle drift used behind the main menu. */
   attract(time: number): void {
     const x = Math.sin(time * 0.08) * 5;

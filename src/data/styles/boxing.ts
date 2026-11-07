@@ -1,5 +1,7 @@
 import { move } from '../../combat/MoveData';
 import type { StyleData } from '../../styles/StyleData';
+
+type BaseStyle = Omit<StyleData, 'air' | 'dash'>;
 import { clinchStrike, finisherMove, getupKick, grabMove, table, throwMove } from './shared';
 
 const S = 'boxing';
@@ -9,7 +11,7 @@ const S = 'boxing';
  * Kick buttons throw body shots and the overhand instead.
  * Combo: jab, jab, cross, hook, uppercut.
  */
-export const BOXING: StyleData = {
+export const BOXING: BaseStyle = {
   id: 'boxing',
   name: 'Boxing',
   blurb: 'Tight guard, bouncing footwork and fast hands. No kicks.',

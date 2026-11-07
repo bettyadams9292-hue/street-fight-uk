@@ -1,5 +1,7 @@
 import { move } from '../../combat/MoveData';
 import type { StyleData } from '../../styles/StyleData';
+
+type BaseStyle = Omit<StyleData, 'air' | 'dash'>;
 import { clinchStrike, finisherMove, getupKick, grabMove, table, throwMove } from './shared';
 
 const S = 'muay_thai';
@@ -9,7 +11,7 @@ const S = 'muay_thai';
  * clinch, leg kicks that slow you down. Slow footwork.
  * Combo: jab, rear leg kick, roundhouse / elbow into knee.
  */
-export const MUAY_THAI: StyleData = {
+export const MUAY_THAI: BaseStyle = {
   id: 'muay_thai',
   name: 'Muay Thai',
   blurb: 'Square stance, deliberate pace. Elbows, knees and shin kicks.',

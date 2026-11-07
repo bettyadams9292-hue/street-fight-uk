@@ -61,6 +61,20 @@ export class Hud {
   private prompt: HTMLElement;
   private subBar: HTMLElement;
   private subFill: HTMLElement;
+  // Story mode.
+  private story: HTMLElement;
+  private money: HTMLElement;
+  private levelText: HTMLElement;
+  private xpFill: HTMLElement;
+  private objective: HTMLElement;
+  private banner: HTMLElement;
+  private bossBar: HTMLElement;
+  private bossName: HTMLElement;
+  private bossFill: HTMLElement;
+  private bossTrail: HTMLElement;
+  private bossTrailV = 1;
+  private weaponText: HTMLElement;
+  private toasts: HTMLElement;
 
   constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
@@ -76,9 +90,31 @@ export class Hud {
     this.prompt = h('div', { class: 'prompt' });
     this.subFill = h('div', { class: 'sub-fill' });
     this.subBar = h('div', { class: 'sub-bar' }, this.subFill);
+    this.money = h('span', { class: 'money' });
+    this.levelText = h('span', { class: 'lvl' });
+    this.xpFill = h('div', { class: 'xp-fill' });
+    this.objective = h('div', { class: 'objective' });
+    this.weaponText = h('span', { class: 'weapon-held' });
+    this.story = h(
+      'div',
+      { class: 'story-info' },
+      h('div', { class: 'story-row' }, this.levelText, this.money, this.weaponText),
+      h('div', { class: 'xp-bar' }, this.xpFill),
+      this.objective,
+    );
+    this.banner = h('div', { class: 'area-banner' });
+    this.bossName = h('div', { class: 'boss-name' });
+    this.bossFill = h('div', { class: 'fill hp' });
+    this.bossTrail = h('div', { class: 'fill trail' });
+    this.bossBar = h('div', { class: 'boss-bar' }, this.bossName, h('div', { class: 'bar health' }, this.bossTrail, this.bossFill));
+    this.toasts = h('div', { class: 'toasts' });
     this.el = h(
       'div',
       { class: 'hud' },
+      this.story,
+      this.banner,
+      this.bossBar,
+      this.toasts,
       h('div', { class: 'hud-top' }, this.player.root, h('div', { class: 'vs', text: 'VS' }), this.enemy.root),
       h(
         'div',
@@ -104,11 +140,59 @@ export class Hud {
   }
 
   /** Context prompt above the training bar (grapple options, finisher, escapes). */
-  setPrompt(text: string, submission: number | null): void {
+  setPrompt(text: string, submission: number | null, interact = false): void {
     if (this.prompt.textContent !== text) this.prompt.textContent = text;
+    this.prompt.classList.toggle('interact', interact);
     this.prompt.style.display = text ? 'block' : 'none';
     this.subBar.style.display = submission === null ? 'none' : 'block';
     if (submission !== null) this.subFill.style.width = `${submission}%`;
+  }
+
+  // ---- story mode -----------------------------------------------------------------
+
+  /** Story mode hides the training bar and shows money, XP, objective and boss bar. */
+  setStory(on: boolean): void {
+    this.el.classList.toggle('story', on);
+    if (!on) this.bossBar.classList.remove('on');
+  }
+
+  updateStory(info: { pocket: number; bank: number; level: number; xp: number; xpNext: number; objective: string; weapon: string | null; boss: { name: string; title: string; health: number; max: number } | null }, dt: number): void {
+    const m = `\u00a3${info.pocket}  \u00b7  bank \u00a3${info.bank}`;
+    if (this.money.textContent !== m) this.money.textContent = m;
+    const l = `LVL ${info.level}`;
+    if (this.levelText.textContent !== l) this.levelText.textContent = l;
+    this.xpFill.style.width = `${Math.min(100, (info.xp / Math.max(1, info.xpNext)) * 100)}%`;
+    if (this.objective.textContent !== info.objective) this.objective.textContent = info.objective;
+    const w = info.weapon ? `\u2694 ${info.weapon}` : '';
+    if (this.weaponText.textContent !== w) this.weaponText.textContent = w;
+    const b = info.boss;
+    this.bossBar.classList.toggle('on', !!b);
+    if (b) {
+      const frac = Math.max(0, b.health / b.max);
+      const name = `${b.name.toUpperCase()} \u2014 ${b.title}`;
+      if (this.bossName.textContent !== name) this.bossName.textContent = name;
+      this.bossFill.style.width = `${frac * 100}%`;
+      this.bossTrailV = frac >= this.bossTrailV ? frac : Math.max(frac, this.bossTrailV - dt * 0.4);
+      this.bossTrail.style.width = `${this.bossTrailV * 100}%`;
+    } else {
+      this.bossTrailV = 1;
+    }
+  }
+
+  /** District name card when you arrive somewhere. */
+  showBanner(district: string, place: string): void {
+    this.banner.replaceChildren(h('div', { class: 'district', text: district.toUpperCase() }), h('div', { class: 'place', text: place }));
+    this.banner.classList.remove('show');
+    void this.banner.offsetWidth;
+    this.banner.classList.add('show');
+  }
+
+  /** Small reward / pickup message at the side. */
+  toast(text: string, kind: 'cash' | 'item' | 'info' | 'warn' = 'info'): void {
+    const t = h('div', { class: `toast ${kind}`, text });
+    this.toasts.append(t);
+    while (this.toasts.children.length > 5) this.toasts.firstElementChild?.remove();
+    setTimeout(() => t.remove(), 2600);
   }
 
   setFpsVisible(v: boolean): void {

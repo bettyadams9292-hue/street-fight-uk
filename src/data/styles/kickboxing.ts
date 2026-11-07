@@ -1,5 +1,7 @@
 import { move } from '../../combat/MoveData';
 import type { StyleData } from '../../styles/StyleData';
+
+type BaseStyle = Omit<StyleData, 'air' | 'dash'>;
 import { clinchStrike, finisherMove, getupKick, grabMove, table, throwMove } from './shared';
 
 const S = 'kickboxing';
@@ -8,7 +10,7 @@ const S = 'kickboxing';
  * Kickboxing: punches and kicks, range control, flexible combos.
  * Combo: jab, cross, low kick, roundhouse.
  */
-export const KICKBOXING: StyleData = {
+export const KICKBOXING: BaseStyle = {
   id: 'kickboxing',
   name: 'Kickboxing',
   blurb: 'Upright stance, punches flowing into kicks. Controls range.',

@@ -1,5 +1,7 @@
 import { move } from '../../combat/MoveData';
 import type { StyleData } from '../../styles/StyleData';
+
+type BaseStyle = Omit<StyleData, 'air' | 'dash'>;
 import { clinchStrike, finisherMove, getupKick, grabMove, table, throwMove } from './shared';
 
 const S = 'street';
@@ -8,7 +10,7 @@ const S = 'street';
  * Street Fighting: the style every player starts with. Loose, scrappy,
  * heavy-handed, dirty. Combos: jab, jab, hook, haymaker / jab or front kick into roundhouse.
  */
-export const STREET: StyleData = {
+export const STREET: BaseStyle = {
   id: 'street',
   name: 'Street Fighting',
   blurb: 'Loose, scrappy and opportunistic. Throws whatever works.',

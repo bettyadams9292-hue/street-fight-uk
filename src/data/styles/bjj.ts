@@ -1,5 +1,7 @@
 import { move } from '../../combat/MoveData';
 import type { StyleData } from '../../styles/StyleData';
+
+type BaseStyle = Omit<StyleData, 'air' | 'dash'>;
 import { clinchStrike, finisherMove, getupKick, grabMove, groundMoves, table, takedownMove, throwMove } from './shared';
 
 const S = 'bjj';
@@ -9,7 +11,7 @@ const ground = groundMoves(S, 'Rear-naked choke');
  * Brazilian Jiu-Jitsu: patient, low, grip-seeking. Dominant on the ground,
  * strongest submissions, sweeps opponents from a knockdown.
  */
-export const BJJ: StyleData = {
+export const BJJ: BaseStyle = {
   id: 'bjj',
   name: 'Brazilian Jiu-Jitsu',
   blurb: 'Patient and low. Gets hold, gets it to the floor, finishes there.',

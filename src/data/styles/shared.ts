@@ -70,6 +70,31 @@ export function groundMoves(style: string, subName: string): { strike: MoveData;
   };
 }
 
+export function jumpPunch(style: string): MoveData {
+  return move({
+    id: `${style}_jump_punch`, name: 'Jumping punch', style, button: 'lp', kind: 'light', anim: 'overhand', limb: 'rearHand',
+    startup: 5, active: 6, recovery: 10, damage: 9, staminaCost: 8, reach: 0.7, hitRadius: 0.26, hitY: 1.3,
+    depthTolerance: 0.55, hitstun: 20, knockback: 2.2, poiseDamage: 18, hitstop: 5, lunge: 0,
+  });
+}
+
+export function jumpKick(style: string): MoveData {
+  return move({
+    id: `${style}_jump_kick`, name: 'Flying kick', style, button: 'lk', kind: 'heavy', anim: 'side_kick', limb: 'leadFoot',
+    startup: 6, active: 8, recovery: 12, damage: 14, staminaCost: 14, reach: 0.95, hitRadius: 0.3, hitY: 0.9,
+    depthTolerance: 0.6, hitstun: 26, knockback: 4.5, poiseDamage: 45, reaction: 'knockdown', hitstop: 8, lunge: 0,
+  });
+}
+
+/** Forward + heavy punch: a stepping lunge that covers distance and knocks back. */
+export function dashStrike(style: string): MoveData {
+  return move({
+    id: `${style}_dash_strike`, name: 'Lunging strike', style, button: 'hp', kind: 'heavy', anim: 'cross', limb: 'rearHand',
+    startup: 12, active: 4, recovery: 22, damage: 15, staminaCost: 15, reach: 0.9, hitRadius: 0.24, hitY: 1.45,
+    depthTolerance: 0.55, hitstun: 26, knockback: 4.5, poiseDamage: 40, reaction: 'stagger', hitstop: 7, lunge: 1.1,
+  });
+}
+
 export function table(...moves: MoveData[]): Record<string, MoveData> {
   return Object.fromEntries(moves.map((m) => [m.id, m]));
 }

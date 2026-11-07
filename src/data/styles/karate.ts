@@ -1,5 +1,7 @@
 import { move } from '../../combat/MoveData';
 import type { StyleData } from '../../styles/StyleData';
+
+type BaseStyle = Omit<StyleData, 'air' | 'dash'>;
 import { clinchStrike, finisherMove, getupKick, grabMove, table, throwMove } from './shared';
 
 const S = 'karate';
@@ -8,7 +10,7 @@ const S = 'karate';
  * Karate: long bladed stance, explosive entries, single decisive strikes.
  * Short combos, but the best counter-fighter: parries open a longer counter window.
  */
-export const KARATE: StyleData = {
+export const KARATE: BaseStyle = {
   id: 'karate',
   name: 'Karate',
   blurb: 'Long, bladed stance. Blitzes in, scores, and is gone.',

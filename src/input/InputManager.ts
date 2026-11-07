@@ -18,7 +18,7 @@ export const KEY_BINDINGS = {
   block: ['Space'],
   jump: ['KeyC'],
   dodge: ['ShiftLeft', 'ShiftRight'],
-  grab: ['KeyU'],
+  grab: ['KeyU', 'KeyE'],
   special: ['KeyO'],
   swap: ['Tab'],
   pause: ['Escape', 'KeyP'],

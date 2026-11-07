@@ -8,6 +8,7 @@ import { Stats, type Attributes } from '../stats/Stats';
 import { Vitals, type FatigueState } from '../stats/Vitals';
 import { defaultAppearance, type CharacterAppearance } from '../character/Appearance';
 import type { StyleData } from '../styles/StyleData';
+import { WEAPONS, type WeaponData, type WeaponId } from '../combat/Weapons';
 
 export type FighterState =
   | 'idle'
@@ -52,6 +53,10 @@ export interface FighterConfig {
   styleRanks?: Record<string, number>;
   perks?: Perk[];
   inputBufferFrames?: number;
+  /** Start holding a weapon. */
+  weapon?: WeaponId | null;
+  /** Moves bought at the gym (story mode). Leave out to allow everything. */
+  unlocks?: { specials: boolean; finishers: boolean };
 }
 
 const WALK_SPEED = 2.6; // m/s
@@ -117,6 +122,13 @@ export class Fighter {
   /** Movement slowed by leg kicks until this frame. */
   slowUntil = -1;
   swapReadyAt = 0;
+  /** Weapon in hand, with hits left before it breaks. */
+  weapon: { data: WeaponData; hits: number } | null = null;
+  /** A weapon this fighter just dropped; the world turns it into a pickup. */
+  droppedWeapon: WeaponData | null = null;
+  unlocks: { specials: boolean; finishers: boolean };
+  private airAttackUsed = false;
+  private airVX = 0;
 
   // Dodge / roll movement.
   private dodgeVel = { x: 0, z: 0 };
@@ -124,7 +136,7 @@ export class Fighter {
   private pendingGetupAttack = false;
   private wasBlockHeld = false;
 
-  private buffered: { button: AttackButton; special: boolean; expires: number } | null = null;
+  private buffered: { button: AttackButton; special: boolean; toward: boolean; expires: number } | null = null;
   private readonly bufferFrames: number;
   private lastFatigue: FatigueState = 'fresh';
   private spawn = { x: 0, z: 0 };
@@ -142,6 +154,8 @@ export class Fighter {
     this.vitals = new Vitals(this.stats);
     this.poise = this.stats.maxPoise;
     this.bufferFrames = cfg.inputBufferFrames ?? INPUT_BUFFER_FRAMES;
+    this.unlocks = cfg.unlocks ?? { specials: true, finishers: true };
+    if (cfg.weapon) this.equipWeapon(cfg.weapon);
     this.spawn = { x: cfg.x ?? 0, z: cfg.z ?? 0 };
     this.pos.x = this.spawn.x;
     this.pos.z = this.spawn.z;
@@ -182,7 +196,19 @@ export class Fighter {
   }
 
   get parryWindow(): number {
-    return PARRY_WINDOW + Math.floor(this.stats.attr('technique') / 5);
+    return PARRY_WINDOW + Math.floor(this.stats.attr('technique') / 5) + this.stats.flat('parryFrames');
+  }
+
+  equipWeapon(id: WeaponId): void {
+    const data = WEAPONS[id];
+    this.weapon = { data, hits: data.durability };
+  }
+
+  /** Let go of the weapon (it lands as a pickup unless it broke). */
+  dropWeapon(): void {
+    if (!this.weapon) return;
+    this.droppedWeapon = this.weapon.data;
+    this.weapon = null;
   }
 
   isFacing(other: Fighter): boolean {
@@ -197,7 +223,7 @@ export class Fighter {
 
   /** A finisher is available: opponent below 15% health, reeling, close and in front. */
   canFinish(t: Fighter | null = this.target): boolean {
-    if (!t || t.isKO || t.grapple || !this.isFree) return false;
+    if (!t || t.isKO || t.grapple || !this.isFree || !this.unlocks.finishers || this.weapon) return false;
     return (
       t.vitals.health / t.vitals.maxHealth < FINISH_HEALTH &&
       (t.state === 'stagger' || t.state === 'guardbreak') &&
@@ -229,6 +255,8 @@ export class Fighter {
     this.comboHits = 0;
     this.buffered = null;
     this.grapple = null;
+    this.weapon = null;
+    this.droppedWeapon = null;
     this.counterUntil = -1;
     this.slowUntil = -1;
     this.stats.removeModifier('leg_slow');
@@ -241,7 +269,9 @@ export class Fighter {
 
   update(cmd: CommandFrame, frame: number, bus: EventBus<GameEvents>): void {
     // Remember attack presses so an early press still comes out.
-    for (const b of ATTACK_BUTTONS) if (cmd.pressed[b]) this.buffered = { button: b, special: cmd.special, expires: frame + this.bufferFrames };
+    for (const b of ATTACK_BUTTONS) {
+      if (cmd.pressed[b]) this.buffered = { button: b, special: cmd.special, toward: cmd.moveX * this.facing > 0.5, expires: frame + this.bufferFrames };
+    }
     if (this.buffered && frame > this.buffered.expires) this.buffered = null;
 
     // Block presses (not holds) are what parry.
@@ -278,7 +308,8 @@ export class Fighter {
         const m = this.move!;
         m.frame++;
         if (m.frame < m.startup && m.data.lunge > 0) this.pos.x += (this.facing * m.data.lunge) / m.startup;
-        if (this.buffered && m.frame >= cancelFrame(m) && !this.grapple) this.tryAttack(this.buffered.button, this.buffered.special, frame, bus);
+        if (!this.grounded) wantVX = this.airVX;
+        if (this.buffered && m.frame >= cancelFrame(m) && !this.grapple && this.grounded) this.tryAttack(this.buffered.button, this.buffered.special, frame, bus);
         if (this.state === 'attack' && this.move === m && m.frame >= totalFrames(m) - 1) {
           this.setState(this.grapple ? (this.grapple.phase === 'ground' ? 'ground_top' : 'clinch_hold') : 'idle');
         }
@@ -318,20 +349,32 @@ export class Fighter {
         break;
 
       case 'jump':
-        // Limited air control.
+        // Limited air control; one attack per jump.
         wantVX = cmd.moveX * walk * 0.6;
+        this.airVX = wantVX;
+        if (this.buffered && !this.airAttackUsed && this.pos.y > 0.15) {
+          const kick = this.buffered.button === 'lk' || this.buffered.button === 'hk';
+          this.buffered = null;
+          this.airAttackUsed = true;
+          this.startMoveById(kick ? this.style.air.kick : this.style.air.punch, frame, bus);
+        }
         break;
 
       case 'idle':
       case 'walk':
       case 'block': {
         if (cmd.pressed.swap && this.trySwap(frame, bus)) break;
+        if (cmd.pressed.grab && this.weapon) {
+          this.dropWeapon();
+          break;
+        }
         if (cmd.pressed.grab && this.tryGrab(frame, bus)) break;
         if (cmd.pressed.dodge && this.tryDodge(cmd, frame, bus)) break;
         if (this.buffered && this.tryAttack(this.buffered.button, this.buffered.special, frame, bus)) break;
         if (cmd.pressed.jump && this.grounded) {
           this.vel.y = JUMP_VELOCITY;
           this.pos.y = 0.001;
+          this.airAttackUsed = false;
           this.setState('jump');
           bus.emit('fighter:jump', { fighter: this });
           wantVX = cmd.moveX * walk;
@@ -381,7 +424,7 @@ export class Fighter {
       if (this.pos.y <= 0) {
         this.pos.y = 0;
         this.vel.y = 0;
-        if (this.state === 'jump') {
+        if (this.state === 'jump' || (this.state === 'attack' && this.move && (this.move.data.id === this.style.air.punch || this.move.data.id === this.style.air.kick))) {
           this.setState('idle');
           bus.emit('fighter:land', { fighter: this });
         }
@@ -408,8 +451,18 @@ export class Fighter {
   /** Start or chain an attack. Returns true if the press was consumed. */
   private tryAttack(button: AttackButton, special: boolean, frame: number, bus: EventBus<GameEvents>): boolean {
     const style = this.style;
+    const toward = this.buffered?.toward ?? false;
+    if (!this.unlocks.specials) special = special && button === 'hp' && this.canFinish();
+    // A weapon in hand replaces punches and kicks with swings (no combos).
+    if (this.weapon && !(special && button === 'hp' && this.canFinish())) {
+      if (this.state === 'attack') return false;
+      this.buffered = null;
+      return this.startMove(button === 'lp' || button === 'lk' ? this.weapon.data.light : this.weapon.data.heavy, frame, bus);
+    }
     let moveId: string | undefined;
-    if (special && button === 'hp' && this.state !== 'attack' && this.canFinish()) {
+    if (!special && button === 'hp' && toward && this.state !== 'attack') {
+      moveId = style.dash;
+    } else if (special && button === 'hp' && this.state !== 'attack' && this.canFinish()) {
       moveId = style.finisher;
     } else if (this.state === 'attack' && this.move) {
       moveId = special ? style.specials[button] : this.move.data.next[button];
@@ -423,7 +476,7 @@ export class Fighter {
     return this.startMove(data, frame, bus);
   }
 
-  private startMoveById(id: string, frame: number, bus: EventBus<GameEvents>): boolean {
+  startMoveById(id: string, frame: number, bus: EventBus<GameEvents>): boolean {
     const data = this.style.moves[id];
     return data ? this.startMove(data, frame, bus) : false;
   }
@@ -546,6 +599,7 @@ export class Fighter {
 
   enterHitReaction(kind: 'flinch' | 'stagger' | 'knockdown', hitstun: number): void {
     if (kind === 'knockdown') {
+      this.dropWeapon();
       this.setState('knockdown', KNOCKDOWN_FRAMES);
       this.poise = this.stats.maxPoise;
     } else if (kind === 'stagger') {
@@ -580,6 +634,7 @@ export class Fighter {
   }
 
   knockOut(): void {
+    this.dropWeapon();
     this.setState('ko');
     this.knockVel *= 1.4;
     this.buffered = null;

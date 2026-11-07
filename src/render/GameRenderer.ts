@@ -9,6 +9,8 @@ import { FighterView } from './FighterView';
 import { HitFX } from './HitFX';
 import { FRAMING, StudioView, type StudioFraming } from './StudioView';
 import type { CharacterAppearance } from '../character/Appearance';
+import type { World } from '../world/World';
+import { LevelView } from './LevelView';
 
 const BG = 0x0a0c12;
 
@@ -20,6 +22,8 @@ export class GameRenderer {
   readonly fx = new HitFX();
   readonly hitboxes = new HitboxView();
   private arenaView: ArenaView | null = null;
+  private levelView: LevelView | null = null;
+  private world: World | null = null;
   private views = new Map<number, FighterView>();
   private sim: Simulation | null = null;
   private quality: Quality;
@@ -70,8 +74,9 @@ export class GameRenderer {
     const dpr = window.devicePixelRatio || 1;
     this.renderer.setPixelRatio(q === 'low' ? Math.min(dpr, 1) : q === 'medium' ? Math.min(dpr, 1.5) : Math.min(dpr, 2));
     this.renderer.shadowMap.enabled = q !== 'low';
-    if (this.arenaView) {
-      for (const l of this.arenaView.shadowLights) {
+    const lights = [...(this.arenaView?.shadowLights ?? []), ...(this.levelView?.shadowLights ?? [])];
+    if (lights.length) {
+      for (const l of lights) {
         l.castShadow = q !== 'low';
         l.shadow.mapSize.set(q === 'high' ? 2048 : 1024, q === 'high' ? 2048 : 1024);
         l.shadow.map?.dispose();
@@ -89,6 +94,22 @@ export class GameRenderer {
     this.scene.add(this.arenaView.group);
     this.applyQuality(this.quality);
     for (const f of sim.fighters) this.addFighter(f);
+  }
+
+  /** Story mode: an area of the neighbourhood. */
+  attachWorld(world: World): void {
+    this.detach();
+    this.sim = world.sim;
+    this.world = world;
+    this.levelView = new LevelView(world.level, world.progress);
+    this.scene.add(this.levelView.group);
+    const indoor = world.level.theme === 'home';
+    const bg = indoor ? 0x07080b : world.level.theme === 'subway' ? 0x0c0d0e : BG;
+    this.scene.background = new THREE.Color(bg);
+    this.scene.fog = indoor ? null : new THREE.FogExp2(bg, world.level.theme === 'subway' ? 0.03 : 0.018);
+    this.cameraRig.resetWorld();
+    this.applyQuality(this.quality);
+    for (const f of world.sim.fighters) this.addFighter(f);
   }
 
   /** Character creator / sheet: one fighter on the studio set. */
@@ -141,6 +162,14 @@ export class GameRenderer {
       });
       this.arenaView = null;
     }
+    if (this.levelView) {
+      this.scene.remove(this.levelView.group);
+      this.levelView.dispose();
+      this.levelView = null;
+      this.world = null;
+      this.scene.background = new THREE.Color(BG);
+      this.scene.fog = new THREE.FogExp2(BG, 0.028);
+    }
     for (const v of this.views.values()) {
       this.scene.remove(v.root);
       v.dispose();
@@ -152,6 +181,7 @@ export class GameRenderer {
   private addFighter(f: Fighter): void {
     const v = new FighterView(f);
     if (f.team === 'player') v.onStep = () => this.onFootstep?.();
+    v.telegraphs = f.team === 'enemy' && !!this.world;
     this.views.set(f.id, v);
     this.scene.add(v.root);
   }
@@ -196,14 +226,17 @@ export class GameRenderer {
   /** @param focus the player fighter (camera follows), or null for the menu drift */
   render(dt: number, time: number, focus: Fighter | null): void {
     if (this.sim) {
-      if (this.views.size !== this.sim.fighters.length) this.syncFighters();
+      if (this.world || this.views.size !== this.sim.fighters.length) this.syncFighters();
       for (const v of this.views.values()) v.update(dt, time);
       if (this.studio) {
         this.updateStudioCamera(dt);
       } else {
         this.hitboxes.update(this.sim.fighters);
         this.arenaView?.update(time);
-        if (focus) this.cameraRig.update(dt, focus, focus.target, this.sim.arena.bounds);
+        if (this.world && focus) {
+          this.cameraRig.updateWorld(dt, focus, focus.target, this.sim.arena.bounds, this.sim.arena.lock);
+          this.levelView?.update(dt, time, this.world, this.cameraRig.focusX);
+        } else if (focus) this.cameraRig.update(dt, focus, focus.target, this.sim.arena.bounds);
         else this.cameraRig.attract(time);
       }
     }

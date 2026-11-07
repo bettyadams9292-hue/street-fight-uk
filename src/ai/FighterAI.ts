@@ -1,3 +1,4 @@
+import type { Arena } from '../world/Arena';
 import type { ActiveMove } from '../combat/MoveData';
 import type { Rng } from '../core/Rng';
 import type { Fighter } from '../fighter/Fighter';
@@ -26,18 +27,57 @@ export class FighterAI {
   private grappleActAt = 0;
   private nextSwapAt = 0;
   private hover: number;
+  private detour = 0;
 
   constructor(
     readonly self: Fighter,
     readonly archetype: Archetype,
     private readonly rng: Rng,
     private readonly tokens: AttackTokens,
+    private readonly arena: Arena | null = null,
   ) {
     this.hover = 2.2 + rng.next() * 0.8;
     this.nextSwapAt = 300 + Math.floor(rng.next() * 300);
   }
 
   think(frame: number): CommandFrame {
+    const cmd = this.decide(frame);
+    if (this.arena) this.steer(cmd);
+    return cmd;
+  }
+
+  /**
+   * Walk round solid things instead of grinding into them: if the way ahead is
+   * blocked, slide along it in depth toward whichever side is open.
+   */
+  private steer(cmd: CommandFrame): void {
+    const me = this.self;
+    if (!me.isFree || Math.abs(cmd.moveX) < 0.1) {
+      this.detour = 0;
+      return;
+    }
+    const arena = this.arena!;
+    const sx = Math.sign(cmd.moveX);
+    if (!arena.blocked(me.pos.x + sx * 0.3, me.pos.z)) {
+      if (this.detour && !arena.blocked(me.pos.x + sx * 0.3, me.pos.z - this.detour * 0.5)) this.detour = 0;
+      if (this.detour) cmd.moveZ = this.detour;
+      return;
+    }
+    if (!this.detour) {
+      const foeZ = me.target?.pos.z ?? 0;
+      const up = !arena.blocked(me.pos.x + sx * 0.3, me.pos.z - 0.6);
+      const down = !arena.blocked(me.pos.x + sx * 0.3, me.pos.z + 0.6);
+      if (up && down) this.detour = foeZ < me.pos.z ? -1 : 1;
+      else if (up) this.detour = -1;
+      else if (down) this.detour = 1;
+      else this.detour = me.pos.z > 0 ? -1 : 1;
+    }
+    cmd.moveZ = this.detour;
+    // Keep a little forward pressure so it slides round the corner.
+    cmd.moveX = sx * 0.3;
+  }
+
+  private decide(frame: number): CommandFrame {
     const cmd = emptyCommand();
     const me = this.self;
     const foe = me.target;

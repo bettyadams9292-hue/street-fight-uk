@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { CharacterAppearance } from '../character/Appearance';
 import type { Fighter } from '../fighter/Fighter';
 import { buildCharacterRig, type Rig } from './CharacterRig';
+import { buildWeaponMesh, disposeGroup } from './weaponMesh';
 
 const BASE_GUARD = GUARD;
 import {
@@ -43,6 +44,10 @@ export class FighterView {
   private lastZ: number;
   private zMotion = 0;
   private flashTime = 0;
+  private weaponId: string | null = null;
+  private weaponMesh: THREE.Group | null = null;
+  /** Enemies glow red while winding up a heavy attack, so it can be read and avoided. */
+  telegraphs = false;
   /** Extra rotation on top of facing (the character creator's turntable). */
   extraYaw = 0;
   /** Fires when a foot hits the ground while walking (for footstep audio). */
@@ -61,6 +66,9 @@ export class FighterView {
 
   /** Rebuild the model with a new look (character creator, clothes changes). Keeps the current pose. */
   setAppearance(appearance: CharacterAppearance): void {
+    if (this.weaponMesh) disposeGroup(this.weaponMesh);
+    this.weaponMesh = null;
+    this.weaponId = null;
     this.root.remove(this.rig.root);
     this.rig.dispose();
     this.rig = buildCharacterRig(appearance);
@@ -92,8 +100,42 @@ export class FighterView {
 
     // Hit flash.
     this.flashTime = Math.max(0, this.flashTime - dt);
-    const e = this.flashTime > 0 ? 0.6 : 0;
-    for (const m of this.rig.flashMaterials) m.emissive.setScalar(e);
+    if (this.flashTime > 0) {
+      for (const m of this.rig.flashMaterials) m.emissive.setScalar(0.6);
+    } else if (this.telegraphs && this.isWindingUpHeavy()) {
+      const pulse = 0.25 + 0.2 * Math.sin(time * 40);
+      for (const m of this.rig.flashMaterials) m.emissive.setRGB(pulse * 1.6, pulse * 0.25, 0);
+    } else {
+      for (const m of this.rig.flashMaterials) m.emissive.setScalar(0);
+    }
+    this.syncWeapon();
+  }
+
+  private isWindingUpHeavy(): boolean {
+    const f = this.fighter;
+    const m = f.state === 'attack' ? f.move : null;
+    if (!m || m.frame >= m.startup) return false;
+    const d = m.data;
+    return d.kind === 'heavy' || d.kind === 'special' || d.kind === 'grab' || d.reaction === 'knockdown';
+  }
+
+  /** Show whatever weapon the fighter is holding in the rear hand. */
+  private syncWeapon(): void {
+    const id = this.fighter.weapon?.data.id ?? null;
+    if (id === this.weaponId) return;
+    if (this.weaponMesh) {
+      this.weaponMesh.parent?.remove(this.weaponMesh);
+      disposeGroup(this.weaponMesh);
+      this.weaponMesh = null;
+    }
+    this.weaponId = id;
+    if (!id || !this.fighter.weapon) return;
+    const mesh = buildWeaponMesh(this.fighter.weapon.data);
+    // Grip in the fist, pointing forward out of it.
+    mesh.position.set(0, -0.3, 0.02);
+    mesh.rotation.x = Math.PI / 2;
+    this.rig.joints.rElbow.add(mesh);
+    this.weaponMesh = mesh;
   }
 
   private targetPose(moved: number, time: number): { pose: Pose; speed: number } {
@@ -198,6 +240,7 @@ export class FighterView {
   }
 
   dispose(): void {
+    if (this.weaponMesh) disposeGroup(this.weaponMesh);
     this.root.remove(this.rig.root);
     this.rig.dispose();
   }

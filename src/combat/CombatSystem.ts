@@ -7,6 +7,18 @@ import type { Arena } from '../world/Arena';
 import { BLOCK_STAMINA_RATIO, CLEAN_HIT_DAMAGE, CLEAN_HIT_POISE, computeDamage, repetitionMultiplier } from './Damage';
 import { endGrapple, resolveGrappleMove, startGrapple } from './Grapple';
 import { isActiveFrame, type ActiveMove } from './MoveData';
+import { isWeaponMove } from './Weapons';
+
+/** Weapons wear down with every hit, blocked or not. */
+function wearWeapon(attacker: Fighter, m: ActiveMove, bus: EventBus<GameEvents>): void {
+  if (!attacker.weapon || !isWeaponMove(m.data)) return;
+  attacker.weapon.hits--;
+  if (attacker.weapon.hits <= 0) {
+    const w = attacker.weapon.data;
+    attacker.weapon = null;
+    bus.emit('weapon:broken', { fighter: attacker, name: w.name, smashed: w.breaks });
+  }
+}
 
 export interface HitSphere {
   x: number;
@@ -66,7 +78,10 @@ export function resolveCombat(fighters: Fighter[], frame: number, bus: EventBus<
       m.hitTargets.add(target.id);
       m.connected = true;
       if (m.data.kind === 'grab') resolveGrab(attacker, target, m, frame, bus);
-      else resolveHit(attacker, target, m, frame, bus, rng, sphere);
+      else {
+        resolveHit(attacker, target, m, frame, bus, rng, sphere);
+        wearWeapon(attacker, m, bus);
+      }
       if (m.data.kind === 'grab') break;
     }
   }

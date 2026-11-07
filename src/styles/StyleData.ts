@@ -30,6 +30,9 @@ export interface StyleData {
   /** Attack thrown while getting up from a knockdown. */
   getupAttack: string;
   finisher: string;
+  /** Jump attacks (punch buttons / kick buttons) and the forward heavy. Added to every style. */
+  air: { punch: string; kick: string };
+  dash: string;
   defence: DefenceAbility;
   defenceName: string;
   defenceText: string;

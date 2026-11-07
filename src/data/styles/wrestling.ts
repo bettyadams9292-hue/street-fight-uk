@@ -1,5 +1,7 @@
 import { move } from '../../combat/MoveData';
 import type { StyleData } from '../../styles/StyleData';
+
+type BaseStyle = Omit<StyleData, 'air' | 'dash'>;
 import { clinchStrike, finisherMove, getupKick, grabMove, groundMoves, table, takedownMove, throwMove } from './shared';
 
 const S = 'wrestling';
@@ -9,7 +11,7 @@ const ground = groundMoves(S, 'Neck crank');
  * Wrestling: low, forward, hands out. Takedowns, slams, high poise.
  * LK shoots a double-leg straight to the ground from range.
  */
-export const WRESTLING: StyleData = {
+export const WRESTLING: BaseStyle = {
   id: 'wrestling',
   name: 'Wrestling',
   blurb: 'Low and relentless. Takes people down and keeps them there.',

@@ -47,4 +47,5 @@ export interface GameEvents {
   'grapple:takedown': { holder: Fighter; held: Fighter; damage: number };
   'submission:start': { holder: Fighter; held: Fighter };
   submission: { holder: Fighter; held: Fighter; damage: number };
+  'weapon:broken': { fighter: Fighter; name: string; smashed: boolean };
 }
