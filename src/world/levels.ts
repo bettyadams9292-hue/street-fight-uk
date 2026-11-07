@@ -1,4 +1,6 @@
 import type { AreaId } from '../progress/Progress';
+import { DISTRICTS } from './districts';
+import { INTERIORS } from './interiors';
 import type { LevelDef } from './LevelTypes';
 
 /**
@@ -59,6 +61,7 @@ const home: LevelDef = {
     { kind: 'homecar', x: 13.5, z: 0.6 },
     { kind: 'workbench', x: 16.6, z: -1.4 },
     { kind: 'shelves', x: 11.6, z: -1.55 },
+    { kind: 'chest', x: 14.2, z: -1.55 },
   ],
   stations: [
     { id: 'wardrobe', x: -15.4, z: -0.8, label: 'Wardrobe: change your look' },
@@ -69,10 +72,16 @@ const home: LevelDef = {
     { id: 'kitchen', x: -1.2, z: -0.85, label: 'Kitchen: eat and recover' },
     { id: 'gym', x: 3.4, z: -0.75, label: 'Gym: train and learn' },
     { id: 'sparring', x: 7.6, z: 0.2, label: 'Spar with Mo' },
-    { id: 'garage', x: 16.6, z: -0.75, label: 'Garage: weapons and gear' },
+    { id: 'garage', x: 16.6, z: -0.75, label: 'Workbench: repair weapons' },
+    { id: 'storage', x: 14.2, z: -0.9, label: 'Stash: your storage chest' },
   ],
   pickups: [],
+  containers: [
+    { id: 'bedside', kind: 'drawers', x: -17.2, z: -0.4, label: 'Search the bedside drawers', fixed: [{ id: 'coin_silver', qty: 2 }, { id: 'plasters', qty: 2 }] },
+    { id: 'cupboards', kind: 'cupboard', x: 0.6, z: -0.9, label: 'Search the kitchen cupboards', loot: 'cupboard' },
+  ],
   encounters: [],
+  weather: 'indoors',
   lights: [
     { x: -16.5, y: 2.6, z: -0.3, colour: 0xffd8a0, intensity: 9, range: 9 },
     { x: -8.5, y: 2.6, z: -0.3, colour: 0xffd090, intensity: 10, range: 10 },
@@ -93,11 +102,13 @@ const estate: LevelDef = {
   bounds: { minX: -12, maxX: 56, ...STREET_Z },
   entries: [
     { id: 'home', x: -6, z: -1.0, facing: 1 },
+    { id: 'left', x: -10, z: 0, facing: 1 },
     { id: 'right', x: 54, z: 0, facing: -1 },
     { id: 'subway', x: 38, z: -1.0, facing: -1 },
   ],
   exits: [
     { id: 'home_door', kind: 'door', x: -6, z: -1.6, to: 'home', toEntry: 'door', label: 'Go home' },
+    { id: 'to_residential', kind: 'edge', side: 'left', x: -12, z: 0, to: 'residential', toEntry: 'right', label: 'Hollins Estate' },
     { id: 'to_high_street', kind: 'edge', side: 'right', x: 56, z: 0, to: 'high_street', toEntry: 'left', label: 'High Street' },
     { id: 'subway_steps', kind: 'door', x: 38, z: -1.6, to: 'subway', toEntry: 'estate', label: 'Subway steps', requires: 'shortcut_subway', lockedText: 'The subway gate’s chained from the other side' },
   ],
@@ -122,17 +133,29 @@ const estate: LevelDef = {
   ],
   pickups: [
     { id: 'tenner', kind: 'cash', x: 28, z: 0.5, amount: 10 },
-    { id: 'chips', kind: 'food', x: 15, z: -1.0, amount: 25, label: 'Chips' },
-    { id: 'bottle', kind: 'weapon', x: 24, z: -0.6, weapon: 'bottle' },
-    { id: 'garages_stash', kind: 'secret', x: 43, z: -1.8, label: 'Behind the garages', reward: { cash: 40, cosmetic: 'acc:cap' } },
+    { id: 'chips', kind: 'item', item: 'chips', x: 15, z: -1.0 },
+    { id: 'bottle', kind: 'item', item: 'w_bottle', x: 24, z: -0.6 },
+    { id: 'cone', kind: 'item', item: 'w_cone', x: 41, z: 1.1 },
+    { id: 'brick', kind: 'item', item: 'w_brick', x: 31, z: -0.4 },
+    { id: 'garages_stash', kind: 'secret', x: 43, z: -1.8, label: 'Behind the garages', reward: { cash: 40, items: ['cap_black'] } },
   ],
+  containers: [
+    { id: 'bins', kind: 'bin', x: -2.1, z: -0.95, label: 'Search the wheelie bins', loot: 'bin' },
+    { id: 'skip', kind: 'skip', x: 28, z: -0.25, label: 'Search the skip', loot: 'skip' },
+    { id: 'car', kind: 'car', x: 6, z: 0.3, label: 'Search the parked car', loot: 'car' },
+    { id: 'lockup', kind: 'locker', x: 37.1, z: -1.6, label: 'Open the lock-up', fixed: [{ id: 'w_crowbar' }, { id: 'console' }, { id: 'cash_bundle' }], requires: 'has_lockup_key', lockedText: 'Padlocked. Somebody on Hollins has the key.' },
+  ],
+  breakables: [
+    { id: 'crates1', kind: 'crate', x: 20, z: -1.5, hp: 2, drops: 'plank', loot: 'crate' },
+  ],
+  weather: 'rain',
   encounters: [
     {
       id: 'lads', triggerX: 18, lock: [10, 34], optional: false,
       waves: [{ enemies: [{ archetype: 'thug' }, { archetype: 'thug' }] }, { enemies: [{ archetype: 'hothead' }, { archetype: 'thug' }] }],
       reward: { cash: 30, xp: 80 }, objective: 'Get past the estate lads',
     },
-    { id: 'garage_crew', triggerX: 40, optional: true, waves: [{ enemies: [{ archetype: 'thug' }, { archetype: 'hothead' }] }], reward: { cash: 20, xp: 60 } },
+    { id: 'garage_crew', triggerX: 40, optional: true, waves: [{ enemies: [{ archetype: 'hooded' }, { archetype: 'thug' }] }], reward: { cash: 20, xp: 60 } },
   ],
   lights: [
     { x: 4, y: 4.2, z: 0.6, colour: 0xffb060, intensity: 14, range: 12 },
@@ -153,9 +176,13 @@ const highStreet: LevelDef = {
   entries: [
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 90, z: 0, facing: -1 },
+    { id: 'pub', x: 30.5, z: -1.0, facing: 1 },
+    { id: 'clothes', x: 49, z: -1.0, facing: 1 },
   ],
   exits: [
     { id: 'to_estate', kind: 'edge', side: 'left', x: 0, z: 0, to: 'estate', toEntry: 'right', label: 'Estate' },
+    { id: 'pub_door', kind: 'door', x: 30.5, z: -1.6, to: 'pub', toEntry: 'door', label: 'Into the Red Lion' },
+    { id: 'threads_door', kind: 'door', x: 49, z: -1.6, to: 'clothes_shop', toEntry: 'door', shop: 'threads', label: 'Into Threads (clothes shop)' },
     { id: 'to_alleys', kind: 'edge', side: 'right', x: 92, z: 0, to: 'alleys', toEntry: 'left', label: 'Back alleys', requires: 'boss_gaffer', lockedText: 'Gaffer’s lads block the way. Deal with him first.' },
   ],
   facades: [
@@ -163,7 +190,7 @@ const highStreet: LevelDef = {
     { kind: 'shop', x0: 10, x1: 20, label: 'CHIPPY', colour: '#1f4f8a' },
     { kind: 'pub', x0: 20, x1: 34, label: 'THE RED LION' },
     { kind: 'shop', x0: 34, x1: 44, label: 'VAPE & PHONE', colour: '#6b2d82' },
-    { kind: 'shop', x0: 44, x1: 54, label: 'CORNER SHOP', colour: '#2d6b3a' },
+    { kind: 'shop', x0: 44, x1: 54, label: 'THREADS', colour: '#101012' },
     { kind: 'shop', x0: 54, x1: 62, label: 'TO LET', colour: '#555555' },
     { kind: 'shop', x0: 62, x1: 74, label: 'KEBAB HOUSE', colour: '#9a2a1a' },
     { kind: 'pub', x0: 74, x1: 92, label: 'THE GAFFER’S ARMS', colour: '#2a1a12' },
@@ -180,12 +207,20 @@ const highStreet: LevelDef = {
     { kind: 'crates', x: 84, z: -1.5 },
   ],
   pickups: [
-    { id: 'pint', kind: 'food', x: 26, z: -1.1, amount: 30, label: 'Pint' },
-    { id: 'kebab', kind: 'food', x: 64, z: -1.0, amount: 40, label: 'Kebab' },
+    { id: 'pop', kind: 'item', item: 'can_of_pop', x: 24, z: -1.1 },
+    { id: 'kebab', kind: 'item', item: 'kebab', x: 64, z: -1.0 },
     { id: 'change', kind: 'cash', x: 47, z: 0.8, amount: 15 },
-    { id: 'phonebox_stash', kind: 'secret', x: 18.8, z: -0.7, label: 'Taped in the phone box', reward: { cash: 60 } },
-    { id: 'bat', kind: 'weapon', x: 55, z: -0.9, weapon: 'bat' },
+    { id: 'phonebox_stash', kind: 'secret', x: 18.8, z: -0.7, label: 'Taped in the phone box', reward: { cash: 60, items: ['watch_silver'] } },
+    { id: 'bat', kind: 'item', item: 'w_baseball_bat', x: 55, z: -0.9 },
+    { id: 'umbrella', kind: 'item', item: 'w_umbrella', x: 9.5, z: -0.9 },
+    { id: 'sign', kind: 'item', item: 'w_road_sign', x: 73, z: 1.2 },
   ],
+  containers: [
+    { id: 'bin1', kind: 'bin', x: 40, z: -1.0, label: 'Search the litter bin', loot: 'bin' },
+    { id: 'van', kind: 'car', x: 58, z: 0.0, label: 'Search the van', loot: 'car' },
+    { id: 'crates', kind: 'crate', x: 84, z: -0.85, label: 'Search the beer crates', loot: 'crate' },
+  ],
+  weather: 'rain',
   encounters: [
     {
       id: 'pub_door', triggerX: 28, lock: [18, 42], optional: false,
@@ -219,9 +254,11 @@ const alleys: LevelDef = {
   entries: [
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 70, z: 0, facing: -1 },
+    { id: 'market', x: 46, z: -0.8, facing: 1 },
   ],
   exits: [
     { id: 'to_high_street', kind: 'edge', side: 'left', x: 0, z: 0, to: 'high_street', toEntry: 'right', label: 'High Street' },
+    { id: 'market_gates', kind: 'door', x: 46, z: -1.4, to: 'market', toEntry: 'left', label: 'Through the market gates' },
     { id: 'to_industrial', kind: 'edge', side: 'right', x: 72, z: 0, to: 'industrial', toEntry: 'left', label: 'Industrial Quarter' },
   ],
   facades: [
@@ -243,18 +280,30 @@ const alleys: LevelDef = {
     { kind: 'pallets', x: 62, z: -1.0 },
   ],
   pickups: [
-    { id: 'pipe', kind: 'weapon', x: 16, z: -0.6, weapon: 'pipe' },
-    { id: 'pasty', kind: 'food', x: 45, z: 0, amount: 30, label: 'Pasty' },
-    { id: 'skip_stash', kind: 'secret', x: 22, z: 0.1, label: 'Under the skip', reward: { cash: 50, cosmetic: 'top:bomber' } },
+    { id: 'pipe', kind: 'item', item: 'w_pipe', x: 16, z: -0.6 },
+    { id: 'pasty', kind: 'item', item: 'pasty', x: 45, z: 0.6 },
+    { id: 'skip_stash', kind: 'secret', x: 22, z: 0.1, label: 'Under the skip', reward: { cash: 50, items: ['bomber_jacket'] } },
     { id: 'coins', kind: 'cash', x: 58, z: -1.2, amount: 20 },
+    { id: 'chain', kind: 'item', item: 'w_chain', x: 66, z: 0.6 },
+    { id: 'broom', kind: 'item', item: 'w_broom', x: 9, z: 0.8 },
   ],
+  containers: [
+    { id: 'bins', kind: 'bin', x: 6.4, z: -0.55, label: 'Search the bins', loot: 'bin' },
+    { id: 'skip', kind: 'skip', x: 22, z: -0.05, label: 'Search the skip', loot: 'skip' },
+    { id: 'bin2', kind: 'bin', x: 50, z: 0.55, label: 'Search the bin', loot: 'bin' },
+  ],
+  breakables: [
+    { id: 'pallets1', kind: 'pallet', x: 28, z: 1.1, hp: 2, drops: 'plank' },
+    { id: 'boxes1', kind: 'boxes', x: 55, z: -1.2, hp: 1, loot: 'dumpster' },
+  ],
+  weather: 'rain',
   encounters: [
     {
       id: 'ambush', triggerX: 26, lock: [16, 40], optional: false,
       waves: [{ enemies: [{ archetype: 'hothead' }, { archetype: 'hothead' }] }, { enemies: [{ archetype: 'tooled', weapon: 'pipe' }, { archetype: 'thug' }, { archetype: 'thug' }] }],
       reward: { cash: 50, xp: 160 }, objective: 'Get through the alleys',
     },
-    { id: 'dealers', triggerX: 54, optional: true, waves: [{ enemies: [{ archetype: 'defender' }, { archetype: 'tooled', weapon: 'bottle' }] }], reward: { cash: 40, xp: 110 } },
+    { id: 'dealers', triggerX: 54, optional: true, waves: [{ enemies: [{ archetype: 'defender' }, { archetype: 'knifeman' }] }], reward: { cash: 40, xp: 110 } },
   ],
   lights: [
     { x: 10, y: 3.4, z: -0.6, colour: 0xffe0a0, intensity: 9, range: 10 },
@@ -275,9 +324,11 @@ const industrial: LevelDef = {
   entries: [
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 90, z: 0, facing: -1 },
+    { id: 'towpath', x: 61, z: -0.8, facing: 1 },
   ],
   exits: [
     { id: 'to_alleys', kind: 'edge', side: 'left', x: 0, z: 0, to: 'alleys', toEntry: 'right', label: 'Back alleys' },
+    { id: 'towpath', kind: 'door', x: 61, z: -1.6, to: 'docks', toEntry: 'left', label: 'Down to the canal towpath', requires: 'boss_sully', lockedText: 'Sully\u2019s lads guard the towpath gate.' },
     { id: 'to_subway', kind: 'edge', side: 'right', x: 92, z: 0, to: 'subway', toEntry: 'left', label: 'Subway', requires: 'boss_sully', lockedText: 'Sully’s gym runs this yard. Beat him first.' },
   ],
   facades: [
@@ -300,11 +351,21 @@ const industrial: LevelDef = {
     { kind: 'skip', x: 86, z: -1.2 },
   ],
   pickups: [
-    { id: 'pipe', kind: 'weapon', x: 20, z: 0.2, weapon: 'pipe' },
-    { id: 'butty', kind: 'food', x: 46, z: -1.2, amount: 35, label: 'Bacon butty' },
-    { id: 'scrap_stash', kind: 'secret', x: 26, z: -0.1, label: 'In the scrap pile', reward: { gear: 'steel_caps', cash: 30 } },
+    { id: 'pipe', kind: 'item', item: 'w_wrench', x: 20, z: 0.2 },
+    { id: 'butty', kind: 'item', item: 'bacon_butty', x: 46, z: -0.6 },
+    { id: 'scrap_stash', kind: 'secret', x: 26, z: -0.1, label: 'In the scrap pile', reward: { items: ['steel_toecaps'], cash: 30 } },
     { id: 'wages', kind: 'cash', x: 64, z: 1.4, amount: 25 },
+    { id: 'shovel', kind: 'item', item: 'w_shovel', x: 74, z: 0.9 },
   ],
+  containers: [
+    { id: 'van', kind: 'car', x: 40, z: -0.15, label: 'Search the van', loot: 'car' },
+    { id: 'crates', kind: 'crate', x: 50.5, z: -0.7, label: 'Search the crates', loot: 'crate' },
+    { id: 'skip', kind: 'skip', x: 86, z: -0.35, label: 'Search the skip', loot: 'skip' },
+  ],
+  breakables: [
+    { id: 'pallets', kind: 'pallet', x: 33, z: 1.2, hp: 2, drops: 'plank' },
+  ],
+  weather: 'mist',
   encounters: [
     {
       id: 'yard', triggerX: 30, lock: [20, 46], optional: false,
@@ -338,11 +399,13 @@ const subway: LevelDef = {
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 70, z: 0, facing: -1 },
     { id: 'estate', x: 66, z: -0.9, facing: -1 },
+    { id: 'platform', x: 8, z: -0.9, facing: 1 },
   ],
   exits: [
     { id: 'to_industrial', kind: 'edge', side: 'left', x: 0, z: 0, to: 'industrial', toEntry: 'right', label: 'Industrial Quarter' },
     { id: 'to_city', kind: 'edge', side: 'right', x: 72, z: 0, to: 'city', toEntry: 'left', label: 'City Centre' },
     { id: 'estate_stairs', kind: 'door', x: 66, z: -1.5, to: 'estate', toEntry: 'subway', label: 'Stairs up to the estate' },
+    { id: 'deep_line', kind: 'door', x: 8, z: -1.5, to: 'underground', toEntry: 'left', label: 'Down to the Deep Line platforms', requires: 'boss_ratcatcher', lockedText: 'Shuttered. The Ratcatcher\u2019s crew controls the old lines.' },
   ],
   facades: [
     { kind: 'subway', x0: 0, x1: 72 },
@@ -352,7 +415,7 @@ const subway: LevelDef = {
   gates: [{ id: 'stairs_gate', x: 62, z0: -1.7, z1: -0.45, openFlag: 'shortcut_subway', label: 'Stairs gate' }],
   levers: [{ id: 'gate_lever', x: 44, z: -1.2, sets: 'shortcut_subway', label: 'Pull the gate lever', doneText: 'Shortcut open: the subway stairs now lead to the estate' }],
   props: [
-    { kind: 'bin', x: 8, z: -1.25 },
+    { kind: 'bin', x: 4, z: -1.25 },
     { kind: 'trolley', x: 20, z: 1.0 },
     { kind: 'barrier', x: 30, z: -1.4 },
     { kind: 'cone', x: 36, z: 0.6 },
@@ -360,10 +423,16 @@ const subway: LevelDef = {
     { kind: 'crates', x: 64, z: 1.1 },
   ],
   pickups: [
-    { id: 'meal_deal', kind: 'food', x: 26, z: 0.4, amount: 35, label: 'Meal deal' },
+    { id: 'meal_deal', kind: 'item', item: 'meal_deal', x: 26, z: 0.4 },
     { id: 'busker_hat', kind: 'cash', x: 12, z: -1.0, amount: 15 },
-    { id: 'tile_stash', kind: 'secret', x: 70, z: -1.3, label: 'Behind a loose tile', reward: { gear: 'mouthguard', cosmetic: 'acc:chain' } },
+    { id: 'tile_stash', kind: 'secret', x: 70, z: -1.3, label: 'Behind a loose tile', reward: { items: ['mouthguard', 'chain_silver'] } },
+    { id: 'skateboard', kind: 'item', item: 'w_skateboard', x: 33, z: 0.9 },
   ],
+  containers: [
+    { id: 'bin', kind: 'bin', x: 4, z: -0.7, label: 'Search the bin', loot: 'bin' },
+    { id: 'bin2', kind: 'bin', x: 52, z: 0.7, label: 'Search the bin', loot: 'bin' },
+  ],
+  weather: 'indoors',
   encounters: [
     {
       id: 'underpass', triggerX: 22, lock: [12, 36], optional: false,
@@ -392,9 +461,15 @@ const city: LevelDef = {
   entries: [
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 90, z: 0, facing: -1 },
+    { id: 'pawn', x: 67, z: -1.0, facing: -1 },
+    { id: 'precinct', x: 10, z: -1.0, facing: 1 },
+    { id: 'neon', x: 38, z: -1.0, facing: 1 },
   ],
   exits: [
     { id: 'to_subway', kind: 'edge', side: 'left', x: 0, z: 0, to: 'subway', toEntry: 'right', label: 'Subway' },
+    { id: 'pawn_door', kind: 'door', x: 67, z: -1.6, to: 'pawn_shop', toEntry: 'door', label: 'Into Pawn & Gold' },
+    { id: 'precinct_walk', kind: 'door', x: 10, z: -1.6, to: 'precinct', toEntry: 'left', label: 'Walkway to Kingsway Precinct' },
+    { id: 'neon_mile', kind: 'door', x: 38, z: -1.6, to: 'nightlife', toEntry: 'left', label: 'Through to the Neon Mile', requires: 'has_vip_pass', lockedText: 'The doormen want to see a VIP pass. Whoever runs the precinct hands them out.' },
     { id: 'to_territory', kind: 'edge', side: 'right', x: 92, z: 0, to: 'territory', toEntry: 'left', label: 'The Pit', requires: 'boss_ratcatcher', lockedText: 'The Ratcatcher’s crew won’t let you past' },
   ],
   facades: [
@@ -402,7 +477,7 @@ const city: LevelDef = {
     { kind: 'shop', x0: 18, x1: 30, label: 'GREGGS-ISH BAKERY', colour: '#1b3d6e' },
     { kind: 'club', x0: 30, x1: 46, label: 'VELVET' },
     { kind: 'office', x0: 46, x1: 62 },
-    { kind: 'shop', x0: 62, x1: 72, label: 'CASH CONVERTERS', colour: '#c9a227' },
+    { kind: 'shop', x0: 62, x1: 72, label: 'PAWN & GOLD', colour: '#c9a227' },
     { kind: 'club', x0: 72, x1: 92, label: 'RAT & CASTLE' },
   ],
   props: [
@@ -417,12 +492,18 @@ const city: LevelDef = {
     { kind: 'barrier', x: 82, z: -1.6 },
   ],
   pickups: [
-    { id: 'sausage_roll', kind: 'food', x: 22, z: -0.8, amount: 35, label: 'Sausage roll' },
+    { id: 'sausage_roll', kind: 'item', item: 'sausage_roll', x: 22, z: -0.8 },
     { id: 'dropped_wallet', kind: 'cash', x: 44, z: 1.5, amount: 40 },
-    { id: 'bat', kind: 'weapon', x: 56, z: -0.6, weapon: 'bat' },
-    { id: 'club_stash', kind: 'secret', x: 31, z: -1.8, label: 'Club bins', reward: { gear: 'leather_jacket', cosmetic: 'top:tracksuit' } },
-    { id: 'curry', kind: 'food', x: 66, z: 0.8, amount: 45, label: 'Curry' },
+    { id: 'bat', kind: 'item', item: 'w_bat', x: 56, z: -0.6 },
+    { id: 'club_stash', kind: 'secret', x: 31, z: -1.8, label: 'Club bins', reward: { items: ['leather_jacket', 'tracksuit_top'] } },
+    { id: 'curry', kind: 'item', item: 'curry', x: 64, z: 0.8 },
+    { id: 'golf', kind: 'item', item: 'w_golf_club', x: 77, z: 1.0 },
   ],
+  containers: [
+    { id: 'car', kind: 'car', x: 52, z: 0.2, label: 'Search the parked car', loot: 'car' },
+    { id: 'clubbins', kind: 'dumpster', x: 44, z: -1.3, label: 'Search the club bins', loot: 'dumpster' },
+  ],
+  weather: 'rain',
   encounters: [
     {
       id: 'square', triggerX: 32, lock: [20, 46], optional: false,
@@ -453,8 +534,14 @@ const territory: LevelDef = {
   district: 'Dunc’s Territory',
   theme: 'territory',
   bounds: { minX: 0, maxX: 80, ...STREET_Z },
-  entries: [{ id: 'left', x: 2, z: 0, facing: 1 }],
-  exits: [{ id: 'to_city', kind: 'edge', side: 'left', x: 0, z: 0, to: 'city', toEntry: 'right', label: 'City Centre' }],
+  entries: [
+    { id: 'left', x: 2, z: 0, facing: 1 },
+    { id: 'right', x: 78, z: 0, facing: -1 },
+  ],
+  exits: [
+    { id: 'to_city', kind: 'edge', side: 'left', x: 0, z: 0, to: 'city', toEntry: 'right', label: 'City Centre' },
+    { id: 'to_hq', kind: 'edge', side: 'right', x: 80, z: 0, to: 'hq', toEntry: 'left', label: 'Hale House', requiresAll: ['has_dunc_phone', 'boss_docks', 'boss_precinct', 'boss_nightclub', 'boss_stadium'], lockedText: 'Hale House is locked down. Beat Big Dunc, then break the Docks, the Precinct, the Neon Mile and the Firm first.' },
+  ],
   facades: [
     { kind: 'warehouse', x0: 0, x1: 20, label: 'CONDEMNED' },
     { kind: 'hoarding', x0: 20, x1: 36 },
@@ -471,10 +558,19 @@ const territory: LevelDef = {
     { kind: 'drum', x: 76.7, z: -1.3 },
   ],
   pickups: [
-    { id: 'pipe', kind: 'weapon', x: 12, z: 0.3, weapon: 'pipe' },
-    { id: 'energy', kind: 'food', x: 34, z: 0.6, amount: 50, label: 'Energy drink' },
-    { id: 'van_stash', kind: 'secret', x: 42, z: -0.2, label: 'In the van', reward: { gear: 'lucky_chain', cosmetic: 'acc:headguard', cash: 100 } },
+    { id: 'pipe', kind: 'item', item: 'w_metal_bar', x: 12, z: 0.3 },
+    { id: 'energy', kind: 'item', item: 'energy_drink', x: 34, z: 0.6 },
+    { id: 'firstaid', kind: 'item', item: 'first_aid', x: 47, z: -1.0 },
+    { id: 'van_stash', kind: 'secret', x: 42, z: -0.2, label: 'In the van', reward: { items: ['lucky_chain'], cash: 100 } },
   ],
+  containers: [
+    { id: 'skip', kind: 'skip', x: 30, z: -0.35, label: 'Search the skip', loot: 'skip' },
+    { id: 'drums', kind: 'crate', x: 8, z: -0.8, label: 'Search behind the drums', loot: 'crate' },
+  ],
+  breakables: [
+    { id: 'crate1', kind: 'crate', x: 56, z: 1.3, hp: 2, drops: 'plank', loot: 'crate' },
+  ],
+  weather: 'rain',
   encounters: [
     {
       id: 'gauntlet', triggerX: 22, lock: [10, 38], optional: false,
@@ -498,7 +594,7 @@ const territory: LevelDef = {
   objective: 'End it with Big Dunc',
 };
 
-export const LEVELS: Record<AreaId, LevelDef> = {
+export const CORE_LEVELS = {
   home,
   estate,
   high_street: highStreet,
@@ -509,10 +605,22 @@ export const LEVELS: Record<AreaId, LevelDef> = {
   territory,
 };
 
-/** Which district boss you need to beat next, for the story screen. */
-export const DISTRICT_ORDER: { flag: string; area: AreaId; label: string }[] = [
+
+export const LEVELS: Record<AreaId, LevelDef> = { ...CORE_LEVELS, ...DISTRICTS, ...INTERIORS };
+
+/** The story's spine, in order: who to beat next, for the story screen and the phone. */
+export const DISTRICT_ORDER: { flag: string; area: AreaId; label: string; optional?: boolean }[] = [
   { flag: 'boss_gaffer', area: 'high_street', label: 'Take the High Street from the Gaffer' },
+  { flag: 'boss_estate_king', area: 'residential', label: 'Deal with the Estate King on Hollins', optional: true },
   { flag: 'boss_sully', area: 'industrial', label: 'Beat Sully Kane in the Industrial Quarter' },
+  { flag: 'boss_market', area: 'market', label: 'Take on Maureen Doyle at the Old Market', optional: true },
   { flag: 'boss_ratcatcher', area: 'city', label: 'Take down the Ratcatcher in the City Centre' },
+  { flag: 'boss_docks', area: 'docks', label: 'Put Big Lenny down at the Canal Docks' },
+  { flag: 'boss_precinct', area: 'precinct', label: 'Break Dean Pryce’s grip on Kingsway Precinct' },
+  { flag: 'boss_nightclub', area: 'nightlife', label: 'Settle things with Simone Achebe on the Neon Mile' },
+  { flag: 'boss_stadium', area: 'stadium', label: 'Beat the firm’s top boy at Kirkgate' },
+  { flag: 'boss_factory', area: 'factory', label: 'Face Kasia Nowak in the old factory', optional: true },
+  { flag: 'boss_underground', area: 'underground', label: 'Find the Underground King on the Deep Line', optional: true },
   { flag: 'boss_dunc', area: 'territory', label: 'Finish Big Dunc in the Pit' },
+  { flag: 'boss_final', area: 'hq', label: 'End it with Victor Hale at Hale House' },
 ];

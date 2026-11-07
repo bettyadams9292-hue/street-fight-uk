@@ -2,7 +2,7 @@ import { emptyCommand, type CommandFrame, type PressButton } from './Commands';
 
 type GameButton = PressButton;
 const PRESS_BUTTONS: readonly GameButton[] = ['lp', 'hp', 'lk', 'hk', 'jump', 'dodge', 'grab', 'swap'];
-export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause';
+export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory';
 export type InputSource = 'keyboard' | 'gamepad' | 'touch';
 
 /** Keyboard layout. Kept in one place so a rebinding screen can edit it later. */
@@ -99,6 +99,7 @@ export class InputManager {
       }
       if (code === 'Escape') this.emitMenu('back');
       else if (code === 'KeyP') this.emitMenu('pause');
+      else if (code === 'KeyI') this.emitMenu('inventory');
     }
     // Menu navigation (arrow keys / WASD / Enter).
     if (code === 'ArrowUp' || code === 'KeyW') this.emitMenu('up');
@@ -126,6 +127,7 @@ export class InputManager {
 
     for (const b of PRESS_BUTTONS) if (edge(PAD_BUTTONS[b])) this.pressedQueue.add(b);
     if (edge(PAD.START)) this.emitMenu('pause', 'gamepad');
+    if (edge(PAD.RB)) this.emitMenu('inventory', 'gamepad');
     if (edge(PAD.A)) this.emitMenu('confirm', 'gamepad');
     if (edge(PAD.B)) this.emitMenu('back', 'gamepad');
     if (edge(PAD.UP)) this.emitMenu('up', 'gamepad');

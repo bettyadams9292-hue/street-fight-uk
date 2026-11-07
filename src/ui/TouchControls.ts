@@ -53,6 +53,8 @@ export class TouchControls {
       btn('JUMP', 'jump', () => input.pressFromTouch('jump')),
       btn('GRAB', 'grab', () => input.pressFromTouch('grab')),
     );
+    // Inventory, top right under the pause button.
+    const bag = btn('BAG', 'bag', () => input.menuFromTouch('inventory'));
     // SP arms the next attack as a special (and SP + HP finishes a beaten opponent).
     const sp = btn('SP', 'sp', () => {
       input.touch.specialArmed = !input.touch.specialArmed;
@@ -61,7 +63,7 @@ export class TouchControls {
     input.onSpecialUsed = () => sp.classList.remove('armed');
     const extras = h('div', { class: 'extra-pad' }, sp, btn('SWAP', 'swap', () => input.pressFromTouch('swap')));
 
-    this.el = h('div', { class: 'touch-controls' }, zone, side, pad, extras);
+    this.el = h('div', { class: 'touch-controls' }, zone, side, pad, extras, bag);
 
     zone.addEventListener('pointerdown', (e) => this.stickStart(e, zone));
     zone.addEventListener('pointermove', (e) => this.stickMove(e));

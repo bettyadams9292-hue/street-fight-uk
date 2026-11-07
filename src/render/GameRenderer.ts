@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { themeProfile } from './themes';
 import type { Simulation } from '../core/Simulation';
 import { HitboxView } from '../debug/HitboxView';
 import type { Fighter } from '../fighter/Fighter';
@@ -103,10 +104,11 @@ export class GameRenderer {
     this.world = world;
     this.levelView = new LevelView(world.level, world.progress);
     this.scene.add(this.levelView.group);
-    const indoor = world.level.theme === 'home';
-    const bg = indoor ? 0x07080b : world.level.theme === 'subway' ? 0x0c0d0e : BG;
+    const prof = themeProfile(world.level.theme);
+    const bg = prof.interior ? 0x07080b : prof.roofed ? prof.bg : world.level.theme === 'estate' || world.level.theme === 'high_street' ? BG : prof.bg;
     this.scene.background = new THREE.Color(bg);
-    this.scene.fog = indoor ? null : new THREE.FogExp2(bg, world.level.theme === 'subway' ? 0.03 : 0.018);
+    const mist = world.level.weather === 'mist' ? 1.8 : 1;
+    this.scene.fog = prof.interior || !prof.fog ? null : new THREE.FogExp2(bg, prof.fog * mist);
     this.cameraRig.resetWorld();
     this.applyQuality(this.quality);
     for (const f of world.sim.fighters) this.addFighter(f);

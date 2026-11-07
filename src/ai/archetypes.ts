@@ -41,7 +41,10 @@ export interface Archetype {
   look: (rnd: () => number) => Partial<CharacterAppearance>;
 }
 
-export const ARCHETYPE_IDS = ['thug', 'hothead', 'bruiser', 'defender', 'tooled', 'boxer', 'kickboxer', 'grappler', 'elite', 'rival', 'boss'] as const;
+export const ARCHETYPE_IDS = [
+  'thug', 'hothead', 'bruiser', 'defender', 'tooled', 'boxer', 'kickboxer', 'grappler', 'elite', 'rival', 'boss',
+  'hooded', 'runner', 'knifeman', 'brawler', 'casual', 'gang_enforcer', 'docker', 'bouncer', 'security', 'police',
+] as const;
 export type ArchetypeId = (typeof ARCHETYPE_IDS)[number];
 
 const attrs = (strength: number, speed: number, endurance: number, agility: number, defence: number, technique: number): Attributes => ({
@@ -118,6 +121,77 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     aggression: 0.65, blockChance: 0.45, dodgeChance: 0.25, parryChance: 0.25, range: 0.95, comboLength: 4,
     grabChance: 0.15, specialChance: 0.2, retreatsWhenTired: true, reactionFrames: 8, cashDrop: 30, xp: 120,
     look: () => ({ top: 'bomber', bottoms: 'trackies', accessories: ['wraps', 'chain'] }),
+  },
+  // ---- Stage 5 -------------------------------------------------------------------------
+  hooded: {
+    id: 'hooded', name: 'Hooded Fighter', description: 'Quick hands, hood up. Hits and slips back out.',
+    style: 'street', secondaryStyle: 'boxing', attributes: attrs(6, 9, 6, 9, 5, 6), level: 3,
+    aggression: 0.55, blockChance: 0.2, dodgeChance: 0.35, parryChance: 0.05, range: 0.95, comboLength: 3,
+    grabChance: 0.02, specialChance: 0.1, retreatsWhenTired: true, reactionFrames: 12, cashDrop: 9, xp: 40,
+    look: (r) => ({ top: 'hoodie', topColour: ['#1b1d22', '#2b2e35', '#4a4d55'][Math.floor(r() * 3)], bottoms: 'joggers', bottomsColour: '#1b1d22', accessories: ['snood'], headColour: '#1b1d22', muscle: 0.35, weight: 0.15 }),
+  },
+  runner: {
+    id: 'runner', name: 'Runner', description: 'Fast and agile. Darts in, dodges everything, never stands still.',
+    style: 'kickboxing', attributes: attrs(5, 11, 6, 11, 4, 6), level: 3,
+    aggression: 0.6, blockChance: 0.05, dodgeChance: 0.35, parryChance: 0.02, range: 1.1, comboLength: 2,
+    grabChance: 0, specialChance: 0.15, retreatsWhenTired: true, reactionFrames: 10, cashDrop: 8, xp: 40,
+    look: () => ({ top: 'tracksuit', topColour: '#2f6fa8', bottoms: 'joggers', shoes: 'runners', muscle: 0.25, weight: 0.05, height: 0.98 }),
+  },
+  knifeman: {
+    id: 'knifeman', name: 'Blade Merchant', description: 'Carries a knife. Fast and nasty: knock it out of his hand.',
+    style: 'street', attributes: attrs(6, 9, 6, 8, 4, 6), level: 3,
+    aggression: 0.5, blockChance: 0.1, dodgeChance: 0.25, parryChance: 0, range: 0.8, comboLength: 1,
+    grabChance: 0, specialChance: 0, retreatsWhenTired: true, reactionFrames: 12, weapon: 'knife', cashDrop: 10, xp: 45,
+    look: () => ({ top: 'puffer', topColour: '#1b1d22', bottoms: 'trackies', accessories: ['beanie'], headColour: '#2b2e35' }),
+  },
+  brawler: {
+    id: 'brawler', name: 'Pub Brawler', description: 'Big wild haymakers. Runs at you swinging.',
+    style: 'street', attributes: attrs(10, 5, 8, 4, 5, 3), level: 3,
+    aggression: 0.8, blockChance: 0.05, dodgeChance: 0, parryChance: 0, range: 0.85, comboLength: 3,
+    grabChance: 0.15, specialChance: 0.25, retreatsWhenTired: false, reactionFrames: 18, cashDrop: 10, xp: 45,
+    look: () => ({ top: 'football', topColour: '#b3121b', bottoms: 'jeans', weight: 0.8, muscle: 0.5, hair: 'buzz' }),
+  },
+  casual: {
+    id: 'casual', name: 'Football Casual', description: 'Comes in a firm. Smartly dressed, works the angles with his mates.',
+    style: 'street', secondaryStyle: 'boxing', attributes: attrs(8, 7, 8, 6, 6, 6), level: 4,
+    aggression: 0.55, blockChance: 0.3, dodgeChance: 0.15, parryChance: 0.08, range: 0.9, comboLength: 3,
+    grabChance: 0.08, specialChance: 0.12, retreatsWhenTired: true, reactionFrames: 12, cashDrop: 14, xp: 55,
+    look: (r) => ({ top: r() < 0.5 ? 'bomber' : 'denim', topColour: r() < 0.5 ? '#1f2a44' : '#2f4a2d', bottoms: 'jeans', shoes: 'trainers', shoesColour: '#e8e6e1', accessories: ['cap'], headColour: '#e8e6e1' }),
+  },
+  gang_enforcer: {
+    id: 'gang_enforcer', name: 'Gang Enforcer', description: 'The firm’s muscle. Heavy hitter who can grapple too.',
+    style: 'muay_thai', secondaryStyle: 'wrestling', attributes: attrs(11, 8, 10, 7, 9, 8), level: 6,
+    aggression: 0.6, blockChance: 0.4, dodgeChance: 0.15, parryChance: 0.15, range: 0.95, comboLength: 3,
+    grabChance: 0.18, specialChance: 0.2, retreatsWhenTired: false, reactionFrames: 10, cashDrop: 28, xp: 100,
+    look: () => ({ top: 'leather', topColour: '#1a1410', bottoms: 'jeans', bottomsColour: '#1b1d22', muscle: 0.85, weight: 0.5, accessories: ['chain', 'ring'], chainColour: 'gold' }),
+  },
+  docker: {
+    id: 'docker', name: 'Dock Worker', description: 'Huge forearms from lifting all day. Grabs and throws.',
+    style: 'wrestling', attributes: attrs(12, 4, 11, 3, 8, 5), level: 4,
+    aggression: 0.45, blockChance: 0.25, dodgeChance: 0, parryChance: 0, range: 0.85, comboLength: 2,
+    grabChance: 0.35, specialChance: 0.1, retreatsWhenTired: false, reactionFrames: 20, cashDrop: 12, xp: 55,
+    look: () => ({ top: 'workwear', topColour: '#e8d000', bottoms: 'workwear', shoes: 'boots', accessories: ['beanie'], headColour: '#1f2a44', muscle: 0.85, weight: 0.75 }),
+  },
+  bouncer: {
+    id: 'bouncer', name: 'Bouncer', description: 'Massive doorman. Blocks everything, then throws you out.',
+    style: 'boxing', secondaryStyle: 'wrestling', attributes: attrs(11, 5, 11, 4, 12, 7), level: 5,
+    aggression: 0.35, blockChance: 0.6, dodgeChance: 0, parryChance: 0.2, range: 0.9, comboLength: 2,
+    grabChance: 0.25, specialChance: 0.1, retreatsWhenTired: false, reactionFrames: 12, cashDrop: 18, xp: 70,
+    look: () => ({ top: 'coat', topColour: '#1b1d22', bottoms: 'jeans', bottomsColour: '#1b1d22', hair: 'bald', muscle: 0.9, weight: 0.7, height: 1.06, accessories: ['earring'] }),
+  },
+  security: {
+    id: 'security', name: 'Security Guard', description: 'Shop security. Holds you until the police arrive.',
+    style: 'street', secondaryStyle: 'wrestling', attributes: attrs(8, 5, 8, 5, 8, 5), level: 3,
+    aggression: 0.4, blockChance: 0.4, dodgeChance: 0, parryChance: 0.05, range: 0.9, comboLength: 2,
+    grabChance: 0.3, specialChance: 0, retreatsWhenTired: false, reactionFrames: 14, cashDrop: 0, xp: 30,
+    look: () => ({ top: 'coat', topColour: '#1b1d22', bottoms: 'workwear', bottomsColour: '#1b1d22', accessories: ['watch'] }),
+  },
+  police: {
+    id: 'police', name: 'Police Officer', description: 'Wants to arrest you. Grabs, holds and doesn’t give up.',
+    style: 'wrestling', secondaryStyle: 'boxing', attributes: attrs(9, 7, 10, 6, 9, 7), level: 5,
+    aggression: 0.55, blockChance: 0.45, dodgeChance: 0.05, parryChance: 0.1, range: 0.9, comboLength: 2,
+    grabChance: 0.4, specialChance: 0, retreatsWhenTired: false, reactionFrames: 12, cashDrop: 0, xp: 20,
+    look: () => ({ top: 'workwear', topColour: '#1b1d22', bottoms: 'workwear', bottomsColour: '#1b1d22', shoes: 'boots', shoesColour: '#101012', accessories: ['cap'], headColour: '#101418' }),
   },
   boss: {
     id: 'boss', name: 'Big Dunc', description: 'Runs the fight club. Goes berserk when hurt.',

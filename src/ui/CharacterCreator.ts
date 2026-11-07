@@ -278,9 +278,9 @@ export function characterCreator(
         content.replaceChildren(
           cycleRow('Top', opts(TOP_STYLES.filter((t) => (a.body === 'male' || t !== 'none') && (!isLocked(`top:${t}`) || t === a.top)), topLabels), a.top, (v) => set('top', v)),
           swatchRow('Top colour', CLOTHING_COLOURS, a.topColour, (v) => set('topColour', v)),
-          cycleRow('Bottoms', opts(BOTTOM_STYLES), a.bottoms, (v) => set('bottoms', v)),
+          cycleRow('Bottoms', opts(BOTTOM_STYLES.filter((t) => !isLocked(`bottoms:${t}`) || t === a.bottoms)), a.bottoms, (v) => set('bottoms', v)),
           swatchRow('Bottoms colour', CLOTHING_COLOURS, a.bottomsColour, (v) => set('bottomsColour', v)),
-          cycleRow('Shoes', opts(SHOE_STYLES), a.shoes, (v) => set('shoes', v)),
+          cycleRow('Shoes', opts(SHOE_STYLES.filter((t) => !isLocked(`shoes:${t}`) || t === a.shoes)), a.shoes, (v) => set('shoes', v)),
           swatchRow('Shoes colour', CLOTHING_COLOURS, a.shoesColour, (v) => set('shoesColour', v)),
           h('h3', { text: 'Accessories' }),
           ...ACCESSORIES.filter((acc) => !isLocked(`acc:${acc}`) || a.accessories.includes(acc)).map((acc) =>
@@ -290,7 +290,7 @@ export function characterCreator(
             }),
           ),
           cycleRow('Metal', [{ value: 'gold' as const, label: 'Gold' }, { value: 'silver' as const, label: 'Silver' }], a.chainColour, (v) => set('chainColour', v)),
-          h('p', { class: 'hint', text: lockedCount() ? `${lockedCount()} more item${lockedCount() === 1 ? '' : 's'} to find around the neighbourhood.` : 'You\u2019ve found every item of clothing.' }),
+          h('p', { class: 'hint', text: lockedCount() ? 'These are your own clothes. Jackets, trainers, chains and more are sold at Threads on the High Street (or found), and you wear them from your inventory.' : '' }),
         );
         break;
       }

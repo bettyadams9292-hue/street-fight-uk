@@ -33,6 +33,20 @@ const CHECKPOINTS: Checkpoint[] = [
   { area: 'subway', level: 5, upgrades: { health: 2, power: 1, toughness: 1 }, style: 'boxing', gear: 'steel_caps', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully'] },
   { area: 'city', level: 6, upgrades: { health: 3, power: 2, toughness: 1 }, style: 'boxing', gear: 'mouthguard', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully'] },
   { area: 'territory', level: 7, upgrades: { health: 3, power: 2, toughness: 2, stamina: 1 }, style: 'boxing', gear: 'leather_jacket', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully', 'boss_ratcatcher'] },
+  // Stage 5 districts, in the order a player is likely to reach them.
+  { area: 'residential', level: 3, upgrades: { health: 1 }, style: 'street', gear: 'wraps', moves: ['specials'], flags: ['boss_gaffer'] },
+  { area: 'market', level: 4, upgrades: { health: 1, power: 1 }, style: 'boxing', gear: 'wraps', moves: ['specials'], flags: ['boss_gaffer'] },
+  { area: 'leisure', level: 4, upgrades: { health: 1, power: 1 }, style: 'boxing', gear: 'wraps', moves: ['specials'], flags: ['boss_gaffer'] },
+  { area: 'docks', level: 6, upgrades: { health: 2, power: 2, toughness: 1 }, style: 'boxing', gear: 'mouthguard', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully'] },
+  { area: 'ind_estate', level: 6, upgrades: { health: 2, power: 2, toughness: 1 }, style: 'boxing', gear: 'mouthguard', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully'] },
+  { area: 'precinct', level: 7, upgrades: { health: 3, power: 2, toughness: 1 }, style: 'boxing', gear: 'mouthguard', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully', 'boss_ratcatcher'] },
+  { area: 'mall', level: 7, upgrades: { health: 3, power: 2, toughness: 1 }, style: 'boxing', gear: 'mouthguard', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully', 'boss_ratcatcher'] },
+  { area: 'car_park', level: 7, upgrades: { health: 3, power: 2, toughness: 1 }, style: 'boxing', gear: 'mouthguard', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully', 'boss_ratcatcher'] },
+  { area: 'nightlife', level: 8, upgrades: { health: 3, power: 2, toughness: 2, stamina: 1 }, style: 'boxing', gear: 'leather_jacket', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully', 'boss_ratcatcher', 'boss_precinct'] },
+  { area: 'stadium', level: 8, upgrades: { health: 3, power: 2, toughness: 2, stamina: 1 }, style: 'boxing', gear: 'leather_jacket', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully', 'boss_ratcatcher'] },
+  { area: 'factory', level: 8, upgrades: { health: 3, power: 2, toughness: 2, stamina: 1 }, style: 'boxing', gear: 'leather_jacket', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully', 'boss_docks'] },
+  { area: 'underground', level: 9, upgrades: { health: 4, power: 3, toughness: 2, stamina: 1 }, style: 'boxing', gear: 'leather_jacket', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully', 'boss_ratcatcher'] },
+  { area: 'hq', level: 11, upgrades: { health: 4, power: 3, toughness: 3, stamina: 2 }, style: 'boxing', gear: 'leather_jacket', moves: ['specials', 'finishers'], flags: ['boss_gaffer', 'boss_sully', 'boss_ratcatcher', 'boss_dunc', 'boss_docks', 'boss_precinct', 'boss_nightclub', 'boss_stadium'] },
 ];
 
 /** How a decent player behaves; a "casual" one blocks and reads less. */
@@ -53,8 +67,9 @@ function progressFor(cp: Checkpoint): Progress {
   for (const [k, v] of Object.entries(cp.upgrades)) p.save.upgrades[k as UpgradeId] = v!;
   p.save.styles.learned = ['street', cp.style];
   p.save.styles.primary = cp.style;
-  p.save.equipped.gear = cp.gear;
-  if (cp.gear && !p.save.gear.includes(cp.gear)) p.save.gear.push(cp.gear);
+  // Stage 5: gear is worn items now.
+  const GEAR_ITEM: Record<GearId, string> = { wraps: 'wraps', mouthguard: 'mouthguard', steel_caps: 'steel_toecaps', leather_jacket: 'leather_jacket', lucky_chain: 'lucky_chain' };
+  if (cp.gear) p.wearNew(GEAR_ITEM[cp.gear]);
   p.save.moves = [...cp.moves];
   for (const f of cp.flags) p.set(f);
   return p;

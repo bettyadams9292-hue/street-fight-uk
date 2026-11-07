@@ -16,6 +16,8 @@ function wearWeapon(attacker: Fighter, m: ActiveMove, bus: EventBus<GameEvents>)
   if (attacker.weapon.hits <= 0) {
     const w = attacker.weapon.data;
     attacker.weapon = null;
+    // A bottle leaves a broken bottle in your hand; a chair leaves a chair leg.
+    if (w.breaksInto) attacker.equipWeapon(w.breaksInto);
     bus.emit('weapon:broken', { fighter: attacker, name: w.name, smashed: w.breaks });
   }
 }
@@ -72,7 +74,7 @@ export function resolveCombat(fighters: Fighter[], frame: number, bus: EventBus<
 
     const sphere = hitSphereOf(attacker, m);
     for (const target of fighters) {
-      if (target === attacker || target.team === attacker.team) continue;
+      if (target === attacker || target.team === attacker.team || target.team === 'neutral' || attacker.team === 'neutral') continue;
       if (target.isInvulnerable || m.hitTargets.has(target.id)) continue;
       if (!sphereHitsFighter(sphere, target, m.data.depthTolerance)) continue;
       m.hitTargets.add(target.id);

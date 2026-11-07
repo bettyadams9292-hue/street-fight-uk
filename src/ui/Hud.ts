@@ -75,6 +75,10 @@ export class Hud {
   private bossTrailV = 1;
   private weaponText: HTMLElement;
   private toasts: HTMLElement;
+  private bagChip: HTMLElement;
+  private weaponChip: HTMLElement;
+  private weaponBar: HTMLElement;
+  private heatChip: HTMLElement;
 
   constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
@@ -108,10 +112,15 @@ export class Hud {
     this.bossTrail = h('div', { class: 'fill trail' });
     this.bossBar = h('div', { class: 'boss-bar' }, this.bossName, h('div', { class: 'bar health' }, this.bossTrail, this.bossFill));
     this.toasts = h('div', { class: 'toasts' });
+    this.bagChip = h('div', { class: 'status-chip bag' });
+    this.weaponBar = h('span');
+    this.weaponChip = h('div', { class: 'status-chip weapon off' }, h('span', { class: 'wname' }), h('span', { class: 'bar' }, this.weaponBar));
+    this.heatChip = h('div', { class: 'status-chip heat off' });
     this.el = h(
       'div',
       { class: 'hud' },
       this.story,
+      h('div', { class: 'status-strip' }, this.bagChip, this.weaponChip, this.heatChip),
       this.banner,
       this.bossBar,
       this.toasts,
@@ -156,7 +165,35 @@ export class Hud {
     if (!on) this.bossBar.classList.remove('on');
   }
 
-  updateStory(info: { pocket: number; bank: number; level: number; xp: number; xpNext: number; objective: string; weapon: string | null; boss: { name: string; title: string; health: number; max: number } | null }, dt: number): void {
+  updateStory(
+    info: {
+      pocket: number; bank: number; level: number; xp: number; xpNext: number; objective: string; weapon: string | null;
+      boss: { name: string; title: string; health: number; max: number } | null;
+      /** Pocket slots used / available; weapon condition 0..1; police heat 0..100. */
+      slots?: { used: number; cap: number }; condition?: number | null; heat?: number; police?: boolean;
+    },
+    dt: number,
+  ): void {
+    if (info.slots) {
+      const t = `POCKETS ${info.slots.used}/${info.slots.cap}`;
+      if (this.bagChip.textContent !== t) this.bagChip.textContent = t;
+      this.bagChip.classList.toggle('full', info.slots.used >= info.slots.cap);
+    }
+    const c = info.condition;
+    const showW = c !== null && c !== undefined && !!info.weapon;
+    this.weaponChip.classList.toggle('off', !showW);
+    if (showW) {
+      const nm = this.weaponChip.firstElementChild as HTMLElement;
+      const label = info.weapon!.replace(/ \(\d+\)$/, '');
+      if (nm.textContent !== label) nm.textContent = label;
+      this.weaponBar.style.width = `${Math.max(0, Math.min(1, c!)) * 100}%`;
+      this.weaponBar.style.background = c! > 0.5 ? '#6ad04a' : c! > 0.25 ? '#e8c040' : '#e84a3a';
+    }
+    const heat = info.heat ?? 0;
+    this.heatChip.classList.toggle('off', heat <= 0 && !info.police);
+    this.heatChip.classList.toggle('hot', !!info.police || heat >= 60);
+    const ht = info.police ? 'POLICE' : heat >= 60 ? `WANTED ${Math.round(heat)}` : `HEAT ${Math.round(heat)}`;
+    if (this.heatChip.textContent !== ht) this.heatChip.textContent = ht;
     const m = `\u00a3${info.pocket}  \u00b7  bank \u00a3${info.bank}`;
     if (this.money.textContent !== m) this.money.textContent = m;
     const l = `LVL ${info.level}`;
@@ -188,8 +225,9 @@ export class Hud {
   }
 
   /** Small reward / pickup message at the side. */
-  toast(text: string, kind: 'cash' | 'item' | 'info' | 'warn' = 'info'): void {
+  toast(text: string, kind: 'cash' | 'item' | 'info' | 'warn' = 'info', accent?: string): void {
     const t = h('div', { class: `toast ${kind}`, text });
+    if (accent) t.style.borderLeftColor = accent;
     this.toasts.append(t);
     while (this.toasts.children.length > 5) this.toasts.firstElementChild?.remove();
     setTimeout(() => t.remove(), 2600);

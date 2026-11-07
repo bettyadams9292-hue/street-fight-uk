@@ -12,13 +12,13 @@ export type HairStyle = (typeof HAIR_STYLES)[number];
 export const FACIAL_HAIR = ['none', 'stubble', 'moustache', 'goatee', 'short_beard', 'full_beard'] as const;
 export type FacialHair = (typeof FACIAL_HAIR)[number];
 
-export const TOP_STYLES = ['hoodie', 'tracksuit', 'tshirt', 'bomber', 'vest', 'none'] as const;
+export const TOP_STYLES = ['hoodie', 'designer_hoodie', 'tracksuit', 'tshirt', 'football', 'bomber', 'puffer', 'leather', 'denim', 'coat', 'workwear', 'vest', 'none'] as const;
 export type TopStyle = (typeof TOP_STYLES)[number];
 
-export const BOTTOM_STYLES = ['trackies', 'jeans', 'shorts'] as const;
+export const BOTTOM_STYLES = ['trackies', 'joggers', 'jeans', 'cargos', 'workwear', 'shorts'] as const;
 export type BottomStyle = (typeof BOTTOM_STYLES)[number];
 
-export const SHOE_STYLES = ['trainers', 'hitops', 'boots'] as const;
+export const SHOE_STYLES = ['trainers', 'runners', 'hitops', 'boots'] as const;
 export type ShoeStyle = (typeof SHOE_STYLES)[number];
 
 export const TATTOO_SLOTS = ['leftUpperArm', 'rightUpperArm', 'leftForearm', 'rightForearm', 'chest', 'neck'] as const;
@@ -33,7 +33,13 @@ export type FaceScar = (typeof FACE_SCARS)[number];
 export const ARM_SCARS = ['none', 'left', 'right', 'both'] as const;
 export type ArmScar = (typeof ARM_SCARS)[number];
 
-export const ACCESSORIES = ['wraps', 'chain', 'cap', 'watch', 'earring', 'headguard'] as const;
+export const ACCESSORIES = ['wraps', 'chain', 'cap', 'beanie', 'watch', 'earring', 'headguard', 'sunglasses', 'snood', 'ring', 'belt', 'mouthguard'] as const;
+
+/** What a new fighter can pick in the creator. Everything else is bought, found or stolen. */
+export const STARTER_TOPS: readonly TopStyle[] = ['hoodie', 'tracksuit', 'tshirt', 'vest', 'none'];
+export const STARTER_BOTTOMS: readonly BottomStyle[] = ['trackies', 'jeans', 'shorts'];
+export const STARTER_SHOES: readonly ShoeStyle[] = ['trainers', 'hitops'];
+export const STARTER_ACCESSORIES: readonly Accessory[] = ['wraps', 'watch', 'earring'];
 export type Accessory = (typeof ACCESSORIES)[number];
 
 export interface CharacterAppearance {
@@ -75,6 +81,8 @@ export interface CharacterAppearance {
   shoesColour: string;
   accessories: Accessory[];
   chainColour: 'gold' | 'silver';
+  /** Colour of a cap, beanie or face covering. */
+  headColour?: string;
 }
 
 export const SKIN_TONES = [
@@ -239,6 +247,7 @@ export function sanitiseAppearance(raw: unknown): CharacterAppearance {
     shoesColour: colour(a.shoesColour, d.shoesColour),
     accessories: Array.isArray(a.accessories) ? (a.accessories.filter((x) => ACCESSORIES.includes(x as Accessory)) as Accessory[]) : d.accessories,
     chainColour: a.chainColour === 'silver' ? 'silver' : 'gold',
+    headColour: typeof a.headColour === 'string' && /^#[0-9a-f]{6}$/i.test(a.headColour) ? a.headColour : undefined,
   };
 }
 
@@ -248,12 +257,14 @@ export const LABELS: Record<string, string> = {
   bald: 'Shaved', buzz: 'Buzz cut', crop: 'Short crop', quiff: 'Quiff', curly: 'Curly top', afro: 'Afro', cornrows: 'Cornrows',
   mohawk: 'Mohawk', bun: 'Bun', ponytail: 'Ponytail', long: 'Long', bob: 'Bob',
   none: 'None', stubble: 'Stubble', moustache: 'Moustache', goatee: 'Goatee', short_beard: 'Short beard', full_beard: 'Full beard',
-  hoodie: 'Hoodie', tracksuit: 'Tracksuit top', tshirt: 'T-shirt', bomber: 'Bomber jacket', vest: 'Vest',
-  trackies: 'Trackies', jeans: 'Jeans', shorts: 'Fight shorts',
-  trainers: 'Trainers', hitops: 'High-tops', boots: 'Boots',
+  hoodie: 'Hoodie', designer_hoodie: 'Designer hoodie', tracksuit: 'Tracksuit top', tshirt: 'T-shirt', football: 'Football shirt', bomber: 'Bomber jacket',
+  puffer: 'Puffer jacket', leather: 'Leather jacket', denim: 'Denim jacket', coat: 'Long coat', workwear: 'Workwear', vest: 'Vest',
+  trackies: 'Trackies', joggers: 'Joggers', jeans: 'Jeans', cargos: 'Cargos', shorts: 'Fight shorts',
+  trainers: 'Trainers', runners: 'Running trainers', hitops: 'High-tops', boots: 'Boots',
   tribal: 'Tribal', rose: 'Rose', swallow: 'Swallow', crown: 'Crown', geometric: 'Geometric', sleeve: 'Full sleeve',
   brow: 'Split eyebrow', cheek: 'Cheek slash', chin: 'Chin', left: 'Left arm', right: 'Right arm', both: 'Both arms',
-  wraps: 'Hand wraps', chain: 'Chain', cap: 'Cap', watch: 'Watch', earring: 'Earring', headguard: 'Head guard',
+  wraps: 'Hand wraps', chain: 'Chain', cap: 'Cap', beanie: 'Beanie', watch: 'Watch', earring: 'Earring', headguard: 'Head guard',
+  sunglasses: 'Sunglasses', snood: 'Face covering', ring: 'Ring', belt: 'Belt', mouthguard: 'Gumshield',
   leftUpperArm: 'Left upper arm', rightUpperArm: 'Right upper arm', leftForearm: 'Left forearm', rightForearm: 'Right forearm',
   chest: 'Chest', neck: 'Neck',
 };

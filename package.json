@@ -6,11 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "balance": "tsx tests/balance.ts",
-    "test": "tsx tests/sim.test.ts && tsx tests/character.test.ts && tsx tests/stage3.test.ts && tsx tests/world.test.ts"
+    "test": "tsx tests/sim.test.ts && tsx tests/character.test.ts && tsx tests/stage3.test.ts && tsx tests/world.test.ts && tsx tests/stage5.test.ts"
   },
   "dependencies": {
     "three": "^0.170.0"

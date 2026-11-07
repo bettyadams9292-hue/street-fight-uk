@@ -30,7 +30,8 @@ export type FighterState =
   | 'ground_bottom'
   | 'ko';
 
-export type Team = 'player' | 'enemy';
+/** 'neutral' fighters (shopkeepers, bystanders) can't hit or be hit until they turn hostile. */
+export type Team = 'player' | 'enemy' | 'neutral';
 
 /** Perks granted by backgrounds (see character/Character.ts). */
 export type Perk = 'cheap_grabs' | 'dodge_frames';
@@ -57,6 +58,8 @@ export interface FighterConfig {
   grabProtectFrames?: number;
   /** Start holding a weapon. */
   weapon?: WeaponId | null;
+  /** Remaining durability of that weapon. */
+  weaponHits?: number;
   /** Moves bought at the gym (story mode). Leave out to allow everything. */
   unlocks?: { specials: boolean; finishers: boolean };
 }
@@ -84,7 +87,7 @@ export const FINISH_HEALTH = 0.15;
 export class Fighter {
   readonly id: number;
   readonly name: string;
-  readonly team: Team;
+  team: Team;
   readonly appearance: CharacterAppearance;
   readonly stats: Stats;
   readonly vitals: Vitals;
@@ -131,7 +134,9 @@ export class Fighter {
   /** Weapon in hand, with hits left before it breaks. */
   weapon: { data: WeaponData; hits: number } | null = null;
   /** A weapon this fighter just dropped; the world turns it into a pickup. */
-  droppedWeapon: WeaponData | null = null;
+  droppedWeapon: { data: WeaponData; hits: number } | null = null;
+  /** A weapon this fighter just threw; the world turns it into a projectile. */
+  thrownWeapon: { data: WeaponData; hits: number } | null = null;
   unlocks: { specials: boolean; finishers: boolean };
   private airAttackUsed = false;
   private airVX = 0;
@@ -162,7 +167,7 @@ export class Fighter {
     this.poise = this.stats.maxPoise;
     this.bufferFrames = cfg.inputBufferFrames ?? INPUT_BUFFER_FRAMES;
     this.unlocks = cfg.unlocks ?? { specials: true, finishers: true };
-    if (cfg.weapon) this.equipWeapon(cfg.weapon);
+    if (cfg.weapon) this.equipWeapon(cfg.weapon, cfg.weaponHits);
     this.spawn = { x: cfg.x ?? 0, z: cfg.z ?? 0 };
     this.pos.x = this.spawn.x;
     this.pos.z = this.spawn.z;
@@ -206,16 +211,28 @@ export class Fighter {
     return PARRY_WINDOW + Math.floor(this.stats.attr('technique') / 5) + this.stats.flat('parryFrames');
   }
 
-  equipWeapon(id: WeaponId): void {
+  /** @param hits remaining durability (defaults to brand new). */
+  equipWeapon(id: WeaponId, hits?: number): void {
     const data = WEAPONS[id];
-    this.weapon = { data, hits: data.durability };
+    this.weapon = { data, hits: Math.max(1, Math.min(data.durability, hits ?? data.durability)) };
   }
 
   /** Let go of the weapon (it lands as a pickup unless it broke). */
   dropWeapon(): void {
     if (!this.weapon) return;
-    this.droppedWeapon = this.weapon.data;
+    this.droppedWeapon = this.weapon;
     this.weapon = null;
+  }
+
+  /** Throw a throwable weapon: the world launches it. */
+  throwWeapon(frame: number, bus: EventBus<GameEvents>): boolean {
+    if (!this.weapon?.data.throwable) return false;
+    this.vitals.spendStamina(8, frame);
+    this.thrownWeapon = this.weapon;
+    this.weapon = null;
+    this.vitals.markCombat(frame);
+    bus.emit('weapon:thrown', { fighter: this, name: this.thrownWeapon.data.name });
+    return true;
   }
 
   isFacing(other: Fighter): boolean {
@@ -375,7 +392,7 @@ export class Fighter {
       case 'block': {
         if (cmd.pressed.swap && this.trySwap(frame, bus)) break;
         if (cmd.pressed.grab && this.weapon) {
-          this.dropWeapon();
+          if (!this.throwWeapon(frame, bus)) this.dropWeapon();
           break;
         }
         if (cmd.pressed.grab && this.tryGrab(frame, bus)) break;

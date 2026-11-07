@@ -238,7 +238,7 @@ test('beaten enemies drop cash and are removed', () => {
   ko(w, f);
   run(w, 160);
   assert(!w.sim.fighters.includes(f), 'body still in the sim');
-  const drop = w.pickups.find((x) => x.kind === 'drop');
+  const drop = w.cash.find((x) => !x.def);
   assert(drop && drop.amount > 0, 'no cash dropped');
 });
 
@@ -286,7 +286,7 @@ test('boss: phases fire, defeat fires once, rewards once, unlocks the next distr
   assert(to === 'alleys', `exit went to "${to}"`);
 });
 
-test('one-time pickups stay collected; food comes back', () => {
+test('one-time pickups stay collected; everyday finds restock only after a few trips', () => {
   const p = freshProgress();
   const w = new World(LEVELS.estate, p, { entry: 'home', seed: 1 });
   for (const e of w.encounters) e.status = 'cleared';
@@ -296,32 +296,38 @@ test('one-time pickups stay collected; food comes back', () => {
   assert(p.save.cash.pocket === cash + 10, 'tenner not picked up');
   place(w, 43, -1.6);
   run(w, 2);
-  assert(p.save.stats.secrets === 1 && p.save.cosmetics.includes('acc:cap'), 'secret not found');
-  w.player.vitals.health = 10;
+  assert(p.save.stats.secrets === 1 && p.owns('cap_black'), 'secret not found');
+  // Chips go in your pockets.
   place(w, 15, -1.0);
   run(w, 2);
-  assert(w.player.vitals.health > 10, 'food did not heal');
+  assert(w.interactable?.kind === 'item', `no pick-up prompt: ${w.interactable?.kind}`);
+  run(w, 1, () => cmd({ press: ['grab'] }));
+  assert(p.save.inventory.some((s) => s.id === 'chips'), 'chips not in pockets');
   const w2 = new World(LEVELS.estate, p, { entry: 'home', seed: 1 });
-  assert(!w2.pickups.some((x) => x.key === 'tenner' || x.key === 'garages_stash'), 'one-time pickups came back');
-  assert(w2.pickups.some((x) => x.key === 'chips'), 'food did not come back');
+  assert(!w2.cash.some((x) => x.key === 'tenner') && !w2.secrets.some((x) => x.key === 'garages_stash'), 'one-time pickups came back');
+  assert(!w2.items.some((x) => x.pickupId === 'chips'), 'chips came straight back (farmable)');
+  for (let i = 0; i < 6; i++) p.tick();
+  const w3 = new World(LEVELS.estate, p, { entry: 'home', seed: 1 });
+  assert(w3.items.some((x) => x.pickupId === 'chips'), 'chips never restocked');
 });
 
-test('weapons: pick up, swing, drop on knockdown, and go in the garage', () => {
+test('weapons: pick up, swing, throw or drop, and they persist in your hands', () => {
   const p = freshProgress();
   const w = new World(LEVELS.estate, p, { entry: 'home', seed: 1 });
   for (const e of w.encounters) e.status = 'cleared';
-  place(w, 24, 0);
+  place(w, 24, -0.2);
   run(w, 2);
-  assert(w.interactable?.kind === 'weapon', `no weapon prompt: ${w.interactable?.kind}`);
+  assert(w.interactable?.kind === 'item' && w.interactable.item.stack.id === 'w_bottle', `no weapon prompt: ${w.interactable?.kind}`);
   run(w, 1, () => cmd({ press: ['grab'] }));
   assert(w.player.weapon?.data.id === 'bottle', 'not holding the bottle');
-  assert(p.save.weapons.includes('bottle'), 'bottle not in the garage');
+  assert(p.save.held?.id === 'w_bottle', 'held weapon not saved');
   run(w, 2, (i) => cmd({ press: i === 0 ? ['hp'] : [] }));
   assert(w.player.move?.data.style === 'weapon', `swing was ${w.player.move?.data.id}`);
   run(w, 60);
   w.player.weapon && w.player.dropWeapon();
   run(w, 2);
-  assert(w.items.some((i) => i.weapon.id === 'bottle'), 'dropped bottle not on the ground');
+  assert(w.items.some((i) => i.stack.id === 'w_bottle' || i.stack.id === 'w_broken_bottle'), 'dropped bottle not on the ground');
+  assert(!p.save.held, 'still marked as held after dropping');
 });
 
 test('subway lever opens the gate and the estate shortcut', () => {
@@ -392,11 +398,11 @@ test('save/load round trip, backup recovery and legacy migration', () => {
   // Second write backs up the first; then corrupt main.
   p.addCash(1);
   store.write(p.save);
-  kv.setItem('sfuk.save.v2', '{not json');
+  kv.setItem('sfuk.save.v3', '{not json');
   const rec = store.load()!;
   assert(rec && rec.recovered && rec.save.flags.boss_gaffer, 'did not recover from backup');
   // Garbage fields get repaired, not crash.
-  kv.setItem('sfuk.save.v2', JSON.stringify({ ...p.save, cash: { pocket: -50, bank: 'lots' }, area: 'narnia', flags: { x: 'yes', y: true } }));
+  kv.setItem('sfuk.save.v3', JSON.stringify({ ...p.save, cash: { pocket: -50, bank: 'lots' }, area: 'narnia', flags: { x: 'yes', y: true } }));
   const fixed = store.load()!;
   assert(fixed.save.cash.pocket >= 0 && typeof fixed.save.cash.bank === 'number' && fixed.save.area === 'home' && !fixed.save.flags.x && fixed.save.flags.y, 'sanitise failed');
 });
@@ -462,8 +468,8 @@ test('soak: AI groups in every area for 40 s without errors or escapes', () => {
     const lvl = LEVELS[id];
     const p = freshProgress();
     const w = new World(lvl, p, { entry: lvl.entries[0].id, seed: 7 });
-    const first = w.encounters.find((e) => !e.def.optional)!;
-    place(w, first.def.triggerX + 0.5, 0);
+    const first = w.encounters.find((e) => !e.def.optional) ?? w.encounters[0];
+    if (first) place(w, first.def.triggerX + 0.5, 0);
     w.player.vitals.health = 1e6;
     for (let i = 0; i < 40 * 60; i++) {
       w.step(cmd({ press: i % 20 === 0 ? ['lp'] : [], moveX: Math.sin(i / 50) }));

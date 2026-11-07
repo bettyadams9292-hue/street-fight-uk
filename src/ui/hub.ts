@@ -1,17 +1,17 @@
 import { BOSSES } from '../ai/bosses';
-import { WEAPONS, type WeaponId } from '../combat/Weapons';
+import { WEAPONS } from '../combat/Weapons';
 import { STYLES } from '../data/styles';
 import {
-  GEAR,
   MOVE_UNLOCKS,
   MOVE_UNLOCK_IDS,
   STYLE_LESSONS,
   UPGRADES,
   UPGRADE_IDS,
   xpForNextLevel,
-  type GearId,
 } from '../progress/catalogue';
 import type { AreaId, Progress, PurchaseResult } from '../progress/Progress';
+import type { ItemStack } from '../items/Inventory';
+import { ITEMS } from '../items/items';
 import type { StyleId } from '../styles/StyleData';
 import { LEVELS, DISTRICT_ORDER } from '../world/levels';
 import { cycleRow, menuButton } from './controls';
@@ -123,26 +123,72 @@ export function kitchenScreen(progress: Progress, close: () => void, heal: () =>
   }, close);
 }
 
-// ---- garage ---------------------------------------------------------------------------
+// ---- workbench: repair weapons ----------------------------------------------------------------
 
-export function garageScreen(progress: Progress, close: () => void, changed: () => void): Screen {
-  return panelScreen('Garage', progress, () => {
+/** Cost to bring a weapon back to full: a share of its value per missing hit, at least a quid. */
+export function repairCost(st: ItemStack): number {
+  const d = ITEMS[st.id];
+  const w = d?.weapon ? WEAPONS[d.weapon] : null;
+  if (!w || st.hits === undefined || st.hits >= w.durability) return 0;
+  const missing = (w.durability - st.hits) / w.durability;
+  return Math.max(1, Math.round((w.value + 6) * 0.5 * missing));
+}
+
+export function repairScreen(progress: Progress, close: () => void, changed: () => void): Screen {
+  return panelScreen('Workbench', progress, (msg) => {
     const s = progress.save;
-    const rows: HTMLElement[] = [
-      h('h3', { text: 'Take a weapon out' }),
-      cycleRow<WeaponId | null>('Weapon', [{ value: null, label: 'Bare hands' }, ...s.weapons.map((w) => ({ value: w as WeaponId | null, label: WEAPONS[w].name }))], s.equipped.weapon, (v) => {
-        s.equipped.weapon = v;
-        changed();
-      }),
-      h('p', { class: 'hint', text: s.weapons.length ? 'You start each trip holding it. It wears out and drops if you’re knocked down, but the garage always has another.' : 'Pick up a weapon out on the streets and a spare ends up here.' }),
-      h('h3', { text: 'Gear' }),
-      cycleRow<GearId | null>('Wearing', [{ value: null, label: 'Nothing' }, ...s.gear.map((g) => ({ value: g as GearId | null, label: GEAR[g].name }))], s.equipped.gear, (v) => {
-        s.equipped.gear = v;
-        changed();
-      }),
-    ];
-    for (const g of s.gear) rows.push(h('div', { class: 'shop-row' }, h('div', { class: 'what' }, h('b', { text: GEAR[g].name }), h('span', { text: GEAR[g].text })), h('span', { text: s.equipped.gear === g ? 'On' : '' })));
-    if (s.gear.length < Object.keys(GEAR).length) rows.push(h('p', { class: 'hint', text: `${Object.keys(GEAR).length - s.gear.length} more bits of gear are stashed around the neighbourhood.` }));
+    const weapons: { st: ItemStack; where: string }[] = [];
+    if (s.held) weapons.push({ st: s.held, where: 'in your hands' });
+    for (const st of s.inventory) if (ITEMS[st.id].weapon) weapons.push({ st, where: 'in your pockets' });
+    for (const st of s.storage) if (ITEMS[st.id].weapon) weapons.push({ st, where: 'in the stash' });
+    const rows: HTMLElement[] = [h('p', { class: 'hint', text: 'Tape, glue and the odd bolt. Bring a battered weapon back to full strength, paid from the tin. Things that smash (bottles, tellies) can\u2019t be fixed.' })];
+    if (!weapons.length) rows.push(h('p', { text: 'No weapons to work on. Pick some up out there; spares can live in the stash.' }));
+    for (const { st, where } of weapons) {
+      const d = ITEMS[st.id];
+      const w = WEAPONS[d.weapon!];
+      const cost = repairCost(st);
+      const fixable = !w.breaks || w.durability > 2;
+      rows.push(
+        shopRow(`${d.name}  ${st.hits ?? w.durability}/${w.durability}`, where, cost === 0 ? 'Good as new' : !fixable ? 'Can\u2019t fix' : `Fix \u00a3${cost}`, cost === 0 || !fixable ? null : () => {
+          if (s.cash.bank < cost) return msg(`Need \u00a3${cost} in the tin`, true);
+          s.cash.bank -= cost;
+          st.hits = w.durability;
+          changed();
+          msg(`${d.name} fixed up`);
+        }),
+      );
+    }
+    return rows;
+  }, close);
+}
+
+// ---- the Red Lion bar -----------------------------------------------------------------------------
+
+export const BAR_MENU: { id: string; price: number }[] = [
+  { id: 'can_of_pop', price: 2 },
+  { id: 'water', price: 1 },
+  { id: 'flask_tea', price: 3 },
+  { id: 'sausage_roll', price: 3 },
+  { id: 'pasty', price: 4 },
+  { id: 'fry_up', price: 12 },
+  { id: 'first_aid', price: 18 },
+];
+
+export function barScreen(progress: Progress, close: () => void, changed: () => void): Screen {
+  return panelScreen('The Red Lion', progress, (msg) => {
+    const rows: HTMLElement[] = [h('p', { class: 'hint', text: '"What can I get you? Kitchen\u2019s open till ten. And there\u2019s a first aid kit behind the bar, if you\u2019re after a fight."' })];
+    for (const m of BAR_MENU) {
+      const d = ITEMS[m.id];
+      rows.push(
+        shopRow(d.name, d.use?.text ?? d.text, `\u00a3${m.price}`, () => {
+          if (progress.spaceFor(m.id) < 1) return msg('Your pockets are full', true);
+          if (!progress.pay(m.price)) return msg(`You need \u00a3${m.price}`, true);
+          progress.giveItem(m.id);
+          changed();
+          msg(`${d.name}. In your pocket.`);
+        }),
+      );
+    }
     return rows;
   }, close);
 }
@@ -179,12 +225,18 @@ export const TAXI_STOPS: { area: AreaId; entry: string; requires?: string; requi
   { area: 'subway', entry: 'left', requires: 'boss_sully', requiresText: 'Beat Sully first' },
   { area: 'city', entry: 'left', requires: 'boss_sully', requiresText: 'Beat Sully first' },
   { area: 'territory', entry: 'left', requires: 'boss_ratcatcher', requiresText: 'Beat the Ratcatcher first' },
+  { area: 'residential', entry: 'right' },
+  { area: 'leisure', entry: 'right', requires: 'boss_estate_king', requiresText: 'Beat the Estate King first' },
+  { area: 'market', entry: 'left', requires: 'boss_gaffer', requiresText: 'Beat the Gaffer first' },
+  { area: 'docks', entry: 'left', requires: 'boss_sully', requiresText: 'Beat Sully first' },
+  { area: 'precinct', entry: 'left', requires: 'boss_sully', requiresText: 'Beat Sully first' },
+  { area: 'mall', entry: 'left', requires: 'boss_precinct', requiresText: 'Beat Dean Pryce first' },
 ];
 
 export function contactsScreen(progress: Progress, close: () => void, travel: (area: AreaId, entry: string) => void, changed: () => void): Screen {
   return panelScreen('Phone', progress, (msg) => {
     const s = progress.save;
-    const next = DISTRICT_ORDER.find((d) => !progress.has(d.flag));
+    const next = DISTRICT_ORDER.find((d) => !d.optional && !progress.has(d.flag));
     const rows: HTMLElement[] = [
       h('h3', { text: 'Messages' }),
       h('p', { text: next ? `Mo: "${hintFor(next.flag)}"` : 'Mo: "You did it. Nobody runs these streets now. Mad."' }),
@@ -214,8 +266,18 @@ function hintFor(flag: string): string {
       return 'Sully Kane used to be a proper boxer. Runs a gym at the end of the Canal Side yard. Watch his hands.';
     case 'boss_ratcatcher':
       return 'The Ratcatcher drinks at the Rat & Castle in town. He’ll try to tie you up. Don’t let him get you on the floor.';
-    default:
+    case 'boss_docks':
+      return 'Down the towpath from Sully\u2019s yard there\u2019s the old canal docks. Big Lenny Shaw runs them. Huge bloke, grabs and throws.';
+    case 'boss_precinct':
+      return 'Kingsway Precinct, through the walkway off Market Square. Dean Pryce takes money off every shop. He\u2019s got the VIP passes for the Neon Mile too.';
+    case 'boss_nightclub':
+      return 'With Pryce\u2019s VIP pass you can get onto the Neon Mile. Simone Achebe owns Velvet. Fast feet, watch the kicks.';
+    case 'boss_stadium':
+      return 'Kirkgate Ground, past the leisure park. You need the service key: Maureen at the Old Market keeps one. The firm\u2019s top boy is Carl Briggs.';
+    case 'boss_dunc':
       return 'Big Dunc. The Pit, past the city. Everything leads back to him.';
+    default:
+      return 'Victor Hale. Hale House, past the Pit. This is where it ends.';
   }
 }
 
@@ -235,7 +297,7 @@ export function tinScreen(progress: Progress, close: () => void, changed: () => 
 
 // ---- story menus --------------------------------------------------------------------------
 
-export function storyPauseMenu(actions: { resume: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; quit: () => void }): Screen {
+export function storyPauseMenu(actions: { resume: () => void; inventory: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; quit: () => void }): Screen {
   const el = h(
     'div',
     { class: 'screen pause-menu' },
@@ -244,6 +306,7 @@ export function storyPauseMenu(actions: { resume: () => void; home: (() => void)
       'nav',
       { class: 'menu-list' },
       menuButton('Resume', actions.resume),
+      menuButton('Inventory', actions.inventory, 'I / RB / BAG'),
       actions.home ? menuButton('Head home', actions.home, 'Back to your house. Fights here will still be waiting.') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
       menuButton('Save', actions.save),
       menuButton('Settings', actions.settings),

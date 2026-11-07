@@ -26,11 +26,15 @@ import { emptyCommand, type AttackButton } from './input/Commands';
 import type { StudioFraming } from './render/StudioView';
 import { SaveStore } from './save/SaveStore';
 import { newSave, Progress, type AreaId } from './progress/Progress';
-import { LOCKED_COSMETICS, xpForNextLevel } from './progress/catalogue';
+import { xpForNextLevel } from './progress/catalogue';
+import { STARTER_ACCESSORIES, STARTER_BOTTOMS, STARTER_SHOES, STARTER_TOPS } from './character/Appearance';
+import { ITEMS, RARITY_COLOURS } from './items/items';
+import { clothesShopScreen, inventoryScreen, pawnScreen, storageScreen } from './ui/inventoryUI';
+import { arrest, ARREST_HEAT, robShop } from './world/robbery';
 import { World } from './world/World';
 import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
-import { contactsScreen, garageScreen, gymScreen, kitchenScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
+import { barScreen, contactsScreen, gymScreen, kitchenScreen, repairScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
 
@@ -215,8 +219,7 @@ export class Game {
   private openCreator(mode: 'new' | 'edit', back: 'sheet' | 'home' = 'sheet', at?: { x: number; z: number }): void {
     const existing = mode === 'edit' ? this.character ?? undefined : undefined;
     const startLook = existing?.appearance ?? stripLocked(characterCreatorDefault());
-    const owned = mode === 'edit' && this.progress ? this.progress.save.cosmetics : [];
-    const isLocked = (key: string) => LOCKED_COSMETICS.includes(key) && !owned.includes(key);
+    const isLocked = starterLocked;
     const returnTo = () => (back === 'home' ? this.enterArea('home', 'start', { at }) : this.openSheet());
     this.enterStudio(startLook);
     const screen = characterCreator(
@@ -331,6 +334,7 @@ export class Game {
       this.ui.replaceAll(
         storyPauseMenu({
           resume: () => this.resume(),
+          inventory: () => this.openInventory(),
           home: atHome || w.locked || w.player.isKO ? null : () => this.goHome(false),
           homeWhy: atHome ? '' : 'Can\u2019t head home in the middle of a fight',
           save: () => {
@@ -432,7 +436,7 @@ export class Game {
   }
 
   /** Build an area and drop the player in. Saves where you are so a closed tab resumes here. */
-  private enterArea(area: AreaId, entry: string, opts: { carry?: { health: number; stamina: number; weapon: import('./combat/Weapons').WeaponId | null } | null; at?: { x: number; z: number } } = {}): void {
+  private enterArea(area: AreaId, entry: string, opts: { carry?: { health: number; stamina: number } | null; at?: { x: number; z: number } } = {}): void {
     const p = this.progress!;
     const level = LEVELS[area];
     this.unwire();
@@ -442,11 +446,11 @@ export class Game {
     this.pending = null;
     const from = p.save.area;
     const carry = opts.carry ? { ...opts.carry } : null;
-    if (area === 'home') {
-      // Home: the garage always has your chosen weapon; the trip's meal is used up.
-      if (carry) carry.weapon = p.save.equipped.weapon;
-      if (from !== 'home' && p.save.mealBuff) p.save.mealBuff = false;
-    }
+    delete p.save.flags['threads_robbable'];
+    // Moving between areas is the game's clock: heat dies down, shops reopen.
+    if (area !== from) p.tick();
+    // Home: the trip's meal is used up.
+    if (area === 'home' && from !== 'home' && p.save.mealBuff) p.save.mealBuff = false;
     const world = new World(level, p, { entry, touch: this.touchWanted(), carry, difficulty: this.settings.get().difficulty });
     if (opts.at) {
       world.player.pos.x = opts.at.x;
@@ -480,7 +484,7 @@ export class Game {
   }
 
   /** Fade out, swap area, fade in. */
-  private changeArea(area: AreaId, entry: string, carry: { health: number; stamina: number; weapon: import('./combat/Weapons').WeaponId | null } | null): void {
+  private changeArea(area: AreaId, entry: string, carry: { health: number; stamina: number } | null): void {
     if (this.state === 'transition') return;
     this.state = 'transition';
     this.touch.release();
@@ -515,6 +519,10 @@ export class Game {
         objective,
         weapon: w.player.weapon ? `${w.player.weapon.data.name} (${w.player.weapon.hits})` : null,
         boss: boss && def ? { name: def.name, title: def.title, health: boss.vitals.health, max: boss.vitals.maxHealth } : null,
+        slots: { used: s.inventory.length, cap: this.progress!.inventoryCap },
+        condition: w.player.weapon ? w.player.weapon.hits / w.player.weapon.data.durability : null,
+        heat: s.heat,
+        police: w.policeActive,
       },
       dt,
     );
@@ -547,7 +555,7 @@ export class Game {
         if (this.settings.get().screenShake) this.renderer.cameraRig.addShake(0.2);
         this.audio.guardBreak();
       }),
-      ev.on('boss:defeated', ({ boss, first, cash, xp }) => {
+      ev.on('boss:defeated', ({ boss, first, cash, xp, items }) => {
         this.saveGame();
         this.hud.notify(`${boss.name.toUpperCase()} IS DONE`, 'big');
         const next = first ? this.unlockedBy(boss.flag) : null;
@@ -563,8 +571,10 @@ export class Game {
               { text: `+£${cash} (in your pocket: bank it at home)` },
               { text: `+${xp} XP · level ${this.progress!.save.level}` },
             ];
+            if (items.length) lines.push({ text: `Took: ${items.join(', ')}` });
             if (next) lines.push({ text: `Unlocked: ${next}`, big: true });
-            if (boss.flag === 'boss_dunc') lines.push({ text: 'That’s the lot. The neighbourhood is yours.', big: true });
+            if (boss.flag === 'boss_dunc') lines.push({ text: 'Dunc\u2019s phone has one contact: THE BOSS. Hale House, past the Pit.', big: true });
+            if (boss.flag === 'boss_final') lines.push({ text: 'That\u2019s the lot. The whole town is yours.', big: true });
             this.ui.replaceAll(
               rewardScreen('VICTORY', lines, [
                 { label: 'Head home', sub: 'Bank your cash, train up, save', go: () => this.goHome(false) },
@@ -574,9 +584,37 @@ export class Game {
           },
         };
       }),
-      ev.on('pickup', ({ kind, label }) => {
+      ev.on('cash', ({ amount }) => {
         this.audio.uiConfirm();
-        this.hud.toast(kind === 'cash' || kind === 'drop' ? `+${label}` : kind === 'food' ? `${label}: health up` : `Picked up: ${label}`, kind === 'cash' || kind === 'drop' ? 'cash' : 'item');
+        this.hud.toast(`+\u00a3${amount}`, 'cash');
+      }),
+      ev.on('item:picked', ({ name, qty, rarity, stolen }) => {
+        this.audio.uiConfirm();
+        this.hud.toast(`${name}${qty > 1 ? ` \u00d7${qty}` : ''}${stolen ? ' (stolen)' : ''}`, 'item', RARITY_COLOURS[rarity as keyof typeof RARITY_COLOURS]);
+        this.saveGame();
+      }),
+      ev.on('item:held', ({ name }) => {
+        this.audio.uiConfirm();
+        this.hud.toast(`Holding: ${name}. Light/heavy to swing, Grab to throw or drop.`, 'item');
+        this.saveGame();
+      }),
+      ev.on('item:full', ({ name }) => this.hud.toast(`Pockets full: no room for the ${name.toLowerCase()}. Open the inventory (I / RB / BAG) to make space.`, 'warn')),
+      ev.on('searched', ({ label, found }) => {
+        if (found.length) this.audio.uiConfirm();
+        this.hud.toast(found.length ? `${label}: ${found.join(', ')}` : `${label}: nothing`, found.length ? 'item' : 'info');
+        if (found.length) this.saveGame();
+      }),
+      ev.on('broken', ({ label }) => {
+        this.audio.impact(0.8, false);
+        this.hud.toast(label, 'info');
+      }),
+      ev.on('alarm', () => {
+        this.hud.notify('ALARM!', 'warn');
+        this.hud.toast('The alarm\u2019s going. Police on their way: get out or get ready.', 'warn');
+      }),
+      ev.on('police:arrive', ({ count }) => {
+        this.hud.notify('POLICE!', 'big');
+        this.hud.toast(`${count} officers. If they put you down, you\u2019re nicked: stolen gear seized and a fine.`, 'warn');
       }),
       ev.on('secret', ({ label }) => {
         this.audio.uiConfirm();
@@ -594,8 +632,29 @@ export class Game {
         this.hud.toast('+1 training point: spend it at the gym', 'item');
       }),
       ev.on('station', ({ id }) => this.openStation(id)),
-      ev.on('player:defeated', () => {
+      ev.on('player:defeated', ({ byPolice }) => {
         const p = this.progress!;
+        if (byPolice || p.save.heat >= ARREST_HEAT) {
+          const { fine, seized } = this.arrested();
+          p.save.mealBuff = false;
+          this.pending = {
+            at: this.time + 0.4,
+            show: () => {
+              this.state = 'paused';
+              this.touch.release();
+              this.updateTouchVisibility();
+              this.ui.replaceAll(
+                rewardScreen('NICKED', [
+                  { text: 'You\u2019re under arrest.', big: true },
+                  { text: seized ? `They took ${seized} stolen item${seized === 1 ? '' : 's'} off you.` : 'Nothing stolen on you, at least.' },
+                  { text: `Fined \u00a3${fine}. A night in the cells and they let you go.` },
+                  { text: 'Your heat is back to nothing. Everything you\u2019ve beaten stays beaten.' },
+                ], [{ label: 'Walk home', go: () => this.goHome(true) }]),
+              );
+            },
+          };
+          return;
+        }
         const lost = p.losePocket(0.25);
         p.save.stats.deaths++;
         p.save.mealBuff = false;
@@ -629,22 +688,29 @@ export class Game {
     const at = station ? { x: w.player.pos.x, z: w.player.pos.z } : undefined;
     if (id === 'wardrobe') return this.openCreator('edit', 'home', at);
     if (id === 'mirror') return this.openSheet('home', at);
+    if (id === 'clothes_counter' || id === 'changing') return this.openClothesShop();
     this.state = 'paused';
     this.touch.release();
     this.input.flush();
     this.updateTouchVisibility();
     this.hubDirty = false;
+    /** Changes that alter the player (look, stats, styles): rebuild on close. */
     const changed = () => {
       this.hubDirty = true;
       this.saveGame();
+    };
+    /** Changes to money and items only: just save. */
+    const saved = () => {
+      this.saveGame();
+      // Keep the weapon in your hands in step with the save (repairs).
+      const held = p.save.held;
+      if (held && w.player.weapon && held.hits !== undefined) w.player.weapon.hits = held.hits;
     };
     const close = () => {
       this.ui.replaceAll(null);
       if (this.hubDirty) {
         // Rebuild the player with the new styles, upgrades and kit, right where they stood.
-        const carry = w.carry();
-        carry.weapon = p.save.equipped.weapon;
-        this.enterArea('home', 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry });
+        this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
         this.hud.toast('Kit updated', 'item');
       } else this.resume();
     };
@@ -663,7 +729,10 @@ export class Game {
         }, changed);
         break;
       case 'garage':
-        screen = garageScreen(p, close, changed);
+        screen = repairScreen(p, close, saved);
+        break;
+      case 'storage':
+        screen = storageScreen(p, this.ui, changed, close);
         break;
       case 'sofa':
         screen = sofaScreen(p, close, () => this.saveGame());
@@ -673,10 +742,16 @@ export class Game {
           this.ui.replaceAll(null);
           this.state = 'playing';
           this.changeArea(area, entry, null);
-        }, changed);
+        }, saved);
         break;
       case 'tin':
-        screen = tinScreen(p, close, changed);
+        screen = tinScreen(p, close, saved);
+        break;
+      case 'pawn_counter':
+        screen = pawnScreen(p, this.ui, saved, close);
+        break;
+      case 'bar':
+        screen = barScreen(p, close, saved);
         break;
       default:
         this.resume();
@@ -685,12 +760,137 @@ export class Game {
     this.ui.replaceAll(screen);
   }
 
+  // ---- inventory ------------------------------------------------------------------
+
+  private openInventory(): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    this.state = 'paused';
+    this.touch.release();
+    this.input.flush();
+    this.updateTouchVisibility();
+    let lookChanged = false;
+    const before = JSON.stringify(p.appearance()) + JSON.stringify(p.save.worn);
+    const close = () => {
+      this.ui.replaceAll(null);
+      lookChanged = JSON.stringify(p.appearance()) + JSON.stringify(p.save.worn) !== before;
+      if (lookChanged) {
+        // New clothes or kit: rebuild the player model and stats where they stand.
+        this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+      } else this.resume();
+    };
+    this.ui.replaceAll(
+      inventoryScreen(
+        p,
+        this.ui,
+        {
+          use: (uid) => {
+            const r = w.useItem(uid);
+            if (r.ok) this.audio.uiConfirm();
+            return r;
+          },
+          hold: (uid) => w.holdFromInventory(uid),
+          putAway: () => w.putAwayWeapon(),
+          drop: (uid, qty) => w.dropFromInventory(uid, qty),
+          changed: () => this.saveGame(),
+        },
+        close,
+        { atHome: w.level.id === 'home' },
+      ),
+    );
+  }
+
+  // ---- shops ------------------------------------------------------------------------
+
+  /** Threads: browse with your fighter on the studio set, then back into the shop. */
+  private openClothesShop(): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    const at = { x: w.player.pos.x, z: w.player.pos.z };
+    const carry = w.carry();
+    const area = w.level.id;
+    const shop = p.shop('threads');
+    this.enterStudio(p.appearance());
+    this.renderer.setStudioFraming('full');
+    let framing: StudioFraming = 'full';
+    const back = () => this.enterArea(area, 'door', { at, carry });
+    this.ui.replaceAll(
+      clothesShopScreen(
+        p,
+        this.ui,
+        {
+          preview: (id) => {
+            if (!this.studio) return;
+            const look = p.appearance();
+            const wear = id ? ITEMS[id]?.wear : undefined;
+            if (wear) {
+              if (wear.top) { look.top = wear.top; look.topColour = wear.colour ?? look.topColour; }
+              if (wear.bottoms) { look.bottoms = wear.bottoms; look.bottomsColour = wear.colour ?? look.bottomsColour; }
+              if (wear.shoes) { look.shoes = wear.shoes; look.shoesColour = wear.colour ?? look.shoesColour; }
+              if (wear.accessory && !look.accessories.includes(wear.accessory)) look.accessories = [...look.accessories, wear.accessory];
+              if (wear.chain) look.chainColour = wear.chain;
+              if ((wear.slot === 'head' || wear.slot === 'face') && wear.colour) look.headColour = wear.colour;
+            }
+            this.studio.pending = look;
+          },
+          rotate: (d) => this.renderer.rotateStudio(d),
+          zoom: () => {
+            framing = framing === 'full' ? 'upper' : framing === 'upper' ? 'face' : 'full';
+            if (this.studio) this.studio.framing = framing;
+            this.renderer.setStudioFraming(framing);
+          },
+          changed: () => this.saveGame(),
+          rob: () => this.robClothesShop(at),
+          priceMult: shop.priceMult,
+        },
+        back,
+      ),
+    );
+  }
+
+  /**
+   * Robbing Threads. Priya either empties the till or fights back; either
+   * way the alarm goes, the police come, your heat goes up, the shop shuts
+   * for a while and she charges you more afterwards. Each robbery pays less.
+   */
+  private robClothesShop(at: { x: number; z: number }): void {
+    const p = this.progress!;
+    this.enterArea('clothes_shop', 'door', { at });
+    const w = this.world!;
+    const keeper = [...w.npcs.entries()].find(([st]) => st.id === 'clothes_counter')?.[1] ?? null;
+    const r = robShop(p, w, 'threads', keeper);
+    this.hud.notify('ROBBERY', 'big');
+    this.audio.guardBreak();
+    if (r.resisted) {
+      this.hud.toast('"Not again. Not in my shop." Priya comes over the counter.', 'warn');
+      if (r.guard) this.hud.toast('A security guard steps out from the back.', 'warn');
+    } else {
+      this.hud.toast(`"Take it! Just take it!" Priya empties the till: £${r.till}.`, 'cash');
+    }
+    this.hud.toast(`Grabbed: ${r.grabbed.map((id) => ITEMS[id].name).join(', ')} (stolen)`, 'item');
+    this.hud.toast(`Alarm going off. Police in ${Math.round(r.alarmIn / 60)} seconds.`, 'warn');
+    this.saveGame();
+  }
+
+  /** Caught by the police: lose stolen goods, pay a fine, heat wiped. */
+  private arrested(): { fine: number; seized: number } {
+    const r = arrest(this.progress!);
+    this.saveGame();
+    return r;
+  }
+
   // ---- input -----------------------------------------------------------------
 
   private onMenuAction(a: MenuAction, src: InputSource): void {
     this.audio.unlock();
     if (this.ui.isOpen) {
       this.ui.handle(a, src);
+      return;
+    }
+    if (this.state === 'playing' && a === 'inventory' && this.world) {
+      this.openInventory();
       return;
     }
     if (this.state === 'playing' && (a === 'pause' || (a === 'back' && src === 'keyboard'))) this.pause();
@@ -923,10 +1123,22 @@ export class Game {
   }
 }
 
-/** New fighters start without the clothes you find in the story. */
+/** Your own clothes are the basics; everything else is bought, found or stolen and worn from the inventory. */
+function starterLocked(key: string): boolean {
+  const [kind, v] = key.split(':');
+  if (kind === 'top') return !(STARTER_TOPS as readonly string[]).includes(v);
+  if (kind === 'bottoms') return !(STARTER_BOTTOMS as readonly string[]).includes(v);
+  if (kind === 'shoes') return !(STARTER_SHOES as readonly string[]).includes(v);
+  if (kind === 'acc') return !(STARTER_ACCESSORIES as readonly string[]).includes(v);
+  return false;
+}
+
+/** New fighters start in their own clothes. */
 function stripLocked(a: CharacterAppearance): CharacterAppearance {
-  const out = { ...a, accessories: a.accessories.filter((x) => !LOCKED_COSMETICS.includes(`acc:${x}`)) };
-  if (LOCKED_COSMETICS.includes(`top:${a.top}`)) out.top = 'hoodie';
+  const out = { ...a, accessories: a.accessories.filter((x) => !starterLocked(`acc:${x}`)) };
+  if (starterLocked(`top:${a.top}`)) out.top = 'hoodie';
+  if (starterLocked(`bottoms:${a.bottoms}`)) out.bottoms = 'trackies';
+  if (starterLocked(`shoes:${a.shoes}`)) out.shoes = 'trainers';
   return out;
 }
 

@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import type { Progress } from '../progress/Progress';
 import type { ExitDef, FacadeDef, LevelDef, PropDef, Theme } from '../world/LevelTypes';
 import { PROP_SIZE } from '../world/LevelTypes';
-import type { World } from '../world/World';
+import { themeProfile } from './themes';
+import { exitLocked, type World } from '../world/World';
 import {
   concreteTexture,
   corrugatedTexture,
@@ -18,6 +19,9 @@ import {
 } from './levelTextures';
 import { brickTexture, canvas, pavingTexture, roadTexture, shutterTexture, toTexture } from './textures';
 import { buildWeaponMesh, disposeGroup } from './weaponMesh';
+import { WEAPONS } from '../combat/Weapons';
+import { RARITY_COLOURS, itemDef } from '../items/items';
+import { itemIconUrl } from '../ui/itemIcons';
 
 /** How far the scenery carries on past the playable ends, so the camera never sees past it. */
 export const LEVEL_EXTENT = 16;
@@ -27,7 +31,7 @@ export function backWallZ(level: LevelDef): number {
   return level.bounds.minZ - 0.55;
 }
 
-const STREET_THEMES: Theme[] = ['estate', 'high_street', 'city'];
+const STREET_THEMES: Theme[] = ['estate', 'high_street', 'city', 'residential', 'leisure', 'stadium', 'nightlife', 'ind_estate'];
 
 /**
  * Builds an area of the world from its LevelDef: ground, building fronts,
@@ -44,12 +48,18 @@ export class LevelView {
   private mats = new Map<string, THREE.MeshStandardMaterial>();
   private pickupMeshes = new Map<string, THREE.Object3D>();
   private itemMeshes = new Map<string, THREE.Object3D>();
+  private projMeshes = new Map<string, THREE.Object3D>();
+  private breakMeshes = new Map<string, { whole: THREE.Object3D; debris: THREE.Object3D }>();
+  private containerMarks = new Map<string, THREE.Object3D>();
   private gates = new Map<string, { mesh: THREE.Object3D; lift: number }>();
   private levers = new Map<string, { handle: THREE.Object3D; lamp: THREE.MeshStandardMaterial }>();
   private exitSigns: { exit: ExitDef; mat: THREE.MeshStandardMaterial; text: THREE.Mesh; locked: boolean | null }[] = [];
   private highlight: THREE.Mesh;
   private flicker: { light: THREE.PointLight; base: number }[] = [];
   private sun: THREE.DirectionalLight;
+  private water: THREE.Mesh | null = null;
+  private rain: THREE.LineSegments | null = null;
+  private rainBase: Float32Array | null = null;
 
   constructor(readonly level: LevelDef, private readonly progress: Progress) {
     this.back = backWallZ(level);
@@ -125,7 +135,7 @@ export class LevelView {
       const last = fac[fac.length - 1];
       this.buildFacade({ ...last, x0: last.x1, x1: this.X1, label: undefined });
     }
-    if (lvl.theme !== 'home' && lvl.theme !== 'subway') this.buildSkyline();
+    if (themeProfile(lvl.theme).skyline !== 'none') this.buildSkyline();
     for (const w of lvl.walls ?? []) this.buildWall(w);
     for (const p of lvl.props) this.buildProp(p);
     for (const ex of lvl.exits) this.buildExit(ex);
@@ -133,6 +143,7 @@ export class LevelView {
     for (const l of lvl.levers ?? []) this.buildLever(l.id, l.x);
     this.buildGraffiti();
     this.buildLights();
+    this.buildWeather();
   }
 
   private buildGround(): void {
@@ -171,11 +182,43 @@ export class LevelView {
       this.box(W, 0.5, 0.25, (X0 + X1) / 2, 0.25, front + 0.15, new THREE.MeshStandardMaterial({ map: tileTexture('#c9c2a8', '#5c574c', W / 2, 1), roughness: 0.4 }));
       return;
     }
-    const hard = theme === 'industrial' || theme === 'territory';
-    const groundMat = hard
-      ? new THREE.MeshStandardMaterial({ map: markingsTexture(theme === 'territory' ? '#3f3a35' : '#55524c', '#c9a227', W / 8), roughness: 0.9 })
-      : new THREE.MeshStandardMaterial({ map: pavingTexture(W / 2.4, (front - this.back) / 2.4), roughness: 0.82, color: theme === 'alleys' ? 0x8a8478 : 0xffffff });
+    const prof = themeProfile(theme);
+    if (prof.interior) return this.interiorGround(front);
+    if (prof.roofed) return this.roofedGround(front);
+    const depth = front - this.back;
+    let groundMat: THREE.MeshStandardMaterial;
+    switch (prof.ground) {
+      case 'hard':
+        groundMat = new THREE.MeshStandardMaterial({ map: markingsTexture(theme === 'territory' || theme === 'hq' ? '#3f3a35' : '#55524c', '#c9a227', W / 8), roughness: 0.9 });
+        break;
+      case 'concrete':
+        groundMat = new THREE.MeshStandardMaterial({ map: concreteTexture('#6e6c66', W / 4, depth / 4), roughness: 0.92 });
+        break;
+      case 'cobbles':
+        groundMat = new THREE.MeshStandardMaterial({ map: tileTexture('#6a645a', '#2a2620', W / 0.9, depth / 0.9, 32), roughness: 0.75, color: theme === 'alleys' ? 0xb0aaa0 : 0xffffff });
+        if (theme === 'alleys') groundMat = new THREE.MeshStandardMaterial({ map: pavingTexture(W / 2.4, depth / 2.4), roughness: 0.82, color: 0x8a8478 });
+        break;
+      default:
+        groundMat = new THREE.MeshStandardMaterial({ map: pavingTexture(W / 2.4, depth / 2.4), roughness: 0.82, color: theme === 'precinct' ? 0xc8bfae : theme === 'residential' ? 0xe8e4dc : 0xffffff });
+    }
     this.ground(X0, X1, this.back, front, groundMat);
+    if (!prof.road && theme !== 'alleys') {
+      if (theme === 'docks') {
+        // Quay edge and black water beyond.
+        this.box(W, 0.3, 0.4, (X0 + X1) / 2, -0.05, front + 0.2, new THREE.MeshStandardMaterial({ map: concreteTexture('#8a8780', W / 3, 1), roughness: 0.95 }), false);
+        this.box(W, 0.08, 0.08, (X0 + X1) / 2, 0.14, front + 0.36, this.mat('#c9a227', 0.6), false);
+        const water = new THREE.Mesh(new THREE.PlaneGeometry(W, 40), this.mat('#0a1620', 0.08, 0.6, { emissive: 0x0a1a2a, emissiveIntensity: 0.4 }));
+        water.rotation.x = -Math.PI / 2;
+        water.position.set((X0 + X1) / 2, -0.9, front + 20.4);
+        this.group.add(water);
+        this.water = water;
+        return;
+      }
+      // A forecourt or yard: kerb, then more of the same surface fading into the dark.
+      this.box(W, 0.14, 0.2, (X0 + X1) / 2, 0.07, front + 0.1, this.mat('#77787c', 0.9), false);
+      this.ground(X0, X1, front + 0.2, front + 14, new THREE.MeshStandardMaterial({ map: concreteTexture('#3a3a3c', W / 6, 3), roughness: 0.95 }), -0.01);
+      return;
+    }
     if (theme === 'alleys') {
       // Low back wall of the gardens opposite.
       this.ground(X0, X1, front, front + 12, new THREE.MeshStandardMaterial({ map: pavingTexture(W / 2.4, 5), color: 0x6a665e, roughness: 0.9 }));
@@ -204,6 +247,102 @@ export class LevelView {
     }
   }
 
+  /** Shops, the pawn shop and the pub: a cutaway room like the flat, with the right floor. */
+  private interiorGround(front: number): void {
+    const { minX, maxX } = this.level.bounds;
+    const theme = this.level.theme;
+    const W = maxX - minX;
+    const depth = front - this.back;
+    const floor =
+      theme === 'shop'
+        ? new THREE.MeshStandardMaterial({ map: tileTexture('#e8e4dc', '#b8b4ac', W / 0.8, depth / 0.8, 64), roughness: 0.25, metalness: 0.05 })
+        : theme === 'pawn'
+          ? new THREE.MeshStandardMaterial({ map: tileTexture('#5a1e22', '#4a181c', W / 0.5, depth / 0.5, 32), roughness: 1 })
+          : new THREE.MeshStandardMaterial({ map: woodFloorTexture(W / 2, depth / 2), roughness: 0.55, color: 0x9a7a5a });
+    this.ground(minX, maxX, this.back, front, floor);
+    this.box(W, 0.3, 0.2, (minX + maxX) / 2, -0.15, front + 0.1, this.mat('#2a2522'), false);
+    this.ground(this.X0, this.X1, front + 0.2, front + 20, this.mat('#07080b', 1), -0.3);
+    for (const x of [minX - 0.15, maxX + 0.15]) this.box(0.3, 3.2, depth, x, 1.6, (front + this.back) / 2, this.mat('#3a332c'));
+  }
+
+  /** Car park decks, the mall and the old tunnels: floor, ceiling, columns along the front. */
+  private roofedGround(front: number): void {
+    const theme = this.level.theme;
+    const X0 = this.X0;
+    const X1 = this.X1;
+    const W = X1 - X0;
+    const depth = front - this.back;
+    const mall = theme === 'mall';
+    const floor = mall
+      ? new THREE.MeshStandardMaterial({ map: tileTexture('#d8d4cc', '#a8a49c', W / 1.2, depth / 1.2, 64), roughness: 0.18, metalness: 0.1 })
+      : theme === 'car_park'
+        ? new THREE.MeshStandardMaterial({ map: markingsTexture('#4a4a4c', '#e8e8e0', W / 5), roughness: 0.9 })
+        : new THREE.MeshStandardMaterial({ map: concreteTexture('#4a4844', W / 4, depth / 4), roughness: 1 });
+    this.ground(X0, X1, this.back, front + 3, floor);
+    const ceilH = mall ? 4.2 : theme === 'car_park' ? 2.9 : 3.4;
+    const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(W, depth + 4), new THREE.MeshStandardMaterial({ map: concreteTexture(mall ? '#c8c4bc' : '#4a4a48', W / 4, 1), roughness: 1, side: THREE.DoubleSide }));
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.set((X0 + X1) / 2, ceilH, (this.back + front) / 2);
+    this.group.add(ceiling);
+    // Ceiling beams or light strips.
+    for (let x = X0 + 3; x < X1; x += mall ? 5 : 7) {
+      if (mall) this.box(2.4, 0.05, 0.5, x, ceilH - 0.03, this.back + 1.4, this.mat('#ffffff', 0.4, 0, { emissive: 0xfff8e8, emissiveIntensity: 1.1 }), false);
+      else this.box(0.5, 0.45, depth + 3, x, ceilH - 0.22, (this.back + front) / 2, new THREE.MeshStandardMaterial({ map: concreteTexture('#5a5856', 1, 2), roughness: 1 }), false);
+    }
+    // Columns along the open front so it reads as a structure.
+    for (let x = X0 + 2; x < X1; x += mall ? 10 : 8) {
+      const col = mall ? this.mat('#e8e4dc', 0.3) : new THREE.MeshStandardMaterial({ map: concreteTexture('#7a7874', 1, 2), roughness: 0.95 });
+      this.box(0.5, ceilH, 0.5, x, ceilH / 2, front + 1.6, col, true);
+      if (theme === 'car_park') this.box(0.52, 0.5, 0.52, x, 0.6, front + 1.6, this.mat('#d8b018', 0.6), false);
+    }
+    if (theme === 'car_park') {
+      // Open side onto the night: a low parapet.
+      this.box(W, 1.0, 0.25, (X0 + X1) / 2, 0.5, front + 2.6, new THREE.MeshStandardMaterial({ map: concreteTexture('#6a6864', W / 3, 1) }), true);
+    }
+  }
+
+  /** Rain streaks that follow the camera. */
+  private buildWeather(): void {
+    const weather = this.level.weather ?? (themeProfile(this.level.theme).interior ? 'indoors' : 'clear');
+    if (weather !== 'rain' || themeProfile(this.level.theme).roofed) return;
+    const N = 900;
+    const pos = new Float32Array(N * 6);
+    const base = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      base[i * 3] = (this.rnd() - 0.5) * 36;
+      base[i * 3 + 1] = this.rnd() * 9;
+      base[i * 3 + 2] = this.back + this.rnd() * 12;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x9ab0d0, transparent: true, opacity: 0.32, depthWrite: false }));
+    lines.frustumCulled = false;
+    this.group.add(lines);
+    this.rain = lines;
+    this.rainBase = base;
+  }
+
+  private updateWeather(time: number, camX: number): void {
+    if (this.water) (this.water.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.35 + Math.sin(time * 0.8) * 0.08;
+    if (!this.rain || !this.rainBase) return;
+    const attr = this.rain.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const a = attr.array as Float32Array;
+    const b = this.rainBase;
+    const n = b.length / 3;
+    for (let i = 0; i < n; i++) {
+      const x = camX + ((((b[i * 3] + 18) % 36) + 36) % 36) - 18;
+      const y = 9 - ((((9 - b[i * 3 + 1]) + time * 14) % 9) + 9) % 9;
+      const z = b[i * 3 + 2];
+      a[i * 6] = x;
+      a[i * 6 + 1] = y;
+      a[i * 6 + 2] = z;
+      a[i * 6 + 3] = x - 0.04;
+      a[i * 6 + 4] = y - 0.35;
+      a[i * 6 + 5] = z;
+    }
+    attr.needsUpdate = true;
+  }
+
   private buildSkyline(): void {
     const theme = this.level.theme;
     const z = this.back - 14;
@@ -211,7 +350,8 @@ export class LevelView {
     let x = this.X0 - 20;
     while (x < this.X0 - 20 + W) {
       const w = 6 + this.rnd() * 10;
-      const h = (theme === 'city' ? 18 : 10) + this.rnd() * (theme === 'city' ? 24 : 12);
+      const city = themeProfile(theme).skyline === 'city';
+      const h = (city ? 18 : 10) + this.rnd() * (city ? 24 : 12);
       const tex = windowGridTexture(Math.max(2, Math.round(w / 1.5)), Math.max(3, Math.round(h / 2)), '#ffcf7a', '#14161c', '#1b1d24', 0.25);
       const m = new THREE.MeshStandardMaterial({ color: 0x1c1f27, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.55, roughness: 1 });
       const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 6), m);
@@ -252,7 +392,369 @@ export class LevelView {
         return this.club(f);
       case 'room':
         return this.room(f);
+      case 'semi':
+        return this.semi(f);
+      case 'precinct':
+        return this.precinct(f);
+      case 'mall':
+        return this.mallFront(f);
+      case 'stand':
+        return this.stand(f);
+      case 'leisure':
+        return this.leisure(f);
+      case 'dock':
+        return this.dock(f);
+      case 'containers':
+        return this.containerStack(f);
+      case 'market':
+        return this.marketHall(f);
+      case 'car_park':
+        return this.carParkWall(f);
+      case 'ruin':
+        return this.ruin(f);
+      case 'platform':
+        return this.platform(f);
+      case 'fortress':
+        return this.fortress(f);
+      case 'interior':
+        return this.interior(f);
+      default:
+        // Never leave a hole: plain brick for anything without a builder yet.
+        return this.brickWall(f.x0, f.x1, 6);
     }
+  }
+
+  /** 1930s semis: pebbledash, bay windows, hipped roofs, little front walls. */
+  private semi(f: FacadeDef): void {
+    const H = 6.6;
+    const dash = new THREE.MeshStandardMaterial({ map: plasterTexture('#c8c0b0', (f.x1 - f.x0) / 3, 2), roughness: 1 });
+    this.panel(f.x1 - f.x0, H, (f.x0 + f.x1) / 2, H / 2, dash, 0);
+    const doorCols = ['#ffffff', '#1d3a2a', '#7a1414', '#1d2a5a', '#3a3a3a'];
+    for (let x = f.x0 + 0.5; x + 7.5 <= f.x1 + 0.01; x += 8) {
+      for (const [dx, door] of [[1.6, 3.4], [6.4, 4.6]] as const) {
+        // Brick bay, two storeys, with white uPVC frames.
+        this.box(2.2, 4.8, 0.5, x + dx, 2.4, this.back + 0.25, new THREE.MeshStandardMaterial({ map: brickTexture(0.6, 1.2), color: 0xd8b8a0 }));
+        this.box(1.9, 1.3, 0.05, x + dx, 1.6, this.back + 0.52, this.windowMat(this.rnd() < 0.5 ? 0.5 : 0), false);
+        this.box(1.9, 1.2, 0.05, x + dx, 4.0, this.back + 0.52, this.windowMat(this.rnd() < 0.35 ? 0.4 : 0), false);
+        for (const y of [1.6, 4.0]) this.box(2.0, 0.07, 0.07, x + dx, y, this.back + 0.55, this.mat('#f4f4f0', 0.4), false);
+        this.box(1.0, 2.1, 0.08, x + door, 1.05, this.back + 0.04, this.mat(doorCols[Math.floor(this.rnd() * doorCols.length)], 0.4));
+        this.box(1.3, 0.1, 0.6, x + door, 2.3, this.back + 0.3, this.mat('#e8e4d8', 0.7), false);
+      }
+      // Hipped roof and chimney.
+      const roof = this.box(8, 0.2, 3.2, x + 4, H + 0.6, this.back - 1.2, this.mat('#4a2e26', 0.8));
+      roof.rotation.x = -0.45;
+      this.box(0.8, 1.4, 0.6, x + 4, H + 1.2, this.back - 0.6, new THREE.MeshStandardMaterial({ map: brickTexture(0.3, 0.4) }));
+      // Satellite dish.
+      if (this.rnd() < 0.6) {
+        const dish = this.cyl(0.32, 0.05, 0.12, x + 1.6, 5.6, this.back + 0.55, this.mat('#d8d8d4', 0.4, 0.3), 16);
+        dish.rotation.x = Math.PI / 2.6;
+      }
+    }
+    // Low garden wall in front.
+    this.box(f.x1 - f.x0, 0.55, 0.22, (f.x0 + f.x1) / 2, 0.27, this.back + 0.95, new THREE.MeshStandardMaterial({ map: brickTexture((f.x1 - f.x0) / 4, 0.2) }), true);
+  }
+
+  /** 1960s shopping parade: concrete canopy over shopfronts, flats above. */
+  private precinct(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const H = 8;
+    this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: concreteTexture('#9a968a', w / 3, 2), roughness: 1 }), 0);
+    const tex = windowGridTexture(Math.max(2, Math.round(w / 2)), 2, '#ffd08a', '#1a1d24', '#7a766c', 0.3);
+    this.panel(w - 0.6, 3, cx, 6, new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.4 }), 0.03);
+    const lit = f.label !== 'TO LET';
+    const colour = f.colour ?? '#2a5a8a';
+    this.box(w - 0.4, 2.6, 0.06, cx, 1.3, this.back + 0.08, this.mat('#0e1216', 0.05, 0.7, { emissive: 0xfff2d8, emissiveIntensity: lit ? 0.6 : 0.02 }), false);
+    if (!lit || this.rnd() < 0.3) this.box(w - 0.4, lit ? 1 : 2.6, 0.05, cx, lit ? 2.1 : 1.3, this.back + 0.12, new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 }), false);
+    // Deep concrete canopy along the whole parade.
+    this.box(w, 0.35, 1.8, cx, 3.25, this.back + 0.9, new THREE.MeshStandardMaterial({ map: concreteTexture('#7a766c', w / 4, 1), roughness: 1 }));
+    if (f.label) {
+      const t = signTexture(f.label, colour, '#ffffff');
+      this.box(w - 0.6, 0.55, 0.08, cx, 3.25, this.back + 1.82, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: lit ? 0.45 : 0.05 }), false);
+    }
+    // Underside downlights.
+    for (let x = f.x0 + 1.5; x < f.x1 - 1; x += 3) this.box(0.3, 0.03, 0.3, x, 3.06, this.back + 1.2, this.mat('#ffffff', 0.4, 0, { emissive: 0xfff4d8, emissiveIntensity: lit ? 1 : 0.1 }), false);
+  }
+
+  /** Inside the shopping centre: glass shopfronts with backlit fascias. */
+  private mallFront(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const colour = f.colour ?? '#3a3a40';
+    this.panel(w, 4.2, cx, 2.1, this.mat('#d8d4cc', 0.5), 0);
+    this.box(w - 0.6, 2.8, 0.05, cx, 1.4, this.back + 0.1, this.mat('#1a2026', 0.04, 0.8, { emissive: 0xfff8ec, emissiveIntensity: 0.7 }), false);
+    for (let x = f.x0 + 0.3; x <= f.x1 - 0.2; x += 2.4) this.box(0.06, 2.8, 0.08, x, 1.4, this.back + 0.12, this.mat('#b8bcc4', 0.25, 0.9), false);
+    // Displays behind the glass.
+    for (let x = f.x0 + 1.4; x < f.x1 - 1; x += 2.4) {
+      const h = 0.5 + this.rnd() * 0.9;
+      this.box(1.4, h, 0.4, x, h / 2, this.back + 0.04, this.mat(['#e8e4dc', colour, '#202024'][Math.floor(this.rnd() * 3)], 0.5), false);
+    }
+    if (f.label) {
+      const t = signTexture(f.label, colour, '#ffffff');
+      this.box(Math.min(w - 1, 9), 0.7, 0.12, cx, 3.35, this.back + 0.14, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.9 }), false);
+    }
+  }
+
+  /** The football ground: corrugated stand rising behind a turnstile wall. */
+  private stand(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    this.box(w, 3.2, 0.3, cx, 1.6, this.back + 0.05, new THREE.MeshStandardMaterial({ map: brickTexture(w / 4, 0.8), color: 0xc8a8a0 }));
+    // Raked stand behind.
+    for (let i = 0; i < 8; i++) this.box(w, 0.5, 1.2, cx, 3.5 + i * 0.55, this.back - 0.6 - i * 1.0, this.mat(i % 2 ? '#b3121b' : '#8a0e14', 0.8), false);
+    const roof = this.box(w, 0.15, 10, cx, 8.8, this.back - 4, new THREE.MeshStandardMaterial({ map: corrugatedTexture('#c8ccd0', w / 3, 3), roughness: 0.5, metalness: 0.5 }), false);
+    roof.rotation.x = 0.08;
+    for (let x = f.x0 + 4; x < f.x1; x += 10) this.box(0.3, 9, 0.3, x, 4.5, this.back - 0.2, this.mat('#2a3a5a', 0.5, 0.6));
+    // Turnstile doors.
+    for (let x = f.x0 + 3; x < f.x1 - 2; x += 6) {
+      this.box(1.0, 2.1, 0.05, x, 1.05, this.back + 0.22, this.mat('#2a3a5a', 0.4, 0.3), false);
+      const t = signTexture(`TURNSTILES ${String.fromCharCode(65 + Math.floor((x - f.x0) / 6))}`, '#1a1a1a', '#ffd23d', { w: 512, h: 96 });
+      this.box(1.4, 0.26, 0.04, x, 2.35, this.back + 0.22, new THREE.MeshStandardMaterial({ map: t }), false);
+    }
+    if (f.label) {
+      const t = signTexture(f.label, '#b3121b', '#ffffff');
+      this.box(Math.min(w - 2, 14), 1.0, 0.1, cx, 2.9, this.back + 0.25, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.3 }), false);
+    }
+    // Floodlight pylon.
+    this.box(0.3, 18, 0.3, f.x1 - 3, 9, this.back - 6, this.mat('#4a4d52', 0.5, 0.6));
+    this.box(3, 1.4, 0.4, f.x1 - 3, 18, this.back - 6, this.mat('#ffffff', 0.3, 0, { emissive: 0xffffff, emissiveIntensity: 1.6 }), false);
+  }
+
+  /** Council leisure centre: brown brick, blue panels, big glazed entrance. */
+  private leisure(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    this.panel(w, 7, cx, 3.5, new THREE.MeshStandardMaterial({ map: brickTexture(w / 4, 1.8), color: 0xa88a70 }), 0);
+    this.box(w, 1.2, 0.1, cx, 6.4, this.back + 0.06, this.mat('#1f5a9a', 0.5), false);
+    this.box(w * 0.4, 3, 0.06, cx, 1.5, this.back + 0.1, this.mat('#0c1418', 0.05, 0.8, { emissive: 0xc8e8ff, emissiveIntensity: 0.5 }), false);
+    for (let x = cx - w * 0.2; x <= cx + w * 0.2; x += 1.6) this.box(0.06, 3, 0.08, x, 1.5, this.back + 0.12, this.mat('#1f5a9a', 0.4), false);
+    // High strip windows into the pool hall.
+    this.box(w - 2, 0.9, 0.05, cx, 4.6, this.back + 0.04, this.mat('#0c1418', 0.05, 0.6, { emissive: 0x5ac8e8, emissiveIntensity: 0.55 }), false);
+    if (f.label) {
+      const t = signTexture(f.label, '#1f5a9a', '#ffffff');
+      this.box(Math.min(w - 2, 12), 0.7, 0.08, cx, 3.5, this.back + 0.12, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.4 }), false);
+    }
+  }
+
+  /** Dockside warehouse: tall brick, loading doors on every floor, a hoist beam. */
+  private dock(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const H = 13;
+    this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: brickTexture(w / 4, H / 4), color: 0x9a6a5a }), 0);
+    for (let x = f.x0 + 2; x < f.x1 - 1; x += 4) {
+      for (let y = 4.5; y < H - 1; y += 3) this.windowAt(x, y, 1.0, 1.6, this.windowMat(this.rnd() < 0.15 ? 0.3 : 0));
+    }
+    // Loading bays stacked up the middle with a hoist.
+    for (let y = 1.4; y < H - 1; y += 3) this.box(2.2, 2.4, 0.08, cx, y, this.back + 0.05, this.mat('#2a3a3a', 0.8), false);
+    this.box(0.25, 0.25, 1.8, cx, H - 0.4, this.back + 0.9, this.mat('#2a2a2a', 0.5, 0.7));
+    this.cyl(0.015, 0.015, 3, cx, H - 2, this.back + 1.7, this.mat('#1a1a1a', 0.5, 0.8), 6);
+    if (f.label) {
+      const t = signTexture(f.label, '#e8e4d8', '#1a1a1a', { serif: true });
+      this.panel(Math.min(w - 2, 14), 0.9, cx, H - 0.9, new THREE.MeshStandardMaterial({ map: t, roughness: 0.9 }), 0.04);
+    }
+  }
+
+  /** Shipping containers stacked two and three high. */
+  private containerStack(f: FacadeDef): void {
+    const cols = ['#b3121b', '#1f5a9a', '#2a6a3a', '#c97a1a', '#5a5e64', '#d8d4cc'];
+    for (let x = f.x0; x + 6 <= f.x1 + 0.5; x += 6.2) {
+      const n = 2 + Math.floor(this.rnd() * 2);
+      for (let i = 0; i < n; i++) {
+        const c = cols[Math.floor(this.rnd() * cols.length)];
+        const m = new THREE.MeshStandardMaterial({ map: corrugatedTexture(c, 6, 1), roughness: 0.6, metalness: 0.4 });
+        this.box(6, 2.6, 2.4, x + 3, 1.3 + i * 2.6, this.back - 1.2 - (i % 2) * 0.1, m);
+        this.box(0.08, 2.4, 0.06, x + 1.5, 1.3 + i * 2.6, this.back + 0.01, this.mat('#2a2a2a', 0.6, 0.6), false);
+      }
+    }
+    // Gantry crane over the yard.
+    const cx = (f.x0 + f.x1) / 2;
+    this.box(0.6, 20, 0.6, f.x0 + 1, 10, this.back - 8, this.mat('#c9a227', 0.6, 0.4));
+    this.box(0.6, 20, 0.6, f.x1 - 1, 10, this.back - 8, this.mat('#c9a227', 0.6, 0.4));
+    this.box(f.x1 - f.x0, 1, 1, cx, 20, this.back - 8, this.mat('#c9a227', 0.6, 0.4));
+  }
+
+  /** Victorian market hall: cast iron and glass. */
+  private marketHall(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    this.panel(w, 9, cx, 4.5, new THREE.MeshStandardMaterial({ map: brickTexture(w / 4, 2.2), color: 0xd8a890 }), 0);
+    for (let x = f.x0 + 3; x < f.x1 - 2; x += 6) {
+      // Arched openings with iron gates half open.
+      this.box(3.8, 4.2, 0.06, x, 2.1, this.back + 0.04, this.mat('#1a1410', 0.9, 0, { emissive: 0xffb050, emissiveIntensity: 0.12 }), false);
+      const arch = new THREE.Mesh(new THREE.CircleGeometry(1.9, 20, 0, Math.PI), this.mat('#1a1410', 0.9, 0, { emissive: 0xffb050, emissiveIntensity: 0.12 }));
+      arch.position.set(x, 4.2, this.back + 0.05);
+      this.group.add(arch);
+      for (let k = -1.7; k <= -0.2; k += 0.15) this.box(0.025, 4, 0.025, x + k, 2, this.back + 0.1, this.mat('#1d3a2a', 0.5, 0.6), false);
+      this.windowAt(x, 7.2, 2.4, 1.2, this.windowMat(0.2));
+    }
+    if (f.label) {
+      const t = signTexture(f.label, '#1d3a2a', '#d9b65a', { serif: true });
+      this.panel(Math.min(w - 4, 16), 1.0, cx, 8.4, new THREE.MeshStandardMaterial({ map: t }), 0.04);
+    }
+    // Clock.
+    const clock = new THREE.Mesh(new THREE.CircleGeometry(0.6, 24), this.mat('#f0ece0', 0.5, 0, { emissive: 0xfff0d0, emissiveIntensity: 0.4 }));
+    clock.position.set(cx, 10.2, this.back + 0.05);
+    this.group.add(clock);
+    this.box(2, 2, 0.3, cx, 10.2, this.back - 0.1, new THREE.MeshStandardMaterial({ map: brickTexture(0.5, 0.5), color: 0xd8a890 }));
+  }
+
+  /** Back wall of a car park deck: painted concrete, bay numbers, pipes. */
+  private carParkWall(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    this.panel(w, 3, cx, 1.5, new THREE.MeshStandardMaterial({ map: concreteTexture('#7a7874', w / 3, 1), roughness: 1 }), 0);
+    this.box(w, 0.9, 0.03, cx, 0.45, this.back + 0.02, this.mat('#d8b018', 0.7), false);
+    for (let x = f.x0 + 1.25; x < f.x1; x += 2.5) {
+      const t = signTexture(`${Math.floor((x - f.x0) / 2.5) + 1}`, '#d8b018', '#1a1a1a', { w: 128, h: 128 });
+      this.panel(0.4, 0.4, x, 1.6, new THREE.MeshStandardMaterial({ map: t }), 0.04);
+    }
+    this.cyl(0.08, 0.08, w, cx, 2.6, this.back + 0.2, this.mat('#9a4a1a', 0.6, 0.4), 8).rotation.z = Math.PI / 2;
+    if (f.label) {
+      const t = signTexture(f.label, '#1a3a6a', '#ffffff');
+      for (let x = f.x0 + 8; x < f.x1; x += 24) this.panel(2.4, 0.6, x, 2.2, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.3 }), 0.05);
+    }
+  }
+
+  /** Derelict mill: broken windows, missing roof, buddleia growing out the brick. */
+  private ruin(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const H = 11;
+    this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: brickTexture(w / 4, H / 4), color: 0x8a6a5a }), 0);
+    for (let x = f.x0 + 2; x < f.x1 - 1; x += 3.2) {
+      for (let y = 2.2; y < H - 1; y += 3) {
+        this.windowAt(x, y, 1.6, 2, this.mat('#050608', 1));
+        // Shards left in the frames.
+        if (this.rnd() < 0.6) this.box(0.6, 0.5, 0.02, x - 0.4, y + 0.6, this.back + 0.08, this.mat('#5a6a7a', 0.1, 0.4, { transparent: true, opacity: 0.6 }), false);
+        if (this.rnd() < 0.3) this.box(1.8, 2.2, 0.05, x, y, this.back + 0.1, this.mat('#a88a5e', 0.95), false);
+      }
+    }
+    // Jagged roofline and roof trusses open to the sky.
+    for (let x = f.x0; x < f.x1; x += 1.2) this.box(1.2, 0.4 + this.rnd() * 1.4, 0.4, x + 0.6, H + 0.2, this.back - 0.2, new THREE.MeshStandardMaterial({ map: brickTexture(0.3, 0.3), color: 0x8a6a5a }), false);
+    for (let x = f.x0 + 2; x < f.x1; x += 4) {
+      const t = this.box(0.15, 0.15, 6, x, H + 0.8, this.back - 3, this.mat('#3a2a1a', 0.9), false);
+      t.rotation.x = (this.rnd() - 0.5) * 0.3;
+    }
+    // Weeds.
+    for (let i = 0; i < w / 4; i++) {
+      const bush = new THREE.Mesh(new THREE.SphereGeometry(0.3 + this.rnd() * 0.3, 8, 6), this.mat(this.rnd() < 0.3 ? '#7a4a8a' : '#3a5a2a', 1));
+      bush.position.set(f.x0 + this.rnd() * w, this.rnd() < 0.5 ? 0.2 : 2 + this.rnd() * 6, this.back + 0.2);
+      this.group.add(bush);
+    }
+    if (f.label) {
+      const t = signTexture(f.label, '#d8d0b8', '#3a2a1a', { serif: true });
+      this.panel(Math.min(w - 2, 12), 0.9, cx, H - 0.6, new THREE.MeshStandardMaterial({ map: t, roughness: 1, color: 0x9a9080 }), 0.04);
+    }
+  }
+
+  /** Disused underground platform: curved tiled tunnel, roundel, track bed in front. */
+  private platform(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    this.panel(w, 3.4, cx, 1.7, new THREE.MeshStandardMaterial({ map: tileTexture('#a8a088', '#3a3830', w / 2, 2), roughness: 0.6, color: 0x9a9480 }), 0);
+    this.box(w, 0.2, 0.04, cx, 1.0, this.back + 0.03, this.mat('#6a1414', 0.5), false);
+    for (let x = f.x0 + 6; x < f.x1 - 3; x += 14) {
+      // Roundel.
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.12, 8, 32), this.mat('#8a1a1a', 0.5));
+      ring.position.set(x, 2.1, this.back + 0.06);
+      this.group.add(ring);
+      const t = signTexture(f.label ?? 'KIRKGATE', '#1a2a6a', '#ffffff', { w: 512, h: 96 });
+      this.panel(1.6, 0.3, x, 2.1, new THREE.MeshStandardMaterial({ map: t }), 0.1);
+      this.box(2.4, 1.4, 0.05, x + 5, 1.9, this.back + 0.04, this.mat('#222', 0.5), false);
+      this.panel(2.2, 1.2, x + 5, 1.9, new THREE.MeshStandardMaterial({ map: posterTexture(this.rnd), roughness: 0.9, color: 0x8a8070 }), 0.08);
+    }
+  }
+
+  /** The Boss's compound: high concrete wall, razor wire, cameras, a gate. */
+  private fortress(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    this.panel(w, 4.5, cx, 2.25, new THREE.MeshStandardMaterial({ map: concreteTexture('#5a5854', w / 3, 1.5), roughness: 1 }), 0);
+    for (let x = f.x0 + 0.5; x < f.x1; x += 3) this.box(0.35, 4.6, 0.3, x, 2.3, this.back + 0.1, this.mat('#4a4844', 1));
+    // Razor wire coils.
+    for (let x = f.x0 + 0.5; x < f.x1; x += 0.6) {
+      const c = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.01, 4, 14), this.mat('#b8bcc4', 0.3, 0.9));
+      c.position.set(x, 4.85, this.back + 0.05);
+      c.rotation.y = Math.PI / 2.4;
+      this.group.add(c);
+    }
+    for (let x = f.x0 + 5; x < f.x1; x += 12) {
+      this.box(0.3, 0.2, 0.35, x, 4.2, this.back + 0.3, this.mat('#e8e8e4', 0.4));
+      this.box(0.06, 0.06, 0.06, x, 4.2, this.back + 0.5, this.mat('#ff2020', 0.4, 0, { emissive: 0xff2020, emissiveIntensity: 1.5 }), false);
+    }
+    // Glass tower beyond the wall.
+    const tex = windowGridTexture(Math.max(3, Math.round(w / 2)), 10, '#ffd8a8', '#0a0c10', '#14161c', 0.25);
+    const tower = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.8, 22), new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.5, roughness: 0.2, metalness: 0.6 }));
+    tower.position.set(cx, 11, this.back - 8);
+    this.group.add(tower);
+    if (f.label) {
+      const t = signTexture(f.label, '#0a0a0c', '#d9b65a', { serif: true });
+      this.box(Math.min(w - 4, 10), 0.8, 0.08, cx, 3.2, this.back + 0.08, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.35 }), false);
+    }
+  }
+
+  /** The back wall of a shop or pub interior. */
+  private interior(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const theme = this.level.theme;
+    const H = 3.2;
+    const colour = f.colour ?? '#8c7a5e';
+    if (theme === 'pub') {
+      this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: plasterTexture('#6a2a1e', w / 3, 1), roughness: 0.9 }), 0);
+      // Wood panelling to dado height, brass rail, framed pictures.
+      this.box(w, 1.1, 0.04, cx, 0.55, this.back + 0.02, new THREE.MeshStandardMaterial({ map: woodFloorTexture(w / 2, 0.5), roughness: 0.5, color: 0x6a3a1a }), false);
+      this.box(w, 0.05, 0.06, cx, 1.12, this.back + 0.05, this.mat('#c9a227', 0.2, 0.9), false);
+      for (let x = f.x0 + 2; x < f.x1 - 1; x += 3.4) {
+        this.box(0.7, 0.55, 0.03, x, 2.0, this.back + 0.03, this.mat('#2a1a0a', 0.5), false);
+        this.panel(0.58, 0.43, x, 2.0, new THREE.MeshStandardMaterial({ map: posterTexture(this.rnd), color: 0xa89878, roughness: 0.9 }), 0.05);
+      }
+      // Optics and bottles behind the bar.
+      for (const st of this.level.stations ?? []) {
+        if (st.id !== 'bar') continue;
+        this.box(3.6, 0.04, 0.25, st.x, 1.6, this.back + 0.12, this.mat('#3a2010', 0.5), false);
+        this.box(3.6, 0.04, 0.25, st.x, 2.1, this.back + 0.12, this.mat('#3a2010', 0.5), false);
+        for (let i = 0; i < 16; i++) {
+          const b = this.cyl(0.035, 0.035, 0.28, st.x - 1.7 + (i % 8) * 0.48, i < 8 ? 1.76 : 2.26, this.back + 0.14, this.mat(['#2f6b3a', '#8a5a1a', '#d8d4c8', '#5a1a1a'][i % 4], 0.1, 0.1, { emissive: 0xffa040, emissiveIntensity: 0.15 }), 8);
+          b.castShadow = false;
+        }
+        this.panel(3.8, 0.9, st.x, 1.85, this.mat('#a8b8c8', 0.05, 0.3, { emissive: 0x4a3020, emissiveIntensity: 0.3 }), 0.01);
+      }
+    } else if (theme === 'pawn') {
+      this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: plasterTexture(colour, w / 3, 1), roughness: 0.95 }), 0);
+      // Barred window and a wall of guitars, tools and tellies for sale.
+      const wx = f.x1 - 2.2;
+      this.box(1.8, 1.2, 0.04, wx, 1.9, this.back + 0.02, this.mat('#0b1020', 0.1, 0.4, { emissive: 0x2a3a6a, emissiveIntensity: 0.5 }), false);
+      for (let k = -0.8; k <= 0.8; k += 0.2) this.box(0.025, 1.2, 0.025, wx + k, 1.9, this.back + 0.06, this.mat('#1a1a1a', 0.5, 0.8), false);
+      for (let x = f.x0 + 1; x < f.x1 - 4; x += 1.1) {
+        if (this.rnd() < 0.5) {
+          const body = this.box(0.32, 0.42, 0.06, x, 2.25, this.back + 0.05, this.mat(['#a0401a', '#1a1a1a', '#e8d8b0'][Math.floor(this.rnd() * 3)], 0.3), false);
+          body.rotation.z = 0.08;
+          this.box(0.05, 0.5, 0.03, x, 2.7, this.back + 0.05, this.mat('#3a2010', 0.5), false);
+        } else {
+          this.box(0.5, 0.35, 0.3, x, 2.55, this.back + 0.15, this.mat('#2a2a2a', 0.5), false);
+        }
+      }
+      if (f.label) {
+        const t = signTexture(f.label, '#1a1a1a', '#ffd23d', { w: 1024, h: 128 });
+        this.panel(Math.min(w - 2, 7), 0.45, cx, 2.85, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.6 }), 0.05);
+      }
+    } else {
+      // Clothes shop: bright white walls, slatwall, a big backlit logo.
+      this.panel(w, H, cx, H / 2, this.mat(colour, 0.7), 0);
+      for (let y = 0.4; y < 2.6; y += 0.2) this.box(w, 0.02, 0.02, cx, y, this.back + 0.02, this.mat('#c8c4bc', 0.5), false);
+      for (let x = f.x0 + 1.5; x < f.x1 - 1; x += 2.5) {
+        // Folded tees and hats on the slatwall.
+        for (let k = 0; k < 3; k++) this.box(0.4, 0.08, 0.25, x - 0.5 + k * 0.5, 1.5 + (k % 2) * 0.6, this.back + 0.14, this.mat(['#1a1a1a', '#e8e4dc', '#7a1414', '#1f2a44', '#3a5a3a'][Math.floor(this.rnd() * 5)], 0.9), false);
+      }
+      if (f.label) {
+        const t = signTexture(f.label, '#101012', '#ffffff', { w: 512, h: 128 });
+        this.panel(3.2, 0.8, cx, 2.6, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.8 }), 0.05);
+      }
+    }
+    this.box(w, 0.12, 0.04, cx, 0.06, this.back + 0.03, this.mat('#2a2420', 0.6), false);
+    this.box(w, 0.25, 0.6, cx, H + 0.12, this.back + 0.3, this.mat('#c8c4bc', 0.9), false);
   }
 
   /** Brick wall the full width of a facade. */
@@ -419,7 +921,7 @@ export class LevelView {
     // Entrance with a security door.
     this.box(2.4, 2.6, 0.2, cx, 1.3, this.back + 0.1, this.mat('#2d3a4a', 0.4, 0.4));
     this.box(1.6, 2.2, 0.06, cx, 1.1, this.back + 0.22, this.mat('#0c0e12', 0.1, 0.6, { emissive: 0xc8e0ff, emissiveIntensity: 0.25 }), false);
-    const sign = signTexture('TANNER HOUSE 1-48', '#1d3a6a', '#ffffff', { w: 512, h: 96 });
+    const sign = signTexture(f.label ?? 'TANNER HOUSE 1-48', '#1d3a6a', '#ffffff', { w: 512, h: 96 });
     this.box(2.4, 0.4, 0.06, cx, 2.85, this.back + 0.22, new THREE.MeshStandardMaterial({ map: sign }), false);
   }
 
@@ -888,6 +1390,340 @@ export class LevelView {
         for (let i = 0; i < 6; i++) B(0.3, 0.25, 0.3, -W / 2 + 0.25 + (i % 3) * 0.5, 0.45 + Math.floor(i / 3) * 0.5, 0, this.mat(['#a87a4a', '#3a5a8a', '#8a2a2a'][i % 3], 0.9), false);
         break;
       }
+      case 'chest': {
+        // Ottoman storage chest: wood with iron straps and a brass lock.
+        const wood = new THREE.MeshStandardMaterial({ map: woodFloorTexture(1, 0.5), color: 0x8a5a32, roughness: 0.6 });
+        B(W, 0.55, D, 0, 0.3, 0, wood);
+        const lid = B(W + 0.04, 0.12, D + 0.04, 0, 0.64, 0, wood);
+        lid.castShadow = true;
+        for (const dx of [-W / 3, W / 3]) B(0.06, 0.68, D + 0.06, dx, 0.34, 0, this.mat('#2a2a2a', 0.5, 0.7), false);
+        B(0.12, 0.14, 0.03, 0, 0.5, D / 2 + 0.03, this.mat('#c9a227', 0.25, 0.9), false);
+        break;
+      }
+      case 'dumpster': {
+        const m = this.mat(c ?? '#2a5a3a', 0.6, 0.4);
+        B(W, 1.2, D, 0, 0.7, 0, m);
+        const lid = B(W, 0.06, D * 0.55, 0, 1.36, -D * 0.2, this.mat('#1a1a1a', 0.7));
+        lid.rotation.x = -0.25;
+        for (const dx of [-W / 2 + 0.15, W / 2 - 0.15]) for (const dz of [-D / 2 + 0.1, D / 2 - 0.1]) C(0.07, 0.07, 0.1, dx, 0.05, dz, this.mat('#111', 0.9), 10);
+        B(W + 0.04, 0.06, 0.06, 0, 1.15, D / 2, this.mat('#555', 0.5, 0.6), false);
+        break;
+      }
+      case 'rubbish_bags': {
+        const m = this.mat('#111214', 0.25, 0.1);
+        for (let i = 0; i < 4; i++) {
+          const bag = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), m);
+          bag.scale.set(1, 0.85 + this.rnd() * 0.3, 1);
+          bag.position.set((i - 1.5) * 0.28, 0.24 + (i === 2 ? 0.3 : 0), (this.rnd() - 0.5) * 0.3);
+          bag.castShadow = true;
+          g.add(bag);
+        }
+        break;
+      }
+      case 'cardboard': {
+        const m = this.mat('#a8865a', 0.95);
+        B(W, 0.5, D, 0, 0.25, 0, m);
+        B(W * 0.7, 0.35, D * 0.7, 0.1, 0.68, 0, m);
+        const flap = B(W * 0.7, 0.02, 0.3, 0.1, 0.88, D * 0.35, m, false);
+        flap.rotation.x = 0.8;
+        break;
+      }
+      case 'abandoned_car': {
+        this.car(g, W, D, c ?? '#5a3a2a', false);
+        // Burnt out: dark, windows gone, on its rims.
+        g.traverse((o: THREE.Object3D) => {
+          if (o instanceof THREE.Mesh && o.material instanceof THREE.MeshStandardMaterial && o.material.metalness > 0.6) o.material = this.mat('#2a2420', 1, 0.3);
+        });
+        g.position.y = -0.12;
+        break;
+      }
+      case 'container': {
+        const m = new THREE.MeshStandardMaterial({ map: corrugatedTexture(c ?? ['#b3121b', '#1f5a9a', '#2a6a3a', '#c97a1a'][Math.floor(this.rnd() * 4)], 6, 1), roughness: 0.6, metalness: 0.4 });
+        B(W, 2.6, D, 0, 1.3, 0, m);
+        for (const dx of [W / 2 - 0.02]) for (const dz of [-0.4, 0.4]) B(0.04, 2.4, 0.04, dx, 1.3, dz, this.mat('#2a2a2a', 0.5, 0.7), false);
+        break;
+      }
+      case 'market_stall': {
+        const wood = this.mat('#7a5a32', 0.8);
+        B(W, 0.08, D, 0, 0.9, 0, wood);
+        for (const dx of [-W / 2 + 0.05, W / 2 - 0.05]) for (const dz of [-D / 2 + 0.05, D / 2 - 0.05]) B(0.05, 2.2, 0.05, dx, 1.1, dz, this.mat('#5a5e64', 0.5, 0.6), false);
+        const stripes = ['#b3121b', '#f0ece0'];
+        for (let i = 0; i < 8; i++) {
+          const s2 = B(W / 8, 0.04, D + 0.3, -W / 2 + W / 16 + (i * W) / 8, 2.2, 0, this.mat(c && i % 2 === 0 ? c : stripes[i % 2], 0.9), false);
+          s2.rotation.x = 0.15;
+        }
+        // Produce in crates.
+        for (let i = 0; i < 4; i++) {
+          B(W / 4.5, 0.15, D * 0.7, -W / 2 + W / 8 + (i * W) / 4, 1.02, 0, this.mat('#a8865a', 0.9), false);
+          B(W / 5, 0.08, D * 0.6, -W / 2 + W / 8 + (i * W) / 4, 1.12, 0, this.mat(['#d84a1a', '#3a8a2a', '#e8c82a', '#7a1a4a'][i], 0.8), false);
+        }
+        break;
+      }
+      case 'turnstile': {
+        B(W * 0.4, 1.0, D, -W * 0.3, 0.5, 0, this.mat('#9aa0a8', 0.3, 0.8));
+        for (let i = 0; i < 3; i++) {
+          const arm = B(0.5, 0.04, 0.04, 0.05, 0.9, 0, this.mat('#c8ccd0', 0.2, 0.9), false);
+          arm.rotation.x = (i * Math.PI * 2) / 3;
+          arm.position.x = 0.1;
+        }
+        break;
+      }
+      case 'pillar':
+        B(W, 3.4, D, 0, 1.7, 0, new THREE.MeshStandardMaterial({ map: concreteTexture('#7a7874', 1, 3), roughness: 1 }));
+        B(W + 0.02, 0.4, D + 0.02, 0, 0.8, 0, this.mat('#d8b018', 0.6), false);
+        break;
+      case 'bike_rack': {
+        const m = this.mat('#2a2e33', 0.4, 0.7);
+        for (let x = -W / 2 + 0.2; x <= W / 2 - 0.2; x += 0.6) {
+          const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.025, 6, 16, Math.PI), m);
+          hoop.position.set(x, 0, 0);
+          hoop.castShadow = true;
+          g.add(hoop);
+        }
+        break;
+      }
+      case 'lamp_post': {
+        C(0.06, 0.09, 6, 0, 3, 0, this.mat('#2a2e33', 0.5, 0.6), 8);
+        B(0.1, 0.08, 0.9, 0, 6, 0.4, this.mat('#2a2e33', 0.5, 0.6));
+        B(0.3, 0.12, 0.5, 0, 5.92, 0.8, this.mat('#ffffff', 0.4, 0, { emissive: 0xffc070, emissiveIntensity: 1.4 }), false);
+        break;
+      }
+      case 'traffic_light': {
+        C(0.05, 0.05, 3, 0, 1.5, 0, this.mat('#2a2a2a', 0.5, 0.6), 8);
+        B(0.3, 0.85, 0.22, 0, 3.3, 0, this.mat('#141414', 0.5));
+        [0xff2020, 0xffa020, 0x20ff60].forEach((col, i) => B(0.16, 0.16, 0.03, 0, 3.58 - i * 0.27, 0.12, this.mat('#111', 0.3, 0, { emissive: col, emissiveIntensity: i === 0 ? 1.4 : 0.08 }), false));
+        break;
+      }
+      case 'sign_post': {
+        C(0.04, 0.04, 2.6, 0, 1.3, 0, this.mat('#8a9098', 0.4, 0.7), 8);
+        const t = signTexture(p.label ?? 'NO BALL GAMES', '#ffffff', '#1a1a1a', { w: 512, h: 256 });
+        B(0.8, 0.5, 0.03, 0, 2.4, 0.04, new THREE.MeshStandardMaterial({ map: t }), false);
+        break;
+      }
+      case 'bollard_row': {
+        for (let x = -W / 2 + 0.15; x <= W / 2; x += 0.75) {
+          C(0.1, 0.12, 0.9, x, 0.45, 0, this.mat('#1a1a1a', 0.5, 0.4), 12);
+          C(0.105, 0.105, 0.08, x, 0.78, 0, this.mat('#e8e4d8', 0.4, 0, { emissive: 0x404040, emissiveIntensity: 0.4 }), 12);
+        }
+        break;
+      }
+      case 'bus': {
+        const paint = this.mat(c ?? '#b3121b', 0.35, 0.3);
+        B(W, 2.9, D, 0, 1.75, 0, paint);
+        B(W - 0.6, 0.8, D + 0.02, -0.1, 1.9, 0, this.mat('#0a0d12', 0.1, 0.8, { emissive: 0xfff0c8, emissiveIntensity: 0.15 }), false);
+        B(W - 0.6, 0.6, D + 0.02, -0.1, 2.85, 0, this.mat('#0a0d12', 0.1, 0.8), false);
+        B(0.04, 0.4, 1.6, W / 2 + 0.01, 3.0, 0, this.mat('#111', 0.3, 0, { emissive: 0xffa020, emissiveIntensity: 1 }), false);
+        for (const dx of [-W / 2 + 1.2, W / 2 - 1.4]) for (const dz of [-D / 2 + 0.1, D / 2 - 0.1]) C(0.5, 0.5, 0.3, dx, 0.5, dz, this.mat('#0b0b0b', 0.9)).rotation.x = Math.PI / 2;
+        break;
+      }
+      case 'forklift': {
+        const y = this.mat(c ?? '#d8a018', 0.5, 0.3);
+        B(W * 0.6, 0.9, D, -W * 0.15, 0.65, 0, y);
+        B(W * 0.4, 0.05, D * 0.8, -W * 0.15, 2.1, 0, this.mat('#1a1a1a', 0.5, 0.6));
+        for (const dx of [-W * 0.4, W * 0.1]) for (const dz of [-D / 2 + 0.05, D / 2 - 0.05]) B(0.05, 1.9, 0.05, dx, 1.2, dz, this.mat('#1a1a1a', 0.5, 0.6), false);
+        B(0.1, 2.2, D * 0.8, W * 0.2, 1.1, 0, this.mat('#2a2a2a', 0.5, 0.7));
+        for (const dz of [-0.25, 0.25]) B(0.9, 0.06, 0.12, W * 0.2 + 0.45, 0.12, dz, this.mat('#3a3a3a', 0.5, 0.7));
+        for (const dx of [-W * 0.35, W * 0.05]) for (const dz of [-D / 2, D / 2]) C(0.25, 0.25, 0.2, dx, 0.25, dz, this.mat('#0b0b0b', 0.9)).rotation.x = Math.PI / 2;
+        break;
+      }
+      case 'bollard_dock': {
+        C(W * 0.7, W, 0.6, 0, 0.3, 0, this.mat('#1a1a1a', 0.6, 0.5), 12);
+        C(W, W, 0.08, 0, 0.62, 0, this.mat('#1a1a1a', 0.6, 0.5), 12);
+        const rope = new THREE.Mesh(new THREE.TorusGeometry(W * 0.8, 0.03, 6, 16), this.mat('#c8b080', 1));
+        rope.rotation.x = Math.PI / 2;
+        rope.position.y = 0.45;
+        g.add(rope);
+        break;
+      }
+      case 'crane_leg': {
+        const m = this.mat('#c9a227', 0.6, 0.4);
+        B(W, 12, D, 0, 6, 0, m);
+        for (let y = 1; y < 12; y += 1.5) {
+          const brace = B(0.06, 1.6, D + 0.02, 0, y, 0, this.mat('#8a6a12', 0.6, 0.5), false);
+          brace.rotation.x = 0.7;
+        }
+        B(W + 0.6, 0.4, D + 0.6, 0, 0.2, 0, this.mat('#2a2a2a', 0.6, 0.6));
+        break;
+      }
+      case 'kiosk': {
+        B(W, 2.4, D, 0, 1.2, 0, this.mat(c ?? '#1d3a2a', 0.5));
+        B(W - 0.3, 0.9, 0.04, 0, 1.6, D / 2 + 0.01, this.mat('#101418', 0.05, 0.7, { emissive: 0xfff2d8, emissiveIntensity: 0.7 }), false);
+        B(W + 0.3, 0.1, D + 0.4, 0, 2.45, 0, this.mat('#1a1a1a', 0.5));
+        const t = signTexture(p.label ?? 'NEWS', '#c81e1e', '#ffffff', { w: 512, h: 128 });
+        B(W, 0.3, 0.04, 0, 2.2, D / 2 + 0.03, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.4 }), false);
+        break;
+      }
+      case 'fountain': {
+        C(W, W, 0.5, 0, 0.25, 0, new THREE.MeshStandardMaterial({ map: concreteTexture('#a8a498', 2, 1), roughness: 0.9 }), 24);
+        const water = C(W - 0.1, W - 0.1, 0.02, 0, 0.45, 0, this.mat('#1a3a4a', 0.05, 0.5, { emissive: 0x2a5a7a, emissiveIntensity: 0.5 }), 24);
+        water.castShadow = false;
+        C(0.15, 0.25, 1.4, 0, 0.9, 0, this.mat('#a8a498', 0.9), 12);
+        C(0.5, 0.4, 0.15, 0, 1.6, 0, this.mat('#a8a498', 0.9), 16);
+        break;
+      }
+      case 'escalator': {
+        const ramp = B(W, 0.3, D, 0, 1.2, 0, this.mat('#b8bcc4', 0.3, 0.8));
+        ramp.rotation.z = 0.5;
+        for (const dz of [-D / 2, D / 2]) {
+          const side = B(W + 0.2, 1.0, 0.06, 0, 1.6, dz, this.mat('#a8c8d8', 0.05, 0.3, { transparent: true, opacity: 0.4 }), false);
+          side.rotation.z = 0.5;
+          const rail = B(W + 0.3, 0.06, 0.08, 0, 2.15, dz, this.mat('#1a1a1a', 0.5), false);
+          rail.rotation.z = 0.5;
+        }
+        break;
+      }
+      case 'mall_planter': {
+        B(W, 0.6, D, 0, 0.3, 0, this.mat('#d8d4cc', 0.4));
+        B(W - 0.1, 0.05, D - 0.1, 0, 0.6, 0, this.mat('#3a2a1a', 1), false);
+        for (let i = 0; i < 3; i++) {
+          const tree = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.6, 8), this.mat('#2a5a2a', 0.9));
+          tree.position.set(-W / 3 + (i * W) / 3, 1.4, 0);
+          tree.castShadow = true;
+          g.add(tree);
+        }
+        break;
+      }
+      case 'atm': {
+        B(W, 1.6, D, 0, 0.8, 0, this.mat('#4a4d55', 0.4, 0.6));
+        B(W * 0.7, 0.3, 0.02, 0, 1.25, D / 2 + 0.01, this.mat('#0a1a2a', 0.1, 0.4, { emissive: 0x2a8ad8, emissiveIntensity: 0.9 }), false);
+        B(W * 0.5, 0.15, 0.06, 0, 0.95, D / 2 + 0.03, this.mat('#2a2a2a', 0.4, 0.6), false);
+        const t = signTexture('CASH', '#1f6a3a', '#ffffff', { w: 256, h: 96 });
+        B(W, 0.2, 0.02, 0, 1.52, D / 2 + 0.01, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5 }), false);
+        break;
+      }
+      case 'vending': {
+        B(W, 1.9, D, 0, 0.95, 0, this.mat(c ?? '#b3121b', 0.4, 0.3));
+        B(W * 0.65, 1.3, 0.02, -W * 0.12, 1.15, D / 2 + 0.01, this.mat('#101418', 0.05, 0.6, { emissive: 0xfff8e8, emissiveIntensity: 0.8 }), false);
+        for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) B(0.08, 0.16, 0.05, -W * 0.4 + k * 0.13, 0.65 + r * 0.32, D / 2 - 0.04, this.mat(['#d82a2a', '#2a8ad8', '#e8c82a', '#2a8a3a'][(r + k) % 4], 0.4), false);
+        break;
+      }
+      case 'shop_rail': {
+        const chrome = this.mat('#c8ccd0', 0.15, 0.95);
+        for (const dx of [-W / 2 + 0.05, W / 2 - 0.05]) C(0.02, 0.02, 1.5, dx, 0.75, 0, chrome, 8);
+        C(0.015, 0.015, W, 0, 1.48, 0, chrome, 8).rotation.z = Math.PI / 2;
+        B(W, 0.04, D, 0, 0.03, 0, chrome, false);
+        for (let x = -W / 2 + 0.15; x < W / 2 - 0.1; x += 0.11) {
+          const col = ['#1a1a1a', '#1f2a44', '#7a1414', '#3a5a3a', '#e8e4dc', '#5a4a3a'][Math.floor(this.rnd() * 6)];
+          B(0.04, 0.7, 0.45, x, 1.08, 0, this.mat(col, 0.95), false);
+        }
+        break;
+      }
+      case 'mannequin': {
+        const skin = this.mat('#e8e4dc', 0.35);
+        C(0.15, 0.15, 0.02, 0, 0.01, 0, this.mat('#1a1a1a', 0.3, 0.6), 16);
+        C(0.015, 0.015, 0.7, 0, 0.36, 0, this.mat('#c8ccd0', 0.15, 0.9), 6);
+        B(0.36, 0.55, 0.2, 0, 1.0, 0, this.mat(c ?? ['#1a1a1a', '#7a1414', '#1f2a44'][Math.floor(this.rnd() * 3)], 0.9));
+        B(0.34, 0.25, 0.2, 0, 0.62, 0, this.mat('#2a3a5a', 0.9));
+        C(0.06, 0.06, 0.1, 0, 1.33, 0, skin, 8);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), skin);
+        head.scale.set(0.85, 1.1, 0.95);
+        head.position.y = 1.5;
+        head.castShadow = true;
+        g.add(head);
+        for (const dx of [-0.22, 0.22]) B(0.08, 0.5, 0.1, dx, 0.98, 0, this.mat('#1a1a1a', 0.9));
+        break;
+      }
+      case 'display_cabinet':
+      case 'glass_counter': {
+        const tall = p.kind === 'display_cabinet';
+        const h = tall ? 1.8 : 1.0;
+        B(W, 0.3, D, 0, 0.15, 0, this.mat('#2a1a10', 0.5));
+        B(W, h - 0.3, D, 0, 0.15 + h / 2, 0, this.mat('#c8e0f0', 0.02, 0.2, { transparent: true, opacity: 0.25, depthWrite: false }), false);
+        for (let k = 0; k < (tall ? 3 : 1); k++) B(W - 0.05, 0.02, D - 0.05, 0, 0.5 + k * 0.45, 0, this.mat('#c8e0f0', 0.05, 0.2, { transparent: true, opacity: 0.4 }), false);
+        // Watches, rings, phones glinting on the shelves.
+        for (let i = 0; i < (tall ? 12 : 6); i++) {
+          const gold = this.rnd() < 0.5;
+          B(0.08, 0.03, 0.06, -W / 2 + 0.15 + this.rnd() * (W - 0.3), 0.53 + Math.floor(this.rnd() * (tall ? 3 : 1)) * 0.45, (this.rnd() - 0.5) * (D - 0.2), this.mat(gold ? '#d4af37' : '#c8ccd0', 0.15, 0.95, { emissive: gold ? 0x6a5010 : 0x404448, emissiveIntensity: 0.6 }), false);
+        }
+        B(W, 0.04, D, 0, 0.15 + h - 0.15 + 0.02, 0, this.mat('#2a1a10', 0.5), false);
+        break;
+      }
+      case 'shop_counter': {
+        B(W, 1.0, D, 0, 0.5, 0, this.mat(c ?? '#e8e4dc', 0.4));
+        B(W + 0.06, 0.05, D + 0.06, 0, 1.02, 0, this.mat('#1a1a1a', 0.3, 0.2));
+        B(0.35, 0.25, 0.3, W / 2 - 0.4, 1.17, 0, this.mat('#1a1a1a', 0.4, 0.4));
+        B(0.3, 0.2, 0.02, W / 2 - 0.4, 1.4, -0.05, this.mat('#0a1a2a', 0.1, 0.4, { emissive: 0x2a8ad8, emissiveIntensity: 0.7 }), false);
+        break;
+      }
+      case 'shop_shelf': {
+        const m = this.mat(c ?? '#e8e4dc', 0.6);
+        B(W, 1.9, 0.05, 0, 0.95, -D / 2 + 0.03, m);
+        for (let i = 0; i < 4; i++) {
+          B(W, 0.03, D, 0, 0.3 + i * 0.48, 0, m, false);
+          for (let x = -W / 2 + 0.15; x < W / 2 - 0.1; x += 0.25) B(0.2, 0.14, D * 0.7, x, 0.38 + i * 0.48, 0, this.mat(['#1a1a1a', '#e8e4dc', '#7a1414', '#1f2a44', '#c97a1a', '#3a5a3a'][Math.floor(this.rnd() * 6)], 0.9), false);
+        }
+        break;
+      }
+      case 'changing_booth': {
+        const m = this.mat('#e8e4dc', 0.6);
+        B(0.04, 2.2, D, -W / 2, 1.1, 0, m);
+        B(0.04, 2.2, D, W / 2, 1.1, 0, m);
+        B(W, 2.2, 0.04, 0, 1.1, -D / 2, this.mat('#a8b8c8', 0.05, 0.2, { emissive: 0x4a5a6a, emissiveIntensity: 0.4 }));
+        C(0.012, 0.012, W, 0, 2.15, D / 2, this.mat('#c8ccd0', 0.2, 0.9), 6).rotation.z = Math.PI / 2;
+        B(W * 0.35, 1.9, 0.02, -W * 0.3, 1.18, D / 2, this.mat('#2a3a5a', 0.95), false);
+        break;
+      }
+      case 'bar': {
+        const wood = new THREE.MeshStandardMaterial({ map: woodFloorTexture(W / 1.5, 0.6), color: 0x6a3a1a, roughness: 0.4 });
+        B(W, 1.05, D, 0, 0.52, 0, wood);
+        B(W + 0.1, 0.06, D + 0.15, 0, 1.08, 0.05, this.mat('#3a1a0a', 0.25, 0.1));
+        B(W, 0.04, 0.04, 0, 0.22, D / 2 + 0.12, this.mat('#c9a227', 0.2, 0.9), false);
+        // Beer pumps.
+        for (let i = 0; i < 4; i++) {
+          C(0.03, 0.04, 0.2, -0.6 + i * 0.4, 1.2, 0.05, this.mat('#c8ccd0', 0.2, 0.9), 8);
+          B(0.05, 0.3, 0.05, -0.6 + i * 0.4, 1.4, 0.05, this.mat(['#1a1a1a', '#e8e4dc', '#7a1414', '#1f2a44'][i], 0.4), false);
+        }
+        for (let i = 0; i < 3; i++) C(0.035, 0.03, 0.14, W / 2 - 0.4 - i * 0.18, 1.18, D / 2 - 0.1, this.mat('#d8a040', 0.1, 0.1, { transparent: true, opacity: 0.8, emissive: 0x6a3a10, emissiveIntensity: 0.3 }), 10);
+        break;
+      }
+      case 'pool_table': {
+        B(W, 0.18, D, 0, 0.72, 0, this.mat('#4a2a14', 0.5));
+        B(W - 0.25, 0.02, D - 0.25, 0, 0.82, 0, this.mat('#1a5a2a', 1), false);
+        for (const dx of [-W / 2 + 0.15, W / 2 - 0.15]) for (const dz of [-D / 2 + 0.15, D / 2 - 0.15]) B(0.14, 0.64, 0.14, dx, 0.32, dz, this.mat('#4a2a14', 0.5));
+        const cols = ['#e8c82a', '#c81e1e', '#1a1a1a', '#f0f0f0', '#1f5a9a', '#c81e1e', '#e8c82a'];
+        cols.forEach((col, i) => {
+          const ball = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), this.mat(col, 0.15));
+          ball.position.set(-0.3 + (i % 4) * 0.2 + this.rnd() * 0.1, 0.86, -0.2 + Math.floor(i / 4) * 0.3);
+          g.add(ball);
+        });
+        // Lampshade over the table.
+        B(1.2, 0.18, 0.4, 0, 2.3, 0, this.mat('#1d3a2a', 0.6, 0, { emissive: 0xfff0c8, emissiveIntensity: 0.3 }), false);
+        break;
+      }
+      case 'pub_table': {
+        C(W, W, 0.05, 0, 0.74, 0, this.mat('#3a2010', 0.35), 20);
+        C(0.04, 0.05, 0.7, 0, 0.37, 0, this.mat('#1a1a1a', 0.4, 0.6), 8);
+        C(0.25, 0.25, 0.03, 0, 0.02, 0, this.mat('#1a1a1a', 0.4, 0.6), 16);
+        C(0.035, 0.03, 0.15, 0.1, 0.84, 0.05, this.mat('#d8a040', 0.1, 0.1, { transparent: true, opacity: 0.8 }), 10);
+        break;
+      }
+      case 'fruit_machine': {
+        B(W, 1.8, D, 0, 0.9, 0, this.mat('#1a1a2a', 0.4));
+        B(W * 0.8, 0.45, 0.02, 0, 1.3, D / 2 + 0.01, this.mat('#111', 0.3, 0, { emissive: 0xff8a2a, emissiveIntensity: 0.8 }), false);
+        B(W * 0.8, 0.3, 0.02, 0, 1.65, D / 2 + 0.01, this.mat('#111', 0.3, 0, { emissive: 0xff2aa0, emissiveIntensity: 1 }), false);
+        for (let i = 0; i < 4; i++) B(0.06, 0.03, 0.03, -0.15 + i * 0.1, 0.95, D / 2 + 0.02, this.mat('#111', 0.3, 0, { emissive: [0xff2020, 0xffd020, 0x20ff60, 0x2080ff][i], emissiveIntensity: 1 }), false);
+        break;
+      }
+      case 'jukebox': {
+        B(W, 1.3, D, 0, 0.65, 0, this.mat('#5a2a14', 0.3));
+        const top = C(W / 2, W / 2, D * 2, 0, 1.3, 0, this.mat('#d84a1a', 0.2, 0, { emissive: 0xff8a2a, emissiveIntensity: 0.9 }), 20);
+        top.rotation.x = Math.PI / 2;
+        B(W * 0.7, 0.4, 0.02, 0, 0.95, D / 2 + 0.01, this.mat('#1a1a1a', 0.1, 0.3, { emissive: 0xffe0a0, emissiveIntensity: 0.6 }), false);
+        break;
+      }
+      case 'dj_booth': {
+        B(W, 1.1, D, 0, 0.55, 0, this.mat('#121216', 0.4, 0.3));
+        B(W, 0.08, D * 0.9, 0, 1.14, 0, this.mat('#1a1a1a', 0.3, 0.4));
+        for (const dx of [-W / 3, W / 3]) {
+          const deck = C(0.16, 0.16, 0.03, dx, 1.2, 0, this.mat('#2a2a2a', 0.2, 0.7), 20);
+          deck.castShadow = false;
+        }
+        B(W, 0.06, 0.03, 0, 0.9, D / 2 + 0.01, this.mat('#111', 0.3, 0, { emissive: 0xa070ff, emissiveIntensity: 1.6 }), false);
+        break;
+      }
+      default:
+        // Anything without a model yet still shows its collision box, so you never bump into thin air.
+        B(W || 0.3, 1, D || 0.3, 0, 0.5, 0, this.mat(c ?? '#5a5e64', 0.7));
     }
   }
 
@@ -995,8 +1831,8 @@ export class LevelView {
 
   private buildGraffiti(): void {
     const theme = this.level.theme;
-    if (theme === 'home') return;
-    const density = theme === 'alleys' || theme === 'territory' || theme === 'subway' ? 7 : theme === 'estate' || theme === 'industrial' ? 10 : 16;
+    const density = themeProfile(theme).graffiti;
+    if (!density) return;
     for (let x = this.level.bounds.minX + 2; x < this.level.bounds.maxX; x += density * (0.6 + this.rnd() * 0.8)) {
       const w = 1.4 + this.rnd() * 1.2;
       if (this.level.exits.some((e) => e.kind === 'door' && Math.abs(e.x - x) < w / 2 + 0.9)) continue;
@@ -1008,7 +1844,8 @@ export class LevelView {
   private buildLights(): void {
     const theme = this.level.theme;
     const g = this.group;
-    const indoor = theme === 'home' || theme === 'subway';
+    const prof = themeProfile(theme);
+    const indoor = prof.interior || prof.roofed;
     g.add(new THREE.HemisphereLight(indoor ? 0x8a8070 : 0x55607e, 0x14100c, indoor ? 1.1 : 0.9));
     const front = new THREE.DirectionalLight(0xffd2a8, indoor ? 0.6 : 0.75);
     front.position.set(2, 3, 12);
@@ -1032,11 +1869,14 @@ export class LevelView {
       light.position.set(l.x, l.y, l.z);
       g.add(light);
       this.flicker.push({ light, base: l.intensity });
-      if (theme === 'home') {
+      if (prof.interior) {
         // Ceiling lampshade.
         this.cyl(0.01, 0.01, 0.4, l.x, 2.8, l.z, this.mat('#222'), 6);
         this.cyl(0.12, 0.25, 0.22, l.x, 2.5, l.z, this.mat('#f0e0c0', 0.8, 0, { emissive: l.colour, emissiveIntensity: 0.8 }), 16);
-      } else if (theme !== 'subway') {
+      } else if (prof.roofed) {
+        // Strip light hanging from the ceiling.
+        this.box(1.4, 0.06, 0.2, l.x, Math.min(l.y + 0.6, 3.25), l.z, this.mat('#ffffff', 0.4, 0, { emissive: l.colour, emissiveIntensity: 1.1 }), false);
+      } else {
         // Wall-mounted lamp bracket.
         const z = this.back + 0.05;
         const metal = this.mat('#1c1e22', 0.5, 0.6);
@@ -1061,60 +1901,13 @@ export class LevelView {
     this.sun.target.position.set(camX, 0, 0);
 
     for (const [i, f] of this.flicker.entries()) {
-      if (this.level.theme === 'home') continue;
+      if (themeProfile(this.level.theme).interior) continue;
       const n = Math.sin(time * 13.1 + i * 7) * Math.sin(time * 3.7 + i);
       f.light.intensity = f.base * (n > 0.985 ? 0.45 : 1);
     }
 
-    // Pickups.
-    const live = new Set<string>();
-    for (const p of world.pickups) {
-      live.add(p.key);
-      let m = this.pickupMeshes.get(p.key);
-      if (!m) {
-        m = this.pickupMesh(p.kind);
-        this.pickupMeshes.set(p.key, m);
-        this.group.add(m);
-      }
-      m.position.set(p.x, 0.25 + Math.sin(time * 3 + p.x) * 0.06, p.z);
-      m.rotation.y = time * 1.8;
-      if (p.kind === 'secret') m.scale.setScalar(0.8 + Math.sin(time * 5) * 0.2);
-    }
-    for (const [k, m] of this.pickupMeshes) {
-      if (live.has(k)) continue;
-      this.group.remove(m);
-      disposeGroup(m);
-      this.pickupMeshes.delete(k);
-    }
-
-    // Weapons on the ground.
-    const items = new Set<string>();
-    for (const it of world.items) {
-      items.add(it.key);
-      let m = this.itemMeshes.get(it.key);
-      if (!m) {
-        const g = new THREE.Group();
-        const w = buildWeaponMesh(it.weapon);
-        w.rotation.z = Math.PI / 2;
-        w.position.set(it.weapon.length / 2, 0.05, 0);
-        g.add(w);
-        const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.36, 24), new THREE.MeshBasicMaterial({ color: 0xffd23d, transparent: true, opacity: 0.5 }));
-        ring.rotation.x = -Math.PI / 2;
-        ring.position.y = 0.01;
-        g.add(ring);
-        this.group.add(g);
-        this.itemMeshes.set(it.key, g);
-        m = g;
-      }
-      m.position.set(it.x, 0, it.z);
-      m.rotation.y = 0.4;
-    }
-    for (const [k, m] of this.itemMeshes) {
-      if (items.has(k)) continue;
-      this.group.remove(m);
-      disposeGroup(m);
-      this.itemMeshes.delete(k);
-    }
+    this.syncDynamic(world, time);
+    this.updateWeather(time, camX);
 
     // Gates slide up when open.
     for (const g of this.level.gates ?? []) {
@@ -1132,7 +1925,7 @@ export class LevelView {
       v.lamp.emissive.setHex(done ? 0x20ff40 : 0xff2020);
     }
     for (const s of this.exitSigns) {
-      const locked = !!s.exit.requires && !this.progress.has(s.exit.requires);
+      const locked = exitLocked(s.exit, this.progress);
       if (locked === s.locked) continue;
       s.locked = locked;
       const label = locked ? `${s.exit.label} ✖` : s.exit.label;
@@ -1155,6 +1948,201 @@ export class LevelView {
       const bad = (it.kind === 'exit' && it.locked) || (it.kind === 'lever' && it.done);
       (this.highlight.material as THREE.MeshBasicMaterial).color.setHex(bad ? 0xff4a3a : 0xffd23d);
     }
+  }
+
+  /** Keeps meshes for everything that comes and goes in the world in step with it. */
+  private syncDynamic(world: World, time: number): void {
+    const sync = <T extends { key: string }>(list: readonly T[], map: Map<string, THREE.Object3D>, make: (e: T) => THREE.Object3D, place: (m: THREE.Object3D, e: T) => void) => {
+      const live = new Set<string>();
+      for (const e of list) {
+        live.add(e.key);
+        let m = map.get(e.key);
+        if (!m) {
+          m = make(e);
+          map.set(e.key, m);
+          this.group.add(m);
+        }
+        place(m, e);
+      }
+      for (const [k, m] of map) {
+        if (live.has(k)) continue;
+        this.group.remove(m);
+        disposeGroup(m);
+        map.delete(k);
+      }
+    };
+    // Cash on the floor: a small stack of notes or a few coins.
+    sync(world.cash.map((c) => ({ ...c, key: `c:${c.key}` })), this.pickupMeshes, (c) => this.pickupMesh(c.amount >= 20 ? 'cash' : 'drop'), (m, c) => {
+      m.position.set(c.x, 0.25 + Math.sin(time * 3 + c.x) * 0.06, c.z);
+      m.rotation.y = time * 1.8;
+    });
+    // Secrets are only a faint glint until you stand on them.
+    sync(world.secrets.map((s) => ({ ...s, key: `s:${s.key}` })), this.pickupMeshes, () => this.pickupMesh('secret'), (m, s) => {
+      m.position.set(s.x, 0.3, s.z);
+      m.rotation.y = time * 2;
+      m.scale.setScalar(0.8 + Math.sin(time * 5) * 0.2);
+    });
+    // Items on the ground.
+    sync(world.items, this.itemMeshes, (it) => {
+      const m = this.groundItemMesh(it.stack.id, it.stack.colour);
+      m.userData.born = it.bornAt < 0 ? -99 : time;
+      return m;
+    }, (m, it) => {
+      const age = Math.max(0, time - (m.userData.born as number));
+      const bounce = age < 0.6 ? Math.abs(Math.sin(age * 10)) * (0.6 - age) * 0.5 : 0;
+      m.position.set(it.x, bounce, it.z);
+      const spin = m.userData.spin as THREE.Object3D | undefined;
+      if (spin) {
+        spin.rotation.y = time * 1.5;
+        spin.position.y = 0.35 + Math.sin(time * 3 + it.x) * 0.05;
+      }
+    });
+    // Thrown weapons, spinning end over end.
+    sync(world.projectiles, this.projMeshes, (p) => {
+      const g = new THREE.Group();
+      const w = buildWeaponMesh(p.weapon);
+      w.position.y = -p.weapon.length / 2;
+      g.add(w);
+      return g;
+    }, (m, p) => {
+      m.position.set(p.x, p.y, p.z);
+      m.rotation.z = -p.spin;
+    });
+    // Breakables: whole until smashed, then a pile of bits.
+    for (const b of world.breakables) {
+      let v = this.breakMeshes.get(b.def.id);
+      if (!v) {
+        v = this.breakableMesh(b.def.kind);
+        v.whole.position.set(b.def.x, 0, b.def.z);
+        v.debris.position.set(b.def.x, 0, b.def.z);
+        this.group.add(v.whole, v.debris);
+        this.breakMeshes.set(b.def.id, v);
+      }
+      v.whole.visible = !b.broken;
+      v.debris.visible = b.broken;
+      // A little shake when it takes a hit.
+      if (!b.broken && b.hp < b.def.hp) v.whole.rotation.z = Math.sin(time * 40) * 0.01 * (b.def.hp - b.hp);
+    }
+    // A faint sparkle over anything not yet searched.
+    for (const c of this.level.containers ?? []) {
+      let m = this.containerMarks.get(c.id);
+      if (!m) {
+        m = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), new THREE.MeshBasicMaterial({ color: c.requires ? 0xff8a3a : 0xfff2b0, transparent: true, opacity: 0.7 }));
+        this.group.add(m);
+        this.containerMarks.set(c.id, m);
+      }
+      const searched = world.isSearched(c);
+      m.visible = !searched;
+      if (!searched) {
+        m.position.set(c.x, 1.45 + Math.sin(time * 2.5 + c.x) * 0.08, c.z);
+        m.rotation.y = time * 2;
+        ((m as THREE.Mesh).material as THREE.MeshBasicMaterial).opacity = 0.35 + 0.35 * Math.max(0, Math.sin(time * 3 + c.x * 1.7));
+      }
+    }
+  }
+
+  /** A weapon lies on the floor; anything else floats as its icon with a rarity ring. */
+  private groundItemMesh(id: string, colour?: string): THREE.Object3D {
+    const def = itemDef(id);
+    const g = new THREE.Group();
+    const rarity = new THREE.Color(RARITY_COLOURS[def?.rarity ?? 'common']);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.28, 0.34, 24), new THREE.MeshBasicMaterial({ color: rarity, transparent: true, opacity: 0.6 }));
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.012;
+    g.add(ring);
+    const wid = def?.weapon;
+    if (wid && WEAPONS[wid]) {
+      const w = buildWeaponMesh(WEAPONS[wid]);
+      w.rotation.z = Math.PI / 2;
+      w.rotation.y = 0.4;
+      w.position.set(WEAPONS[wid].length / 2, 0.05, 0);
+      g.add(w);
+      return g;
+    }
+    const spin = new THREE.Group();
+    const tex = new THREE.TextureLoader().load(itemIconUrl(id, colour));
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const card = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.42), new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+    spin.add(card);
+    const glow = new THREE.Mesh(new THREE.CircleGeometry(0.26, 20), new THREE.MeshBasicMaterial({ color: rarity, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
+    glow.position.z = -0.01;
+    spin.add(glow);
+    g.add(spin);
+    g.userData.spin = spin;
+    return g;
+  }
+
+  private breakableMesh(kind: string): { whole: THREE.Object3D; debris: THREE.Object3D } {
+    const whole = new THREE.Group();
+    const debris = new THREE.Group();
+    const wood = this.mat('#9a7a4e', 0.85);
+    const B = (w: number, h: number, d: number, x: number, y: number, z: number, m: THREE.Material, parent: THREE.Object3D, rx = 0, rz = 0) => {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
+      mesh.position.set(x, y, z);
+      mesh.rotation.set(rx, 0, rz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    };
+    const splinters = (m: THREE.Material, n = 7) => {
+      for (let i = 0; i < n; i++) B(0.08 + this.rnd() * 0.4, 0.03, 0.07, (this.rnd() - 0.5) * 0.9, 0.02 + this.rnd() * 0.04, (this.rnd() - 0.5) * 0.6, m, debris, 0, (this.rnd() - 0.5) * 0.3).rotation.y = this.rnd() * 3;
+    };
+    switch (kind) {
+      case 'crate':
+        B(0.75, 0.7, 0.65, 0, 0.35, 0, wood, whole);
+        for (const y of [0.12, 0.58]) B(0.77, 0.08, 0.67, 0, y, 0, this.mat('#7a5a32', 0.9), whole);
+        splinters(wood, 9);
+        break;
+      case 'pallet':
+        for (let i = 0; i < 3; i++) B(0.8, 0.06, 0.6, 0, 0.06 + i * 0.14, 0, wood, whole);
+        for (const dx of [-0.35, 0, 0.35]) B(0.08, 0.36, 0.6, dx, 0.18, 0, this.mat('#7a5a32', 0.9), whole);
+        splinters(wood, 8);
+        break;
+      case 'chair':
+        for (const [dx, dz] of [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]]) B(0.04, 0.45, 0.04, dx, 0.22, dz, this.mat('#5a3a20', 0.7), whole);
+        B(0.44, 0.05, 0.44, 0, 0.47, 0, this.mat('#5a3a20', 0.7), whole);
+        B(0.44, 0.45, 0.04, 0, 0.72, -0.2, this.mat('#5a3a20', 0.7), whole);
+        B(0.4, 0.04, 0.4, 0, 0.5, 0, this.mat('#7a1e1e', 0.95), whole);
+        splinters(this.mat('#5a3a20', 0.7), 6);
+        break;
+      case 'table':
+        B(0.8, 0.05, 0.7, 0, 0.74, 0, this.mat('#4a2e18', 0.5), whole);
+        for (const [dx, dz] of [[-0.34, -0.28], [0.34, -0.28], [-0.34, 0.28], [0.34, 0.28]]) B(0.05, 0.72, 0.05, dx, 0.36, dz, this.mat('#4a2e18', 0.5), whole);
+        B(0.8, 0.05, 0.7, 0.1, 0.1, 0, this.mat('#4a2e18', 0.5), debris, 0, 0.25);
+        splinters(this.mat('#4a2e18', 0.5), 4);
+        break;
+      case 'tv':
+        B(0.6, 0.45, 0.45, 0, 0.6, 0, this.mat('#2a2a2a', 0.5), whole);
+        B(0.5, 0.36, 0.01, 0, 0.6, 0.23, this.mat('#203028', 0.15, 0.3, { emissive: 0x405048, emissiveIntensity: 0.3 }), whole);
+        B(0.7, 0.38, 0.5, 0, 0.19, 0, this.mat('#3a2a1a', 0.7), whole);
+        B(0.6, 0.4, 0.45, 0, 0.2, 0.05, this.mat('#2a2a2a', 0.5), debris, 0.2, 0.3);
+        B(0.7, 0.38, 0.5, 0, 0.19, -0.5, this.mat('#3a2a1a', 0.7), debris);
+        break;
+      case 'boxes':
+        for (const [x, y, s] of [[-0.2, 0.2, 0.4], [0.22, 0.18, 0.36], [0, 0.58, 0.36]]) B(s, s, s, x, y, 0, this.mat('#b08a5a', 0.95), whole);
+        for (let i = 0; i < 4; i++) B(0.4, 0.02, 0.35, (this.rnd() - 0.5) * 0.8, 0.02, (this.rnd() - 0.5) * 0.4, this.mat('#b08a5a', 0.95), debris).rotation.y = this.rnd() * 3;
+        break;
+      case 'window':
+        B(1.2, 1.2, 0.06, 0, 1.4, 0, this.mat('#9ab0c8', 0.05, 0.3, { transparent: true, opacity: 0.45 }), whole);
+        B(1.3, 0.08, 0.1, 0, 0.78, 0, this.mat('#e8e4d8', 0.6), whole);
+        B(1.3, 0.08, 0.1, 0, 0.78, 0, this.mat('#e8e4d8', 0.6), debris);
+        for (let i = 0; i < 10; i++) B(0.08 + this.rnd() * 0.1, 0.005, 0.06, (this.rnd() - 0.5) * 1.4, 0.005, (this.rnd() - 0.5) * 0.8, this.mat('#c8d8e8', 0.05, 0.4), debris).rotation.y = this.rnd() * 3;
+        break;
+      default: {
+        // barrel
+        const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.9, 16), this.mat('#2a4a7a', 0.5, 0.5));
+        drum.position.y = 0.45;
+        drum.castShadow = true;
+        whole.add(drum);
+        const down = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.9, 16), this.mat('#2a4a7a', 0.6, 0.5));
+        down.rotation.z = Math.PI / 2;
+        down.position.set(0.2, 0.3, 0);
+        debris.add(down);
+      }
+    }
+    debris.visible = false;
+    return { whole, debris };
   }
 
   private pickupMesh(kind: string): THREE.Object3D {

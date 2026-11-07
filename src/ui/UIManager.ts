@@ -47,6 +47,19 @@ export class UIManager {
     if (screen) this.push(screen);
   }
 
+  /** After a screen rebuilds its contents, focus the same position again. */
+  keepFocus(): void {
+    this.focus();
+  }
+
+  /** Focus a specific element (after a rebuild). */
+  focusElement(el: HTMLElement | null): void {
+    if (!el) return this.focus();
+    const idx = this.items().indexOf(el);
+    if (idx >= 0) this.focusIndex = idx;
+    this.focus();
+  }
+
   private activate(s: Screen): void {
     s.el.classList.add('active');
     s.onShow?.();
@@ -95,6 +108,13 @@ export class UIManager {
       case 'left':
       case 'right': {
         const el = items[this.focusIndex];
+        // In item grids, left and right move between slots.
+        if (el?.hasAttribute('data-grid')) {
+          this.focusIndex += action === 'left' ? -1 : 1;
+          this.focus();
+          this.onNavigate?.();
+          return true;
+        }
         if (el) el.dispatchEvent(new CustomEvent('nav-adjust', { detail: action === 'left' ? -1 : 1 }));
         return true;
       }

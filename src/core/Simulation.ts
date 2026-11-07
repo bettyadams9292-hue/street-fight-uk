@@ -54,7 +54,7 @@ export class Simulation {
     let best: Fighter | null = null;
     let bestD = Infinity;
     for (const o of this.fighters) {
-      if (o === f || o.team === f.team || o.isKO) continue;
+      if (o === f || o.team === f.team || o.isKO || o.team === 'neutral' || f.team === 'neutral') continue;
       const d = Math.abs(o.pos.x - f.pos.x) + Math.abs(o.pos.z - f.pos.z) * 0.5;
       if (d < bestD) {
         bestD = d;

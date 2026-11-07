@@ -1,7 +1,6 @@
 import type { ArchetypeId } from '../ai/archetypes';
 import type { BossId } from '../ai/bosses';
 import type { WeaponId } from '../combat/Weapons';
-import type { GearId } from '../progress/catalogue';
 import type { AreaId } from '../progress/Progress';
 
 /**
@@ -9,14 +8,25 @@ import type { AreaId } from '../progress/Progress';
  * (LevelView.ts) are both built from this, so what you see is what collides.
  */
 
-export type Theme = 'home' | 'estate' | 'high_street' | 'alleys' | 'industrial' | 'subway' | 'city' | 'territory';
+export type Theme =
+  | 'home' | 'estate' | 'high_street' | 'alleys' | 'industrial' | 'subway' | 'city' | 'territory'
+  | 'residential' | 'leisure' | 'stadium' | 'market' | 'docks' | 'ind_estate' | 'factory' | 'precinct' | 'mall' | 'car_park'
+  | 'nightlife' | 'underground' | 'hq' | 'shop' | 'pawn' | 'pub';
 
 /** Solid things on the ground. Size comes from the kind unless given. */
 export type PropKind =
   | 'bin' | 'skip' | 'car' | 'van' | 'phonebox' | 'busstop' | 'bench' | 'barrier' | 'pallets' | 'crates' | 'drum' | 'cone' | 'trolley'
   | 'postbox' | 'bollard' | 'planter' | 'scrap'
   // home
-  | 'bed' | 'wardrobe' | 'sofa' | 'tv' | 'table' | 'fridge' | 'cooker' | 'counter' | 'weights' | 'bag' | 'workbench' | 'shelves' | 'homecar' | 'desk' | 'rack';
+  | 'bed' | 'wardrobe' | 'sofa' | 'tv' | 'table' | 'fridge' | 'cooker' | 'counter' | 'weights' | 'bag' | 'workbench' | 'shelves' | 'homecar' | 'desk' | 'rack'
+  | 'chest'
+  // streets (Stage 5)
+  | 'dumpster' | 'rubbish_bags' | 'cardboard' | 'abandoned_car' | 'container' | 'market_stall' | 'turnstile' | 'pillar' | 'bike_rack'
+  | 'lamp_post' | 'traffic_light' | 'sign_post' | 'bollard_row' | 'bus' | 'forklift' | 'bollard_dock' | 'crane_leg' | 'kiosk' | 'fountain'
+  | 'escalator' | 'mall_planter' | 'atm' | 'vending'
+  // shops and pubs
+  | 'shop_rail' | 'mannequin' | 'display_cabinet' | 'glass_counter' | 'shop_counter' | 'shop_shelf' | 'changing_booth'
+  | 'bar' | 'pool_table' | 'pub_table' | 'fruit_machine' | 'jukebox' | 'dj_booth';
 
 export interface PropDef {
   kind: PropKind;
@@ -25,10 +35,15 @@ export interface PropDef {
   /** Rotate 90 degrees (swap width and depth). */
   turned?: boolean;
   colour?: string;
+  /** Text on signs and kiosks. */
+  label?: string;
 }
 
 /** Back-wall scenery along the street. */
-export type FacadeKind = 'terrace' | 'shop' | 'pub' | 'tower' | 'garages' | 'warehouse' | 'fence' | 'hoarding' | 'subway' | 'office' | 'club' | 'house_front' | 'room';
+export type FacadeKind =
+  | 'terrace' | 'shop' | 'pub' | 'tower' | 'garages' | 'warehouse' | 'fence' | 'hoarding' | 'subway' | 'office' | 'club' | 'house_front' | 'room'
+  | 'semi' | 'precinct' | 'mall' | 'stand' | 'leisure' | 'dock' | 'containers' | 'market' | 'car_park' | 'ruin' | 'platform' | 'fortress'
+  | 'interior';
 
 export interface FacadeDef {
   kind: FacadeKind;
@@ -57,6 +72,10 @@ export interface ExitDef {
   toEntry: string;
   /** Needs this progress flag to use. */
   requires?: string;
+  /** Needs all of these flags. */
+  requiresAll?: string[];
+  /** A shop door: shut while the shop is closed (after a robbery). */
+  shop?: string;
   lockedText?: string;
   label: string;
 }
@@ -80,16 +99,55 @@ export interface LeverDef {
   doneText: string;
 }
 
+/**
+ * Something lying about. Cash is collected by walking over it; items are
+ * picked up with the interact button. Cash and secrets are one-time; plain
+ * items come back each visit unless `once` is set.
+ */
 export interface PickupDef {
   id: string;
-  kind: 'cash' | 'food' | 'weapon' | 'secret';
+  kind: 'cash' | 'item' | 'secret';
   x: number;
   z: number;
   amount?: number;
-  weapon?: WeaponId;
+  /** Item id (see items.ts), e.g. 'kebab', 'w_bat', 'watch_gold'. */
+  item?: string;
+  qty?: number;
+  once?: boolean;
   /** Secrets: what you find. */
-  reward?: { cosmetic?: string; gear?: GearId; cash?: number };
+  reward?: { cash?: number; items?: string[] };
   label?: string;
+}
+
+export type ContainerKind = 'bin' | 'skip' | 'car' | 'drawers' | 'cupboard' | 'wardrobe' | 'crate' | 'locker' | 'bag' | 'dumpster' | 'till';
+
+/** Something you can search with the interact button. */
+export interface ContainerDef {
+  id: string;
+  kind: ContainerKind;
+  x: number;
+  z: number;
+  label: string;
+  /** Random contents from a loot table (refills every few trips)... */
+  loot?: string;
+  /** ...or fixed contents (found once). */
+  fixed?: { id: string; qty?: number }[];
+  cash?: number;
+  /** Needs this flag (a key) to open. */
+  requires?: string;
+  lockedText?: string;
+}
+
+/** A prop you can smash, dropping what was in or made of it. */
+export interface BreakableDef {
+  id: string;
+  kind: 'crate' | 'pallet' | 'chair' | 'table' | 'tv' | 'boxes' | 'window' | 'barrel';
+  x: number;
+  z: number;
+  hp: number;
+  /** Weapon left behind (a smashed chair leaves a chair leg). */
+  drops?: WeaponId;
+  loot?: string;
 }
 
 export interface WaveDef {
@@ -110,13 +168,30 @@ export interface EncounterDef {
   objective?: string;
 }
 
-export type StationId = 'wardrobe' | 'mirror' | 'gym' | 'sparring' | 'kitchen' | 'garage' | 'sofa' | 'contacts' | 'tin';
+export type StationId =
+  | 'wardrobe' | 'mirror' | 'gym' | 'sparring' | 'kitchen' | 'garage' | 'sofa' | 'contacts' | 'tin' | 'storage'
+  | 'clothes_counter' | 'changing' | 'pawn_counter' | 'bar';
+
+/** A non-hostile character standing at a station (shopkeepers, barmen). */
+export interface NpcDef {
+  name: string;
+  /** Seed for their look. */
+  seed: number;
+  body?: 'male' | 'female';
+  top?: string;
+  topColour?: string;
+  /** Offset from the station point (they stand behind the counter). */
+  dz?: number;
+}
 
 export interface StationDef {
   id: StationId;
   x: number;
   z: number;
   label: string;
+  npc?: NpcDef;
+  /** Which shop this is (for shop state: robberies, closures). */
+  shop?: string;
 }
 
 export interface LightDef {
@@ -144,8 +219,12 @@ export interface LevelDef {
   gates?: GateDef[];
   levers?: LeverDef[];
   pickups: PickupDef[];
+  containers?: ContainerDef[];
+  breakables?: BreakableDef[];
   encounters: EncounterDef[];
   stations?: StationDef[];
+  /** Weather and time of day. */
+  weather?: 'clear' | 'rain' | 'mist' | 'indoors';
   lights: LightDef[];
   /** Objective when nothing else is going on. */
   objective: string;
@@ -158,6 +237,13 @@ export const PROP_SIZE: Record<PropKind, [number, number]> = {
   bollard: [0.12, 0.12], planter: [0.6, 0.4], scrap: [1.1, 0.8],
   bed: [1.0, 0.75], wardrobe: [0.6, 0.35], sofa: [1.0, 0.45], tv: [0.6, 0.25], table: [0.5, 0.4], fridge: [0.4, 0.35], cooker: [0.4, 0.35],
   counter: [1.2, 0.35], weights: [0.8, 0.4], bag: [0.25, 0.25], workbench: [1.0, 0.4], shelves: [0.8, 0.25], homecar: [2.0, 0.9], desk: [0.7, 0.35], rack: [0.8, 0.2],
+  chest: [0.6, 0.35],
+  dumpster: [1.0, 0.6], rubbish_bags: [0.5, 0.35], cardboard: [0.45, 0.35], abandoned_car: [2.0, 0.9], container: [3.0, 1.2], market_stall: [1.3, 0.6],
+  turnstile: [0.4, 0.3], pillar: [0.3, 0.3], bike_rack: [0.9, 0.15], lamp_post: [0.1, 0.1], traffic_light: [0.1, 0.1], sign_post: [0.08, 0.08],
+  bollard_row: [1.5, 0.12], bus: [5.0, 1.2], forklift: [1.1, 0.65], bollard_dock: [0.22, 0.22], crane_leg: [0.5, 0.5], kiosk: [1.0, 0.8], fountain: [1.2, 1.0],
+  escalator: [2.4, 0.6], mall_planter: [1.0, 0.5], atm: [0.35, 0.25], vending: [0.45, 0.35],
+  shop_rail: [0.9, 0.3], mannequin: [0.25, 0.25], display_cabinet: [0.8, 0.35], glass_counter: [1.2, 0.4], shop_counter: [1.3, 0.4], shop_shelf: [1.0, 0.25],
+  changing_booth: [0.6, 0.6], bar: [2.5, 0.45], pool_table: [1.3, 0.75], pub_table: [0.45, 0.45], fruit_machine: [0.35, 0.3], jukebox: [0.45, 0.3], dj_booth: [1.2, 0.5],
 };
 
 export function propBox(p: PropDef): { minX: number; maxX: number; minZ: number; maxZ: number } | null {
