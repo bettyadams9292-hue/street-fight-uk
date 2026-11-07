@@ -39,7 +39,7 @@ export class GameRenderer {
     this.renderer = new THREE.WebGLRenderer({ antialias: quality !== 'low', powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.3;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(this.renderer.domElement);
 
@@ -166,13 +166,15 @@ export class GameRenderer {
     const target = FRAMING[st.framing];
     const k = 1 - Math.exp(-6 * dt);
     st.camY += (target.y - st.camY) * k;
-    st.camDist += (target.distance - st.camDist) * k;
+    // Portrait phones show the model in the top half only, so step back further.
+    const dist = target.distance * (st.panel === 'bottom' ? 1.4 : 1);
+    st.camDist += (dist - st.camDist) * k;
     const cam = this.cameraRig.camera;
     // Shift the view so the model sits in the space not covered by the menu panel.
     const halfH = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * st.camDist;
     const halfW = halfH * cam.aspect;
     const offX = st.panel === 'left' ? -halfW * 0.38 : 0;
-    const offY = st.panel === 'bottom' ? -halfH * 0.5 : 0;
+    const offY = st.panel === 'bottom' ? -halfH * 0.56 : 0;
     cam.position.set(offX, st.camY + 0.05 + offY, st.camDist);
     cam.lookAt(offX, st.camY + offY, 0);
   }

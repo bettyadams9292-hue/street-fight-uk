@@ -187,8 +187,8 @@ export function buildCharacterRig(a: CharacterAppearance): Rig {
     spine.add(shoulder);
     shoulder.add(capsule(armR, 0.17, upperArmMat(left ? 'leftUpperArm' : 'rightUpperArm'), -0.13));
     if (a.top === 'tracksuit') {
-      const stripe = mesh(new THREE.BoxGeometry(0.012, 0.26, 0.012), soleMat, false);
-      stripe.position.set(armR * side, -0.13, 0);
+      const stripe = mesh(new THREE.BoxGeometry(0.008, 0.24, 0.008), soleMat, false);
+      stripe.position.set(armR * 0.92 * side, -0.13, 0);
       shoulder.add(stripe);
     }
     const elbow = new THREE.Group();
@@ -196,13 +196,13 @@ export function buildCharacterRig(a: CharacterAppearance): Rig {
     shoulder.add(elbow);
     elbow.add(capsule(foreR, 0.16, forearmMat(left ? 'leftForearm' : 'rightForearm', left ? armScarL : armScarR), -0.12));
     if (a.top === 'tracksuit') {
-      const stripe = mesh(new THREE.BoxGeometry(0.012, 0.22, 0.012), soleMat, false);
-      stripe.position.set(foreR * side, -0.12, 0);
+      const stripe = mesh(new THREE.BoxGeometry(0.008, 0.2, 0.008), soleMat, false);
+      stripe.position.set(foreR * 0.92 * side, -0.12, 0);
       elbow.add(stripe);
     }
     const wrapped = a.accessories.includes('wraps');
-    const fist = mesh(new THREE.SphereGeometry(0.058 * (1 + 0.15 * mu), 12, 10), wrapped ? wrapsMat : plainSkin);
-    fist.scale.set(0.9, 1.1, 1);
+    const fist = mesh(new THREE.SphereGeometry(0.047 * (1 + 0.15 * mu), 12, 10), wrapped ? wrapsMat : plainSkin);
+    fist.scale.set(0.85, 1.15, 1.05);
     fist.position.y = -0.28;
     elbow.add(fist);
     if (left && a.accessories.includes('watch')) {
@@ -224,8 +224,8 @@ export function buildCharacterRig(a: CharacterAppearance): Rig {
     const thigh = capsule(thighR * (a.bottoms === 'shorts' ? 1.12 : 1), 0.27, thighMat, -0.21);
     hip.add(thigh);
     if (a.bottoms === 'trackies') {
-      const stripe = mesh(new THREE.BoxGeometry(0.012, 0.36, 0.012), soleMat, false);
-      stripe.position.set(thighR * side, -0.21, 0);
+      const stripe = mesh(new THREE.BoxGeometry(0.008, 0.34, 0.008), soleMat, false);
+      stripe.position.set(thighR * 0.92 * side, -0.21, 0);
       hip.add(stripe);
     }
     const knee = new THREE.Group();
@@ -321,13 +321,13 @@ function buildHead(head: THREE.Group, a: CharacterAppearance, k: HeadKit): void 
 
   // Brow, nose, eyes, mouth, ears.
   const browMat = k.skin({ tone: a.skinTone });
-  const brow = k.mesh(new THREE.BoxGeometry(0.15 * hw, 0.018 * (1 + 0.6 * Math.max(0, f.brow)), 0.03 * (1 + 0.4 * f.brow)), browMat, false);
-  brow.position.set(0, cy + 0.035, 0.085 + 0.006 * f.brow);
+  const brow = k.mesh(new THREE.BoxGeometry(0.13 * hw, 0.014 * (1 + 0.5 * Math.max(0, f.brow)), 0.02 * (1 + 0.4 * f.brow)), browMat, false);
+  brow.position.set(0, cy + 0.035, 0.083 + 0.004 * f.brow);
   head.add(brow);
-  const brows = k.std({ color: k.hairMat.color, roughness: 0.9 });
+  const brows = k.std({ color: new THREE.Color(k.hairHex).multiplyScalar(0.6), roughness: 0.9 });
   for (const s of [1, -1]) {
-    const b = k.mesh(new THREE.BoxGeometry(0.04, 0.008, 0.01), brows, false);
-    b.position.set(0.035 * s * (1 + 0.15 * f.eyeSpacing), cy + 0.04, 0.1 + 0.006 * f.brow);
+    const b = k.mesh(new THREE.BoxGeometry(0.034, 0.006, 0.006), brows, false);
+    b.position.set(0.034 * s * (1 + 0.15 * f.eyeSpacing), cy + 0.042, 0.096 + 0.004 * f.brow);
     b.rotation.z = -0.15 * s;
     head.add(b);
   }

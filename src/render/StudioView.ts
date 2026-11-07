@@ -45,8 +45,11 @@ export class StudioView {
     rim.position.set(-3, 3, -3);
     this.group.add(rim);
 
-    const fill = new THREE.HemisphereLight(0x5a6378, 0x0c0c0e, 0.7);
+    const fill = new THREE.HemisphereLight(0x5a6378, 0x0c0c0e, 0.9);
     this.group.add(fill);
+    const front = new THREE.DirectionalLight(0xfff0e0, 0.9);
+    front.position.set(-0.5, 1.8, 5);
+    this.group.add(front);
   }
 
   dispose(): void {

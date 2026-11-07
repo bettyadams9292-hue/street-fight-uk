@@ -104,12 +104,17 @@ export class ArenaView {
     this.addLampPost(-4, -3.1);
     this.addLampPost(6, -3.1);
     for (const x of [-12, -9, 9, 12]) this.addBollard(x, 2.25);
-    this.addCar(-3, 4.4, 0x1f2a44);
-    this.addCar(8.5, 4.4, 0x6b6b70);
+    // Parked cars sit at the far ends of the road so they never block the fight.
+    this.addCar(-17, 4.6, 0x1f2a44);
+    this.addCar(17.5, 4.6, 0x6b6b70);
 
     // ---- lighting ----------------------------------------------------------
-    const hemi = new THREE.HemisphereLight(0x46506e, 0x0b0a0a, 0.55);
+    const hemi = new THREE.HemisphereLight(0x55607e, 0x14100c, 0.9);
     g.add(hemi);
+    // Soft light from the road side (passing headlights / shop glow) so fighters aren't silhouettes.
+    const front = new THREE.DirectionalLight(0xffd2a8, 0.75);
+    front.position.set(2, 3, 12);
+    g.add(front);
     const moon = new THREE.DirectionalLight(0x8ea2d6, 0.35);
     moon.position.set(-6, 12, 10);
     g.add(moon);
