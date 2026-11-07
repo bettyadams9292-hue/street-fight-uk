@@ -17,6 +17,8 @@ import {
   type GearId,
   type MoveUnlockId,
   type UpgradeId,
+  DIFFICULTY,
+  LEVEL_BONUS,
 } from './catalogue';
 
 export const AREA_IDS = ['home', 'estate', 'high_street', 'alleys', 'industrial', 'subway', 'city', 'territory'] as const;
@@ -271,14 +273,26 @@ export class Progress {
       styleRanks: c.styleRanks,
       perks,
       inputBufferFrames: touch ? 12 : undefined,
+      grabProtectFrames: 150,
       weapon: s.equipped.weapon,
       unlocks: { specials: s.moves.includes('specials'), finishers: s.moves.includes('finishers') },
     };
   }
 
   /** Apply upgrades, gear and buffs to a freshly built player fighter. */
-  applyModifiers(f: Fighter): void {
+  applyModifiers(f: Fighter, difficulty: keyof typeof DIFFICULTY = 'normal'): void {
     const s = this.save;
+    f.stats.removeModifiersFrom('difficulty');
+    f.stats.removeModifiersFrom('level');
+    const d = DIFFICULTY[difficulty] ?? DIFFICULTY.normal;
+    f.stats.addModifier({ id: 'diff_taken', source: 'difficulty', stat: 'damageTakenMult', mul: d.taken });
+    f.stats.addModifier({ id: 'diff_dealt', source: 'difficulty', stat: 'damageMult', mul: d.dealt });
+    const lv = Math.max(0, s.level - 1);
+    if (lv > 0) {
+      f.stats.addModifier({ id: 'lvl_dealt', source: 'level', stat: 'damageMult', mul: 1 + LEVEL_BONUS.dealt * lv });
+      f.stats.addModifier({ id: 'lvl_taken', source: 'level', stat: 'damageTakenMult', mul: Math.max(0.5, 1 - LEVEL_BONUS.taken * lv) });
+      f.stats.addModifier({ id: 'lvl_health', source: 'level', flat: 'maxHealth', add: LEVEL_BONUS.health * lv });
+    }
     f.stats.removeModifiersFrom('upgrade');
     f.stats.removeModifiersFrom('gear');
     f.stats.removeModifiersFrom('move');

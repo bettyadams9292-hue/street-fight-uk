@@ -4,6 +4,7 @@
  */
 export type Quality = 'low' | 'medium' | 'high';
 export type TouchMode = 'auto' | 'on' | 'off';
+export type Difficulty = 'easy' | 'normal' | 'hard';
 
 export interface Settings {
   version: 1;
@@ -15,6 +16,8 @@ export interface Settings {
   touchControls: TouchMode;
   showHitboxes: boolean;
   showFps: boolean;
+  /** Story mode only: how hard the streets hit back. */
+  difficulty: Difficulty;
 }
 
 const KEY = 'sfuk.settings.v1';
@@ -29,6 +32,7 @@ export const DEFAULT_SETTINGS: Settings = {
   touchControls: 'auto',
   showHitboxes: false,
   showFps: false,
+  difficulty: 'normal',
 };
 
 type Listener = (s: Settings) => void;
@@ -70,7 +74,9 @@ export class SettingsStore {
       if (!raw) return { ...DEFAULT_SETTINGS };
       const parsed = JSON.parse(raw) as Partial<Settings>;
       // Merge over defaults so new settings added later get sensible values.
-      return { ...DEFAULT_SETTINGS, ...parsed, version: 1 };
+      const merged = { ...DEFAULT_SETTINGS, ...parsed, version: 1 as const };
+      if (!['easy', 'normal', 'hard'].includes(merged.difficulty)) merged.difficulty = 'normal';
+      return merged;
     } catch {
       return { ...DEFAULT_SETTINGS };
     }

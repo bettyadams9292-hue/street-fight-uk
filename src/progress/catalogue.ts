@@ -95,6 +95,20 @@ export const COSMETIC_LABELS: Record<string, string> = {
 };
 export const LOCKED_COSMETICS = Object.keys(COSMETIC_LABELS);
 
+/**
+ * Story mode is an arcade brawler: you're tougher and hit harder than the
+ * people you fight, and the gap is set by difficulty. Tuned with
+ * tests/balance.ts.
+ */
+export const DIFFICULTY = {
+  easy: { name: 'Easy', text: 'For enjoying the story', taken: 0.4, dealt: 1.6 },
+  normal: { name: 'Normal', text: 'A proper scrap', taken: 0.52, dealt: 1.4 },
+  hard: { name: 'Hard', text: 'The streets don\u2019t care', taken: 0.75, dealt: 1.15 },
+} as const;
+
+/** Each level past 1 makes you hit a bit harder and take a bit less. */
+export const LEVEL_BONUS = { dealt: 0.05, taken: 0.025, health: 4 };
+
 /** XP needed to reach the next level: 100 x level^1.5 (design doc). */
 export function xpForNextLevel(level: number): number {
   return Math.round(100 * Math.pow(level, 1.5));

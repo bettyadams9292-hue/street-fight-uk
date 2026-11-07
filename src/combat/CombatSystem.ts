@@ -88,7 +88,7 @@ export function resolveCombat(fighters: Fighter[], frame: number, bus: EventBus<
 }
 
 function resolveGrab(attacker: Fighter, target: Fighter, m: ActiveMove, frame: number, bus: EventBus<GameEvents>): void {
-  if (target.grapple || !target.grounded) return;
+  if (target.grapple || !target.grounded || frame < target.grabProtectUntil) return;
   // Sprawl: a blocking wrestler can't be grabbed.
   if (target.style.defence === 'sprawl' && target.isBlocking) {
     attacker.enterParried(36);

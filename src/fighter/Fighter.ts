@@ -53,6 +53,8 @@ export interface FighterConfig {
   styleRanks?: Record<string, number>;
   perks?: Perk[];
   inputBufferFrames?: number;
+  /** After being let go from a hold, can't be grabbed again for this long (story-mode player). */
+  grabProtectFrames?: number;
   /** Start holding a weapon. */
   weapon?: WeaponId | null;
   /** Moves bought at the gym (story mode). Leave out to allow everything. */
@@ -88,6 +90,10 @@ export class Fighter {
   readonly vitals: Vitals;
   styleRanks: Record<string, number>;
   readonly perks: Set<Perk>;
+  readonly grabProtectFrames: number;
+  /** Frame until which grabs on this fighter whiff. */
+  grabProtectUntil = 0;
+  private wasHeld = false;
 
   primaryStyle: StyleData;
   secondaryStyle: StyleData | null;
@@ -148,6 +154,7 @@ export class Fighter {
     this.appearance = cfg.appearance ?? defaultAppearance();
     this.styleRanks = { ...(cfg.styleRanks ?? {}) };
     this.perks = new Set(cfg.perks ?? []);
+    this.grabProtectFrames = cfg.grabProtectFrames ?? 0;
     this.primaryStyle = cfg.style;
     this.secondaryStyle = cfg.secondaryStyle ?? null;
     this.stats = new Stats(cfg.attributes, cfg.level ?? 1);
@@ -268,6 +275,9 @@ export class Fighter {
   // ---- per-frame update -----------------------------------------------------
 
   update(cmd: CommandFrame, frame: number, bus: EventBus<GameEvents>): void {
+    const held = this.grapple?.role === 'held';
+    if (this.wasHeld && !held && this.grabProtectFrames) this.grabProtectUntil = frame + this.grabProtectFrames;
+    this.wasHeld = held;
     // Remember attack presses so an early press still comes out.
     for (const b of ATTACK_BUTTONS) {
       if (cmd.pressed[b]) this.buffered = { button: b, special: cmd.special, toward: cmd.moveX * this.facing > 0.5, expires: frame + this.bufferFrames };

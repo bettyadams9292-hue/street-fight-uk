@@ -447,7 +447,7 @@ export class Game {
       if (carry) carry.weapon = p.save.equipped.weapon;
       if (from !== 'home' && p.save.mealBuff) p.save.mealBuff = false;
     }
-    const world = new World(level, p, { entry, touch: this.touchWanted(), carry });
+    const world = new World(level, p, { entry, touch: this.touchWanted(), carry, difficulty: this.settings.get().difficulty });
     if (opts.at) {
       world.player.pos.x = opts.at.x;
       world.player.pos.z = opts.at.z;
@@ -714,6 +714,13 @@ export class Game {
   // ---- settings ------------------------------------------------------------
 
   private applySettings(s: Settings): void {
+    // Difficulty applies straight away, keeping the current health fraction.
+    if (this.world && this.progress) {
+      const v = this.world.player.vitals;
+      const frac = v.health / v.maxHealth;
+      this.progress.applyModifiers(this.world.player, s.difficulty);
+      v.health = Math.max(1, Math.round(v.maxHealth * frac));
+    }
     this.audio.applySettings(s);
     this.renderer.applyQuality(s.quality);
     this.renderer.hitboxes.visible = s.showHitboxes;

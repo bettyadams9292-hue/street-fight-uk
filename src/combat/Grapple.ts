@@ -118,13 +118,16 @@ export function updateGrapples(fighters: Fighter[], commands: Map<number, Comman
 
     // ---- submissions --------------------------------------------------------
     if (link.submitting) {
-      const pressure = 1.1 + 0.03 * holder.stats.attr('technique') + 0.35 * holder.style.grappleSkill + 0.4 * (holder.vitals.stamina / holder.vitals.maxStamina);
+      const raw = 1.1 + 0.03 * holder.stats.attr('technique') + 0.35 * holder.style.grappleSkill + 0.4 * (holder.vitals.stamina / holder.vitals.maxStamina);
+      // The story-mode player gets longer to fight a submission off.
+      const pressure = held.grabProtectFrames ? raw * 0.65 : raw;
       const resist = vc?.block ? 0.6 + 0.4 * (held.vitals.stamina / held.vitals.maxStamina) + 0.2 * held.style.grappleSkill : 0.2;
       if (vc?.block) held.vitals.spendStamina(10 / SIM_HZ, frame);
       link.subProgress = Math.max(0, Math.min(100, link.subProgress + pressure - resist));
       heldLink.subProgress = link.subProgress;
       if (link.subProgress >= 100) {
-        const dmg = held.vitals.maxHealth * 0.35;
+        // A tap-out hurts but never ends a fight on its own from healthy.
+        const dmg = held.vitals.maxHealth * (held.grabProtectFrames ? 0.22 : 0.35) * held.stats.damageTakenMultiplier;
         held.vitals.takeDamage(dmg, frame);
         bus.emit('submission', { holder, held, damage: dmg });
         endGrapple(holder, bus, 'submission');

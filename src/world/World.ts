@@ -109,7 +109,7 @@ export class World {
   constructor(
     readonly level: LevelDef,
     readonly progress: Progress,
-    opts: { entry: string; touch?: boolean; carry?: { health: number; stamina: number; weapon: WeaponId | null } | null; seed?: number },
+    opts: { entry: string; touch?: boolean; carry?: { health: number; stamina: number; weapon: WeaponId | null } | null; seed?: number; difficulty?: 'easy' | 'normal' | 'hard' },
   ) {
     const obstacles: Obstacle[] = [];
     for (const p of level.props) {
@@ -129,7 +129,7 @@ export class World {
     const cfg = progress.fighterConfig(PLAYER_ID, entry.x, entry.z, !!opts.touch);
     if (opts.carry) cfg.weapon = opts.carry.weapon;
     this.player = this.sim.add(new Fighter(cfg));
-    progress.applyModifiers(this.player);
+    progress.applyModifiers(this.player, opts.difficulty ?? 'normal');
     this.player.vitals.reset();
     if (opts.carry) {
       this.player.vitals.health = Math.max(1, Math.min(this.player.vitals.maxHealth, opts.carry.health));

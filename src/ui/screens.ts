@@ -1,4 +1,5 @@
-import type { SettingsStore, Settings, Quality, TouchMode } from '../save/Settings';
+import type { SettingsStore, Settings, Quality, TouchMode, Difficulty } from '../save/Settings';
+import { DIFFICULTY } from '../progress/catalogue';
 import { h } from './dom';
 import { cycleRow, menuButton, sliderRow } from './controls';
 import type { Screen, UIManager } from './UIManager';
@@ -50,6 +51,8 @@ export function settingsScreen(store: SettingsStore, ui: UIManager): Screen {
       h(
         'div',
         { class: 'panel' },
+        h('h3', { text: 'Game' }),
+        cycleRow<Difficulty>('Difficulty (story)', (['easy', 'normal', 'hard'] as const).map((d) => ({ value: d, label: `${DIFFICULTY[d].name}: ${DIFFICULTY[d].text}` })), s.difficulty, (v) => store.update({ difficulty: v })),
         h('h3', { text: 'Audio' }),
         sliderRow('Master volume', s.masterVolume, (v) => store.update({ masterVolume: v })),
         sliderRow('Effects volume', s.effectsVolume, (v) => store.update({ effectsVolume: v })),

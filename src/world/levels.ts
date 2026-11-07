@@ -427,7 +427,7 @@ const city: LevelDef = {
   encounters: [
     {
       id: 'square', triggerX: 32, lock: [20, 46], optional: false,
-      waves: [{ enemies: [{ archetype: 'boxer' }, { archetype: 'kickboxer' }, { archetype: 'hothead' }] }, { enemies: [{ archetype: 'elite' }, { archetype: 'tooled', weapon: 'bat' }, { archetype: 'thug' }] }],
+      waves: [{ enemies: [{ archetype: 'boxer' }, { archetype: 'hothead' }, { archetype: 'thug' }] }, { enemies: [{ archetype: 'kickboxer' }, { archetype: 'tooled', weapon: 'bat' }] }],
       reward: { cash: 100, xp: 320 }, objective: 'Get across the square',
     },
     { id: 'doormen', triggerX: 62, optional: true, waves: [{ enemies: [{ archetype: 'defender' }, { archetype: 'defender' }] }], reward: { cash: 70, xp: 200 } },
@@ -481,8 +481,7 @@ const territory: LevelDef = {
       id: 'gauntlet', triggerX: 22, lock: [10, 38], optional: false,
       waves: [
         { enemies: [{ archetype: 'bruiser' }, { archetype: 'tooled', weapon: 'bat' }, { archetype: 'hothead' }] },
-        { enemies: [{ archetype: 'elite' }, { archetype: 'grappler' }] },
-        { enemies: [{ archetype: 'rival' }, { archetype: 'defender' }] },
+        { enemies: [{ archetype: 'elite' }, { archetype: 'thug' }] },
       ],
       reward: { cash: 150, xp: 450 }, objective: 'Get through Dunc’s crew',
     },
