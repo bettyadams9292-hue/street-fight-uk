@@ -12,6 +12,7 @@ import { LOOT } from '../src/items/loot';
 import { AREA_IDS } from '../src/progress/Progress';
 import { PROP_SIZE, type FacadeKind, type PropKind } from '../src/world/LevelTypes';
 import { LEVELS } from '../src/world/levels';
+import { BIKE_LIST, CAR_LIST, FINISH_LIST, FURNITURE_LIST } from '../src/property/catalogue';
 
 type Row = { name: string; file: string; appears: string; status: string; needs: string; replacement: string; material: string; animation: string; collision: string; checked: string };
 
@@ -100,6 +101,20 @@ rows.push({
     { name: 'Ground items', file: 'src/render/LevelView.ts groundItemMesh', appears: 'anything dropped or placed', status: 'New (Stage 5)', needs: 'A 3D model per item instead of an icon card', replacement: 'Weapons use their 3D model; other items float as their icon with a rarity ring', material: 'Icon texture', animation: 'Bob, spin, landing bounce', collision: 'none (picked up by interact)', checked: 'Integrated; not screenshot-checked' },
     { name: `Item icons (${ITEM_LIST.length})`, file: 'src/ui/itemIcons.ts', appears: 'inventory, stash, shop, pawn, ground items', status: 'New (Stage 5)', needs: 'Painted or rendered artwork', replacement: 'Canvas-drawn icon per icon kind, tinted by item colour', material: '2D canvas', animation: 'none', collision: 'n/a', checked: 'Integrated; not screenshot-checked' },
     { name: 'Searchable container marker', file: 'src/render/LevelView.ts', appears: 'every container', status: 'New (Stage 5)', needs: '—', replacement: 'Small glint, orange if locked', material: 'Basic', animation: 'Pulses until searched', collision: 'n/a', checked: 'Integrated' },
+  ],
+});
+
+rows.push({
+  section: 'House, showrooms and vehicles (Stage 6)',
+  intro: 'Built from primitives in src/render/propModels.ts with shared geometry and cached materials. Furniture and vehicles were screenshot-checked in the casino, car showroom, house and estate; not every colour of every piece has been looked at.',
+  rows: [
+    ...FURNITURE_LIST.map((f) => ({ name: `Furniture: ${f.name}`, file: 'src/render/propModels.ts buildFurnitureModel', appears: 'home (placed by the player), Home & Hearth showroom, shop preview', status: 'New (Stage 6)', needs: 'Fabric/wood normal maps', replacement: `Procedural ${f.mount} piece, ${f.colours.length} colours`, material: 'PBR, colour per piece', animation: 'none', collision: f.mount === 'floor' ? `${(f.size[0] * 2).toFixed(2)} × ${(f.size[1] * 2).toFixed(2)} m, swaps on quarter turns` : f.mount === 'rug' ? 'none (walk over)' : 'none (on the wall)', checked: 'Integrated' })),
+    ...CAR_LIST.map((c) => ({ name: `Car: ${c.name}`, file: 'src/render/propModels.ts buildCarModel', appears: 'drive outside 14 Tanner Road, Brackley Motors, casino podium, previews', status: 'New (Stage 6)', needs: 'Curved bodywork, interiors', replacement: `${c.cls} body: cabin, glass, pillars, wheels with rims, lights, plates, class extras`, material: 'Paint 0.22 roughness / 0.75 metal, glass, chrome', animation: 'Turns on the casino podium', collision: `${(c.size[0] * 2).toFixed(1)} × ${(c.size[1] * 2).toFixed(1)} m`, checked: 'Integrated; showroom screenshot-checked' })),
+    ...BIKE_LIST.map((b) => ({ name: `Bike: ${b.name}`, file: 'src/render/propModels.ts buildBikeModel', appears: 'garage bays, parked outside, under the rider, Mudlark Moto, podium, previews', status: 'New (Stage 6)', needs: 'Chain, cables, decals', replacement: 'Knobbly tyres, spokes, forks, frame, engine, tank, seat, plates, exhaust', material: 'PBR plastics and alloys', animation: 'Rider sits on it (riding pose)', collision: 'none when parked; ridden by the player', checked: 'Integrated; riding screenshot-checked' })),
+    ...FINISH_LIST.map((f) => ({ name: `${f.kind === 'floor' ? 'Floor' : 'Wall'}: ${f.name}`, file: 'src/render/LevelView.ts floorFinish / wallFinish', appears: 'home rooms (chosen per room)', status: 'New (Stage 6)', needs: 'Normal maps', replacement: `${f.pattern} canvas texture`, material: 'Canvas texture', animation: 'none', collision: 'n/a', checked: 'Integrated' })),
+    { name: 'Facade: showroom', file: 'src/render/LevelView.ts showroom', appears: 'High Street (Home & Hearth), trading estate (Brackley Motors, Mudlark Moto)', status: 'New (Stage 6)', needs: '—', replacement: 'Glazed bays, stock silhouettes, lit fascia, canopy, totem and flags', material: 'Brick or cladding, emissive glass', animation: 'none', collision: 'Back wall', checked: 'Integrated' },
+    { name: 'Facade: casino', file: 'src/render/LevelView.ts casinoFront', appears: 'Market Square', status: 'New (Stage 6)', needs: '—', replacement: 'Black and gold front, neon name, marquee bulbs, red carpet, rope posts', material: 'PBR + neon', animation: 'none', collision: 'Back wall', checked: 'Integrated' },
+    { name: 'Facade: 14 Tanner Road', file: 'src/render/LevelView.ts houseFront', appears: 'Tanner Road Estate', status: 'Rebuilt (Stage 6)', needs: '—', replacement: 'Panelled door, letterbox, handle, porch light, bay, tiled roof, gutter, downpipe, chimney, garden wall, drive, path', material: 'Brick, tile canvas textures', animation: 'none', collision: 'Back wall + garden wall', checked: 'Screenshot-checked' },
   ],
 });
 

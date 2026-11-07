@@ -334,6 +334,52 @@ Every visual asset, with where it appears, its status and collision, is listed i
 - Animation is still the code-driven pose system; there are no animation clips.
 
 
+## Stage 6 report: house, shops, vehicles and casino
+
+**House (14 Tanner Road).** The house is now built from the save (`src/property/home.ts`). It has a new bathroom, so there are four rooms you can decorate: bathroom, bedroom, living room and kitchen. The fixed fittings (wardrobe, desk and tin, kitchen, gym, workbench, stash) stay where they are. Everything else can be moved.
+
+- **Placing furniture.** Use the **Home planner** by the front door. Pick a piece, then move it with arrows/WASD, turn it with Q/E (Shift for bigger steps), and press Enter to place it. Esc cancels and Delete puts it back in its box. The same actions are on on-screen buttons. A see-through preview shows green where the piece fits and red where it doesn't, with the reason.
+- **Placement rules.** Pieces stay inside the room. They can't overlap other pieces, clip the walls or fittings, or block the walkway, the front door, a cupboard or any station. Tall pieces can't stand in front of windows, and wall pieces avoid windows, the door, the mirror and each other. Rugs can go under furniture.
+- **Colours and finishes.** Pieces can be recoloured, put back in their box or sold for half price. Floors and walls are set per room.
+- **Seat to save.** The sofa/save station follows your sofa or armchair. With no seat, there's a floor cushion instead.
+- **Exterior.** It has been rebuilt: panelled door, letterbox, handle, porch light, bay window, tiled roof, gutter, downpipe, chimney, garden wall, block-paved drive and path.
+
+**Home & Hearth (High Street).** About 45 pieces in 6 categories, each with colour choices. You can buy several at once, and each piece has a turning 3D preview. You can also buy floors and walls here. Everything is delivered to the house.
+
+**Brackley Motors (trading estate).** Twelve cars across hatchback, saloon, sports, SUV, 4x4 and performance. Each has a price, top speed, 0-60 time, handling and seats.
+
+- Cars park **on the drive outside the house**, never in the garage, with collision.
+- Only the active car is shown. Use the car on the drive to swap cars or drive free to any unlocked stop.
+- You can sell cars back.
+
+**Mudlark Moto (trading estate).** Ten bikes across beginner, motocross, high-performance MX, enduro and pro racing. Each has a price, top speed, acceleration, handling, braking and suspension. You can compare two bikes on the stat bars.
+
+- The car in the garage has gone. The garage now holds three bikes in bays.
+- Take a bike out from the bike store: it waits by the front door.
+- **Riding.** Interact to get on. You move faster and can't fight. Interact again to get off. A fight starting knocks you off.
+- **Parking.** Going into a building leaves the bike outside, and riding home puts it back in the garage.
+
+**The Golden Lion (Market Square).** Everything here uses game money only.
+
+- **Games.** Slots, single-zero roulette (evens, dozens, single numbers) and blackjack (3:2, double down). There is also a £10 prize draw and a £50 competition for the car or bike on the podium (1 in 40). The prize changes every few trips.
+- **Prizes.** Won cars park on the drive. Won bikes go in the garage, or you get the cash value if there's no room.
+
+**Getting there.** All four buildings have shopfronts, doors, staff and a back-door ride home. They are also on Dave's Cabs.
+
+**Saving.** Save v3 gains a `property` block: furniture with position, rotation and colour; finishes; cars and the active car; bikes and where the one that's out is; whether you're riding; and casino stats. Saves without it load with the house as it came. Bad data is repaired: a misplaced piece goes back in its box and is never lost.
+
+**Files.**
+
+- New: `src/property/` (catalogue, home, state, casino, levels), `src/render/propModels.ts`, `src/ui/propertyUI.ts`, `src/ui/propPreview.ts`, `tests/stage6.test.ts`.
+- Changed: `Game.ts`, `LevelView.ts`, `FighterView.ts`, `GameRenderer.ts`, `LevelTypes.ts`, `levels.ts`, `districts.ts`, `interiors.ts`, `Progress.ts`, `themes.ts`, `hub.ts`, `styles.css`, `weaponMesh.ts`.
+
+**Limits.**
+
+- Driving is a free cab ride, not a drivable car.
+- Furniture is procedural, built from primitives.
+- The planner is keyboard, mouse or touch only; there's no gamepad support in the editor.
+- Gym and garage can't be decorated.
+
 ## Characters: Quaternius Universal Base Characters (CC0)
 
 - **Source.** Fighters use the male and female models from Quaternius' **Universal Base Characters** (Standard, CC0, public domain). The originals and their licence are in [`assets/quaternius-ubc`](assets/quaternius-ubc/README.md).

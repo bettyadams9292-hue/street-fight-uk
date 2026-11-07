@@ -894,7 +894,20 @@ export class Game {
     const w = this.world;
     const p = this.progress;
     if (!w || !p || !p.save.property.riding) return;
-    parkBike(p, w.level.id, w.player.pos.x, w.player.pos.z);
+    // Leave it somewhere it doesn't sit inside a bin or a wall: nearest clear spot along the street.
+    const clear = (x: number, z: number) => {
+      for (let dx = -0.95; dx <= 0.95; dx += 0.3) for (const dz of [-0.3, 0, 0.3]) if (w.arena.blocked(x + dx, z + dz, 0.02)) return false;
+      const b = w.arena.bounds;
+      return x - 0.95 > b.minX && x + 0.95 < b.maxX;
+    };
+    let spot = { x: w.player.pos.x, z: w.player.pos.z };
+    search: for (let r = 0; r <= 6; r += 0.25) for (const sx of [1, -1]) for (const z of [spot.z, 0.3, 0.9, -0.3]) {
+      if (clear(spot.x + sx * r, z)) {
+        spot = { x: spot.x + sx * r, z };
+        break search;
+      }
+    }
+    parkBike(p, w.level.id, spot.x, spot.z);
     w.player.stats.removeModifier('riding');
     this.renderer.viewOf(w.player)?.setMount(null);
     this.saveGame();

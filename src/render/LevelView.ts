@@ -1482,7 +1482,8 @@ export class LevelView {
     }
     if (f.label) {
       const t = signTexture(f.label.toUpperCase(), '#1a1a1a', '#e8e4d8', { w: 512, h: 96 });
-      this.panel(1.4, 0.26, cx, 2.65, new THREE.MeshStandardMaterial({ map: t }), 0.04);
+      // Top left of the room, clear of door signs and wall pieces.
+      this.panel(1.4, 0.26, f.x0 + 0.95, 2.72, new THREE.MeshStandardMaterial({ map: t }), 0.04);
     }
   }
 
