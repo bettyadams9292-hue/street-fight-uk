@@ -73,7 +73,7 @@ export class GameRenderer {
   applyQuality(q: Quality): void {
     this.quality = q;
     const dpr = window.devicePixelRatio || 1;
-    this.renderer.setPixelRatio(q === 'low' ? Math.min(dpr, 1) : q === 'medium' ? Math.min(dpr, 1.5) : Math.min(dpr, 2));
+    this.renderer.setPixelRatio((q === 'low' ? Math.min(dpr, 1) : q === 'medium' ? Math.min(dpr, 1.5) : Math.min(dpr, 2)) * (this.resScale ?? 1));
     this.renderer.shadowMap.enabled = q !== 'low';
     const lights = [...(this.arenaView?.shadowLights ?? []), ...(this.levelView?.shadowLights ?? [])];
     if (lights.length) {
@@ -112,6 +112,8 @@ export class GameRenderer {
     this.cameraRig.resetWorld();
     this.applyQuality(this.quality);
     for (const f of world.sim.fighters) this.addFighter(f);
+    // Compile every shader the area needs now, during the fade, instead of mid-fight.
+    this.renderer.compile(this.scene, this.cameraRig.camera);
   }
 
   /** Character creator / sheet: one fighter on the studio set. */
@@ -244,5 +246,46 @@ export class GameRenderer {
     }
     this.fx.update(dt);
     this.renderer.render(this.scene, this.cameraRig.camera);
+    this.adaptResolution(dt);
+  }
+
+  // ---- dynamic resolution -------------------------------------------------------------
+  /** 1 = the quality setting's pixel ratio; drops in steps when frames run long, recovers when there's headroom. */
+  private resScale = 1;
+  private slowTime = 0;
+  private fastTime = 0;
+  private frameAvg = 1 / 60;
+
+  private adaptResolution(dt: number): void {
+    if (dt <= 0 || dt > 0.25) return; // tab switches and pauses aren't lag
+    this.frameAvg += (dt - this.frameAvg) * 0.05;
+    if (this.frameAvg > 1 / 45) {
+      this.slowTime += dt;
+      this.fastTime = 0;
+    } else if (this.frameAvg < 1 / 58) {
+      this.fastTime += dt;
+      this.slowTime = 0;
+    } else {
+      this.slowTime = 0;
+      this.fastTime = 0;
+    }
+    if (this.slowTime > 1.5 && this.resScale > 0.55) {
+      this.setResScale(this.resScale - 0.15);
+      this.slowTime = 0;
+    } else if (this.fastTime > 6 && this.resScale < 1) {
+      this.setResScale(this.resScale + 0.1);
+      this.fastTime = 0;
+    }
+  }
+
+  private setResScale(v: number): void {
+    this.resScale = Math.max(0.55, Math.min(1, v));
+    this.renderer.setPixelRatio(this.basePixelRatio() * this.resScale);
+    this.resize();
+  }
+
+  private basePixelRatio(): number {
+    const dpr = window.devicePixelRatio || 1;
+    return this.quality === 'low' ? Math.min(dpr, 1) : this.quality === 'medium' ? Math.min(dpr, 1.5) : Math.min(dpr, 2);
   }
 }

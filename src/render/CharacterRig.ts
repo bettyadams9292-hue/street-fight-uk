@@ -485,6 +485,18 @@ function buildModelRig(a: CharacterAppearance): Rig | null {
   for (const o of unwanted) o.removeFromParent();
   const need = ['hips', 'spine', 'head', 'lShoulder', 'lElbow', 'rShoulder', 'rElbow', 'lHip', 'lKnee', 'rHip', 'rKnee'] as const;
   if (need.some((n) => !bones[n])) return null;
+  // One skeleton for the whole fighter: every part is bound to the same bones with the same bind pose,
+  // so sharing it means the bone matrices are worked out once per frame instead of once per part.
+  let shared: THREE.Skeleton | null = null;
+  model.traverse((o: THREE.Object3D) => {
+    const sm = o as THREE.SkinnedMesh;
+    if (!sm.isSkinnedMesh) return;
+    if (!shared) shared = sm.skeleton;
+    else if (sm.skeleton.bones.length === shared.bones.length && sm.skeleton.bones.every((b: THREE.Bone, i: number) => b === shared!.bones[i])) sm.skeleton = shared;
+    // Small parts don't need to cast shadows.
+    if (!['Body', 'top_long', 'top_short', 'top_vest', 'top_puffer', 'bottoms_long', 'bottoms_shorts', 'coat_skirt', 'hair_long', 'hair_buns'].includes(o.name)) sm.castShadow = false;
+    sm.receiveShadow = false;
+  });
 
   const root = new THREE.Group();
   // The pack characters are 1.78 m (male) and 1.72 m (female); the creator's height slider scales around that.
