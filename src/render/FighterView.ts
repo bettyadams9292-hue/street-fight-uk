@@ -222,7 +222,9 @@ export class FighterView {
     }
   }
 
-  private applyPose(pose: Pose, alpha: number): void {
+  private applyPose(pose: Pose, alphaIn: number): void {
+    // Never overshoot (a bad frame time would otherwise fling the limbs off to infinity).
+    const alpha = Number.isFinite(alphaIn) ? Math.min(1, Math.max(0, alphaIn)) : 1;
     for (const j of JOINTS) {
       const target = pose.joints[j] ?? [0, 0, 0];
       const cur = this.current[j];

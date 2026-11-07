@@ -879,7 +879,7 @@ export class Game {
   // ---- main loop -------------------------------------------------------------
 
   private frame(t: number): void {
-    const dt = this.last === 0 ? 1 / 60 : Math.min(0.1, (t - this.last) / 1000);
+    const dt = this.last === 0 ? 1 / 60 : Math.max(0, Math.min(0.1, (t - this.last) / 1000));
     this.last = t;
     this.time += dt;
 
