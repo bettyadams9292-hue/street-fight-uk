@@ -274,7 +274,7 @@ export class LevelView {
     const depth = front - this.back;
     const mall = theme === 'mall';
     const floor = mall
-      ? new THREE.MeshStandardMaterial({ map: tileTexture('#d8d4cc', '#a8a49c', W / 1.2, depth / 1.2, 64), roughness: 0.18, metalness: 0.1 })
+      ? new THREE.MeshStandardMaterial({ map: tileTexture('#b8b4ac', '#8a867e', W / 1.2, depth / 1.2, 64), roughness: 0.22, metalness: 0.1 })
       : theme === 'car_park'
         ? new THREE.MeshStandardMaterial({ map: markingsTexture('#4a4a4c', '#e8e8e0', W / 5), roughness: 0.9 })
         : new THREE.MeshStandardMaterial({ map: concreteTexture('#4a4844', W / 4, depth / 4), roughness: 1 });
@@ -459,12 +459,12 @@ export class LevelView {
     const w = f.x1 - f.x0;
     const cx = (f.x0 + f.x1) / 2;
     const H = 8;
-    this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: concreteTexture('#9a968a', w / 3, 2), roughness: 1 }), 0);
+    this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: concreteTexture('#6e6a62', w / 3, 2), roughness: 1 }), 0);
     const tex = windowGridTexture(Math.max(2, Math.round(w / 2)), 2, '#ffd08a', '#1a1d24', '#7a766c', 0.3);
-    this.panel(w - 0.6, 3, cx, 6, new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.4 }), 0.03);
+    this.panel(w - 0.6, 3, cx, 6, new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.25 }), 0.03);
     const lit = f.label !== 'TO LET';
     const colour = f.colour ?? '#2a5a8a';
-    this.box(w - 0.4, 2.6, 0.06, cx, 1.3, this.back + 0.08, this.mat('#0e1216', 0.05, 0.7, { emissive: 0xfff2d8, emissiveIntensity: lit ? 0.6 : 0.02 }), false);
+    this.box(w - 0.4, 2.6, 0.06, cx, 1.3, this.back + 0.08, this.mat('#0e1216', 0.05, 0.7, { emissive: 0xffe8c8, emissiveIntensity: lit ? 0.26 : 0.02 }), false);
     if (!lit || this.rnd() < 0.3) this.box(w - 0.4, lit ? 1 : 2.6, 0.05, cx, lit ? 2.1 : 1.3, this.back + 0.12, new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 }), false);
     // Deep concrete canopy along the whole parade.
     this.box(w, 0.35, 1.8, cx, 3.25, this.back + 0.9, new THREE.MeshStandardMaterial({ map: concreteTexture('#7a766c', w / 4, 1), roughness: 1 }));
@@ -481,8 +481,8 @@ export class LevelView {
     const w = f.x1 - f.x0;
     const cx = (f.x0 + f.x1) / 2;
     const colour = f.colour ?? '#3a3a40';
-    this.panel(w, 4.2, cx, 2.1, this.mat('#d8d4cc', 0.5), 0);
-    this.box(w - 0.6, 2.8, 0.05, cx, 1.4, this.back + 0.1, this.mat('#1a2026', 0.04, 0.8, { emissive: 0xfff8ec, emissiveIntensity: 0.7 }), false);
+    this.panel(w, 4.2, cx, 2.1, this.mat('#8e8a84', 0.5), 0);
+    this.box(w - 0.6, 2.8, 0.05, cx, 1.4, this.back + 0.1, this.mat('#1a2026', 0.04, 0.8, { emissive: 0xfff4e4, emissiveIntensity: 0.3 }), false);
     for (let x = f.x0 + 0.3; x <= f.x1 - 0.2; x += 2.4) this.box(0.06, 2.8, 0.08, x, 1.4, this.back + 0.12, this.mat('#b8bcc4', 0.25, 0.9), false);
     // Displays behind the glass.
     for (let x = f.x0 + 1.4; x < f.x1 - 1; x += 2.4) {
