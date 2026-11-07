@@ -167,10 +167,15 @@ export class World {
     return `pickup:${this.level.id}:${p.id}`;
   }
 
+  /** The enemy to show in the top-right bar: whoever you're squaring up to, if they're close. */
   get focusEnemy(): Fighter | null {
-    const t = this.player.target;
-    if (t && t.team === 'enemy' && !t.isKO) return t;
-    return this.activeBoss ?? this.enemies.find((e) => !e.isKO) ?? null;
+    const p = this.player;
+    const near = (f: Fighter) => !f.isKO && Math.abs(f.pos.x - p.pos.x) < 6;
+    const t = p.target;
+    if (t && t.team === 'enemy' && near(t)) return t;
+    const boss = this.activeBoss;
+    if (boss && !boss.isKO) return boss;
+    return this.enemies.find(near) ?? null;
   }
 
   get activeEncounter(): EncounterState | null {
@@ -205,8 +210,9 @@ export class World {
     const p = this.player;
 
     // Interact: the grab button (or E) uses whatever's in front of you, unless an enemy is in grabbing range.
-    this.interactable = p.isKO ? null : this.findInteractable();
-    if (cmd.pressed.grab && this.interactable && p.isFree && !this.enemyInGrabRange()) {
+    // Someone in grabbing range: the button grabs them instead.
+    this.interactable = p.isKO || this.enemyInGrabRange() ? null : this.findInteractable();
+    if (cmd.pressed.grab && this.interactable && p.isFree) {
       cmd = { ...cmd, pressed: { ...cmd.pressed, grab: false } };
       this.interact(this.interactable);
     }

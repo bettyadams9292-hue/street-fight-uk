@@ -45,7 +45,7 @@ const home: LevelDef = {
     { kind: 'wardrobe', x: -15.4, z: -1.45 },
     { kind: 'desk', x: -13.9, z: -1.45 },
     // living room
-    { kind: 'sofa', x: -11, z: 0.6 },
+    { kind: 'sofa', x: -10, z: 0.9 },
     { kind: 'tv', x: -11, z: -1.55 },
     { kind: 'table', x: -5.3, z: -1.3 },
     // kitchen
@@ -63,8 +63,8 @@ const home: LevelDef = {
   ],
   stations: [
     { id: 'wardrobe', x: -15.4, z: -0.8, label: 'Wardrobe: change your look' },
-    { id: 'mirror', x: -17.2, z: 0.6, label: 'Mirror: check yourself' },
-    { id: 'sofa', x: -11, z: 0.0, label: 'Sofa: catch up and save' },
+    { id: 'mirror', x: -16.9, z: -1.15, label: 'Mirror: check yourself' },
+    { id: 'sofa', x: -10, z: 0.15, label: 'Sofa: catch up and save' },
     { id: 'contacts', x: -5.3, z: -0.75, label: 'Phone: contacts' },
     { id: 'tin', x: -13.9, z: -0.9, label: 'Biscuit tin: your savings' },
     { id: 'kitchen', x: -1.2, z: -0.85, label: 'Kitchen: eat and recover' },

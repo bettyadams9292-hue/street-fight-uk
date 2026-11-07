@@ -16,7 +16,7 @@ import {
   windowGridTexture,
   woodFloorTexture,
 } from './levelTextures';
-import { brickTexture, pavingTexture, roadTexture, shutterTexture } from './textures';
+import { brickTexture, canvas, pavingTexture, roadTexture, shutterTexture, toTexture } from './textures';
 import { buildWeaponMesh, disposeGroup } from './weaponMesh';
 
 /** How far the scenery carries on past the playable ends, so the camera never sees past it. */
@@ -300,8 +300,16 @@ export class LevelView {
     }
   }
 
+  private litWindows: THREE.MeshStandardMaterial[] = [];
+
+  /** Dark glass, or a lit room behind net curtains. */
   private windowMat(lit: number): THREE.MeshStandardMaterial {
-    return this.mat('#0a0c12', 0.15, 0.6, { emissive: 0xffc070, emissiveIntensity: lit });
+    if (lit <= 0.05) return this.mat('#0a0c12', 0.15, 0.6, { emissive: 0x3a4a6a, emissiveIntensity: 0.06 });
+    if (this.litWindows.length < 4) {
+      const tex = litWindowTexture(this.rnd);
+      this.litWindows.push(new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2, metalness: 0.3, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.9 }));
+    }
+    return this.litWindows[Math.floor(this.rnd() * this.litWindows.length)];
   }
 
   private windowAt(x: number, y: number, w: number, h: number, m: THREE.Material): void {
@@ -527,12 +535,22 @@ export class LevelView {
     this.box(w, 0.25, 0.6, cx, H + 0.12, this.back + 0.3, this.mat('#d8d4c8', 0.9), false);
     // A window onto the night street.
     if (f.label !== 'Garage' && f.label !== 'Gym') {
+      // Keep the window clear of any door and of the mirror.
+      const busy = [...this.level.exits.filter((e) => e.kind === 'door').map((e) => e.x), ...(this.level.stations ?? []).filter((s) => s.id === 'mirror').map((s) => s.x)];
+      let wx = cx + w * 0.15;
+      if (busy.some((x) => Math.abs(x - wx) < 1.8)) wx = cx - w * 0.28;
       const win = this.mat('#0b1020', 0.1, 0.4, { emissive: 0x2a3a6a, emissiveIntensity: 0.5 });
-      this.box(1.4, 1.1, 0.04, cx + w * 0.15, 1.75, this.back + 0.02, this.mat('#f0eee6', 0.6), false);
-      this.box(1.25, 0.95, 0.05, cx + w * 0.15, 1.75, this.back + 0.03, win, false);
+      this.box(1.4, 1.1, 0.04, wx, 1.75, this.back + 0.02, this.mat('#f0eee6', 0.6), false);
+      this.box(1.25, 0.95, 0.05, wx, 1.75, this.back + 0.03, win, false);
       // Curtains.
-      this.box(0.3, 1.5, 0.05, cx + w * 0.15 - 0.8, 1.75, this.back + 0.06, this.mat(colour === '#6d7a8c' ? '#2a3a5a' : '#7a2a2a', 1), false);
-      this.box(0.3, 1.5, 0.05, cx + w * 0.15 + 0.8, 1.75, this.back + 0.06, this.mat(colour === '#6d7a8c' ? '#2a3a5a' : '#7a2a2a', 1), false);
+      this.box(0.3, 1.5, 0.05, wx - 0.8, 1.75, this.back + 0.06, this.mat(colour === '#6d7a8c' ? '#2a3a5a' : '#7a2a2a', 1), false);
+      this.box(0.3, 1.5, 0.05, wx + 0.8, 1.75, this.back + 0.06, this.mat(colour === '#6d7a8c' ? '#2a3a5a' : '#7a2a2a', 1), false);
+    }
+    // Long mirror on the bedroom wall.
+    for (const st of this.level.stations ?? []) {
+      if (st.id !== 'mirror' || st.x < f.x0 || st.x > f.x1) continue;
+      this.box(0.7, 1.7, 0.04, st.x, 1.15, this.back + 0.03, this.mat('#3a2a1a', 0.6), false);
+      this.box(0.6, 1.6, 0.03, st.x, 1.15, this.back + 0.05, this.mat('#c8d8e8', 0.02, 1), false);
     }
     if (f.label === 'Garage') {
       const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
@@ -664,11 +682,27 @@ export class LevelView {
       }
       case 'trolley': {
         const wire = this.mat('#b0b4b8', 0.3, 0.9);
-        B(W, 0.5, D, 0, 0.75, 0, new THREE.MeshStandardMaterial({ color: 0xb0b4b8, metalness: 0.9, roughness: 0.3, wireframe: true }));
-        B(W, 0.04, 0.04, 0, 1.0, D / 2, wire);
-        for (const dx of [-W / 2 + 0.05, W / 2 - 0.05]) for (const dz of [-D / 2 + 0.05, D / 2 - 0.05]) B(0.03, 0.5, 0.03, dx, 0.25, dz, wire, false);
-        const t = B(W, 0.5, D, 0, 0.75, 0, this.mat('#b0b4b8', 0.3, 0.9, { transparent: true, opacity: 0.15 }), false);
-        t.castShadow = false;
+        // Basket: a grille of thin bars, with a handle and four legs on castors.
+        for (let x = -W / 2; x <= W / 2 + 0.001; x += W / 6) {
+          B(0.012, 0.45, 0.012, x, 0.8, -D / 2, wire, false);
+          B(0.012, 0.45, 0.012, x, 0.8, D / 2, wire, false);
+        }
+        for (let z = -D / 2; z <= D / 2 + 0.001; z += D / 4) {
+          B(0.012, 0.45, 0.012, -W / 2, 0.8, z, wire, false);
+          B(0.012, 0.45, 0.012, W / 2, 0.8, z, wire, false);
+        }
+        for (const y of [0.58, 0.8, 1.02]) {
+          B(W, 0.012, 0.012, 0, y, -D / 2, wire, false);
+          B(W, 0.012, 0.012, 0, y, D / 2, wire, false);
+          B(0.012, 0.012, D, -W / 2, y, 0, wire, false);
+          B(0.012, 0.012, D, W / 2, y, 0, wire, false);
+        }
+        B(W, 0.012, D, 0, 0.58, 0, wire, false);
+        B(0.05, 0.05, D + 0.1, -W / 2 - 0.08, 1.08, 0, this.mat('#2a5ad6', 0.5), false);
+        for (const dx of [-W / 2 + 0.05, W / 2 - 0.05]) for (const dz of [-D / 2 + 0.05, D / 2 - 0.05]) {
+          B(0.025, 0.5, 0.025, dx, 0.3, dz, wire, false);
+          C(0.045, 0.045, 0.03, dx, 0.05, dz, this.mat('#111', 0.8), 10).rotation.x = Math.PI / 2;
+        }
         break;
       }
       case 'postbox': {
@@ -925,9 +959,10 @@ export class LevelView {
     if (theme === 'home') return;
     const density = theme === 'alleys' || theme === 'territory' || theme === 'subway' ? 7 : theme === 'estate' || theme === 'industrial' ? 10 : 16;
     for (let x = this.level.bounds.minX + 2; x < this.level.bounds.maxX; x += density * (0.6 + this.rnd() * 0.8)) {
-      const w = 1.6 + this.rnd() * 1.6;
+      const w = 1.4 + this.rnd() * 1.2;
+      if (this.level.exits.some((e) => e.kind === 'door' && Math.abs(e.x - x) < w / 2 + 0.9)) continue;
       const m = new THREE.MeshStandardMaterial({ map: graffitiTexture(this.rnd), transparent: true, roughness: 0.9, depthWrite: false });
-      this.panel(w, w / 2, x, 0.9 + this.rnd() * 1.2, m, 0.2);
+      this.panel(w, w / 2, x, 0.35 + w / 4 + this.rnd() * 0.25, m, 0.09);
     }
   }
 
@@ -1116,6 +1151,25 @@ export class LevelView {
   dispose(): void {
     disposeGroup(this.group);
   }
+}
+
+/** A lit room seen through a window: warm light, a lampshade glow, curtains each side. */
+function litWindowTexture(rnd: () => number): THREE.CanvasTexture {
+  const [c, g] = canvas(128, 128);
+  const warm = ['#ffb24a', '#ffcf7a', '#f6e2b0', '#9ab8ff'][Math.floor(rnd() * 4)];
+  const grad = g.createRadialGradient(40 + rnd() * 48, 50, 4, 64, 64, 90);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.25, warm);
+  grad.addColorStop(1, '#3a2410');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 128, 128);
+  g.fillStyle = 'rgba(40,20,10,0.85)';
+  g.fillRect(0, 0, 22 + rnd() * 12, 128);
+  g.fillRect(128 - 22 - rnd() * 12, 0, 40, 128);
+  g.fillStyle = 'rgba(0,0,0,0.6)';
+  g.fillRect(62, 0, 4, 128);
+  g.fillRect(0, 62, 128, 4);
+  return toTexture(c);
 }
 
 function hash(s: string): number {
