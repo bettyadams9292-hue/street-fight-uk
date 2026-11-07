@@ -358,20 +358,24 @@ const indEstate: LevelDef = {
   entries: [
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 88, z: 0, facing: -1 },
+    { id: 'bikes', x: 13, z: -1.0, facing: 1 },
+    { id: 'dealer', x: 81, z: -1.0, facing: -1 },
   ],
   exits: [
+    { id: 'bikes_door', kind: 'door', x: 13, z: -1.6, to: 'bike_shop', toEntry: 'door', label: 'Into Mudlark Moto (off-road bikes)' },
+    { id: 'dealer_door', kind: 'door', x: 81, z: -1.6, to: 'car_dealer', toEntry: 'door', label: 'Into Brackley Motors (car showroom)' },
     { id: 'to_docks', kind: 'edge', side: 'left', x: 0, z: 0, to: 'docks', toEntry: 'right', label: 'Canal Docks' },
     { id: 'to_factory', kind: 'edge', side: 'right', x: 90, z: 0, to: 'factory', toEntry: 'left', label: 'Abandoned Factory', requires: 'boss_docks', lockedText: 'Lenny’s men have the factory road chained off.' },
   ],
   facades: [
-    { kind: 'warehouse', x0: 0, x1: 22, label: 'UNIT 1 — TYRES & EXHAUSTS' },
+    { kind: 'showroom', x0: 0, x1: 22, label: 'MUDLARK MOTO', colour: '#e86a10' },
     { kind: 'warehouse', x0: 22, x1: 42, label: 'UNIT 4 — CARPET WAREHOUSE' },
     { kind: 'fence', x0: 42, x1: 52 },
     { kind: 'warehouse', x0: 52, x1: 72, label: 'UNIT 9 — BUILDERS MERCHANT' },
-    { kind: 'warehouse', x0: 72, x1: 90, label: 'UNIT 12 — TO LET' },
+    { kind: 'showroom', x0: 72, x1: 90, label: 'BRACKLEY MOTORS', colour: '#1f4fa8' },
   ],
   props: [
-    { kind: 'van', x: 8, z: 1.1, colour: '#e8e6e1' },
+    { kind: 'van', x: 5, z: 1.1, colour: '#e8e6e1' },
     { kind: 'pallets', x: 18, z: -1.4 },
     { kind: 'forklift', x: 30, z: -1.25 },
     { kind: 'skip', x: 46, z: -1.2 },
@@ -387,7 +391,7 @@ const indEstate: LevelDef = {
     { id: 'tyre_stash', kind: 'secret', x: 4, z: -1.85, label: 'Inside a stack of tyres', reward: { cash: 80, items: ['w_wrench'] } },
   ],
   containers: [
-    { id: 'van1', kind: 'car', x: 8, z: -0.05, label: 'Search the van', loot: 'car' },
+    { id: 'van1', kind: 'car', x: 5, z: -0.05, label: 'Search the van', loot: 'car' },
     { id: 'skip', kind: 'skip', x: 46, z: -0.35, label: 'Search the skip', loot: 'skip' },
     { id: 'merchant', kind: 'crate', x: 62, z: -0.8, label: 'Search the builders’ crates', loot: 'crate' },
     { id: 'van2', kind: 'car', x: 78, z: -0.05, label: 'Search the van', loot: 'car' },

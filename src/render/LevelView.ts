@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import type { Progress } from '../progress/Progress';
 import type { ExitDef, FacadeDef, LevelDef, PropDef, Theme } from '../world/LevelTypes';
-import { PROP_SIZE } from '../world/LevelTypes';
+import { propHalf } from '../world/LevelTypes';
+import { buildFurnitureModel, buildVehicleModel } from './propModels';
+import { CARS, FINISHES, FURNITURE } from '../property/catalogue';
 import { themeProfile } from './themes';
 import { exitLocked, type World } from '../world/World';
 import {
@@ -122,6 +124,42 @@ export class LevelView {
     return mesh;
   }
 
+  /** Floor finishes at home: boards, carpet or tiles in the finish's colours. */
+  private floorFinish(id: string, w: number, d: number): THREE.MeshStandardMaterial {
+    const f = FINISHES[id];
+    switch (f.pattern) {
+      case 'boards':
+        return new THREE.MeshStandardMaterial({ map: woodFloorTexture(w / 2, d / 2), roughness: 0.5, color: f.colour });
+      case 'tiles':
+        return new THREE.MeshStandardMaterial({ map: tileTexture(f.colour, f.colour2 ?? '#555', w / 0.6, d / 0.6, 64), roughness: 0.35 });
+      default:
+        return new THREE.MeshStandardMaterial({ map: plasterTexture(f.colour, w / 1.5, d / 1.5), roughness: 1, color: 0xf0f0f0 });
+    }
+  }
+
+  /** Wall finishes at home: paint, paper, brick slips, panelling or tiles. */
+  private wallFinish(id: string, w: number, h: number): THREE.MeshStandardMaterial {
+    const f = FINISHES[id];
+    switch (f.pattern) {
+      case 'tiles':
+        return new THREE.MeshStandardMaterial({ map: tileTexture(f.colour, f.colour2 ?? '#999', w / 0.3, h / 0.15, 48), roughness: 0.3 });
+      case 'brick':
+        return new THREE.MeshStandardMaterial({ map: brickTexture(w / 4, h / 4), roughness: 0.95, color: 0xd8b8a8 });
+      case 'stripes': {
+        const [c, g] = canvas(64, 64);
+        g.fillStyle = f.colour;
+        g.fillRect(0, 0, 64, 64);
+        g.fillStyle = f.colour2 ?? '#888';
+        for (let x = 0; x < 64; x += 16) g.fillRect(x, 0, 6, 64);
+        return new THREE.MeshStandardMaterial({ map: toTexture(c, w / 0.6, 1), roughness: 0.9 });
+      }
+      case 'panelling':
+        return new THREE.MeshStandardMaterial({ map: plasterTexture(f.colour2 ?? '#e8e4dc', w / 3, 1), roughness: 0.9 });
+      default:
+        return new THREE.MeshStandardMaterial({ map: plasterTexture(f.colour, w / 3, 1), roughness: 0.9 });
+    }
+  }
+
   // ---- building the area -----------------------------------------------------------
 
   private build(): void {
@@ -155,13 +193,16 @@ export class LevelView {
     const theme = this.level.theme;
     if (theme === 'home') {
       const floors: Record<string, THREE.Material> = {
-        Bedroom: new THREE.MeshStandardMaterial({ color: 0x6d5a7a, roughness: 1 }),
-        'Living room': new THREE.MeshStandardMaterial({ color: 0x7a3a2c, roughness: 1 }),
-        Kitchen: new THREE.MeshStandardMaterial({ map: tileTexture('#d8d2c0', '#6f6a60', 6, 4, 64), roughness: 0.5 }),
         Gym: new THREE.MeshStandardMaterial({ color: 0x1d2a22, roughness: 0.95 }),
         Garage: new THREE.MeshStandardMaterial({ map: concreteTexture('#7a7874', 4, 2), roughness: 0.9 }),
       };
-      for (const f of this.level.facades) this.ground(f.x0, f.x1, this.back, front, floors[f.label ?? ''] ?? new THREE.MeshStandardMaterial({ map: woodFloorTexture(4, 2) }));
+      for (const f of this.level.facades) {
+        const fin = f.floor ? FINISHES[f.floor] : undefined;
+        const mat = fin ? this.floorFinish(fin.id, f.x1 - f.x0, front - this.back) : floors[f.label ?? ''] ?? new THREE.MeshStandardMaterial({ map: woodFloorTexture(4, 2) });
+        this.ground(f.x0, f.x1, this.back, front, mat);
+        // Thresholds between rooms.
+        if (f.x0 > minX) this.box(0.24, 0.015, front - 0.1, f.x0, 0.008, (front + 0.1) / 2 + 0.05, this.mat('#8a7a5a', 0.5, 0.3), false);
+      }
       // Cutaway edge of the floor, and outside darkness beyond.
       this.box(maxX - minX, 0.3, 0.2, (minX + maxX) / 2, -0.15, front + 0.1, this.mat('#2a2522'), false);
       this.ground(X0, X1, front + 0.2, front + 20, this.mat('#07080b', 1), -0.3);
@@ -254,7 +295,15 @@ export class LevelView {
     const W = maxX - minX;
     const depth = front - this.back;
     const floor =
-      theme === 'shop'
+      theme === 'furniture_store'
+        ? new THREE.MeshStandardMaterial({ map: woodFloorTexture(W / 2, depth / 2), roughness: 0.45, color: 0xc8a882 })
+        : theme === 'car_showroom'
+          ? new THREE.MeshStandardMaterial({ map: tileTexture('#d8dadc', '#b8babc', W / 1.2, depth / 1.2, 64), roughness: 0.12, metalness: 0.15 })
+          : theme === 'bike_shop'
+            ? new THREE.MeshStandardMaterial({ map: concreteTexture('#4a4c50', W / 4, depth / 4), roughness: 0.4, metalness: 0.1 })
+            : theme === 'casino'
+              ? new THREE.MeshStandardMaterial({ map: this.casinoCarpet(W, depth), roughness: 1 })
+              : theme === 'shop'
         ? new THREE.MeshStandardMaterial({ map: tileTexture('#e8e4dc', '#b8b4ac', W / 0.8, depth / 0.8, 64), roughness: 0.25, metalness: 0.05 })
         : theme === 'pawn'
           ? new THREE.MeshStandardMaterial({ map: tileTexture('#5a1e22', '#4a181c', W / 0.5, depth / 0.5, 32), roughness: 1 })
@@ -263,6 +312,26 @@ export class LevelView {
     this.box(W, 0.3, 0.2, (minX + maxX) / 2, -0.15, front + 0.1, this.mat('#2a2522'), false);
     this.ground(this.X0, this.X1, front + 0.2, front + 20, this.mat('#07080b', 1), -0.3);
     for (const x of [minX - 0.15, maxX + 0.15]) this.box(0.3, 3.2, depth, x, 1.6, (front + this.back) / 2, this.mat('#3a332c'));
+  }
+
+  private casinoCarpet(W: number, D: number): THREE.CanvasTexture {
+    const [c, g] = canvas(128, 128);
+    g.fillStyle = '#5a0a14';
+    g.fillRect(0, 0, 128, 128);
+    g.strokeStyle = '#c9a227';
+    g.lineWidth = 3;
+    for (let i = 0; i < 4; i++) {
+      g.beginPath();
+      g.arc(32 + (i % 2) * 64, 32 + Math.floor(i / 2) * 64, 22, 0, Math.PI * 2);
+      g.stroke();
+    }
+    g.fillStyle = '#1a3a6a';
+    for (let i = 0; i < 4; i++) {
+      g.beginPath();
+      g.arc(64 * (i % 2), 64 * Math.floor(i / 2), 10, 0, Math.PI * 2);
+      g.fill();
+    }
+    return toTexture(c, W / 1.6, D / 1.6);
   }
 
   /** Car park decks, the mall and the old tunnels: floor, ceiling, columns along the front. */
@@ -369,7 +438,11 @@ export class LevelView {
       case 'terrace':
         return this.terrace(f, f.label === 'back');
       case 'house_front':
-        return this.terrace(f, false, f.label);
+        return this.houseFront(f);
+      case 'showroom':
+        return this.showroom(f);
+      case 'casino':
+        return this.casinoFront(f);
       case 'shop':
         return this.shop(f);
       case 'pub':
@@ -701,7 +774,9 @@ export class LevelView {
     const theme = this.level.theme;
     const H = 3.2;
     const colour = f.colour ?? '#8c7a5e';
-    if (theme === 'pub') {
+    if (theme === 'furniture_store' || theme === 'car_showroom' || theme === 'bike_shop' || theme === 'casino') {
+      this.showroomInterior(f, theme);
+    } else if (theme === 'pub') {
       this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: plasterTexture('#6a2a1e', w / 3, 1), roughness: 0.9 }), 0);
       // Wood panelling to dado height, brass rail, framed pictures.
       this.box(w, 1.1, 0.04, cx, 0.55, this.back + 0.02, new THREE.MeshStandardMaterial({ map: woodFloorTexture(w / 2, 0.5), roughness: 0.5, color: 0x6a3a1a }), false);
@@ -755,6 +830,275 @@ export class LevelView {
     }
     this.box(w, 0.12, 0.04, cx, 0.06, this.back + 0.03, this.mat('#2a2420', 0.6), false);
     this.box(w, 0.25, 0.6, cx, H + 0.12, this.back + 0.3, this.mat('#c8c4bc', 0.9), false);
+  }
+
+  /**
+   * Number 14: your own house. Red brick, tiled roof with gutters and a
+   * downpipe, chimney, sills, a proper front door with handle and letterbox,
+   * porch light, a low garden wall, the drive and the front path.
+   */
+  private houseFront(f: FacadeDef): void {
+    const H = 6.4;
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    // Real extent only: the end-caps carry plain terrace on past the edges.
+    if (!f.label) return this.terrace(f, false);
+    this.brickWall(f.x0, f.x1, H, 0xffe8dc);
+    // Soldier course over the ground floor and a string course.
+    this.box(w, 0.1, 0.06, cx, 2.75, this.back + 0.03, this.mat('#7a3a2a', 0.9), false);
+    const door = this.level.exits.find((e) => e.kind === 'door' && e.to === 'home');
+    const dx = door ? door.x : cx;
+    // Front door: panelled, with glass, handle, letterbox and number.
+    const frame = this.mat('#f0eee6', 0.5);
+    this.box(1.3, 2.35, 0.08, dx, 1.17, this.back + 0.04, frame, false);
+    this.box(1.05, 2.15, 0.08, dx, 1.08, this.back + 0.08, this.mat('#1d3a2a', 0.35, 0.1), false);
+    for (const dy of [0.45, 1.05]) this.box(0.75, 0.42, 0.02, dx, dy, this.back + 0.13, this.mat('#173022', 0.4), false);
+    this.box(0.75, 0.42, 0.02, dx, 1.7, this.back + 0.13, this.mat('#c8d8e8', 0.1, 0.3, { emissive: 0xffd8a0, emissiveIntensity: 0.35 }), false);
+    this.box(0.28, 0.06, 0.03, dx, 1.3, this.back + 0.14, this.mat('#c9a227', 0.25, 0.9), false);
+    this.cyl(0.035, 0.035, 0.08, dx + 0.38, 1.05, this.back + 0.16, this.mat('#c9a227', 0.25, 0.9), 10).rotation.x = Math.PI / 2;
+    this.box(0.2, 0.12, 0.04, dx, 2.0, this.back + 0.14, this.mat('#c9a227', 0.25, 0.9), false);
+    const plate = new THREE.MeshStandardMaterial({ map: signTexture(f.label, '#e8e4d8', '#111', { w: 128, h: 128, serif: true }) });
+    this.panel(0.26, 0.26, dx + 0.85, 1.8, plate, 0.05);
+    // Step and porch canopy with a light.
+    this.box(1.5, 0.12, 0.45, dx, 0.06, this.back + 0.24, this.mat('#9a968c', 0.9));
+    this.box(1.7, 0.08, 0.7, dx, 2.5, this.back + 0.35, this.mat('#2a2d33', 0.6));
+    this.box(0.12, 0.2, 0.1, dx - 0.85, 2.0, this.back + 0.06, this.mat('#111', 0.4, 0.5), false);
+    this.box(0.08, 0.12, 0.08, dx - 0.85, 1.95, this.back + 0.12, this.mat('#fff4d8', 0.3, 0, { emissive: 0xffd8a0, emissiveIntensity: 1.2 }), false);
+    // Bay window downstairs, two upstairs.
+    const glass = this.windowMat(0.6);
+    const bayX = dx + 2.7;
+    this.windowAt(bayX, 1.55, 2.0, 1.4, glass);
+    this.box(2.4, 0.12, 0.35, bayX, 2.36, this.back + 0.18, this.mat('#e8e4d8', 0.7), false);
+    this.windowAt(dx, 4.5, 1.1, 1.2, this.windowMat(0));
+    this.windowAt(bayX, 4.5, 1.5, 1.2, this.windowMat(0.4));
+    this.windowAt(dx - 3.2, 4.5, 1.5, 1.2, this.windowMat(0));
+    // Garage door on the left of the drive.
+    const gx = f.x0 + 2.4;
+    const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.55, metalness: 0.45, color: 0xd8d8d0 });
+    this.box(3.6, 2.4, 0.06, gx, 1.2, this.back + 0.04, sh, false);
+    this.box(3.9, 0.12, 0.1, gx, 2.46, this.back + 0.06, frame, false);
+    // Tiled roof, gutter, downpipe, chimney.
+    const roof = new THREE.MeshStandardMaterial({ map: tileTexture('#6a2a1e', '#3a160e', w / 0.35, 8, 32), roughness: 0.8 });
+    const r = this.box(w + 0.3, 0.12, 2.8, cx, H + 0.75, this.back - 1.0, roof);
+    r.rotation.x = 0.55;
+    this.box(w + 0.35, 0.12, 0.14, cx, H + 0.05, this.back + 0.12, this.mat('#15161a', 0.5, 0.3), false);
+    this.cyl(0.05, 0.05, H, f.x1 - 0.3, H / 2, this.back + 0.12, this.mat('#15161a', 0.5, 0.3), 8);
+    this.box(0.18, 0.25, 0.25, f.x1 - 0.3, 0.12, this.back + 0.15, this.mat('#15161a', 0.5, 0.3), false);
+    this.box(1.1, 1.4, 0.7, f.x0 + 1.2, H + 1.4, this.back - 0.4, new THREE.MeshStandardMaterial({ map: brickTexture(0.35, 0.4) }));
+    for (const k of [0, 0.35]) this.cyl(0.09, 0.11, 0.4, f.x0 + 1.0 + k, H + 2.3, this.back - 0.4, this.mat('#7a4a2a'));
+    // Satellite dish and an outside tap.
+    const dish = this.cyl(0.32, 0.05, 0.12, bayX + 1.4, 3.6, this.back + 0.2, this.mat('#d8d8d0', 0.5, 0.3), 16);
+    dish.rotation.x = Math.PI / 2 - 0.3;
+    this.box(0.06, 0.12, 0.08, f.x1 - 0.8, 0.6, this.back + 0.06, this.mat('#c9a227', 0.3, 0.8), false);
+    // Garden: low brick wall with copings in front of the bay, a gravel strip, the drive and the path.
+    const front = this.level.bounds.minZ + 0.25;
+    const wallX0 = dx + 0.8;
+    const wallX1 = f.x1 - 0.2;
+    if (wallX1 - wallX0 > 1) {
+      // A narrow planted bed under the bay window, edged by a low wall.
+      this.ground(wallX0, wallX1, this.back + 0.02, front, this.mat('#2a3a1e', 1), 0.004);
+      for (let x = wallX0 + 0.4; x < wallX1 - 0.3; x += 0.55) {
+        const b = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), this.mat(this.rnd() < 0.3 ? '#4a6a2a' : '#2f5a26', 0.9));
+        b.scale.set(1, 0.75, 0.8);
+        b.position.set(x, 0.18, this.back + 0.3);
+        b.castShadow = true;
+        this.group.add(b);
+      }
+      this.box(wallX1 - wallX0, 0.45, 0.16, (wallX0 + wallX1) / 2, 0.22, front, new THREE.MeshStandardMaterial({ map: brickTexture((wallX1 - wallX0) / 2, 0.25) }));
+      this.box(wallX1 - wallX0 + 0.05, 0.06, 0.22, (wallX0 + wallX1) / 2, 0.48, front, this.mat('#bdb8aa', 0.8), false);
+    }
+    // Block-paved drive from the garage to the kerb, and the path to the door.
+    const drive = new THREE.MeshStandardMaterial({ map: tileTexture('#8a6a5a', '#5a4438', 14, 10, 32), roughness: 0.9 });
+    this.ground(f.x0 + 0.1, dx - 0.75, this.back + 0.02, this.level.bounds.maxZ + 0.35, drive, 0.006);
+    this.ground(dx - 0.6, dx + 0.6, this.back + 0.02, this.level.bounds.maxZ + 0.35, this.mat('#a8a49a', 0.85), 0.007);
+    // Dropped kerb.
+    this.box(dx - f.x0 - 0.8, 0.05, 0.25, (f.x0 + 0.1 + dx - 0.75) / 2, 0.03, this.level.bounds.maxZ + 0.52, this.mat('#9a9890', 0.9), false);
+  }
+
+  /** A shop with a big glass showroom front: furniture, cars, bikes. */
+  private showroom(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const colour = f.colour ?? '#1f4fa8';
+    if (!f.label) return this.warehouseOrShop(f);
+    const trade = this.level.theme === 'ind_estate';
+    const H = trade ? 7 : 7.5;
+    if (trade) {
+      // Portal-frame unit: cladding above, glazing below.
+      this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: corrugatedTexture('#c8ccd0', w / 2, 2), roughness: 0.6, metalness: 0.3 }), 0);
+    } else this.brickWall(f.x0, f.x1, H);
+    if (!trade) for (let x = f.x0 + 1.5; x < f.x1 - 0.5; x += 3) this.windowAt(x, 5.4, 1.2, 1.3, this.windowMat(this.rnd() < 0.5 ? 0.45 : 0));
+    // Glazing in bays with slim mullions, lit from inside.
+    const gw = w - 1.0;
+    const glass = this.mat('#101820', 0.05, 0.7, { emissive: 0xf4f0e8, emissiveIntensity: 0.55 });
+    this.box(gw + 0.2, 3.2, 0.08, cx, 1.65, this.back + 0.04, this.mat('#1a1a1c', 0.4, 0.5));
+    this.box(gw, 3.0, 0.06, cx, 1.6, this.back + 0.09, glass, false);
+    for (let x = f.x0 + 0.5; x <= f.x1 - 0.5 + 0.01; x += gw / Math.max(2, Math.round(gw / 2.4))) this.box(0.08, 3.0, 0.1, x, 1.6, this.back + 0.11, this.mat('#1a1a1c', 0.3, 0.6), false);
+    // What's in the window: silhouettes of the stock.
+    const kind = f.label.includes('MOTORS') ? 'car' : f.label.includes('MOTO') ? 'bike' : 'furniture';
+    const sil = this.mat('#1a1a1c', 0.6, 0, { transparent: true, opacity: 0.55 });
+    for (let x = f.x0 + 2.2; x < f.x1 - 1.5; x += kind === 'car' ? 5 : 2.6) {
+      if (kind === 'car') {
+        this.box(3.6, 0.7, 0.02, x, 0.75, this.back + 0.12, sil, false);
+        this.box(1.8, 0.5, 0.02, x - 0.2, 1.35, this.back + 0.12, sil, false);
+      } else if (kind === 'bike') {
+        for (const dx of [-0.6, 0.6]) {
+          const wh = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.06, 6, 20), sil);
+          wh.position.set(x + dx, 0.45, this.back + 0.12);
+          this.group.add(wh);
+        }
+        this.box(1.0, 0.25, 0.02, x, 0.95, this.back + 0.12, sil, false);
+      } else {
+        this.box(1.6, 0.5, 0.02, x, 0.5, this.back + 0.12, sil, false);
+        this.box(1.6, 0.4, 0.02, x, 0.95, this.back + 0.12, sil, false);
+        this.box(0.06, 1.4, 0.02, x + 1.0, 0.8, this.back + 0.12, sil, false);
+      }
+    }
+    // Fascia sign, lit.
+    const t = signTexture(f.label, colour, '#ffffff', { w: 1024, h: 160 });
+    const sign = new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5 });
+    this.box(Math.min(w - 0.6, 11), 0.9, 0.18, cx, 3.75, this.back + 0.16, sign, false);
+    // Totem sign and flags on the trade estate.
+    if (trade) {
+      const tt = signTexture(kind === 'car' ? 'NEW · USED · FINANCE' : 'MX · ENDURO · SERVICE', '#ffffff', colour, { w: 512, h: 128 });
+      this.box(0.15, 4.2, 0.15, f.x1 - 1.2, 2.1, this.back + 0.4, this.mat('#2a2a2e', 0.4, 0.6));
+      this.box(1.6, 0.8, 0.12, f.x1 - 1.2, 3.9, this.back + 0.4, new THREE.MeshStandardMaterial({ map: tt, emissive: 0xffffff, emissiveMap: tt, emissiveIntensity: 0.4 }), false);
+      for (let i = 0; i < 3; i++) {
+        const fx = f.x0 + 1.0 + i * 1.2;
+        this.cyl(0.03, 0.03, 4.4, fx, 2.2, this.back + 0.35, this.mat('#d8d8d8', 0.3, 0.8), 6);
+        this.box(0.6, 0.35, 0.01, fx + 0.32, 4.1, this.back + 0.35, this.mat(i % 2 ? colour : '#ffffff', 0.9), false);
+      }
+    }
+    // Entrance canopy over the door.
+    const door = this.level.exits.find((e) => e.kind === 'door' && e.x >= f.x0 && e.x <= f.x1);
+    if (door) {
+      this.box(2.4, 0.12, 1.0, door.x, 2.95, this.back + 0.5, this.mat(colour, 0.5));
+      this.box(1.4, 2.4, 0.04, door.x, 1.2, this.back + 0.13, this.mat('#c8dce8', 0.05, 0.2, { emissive: 0xf8f4e8, emissiveIntensity: 0.7 }), false);
+    }
+  }
+
+  private warehouseOrShop(f: FacadeDef): void {
+    if (this.level.theme === 'ind_estate') return this.warehouse(f);
+    return this.brickWall(f.x0, f.x1, 7.5);
+  }
+
+  /** The Golden Lion: black and gold, neon, marquee bulbs, a red carpet and a doorman's rope. */
+  private casinoFront(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    if (!f.label) return this.office(f);
+    const H = 9;
+    this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: plasterTexture('#141012', w / 3, 3), roughness: 0.4, metalness: 0.2 }), 0);
+    const gold = this.mat('#c9a227', 0.25, 0.9, { emissive: 0x5a4010, emissiveIntensity: 0.4 });
+    // Gold pilasters and cornice.
+    for (let x = f.x0 + 0.3; x <= f.x1 - 0.3 + 0.01; x += (w - 0.6) / 4) this.box(0.35, H - 0.6, 0.2, x, (H - 0.6) / 2, this.back + 0.1, gold);
+    this.box(w, 0.35, 0.4, cx, H - 0.2, this.back + 0.2, gold);
+    // Smoked glass upstairs.
+    for (let x = f.x0 + 1.6; x < f.x1 - 1; x += (w - 0.6) / 4) this.box(2.6, 2.4, 0.05, x + 0.4, 6.2, this.back + 0.04, this.mat('#1a0a12', 0.05, 0.8, { emissive: 0xff2a6a, emissiveIntensity: 0.12 }), false);
+    // Neon name and a lion.
+    const t = signTexture(f.label, '#000000', '#ffd23d', { neon: true, w: 1024, h: 192 });
+    const neon = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.6), new THREE.MeshBasicMaterial({ map: t, transparent: true }));
+    neon.position.set(cx, 4.4, this.back + 0.22);
+    this.group.add(neon);
+    const t2 = signTexture('CASINO', '#000000', '#ff3a8a', { neon: true, w: 512, h: 128 });
+    const neon2 = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 0.9), new THREE.MeshBasicMaterial({ map: t2, transparent: true }));
+    neon2.position.set(cx, 3.35, this.back + 0.22);
+    this.group.add(neon2);
+    // Marquee canopy with bulbs.
+    const door = this.level.exits.find((e) => e.kind === 'door' && e.x >= f.x0 && e.x <= f.x1);
+    const dx = door?.x ?? cx;
+    this.box(6, 0.4, 1.4, dx, 2.85, this.back + 0.7, this.mat('#1a1012', 0.4, 0.3));
+    const bulb = this.mat('#fff4d8', 0.3, 0, { emissive: 0xffe0a0, emissiveIntensity: 1.6 });
+    for (let x = dx - 2.9; x <= dx + 2.9; x += 0.3) {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 4), bulb);
+      b.position.set(x, 2.62, this.back + 1.42);
+      this.group.add(b);
+    }
+    // Revolving-style doors, red carpet, brass posts and rope.
+    this.box(2.2, 2.5, 0.06, dx, 1.25, this.back + 0.1, this.mat('#2a1a0a', 0.1, 0.5, { emissive: 0xffb050, emissiveIntensity: 0.5 }), false);
+    this.box(0.08, 2.5, 0.1, dx, 1.25, this.back + 0.14, gold, false);
+    this.ground(dx - 1.1, dx + 1.1, this.back + 0.05, this.level.bounds.minZ + 0.9, this.mat('#7a0a14', 1), 0.008);
+    for (const side of [-1, 1]) {
+      for (const k of [0.3, 1.1]) this.cyl(0.04, 0.06, 0.9, dx + side * 1.35, 0.45, this.level.bounds.minZ + k - 0.6, gold, 10);
+      const rope = this.cyl(0.025, 0.025, 0.8, dx + side * 1.35, 0.78, this.level.bounds.minZ + 0.1, this.mat('#a01020', 0.8), 6);
+      rope.rotation.x = Math.PI / 2;
+    }
+  }
+
+  /** Back walls of the furniture shop, car showroom, bike shop and casino. */
+  private showroomInterior(f: FacadeDef, theme: Theme): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const H = 3.2;
+    const colour = f.colour ?? '#e8e4dc';
+    const label = (text: string, bg: string, fg: string, width: number, y: number, glow = 0.8) => {
+      const t = signTexture(text, bg, fg, { w: 1024, h: 128 });
+      this.panel(width, width / 8, cx, y, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: glow }), 0.05);
+    };
+    if (theme === 'furniture_store') {
+      this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: plasterTexture(colour, w / 3, 1), roughness: 0.9 }), 0);
+      // Timber slat feature wall behind the counter, pendant lights, price cards.
+      for (let x = f.x1 - 5; x < f.x1 - 0.2; x += 0.18) this.box(0.1, H, 0.05, x, H / 2, this.back + 0.03, this.mat('#a87a4a', 0.6), false);
+      for (let x = f.x0 + 2.5; x < f.x1 - 2; x += 3.5) {
+        this.cyl(0.006, 0.006, 0.8, x, H - 0.4, this.back + 1.3, this.mat('#111'), 4);
+        this.cyl(0.08, 0.25, 0.25, x, H - 0.9, this.back + 1.3, this.mat('#1a1a1c', 0.5, 0.3, { emissive: 0xffd8a0, emissiveIntensity: 0.25, side: THREE.DoubleSide }), 16);
+        this.panel(0.5, 0.3, x + 1.2, 1.1, new THREE.MeshStandardMaterial({ map: signTexture(`£${[95, 180, 290, 420, 160][Math.floor(this.rnd() * 5)]}`, '#ffffff', '#c81010', { w: 256, h: 128 }) }), 0.04);
+      }
+      if (f.label) label(f.label, '#2a4a3a', '#f0eee8', 8, 2.75, 0.5);
+    } else if (theme === 'car_showroom') {
+      this.panel(w, H, cx, H / 2, this.mat(colour, 0.5), 0);
+      // Brand wall: big blue stripe, backlit logo, finance boards.
+      this.box(w, 0.5, 0.03, cx, 2.3, this.back + 0.02, this.mat('#1f4fa8', 0.4, 0, { emissive: 0x1f4fa8, emissiveIntensity: 0.4 }), false);
+      for (let x = f.x0 + 3; x < f.x1 - 4; x += 5.2) {
+        this.box(1.6, 1.0, 0.03, x + 2.6, 1.3, this.back + 0.03, this.mat('#111', 0.2), false);
+        this.panel(1.5, 0.9, x + 2.6, 1.3, new THREE.MeshStandardMaterial({ map: signTexture(['0% FINANCE', 'PART EX', '12 MONTH MOT', 'DRIVE AWAY'][Math.floor(this.rnd() * 4)], '#0a1830', '#ffffff', { w: 256, h: 160 }), emissive: 0xffffff, emissiveIntensity: 0.15 }), 0.05);
+      }
+      if (f.label) label(f.label, '#1f4fa8', '#ffffff', 9, 2.82, 0.9);
+      // Ceiling light rails.
+      for (let x = f.x0 + 2; x < f.x1; x += 4) this.box(2.4, 0.04, 0.1, x, H - 0.05, this.back + 1.4, this.mat('#ffffff', 0.4, 0, { emissive: 0xf4f8ff, emissiveIntensity: 1.2 }), false);
+    } else if (theme === 'bike_shop') {
+      this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: corrugatedTexture('#2a2c30', w / 2, 1), roughness: 0.6, metalness: 0.4 }), 0);
+      // Helmets and goggles on shelves, a pegboard of tools in the workshop end, MX banners.
+      for (let x = f.x0 + 1.5; x < f.x1 - 7; x += 2.1) {
+        this.box(1.6, 0.04, 0.3, x + 0.5, 2.0, this.back + 0.15, this.mat('#1a1a1c', 0.4, 0.5), false);
+        for (let k = 0; k < 3; k++) {
+          const hm = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), this.mat(['#e86a10', '#1f4fa8', '#e8e4dc', '#c81010', '#3a9a3a'][Math.floor(this.rnd() * 5)], 0.25, 0.2));
+          hm.scale.set(1, 0.9, 1.15);
+          hm.position.set(x + k * 0.5, 2.16, this.back + 0.17);
+          this.group.add(hm);
+        }
+      }
+      this.box(4, 1.3, 0.03, f.x1 - 4.5, 1.7, this.back + 0.02, this.mat('#a8885a', 0.9), false);
+      for (let i = 0; i < 10; i++) this.box(0.05, 0.25 + (i % 3) * 0.1, 0.03, f.x1 - 6.3 + i * 0.38, 1.75, this.back + 0.05, this.mat(i % 3 ? '#2a2a2e' : '#c81010', 0.4, 0.6), false);
+      for (let i = 0; i < 3; i++) {
+        const t = signTexture(['MOTOCROSS', 'ENDURO', 'RACE READY'][i], ['#e86a10', '#1a1a1a', '#1f4fa8'][i], '#ffffff', { w: 512, h: 128 });
+        this.panel(2.2, 0.55, f.x0 + 3 + i * 4, 2.75, new THREE.MeshStandardMaterial({ map: t }), 0.04);
+      }
+      if (f.label) label(f.label, '#e86a10', '#111111', 7, 1.0, 0.4);
+    } else {
+      // Casino: deep red walls, gold trim, mirrored panels, chandeliers.
+      this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: plasterTexture(colour, w / 3, 1), roughness: 0.7 }), 0);
+      const gold = this.mat('#c9a227', 0.25, 0.9, { emissive: 0x5a4010, emissiveIntensity: 0.3 });
+      this.box(w, 0.06, 0.06, cx, 1.0, this.back + 0.04, gold, false);
+      this.box(w, 0.06, 0.06, cx, 2.6, this.back + 0.04, gold, false);
+      for (let x = f.x0 + 2; x < f.x1 - 1; x += 3) this.box(1.2, 1.4, 0.02, x, 1.8, this.back + 0.03, this.mat('#3a2a2a', 0.05, 0.6, { emissive: 0x5a2a1a, emissiveIntensity: 0.25 }), false);
+      for (let x = f.x0 + 4; x < f.x1 - 2; x += 7) {
+        this.cyl(0.01, 0.01, 0.5, x, H - 0.25, this.back + 1.3, gold, 4);
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * Math.PI * 2;
+          const drop = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), this.mat('#fff4d8', 0.1, 0, { emissive: 0xffe0a0, emissiveIntensity: 1.4 }));
+          drop.position.set(x + Math.cos(a) * 0.35, H - 0.6, this.back + 1.3 + Math.sin(a) * 0.35);
+          this.group.add(drop);
+        }
+        this.cyl(0.38, 0.2, 0.08, x, H - 0.52, this.back + 1.3, gold, 16);
+      }
+      if (f.label) {
+        const t = signTexture(f.label, '#000000', '#ffd23d', { neon: true, w: 1024, h: 160 });
+        const n = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.95), new THREE.MeshBasicMaterial({ map: t, transparent: true }));
+        n.position.set(cx - 4, 2.85, this.back + 0.06);
+        this.group.add(n);
+      }
+    }
   }
 
   /** Brick wall the full width of a facade. */
@@ -1061,23 +1405,53 @@ export class LevelView {
     const cx = (f.x0 + f.x1) / 2;
     const H = 3;
     const colour = f.colour ?? '#8c7a5e';
-    const wall = new THREE.MeshStandardMaterial({ map: f.label === 'Garage' ? brickTexture(w / 4, 1) : f.label === 'Kitchen' ? tileTexture('#e8e2cc', '#9a9480', w / 1.5, 2, 48) : plasterTexture(colour, w / 3, 1), roughness: 0.9 });
+    const fin = f.wall ? FINISHES[f.wall] : undefined;
+    const wall = fin
+      ? this.wallFinish(fin.id, w, H)
+      : new THREE.MeshStandardMaterial({ map: f.label === 'Garage' ? brickTexture(w / 4, 1) : f.label === 'Kitchen' ? tileTexture('#e8e2cc', '#9a9480', w / 1.5, 2, 48) : plasterTexture(colour, w / 3, 1), roughness: 0.9 });
     this.panel(w, H, cx, H / 2, wall, 0);
-    // Skirting and a ceiling strip to sell the cutaway.
-    this.box(w, 0.12, 0.04, cx, 0.06, this.back + 0.03, this.mat('#e8e4d8', 0.6), false);
+    if (fin?.pattern === 'panelling') {
+      // Panelling to dado height, with a rail.
+      this.box(w, 1.05, 0.04, cx, 0.53, this.back + 0.02, new THREE.MeshStandardMaterial({ map: woodFloorTexture(w / 2, 0.5), color: fin.colour, roughness: 0.5 }), false);
+      this.box(w, 0.05, 0.06, cx, 1.07, this.back + 0.05, this.mat('#4a2e1a', 0.5), false);
+    }
+    // Skirting, coving and the ceiling edge to sell the cutaway.
+    const isHome = f.label !== 'Garage' && f.label !== 'Gym';
+    this.box(w, 0.12, 0.04, cx, 0.06, this.back + 0.03, this.mat('#f0eee6', 0.6), false);
+    if (isHome) this.box(w, 0.08, 0.08, cx, H - 0.04, this.back + 0.04, this.mat('#f0eee6', 0.7), false);
     this.box(w, 0.25, 0.6, cx, H + 0.12, this.back + 0.3, this.mat('#d8d4c8', 0.9), false);
+    // Door frames where the room meets the next (the gap is at the front).
+    if (isHome || f.label === 'Gym') {
+      const trim = this.mat('#f0eee6', 0.5);
+      for (const x of [f.x0, f.x1]) {
+        if (x <= this.level.bounds.minX + 0.01 || x >= this.level.bounds.maxX - 0.01) continue;
+        this.box(0.3, 2.25, 0.06, x, 1.12, 0.12, trim, false);
+        this.box(0.3, 0.1, 1.4, x, 2.25, 0.75, trim, false);
+      }
+    }
     // A window onto the night street.
-    if (f.label !== 'Garage' && f.label !== 'Gym') {
-      // Keep the window clear of any door and of the mirror.
-      const busy = [...this.level.exits.filter((e) => e.kind === 'door').map((e) => e.x), ...(this.level.stations ?? []).filter((s) => s.id === 'mirror').map((s) => s.x)];
-      let wx = cx + w * 0.15;
-      if (busy.some((x) => Math.abs(x - wx) < 1.8)) wx = cx - w * 0.28;
-      const win = this.mat('#0b1020', 0.1, 0.4, { emissive: 0x2a3a6a, emissiveIntensity: 0.5 });
-      this.box(1.4, 1.1, 0.04, wx, 1.75, this.back + 0.02, this.mat('#f0eee6', 0.6), false);
-      this.box(1.25, 0.95, 0.05, wx, 1.75, this.back + 0.03, win, false);
-      // Curtains.
-      this.box(0.3, 1.5, 0.05, wx - 0.8, 1.75, this.back + 0.06, this.mat(colour === '#6d7a8c' ? '#2a3a5a' : '#7a2a2a', 1), false);
-      this.box(0.3, 1.5, 0.05, wx + 0.8, 1.75, this.back + 0.06, this.mat(colour === '#6d7a8c' ? '#2a3a5a' : '#7a2a2a', 1), false);
+    const wx = f.windowX !== undefined ? f.windowX : isHome ? this.defaultWindowX(f) : null;
+    if (wx !== null && wx !== undefined) {
+      const bath = f.label === 'Bathroom';
+      const ww = bath ? 0.9 : 1.4;
+      const wh = bath ? 0.8 : 1.1;
+      const wy = bath ? 2.0 : 1.75;
+      const win = bath ? this.mat('#c8d4dc', 0.6, 0, { emissive: 0x5a6a8a, emissiveIntensity: 0.35 }) : this.mat('#0b1020', 0.1, 0.4, { emissive: 0x2a3a6a, emissiveIntensity: 0.5 });
+      this.box(ww, wh, 0.04, wx, wy, this.back + 0.02, this.mat('#f0eee6', 0.6), false);
+      this.box(ww - 0.15, wh - 0.15, 0.05, wx, wy, this.back + 0.03, win, false);
+      this.box(0.04, wh - 0.15, 0.06, wx, wy, this.back + 0.05, this.mat('#f0eee6', 0.6), false);
+      this.box(ww + 0.2, 0.05, 0.14, wx, wy - wh / 2 - 0.03, this.back + 0.08, this.mat('#f0eee6', 0.6), false);
+      if (!bath) {
+        const curtain = this.mat(colour === '#6d7a8c' || f.label === 'Bedroom' ? '#2a3a5a' : '#7a2a2a', 1);
+        this.box(0.3, 1.3, 0.05, wx - 0.8, 1.85, this.back + 0.08, curtain, false);
+        this.box(0.3, 1.3, 0.05, wx + 0.8, 1.85, this.back + 0.08, curtain, false);
+        this.cyl(0.015, 0.015, 2.1, wx, 2.45, this.back + 0.1, this.mat('#2a2a2a', 0.4, 0.6), 6).rotation.z = Math.PI / 2;
+      }
+    }
+    // Light switch and a socket by the door gap.
+    if (isHome) {
+      this.box(0.08, 0.12, 0.02, f.x1 - 0.35, 1.25, this.back + 0.02, this.mat('#f4f2ec', 0.5), false);
+      this.box(0.14, 0.08, 0.02, f.x0 + 0.5, 0.32, this.back + 0.02, this.mat('#f4f2ec', 0.5), false);
     }
     // Long mirror on the bedroom wall.
     for (const st of this.level.stations ?? []) {
@@ -1085,19 +1459,40 @@ export class LevelView {
       this.box(0.7, 1.7, 0.04, st.x, 1.15, this.back + 0.03, this.mat('#3a2a1a', 0.6), false);
       this.box(0.6, 1.6, 0.03, st.x, 1.15, this.back + 0.05, this.mat('#a8b8c8', 0.05, 0.2, { emissive: 0x6a7a8a, emissiveIntensity: 0.5 }), false);
     }
+    if (f.label === 'Bathroom') {
+      // Mirror and shelf over the basin; tiled splashback.
+      const basin = this.level.props.find((p) => p.kind === 'basin');
+      if (basin) {
+        this.box(0.62, 0.55, 0.03, basin.x, 1.55, this.back + 0.03, this.mat('#a8b8c8', 0.05, 0.2, { emissive: 0x6a7a8a, emissiveIntensity: 0.45 }), false);
+        this.box(0.62, 0.03, 0.12, basin.x, 1.24, this.back + 0.07, this.mat('#f4f2ec', 0.4), false);
+      }
+    }
     if (f.label === 'Garage') {
       const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
-      this.box(3.2, 2.3, 0.05, cx - 1, 1.15, this.back + 0.04, sh, false);
+      this.box(3.2, 2.3, 0.05, cx + 1.2, 1.15, this.back + 0.04, sh, false);
+      // Pegboard of tools and a wall rack over the bike bays.
+      this.box(2.4, 1.0, 0.03, cx - 2.6, 1.7, this.back + 0.02, this.mat('#a8885a', 0.9), false);
+      const tool = this.mat('#2a2a2e', 0.4, 0.7);
+      for (let i = 0; i < 7; i++) this.box(0.05, 0.3 + (i % 3) * 0.08, 0.03, cx - 3.6 + i * 0.32, 1.7, this.back + 0.05, i % 2 ? tool : this.mat('#c81010', 0.5), false);
+      this.box(3.0, 0.06, 0.25, cx - 2.6, 2.45, this.back + 0.14, this.mat('#2a2a2e', 0.5, 0.5), false);
+      for (let i = 0; i < 4; i++) this.box(0.45, 0.25, 0.22, cx - 3.7 + i * 0.7, 2.62, this.back + 0.14, this.mat(['#3a5a8a', '#c8a020', '#7a1414', '#3a3a3a'][i], 0.6), false);
     }
     if (f.label === 'Gym') {
-      // Mirror wall.
       this.box(3, 1.6, 0.03, cx - 1.2, 1.4, this.back + 0.02, this.mat('#a8b8c8', 0.05, 0.2, { emissive: 0x5a6a7a, emissiveIntensity: 0.45 }), false);
     }
-    // Room name, painted small above the door gap like a nameplate.
     if (f.label) {
       const t = signTexture(f.label.toUpperCase(), '#1a1a1a', '#e8e4d8', { w: 512, h: 96 });
-      this.panel(1.4, 0.26, cx, 2.35, new THREE.MeshStandardMaterial({ map: t }), 0.04);
+      this.panel(1.4, 0.26, cx, 2.65, new THREE.MeshStandardMaterial({ map: t }), 0.04);
     }
+  }
+
+  private defaultWindowX(f: FacadeDef): number {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const busy = [...this.level.exits.filter((e) => e.kind === 'door').map((e) => e.x), ...(this.level.stations ?? []).filter((s) => s.id === 'mirror').map((s) => s.x)];
+    let wx = cx + w * 0.15;
+    if (busy.some((x) => Math.abs(x - wx) < 1.8)) wx = cx - w * 0.28;
+    return wx;
   }
 
   private buildWall(w: { minX: number; maxX: number; minZ: number; maxZ: number; visual?: 'wall' | 'none' }): void {
@@ -1116,8 +1511,8 @@ export class LevelView {
   // ---- props --------------------------------------------------------------------
 
   private buildProp(p: PropDef): void {
-    let [hx, hz] = PROP_SIZE[p.kind];
-    if (p.turned) [hx, hz] = [hz, hx];
+    if (p.kind === 'furniture' || p.kind === 'vehicle') return this.buildModelProp(p);
+    const [hx, hz] = propHalf(p);
     const W = hx * 2;
     const D = hz * 2;
     const g = new THREE.Group();
@@ -1721,10 +2116,279 @@ export class LevelView {
         B(W, 0.06, 0.03, 0, 0.9, D / 2 + 0.01, this.mat('#111', 0.3, 0, { emissive: 0xa070ff, emissiveIntensity: 1.6 }), false);
         break;
       }
+      case 'bath': {
+        const white = this.mat('#f4f2ec', 0.25);
+        B(W, 0.55, D, 0, 0.28, 0, white);
+        B(W - 0.14, 0.04, D - 0.12, 0, 0.53, 0, this.mat('#a8c8d8', 0.05, 0.1, { emissive: 0x2a4a5a, emissiveIntensity: 0.2 }), false);
+        B(W, 0.04, 0.03, 0, 0.3, D / 2 + 0.01, this.mat('#e8e4dc', 0.3), false);
+        C(0.02, 0.02, 0.22, W / 2 - 0.15, 0.68, -D / 2 + 0.06, this.mat('#d8d8d8', 0.15, 1), 8);
+        // Shower over the bath: rail and curtain.
+        B(0.02, 0.02, D, -W / 2 + 0.05, 2.0, 0, this.mat('#d8d8d8', 0.15, 1), false);
+        B(0.02, 1.3, D * 0.8, -W / 2 + 0.06, 1.35, 0.05, this.mat('#e8f0f4', 1, 0, { transparent: true, opacity: 0.8 }), false);
+        C(0.07, 0.07, 0.02, -W / 2 + 0.3, 1.9, -D / 2 + 0.05, this.mat('#d8d8d8', 0.15, 1), 12);
+        break;
+      }
+      case 'toilet': {
+        const white = this.mat('#f4f2ec', 0.25);
+        B(W * 0.8, 0.4, D * 0.7, 0, 0.2, 0.05, white);
+        B(W, 0.06, D * 0.85, 0, 0.42, 0.06, white);
+        B(W * 1.3, 0.38, 0.18, 0, 0.62, -D / 2 + 0.09, white);
+        B(0.06, 0.02, 0.03, 0.06, 0.8, -D / 2 + 0.1, this.mat('#d8d8d8', 0.15, 1), false);
+        break;
+      }
+      case 'basin': {
+        const white = this.mat('#f4f2ec', 0.25);
+        C(0.07, 0.09, 0.78, 0, 0.39, -0.02, white, 12);
+        B(W, 0.14, D, 0, 0.84, 0, white);
+        B(W - 0.1, 0.02, D - 0.1, 0, 0.91, 0.02, this.mat('#a8c8d8', 0.05, 0.1), false);
+        C(0.015, 0.015, 0.14, 0, 0.98, -D / 2 + 0.05, this.mat('#d8d8d8', 0.15, 1), 8);
+        break;
+      }
+      case 'tyre_stack': {
+        const tyre = this.mat('#0f0f10', 0.95);
+        for (let i = 0; i < 4; i++) {
+          const t = new THREE.Mesh(new THREE.TorusGeometry(W / 2 - 0.1, 0.1, 8, 20), tyre);
+          t.rotation.x = Math.PI / 2;
+          t.position.set(0, 0.1 + i * 0.2, 0);
+          t.castShadow = true;
+          g.add(t);
+        }
+        break;
+      }
+      case 'bike_stand': {
+        B(W, 0.12, D, 0, 0.06, 0, this.mat('#1a1a1c', 0.4, 0.5));
+        B(W - 0.08, 0.02, D - 0.08, 0, 0.13, 0, this.mat('#e86a10', 0.5, 0, { emissive: 0xe86a10, emissiveIntensity: 0.25 }), false);
+        break;
+      }
+      case 'slot_machine': {
+        const cab = this.mat(c ?? '#2a1030', 0.3, 0.4);
+        B(W, 1.15, D, 0, 0.58, 0, cab);
+        B(W, 0.55, D * 0.75, 0, 1.42, -D * 0.12, cab);
+        B(W - 0.1, 0.38, 0.02, 0, 1.45, D * 0.27, this.mat('#111', 0.2, 0, { emissive: 0xffc040, emissiveIntensity: 0.9 }), false);
+        for (let i = 0; i < 3; i++) B(0.15, 0.24, 0.02, -0.2 + i * 0.2, 1.12, D / 2 + 0.01, this.mat('#f8f4e8', 0.3, 0, { emissive: 0xfff0d0, emissiveIntensity: 0.5 }), false);
+        B(W, 0.05, D, 0, 1.73, -D * 0.12, this.mat('#c9a227', 0.2, 0.9, { emissive: 0x7a5a10, emissiveIntensity: 0.4 }), false);
+        const arm = C(0.02, 0.02, 0.5, W / 2 + 0.03, 1.15, 0, this.mat('#d8d8d8', 0.2, 1), 8);
+        arm.rotation.z = -0.15;
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), this.mat('#c81010', 0.3));
+        knob.position.set(W / 2 + 0.07, 1.42, 0);
+        g.add(knob);
+        B(W * 0.7, 0.05, 0.12, 0, 0.82, D / 2 + 0.05, this.mat('#1a1a1a', 0.4), false);
+        break;
+      }
+      case 'roulette_table': {
+        B(W, 0.08, D, 0, 0.82, 0, this.mat('#4a2a14', 0.5));
+        B(W - 0.1, 0.02, D - 0.1, 0, 0.87, 0, this.mat('#1a5a2a', 1));
+        for (const dx of [-W / 2 + 0.12, W / 2 - 0.12]) for (const dz of [-D / 2 + 0.12, D / 2 - 0.12]) C(0.05, 0.05, 0.8, dx, 0.4, dz, this.mat('#2a1a10', 0.5), 8);
+        // The wheel at one end, the layout along the rest.
+        const bowl = C(0.36, 0.3, 0.12, -W / 2 + 0.48, 0.94, 0, this.mat('#3a1a0a', 0.3, 0.2), 32);
+        bowl.castShadow = false;
+        const wheel = C(0.3, 0.3, 0.03, -W / 2 + 0.48, 1.0, 0, this.rouletteMat(), 37);
+        wheel.castShadow = false;
+        C(0.03, 0.03, 0.12, -W / 2 + 0.48, 1.07, 0, this.mat('#c9a227', 0.2, 1), 8);
+        const lay = new THREE.Mesh(new THREE.PlaneGeometry(W - 1.1, D - 0.3), this.mat('#ffffff', 0.9, 0, { map: this.layoutTexture() }));
+        lay.rotation.x = -Math.PI / 2;
+        lay.position.set(0.35, 0.885, 0);
+        g.add(lay);
+        for (let i = 0; i < 5; i++) C(0.035, 0.035, 0.02 + (i % 3) * 0.02, 0.1 + i * 0.25, 0.9, -0.15 + (i % 2) * 0.3, this.mat(['#c81010', '#1f4fa8', '#1a1a1a', '#e8e4dc', '#2a8a3a'][i], 0.4), 12).castShadow = false;
+        break;
+      }
+      case 'blackjack_table': {
+        const top = C(W / 2, W / 2, 0.08, 0, 0.82, 0, this.mat('#4a2a14', 0.5), 40);
+        top.scale.z = D / W;
+        const felt = C(W / 2 - 0.06, W / 2 - 0.06, 0.02, 0, 0.87, 0, this.mat('#1a5a2a', 1), 40);
+        felt.scale.z = D / W;
+        felt.castShadow = false;
+        C(0.08, 0.12, 0.8, 0, 0.4, 0, this.mat('#2a1a10', 0.5), 12);
+        for (let i = 0; i < 5; i++) {
+          const a = Math.PI * (0.15 + i * 0.175);
+          const card = B(0.1, 0.005, 0.14, Math.cos(a) * W * 0.32, 0.885, Math.sin(a) * D * 0.3, this.mat('#f8f4ec', 0.6), false);
+          card.rotation.y = a;
+        }
+        B(0.3, 0.12, 0.18, 0, 0.92, -D / 2 + 0.2, this.mat('#2a2a2e', 0.4), false);
+        // Stools along the front.
+        for (let i = 0; i < 3; i++) {
+          const x = (i - 1) * W * 0.32;
+          C(0.17, 0.17, 0.08, x, 0.68, D / 2 + 0.3, this.mat('#7a1414', 0.8), 14);
+          C(0.03, 0.03, 0.66, x, 0.33, D / 2 + 0.3, this.mat('#c9a227', 0.2, 1), 8).castShadow = false;
+        }
+        break;
+      }
+      case 'casino_cage': {
+        B(W, 1.0, D, 0, 0.5, 0, this.mat('#2a1a10', 0.4));
+        B(W, 0.05, D + 0.05, 0, 1.02, 0, this.mat('#c9a227', 0.2, 0.9));
+        for (let x = -W / 2 + 0.1; x <= W / 2 - 0.05; x += 0.12) B(0.015, 1.2, 0.015, x, 1.62, D / 2 - 0.05, this.mat('#c9a227', 0.2, 0.9), false);
+        B(W, 0.08, D, 0, 2.25, 0, this.mat('#2a1a10', 0.4), false);
+        const t = signTexture('CASHIER', '#1a0a04', '#ffd23d', { w: 512, h: 96 });
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.26), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.7 }));
+        sign.position.set(0, 2.45, D / 2);
+        g.add(sign);
+        break;
+      }
+      case 'prize_podium': {
+        const base = C(W / 2, W / 2 + 0.1, 0.25, 0, 0.125, 0, this.mat('#1a1a1c', 0.25, 0.6), 48);
+        base.scale.z = D / W;
+        const ring = C(W / 2 + 0.02, W / 2 + 0.02, 0.04, 0, 0.25, 0, this.mat('#c9a227', 0.2, 0.9, { emissive: 0xc9a227, emissiveIntensity: 0.5 }), 48);
+        ring.scale.z = D / W;
+        ring.castShadow = false;
+        const t = signTexture('WIN THIS MOTOR', '#3a0e14', '#ffd23d', { w: 1024, h: 128, neon: true });
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.4), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.9 }));
+        sign.position.set(0, 2.55, -D + 0.1);
+        g.add(sign);
+        break;
+      }
       default:
         // Anything without a model yet still shows its collision box, so you never bump into thin air.
         B(W || 0.3, 1, D || 0.3, 0, 0.5, 0, this.mat(c ?? '#5a5e64', 0.7));
     }
+  }
+
+  /** Furniture and vehicles from the catalogues (propModels.ts). */
+  private buildModelProp(p: PropDef): void {
+    const g = new THREE.Group();
+    g.position.set(p.x, 0, p.z);
+    this.group.add(g);
+    const rot = p.rot ?? 0;
+    if (p.kind === 'furniture') {
+      const m = buildFurnitureModel(p.item ?? '', p.colour);
+      g.add(m);
+      g.rotation.y = -rot * (Math.PI / 2);
+      if (p.wallY !== undefined) {
+        // Wall pieces hang flat on the back wall, whatever the room's depth.
+        const d = FURNITURE[p.item ?? '']?.size[1] ?? 0.05;
+        g.position.z = this.back + d + 0.01;
+      }
+      return;
+    }
+    const isCar = !!CARS[p.item ?? ''];
+    const model = buildVehicleModel(p.item ?? '', p.colour);
+    g.add(model);
+    g.rotation.y = -rot * (Math.PI / 2);
+    const [hx, hz] = propHalf(p);
+    if (p.label === 'podium') {
+      model.position.y = 0.27;
+      this.spinners.push(g);
+    } else if (p.plinth) {
+      const plinth = this.cyl(Math.max(hx, hz) + 0.15, Math.max(hx, hz) + 0.2, 0.12, 0, 0.06, 0, this.mat('#e8e8ec', 0.15, 0.3), 40, g);
+      plinth.scale.z = (hz + 0.25) / (Math.max(hx, hz) + 0.2);
+      plinth.castShadow = false;
+      model.position.y = 0.12;
+      const glow = this.cyl(Math.max(hx, hz) + 0.21, Math.max(hx, hz) + 0.21, 0.02, 0, 0.005, 0, this.mat('#ffffff', 0.5, 0, { emissive: isCar ? 0x6aa0ff : 0xff9a3a, emissiveIntensity: 0.8 }), 40, g);
+      glow.scale.z = plinth.scale.z;
+      glow.castShadow = false;
+    } else if (!isCar && p.solid === false) {
+      // A parked bike leans on its stand.
+      model.rotation.x = -0.12;
+    }
+  }
+
+  /** Things that turn slowly (the casino podium). */
+  private spinners: THREE.Object3D[] = [];
+  private ghost: THREE.Group | null = null;
+  private ghostOk: THREE.MeshBasicMaterial | null = null;
+  private ghostBad: THREE.MeshBasicMaterial | null = null;
+
+  /** The placement editor's see-through preview: green where it fits, red where it doesn't. */
+  setGhost(item: string | null, colour: string, at: { x: number; z: number; rot: number } = { x: 0, z: 0, rot: 0 }, ok = true): void {
+    if (!item) {
+      if (this.ghost) this.group.remove(this.ghost);
+      this.ghost = null;
+      return;
+    }
+    if (!this.ghostOk) {
+      this.ghostOk = new THREE.MeshBasicMaterial({ color: 0x3aff7a, transparent: true, opacity: 0.45, depthWrite: false });
+      this.ghostBad = new THREE.MeshBasicMaterial({ color: 0xff3a3a, transparent: true, opacity: 0.45, depthWrite: false });
+    }
+    if (!this.ghost || this.ghost.userData.item !== item) {
+      if (this.ghost) this.group.remove(this.ghost);
+      const g = new THREE.Group();
+      const m = buildFurnitureModel(item, colour);
+      m.traverse((o: THREE.Object3D) => {
+        if (o instanceof THREE.Mesh) {
+          o.castShadow = false;
+          o.userData.shared = true;
+        }
+      });
+      g.add(m);
+      // A footprint outline on the floor so you can see exactly where it sits.
+      const def = FURNITURE[item];
+      if (def && def.mount !== 'wall') {
+        const foot = new THREE.Mesh(new THREE.PlaneGeometry(def.size[0] * 2, def.size[1] * 2), this.ghostOk);
+        foot.rotation.x = -Math.PI / 2;
+        foot.position.y = 0.02;
+        foot.userData.foot = true;
+        g.add(foot);
+      }
+      g.userData.item = item;
+      this.ghost = g;
+      this.group.add(g);
+    }
+    const g = this.ghost;
+    const def = FURNITURE[item];
+    g.position.set(at.x, 0, def?.mount === 'wall' ? this.back + (def.size[1] ?? 0.05) + 0.01 : at.z);
+    g.rotation.y = def?.mount === 'wall' ? 0 : -at.rot * (Math.PI / 2);
+    const m = ok ? this.ghostOk! : this.ghostBad!;
+    g.traverse((o: THREE.Object3D) => {
+      if (o instanceof THREE.Mesh) o.material = m;
+    });
+  }
+
+  private rouletteTex: THREE.Material | null = null;
+  private rouletteMat(): THREE.Material {
+    if (this.rouletteTex) return this.rouletteTex;
+    const [c, g] = canvas(256, 256);
+    const reds = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+    const order = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+    for (let i = 0; i < 37; i++) {
+      const a0 = (i / 37) * Math.PI * 2;
+      const a1 = ((i + 1) / 37) * Math.PI * 2;
+      g.fillStyle = order[i] === 0 ? '#1a8a3a' : reds.has(order[i]) ? '#b81414' : '#111';
+      g.beginPath();
+      g.moveTo(128, 128);
+      g.arc(128, 128, 126, a0, a1);
+      g.fill();
+    }
+    g.fillStyle = '#5a3a1a';
+    g.beginPath();
+    g.arc(128, 128, 70, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#c9a227';
+    g.beginPath();
+    g.arc(128, 128, 22, 0, Math.PI * 2);
+    g.fill();
+    this.rouletteTex = new THREE.MeshStandardMaterial({ map: toTexture(c), roughness: 0.3, metalness: 0.2 });
+    return this.rouletteTex;
+  }
+
+  private layoutTex: THREE.CanvasTexture | null = null;
+  private layoutTexture(): THREE.CanvasTexture {
+    if (this.layoutTex) return this.layoutTex;
+    const [c, g] = canvas(512, 160);
+    g.fillStyle = '#1a5a2a';
+    g.fillRect(0, 0, 512, 160);
+    const reds = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+    g.strokeStyle = '#f0eee8';
+    g.lineWidth = 2;
+    g.font = 'bold 16px sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    for (let n = 1; n <= 36; n++) {
+      const col = Math.floor((n - 1) / 3);
+      const row = 2 - ((n - 1) % 3);
+      const x = 40 + col * 38;
+      const y = 8 + row * 40;
+      g.fillStyle = reds.has(n) ? '#b81414' : '#111';
+      g.fillRect(x, y, 38, 40);
+      g.strokeRect(x, y, 38, 40);
+      g.fillStyle = '#f0eee8';
+      g.fillText(String(n), x + 19, y + 20);
+    }
+    g.fillStyle = '#1a8a3a';
+    g.fillRect(4, 8, 36, 120);
+    g.strokeRect(4, 8, 36, 120);
+    g.fillStyle = '#f0eee8';
+    g.fillText('0', 22, 68);
+    this.layoutTex = toTexture(c);
+    return this.layoutTex;
   }
 
   private car(g: THREE.Group, W: number, D: number, colour: string, home: boolean): void {
@@ -1896,6 +2560,7 @@ export class LevelView {
   // ---- per frame -------------------------------------------------------------------------
 
   update(dt: number, time: number, world: World, camX: number): void {
+    for (const sp of this.spinners) sp.rotation.y = time * 0.25;
     // Shadows follow the action.
     this.sun.position.set(camX - 4, 12, 8);
     this.sun.target.position.set(camX, 0, 0);

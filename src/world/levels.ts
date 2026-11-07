@@ -2,6 +2,8 @@ import type { AreaId } from '../progress/Progress';
 import { DISTRICTS } from './districts';
 import { INTERIORS } from './interiors';
 import type { LevelDef } from './LevelTypes';
+import { FRONT_DOOR_X, HOME_BOUNDS, buildHomeLevel } from '../property/home';
+import { defaultProperty } from '../property/state';
 
 /**
  * The neighbourhood. Areas join end to end (walk off an edge) or through
@@ -16,74 +18,31 @@ const STREET_Z = { minZ: -2, maxZ: 2 };
 
 // ---- home --------------------------------------------------------------------
 
-const home: LevelDef = {
+const homeBase: LevelDef = {
   id: 'home',
   name: 'Home',
   district: '14 Tanner Road',
   theme: 'home',
-  bounds: { minX: -20, maxX: 18, minZ: -1.8, maxZ: 1.4 },
+  bounds: { ...HOME_BOUNDS },
   entries: [
     { id: 'start', x: -16, z: 0.4, facing: 1 },
     { id: 'door', x: -8, z: -0.6, facing: 1 },
   ],
-  exits: [{ id: 'front_door', kind: 'door', x: -8, z: -1.4, to: 'estate', toEntry: 'home', label: 'Go out (front door)' }],
+  exits: [{ id: 'front_door', kind: 'door', x: FRONT_DOOR_X, z: -1.4, to: 'estate', toEntry: 'home', label: 'Go out (front door)' }],
   facades: [
+    { kind: 'room', x0: -26, x1: -20, label: 'Bathroom', colour: '#e8e2cc' },
     { kind: 'room', x0: -20, x1: -13, label: 'Bedroom', colour: '#6d7a8c' },
     { kind: 'room', x0: -13, x1: -4, label: 'Living room', colour: '#8c7a5e' },
     { kind: 'room', x0: -4, x1: 2, label: 'Kitchen', colour: '#c9c2a8' },
     { kind: 'room', x0: 2, x1: 10, label: 'Gym', colour: '#5d6660' },
     { kind: 'room', x0: 10, x1: 18, label: 'Garage', colour: '#6a6a6a' },
   ],
-  // Room dividers with a doorway at the front.
-  walls: [
-    { minX: -13.1, maxX: -12.9, minZ: -2.4, maxZ: 0.1 },
-    { minX: -4.1, maxX: -3.9, minZ: -2.4, maxZ: 0.1 },
-    { minX: 1.9, maxX: 2.1, minZ: -2.4, maxZ: 0.1 },
-    { minX: 9.9, maxX: 10.1, minZ: -2.4, maxZ: 0.1 },
-  ],
-  props: [
-    // bedroom
-    { kind: 'bed', x: -18.6, z: -1.0, turned: true },
-    { kind: 'wardrobe', x: -15.4, z: -1.45 },
-    { kind: 'desk', x: -13.9, z: -1.45 },
-    // living room
-    { kind: 'sofa', x: -12.4, z: -1.0, turned: true },
-    { kind: 'tv', x: -11, z: -1.55 },
-    { kind: 'table', x: -5.3, z: -1.3 },
-    // kitchen
-    { kind: 'counter', x: -1.2, z: -1.45 },
-    { kind: 'cooker', x: -3.2, z: -1.45 },
-    { kind: 'fridge', x: 1.3, z: -1.45 },
-    // gym
-    { kind: 'weights', x: 3.4, z: -1.4 },
-    { kind: 'bag', x: 8.6, z: -1.3 },
-    { kind: 'rack', x: 6, z: -1.6 },
-    // garage
-    { kind: 'homecar', x: 13.5, z: 0.6 },
-    { kind: 'workbench', x: 16.6, z: -1.4 },
-    { kind: 'shelves', x: 11.6, z: -1.55 },
-    { kind: 'chest', x: 14.2, z: -1.55 },
-  ],
-  stations: [
-    { id: 'wardrobe', x: -15.4, z: -0.8, label: 'Wardrobe: change your look' },
-    { id: 'mirror', x: -16.9, z: -1.15, label: 'Mirror: check yourself' },
-    { id: 'sofa', x: -11.4, z: -0.9, label: 'Sofa: catch up and save' },
-    { id: 'contacts', x: -5.3, z: -0.75, label: 'Phone: contacts' },
-    { id: 'tin', x: -13.9, z: -0.9, label: 'Biscuit tin: your savings' },
-    { id: 'kitchen', x: -1.2, z: -0.85, label: 'Kitchen: eat and recover' },
-    { id: 'gym', x: 3.4, z: -0.75, label: 'Gym: train and learn' },
-    { id: 'sparring', x: 7.6, z: 0.2, label: 'Spar with Mo' },
-    { id: 'garage', x: 16.6, z: -0.75, label: 'Workbench: repair weapons' },
-    { id: 'storage', x: 14.2, z: -0.9, label: 'Stash: your storage chest' },
-  ],
+  props: [],
   pickups: [],
-  containers: [
-    { id: 'bedside', kind: 'drawers', x: -17.2, z: -0.4, label: 'Search the bedside drawers', fixed: [{ id: 'coin_silver', qty: 2 }, { id: 'plasters', qty: 2 }] },
-    { id: 'cupboards', kind: 'cupboard', x: 0.6, z: -0.9, label: 'Search the kitchen cupboards', loot: 'cupboard' },
-  ],
   encounters: [],
   weather: 'indoors',
   lights: [
+    { x: -23, y: 2.6, z: -0.3, colour: 0xf4f6ff, intensity: 8, range: 7 },
     { x: -16.5, y: 2.6, z: -0.3, colour: 0xffd8a0, intensity: 9, range: 9 },
     { x: -8.5, y: 2.6, z: -0.3, colour: 0xffd090, intensity: 10, range: 10 },
     { x: -1, y: 2.6, z: -0.3, colour: 0xf4f6ff, intensity: 10, range: 8 },
@@ -92,6 +51,10 @@ const home: LevelDef = {
   ],
   objective: 'Head out the front door when you’re ready',
 };
+
+/** The house as it comes (the save's own layout is built in property/levels.ts). */
+const home: LevelDef = buildHomeLevel(homeBase, defaultProperty());
+export const HOME_BASE = homeBase;
 
 // ---- the estate ------------------------------------------------------------------
 
@@ -120,9 +83,11 @@ const estate: LevelDef = {
     { kind: 'garages', x0: 32, x1: 44 },
     { kind: 'terrace', x0: 44, x1: 56 },
   ],
+  // Number 14's low garden wall (drawn with the house front).
+  walls: [{ minX: -5.2, maxX: -0.2, minZ: -2.4, maxZ: -1.67, visual: 'none' }],
   props: [
-    { kind: 'bin', x: -2.5, z: -1.5 },
-    { kind: 'bin', x: -1.7, z: -1.5, colour: '#2d5a2d' },
+    { kind: 'bin', x: -2.6, z: -1.2 },
+    { kind: 'bin', x: -1.8, z: -1.2, colour: '#2d5a2d' },
     { kind: 'car', x: 6, z: 1.4 },
     { kind: 'bench', x: 14, z: -1.6 },
     { kind: 'trolley', x: 22, z: 0.9 },
@@ -141,7 +106,7 @@ const estate: LevelDef = {
     { id: 'garages_stash', kind: 'secret', x: 43, z: -1.8, label: 'Behind the garages', reward: { cash: 40, items: ['cap_black'] } },
   ],
   containers: [
-    { id: 'bins', kind: 'bin', x: -2.1, z: -0.95, label: 'Search the wheelie bins', loot: 'bin' },
+    { id: 'bins', kind: 'bin', x: -2.2, z: -0.55, label: 'Search the wheelie bins', loot: 'bin' },
     { id: 'skip', kind: 'skip', x: 28, z: -0.25, label: 'Search the skip', loot: 'skip' },
     { id: 'car', kind: 'car', x: 6, z: 0.3, label: 'Search the parked car', loot: 'car' },
     { id: 'lockup', kind: 'locker', x: 37.1, z: -1.6, label: 'Open the lock-up', fixed: [{ id: 'w_crowbar' }, { id: 'console' }, { id: 'cash_bundle' }], requires: 'has_lockup_key', lockedText: 'Padlocked. Somebody on Hollins has the key.' },
@@ -179,11 +144,13 @@ const highStreet: LevelDef = {
     { id: 'right', x: 90, z: 0, facing: -1 },
     { id: 'pub', x: 30.5, z: -1.0, facing: 1 },
     { id: 'clothes', x: 49, z: -1.0, facing: 1 },
+    { id: 'furniture', x: 58, z: -1.0, facing: 1 },
   ],
   exits: [
     { id: 'to_estate', kind: 'edge', side: 'left', x: 0, z: 0, to: 'estate', toEntry: 'right', label: 'Estate' },
     { id: 'pub_door', kind: 'door', x: 30.5, z: -1.6, to: 'pub', toEntry: 'door', shop: 'pub', label: 'Into the Red Lion' },
     { id: 'threads_door', kind: 'door', x: 49, z: -1.6, to: 'clothes_shop', toEntry: 'door', shop: 'threads', label: 'Into Threads (clothes shop)' },
+    { id: 'furniture_door', kind: 'door', x: 58, z: -1.6, to: 'furniture_shop', toEntry: 'door', label: 'Into Home & Hearth (furniture)' },
     { id: 'to_alleys', kind: 'edge', side: 'right', x: 92, z: 0, to: 'alleys', toEntry: 'left', label: 'Back alleys', requires: 'boss_gaffer', lockedText: 'Gaffer’s lads block the way. Deal with him first.' },
   ],
   facades: [
@@ -192,7 +159,7 @@ const highStreet: LevelDef = {
     { kind: 'pub', x0: 20, x1: 34, label: 'THE RED LION' },
     { kind: 'shop', x0: 34, x1: 44, label: 'VAPE & PHONE', colour: '#6b2d82' },
     { kind: 'shop', x0: 44, x1: 54, label: 'THREADS', colour: '#101012' },
-    { kind: 'shop', x0: 54, x1: 62, label: 'TO LET', colour: '#555555' },
+    { kind: 'showroom', x0: 54, x1: 62, label: 'HOME & HEARTH', colour: '#2a4a3a' },
     { kind: 'shop', x0: 62, x1: 74, label: 'KEBAB HOUSE', colour: '#9a2a1a' },
     { kind: 'pub', x0: 74, x1: 92, label: 'THE GAFFER’S ARMS', colour: '#2a1a12' },
   ],
@@ -463,12 +430,14 @@ const city: LevelDef = {
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 90, z: 0, facing: -1 },
     { id: 'pawn', x: 67, z: -1.0, facing: -1 },
+    { id: 'casino', x: 54, z: -1.0, facing: 1 },
     { id: 'precinct', x: 10, z: -1.0, facing: 1 },
     { id: 'neon', x: 38, z: -1.0, facing: 1 },
   ],
   exits: [
     { id: 'to_subway', kind: 'edge', side: 'left', x: 0, z: 0, to: 'subway', toEntry: 'right', label: 'Subway' },
     { id: 'pawn_door', kind: 'door', x: 67, z: -1.6, to: 'pawn_shop', toEntry: 'door', shop: 'pawn', label: 'Into Pawn & Gold' },
+    { id: 'casino_door', kind: 'door', x: 54, z: -1.6, to: 'casino', toEntry: 'door', label: 'Into the Golden Lion Casino' },
     { id: 'precinct_walk', kind: 'door', x: 10, z: -1.6, to: 'precinct', toEntry: 'left', label: 'Walkway to Kingsway Precinct' },
     { id: 'neon_mile', kind: 'door', x: 38, z: -1.6, to: 'nightlife', toEntry: 'left', label: 'Through to the Neon Mile', requires: 'has_vip_pass', lockedText: 'The doormen want to see a VIP pass. Whoever runs the precinct hands them out.' },
     { id: 'to_territory', kind: 'edge', side: 'right', x: 92, z: 0, to: 'territory', toEntry: 'left', label: 'The Pit', requires: 'boss_ratcatcher', lockedText: 'The Ratcatcher’s crew won’t let you past' },
@@ -477,7 +446,7 @@ const city: LevelDef = {
     { kind: 'office', x0: 0, x1: 18, label: 'MERIDIAN HOUSE' },
     { kind: 'shop', x0: 18, x1: 30, label: 'GREGGS-ISH BAKERY', colour: '#1b3d6e' },
     { kind: 'club', x0: 30, x1: 46, label: 'VELVET' },
-    { kind: 'office', x0: 46, x1: 62 },
+    { kind: 'casino', x0: 46, x1: 62, label: 'GOLDEN LION' },
     { kind: 'shop', x0: 62, x1: 72, label: 'PAWN & GOLD', colour: '#c9a227' },
     { kind: 'club', x0: 72, x1: 92, label: 'RAT & CASTLE' },
   ],

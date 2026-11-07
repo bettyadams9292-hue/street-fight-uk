@@ -6,6 +6,7 @@ import type { CharacterAppearance } from '../character/Appearance';
 import { STYLE_IDS, type StyleId } from '../styles/StyleData';
 import type { Fighter, FighterConfig, Perk } from '../fighter/Fighter';
 import { getStyle } from '../data/styles';
+import { defaultProperty, sanitiseProperty, type PropertySave } from '../property/state';
 import {
   GEAR_IDS,
   LEVEL_CAP,
@@ -27,6 +28,8 @@ export const AREA_IDS = [
   'home', 'estate', 'high_street', 'alleys', 'industrial', 'subway', 'city', 'territory',
   // Stage 5: interiors
   'clothes_shop', 'pawn_shop', 'pub',
+  // Stage 6: furniture shop, car dealer, bike shop, casino
+  'furniture_shop', 'car_dealer', 'bike_shop', 'casino',
   // Stage 5: districts
   'residential', 'leisure', 'stadium', 'market', 'docks', 'ind_estate', 'factory', 'precinct', 'mall', 'car_park', 'nightlife', 'underground', 'hq',
 ] as const;
@@ -83,6 +86,8 @@ export interface GameSave {
   /** "Full English" bonus for the next trip out. */
   mealBuff: boolean;
   stats: { kos: number; secrets: number; bosses: number; deaths: number; robberies: number; arrests: number };
+  /** The house's furniture and decor, your cars and bikes, the casino. */
+  property: PropertySave;
   savedAt: string;
 }
 
@@ -117,6 +122,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     entry: 'start',
     mealBuff: false,
     stats: { kos: 0, secrets: 0, bosses: 0, deaths: 0, robberies: 0, arrests: 0 },
+    property: defaultProperty(),
     savedAt: new Date().toISOString(),
   };
   // Starter kit: your hand wraps on, a couple of sandwiches in your pocket.
@@ -174,6 +180,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     entry: typeof r.entry === 'string' ? r.entry : 'start',
     mealBuff: r.mealBuff === true,
     stats: { kos: num(st.kos, 0), secrets: num(st.secrets, 0), bosses: num(st.bosses, 0), deaths: num(st.deaths, 0), robberies: num(st.robberies, 0), arrests: num(st.arrests, 0) },
+    property: sanitiseProperty(r.property, AREA_IDS),
     savedAt: typeof r.savedAt === 'string' ? r.savedAt : base.savedAt,
   };
   const p = new Progress(out);

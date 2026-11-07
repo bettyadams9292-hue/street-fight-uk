@@ -32,6 +32,24 @@ import {
 /**
  * Draws one Fighter from the simulation. Reads state only; never changes it.
  */
+/** Sat on a motorbike: thighs forward, knees bent to the pegs, arms out to the bars. */
+const RIDING: Pose = {
+  joints: {
+    hips: [0, 0, 0],
+    spine: [0.45, 0, 0],
+    head: [-0.3, 0, 0],
+    lShoulder: [-1.15, 0, -0.25],
+    lElbow: [-0.55, 0, 0],
+    rShoulder: [-1.15, 0, 0.25],
+    rElbow: [-0.55, 0, 0],
+    lHip: [-1.25, 0, 0.18],
+    lKnee: [1.75, 0, 0],
+    rHip: [-1.25, 0, -0.18],
+    rKnee: [1.75, 0, 0],
+  },
+  drop: -0.02,
+};
+
 export class FighterView {
   readonly root: THREE.Group;
   private rig: Rig;
@@ -52,6 +70,19 @@ export class FighterView {
   extraYaw = 0;
   /** Fires when a foot hits the ground while walking (for footstep audio). */
   onStep: (() => void) | null = null;
+  /** Something you're sat on (a motorbike): drawn under you, and you sit rather than walk. */
+  private mount: THREE.Object3D | null = null;
+
+  /** Put the fighter on (or take them off) a ride. The mount's nose points along local +z. */
+  setMount(obj: THREE.Object3D | null): void {
+    if (this.mount) this.root.remove(this.mount);
+    this.mount = obj;
+    if (obj) this.root.add(obj);
+  }
+
+  get mounted(): boolean {
+    return this.mount !== null;
+  }
 
   constructor(readonly fighter: Fighter, appearance: CharacterAppearance = fighter.appearance) {
     this.root = new THREE.Group();
@@ -140,6 +171,11 @@ export class FighterView {
 
   private targetPose(moved: number, time: number): { pose: Pose; speed: number } {
     const f = this.fighter;
+    if (this.mount) {
+      // Riding: sat on the seat, hands on the bars, a little lean when moving.
+      const lean = Math.min(0.25, moved * 4);
+      return { pose: { ...RIDING, joints: { ...RIDING.joints, spine: [0.45 + lean, 0, 0] } }, speed: 14 };
+    }
     const GUARD = STANCES[f.style.id] ?? BASE_GUARD;
     switch (f.state) {
       case 'attack': {

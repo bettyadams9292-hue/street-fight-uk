@@ -28,7 +28,7 @@ export const TAXI_COST = 5;
 /** Total secrets hidden around the neighbourhood. */
 export const SECRET_COUNT = Object.values(LEVELS).reduce((n, l) => n + l.pickups.filter((p) => p.kind === 'secret').length, 0);
 
-function panelScreen(title: string, progress: Progress, body: (msg: (text: string, bad?: boolean) => void, rebuild: () => void) => HTMLElement[], close: () => void): Screen {
+export function panelScreen(title: string, progress: Progress, body: (msg: (text: string, bad?: boolean) => void, rebuild: () => void) => HTMLElement[], close: () => void): Screen {
   const el = h('div', { class: 'screen panel-screen hub-screen' });
   let message = '';
   let bad = false;
@@ -51,13 +51,13 @@ function panelScreen(title: string, progress: Progress, body: (msg: (text: strin
   return { el, onBack: close, onShow: build };
 }
 
-function shopRow(name: string, text: string, button: string, onClick: (() => void) | null, owned = false): HTMLElement {
+export function shopRow(name: string, text: string, button: string, onClick: (() => void) | null, owned = false): HTMLElement {
   const b = menuButton(button, () => onClick?.());
   if (!onClick) b.setAttribute('disabled', '');
   return h('div', { class: `shop-row${owned ? ' owned' : ''}` }, h('div', { class: 'what' }, h('b', { text: name }), h('span', { text })), b);
 }
 
-const result = (r: PurchaseResult, ok: string, msg: (t: string, bad?: boolean) => void, changed: () => void) => {
+export const result = (r: PurchaseResult, ok: string, msg: (t: string, bad?: boolean) => void, changed: () => void) => {
   if (r.ok) {
     changed();
     msg(ok);
@@ -250,6 +250,10 @@ export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: st
   { area: 'pawn_shop', entry: 'door', where: 'Sell valuables. Market Square, City Centre', shop: 'pawn' },
   { area: 'clothes_shop', entry: 'door', where: 'Clothes and bags. High Street', shop: 'threads' },
   { area: 'pub', entry: 'door', where: 'Food, drink, pool. High Street', shop: 'pub' },
+  { area: 'furniture_shop', entry: 'door', where: 'Furniture, floors and walls. High Street' },
+  { area: 'car_dealer', entry: 'door', where: 'Cars. Brackley Trading Estate' },
+  { area: 'bike_shop', entry: 'door', where: 'Off-road bikes. Brackley Trading Estate' },
+  { area: 'casino', entry: 'door', where: 'Slots, roulette, blackjack, prize motors. Market Square' },
 ];
 
 export function contactsScreen(progress: Progress, close: () => void, travel: (area: AreaId, entry: string) => void, changed: () => void): Screen {

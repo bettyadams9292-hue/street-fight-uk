@@ -524,14 +524,14 @@ test('a Stage 4 (v2) save migrates: money, flags, gear, weapons and cosmetics al
 
 console.log('Stage 5: the campaign');
 
-test('24 areas, every exit resolves, every new district has a boss or is an interior', () => {
-  assert(AREA_IDS.length === 24, `${AREA_IDS.length} areas`);
+test('every area (24 + Stage 6 buildings), every exit resolves, every new district has a boss or is an interior', () => {
+  assert(AREA_IDS.length === 28, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const l = LEVELS[id];
     assert(l, `no level ${id}`);
     for (const ex of l.exits) assert(LEVELS[ex.to]?.entries.some((e) => e.id === ex.toEntry), `${id} → ${ex.to}:${ex.toEntry} missing`);
   }
-  const interiors = ['home', 'clothes_shop', 'pawn_shop', 'pub'];
+  const interiors = ['home', 'clothes_shop', 'pawn_shop', 'pub', 'furniture_shop', 'car_dealer', 'bike_shop', 'casino'];
   for (const id of AREA_IDS) {
     if (interiors.includes(id)) continue;
     assert(LEVELS[id].encounters.length > 0, `${id} has no fights`);

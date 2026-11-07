@@ -204,6 +204,11 @@ export class GameRenderer {
     for (const f of this.sim.fighters) if (!this.views.has(f.id)) this.addFighter(f);
   }
 
+  /** The home placement editor's preview piece. */
+  setGhost(item: string | null, colour: string, at?: { x: number; z: number; rot: number }, ok = true): void {
+    this.levelView?.setGhost(item, colour, at, ok);
+  }
+
   viewOf(f: Fighter): FighterView | undefined {
     return this.views.get(f.id);
   }

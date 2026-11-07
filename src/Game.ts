@@ -37,8 +37,27 @@ import type { Simulation as Sim } from './core/Simulation';
 import { barScreen, contactsScreen, gymScreen, kitchenScreen, repairScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
+import { resolveLevel } from './property/levels';
+import { FURNITURE, ROOMS, bikeSpeedMult, type RoomId } from './property/catalogue';
+import { checkPlacement, suggestSpot, wallZ, BACK_Z, LANE_Z } from './property/home';
+import { mountBike, parkBike, placeFurniture, ridingBike, sellFurniture, storeBike, storeFurniture, type PlacedAt } from './property/state';
+import { buildBikeModel } from './render/propModels';
+import { themeProfile } from './render/themes';
+import {
+  bikeShopScreen,
+  blackjackScreen,
+  carDealerScreen,
+  carScreen,
+  cashierScreen,
+  furnitureShopScreen,
+  garageBikeScreen,
+  plannerScreen,
+  rouletteScreen,
+  slotsScreen,
+} from './ui/propertyUI';
+import * as THREE from 'three';
 
-type GameState = 'menu' | 'studio' | 'playing' | 'paused' | 'transition';
+type GameState = 'menu' | 'studio' | 'playing' | 'paused' | 'transition' | 'editing';
 const MAX_STEPS_PER_FRAME = 5;
 
 /**
@@ -438,7 +457,9 @@ export class Game {
   /** Build an area and drop the player in. Saves where you are so a closed tab resumes here. */
   private enterArea(area: AreaId, entry: string, opts: { carry?: { health: number; stamina: number } | null; at?: { x: number; z: number } } = {}): void {
     const p = this.progress!;
-    const level = LEVELS[area];
+    const leaving = this.world ? { area: this.world.level.id, x: this.world.player.pos.x, z: this.world.player.pos.z } : null;
+    this.bikeArrivals(area, leaving);
+    const level = resolveLevel(area, p.save);
     this.unwire();
     this.leaveWorld();
     this.mode = null;
@@ -466,6 +487,7 @@ export class Game {
     this.renderer.attachWorld(world);
     this.wire(world.sim);
     this.wireWorld(world);
+    this.applyRiding();
     this.hud.setStory(true);
     this.hud.el.style.display = 'block';
     this.ui.replaceAll(null);
@@ -476,7 +498,7 @@ export class Game {
     if (area !== from || !opts.at) this.hud.showBanner(level.district, level.name);
     // Point out shop doors on this street (they're easy to walk past).
     if (area !== from) {
-      const shops = level.exits.filter((e) => e.kind === 'door' && ['clothes_shop', 'pawn_shop', 'pub'].includes(e.to));
+      const shops = level.exits.filter((e) => e.kind === 'door' && ['clothes_shop', 'pawn_shop', 'pub', 'furniture_shop', 'car_dealer', 'bike_shop', 'casino'].includes(e.to));
       for (const e of shops) {
         const where = e.x < (level.bounds.minX + level.bounds.maxX) / 2 ? 'west end' : 'east end';
         this.hud.toast(`${LEVELS[e.to].name} is on this street (${where}). Walk up to its door.`, 'item');
@@ -698,6 +720,13 @@ export class Game {
     if (id === 'wardrobe') return this.openCreator('edit', 'home', at);
     if (id === 'mirror') return this.openSheet('home', at);
     if (id === 'clothes_counter' || id === 'changing') return this.openClothesShop();
+    if (id === 'bike') {
+      const r = mountBike(p, w.level.id);
+      if (!r.ok) return this.hud.toast(r.reason, 'warn');
+      this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+      this.hud.toast('On the bike. Interact again (away from doors) to get off.', 'item');
+      return;
+    }
     this.state = 'paused';
     this.touch.release();
     this.input.flush();
@@ -762,11 +791,243 @@ export class Game {
       case 'bar':
         screen = barScreen(p, close, saved, () => this.robShop('pub', at ?? { x: 6.5, z: 0.6 }));
         break;
+      case 'planner':
+        screen = plannerScreen(p, close, saved, (uid, room) => this.startPlacing(uid, room));
+        break;
+      case 'furniture_counter':
+        screen = furnitureShopScreen(p, close, saved);
+        break;
+      case 'car_counter':
+        screen = carDealerScreen(p, close, saved);
+        break;
+      case 'bike_counter':
+        screen = bikeShopScreen(p, close, saved);
+        break;
+      case 'bike_rack':
+        screen = garageBikeScreen(p, () => {
+          // The garage bays change when bikes come and go: rebuild the house.
+          this.ui.replaceAll(null);
+          this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+        }, saved, () => {
+          this.ui.replaceAll(null);
+          this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+          this.hud.toast('Bike’s out by the front door', 'item');
+        });
+        break;
+      case 'car':
+        screen = carScreen(p, close, saved, (area, entry) => {
+          this.ui.replaceAll(null);
+          this.state = 'playing';
+          this.changeArea(area, entry, null);
+        }, () => {
+          this.ui.replaceAll(null);
+          this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+          this.hud.toast('Car swapped', 'item');
+        });
+        break;
+      case 'casino_slots':
+        screen = slotsScreen(p, close, saved);
+        break;
+      case 'casino_roulette':
+        screen = rouletteScreen(p, close, saved);
+        break;
+      case 'casino_blackjack':
+        screen = blackjackScreen(p, close, saved);
+        break;
+      case 'casino_cashier':
+        screen = cashierScreen(p, close, saved, () => this.hud.toast('Prize won: it’s waiting at home', 'cash'));
+        break;
       default:
         this.resume();
         return;
     }
     this.ui.replaceAll(screen);
+  }
+
+  // ---- bikes -------------------------------------------------------------------------
+
+  /**
+   * Riding into somewhere: home puts the bike away in the garage; any other
+   * building means you leave it parked outside the door; streets you ride on.
+   */
+  private bikeArrivals(area: AreaId, leaving: { area: AreaId; x: number; z: number } | null): void {
+    const p = this.progress!;
+    const prop = p.save.property;
+    if (!prop.riding || !prop.bikeOut) return;
+    if (leaving && leaving.area === area) return;
+    if (area === 'home') {
+      storeBike(p);
+      this.hud.toast('Bike put away in the garage', 'item');
+    } else if (themeProfile(LEVELS[area].theme).interior || themeProfile(LEVELS[area].theme).roofed && LEVELS[area].theme !== 'subway') {
+      if (leaving) {
+        parkBike(p, leaving.area, leaving.x, leaving.z);
+        this.hud.toast('Bike parked outside', 'item');
+      } else storeBike(p);
+    } else prop.bikeOut.area = area;
+  }
+
+  /** Put the player on the bike if they're riding: faster, no fighting. */
+  private applyRiding(): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    const ride = ridingBike(p);
+    const view = this.renderer.viewOf(w.player);
+    if (!ride) {
+      view?.setMount(null);
+      return;
+    }
+    w.player.stats.addModifier({ id: 'riding', source: 'bike', stat: 'moveSpeedMult', mul: bikeSpeedMult(ride.def) });
+    if (view) {
+      // The model's nose is +x; the rider faces local +z. Sit the seat under the hips.
+      const holder = new THREE.Group();
+      const bike = buildBikeModel(ride.owned.id, ride.owned.colour);
+      bike.position.x = 0.3 * (ride.def.wheel / 0.37);
+      holder.add(bike);
+      holder.rotation.y = -Math.PI / 2;
+      view.setMount(holder);
+    }
+  }
+
+  /** Get off and leave the bike where you're stood. */
+  private dismount(reason?: string): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p || !p.save.property.riding) return;
+    parkBike(p, w.level.id, w.player.pos.x, w.player.pos.z);
+    w.player.stats.removeModifier('riding');
+    this.renderer.viewOf(w.player)?.setMount(null);
+    this.saveGame();
+    // Rebuild so the parked bike appears and can be got back on.
+    this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+    if (reason) this.hud.toast(reason, 'warn');
+  }
+
+  // ---- placement editor ------------------------------------------------------------------------
+
+  private editor: { uid: string; id: string; colour: string; at: PlacedAt; prev: PlacedAt | null; bar: HTMLElement; status: HTMLElement } | null = null;
+
+  /** Lift a piece (or take it out of its box) and move it about with a see-through preview. */
+  private startPlacing(uid: string, room: RoomId): void {
+    const p = this.progress;
+    const w = this.world;
+    if (!p || !w) return;
+    const piece = p.save.property.furniture.find((f) => f.uid === uid);
+    if (!piece) return;
+    const def = FURNITURE[piece.id];
+    const prev = piece.at ? { ...piece.at } : null;
+    piece.at = null;
+    const r = ROOMS[room];
+    const at: PlacedAt =
+      prev ?? suggestSpot(p.save.property, def, room, uid) ?? { room, x: Math.round(((r.x0 + r.x1) / 2) * 10) / 10, z: def.mount === 'wall' ? wallZ(def) : -1.2, rot: 0 };
+    this.ui.replaceAll(null);
+    this.enterArea('home', 'start', { at: { x: at.x, z: 1.0 } });
+    this.state = 'editing';
+    const status = h('div', { class: 'editor-status' });
+    const btn = (label: string, fn: () => void, cls = '') => h('button', { class: `editor-btn ${cls}`, onclick: (e: Event) => (e.preventDefault(), fn()), text: label });
+    const bar = h('div', { class: 'placement-bar' },
+      h('div', { class: 'editor-title', text: `Placing: ${def.name}` }),
+      status,
+      h('div', { class: 'editor-pad' },
+        btn('◀', () => this.nudge(-0.1, 0)),
+        def.mount === 'wall' ? null : btn('▲', () => this.nudge(0, -0.1)),
+        def.mount === 'wall' ? null : btn('▼', () => this.nudge(0, 0.1)),
+        btn('▶', () => this.nudge(0.1, 0)),
+        def.mount === 'wall' ? null : btn('⟲', () => this.turn(-1)),
+        def.mount === 'wall' ? null : btn('⟳', () => this.turn(1)),
+      ),
+      h('div', { class: 'editor-pad' },
+        btn('Place', () => this.confirmPlacing(), 'ok'),
+        btn('Cancel', () => this.endPlacing('cancel')),
+        btn('Store', () => this.endPlacing('store')),
+        btn(`Sell £${Math.floor(def.price / 2)}`, () => this.endPlacing('sell'), 'bad'),
+      ),
+      h('div', { class: 'editor-keys', text: 'Arrows/WASD move · Q/E turn · Shift = bigger steps · Enter place · Esc cancel · Delete store' }),
+    );
+    this.uiRoot.append(bar);
+    this.editor = { uid, id: piece.id, colour: piece.colour, at, prev, bar, status };
+    this.refreshGhost();
+  }
+
+  private refreshGhost(): void {
+    const ed = this.editor;
+    const p = this.progress;
+    const w = this.world;
+    if (!ed || !p || !w) return;
+    const def = FURNITURE[ed.id];
+    const chk = checkPlacement(p.save.property, def, ed.at, ed.uid);
+    this.renderer.setGhost(ed.id, ed.colour, ed.at, chk.ok);
+    ed.status.textContent = chk.ok ? `Fits here (${ROOMS[chk.room].name})` : chk.reason;
+    ed.status.className = `editor-status ${chk.ok ? 'ok' : 'bad'}`;
+    // Keep the camera on it: the player stands in the walkway opposite.
+    w.player.pos.x = Math.max(w.arena.bounds.minX + 0.4, Math.min(w.arena.bounds.maxX - 0.4, ed.at.x));
+    w.player.pos.z = 1.0;
+  }
+
+  private nudge(dx: number, dz: number): void {
+    const ed = this.editor;
+    if (!ed) return;
+    const def = FURNITURE[ed.id];
+    const x = Math.max(-25.9, Math.min(1.9, Math.round((ed.at.x + dx) * 100) / 100));
+    let z = ed.at.z;
+    if (def.mount !== 'wall') z = Math.max(BACK_Z - 0.2, Math.min(LANE_Z + 0.4, Math.round((ed.at.z + dz) * 100) / 100));
+    ed.at = { ...ed.at, x, z, room: (Object.keys(ROOMS) as RoomId[]).find((r) => x > ROOMS[r].x0 && x < ROOMS[r].x1) ?? ed.at.room };
+    this.refreshGhost();
+  }
+
+  private turn(d: number): void {
+    const ed = this.editor;
+    if (!ed || FURNITURE[ed.id].mount === 'wall') return;
+    ed.at = { ...ed.at, rot: (ed.at.rot + d + 4) % 4 };
+    this.refreshGhost();
+  }
+
+  private confirmPlacing(): void {
+    const ed = this.editor;
+    const p = this.progress;
+    if (!ed || !p) return;
+    const r = placeFurniture(p, ed.uid, ed.at);
+    if (!r.ok) {
+      this.hud.toast(r.reason, 'warn');
+      return;
+    }
+    this.hud.toast(`${FURNITURE[ed.id].name} placed`, 'item');
+    this.endPlacing('done');
+  }
+
+  /** Leave the editor: put the piece back where it was (cancel), in its box (store), sold, or where you placed it. */
+  private endPlacing(how: 'done' | 'cancel' | 'store' | 'sell'): void {
+    const ed = this.editor;
+    const p = this.progress;
+    if (!ed || !p) return;
+    const piece = p.save.property.furniture.find((f) => f.uid === ed.uid);
+    if (how === 'cancel' && piece) piece.at = ed.prev;
+    if (how === 'store') storeFurniture(p, ed.uid);
+    if (how === 'sell') {
+      const r = sellFurniture(p, ed.uid);
+      if (r.ok) this.hud.toast(`Sold for £${r.refund}`, 'cash');
+    }
+    ed.bar.remove();
+    this.editor = null;
+    this.renderer.setGhost(null, '');
+    const at = { x: this.world?.player.pos.x ?? ed.at.x, z: 1.0 };
+    this.enterArea('home', 'start', { at });
+  }
+
+  private editorKey(e: KeyboardEvent): void {
+    const big = e.shiftKey ? 5 : 1;
+    const k = e.code;
+    if (k === 'ArrowLeft' || k === 'KeyA') this.nudge(-0.1 * big, 0);
+    else if (k === 'ArrowRight' || k === 'KeyD') this.nudge(0.1 * big, 0);
+    else if (k === 'ArrowUp' || k === 'KeyW') this.nudge(0, -0.1 * big);
+    else if (k === 'ArrowDown' || k === 'KeyS') this.nudge(0, 0.1 * big);
+    else if (k === 'KeyQ') this.turn(-1);
+    else if (k === 'KeyE') this.turn(1);
+    else if (k === 'Enter' || k === 'Space') this.confirmPlacing();
+    else if (k === 'Escape' || k === 'Backspace') this.endPlacing('cancel');
+    else if (k === 'Delete') this.endPlacing('store');
+    else return;
+    e.preventDefault();
   }
 
   // ---- inventory ------------------------------------------------------------------
@@ -907,6 +1168,7 @@ export class Game {
   }
 
   private onKey(e: KeyboardEvent): void {
+    if (this.state === 'editing') return this.editorKey(e);
     if (e.code === 'F1') {
       e.preventDefault();
       this.settings.update({ showHitboxes: !this.settings.get().showHitboxes });
@@ -1099,7 +1361,19 @@ export class Game {
       this.accumulator += dt;
       let steps = 0;
       while (this.accumulator >= DT && steps < MAX_STEPS_PER_FRAME && this.state === 'playing') {
-        const cmd = this.input.sample(pad);
+        let cmd = this.input.sample(pad);
+        if (this.world && this.progress?.save.property.riding) {
+          // On a bike: no fighting. Interact away from anything gets you off; trouble knocks you off.
+          if (this.world.activeEncounter || this.world.locked) {
+            this.dismount('Off the bike: trouble');
+            break;
+          }
+          if (cmd.pressed.grab && !this.world.interactable) {
+            this.dismount();
+            break;
+          }
+          cmd = { ...cmd, special: false, block: false, pressed: { ...cmd.pressed, lp: false, hp: false, lk: false, hk: false, dodge: false, jump: false, swap: false } };
+        }
         if (this.world) this.world.step(cmd);
         else this.mode!.step(cmd);
         this.accumulator -= DT;
@@ -1119,7 +1393,7 @@ export class Game {
     }
 
     const player = this.activePlayer;
-    const inFight = (this.state === 'playing' || this.state === 'paused' || this.state === 'transition') && !!player;
+    const inFight = (this.state === 'playing' || this.state === 'paused' || this.state === 'transition' || this.state === 'editing') && !!player;
     this.renderer.render(dt, this.time, inFight ? player : null);
     if (inFight && player) {
       const enemy = this.world ? this.world.focusEnemy : this.mode!.focusEnemy;

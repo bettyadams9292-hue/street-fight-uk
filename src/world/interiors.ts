@@ -1,4 +1,5 @@
-import type { LevelDef } from './LevelTypes';
+import type { LevelDef, PropDef } from './LevelTypes';
+import { FURNITURE } from '../property/catalogue';
 
 /**
  * Buildings you can walk into. Same rules as the streets: what you see is
@@ -142,4 +143,192 @@ const pub: LevelDef = {
   objective: 'A pint, a game of pool, and the regulars looking for trouble',
 };
 
-export const INTERIORS = { clothes_shop: clothesShop, pawn_shop: pawnShop, pub };
+// ---- Home & Hearth: furniture shop on the High Street ----------------------------------------------
+const F = (item: string, x: number, z: number, extra: Partial<PropDef> = {}): PropDef => ({ kind: 'furniture', item, x, z, size: FURNITURE[item].size, colour: extra.colour ?? FURNITURE[item].colours[0], solid: FURNITURE[item].mount === 'floor', wallY: FURNITURE[item].wallY, ...extra });
+
+const furnitureShop: LevelDef = {
+  id: 'furniture_shop',
+  name: 'Home & Hearth',
+  district: 'High Street',
+  theme: 'furniture_store',
+  bounds: { minX: 0, maxX: 22, ...ROOM },
+  entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
+  exits: [
+    { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'furniture', label: 'Back out to the High Street' },
+    { id: 'cab_home', kind: 'door', x: 21.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Loading bay: ride home in the delivery van' },
+  ],
+  facades: [{ kind: 'interior', x0: 0, x1: 22, label: 'HOME & HEARTH — FURNITURE · LIGHTING · DECOR', colour: '#e8e0d0' }],
+  props: [
+    F('rug_long', 3.2, -0.9, { colour: '#8a6a3a' }),
+    F('sofa_3', 3.2, -1.65, { colour: '#3a4a6a' }),
+    F('coffee_table', 3.2, -0.65),
+    F('floor_lamp', 4.85, -1.9, { colour: '#c9a227' }),
+    F('painting', 3.2, -2.0),
+    F('armchair', 6.0, -1.65, { colour: '#7a2a2a' }),
+    F('bed_double', 8.6, -1.1, { colour: '#c8b89a' }),
+    F('bedside', 9.75, -1.85),
+    F('canvas_art', 8.6, -2.0, { wallY: 2.05 }),
+    F('wardrobe2', 11.3, -1.78, { colour: '#e8e4dc' }),
+    F('dining_table', 14.0, -1.3, { colour: '#c8a070' }),
+    F('dining_chair', 12.95, -1.3, { rot: 1 }),
+    F('dining_chair', 15.05, -1.3, { rot: 3 }),
+    F('neon_sign', 14.0, -2.0, { wallY: 2.05 }),
+    F('plant_tall', 16.1, -1.85),
+    F('fridge2', 17.0, -1.75),
+    { kind: 'shop_counter', x: 19.2, z: -0.6 },
+  ],
+  stations: [
+    {
+      id: 'furniture_counter', x: 19.2, z: 0.2, label: 'Talk to Bev (furniture, floors and walls)',
+      npc: { name: 'Bev', seed: 7731, body: 'female', top: 'tshirt', topColour: '#2a4a3a', dz: -1.65 },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    { x: 4, y: 2.8, z: -0.4, colour: 0xffe8c8, intensity: 9, range: 9 },
+    { x: 11, y: 2.8, z: -0.4, colour: 0xffe8c8, intensity: 9, range: 9 },
+    { x: 18, y: 2.8, z: -0.4, colour: 0xfff4e0, intensity: 8, range: 8 },
+  ],
+  weather: 'indoors',
+  objective: 'Browse the showroom, buy at the counter: it’s delivered to your house',
+};
+
+// ---- Brackley Motors: car showroom on the trading estate --------------------------------------------
+const V = (item: string, x: number, z: number, colour: string, size: [number, number], extra: Partial<PropDef> = {}): PropDef => ({ kind: 'vehicle', item, x, z, colour, size, plinth: true, ...extra });
+
+const carDealer: LevelDef = {
+  id: 'car_dealer',
+  name: 'Brackley Motors',
+  district: 'Trading Estate',
+  theme: 'car_showroom',
+  bounds: { minX: 0, maxX: 28, ...ROOM },
+  entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
+  exits: [
+    { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'ind_estate', toEntry: 'dealer', label: 'Back out to the trading estate' },
+    { id: 'cab_home', kind: 'door', x: 27.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Side door: courtesy car home' },
+  ],
+  facades: [{ kind: 'interior', x0: 0, x1: 28, label: 'BRACKLEY MOTORS — NEW & USED', colour: '#e8ecf0' }],
+  props: [
+    V('corvo', 4.0, -1.05, '#7a1414', [2.1, 1.0]),
+    V('regent', 9.2, -1.05, '#1a1a1a', [2.5, 1.0]),
+    V('phantom', 14.4, -1.05, '#e8c020', [2.5, 1.0]),
+    V('warden', 19.6, -1.05, '#3a4a2a', [2.45, 1.0]),
+    { kind: 'shop_counter', x: 24.4, z: -0.6 },
+  ],
+  stations: [
+    {
+      id: 'car_counter', x: 24.4, z: 0.2, label: 'Talk to Gav (cars)',
+      npc: { name: 'Gav', seed: 3307, body: 'male', top: 'coat', topColour: '#1f2a44', dz: -1.65 },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    { x: 4, y: 2.9, z: -0.3, colour: 0xf4f8ff, intensity: 11, range: 10 },
+    { x: 12, y: 2.9, z: -0.3, colour: 0xf4f8ff, intensity: 11, range: 10 },
+    { x: 20, y: 2.9, z: -0.3, colour: 0xf4f8ff, intensity: 11, range: 10 },
+  ],
+  weather: 'indoors',
+  objective: 'Pick a motor. It’ll be parked on your drive.',
+};
+
+// ---- Mudlark Moto: off-road bike shop on the trading estate ------------------------------------------
+const bikeShop: LevelDef = {
+  id: 'bike_shop',
+  name: 'Mudlark Moto',
+  district: 'Trading Estate',
+  theme: 'bike_shop',
+  bounds: { minX: 0, maxX: 20, ...ROOM },
+  entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
+  exits: [
+    { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'ind_estate', toEntry: 'bikes', label: 'Back out to the trading estate' },
+    { id: 'cab_home', kind: 'door', x: 19.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Workshop door: van home' },
+  ],
+  facades: [{ kind: 'interior', x0: 0, x1: 20, label: 'MUDLARK MOTO — OFF-ROAD · MX · ENDURO', colour: '#2a2c30' }],
+  props: [
+    { kind: 'bike_stand', x: 3.0, z: -1.25 },
+    V('pup85', 3.0, -1.25, '#3a9a3a', [0.95, 0.3], { plinth: false, solid: false }),
+    { kind: 'bike_stand', x: 5.1, z: -1.25 },
+    V('mx250', 5.1, -1.25, '#1f4fa8', [0.95, 0.3], { plinth: false, solid: false }),
+    { kind: 'bike_stand', x: 7.2, z: -1.25 },
+    V('mx450r', 7.2, -1.25, '#3a9a3a', [0.95, 0.3], { plinth: false, solid: false }),
+    { kind: 'bike_stand', x: 9.3, z: -1.25 },
+    V('enduro300', 9.3, -1.25, '#e8e4dc', [0.95, 0.3], { plinth: false, solid: false }),
+    { kind: 'bike_stand', x: 11.4, z: -1.25 },
+    V('factory450', 11.4, -1.25, '#e86a10', [0.95, 0.3], { plinth: false, solid: false }),
+    { kind: 'tyre_stack', x: 13.1, z: -1.75 },
+    { kind: 'workbench', x: 14.9, z: -1.7 },
+    { kind: 'shop_counter', x: 17.6, z: -0.6 },
+  ],
+  stations: [
+    {
+      id: 'bike_counter', x: 17.6, z: 0.2, label: 'Talk to Deano (bikes)',
+      npc: { name: 'Deano', seed: 5519, body: 'male', top: 'hoodie', topColour: '#e86a10', dz: -1.65 },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    { x: 4, y: 2.8, z: -0.4, colour: 0xfff0d8, intensity: 9, range: 9 },
+    { x: 11, y: 2.8, z: -0.4, colour: 0xfff0d8, intensity: 9, range: 9 },
+    { x: 17, y: 2.8, z: -0.4, colour: 0xe8f0ff, intensity: 8, range: 8 },
+  ],
+  weather: 'indoors',
+  objective: 'Pick a bike. It’ll be waiting in your garage.',
+};
+
+// ---- The Golden Lion: casino on Market Square ---------------------------------------------------------
+const casino: LevelDef = {
+  id: 'casino',
+  name: 'The Golden Lion',
+  district: 'City Centre',
+  theme: 'casino',
+  bounds: { minX: 0, maxX: 26, ...ROOM },
+  entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
+  exits: [
+    { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'city', toEntry: 'casino', label: 'Back out to Market Square' },
+    { id: 'cab_home', kind: 'door', x: 25.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Rear exit: house cab home' },
+  ],
+  facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'THE GOLDEN LION', colour: '#3a0e14' }],
+  props: [
+    { kind: 'casino_cage', x: 4.0, z: -0.6 },
+    { kind: 'prize_podium', x: 9.4, z: -1.0 },
+    { kind: 'slot_machine', x: 13.4, z: -1.75 },
+    { kind: 'slot_machine', x: 14.3, z: -1.75 },
+    { kind: 'slot_machine', x: 15.2, z: -1.75 },
+    { kind: 'slot_machine', x: 16.1, z: -1.75 },
+    { kind: 'roulette_table', x: 19.2, z: -0.45 },
+    { kind: 'blackjack_table', x: 23.2, z: -0.45 },
+  ],
+  stations: [
+    {
+      id: 'casino_cashier', x: 4.0, z: 0.2, label: 'Cashier (Vee): prize draw and the motor competition',
+      npc: { name: 'Vee', seed: 8812, body: 'female', top: 'coat', topColour: '#1a1a1a', dz: -1.65 },
+    },
+    { id: 'casino_slots', x: 14.75, z: -0.9, label: 'Play the slots' },
+    {
+      id: 'casino_roulette', x: 19.2, z: 0.55, label: 'Roulette table',
+      npc: { name: 'Marco', seed: 6604, body: 'male', top: 'coat', topColour: '#1a1a1a', dz: -2.0 },
+    },
+    {
+      id: 'casino_blackjack', x: 23.2, z: 0.55, label: 'Blackjack table',
+      npc: { name: 'Jade', seed: 4417, body: 'female', top: 'coat', topColour: '#1a1a1a', dz: -2.0 },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    { x: 4, y: 2.8, z: -0.2, colour: 0xffc070, intensity: 9, range: 9 },
+    { x: 10, y: 2.8, z: -0.2, colour: 0xffe0a0, intensity: 10, range: 9 },
+    { x: 15, y: 2.6, z: -0.6, colour: 0xff4aa0, intensity: 6, range: 6 },
+    { x: 21, y: 2.8, z: -0.2, colour: 0xffc070, intensity: 9, range: 9 },
+  ],
+  weather: 'indoors',
+  objective: 'Slots, roulette, blackjack, and a motor on the podium. Play responsibly: it’s only game money.',
+};
+
+export const INTERIORS = {
+  clothes_shop: clothesShop, pawn_shop: pawnShop, pub,
+  furniture_shop: furnitureShop, car_dealer: carDealer, bike_shop: bikeShop, casino,
+};

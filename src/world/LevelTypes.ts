@@ -11,7 +11,8 @@ import type { AreaId } from '../progress/Progress';
 export type Theme =
   | 'home' | 'estate' | 'high_street' | 'alleys' | 'industrial' | 'subway' | 'city' | 'territory'
   | 'residential' | 'leisure' | 'stadium' | 'market' | 'docks' | 'ind_estate' | 'factory' | 'precinct' | 'mall' | 'car_park'
-  | 'nightlife' | 'underground' | 'hq' | 'shop' | 'pawn' | 'pub';
+  | 'nightlife' | 'underground' | 'hq' | 'shop' | 'pawn' | 'pub'
+  | 'furniture_store' | 'car_showroom' | 'bike_shop' | 'casino';
 
 /** Solid things on the ground. Size comes from the kind unless given. */
 export type PropKind =
@@ -26,7 +27,10 @@ export type PropKind =
   | 'escalator' | 'mall_planter' | 'atm' | 'vending'
   // shops and pubs
   | 'shop_rail' | 'mannequin' | 'display_cabinet' | 'glass_counter' | 'shop_counter' | 'shop_shelf' | 'changing_booth'
-  | 'bar' | 'pool_table' | 'pub_table' | 'fruit_machine' | 'jukebox' | 'dj_booth';
+  | 'bar' | 'pool_table' | 'pub_table' | 'fruit_machine' | 'jukebox' | 'dj_booth'
+  // Stage 6: furniture and vehicles (sized per item), bathroom, casino and showrooms
+  | 'furniture' | 'vehicle' | 'bath' | 'toilet' | 'basin'
+  | 'slot_machine' | 'roulette_table' | 'blackjack_table' | 'casino_cage' | 'prize_podium' | 'tyre_stack' | 'bike_stand';
 
 export interface PropDef {
   kind: PropKind;
@@ -37,13 +41,25 @@ export interface PropDef {
   colour?: string;
   /** Text on signs and kiosks. */
   label?: string;
+  /** Furniture or vehicle catalogue id (kind 'furniture' / 'vehicle'). */
+  item?: string;
+  /** Quarter turns (0..3). Odd turns swap width and depth. */
+  rot?: number;
+  /** Half extents, overriding the kind's size. */
+  size?: [number, number];
+  /** False for things you walk over or that hang on the wall. */
+  solid?: boolean;
+  /** Wall pieces: height of their centre. */
+  wallY?: number;
+  /** Showroom display: stand it on a lit plinth. */
+  plinth?: boolean;
 }
 
 /** Back-wall scenery along the street. */
 export type FacadeKind =
   | 'terrace' | 'shop' | 'pub' | 'tower' | 'garages' | 'warehouse' | 'fence' | 'hoarding' | 'subway' | 'office' | 'club' | 'house_front' | 'room'
   | 'semi' | 'precinct' | 'mall' | 'stand' | 'leisure' | 'dock' | 'containers' | 'market' | 'car_park' | 'ruin' | 'platform' | 'fortress'
-  | 'interior';
+  | 'interior' | 'showroom' | 'casino';
 
 export interface FacadeDef {
   kind: FacadeKind;
@@ -52,6 +68,10 @@ export interface FacadeDef {
   /** Sign text for shops and pubs; room name for interiors. */
   label?: string;
   colour?: string;
+  /** Rooms at home: floor and wall finish ids, and where the window goes (null = none). */
+  floor?: string;
+  wall?: string;
+  windowX?: number | null;
 }
 
 export interface EntryDef {
@@ -170,7 +190,9 @@ export interface EncounterDef {
 
 export type StationId =
   | 'wardrobe' | 'mirror' | 'gym' | 'sparring' | 'kitchen' | 'garage' | 'sofa' | 'contacts' | 'tin' | 'storage'
-  | 'clothes_counter' | 'changing' | 'pawn_counter' | 'bar';
+  | 'clothes_counter' | 'changing' | 'pawn_counter' | 'bar'
+  | 'planner' | 'bike_rack' | 'car' | 'bike' | 'furniture_counter' | 'car_counter' | 'bike_counter'
+  | 'casino_slots' | 'casino_roulette' | 'casino_blackjack' | 'casino_cashier';
 
 /** A non-hostile character standing at a station (shopkeepers, barmen). */
 export interface NpcDef {
@@ -244,11 +266,21 @@ export const PROP_SIZE: Record<PropKind, [number, number]> = {
   escalator: [2.4, 0.6], mall_planter: [1.0, 0.5], atm: [0.35, 0.25], vending: [0.45, 0.35],
   shop_rail: [0.9, 0.3], mannequin: [0.25, 0.25], display_cabinet: [0.8, 0.35], glass_counter: [1.2, 0.4], shop_counter: [1.3, 0.4], shop_shelf: [1.0, 0.25],
   changing_booth: [0.6, 0.6], bar: [2.5, 0.45], pool_table: [1.3, 0.75], pub_table: [0.45, 0.45], fruit_machine: [0.35, 0.3], jukebox: [0.45, 0.3], dj_booth: [1.2, 0.5],
+  furniture: [0.5, 0.5], vehicle: [1.0, 0.5], bath: [0.85, 0.4], toilet: [0.22, 0.3], basin: [0.3, 0.22],
+  slot_machine: [0.38, 0.32], roulette_table: [1.2, 0.6], blackjack_table: [1.1, 0.55], casino_cage: [1.4, 0.4], prize_podium: [2.6, 1.15], tyre_stack: [0.4, 0.4], bike_stand: [1.0, 0.35],
 };
 
-export function propBox(p: PropDef): { minX: number; maxX: number; minZ: number; maxZ: number } | null {
-  let [hx, hz] = PROP_SIZE[p.kind];
-  if (hx === 0) return null;
+/** Half extents after rotation. */
+export function propHalf(p: PropDef): [number, number] {
+  let [hx, hz] = p.size ?? PROP_SIZE[p.kind];
   if (p.turned) [hx, hz] = [hz, hx];
+  if ((p.rot ?? 0) % 2 === 1) [hx, hz] = [hz, hx];
+  return [hx, hz];
+}
+
+export function propBox(p: PropDef): { minX: number; maxX: number; minZ: number; maxZ: number } | null {
+  if (p.solid === false) return null;
+  const [hx, hz] = propHalf(p);
+  if (hx === 0) return null;
   return { minX: p.x - hx, maxX: p.x + hx, minZ: p.z - hz, maxZ: p.z + hz };
 }
