@@ -334,22 +334,17 @@ Every visual asset, with where it appears, its status and collision, is listed i
 - Animation is still the code-driven pose system; there are no animation clips.
 
 
-## Blender characters (Stage 6, in progress)
+## Characters: Quaternius Universal Base Characters (CC0)
 
-- **Skinned models.** Fighters are now a skinned model made in Blender: `assets-src/sfuk_characters.blend` is exported to `public/models/characters.glb`.
-- **Skeleton.** It has the game's 11 joints at exactly the old positions with identity rest rotations. Every existing pose, move and finisher drives it without changes.
-- **The body.** One continuous mesh with hands, fingers and thumbs.
-- **Shape keys.** Muscle, weight and female shape keys follow the creator's sliders.
-- **Clothing.** These garments are skinned to the same skeleton and carry the same shape keys:
-  - long-sleeve, short-sleeve, vest and quilted puffer tops;
-  - a hood, a collar and a long-coat skirt;
-  - trousers and shorts;
-  - trainers.
-- **Head.** The face, hair and headwear are still the procedural head, attached to the head bone.
-- **Fallback.** The classic rig is still there: add `?classic` to the URL, and it's also used if the model file fails to load.
-- **Still to do.**
-  - A modelled head.
-  - UVs and painted textures.
-  - Boots, and the small style details (zips, stripes, logos).
-  - Accessories on the body (chains, belt, wraps).
-  - Environment and prop models.
+- **Source.** Fighters use the male and female models from Quaternius' **Universal Base Characters** (Standard, CC0, public domain). The originals and their licence are in [`assets/quaternius-ubc`](assets/quaternius-ubc/README.md).
+- **Conversion.** They were converted in Blender for the game's 11-joint skeleton, so every existing move, finisher and pose drives them unchanged. The game loads them from `public/models/character_male.glb` and `character_female.glb`, about 4 MB each.
+- **The models.** Real anatomy, faces, eyes, eyebrows and fists. Skin tone and hair colour are tints on the pack's own textures.
+- **Hairstyles.** The pack's 6 hairstyles stand in for the game's 12 (closest match), and males can have its beard.
+- **Clothing.** Skinned garments cut from each body follow the muscle and weight sliders:
+  - tops: long-sleeve, t-shirt, vest and puffer;
+  - extras: hood, collar and coat skirt;
+  - bottoms: trousers and shorts;
+  - shoes.
+- **Headwear.** Hats, sunglasses, snood, mouthguard, headguard, earring and chain are the game's own pieces, lined up on the new heads.
+- **Not carried over.** The creator's detailed face sliders (jaw, nose, eye spacing and so on), tattoos, and scars apply only to the classic rig.
+- **Fallback.** Add `?classic` to the URL to use the old procedural fighters. They are also used automatically if a model fails to load.

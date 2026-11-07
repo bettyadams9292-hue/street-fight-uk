@@ -31,7 +31,7 @@ function darken(hex: string, amount: number): string {
 }
 
 export function buildCharacterRig(a: CharacterAppearance): Rig {
-  if (characterModelsReady()) {
+  if (characterModelsReady(a.body === 'female' ? 'female' : 'male')) {
     const modelRig = buildModelRig(a);
     if (modelRig) return modelRig;
   }
@@ -368,7 +368,7 @@ export function buildCharacterRig(a: CharacterAppearance): Rig {
   };
 }
 
-/** Which garment meshes in characters.glb each clothing style uses. */
+/** Which garment meshes in character_*.glb each clothing style uses. */
 const TOP_MESHES: Record<CharacterAppearance['top'], string[]> = {
   none: [],
   vest: ['top_vest'],
@@ -385,13 +385,38 @@ const TOP_MESHES: Record<CharacterAppearance['top'], string[]> = {
   workwear: ['top_long'],
 };
 
+/** Which pack hairstyle stands in for each of the game's styles. */
+const HAIR_MESH: Record<CharacterAppearance['hair'], { male: string; female: string } | null> = {
+  bald: null,
+  buzz: { male: 'hair_buzz', female: 'hair_buzz_f' },
+  crop: { male: 'hair_buzz', female: 'hair_buzz_f' },
+  cornrows: { male: 'hair_buzz', female: 'hair_buzz_f' },
+  mohawk: { male: 'hair_buzz', female: 'hair_buzz_f' },
+  quiff: { male: 'hair_parted', female: 'hair_parted' },
+  curly: { male: 'hair_parted', female: 'hair_parted' },
+  afro: { male: 'hair_parted', female: 'hair_parted' },
+  bob: { male: 'hair_parted', female: 'hair_long' },
+  bun: { male: 'hair_buns', female: 'hair_buns' },
+  ponytail: { male: 'hair_buns', female: 'hair_buns' },
+  long: { male: 'hair_long', female: 'hair_long' },
+};
+
+/** Average colour (linear) of the pack's light skin texture and its grey hair texture, so tints land on the chosen colour. */
+const SKIN_TEX_AVG = new THREE.Color().setRGB(166 / 255, 120 / 255, 88 / 255, THREE.SRGBColorSpace);
+const HAIR_TEX_AVG = new THREE.Color().setRGB(142 / 255, 142 / 255, 140 / 255, THREE.SRGBColorSpace);
+function tintFor(target: THREE.Color, avg: THREE.Color): THREE.Color {
+  return new THREE.Color(target.r / Math.max(0.02, avg.r), target.g / Math.max(0.02, avg.g), target.b / Math.max(0.02, avg.b));
+}
+
 /**
- * The Blender-made skinned body and clothes, driven by the same joints as the
- * procedural rig. The face, hair and headwear are still the procedural head,
- * attached to the head bone. Returns null if the model isn't available.
+ * Quaternius "Universal Base Characters" (CC0), converted for the game's
+ * 11-joint skeleton, with the game's clothing as skinned garments. Headwear is
+ * the shared procedural headwear, lined up on the model's eyes. Returns null if
+ * the model isn't available.
  */
 function buildModelRig(a: CharacterAppearance): Rig | null {
-  const model = cloneCharacterModel();
+  const female = a.body === 'female';
+  const model = cloneCharacterModel(female ? 'female' : 'male');
   if (!model) return null;
   const disposables: { dispose(): void }[] = [];
   const flashMaterials: THREE.MeshStandardMaterial[] = [];
@@ -410,60 +435,71 @@ function buildModelRig(a: CharacterAppearance): Rig | null {
     m.castShadow = shadow;
     return m;
   };
-  const female = a.body === 'female';
   const hairCol = mixHair(a);
   const topRough: Partial<Record<CharacterAppearance['top'], number>> = { bomber: 0.45, tracksuit: 0.55, leather: 0.32, puffer: 0.4, football: 0.5, workwear: 0.6 };
-  const skinMat = std({ color: a.skinTone, roughness: 0.6 });
   const topMat = std({ color: a.topColour, roughness: topRough[a.top] ?? 0.9, metalness: a.top === 'leather' ? 0.05 : 0, side: THREE.DoubleSide });
   const bottomsMat = std({ color: a.bottomsColour, roughness: a.bottoms === 'jeans' ? 0.95 : 0.85, side: THREE.DoubleSide });
   const shoeMat = std({ color: a.shoesColour, roughness: 0.55 });
   const trimMat = std({ color: darken(a.topColour, 0.3), roughness: 0.8, side: THREE.DoubleSide });
-  const byMaterial: Record<string, THREE.MeshStandardMaterial> = { Skin: skinMat, Top: topMat, Bottoms: bottomsMat, Shoes: shoeMat, Trim: trimMat };
+  const flat: Record<string, THREE.MeshStandardMaterial> = { Top: topMat, Bottoms: bottomsMat, Shoes: shoeMat, Trim: trimMat };
+  const skinTint = tintFor(new THREE.Color(a.skinTone), SKIN_TEX_AVG);
+  const hairTint = tintFor(hairCol, HAIR_TEX_AVG);
 
-  const wanted = new Set<string>(['Body', 'shoes', a.bottoms === 'shorts' ? 'bottoms_shorts' : 'bottoms_long']);
+  const wanted = new Set<string>(['Body', 'eyes', 'shoes', female ? 'brows_f' : 'brows', a.bottoms === 'shorts' ? 'bottoms_shorts' : 'bottoms_long']);
   for (const m of TOP_MESHES[a.top]) wanted.add(m);
+  const hair = HAIR_MESH[a.hair];
+  if (hair && !a.accessories.includes('headguard')) wanted.add(female ? hair.female : hair.male);
+  if (!female && ['moustache', 'goatee', 'short_beard', 'full_beard'].includes(a.facialHair)) wanted.add('beard');
+
   const bones: Record<string, THREE.Object3D> = {};
-  const hidden: THREE.Object3D[] = [];
+  const unwanted: THREE.Object3D[] = [];
   model.traverse((o: THREE.Object3D) => {
     if ((o as THREE.Bone).isBone) bones[o.name] = o;
     const sm = o as THREE.SkinnedMesh;
-    if (!sm.isSkinnedMesh && !(o as THREE.Mesh).isMesh) return;
+    if (!(o as THREE.Mesh).isMesh) return;
     if (!wanted.has(o.name)) {
-      hidden.push(o);
+      unwanted.push(o);
       return;
     }
-    const src = sm.material as THREE.Material;
-    sm.material = byMaterial[src.name] ?? skinMat;
+    const src = sm.material as THREE.MeshStandardMaterial;
+    const name = src.name.replace(/\.\d+$/, '');
+    if (flat[name]) sm.material = flat[name];
+    else {
+      // Textured pack materials: per-fighter copy so skin and hair can be tinted.
+      const m = track(src.clone());
+      if (name === 'Skin') m.color.copy(skinTint);
+      else if (name.startsWith('Hair')) m.color.copy(hairTint);
+      flashMaterials.push(m);
+      sm.material = m;
+    }
     sm.castShadow = true;
     // Skinned meshes move away from their bind-pose bounds; don't let them get culled.
     sm.frustumCulled = false;
-    // Body shape sliders are morph targets made in Blender.
     const dict = sm.morphTargetDictionary;
     const inf = sm.morphTargetInfluences;
     if (dict && inf) {
       if (dict.muscle !== undefined) inf[dict.muscle] = Math.max(0, Math.min(1, (a.muscle - 0.3) / 0.6));
       if (dict.weight !== undefined) inf[dict.weight] = Math.max(0, Math.min(1, (a.weight - 0.2) / 0.6));
-      if (dict.female !== undefined) inf[dict.female] = female ? 1 : 0;
     }
   });
-  for (const o of hidden) o.removeFromParent();
+  for (const o of unwanted) o.removeFromParent();
   const need = ['hips', 'spine', 'head', 'lShoulder', 'lElbow', 'rShoulder', 'rElbow', 'lHip', 'lKnee', 'rHip', 'rKnee'] as const;
   if (need.some((n) => !bones[n])) return null;
 
   const root = new THREE.Group();
+  // The pack characters are 1.78 m (male) and 1.72 m (female); the creator's height slider scales around that.
   root.scale.setScalar(a.height);
   const pitch = new THREE.Group();
   root.add(pitch);
   pitch.add(model);
 
-  // Procedural head (face, hair, headwear) on the head bone.
-  const head = new THREE.Group();
-  bones.head.add(head);
-  const hairMat = std({ color: hairCol, roughness: 0.9 });
-  const darkMat = std({ color: '#101012', roughness: 0.4 });
-  const lipMat = std({ color: darken(a.skinTone, 0.25), roughness: 0.5 });
-  const metal = std({ color: a.chainColour === 'gold' ? '#d4af37' : '#c9ccd2', roughness: 0.25, metalness: 0.9 });
-  buildHead(head, a, {
+  // Headwear on the head bone, lined up with the model's eyes (classic head: eyes 0.145 up, 0.093 forward).
+  const wear = new THREE.Group();
+  const s = female ? 0.9 : 0.96;
+  wear.position.set(0, (female ? 0.172 : 0.178) - 0.145 * s, (female ? 0.105 : 0.111) - 0.093 * s);
+  wear.scale.setScalar(s);
+  bones.head.add(wear);
+  const kit: HeadKit = {
     std,
     mesh,
     skin: (p) => {
@@ -471,13 +507,20 @@ function buildModelRig(a: CharacterAppearance): Rig | null {
       flashMaterials.push(m);
       return m;
     },
-    hairMat,
-    lipMat,
-    darkMat,
-    metal,
+    hairMat: std({ color: hairCol, roughness: 0.9 }),
+    lipMat: std({ color: darken(a.skinTone, 0.25), roughness: 0.5 }),
+    darkMat: std({ color: '#101012', roughness: 0.4 }),
+    metal: std({ color: a.chainColour === 'gold' ? '#d4af37' : '#c9ccd2', roughness: 0.25, metalness: 0.9 }),
     topMat,
     hairHex: '#' + hairCol.getHexString(),
-  });
+  };
+  if (a.accessories.includes('headguard')) buildHeadguard(wear, kit, 0.13);
+  buildHeadwear(wear, a, kit, 0.13, 1);
+  if (a.accessories.includes('earring')) {
+    const ring = mesh(new THREE.TorusGeometry(0.008, 0.002, 6, 12), kit.metal, false);
+    ring.position.set(0.075, 0.1, -0.005);
+    wear.add(ring);
+  }
 
   const joints = Object.fromEntries(need.map((n) => [n, bones[n]])) as Record<JointName, THREE.Object3D>;
   return {
@@ -486,7 +529,7 @@ function buildModelRig(a: CharacterAppearance): Rig | null {
     flashMaterials,
     joints,
     dispose() {
-      // Geometry is shared with the loaded template; only per-fighter materials and head parts are freed.
+      // Geometry and textures are shared with the loaded template; only per-fighter materials and headwear are freed.
       for (const d of disposables) d.dispose();
     },
   };
@@ -634,6 +677,12 @@ function buildHead(head: THREE.Group, a: CharacterAppearance, k: HeadKit): void 
   buildFacialHair(head, a, k, cy, jawW * hw);
   if (a.accessories.includes('headguard')) buildHeadguard(head, k, cy);
   else buildHair(head, a, k, cy, hw);
+  buildHeadwear(head, a, k, cy, hw);
+}
+
+/** Hats, glasses, snood, mouthguard and chain: shared by the classic head and the model heads. */
+function buildHeadwear(head: THREE.Group, a: CharacterAppearance, k: HeadKit, cy: number, hw: number): void {
+  const f = a.face;
   const hatMat = k.std({ color: a.headColour ?? darken(a.topColour, 0.1), roughness: 0.95 });
   if (a.accessories.includes('beanie') && !a.accessories.includes('headguard') && !a.accessories.includes('cap')) {
     const beanie = k.mesh(new THREE.SphereGeometry(0.124, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), hatMat);
