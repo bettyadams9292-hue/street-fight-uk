@@ -200,7 +200,7 @@ export function gymStations(g?: GymSave): StationDef[] {
     const at = k.id === 'mat' ? { x: k.slot.x - 0.75, z: 0.55 } : { x: k.slot.x, z: Math.max(-1.0, Math.min(0.55, k.slot.z + k.size[1] + 0.45)) };
     out.push(owned.includes(k.id)
       ? { id: 'train', x: at.x, z: at.z, label: `${k.name}: train ${k.attribute.toLowerCase()}`, tab: k.id }
-      : { id: 'train', x: at.x, z: at.z, label: `Space for a ${k.name.toLowerCase()} (Iron Temple, Leisure Park)`, tab: k.id });
+      : { id: 'train', x: at.x, z: at.z, label: `Space for ${/^[aeiou]/i.test(k.name) ? 'an' : 'a'} ${k.name.toLowerCase()} (Iron Temple, Leisure Park)`, tab: k.id });
   }
   out.push({ id: 'sparring', x: SPAR_SPOT.x + 0.4, z: 0.55, label: 'Spar with Mo (practice: he won’t really hurt you)' });
   return out;

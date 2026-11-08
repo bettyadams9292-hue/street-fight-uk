@@ -112,6 +112,19 @@ test('side fights finished this visit stay finished when the area is rebuilt in 
   assert(!w.activeEncounter, 'cleared side fight did not re-arm');
 });
 
+test('riding past a side fight doesn’t start it; walking past still does', () => {
+  const lvl = LEVELS.estate;
+  const opt = lvl.encounters.find((e) => e.optional)!;
+  for (const riding of [true, false]) {
+    const p = fresh();
+    p.save.property.riding = riding;
+    const w = new World(lvl, p, { entry: lvl.entries[0].id, at: { x: opt.triggerX - 1.5, z: 0 }, seed: 3, civilians: false });
+    walk(w, 1, 120);
+    const started = w.enemies.length > 0;
+    assert(started === !riding, riding ? 'side fight started while riding past' : 'side fight didn’t start on foot');
+  }
+});
+
 test('get on and off the bike many times: one bike, right place, right state', () => {
   const p = fresh();
   buyBike(p, 'mx250', '#1f4fa8');
@@ -206,6 +219,27 @@ test('pedestrians never stack on one another and despawn when far away', () => {
   }
   for (const c of w.civilians) assert(Math.abs(c.f.pos.x - w.player.pos.x) <= 23, 'far ones removed');
   assert(!LEVELS.home.stations || !CIVILIAN_DENSITY.home, 'nobody wanders through your house');
+});
+
+test('two pedestrians walking into each other pass, and everyone calms down after a fight', () => {
+  const p = fresh();
+  const lvl = LEVELS.high_street;
+  const w = new World(lvl, p, { entry: lvl.entries[0].id, at: { x: 12, z: 1 }, seed: 5 });
+  // Clear the street and put two people head to head on the same line.
+  while (w.civilians.length) (w as unknown as { removeCivilian: (i: number) => void }).removeCivilian(0);
+  const spawn = w as unknown as { spawnCivilian: (spot?: unknown) => void };
+  for (let i = 0; i < 20 && w.civilians.length < 2; i++) spawn.spawnCivilian();
+  assert(w.civilians.length === 2, 'two pedestrians to test with');
+  {
+    const [a, b] = w.civilians;
+    const z = lvl.bounds.minZ + 0.6;
+    a.f.pos.x = 20; b.f.pos.x = 21; a.f.pos.z = z; b.f.pos.z = z;
+    a.brain.dir = 1; b.brain.dir = -1; a.brain.laneZ = z; b.brain.laneZ = z;
+    a.brain.flee(10); b.brain.flee(31);
+    steps(w, 60 * 4);
+    assert(a.f.pos.x > 22 && b.f.pos.x < 19, `they got past each other (${a.f.pos.x.toFixed(1)}, ${b.f.pos.x.toFixed(1)})`);
+    assert(a.brain.activity === 'walk' && b.brain.activity === 'walk', 'no fight on: they stop running');
+  }
 });
 
 console.log('\nStage 8: companions');

@@ -443,6 +443,7 @@ Rolls are seeded from the save, so reloading doesn't re-roll them.
 - Side fights you'd cleared on this visit stay cleared when the area is rebuilt (`keepCleared`).
 - Mounting and dismounting now happen in place, without a rebuild: the parked bike is added or removed as a live prop and station.
 - You're only knocked off by an actual hit landing on you while riding, not just because a fight exists.
+- Riding past a side fight's spot no longer starts it (side fights re-arm each visit, so riding up and down a street kept setting them off). You meet them when you walk past. Story fights still start on the bike.
 - Tested by mounting and parking 12 times across two streets, and with a rebuild past every fight line in four districts (`tests/stage8.test.ts`).
 
 **Basement stairs.** The cellar door in the living room is gone. The garage now has a stairwell cut into the floor, with steps, side walls, hazard nosing, railings and a light. Interacting at the top walks you down the steps with a fade, and you arrive walking off the basement stairs; coming up is the reverse. The opening has collision. The house is wider to fit it (the garage is now 12–22 m).
@@ -456,7 +457,8 @@ Rolls are seeded from the save, so reloading doesn't re-roll them.
 - They walk the pavement lanes at different speeds, browse at shop doors, stand in groups outside pubs, clubs and the casino, chat in pairs, and sit on benches.
 - They step round scenery and each other.
 - They spawn 11–17 m from you, off-screen, and despawn beyond 22 m.
-- They're neutral and can't be hit; when a fight starts they scatter.
+- They're neutral and can't be hit; when a fight starts they scatter, and they go back to walking once it's over.
+- Two people meeting head-on step round each other.
 - They're never pulled into a locked fight zone (that was a bug found by the soak test and fixed in `Arena.clamp`).
 
 **Companions** (`src/companions/`). Seven fighters sit in the Snug, a new back room of the Red Lion:
@@ -533,7 +535,7 @@ Rolls are seeded from the save, so reloading doesn't re-roll them.
 
 **Saving.** New save fields `gym`, `styleTraining` and `companions` are added; weapon stacks gain `mods` and `crafted`. All of them are sanitised. Older saves keep their trained ranks, get the old bag and dumbbells in the gym, and any style learned before keeps its specials (rank 2).
 
-**Tests.** `tests/stage8.test.ts` has 25 tests. Full `npm test` (all eight suites) passed in this build.
+**Tests.** `tests/stage8.test.ts` has 27 tests. Full `npm test` (all eight suites) passed in this build.
 
 **Files.**
 

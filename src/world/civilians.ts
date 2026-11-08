@@ -61,6 +61,8 @@ export class CivilianBrain {
     private readonly rng: Rng,
     lanes: number[],
     start: CivilianActivity,
+    /** Everyone else on the street, so it can step round people as well as things. */
+    private readonly people: () => readonly Fighter[] = () => [],
   ) {
     this.activity = start;
     this.laneZ = lanes[Math.floor(rng.next() * lanes.length)];
@@ -85,6 +87,11 @@ export class CivilianBrain {
     this.spot = null;
     this.standAt = null;
     this.activity = 'walk';
+  }
+
+  /** The fight's over: back to a normal walk. */
+  calm(): void {
+    if (this.activity === 'flee') this.activity = 'walk';
   }
 
   flee(fromX: number): void {
@@ -124,6 +131,16 @@ export class CivilianBrain {
     cmd.moveX = this.dir;
     const dz = this.laneZ - me.pos.z;
     if (!this.sidestep && Math.abs(dz) > 0.08) cmd.moveZ = Math.sign(dz) * 0.6;
+    // Someone in the way (another pedestrian coming the other way, you, a fighter): pass to one side.
+    const ahead = this.people().find((o) => o !== me && !o.isKO && (o.pos.x - me.pos.x) * this.dir > 0 && Math.abs(o.pos.x - me.pos.x) < 1.1 && Math.abs(o.pos.z - me.pos.z) < 0.5);
+    if (ahead) {
+      const b = this.arena.bounds;
+      let side = me.pos.z < ahead.pos.z ? -1 : me.pos.z > ahead.pos.z ? 1 : (me.id % 2 ? 1 : -1);
+      const target = ahead.pos.z + side * 0.55;
+      if (target < b.minZ + 0.2 || target > b.maxZ - 0.2 || this.arena.blocked(me.pos.x, target, 0.25)) side = -side;
+      cmd.moveZ = side;
+      cmd.moveX = this.dir * 0.4;
+    }
     this.avoid(cmd, frame);
     return cmd;
   }

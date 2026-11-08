@@ -328,7 +328,7 @@ export class World {
     const f = new Fighter({ id: this.nextId++, name: 'Passer-by', team: 'neutral', attributes: defaultAttributes(4), style: getStyle('street'), x, z, appearance: look });
     f.stats.addModifier({ id: 'stroll', source: 'civilian', stat: 'moveSpeedMult', mul: 0.42 + r.next() * 0.3 });
     this.sim.add(f);
-    const brain = new CivilianBrain(f, this.arena, r, this.civLanes, 'walk');
+    const brain = new CivilianBrain(f, this.arena, r, this.civLanes, 'walk', () => this.sim.fighters);
     if (spot) brain.claim(spot, spot.taken, this.sim.frame);
     else brain.dir = x < p.pos.x ? 1 : -1;
     if (this.activeEncounter) brain.flee(p.pos.x);
@@ -348,7 +348,9 @@ export class World {
     if (!this.civCap) return;
     const p = this.player;
     const frame = this.sim.frame;
+    const calm = !this.activeEncounter && !this.locked && !this.enemies.some((e) => !e.isKO);
     for (const c of this.civilians) {
+      if (calm) c.brain.calm();
       c.f.ambientPose = c.brain.pose;
       // Walkers passing a free hotspot sometimes stop there.
       if (c.brain.activity === 'walk' && frame % 20 === c.f.id % 20) {
@@ -857,7 +859,10 @@ export class World {
       // Fights start when you cross their line, from either direction.
       const t = e.def.triggerX;
       const crossed = (x0 < t && x1 >= t) || (x0 > t && x1 <= t);
-      if (e.status === 'waiting' && crossed && !this.activeEncounter && !p.isKO) this.startEncounter(e);
+      // Side fights are street-corner trouble you only meet on foot: ride past and they don't
+      // start (they're still there when you come back walking). Story fights start either way.
+      const ridingPast = e.def.optional && this.progress.save.property.riding;
+      if (e.status === 'waiting' && crossed && !ridingPast && !this.activeEncounter && !p.isKO) this.startEncounter(e);
       if (e.status !== 'active') continue;
       if (e.boss) this.updateBossPhases(e);
       const alive = e.enemies.filter((f) => !f.isKO);
