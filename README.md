@@ -922,3 +922,81 @@ Every style except MMA has a real upside and a real downside, so nobody is bette
 - **Headwear.** Hats, sunglasses, snood, mouthguard, headguard, earring and chain are the game's own pieces, lined up on the new heads.
 - **Not carried over.** The creator's detailed face sliders (jaw, nose, eye spacing and so on), tattoos, and scars apply only to the classic rig.
 - **Fallback.** Add `?classic` to the URL to use the old procedural fighters. They are also used automatically if a model fails to load.
+
+## Stage 12 report: the interactive house — cooking, eating, washing, sleeping
+
+**Needs** (`src/home/needs.ts`, saved as `needs`): hunger, energy, hygiene, teeth, bladder and diet, each 0–100.
+
+- They change with play time: slower at home, faster in a fight (hygiene and energy), and not at all while you sleep. Full to empty hunger takes about 45 minutes out.
+- Hygiene levels follow the brief: Excellent 90+, Good 70–89, Average 40–69, Poor 20–39, Very poor 0–19.
+- **Effects are mild:**
+  - Hungry or tired: stamina comes back a bit slower.
+  - Starving: also −10 max stamina.
+  - A poor diet over time: −5% stamina recovery.
+  - Eating well: +8 max stamina.
+  - Hygiene, teeth and the loo never affect fighting.
+- **HUD:** only needs that want attention show, as small chips by the status strip (hidden in fights), with a one-off nudge when one becomes urgent.
+- **Character screen:** a Needs & lifestyle section shows bars and labels ("Hungry", "Needs a shower", "Comfortable").
+
+**Groceries.**
+
+- Real ingredient items live in the fridge or the cupboards (saved as `pantry`).
+- New games and older saves come stocked.
+- From the fridge or cupboard screen you can take things out, put shopping away from your pockets, or order a delivery (a £25 weekly shop or single items).
+- Snacks (crisps, chocolate, an apple, biscuits) live in the cupboard.
+
+**Recipes** (`src/home/recipes.ts`), 16 in all:
+
+- **Quick:** sandwich, toast, cereal, beans on toast, scrambled eggs.
+- **Cooked:** full English, sausage and mash, chicken and chips, steak and potatoes, pasta bake, burgers, curry.
+- **Snacks:** crisps, chocolate, fruit, biscuits.
+
+Each has ingredients, prep and cook time, servings, hunger filled, energy, health, diet quality and star quality, and makes a meal item with its own icon.
+
+**Cooking** is acted out in the house. Choosing a recipe at the worktop or cooker starts the sequence:
+
+1. Walk to the fridge: the door swings open, the light comes on, and you take things out.
+2. Then the cupboards, the same way.
+3. The worktop: chopping on a board, with knife sounds.
+4. The hob (stirring a pan, steam, a sizzle) or the oven (crouch, wait while it glows, take it out).
+5. Plate up.
+
+Ingredients are taken when prep starts. Stopping during prep puts them back. Stopping while it's on the heat ruins it. Extra servings go into the fridge as leftovers. Then you walk to a seat (the dining table first, otherwise the sofa), sit, eat (with a plate in front of you), and have a drink. A home-cooked full English gives the old +25 max-health bonus.
+
+**The crew at meals.** Companions at home come and sit down to eat while there are servings in the fridge. Each serving they eat lowers their fatigue and restores some health.
+
+**Bathroom.**
+
+- **Shower:** you step into the bath, the curtain is drawn, and water, steam and sound play while hygiene rises to Excellent over ten seconds. You stay clothed, behind the curtain.
+- **Sinks:** wash hands (also at the kitchen sink), wash face, and brush teeth. Each has its own animation, and the tap runs where it should.
+- **Toilet:** sit down clothed, the bladder empties, then flush. It can be stopped part way, and it won't let you go when you don't need to.
+- **Mirror cabinet (if placed):** freshen up.
+
+**Rest.**
+
+- **Bed:** choose sleep or a lie down. You sit on the edge, lie back, the screen dims with "Zzz…", then you get up.
+  - Sleep: full energy, training fatigue gone, injuries down a level, crew rested.
+  - Sleep doesn't move the story clock.
+  - A lie down gives +35 energy.
+- **TV:** sit on the sofa facing it; energy and fatigue slowly improve.
+
+**Prompts.** These read like "FRIDGE  E  Open fridge" and "SHOWER  E  Take shower". There's one list at most, never nested menus.
+
+**Stopping and safety.**
+
+- Every activity can be stopped with Esc, by moving, or by pressing E.
+- You ease back out of where you were (bath, bed, chair) onto open floor, and the effects and sounds stop.
+- Leaving the house or opening a menu stops it cleanly.
+- If the way is blocked for too long, a safety net moves you, so nobody ends up stuck. A test checks it's never needed on the normal routes.
+- While pinned in place, the character isn't pushed or pulled by gravity, so there's no floating or sinking.
+
+**Animations** (new: `src/render/activityPoses.ts`): reach into the fridge, crouch at a cupboard or oven, chop, stir, carry a plate, wait, eat sitting, drink sitting, shower, wash hands, wash face, brush teeth, sit on the bed edge, and lie in bed. They blend through the existing pose system. **Effects** are in `src/render/HouseFX.ts` and **sounds** in `AudioManager.loop` and `house`: water, sizzle, oven hum, fridge, cupboard, chopping, cutlery, eating, flush, tap, brushing.
+
+**Companions.**
+
+- They never use standing spots at the hob, fridge, sinks, toilet, shower or bed. The kitchen standing spots moved out of the way.
+- Seats boxed in by a coffee table are now reached from the side, which gives more usable sofa seats.
+- Someone who can't reach a seat gives up and picks something else.
+- Fixed a Stage 11 bug where a companion re-choosing their own seat could let someone else sit on them.
+
+**Tests.** `tests/stage12.test.ts` has 25 tests covering needs, recipes, saves, every activity, stopping, crew and reachability. The full `npm test` (12 suites, 255 tests) passed.
