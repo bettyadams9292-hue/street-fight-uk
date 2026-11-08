@@ -1,3 +1,5 @@
+import { needsEffects, overallNeeds } from '../home/needs';
+import { needsBars } from './kitchenUI';
 import { BACKGROUNDS } from '../character/Character';
 import {
   activeSlots,
@@ -217,6 +219,12 @@ export function profileScreen(o: ProfileOptions): Screen {
         s.condition.injuries.length
           ? h('p', { class: 'pf-hint', text: `All healed in about ${mmss(timeToHeal(s.condition) / (atHome() ? 3 : 1))}. Faster at home; the sofa sorts a level of everything; a first aid kit fixes your worst injury by a level, plasters see to bruising.` })
           : h('p', { class: 'pf-hint', text: 'Big hits to the head, body, legs, or heavy blows you block, can leave injuries after a fight.' }),
+      ),
+      section('Needs & lifestyle', 'food',
+        h('div', { class: 'pf-xp' }, h('span', { text: `Overall: ${overallNeeds(s.needs)}` })),
+        needsBars(s.needs),
+        ...needsEffects(s.needs).map((t) => h('p', { class: 'pf-warn', text: t })),
+        h('p', { class: 'pf-hint', text: 'At home: cook and eat at the table, shower, brush your teeth, use the loo, sleep in your bed. Eating well gives +8 max stamina; hunger, tiredness and a poor diet slow your stamina a little. Washing and the loo never affect fighting.' }),
       ),
       section('Equipment', 'bag', weaponLine(s.held, f), ...(worn.length ? worn : [h('p', { class: 'pf-none', text: 'Nothing worn.' })]),
         row('Pockets', `${s.inventory.length} / ${p.inventoryCap}`, `Stash at home: ${s.storage.length} / ${s.storageCap}`)),

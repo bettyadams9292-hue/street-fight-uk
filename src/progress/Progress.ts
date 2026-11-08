@@ -12,6 +12,8 @@ import { defaultGym, sanitiseGym, type GymSave } from '../training/gym';
 import { sanitiseStyleTraining, type StyleTraining } from '../training/styleGyms';
 import { defaultCompanions, sanitiseCompanions, type CompanionSave } from '../companions/companions';
 import { DISTRICT_ORDER } from '../world/levels';
+import { defaultNeeds, eat, needsModifiers, sanitiseNeeds, type NeedsSave } from '../home/needs';
+import { putInto, sanitisePantry, STARTER_GROCERIES, type PantrySave } from '../home/recipes';
 import { conditionModifiers, defaultCondition, sanitiseCondition, treatInjury, type ConditionSave } from '../condition/condition';
 import { currentFatigue } from '../training/gym';
 import {
@@ -115,6 +117,10 @@ export interface GameSave {
   destination: AreaId | null;
   /** Your injuries. */
   condition: ConditionSave;
+  /** Hunger, energy, hygiene, teeth, bladder, diet. */
+  needs: NeedsSave;
+  /** The fridge and the kitchen cupboards. */
+  pantry: PantrySave;
   savedAt: string;
 }
 
@@ -158,12 +164,15 @@ export function newSave(character: PlayerCharacter): GameSave {
     visited: ['home', 'estate'],
     destination: null,
     condition: defaultCondition(),
+    needs: defaultNeeds(),
+    pantry: { fridge: [], cupboard: [] },
     savedAt: new Date().toISOString(),
   };
-  // Starter kit: your hand wraps on, a couple of sandwiches in your pocket.
+  // Starter kit: your hand wraps on, a couple of sandwiches in your pocket, food in the kitchen.
   const p = new Progress(s);
   p.wearNew('wraps');
   p.giveItem('meal_deal', 2);
+  p.stockKitchen(STARTER_GROCERIES);
   return s;
 }
 
@@ -230,8 +239,11 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     visited: sanitiseVisited(r.visited, r.area, flags),
     destination: (AREA_IDS as readonly string[]).includes(r.destination as string) ? (r.destination as AreaId) : null,
     condition: sanitiseCondition(r.condition),
+    needs: sanitiseNeeds(r.needs),
+    pantry: { fridge: [], cupboard: [] },
     savedAt: typeof r.savedAt === 'string' ? r.savedAt : base.savedAt,
   };
+  let pantry: PantrySave | null = null;
   const p = new Progress(out);
   if (r.version === 3) {
     // Stacks: drop junk, never allow the same uid twice anywhere.
@@ -249,6 +261,8 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     // Weapons you've handed to your crew are items too.
     out.companions = sanitiseCompanions(r.companions, (x) => sanitiseStack(x, seen));
     out.inventory = stacks(r.inventory, 99);
+    pantry = sanitisePantry(r.pantry, (x) => sanitiseStack(x, seen));
+    if (pantry) out.pantry = pantry;
     // If the pockets hold more than fit (a bag was removed by hand), overflow goes to the stash.
     while (out.inventory.length > p.inventoryCap) {
       out.storage.push(out.inventory.pop()!);
@@ -274,6 +288,8 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     }
     for (const c of list(r.cosmetics, LOCKED_COSMETICS)) if (COSMETIC_TO_ITEM[c]) p.stashNew(COSMETIC_TO_ITEM[c]);
   }
+  // Saves from before the kitchen worked: the house comes stocked.
+  if (!pantry) p.stockKitchen(STARTER_GROCERIES);
   return out;
 }
 
@@ -443,6 +459,16 @@ export class Progress {
     return this.pocket(this.newStack(id, qty, extra));
   }
 
+  /** Groceries straight into the fridge and the cupboards (new games, deliveries). */
+  stockKitchen(list: { id: string; qty: number }[]): void {
+    for (const g of list) {
+      const d = ITEMS[g.id];
+      if (!d?.store) continue;
+      putInto(d.store === 'fridge' ? this.save.pantry.fridge : this.save.pantry.cupboard, g.id, g.qty, () => this.newUid());
+      this.discover(g.id);
+    }
+  }
+
   /** Straight into the stash at home (migration, rewards sent home). */
   stashNew(id: string, qty = 1): void {
     addStack(this.save.storage, this.save.storageCap, this.newStack(id, qty), () => this.newUid());
@@ -568,6 +594,9 @@ export class Progress {
       const target = c.injuries.filter((i) => i.part !== 'bruising').sort((a, b) => b.severity - a.severity)[0] ?? c.injuries[0];
       treated = target ? treatInjury(c, target.part)?.name ?? null : null;
     } else if (st.id === 'plasters') treated = treatInjury(c, 'bruising')?.name ?? null;
+    if (use.needs) eat(this.save.needs, use.needs);
+    // A home-cooked full English sets you up for the next trip, wherever you eat it.
+    if (st.id === 'm_full_english') this.save.mealBuff = true;
     return { ok: true, heal: use.heal ?? 0, healPct: use.healPct ?? 0, stamina: use.stamina ?? 0, name: ITEMS[st.id].name, treated };
   }
 
@@ -755,6 +784,9 @@ export class Progress {
     // Injuries and training exhaustion.
     f.stats.removeModifiersFrom('injury');
     for (const m of conditionModifiers(s.condition, currentFatigue(s.gym, s.playTime))) f.stats.addModifier(m);
+    // Hunger, tiredness and diet: small effects either way.
+    f.stats.removeModifiersFrom('needs');
+    for (const m of needsModifiers(s.needs)) f.stats.addModifier(m);
     f.poise = f.stats.maxPoise;
   }
 }

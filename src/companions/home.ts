@@ -57,6 +57,9 @@ const SEAT_POINTS: Record<string, { x: number; z: number }[]> = {
 /** Breakfast-bar stools: sat facing the island from its front. */
 const ISLAND_STOOLS = [{ x: -0.35, z: 0.42 }, { x: 0.35, z: 0.42 }];
 
+/** Things the player uses in the house: the crew keep out of the way of these. */
+const PLAYER_STATIONS = new Set<string>(['kitchen', 'cooker', 'cupboard', 'sink', 'fridge', 'shower', 'toilet', 'basin', 'bed', 'bath_cabinet', 'tv', 'dining']);
+
 /** The hallway: clear from end to end in front of every room's doorway. */
 const LANE_Z = 0.95;
 const TV_IDS = new Set(['tv_43', 'tv_65']);
@@ -81,19 +84,21 @@ export class HomeLife {
     const tvs = level.props.filter((p) => p.kind === 'furniture' && TV_IDS.has(p.item ?? ''));
     for (const p of level.props) this.addSeats(p, tvs);
     // Places to stand about.
+    // Never stand about where you need to be to use something (the hob, the fridge, the sink, the loo...).
+    const keepClear = (level.stations ?? []).filter((st) => PLAYER_STATIONS.has(st.id));
     const add = (key: string, x: number, z: number, yaw: number, activity: string, use: HomeActivity) => {
-      if (!this.arena.blocked(x, z, 0.25)) this.spots.push({ key, x, z, yaw, activity, use });
+      if (this.arena.blocked(x, z, 0.25)) return;
+      if (keepClear.some((st) => Math.abs(st.x - x) < 0.75 && z < st.z + 0.75)) return;
+      this.spots.push({ key, x, z, yaw, activity, use });
     };
-    add('counter', -1.2, -0.72, Math.PI, 'lean', 'kitchen');
-    add('cooker', -3.0, -0.75, Math.PI, 'drink', 'kitchen');
-    add('fridge', 1.3, -0.8, Math.PI, 'drink', 'kitchen');
-    add('kitchen_mid', -0.4, 0.2, Math.PI * 0.75, 'drink', 'kitchen');
+    add('kitchen_mid', 0.5, 0.45, Math.PI * 0.75, 'drink', 'kitchen');
+    add('kitchen_door', -3.4, 0.5, Math.PI * 0.6, 'lean', 'kitchen');
     for (const [id, r] of Object.entries(ROOMS)) if (id !== 'bathroom') add(`window_${id}`, r.window + 0.4, -1.3, Math.PI, 'look', 'stand');
     add('living_corner', -12.2, 0.2, Math.PI * 0.6, 'arms', 'stand');
     add('gym_floor', 6.2, 0.5, 0, 'stretch', 'stretch');
     add('gym_floor2', 8.0, 0.6, 0, 'stretch', 'stretch');
     add('hall_phone', -9.6, 0.4, 0.3, 'phone', 'phone');
-    add('kitchen_phone', 0.4, 0.5, -0.3, 'phone', 'phone');
+    add('kitchen_phone', -2.4, 0.6, -0.3, 'phone', 'phone');
   }
 
   private addSeats(p: PropDef, tvs: PropDef[]): void {
@@ -121,14 +126,37 @@ export class HomeLife {
         ax = seat.x;
         az = seat.z + 0.35;
       }
-      if (this.arena.blocked(ax, az, 0.2)) {
-        ax += fwd.x * 0.25;
-        az += fwd.z * 0.25;
-        if (this.arena.blocked(ax, az, 0.2)) return; // boxed in: not usable
+      // Reachable: a clear way down from the hallway to where you stand.
+      const fromLane = (x: number, z: number) => {
+        for (let zz = z; zz < LANE_Z; zz += 0.15) if (this.arena.blocked(x, zz, 0.2)) return false;
+        return true;
+      };
+      if (this.arena.blocked(ax, az, 0.2) || !fromLane(ax, az)) {
+        // Something in front (a coffee table): step in from a little further out, or from the side.
+        const side = { x: Math.cos(yaw), z: -Math.sin(yaw) };
+        const tries: [number, number][] = [[0, 0.25], [0.45, 0], [-0.45, 0], [0.75, 0], [-0.75, 0], [1.05, 0], [-1.05, 0], [0.75, 0.25], [-0.75, 0.25]];
+        const ok = tries.map(([l, f]) => ({ x: ax + side.x * l + fwd.x * f, z: az + side.z * l + fwd.z * f })).find((c) => !this.arena.blocked(c.x, c.z, 0.2) && fromLane(c.x, c.z) && this.clearPath(c.x, c.z, seat.x, seat.z, p));
+        if (!ok) return; // boxed in: not usable
+        ax = ok.x;
+        az = ok.z;
       }
       const tv = tvs.find((t) => roomOf(t.x) === roomOf(seat.x));
       this.seats.push({ key: `${p.item}@${p.x.toFixed(2)},${p.z.toFixed(2)}#${i}`, x: seat.x, z: seat.z, yaw, ax, az, room: roomOf(seat.x), kind: p.item!, tv: tv ? tv.x : null });
     });
+  }
+
+  /** From where you stand to the seat, nothing in the way but the piece you're sitting on. */
+  private clearPath(x0: number, z0: number, x1: number, z1: number, piece: PropDef): boolean {
+    const def = FURNITURE[piece.item ?? ''];
+    const [hx, hz] = def ? ((piece.rot ?? 0) % 2 === 1 ? [def.size[1], def.size[0]] : def.size) : [0, 0];
+    const n = 8;
+    for (let i = 1; i < n; i++) {
+      const x = x0 + ((x1 - x0) * i) / n;
+      const z = z0 + ((z1 - z0) * i) / n;
+      const onPiece = Math.abs(x - piece.x) < hx + 0.3 && Math.abs(z - piece.z) < hz + 0.3;
+      if (!onPiece && this.arena.blocked(x, z, 0.12)) return false;
+    }
+    return true;
   }
 
   claim(key: string, f: Fighter): boolean {
@@ -231,12 +259,15 @@ export class HomeBrain {
   private from = { x: 0, z: 0 };
   private variantTimer = 0;
   private stuckT = 0;
+  private walkT = 0;
   private lastPos = { x: 0, z: 0 };
   private chatWith: HomeBrain | null = null;
   private laughT = 0;
   private talkingNow = false;
   /** Asked to follow you round the house (or gathering to go out). */
   following = false;
+  /** Sat down for a meal: seconds of eating left (counts down once they're seated). */
+  eatT = 0;
 
   constructor(
     readonly self: Fighter,
@@ -283,6 +314,26 @@ export class HomeBrain {
 
   get resting(): boolean {
     return this.state === 'seated';
+  }
+
+  /**
+   * Come and eat: head for a free seat, preferring the dining table and
+   * places near `near`, and eat for a while once sat down.
+   */
+  joinMeal(near: { x: number; z: number }, seconds: number): boolean {
+    if (this.following) return false;
+    const pref = (st: Seat) => (st.kind === 'dining_chair' || st.kind === 'island' ? 4 : 0) - Math.abs(st.x - near.x) * 0.4;
+    // Already sat at the table: just tuck in.
+    if (this.seat && this.state === 'seated' && (this.seat.kind === 'dining_chair' || this.seat.kind === 'island' || Math.abs(this.seat.x - near.x) < 3)) {
+      this.eatT = seconds;
+      this.timer = Math.max(this.timer, seconds + 2);
+      return true;
+    }
+    const seat = this.life.freeSeat(this.self, pref);
+    if (!seat) return false;
+    this.eatT = seconds;
+    this.goTo({ seat });
+    return true;
   }
 
   // ---- chat hooks (driven by HomeLife) ----
@@ -335,6 +386,13 @@ export class HomeBrain {
       case 'standing_up':
         return this.stepStandUp(dt);
       case 'seated':
+        if (this.eatT > 0) {
+          this.eatT = Math.max(0, this.eatT - dt);
+          this.self.activity = 'eat';
+          if (this.seat) this.self.yawOverride = this.seat.yaw;
+          this.timer = Math.max(this.timer, 3);
+          return emptyCommand();
+        }
         this.seatedPose(dt);
         if ((this.timer -= dt) <= 0 && !this.life.chatting(this)) this.chooseNext();
         return emptyCommand();
@@ -387,6 +445,11 @@ export class HomeBrain {
   /** Head off somewhere: claim it first so nobody else heads for the same place. */
   private goTo(goal: { seat?: Seat; spot?: Spot }): void {
     const key = goal.seat?.key ?? goal.spot!.key;
+    // Already there: stay put.
+    if ((this.seat && this.seat.key === key) || (this.spot && this.spot.key === key)) {
+      this.timer = 10 + this.rng() * 15;
+      return;
+    }
     if (!this.life.claim(key, this.self)) {
       this.timer = 2;
       return;
@@ -418,6 +481,7 @@ export class HomeBrain {
     this.path = this.clearLine(me.pos.x, me.pos.z, t.x, t.z) ? [t] : [{ x: me.pos.x, z: LANE_Z }, { x: t.x, z: LANE_Z }, t];
     this.state = 'walking';
     this.stuckT = 0;
+    this.walkT = 0;
   }
 
   private clearLine(x0: number, z0: number, x1: number, z1: number): boolean {
@@ -453,6 +517,18 @@ export class HomeBrain {
     cmd.moveX = dx / d;
     cmd.moveZ = dz / d;
     if (Math.abs(dx) > 0.05) me.facing = dx > 0 ? 1 : -1;
+    // Can't get there at all: give up on it and do something else.
+    this.walkT += dt;
+    if (this.walkT > 12 && this.state === 'walking') {
+      const g = this.goal;
+      if (g) this.life.release(me, g.seat?.key ?? g.spot?.key);
+      this.goal = null;
+      this.path = [];
+      this.eatT = 0;
+      this.state = 'idle';
+      this.timer = 2;
+      return cmd;
+    }
     // Not getting anywhere (someone in the way): wait a moment, then skip to the hallway and replan.
     this.stuckT += dt;
     if (this.stuckT > 1.2) {

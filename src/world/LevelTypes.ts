@@ -202,7 +202,8 @@ export type StationId =
   | 'planner' | 'bike_rack' | 'car' | 'bike' | 'furniture_counter' | 'car_counter' | 'bike_counter'
   | 'casino_slots' | 'casino_roulette' | 'casino_blackjack' | 'casino_cashier'
   | 'terminal' | 'grow_counter' | 'grow_display'
-  | 'computer' | 'train' | 'style_coach' | 'style_drill' | 'recruit' | 'gym_counter';
+  | 'computer' | 'train' | 'style_coach' | 'style_drill' | 'recruit' | 'gym_counter'
+  | 'fridge' | 'cupboard' | 'cooker' | 'sink' | 'dining' | 'tv' | 'shower' | 'toilet' | 'basin' | 'bed' | 'bath_cabinet';
 
 /** A non-hostile character standing at a station (shopkeepers, barmen). */
 export interface NpcDef {

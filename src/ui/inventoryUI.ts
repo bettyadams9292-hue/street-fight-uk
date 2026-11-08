@@ -55,7 +55,7 @@ export function groupOf(d: ItemDef): Exclude<Filter, 'all'> {
   if (d.weapon || d.category === 'weapon') return 'weapons';
   if (d.id.startsWith('bag_')) return 'equipment';
   if (d.category === 'clothing' || d.category === 'accessory' || d.wear) return 'clothing';
-  if (d.category === 'consumable' || d.use) return 'consumables';
+  if (d.category === 'consumable' || d.use || d.ingredient) return 'consumables';
   if (MATERIALS.has(d.id)) return 'materials';
   if (d.category === 'valuable' || d.category === 'collectible') return 'valuables';
   return 'other';

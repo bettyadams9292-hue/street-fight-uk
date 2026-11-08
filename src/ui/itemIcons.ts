@@ -339,6 +339,48 @@ const DRAW: Record<string, Painter> = {
     if (id === 'pasty') { g.beginPath(); for (let x = 26; x <= 102; x += 8) g.lineTo(x, 46 + ((x / 8) % 2) * 6); g.stroke(); }
     else { for (let x = 40; x < 92; x += 12) { g.beginPath(); g.moveTo(x, 54); g.lineTo(x + 6, 90); g.stroke(); } }
   },
+  plate: (g, col) => {
+    // A plate of home cooking, seen from above at an angle.
+    g.fillStyle = '#f4f2ec'; g.beginPath(); g.ellipse(64, 72, 54, 38, 0, 0, Math.PI * 2); g.fill();
+    g.shadowColor = 'transparent';
+    g.strokeStyle = '#d8d4cc'; g.lineWidth = 3; g.beginPath(); g.ellipse(64, 72, 42, 28, 0, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = gloss(g, col, 50, 92); g.beginPath(); g.ellipse(60, 70, 30, 18, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = shade(col, 0.35); for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(46 + i * 7, 64 + (i % 2) * 8, 4, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#c8c8c8'; rr(g, 98, 50, 6, 44, 3); g.fill();
+  },
+  grocery: (g, col, d) => {
+    const id = d.id;
+    if (id === 'g_eggs') {
+      g.fillStyle = '#a89070'; rr(g, 18, 60, 92, 40, 6); g.fill();
+      g.shadowColor = 'transparent'; g.fillStyle = '#f4ecd8';
+      for (let i = 0; i < 3; i++) { g.beginPath(); g.ellipse(36 + i * 28, 58, 11, 14, 0, 0, Math.PI * 2); g.fill(); }
+      return;
+    }
+    if (id === 's_fruit' || id === 'g_tomatoes' || id === 'g_onions' || id === 'g_potatoes' || id === 'g_mushrooms') {
+      g.fillStyle = gloss(g, col, 30, 110); g.beginPath(); g.arc(64, 70, 38, 0, Math.PI * 2); g.fill();
+      g.shadowColor = 'transparent'; g.fillStyle = 'rgba(255,255,255,0.35)'; g.beginPath(); g.ellipse(50, 54, 10, 6, -0.6, 0, Math.PI * 2); g.fill();
+      if (id === 's_fruit' || id === 'g_tomatoes') { g.fillStyle = '#4a7a2a'; g.fillRect(62, 26, 4, 10); }
+      return;
+    }
+    if (id === 'g_milk') {
+      g.fillStyle = '#f8f8f4'; rr(g, 40, 28, 48, 88, 10); g.fill();
+      g.shadowColor = 'transparent'; g.fillStyle = '#2a8a3a'; rr(g, 52, 14, 24, 16, 4); g.fill(); g.fillStyle = '#4aa8ff'; g.fillRect(40, 66, 48, 16);
+      return;
+    }
+    const tin = ['g_beans', 'g_sauce', 'g_curry_sauce'].includes(id);
+    if (tin) {
+      g.fillStyle = gloss(g, col, 30, 110); rr(g, 34, 30, 60, 80, 8); g.fill();
+      g.shadowColor = 'transparent'; g.fillStyle = metalGrad(g, '#c9ccd2', 34, 0, 94, 0); g.fillRect(36, 26, 56, 8);
+      g.fillStyle = '#f4f0e6'; g.fillRect(34, 56, 60, 22);
+    } else {
+      // A packet or a box with a label.
+      g.fillStyle = gloss(g, col, 26, 112); rr(g, 22, 26, 84, 86, 8); g.fill();
+      g.shadowColor = 'transparent'; g.fillStyle = 'rgba(255,255,255,0.85)'; rr(g, 30, 54, 68, 28, 4); g.fill();
+    }
+    g.fillStyle = '#1a1a1a'; g.font = 'bold 13px Arial'; g.textAlign = 'center';
+    const word = d.name.split(' ').slice(-1)[0].toUpperCase().slice(0, 9);
+    g.fillText(word, 64, tin ? 72 : 73);
+  },
   drink: (g, col, d) => {
     if (d.id === 'flask_tea') {
       g.fillStyle = metalGrad(g, '#5a7a9a', 40, 0, 88, 0); rr(g, 40, 20, 48, 96, 10); g.fill();

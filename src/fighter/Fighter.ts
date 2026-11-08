@@ -476,7 +476,8 @@ export class Fighter {
       this.pos.z += this.vel.z * dt;
     }
 
-    if (!this.grounded || this.vel.y > 0) {
+    // Anchored (sat, lying down, stood in the bath): held where they've been put.
+    if (!this.anchored && (!this.grounded || this.vel.y > 0)) {
       this.vel.y += GRAVITY * dt;
       this.pos.y += this.vel.y * dt;
       if (this.pos.y <= 0) {

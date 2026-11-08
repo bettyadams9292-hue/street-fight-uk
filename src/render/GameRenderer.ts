@@ -8,6 +8,7 @@ import { ArenaView } from './ArenaView';
 import { CameraRig } from './CameraRig';
 import { FighterView } from './FighterView';
 import { HitFX } from './HitFX';
+import { HouseFX } from './HouseFX';
 import { FRAMING, StudioView, type StudioFraming } from './StudioView';
 import type { CharacterAppearance } from '../character/Appearance';
 import type { World } from '../world/World';
@@ -21,6 +22,8 @@ export class GameRenderer {
   readonly scene = new THREE.Scene();
   readonly cameraRig: CameraRig;
   readonly fx = new HitFX();
+  /** The house's activity effects (fridge door, steam, shower water). */
+  readonly house = new HouseFX();
   readonly hitboxes = new HitboxView();
   private arenaView: ArenaView | null = null;
   private levelView: LevelView | null = null;
@@ -50,7 +53,7 @@ export class GameRenderer {
 
     this.scene.background = new THREE.Color(BG);
     this.scene.fog = new THREE.FogExp2(BG, 0.028);
-    this.scene.add(this.fx.points, this.hitboxes.group);
+    this.scene.add(this.fx.points, this.hitboxes.group, this.house.group);
 
     this.cameraRig = new CameraRig(1);
     this.resize();
@@ -145,6 +148,7 @@ export class GameRenderer {
   }
 
   detach(): void {
+    this.house.clear();
     if (this.studio) {
       this.scene.remove(this.studio.view.group);
       this.studio.view.dispose();
@@ -269,6 +273,7 @@ export class GameRenderer {
       }
     }
     this.fx.update(dt);
+    this.house.update(dt);
     this.renderer.render(this.scene, this.cameraRig.camera);
     this.adaptResolution(dt);
   }

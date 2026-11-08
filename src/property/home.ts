@@ -66,7 +66,7 @@ const FIXED_STATIONS: StationDef[] = [
   { id: 'contacts', x: -6.4, z: -0.75, label: 'Phone: contacts' },
   { id: 'computer', x: -5.0, z: -1.25, label: 'Computer: shop for furniture, arrange the house, decorate' },
   { id: 'tin', x: -13.9, z: -0.9, label: 'Biscuit tin: your savings' },
-  { id: 'kitchen', x: -1.2, z: -0.85, label: 'Kitchen: eat and recover' },
+  { id: 'kitchen', x: -1.2, z: -0.85, label: 'WORKTOP|Prepare food' },
   { id: 'gym', x: 2.45, z: -1.2, label: 'Coach’s board: training plan, moves and styles' },
   { id: 'garage', x: 20.6, z: -0.75, label: 'Workbench: repair, craft and upgrade weapons' },
   { id: 'storage', x: 18.75, z: -0.9, label: 'Stash: your storage chest' },
@@ -75,8 +75,60 @@ const FIXED_STATIONS: StationDef[] = [
 
 export const HOME_CONTAINERS: ContainerDef[] = [
   { id: 'bedside', kind: 'drawers', x: -17.55, z: -1.6, label: 'Search the bedside drawers', fixed: [{ id: 'coin_silver', qty: 2 }, { id: 'plasters', qty: 2 }] },
-  { id: 'cupboards', kind: 'cupboard', x: 0.6, z: -0.9, label: 'Search the kitchen cupboards', loot: 'cupboard' },
 ];
+
+/**
+ * The rest of the house that does something (Stage 12): the kitchen, the
+ * bathroom. Where you stand to use each (`stand`), and which way you face.
+ * Labels are "THING|What it does" (the prompt shows "THING  [E]  What it does").
+ */
+export interface HouseSpot {
+  id: StationDef['id'];
+  x: number;
+  z: number;
+  label: string;
+  stand: { x: number; z: number; yaw: number };
+}
+export const HOUSE_SPOTS: HouseSpot[] = [
+  { id: 'cooker', x: -3.2, z: -0.85, label: 'COOKER|Cook food', stand: { x: -3.2, z: -0.74, yaw: Math.PI } },
+  { id: 'cupboard', x: -2.05, z: -0.85, label: 'CUPBOARDS|Open cupboards', stand: { x: -2.05, z: -0.74, yaw: Math.PI } },
+  { id: 'sink', x: -0.45, z: -0.85, label: 'SINK|Wash hands', stand: { x: -0.45, z: -0.74, yaw: Math.PI } },
+  { id: 'fridge', x: 1.3, z: -0.85, label: 'FRIDGE|Open fridge', stand: { x: 1.3, z: -0.7, yaw: Math.PI } },
+  { id: 'shower', x: -24.9, z: -0.95, label: 'SHOWER|Take shower', stand: { x: -24.9, z: -1.08, yaw: Math.PI } },
+  { id: 'toilet', x: -23.2, z: -1.0, label: 'TOILET|Use toilet', stand: { x: -23.2, z: -1.3, yaw: 0 } },
+  { id: 'basin', x: -22.1, z: -1.05, label: 'BATHROOM SINK|Wash and brush teeth', stand: { x: -22.1, z: -1.48, yaw: Math.PI } },
+];
+export const WORKTOP_STAND = { x: -1.25, z: -0.74, yaw: Math.PI };
+export const HOUSE_SPOT_BY_ID: Partial<Record<StationDef['id'], HouseSpot>> = Object.fromEntries(HOUSE_SPOTS.map((h) => [h.id, h]));
+
+/** In a piece's own space (x across, z towards the front) to the world. */
+export function pieceLocal(at: { x: number; z: number; rot: number }, lx: number, lz: number): { x: number; z: number; yaw: number } {
+  const t = -at.rot * (Math.PI / 2);
+  return { x: at.x + lx * Math.cos(t) + lz * Math.sin(t), z: at.z - lx * Math.sin(t) + lz * Math.cos(t), yaw: t };
+}
+
+/** Stations that come with furniture you've placed: the bed, the dining table, the telly, the bathroom cabinet. */
+export function furnitureStations(prop: PropertySave): StationDef[] {
+  const out: StationDef[] = [];
+  const seen = new Set<string>();
+  for (const f of prop.furniture) {
+    const def = FURNITURE[f.id];
+    if (!def || !f.at) continue;
+    const front = (extra: number) => pieceLocal(f.at!, 0, (f.at!.rot % 2 === 1 ? def.size[0] : def.size[1]) + extra);
+    const add = (id: StationDef['id'], label: string, extra = 0.3) => {
+      if (seen.has(id)) return;
+      const p = def.mount === 'wall' ? { x: f.at!.x, z: -1.1 } : front(extra);
+      // Keep it on the floor in front of the walkway.
+      out.push({ id, x: p.x, z: Math.min(0.5, p.z), label });
+      seen.add(id);
+    };
+    if (f.id === 'bed_double' || f.id === 'bed_single') add('bed', 'BED|Sleep or rest', 0.25);
+    else if (f.id === 'dining_table' || f.id === 'island') add('dining', `${def.name.toUpperCase()}|Sit and eat`, 0.3);
+    else if (f.id === 'tv_43' || f.id === 'tv_65') add('tv', 'TV|Watch telly', 0.5);
+    else if (f.id === 'bath_cabinet') add('bath_cabinet', 'CABINET|Freshen up');
+  }
+  return out;
+}
 
 /** Bike bays in the garage: pointing into the room, side by side. */
 export const GARAGE_SLOTS = [12.85, 13.75, 14.65].slice(0, GARAGE_SPACES).map((x) => ({ x, z: -0.85 }));
@@ -220,7 +272,7 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave
     facades,
     walls: HOME_WALLS.map((w) => ({ ...w })),
     props,
-    stations: [...FIXED_STATIONS, seatStation(prop), ...gymStations(gym)],
+    stations: [...FIXED_STATIONS, ...HOUSE_SPOTS.map(({ id, x, z, label }) => ({ id, x, z, label })), ...furnitureStations(prop), seatStation(prop), ...gymStations(gym)],
     containers: HOME_CONTAINERS.map((c) => ({ ...c })),
   };
 }

@@ -2,7 +2,9 @@ import { ARCHETYPES, type ArchetypeId } from '../ai/archetypes';
 import { TRAINING_MODE_LABELS, type TrainingOpponent } from '../core/TrainingMode';
 import type { Fighter } from '../fighter/Fighter';
 import { h } from './dom';
-import { icon } from './icons';
+import { icon, type IconName } from './icons';
+
+const NEED_ICONS: Record<string, IconName> = { hunger: 'food', energy: 'sleep', hygiene: 'shower', oral: 'tooth', bladder: 'toilet', nutrition: 'food' };
 
 interface BarSet {
   root: HTMLElement;
@@ -83,6 +85,13 @@ export class Hud {
   private route: HTMLElement;
   private routeText: HTMLElement;
   private vs: HTMLElement;
+  private needsChips: HTMLElement;
+  private needsKey = '';
+  private activity: HTMLElement;
+  private activityTitle: HTMLElement;
+  private activityLabel: HTMLElement;
+  private activityFill: HTMLElement;
+  private sleepShade: HTMLElement;
 
   constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
@@ -124,11 +133,19 @@ export class Hud {
     this.weaponBar = h('span');
     this.weaponChip = h('div', { class: 'status-chip weapon off' }, h('span', { class: 'wname' }), h('span', { class: 'bar' }, this.weaponBar));
     this.heatChip = h('div', { class: 'status-chip heat off' });
+    this.needsChips = h('div', { class: 'needs-chips' });
+    this.activityTitle = h('b');
+    this.activityLabel = h('span');
+    this.activityFill = h('div', { class: 'act-fill' });
+    this.activity = h('div', { class: 'house-activity off' }, this.activityTitle, this.activityLabel, h('div', { class: 'act-bar' }, this.activityFill), h('small', { text: 'Esc or move to stop' }));
+    this.sleepShade = h('div', { class: 'sleep-shade' });
     this.el = h(
       'div',
       { class: 'hud' },
       this.story,
-      h('div', { class: 'status-strip' }, this.bagChip, this.weaponChip, this.heatChip),
+      this.sleepShade,
+      h('div', { class: 'status-strip' }, this.bagChip, this.weaponChip, this.heatChip, this.needsChips),
+      this.activity,
       this.banner,
       this.bossBar,
       this.toasts,
@@ -242,6 +259,24 @@ export class Hud {
     }
   }
 
+  /** What you're doing in the house: a title, the current step and a progress bar. Null hides it. */
+  setActivity(a: { title: string; label: string; frac: number; sleeping: boolean } | null): void {
+    this.activity.classList.toggle('off', !a);
+    this.sleepShade.classList.toggle('on', !!a?.sleeping);
+    if (!a) return;
+    if (this.activityTitle.textContent !== a.title) this.activityTitle.textContent = a.title;
+    if (this.activityLabel.textContent !== a.label) this.activityLabel.textContent = a.label;
+    this.activityFill.style.width = `${Math.round(a.frac * 100)}%`;
+  }
+
+  /** Needs that want attention (only those): small chips by the status strip. */
+  setNeeds(list: { key: string; text: string; urgency: number }[]): void {
+    const key = list.map((n) => `${n.key}:${n.text}:${n.urgency}`).join('|');
+    if (key === this.needsKey) return;
+    this.needsKey = key;
+    this.needsChips.replaceChildren(...list.map((n) => h('div', { class: `status-chip need u${n.urgency}`, title: 'Needs (H for details)' }, icon(NEED_ICONS[n.key] ?? 'info'), h('span', { text: n.text }))));
+  }
+
   /** District name card when you arrive somewhere. */
   showBanner(district: string, place: string): void {
     this.banner.replaceChildren(h('div', { class: 'district', text: district.toUpperCase() }), h('div', { class: 'place', text: place }));
@@ -315,7 +350,8 @@ export class Hud {
         this.bubbles.splice(i, 1);
         continue;
       }
-      const pt = project(b.f.pos.x, b.f.pos.y + (b.f.activity?.startsWith('sit') ? 1.55 : 2.05), b.f.pos.z);
+      const act = b.f.activity ?? '';
+      const pt = project(b.f.pos.x, b.f.pos.y + (act === 'lie' ? 1.0 : act.startsWith('sit') || act === 'eat' ? 1.55 : 2.05), b.f.pos.z);
       if (!pt) {
         b.el.style.display = 'none';
         continue;

@@ -8,7 +8,8 @@ export type IconName =
   | 'home' | 'mission' | 'boss' | 'side' | 'shop' | 'clothes' | 'pawn' | 'gym' | 'pub' | 'casino' | 'cars' | 'bikes'
   | 'property' | 'contact' | 'street' | 'parked' | 'lock' | 'map' | 'bag' | 'close' | 'play' | 'save' | 'settings'
   | 'controls' | 'quit' | 'phone' | 'pin' | 'you' | 'plus' | 'minus' | 'target' | 'route' | 'cab' | 'walk' | 'weapon'
-  | 'consumable' | 'material' | 'valuable' | 'misc' | 'equipment' | 'all' | 'check' | 'coin' | 'back' | 'info';
+  | 'consumable' | 'material' | 'valuable' | 'misc' | 'equipment' | 'all' | 'check' | 'coin' | 'back' | 'info'
+  | 'food' | 'sleep' | 'shower' | 'tooth' | 'toilet';
 
 const P: Record<IconName, string> = {
   home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/>',
@@ -56,6 +57,11 @@ const P: Record<IconName, string> = {
   coin: '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 8.5a3 3 0 0 0-5 2V16h6M8.5 13h4"/>',
   back: '<path d="M15 5l-7 7 7 7"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  food: '<path d="M7 3v8a2 2 0 0 0 2 2v8"/><path d="M5 3v6M9 3v6"/><path d="M17 21V3c-2.5 1-4 4-4 8h4"/>',
+  sleep: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
+  shower: '<path d="M4 20V8a4 4 0 0 1 8 0"/><path d="M8 12h8"/><path d="M10 15v1M14 15v1M12 18v1M9 19v1M15 19v1"/>',
+  tooth: '<path d="M7 3c-2.5 0-4 2-3.5 5 .5 3 1.5 4 2 7s1 6 2.5 6 1.5-4 4-4 2.5 4 4 4 2-3 2.5-6 1.5-4 2-7S19.5 3 17 3c-2 0-3 1-5 1S9 3 7 3z"/>',
+  toilet: '<path d="M6 3h5v7H6z"/><path d="M4 10h14a0 0 0 0 1 0 0 6 6 0 0 1-6 6H9l1 5H6l1-5a5 5 0 0 1-3-6z"/>',
 };
 
 /** SVG markup for an icon (stroke uses currentColor). */

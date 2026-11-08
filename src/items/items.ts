@@ -52,6 +52,8 @@ export interface WearSpec {
 }
 
 export interface UseSpec {
+  /** What it does for hunger, energy, diet and bladder (see home/needs.ts). */
+  needs?: { fill: number; diet: number; energy?: number; bladder?: number };
   heal?: number;
   stamina?: number;
   /** Fraction of max health. */
@@ -64,7 +66,7 @@ export type IconKind =
   | 'weapon' | 'top' | 'bottoms' | 'shoes' | 'cap' | 'beanie' | 'sunglasses' | 'snood' | 'chain' | 'watch' | 'smartwatch' | 'ring'
   | 'earring' | 'bracelet' | 'belt' | 'wraps' | 'gumshield' | 'headguard' | 'food' | 'drink' | 'medkit' | 'phone' | 'tablet'
   | 'headphones' | 'console' | 'handheld' | 'camera' | 'coin' | 'cash' | 'wallet_hw' | 'handbag' | 'trainers' | 'shirt_signed'
-  | 'programme' | 'antique' | 'vinyl' | 'key' | 'document' | 'scrap' | 'bag' | 'card' | 'football';
+  | 'programme' | 'antique' | 'vinyl' | 'key' | 'document' | 'scrap' | 'bag' | 'card' | 'football' | 'grocery' | 'plate';
 
 export interface ItemDef {
   id: string;
@@ -87,6 +89,10 @@ export interface ItemDef {
   questFlag?: string;
   /** Pawn shop won't take it (worthless, or a quest item). */
   unsellable?: boolean;
+  /** Food that keeps in the kitchen: which of the fridge or the cupboards it lives in. */
+  store?: 'fridge' | 'cupboard';
+  /** A cooking ingredient (not eaten on its own). */
+  ingredient?: boolean;
 }
 
 const defs: ItemDef[] = [];
@@ -176,23 +182,81 @@ acc('ring_signet', 'Signet ring', 'finger', 'ring', 90, 'ring', '#d4af37', 'Heav
 acc('belt_leather', 'Leather belt', 'waist', 'belt', 20, 'belt', '#3a2414', 'Brown leather, brass buckle.');
 
 // ---- consumables -------------------------------------------------------------------------
-const food = (id: string, name: string, heal: number, value: number, text: string, colour: string, stamina = 0) =>
-  add({ id, name, text, category: 'consumable', rarity: 'common', value, stack: 5, icon: 'food', colour, use: { heal, stamina, text: `+${heal} health${stamina ? `, +${stamina} stamina` : ''}` } });
-const drink = (id: string, name: string, stamina: number, value: number, text: string, colour: string, heal = 0) =>
-  add({ id, name, text, category: 'consumable', rarity: 'common', value, stack: 5, icon: 'drink', colour, use: { stamina, heal, text: `+${stamina} stamina${heal ? `, +${heal} health` : ''}` } });
-food('chips', 'Chips', 25, 3, 'Salt and vinegar, wrapped in paper.', '#e8c060');
-food('kebab', 'Kebab', 40, 7, 'Doner with everything.', '#c88a4a');
-food('pasty', 'Pasty', 30, 3, 'Steak and potato, still warm.', '#d8a050');
-food('sausage_roll', 'Sausage roll', 30, 2, 'Flaky pastry, greasy bag.', '#d8a860');
-food('meal_deal', 'Meal deal', 35, 4, 'Sandwich, crisps and a drink.', '#4a9a5a', 10);
-food('bacon_butty', 'Bacon butty', 35, 3, 'Brown sauce, obviously.', '#c86040');
-food('curry', 'Curry', 45, 9, 'Chicken tikka and rice from the takeaway.', '#d88a2a');
-food('fry_up', 'Full English', 60, 10, 'Everything on one plate.', '#e8a040', 20);
-food('protein_bar', 'Protein bar', 15, 2, 'Chewy. Tastes of chalk.', '#5a3a2a', 15);
-drink('energy_drink', 'Energy drink', 60, 2, 'Can of something fizzy and bright.', '#3ad84a');
-drink('can_of_pop', 'Can of pop', 30, 1, 'Fizzy and cold.', '#d82a2a', 5);
-drink('water', 'Bottle of water', 40, 1, 'Fresh and cold.', '#8ac8ff');
-drink('flask_tea', 'Flask of tea', 35, 3, 'Strong, two sugars.', '#8a5a3a', 15);
+const needsText = (n: UseSpec['needs']) => (n ? `, fills ${n.fill}% hunger` : '');
+const food = (id: string, name: string, heal: number, value: number, text: string, colour: string, stamina = 0, needs?: UseSpec['needs']) => {
+  const n = needs ?? { fill: Math.round(heal * 0.9), diet: 30 };
+  add({ id, name, text, category: 'consumable', rarity: 'common', value, stack: 5, icon: 'food', colour, use: { heal, stamina, needs: n, text: `+${heal} health${stamina ? `, +${stamina} stamina` : ''}${needsText(n)}` } });
+};
+const drink = (id: string, name: string, stamina: number, value: number, text: string, colour: string, heal = 0, needs?: UseSpec['needs']) => {
+  const n = needs ?? { fill: 3, diet: 40, bladder: 15 };
+  add({ id, name, text, category: 'consumable', rarity: 'common', value, stack: 5, icon: 'drink', colour, store: 'fridge', use: { stamina, heal, needs: n, text: `+${stamina} stamina${heal ? `, +${heal} health` : ''}` } });
+};
+food('chips', 'Chips', 25, 3, 'Salt and vinegar, wrapped in paper.', '#e8c060', 0, { fill: 25, diet: 20 });
+food('kebab', 'Kebab', 40, 7, 'Doner with everything.', '#c88a4a', 0, { fill: 45, diet: 25 });
+food('pasty', 'Pasty', 30, 3, 'Steak and potato, still warm.', '#d8a050', 0, { fill: 35, diet: 30 });
+food('sausage_roll', 'Sausage roll', 30, 2, 'Flaky pastry, greasy bag.', '#d8a860', 0, { fill: 25, diet: 25 });
+food('meal_deal', 'Meal deal', 35, 4, 'Sandwich, crisps and a drink.', '#4a9a5a', 10, { fill: 35, diet: 45, bladder: 8 });
+food('bacon_butty', 'Bacon butty', 35, 3, 'Brown sauce, obviously.', '#c86040', 0, { fill: 30, diet: 35 });
+food('curry', 'Curry', 45, 9, 'Chicken tikka and rice from the takeaway.', '#d88a2a', 0, { fill: 50, diet: 45 });
+food('fry_up', 'Full English', 60, 10, 'Everything on one plate.', '#e8a040', 20, { fill: 60, diet: 45, energy: 10 });
+food('protein_bar', 'Protein bar', 15, 2, 'Chewy. Tastes of chalk.', '#5a3a2a', 15, { fill: 12, diet: 60, energy: 5 });
+drink('energy_drink', 'Energy drink', 60, 2, 'Can of something fizzy and bright.', '#3ad84a', 0, { fill: 0, diet: 10, energy: 15, bladder: 18 });
+drink('can_of_pop', 'Can of pop', 30, 1, 'Fizzy and cold.', '#d82a2a', 5, { fill: 2, diet: 10, bladder: 15 });
+drink('water', 'Bottle of water', 40, 1, 'Fresh and cold.', '#8ac8ff', 0, { fill: 0, diet: 70, bladder: 15 });
+drink('flask_tea', 'Flask of tea', 35, 3, 'Strong, two sugars.', '#8a5a3a', 15, { fill: 2, diet: 40, energy: 6, bladder: 15 });
+
+// ---- the kitchen: groceries, snacks and home-cooked meals (Stage 12) ----------------------------
+/** A cooking ingredient: kept in the fridge or the cupboards, used by recipes (home/recipes.ts). */
+const grocery = (id: string, name: string, store: 'fridge' | 'cupboard', value: number, colour: string, text: string) =>
+  add({ id, name, text, category: 'misc', rarity: 'common', value, stack: 10, icon: 'grocery', colour, store, ingredient: true, unsellable: true });
+grocery('g_bread', 'Loaf of bread', 'cupboard', 1, '#d8a860', 'Thick sliced white. A few slices per meal.');
+grocery('g_butter', 'Butter', 'fridge', 2, '#f4dc70', 'Proper butter, not spread.');
+grocery('g_cheese', 'Cheddar', 'fridge', 3, '#f0c040', 'Mature. Grates, slices, melts.');
+grocery('g_ham', 'Sliced ham', 'fridge', 2, '#e89a9a', 'Pack of thick-cut ham.');
+grocery('g_eggs', 'Eggs', 'fridge', 2, '#f4ecd8', 'Free range, half a dozen.');
+grocery('g_milk', 'Milk', 'fridge', 1, '#f8f8f4', 'Semi-skimmed, two pints.');
+grocery('g_cereal', 'Cereal', 'cupboard', 2, '#d84a2a', 'Big box of cornflakes.');
+grocery('g_beans', 'Baked beans', 'cupboard', 1, '#3a7ad8', 'Tin of beans in tomato sauce.');
+grocery('g_bacon', 'Bacon', 'fridge', 3, '#d86a5a', 'Back bacon, smoked.');
+grocery('g_sausages', 'Sausages', 'fridge', 3, '#c87a5a', 'Pork bangers from the butcher.');
+grocery('g_potatoes', 'Potatoes', 'cupboard', 1, '#b8945a', 'Bag of Maris Pipers.');
+grocery('g_chicken', 'Chicken breasts', 'fridge', 4, '#f0d0b8', 'Two chicken breasts.');
+grocery('g_steak', 'Sirloin steak', 'fridge', 7, '#a8303a', 'A proper bit of steak.');
+grocery('g_pasta', 'Pasta', 'cupboard', 1, '#e8d080', 'Bag of penne.');
+grocery('g_sauce', 'Pasta sauce', 'cupboard', 2, '#c83a2a', 'Jar of tomato and basil.');
+grocery('g_mince', 'Beef mince', 'fridge', 4, '#a8484a', 'Lean steak mince.');
+grocery('g_buns', 'Burger buns', 'cupboard', 1, '#d89a50', 'Sesame seed buns.');
+grocery('g_curry_sauce', 'Curry sauce', 'cupboard', 2, '#d88a2a', 'Jar of tikka masala.');
+grocery('g_rice', 'Rice', 'cupboard', 1, '#f4f0e6', 'Basmati.');
+grocery('g_onions', 'Onions', 'cupboard', 1, '#c8a060', 'A net of onions.');
+grocery('g_mushrooms', 'Mushrooms', 'fridge', 1, '#c8b8a0', 'Punnet of chestnut mushrooms.');
+grocery('g_tomatoes', 'Tomatoes', 'fridge', 1, '#e04030', 'Vine tomatoes.');
+grocery('g_peas', 'Frozen peas', 'fridge', 1, '#5ab040', 'From the freezer drawer.');
+grocery('g_oven_chips', 'Oven chips', 'fridge', 2, '#e8c060', 'Freezer bag of crinkle cuts.');
+
+/** Snacks: straight from the cupboard. */
+const snack = (id: string, name: string, value: number, colour: string, text: string, needs: NonNullable<UseSpec['needs']>, stamina = 0) =>
+  add({ id, name, text, category: 'consumable', rarity: 'common', value, stack: 10, icon: 'grocery', colour, store: 'cupboard', use: { stamina, needs, text: `Fills ${needs.fill}% hunger${stamina ? `, +${stamina} stamina` : ''}` } });
+snack('s_crisps', 'Crisps', 1, '#3a6ad8', 'Ready salted. Gone in a minute.', { fill: 10, diet: 15 });
+snack('s_chocolate', 'Chocolate bar', 1, '#6a3a20', 'A quick sugar hit.', { fill: 10, diet: 10, energy: 8 }, 10);
+snack('s_fruit', 'Apple', 1, '#5ab040', 'Crisp and green. Good for you.', { fill: 10, diet: 85 });
+snack('s_biscuits', 'Biscuits', 1, '#c88a40', 'Chocolate digestives. One more won\u2019t hurt.', { fill: 12, diet: 15 });
+
+/** Home-cooked meals (what the recipes make). Leftovers keep in the fridge. */
+const meal = (id: string, name: string, colour: string, text: string, heal: number, needs: NonNullable<UseSpec['needs']>, stamina = 0) =>
+  add({ id, name, text, category: 'consumable', rarity: 'common', value: 0, stack: 4, icon: 'plate', colour, store: 'fridge', unsellable: true, use: { heal, stamina, needs, text: `+${heal} health, fills ${needs.fill}% hunger` } });
+meal('m_sandwich', 'Ham and cheese sandwich', '#e8c070', 'Made it yourself. Cut into triangles.', 20, { fill: 35, diet: 50 });
+meal('m_toast', 'Buttered toast', '#d89a50', 'Two slices, plenty of butter.', 12, { fill: 20, diet: 35 });
+meal('m_cereal', 'Bowl of cereal', '#e8a040', 'Cornflakes and cold milk.', 12, { fill: 25, diet: 55 });
+meal('m_beans_toast', 'Beans on toast', '#e05a2a', 'A British classic.', 25, { fill: 40, diet: 60 });
+meal('m_scrambled', 'Scrambled eggs on toast', '#f4d050', 'Soft and buttery.', 25, { fill: 40, diet: 65, energy: 4 });
+meal('m_full_english', 'Home-cooked full English', '#e8a040', 'Bacon, sausage, egg, beans, mushrooms, tomato, toast. Keeps you going all trip.', 60, { fill: 75, diet: 50, energy: 15 }, 20);
+meal('m_sausage_mash', 'Sausage and mash', '#c87a5a', 'Bangers, buttery mash, peas.', 45, { fill: 65, diet: 60, energy: 8 });
+meal('m_chicken_chips', 'Chicken and chips', '#e8c060', 'Oven-baked chicken breast and crinkle chips.', 45, { fill: 65, diet: 55, energy: 8 });
+meal('m_steak', 'Steak and potatoes', '#a8303a', 'Sirloin, roast potatoes, mushrooms.', 55, { fill: 70, diet: 72, energy: 12 }, 10);
+meal('m_pasta', 'Pasta bake', '#c83a2a', 'Penne in tomato sauce under melted cheddar.', 40, { fill: 60, diet: 65, energy: 6 });
+meal('m_burger', 'Homemade cheeseburger', '#a8484a', 'Smash burger, onions, cheese.', 45, { fill: 60, diet: 42, energy: 6 });
+meal('m_curry', 'Chicken curry and rice', '#d88a2a', 'Tikka masala with basmati.', 50, { fill: 70, diet: 70, energy: 10 });
 add({ id: 'plasters', name: 'Plasters', text: 'A box of plasters.', category: 'consumable', rarity: 'common', value: 2, stack: 5, icon: 'medkit', colour: '#e8c8a0', use: { heal: 20, text: '+20 health' } });
 add({ id: 'first_aid', name: 'First aid kit', text: 'Bandages, wipes, the lot.', category: 'consumable', rarity: 'uncommon', value: 15, stack: 3, icon: 'medkit', colour: '#d81e1e', use: { healPct: 0.6, text: 'Restores 60% of your health' } });
 

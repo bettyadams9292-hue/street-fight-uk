@@ -9,6 +9,9 @@ import { InputManager, type InputSource, type MenuAction } from './input/InputMa
 import { GameRenderer } from './render/GameRenderer';
 import { SettingsStore, type Settings } from './save/Settings';
 import { Hud } from './ui/Hud';
+import { HouseController } from './home/house';
+import { attention } from './home/needs';
+import type { Screen } from './ui/UIManager';
 import { TouchControls } from './ui/TouchControls';
 import { UIManager } from './ui/UIManager';
 import { controlsScreen, mainMenu, pauseMenu, settingsScreen } from './ui/screens';
@@ -37,7 +40,7 @@ import type { Simulation as Sim } from './core/Simulation';
 import { mapScreen } from './ui/mapUI';
 import { profileScreen } from './ui/profileUI';
 import { nextExit } from './map/worldMap';
-import { barScreen, contactsScreen, kitchenScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
+import { barScreen, contactsScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
 import { resolveLevel } from './property/levels';
@@ -109,6 +112,8 @@ export class Game {
   private pending: { at: number; show: () => void } | null = null;
   /** Hub panel changed the save: rebuild the player when it closes. */
   private hubDirty = false;
+  /** The house's activities: cooking, eating, washing, sleeping. */
+  private house!: HouseController;
   private state: GameState = 'menu';
   private unsubscribe: (() => void)[] = [];
   private accumulator = 0;
@@ -121,6 +126,21 @@ export class Game {
     this.renderer = new GameRenderer(gameRoot, s.quality);
     this.renderer.onFootstep = () => this.audio.step();
     this.ui = new UIManager(uiRoot);
+    this.house = new HouseController({
+      world: () => this.world,
+      progress: () => this.progress,
+      fx: (key, spec) => this.renderer.house.set(key, spec),
+      sound: (kind) => this.audio.house(kind),
+      loop: (id, on) => this.audio.loop(id, on),
+      toast: (text, kind) => this.hud.toast(text, kind ?? 'info'),
+      say: (text) => this.world && this.hud.speech(this.world.player, '', text),
+      panel: (make, closed) => this.housePanel(make, closed),
+      refresh: () => {
+        if (this.world && this.progress) this.progress.applyModifiers(this.world.player, this.world.difficulty);
+      },
+      save: () => this.saveGame(),
+      restAtHome: () => this.restAtHome(),
+    });
     this.ui.onNavigate = () => this.audio.uiMove();
     this.ui.onConfirm = () => this.audio.uiConfirm();
 
@@ -491,6 +511,8 @@ export class Game {
   /** Build an area and drop the player in. Saves where you are so a closed tab resumes here. */
   private enterArea(area: AreaId, entry: string, opts: { carry?: { health: number; stamina: number } | null; at?: { x: number; z: number } } = {}): void {
     const p = this.progress!;
+    this.house.abort();
+    this.audio.stopLoops();
     const leaving = this.world ? { area: this.world.level.id, x: this.world.player.pos.x, z: this.world.player.pos.z } : null;
     // Your companion's health and weapon go with them; anything you took in a fight left half-done still counts.
     this.world?.settleInjuries();
@@ -565,6 +587,9 @@ export class Game {
   }
 
   private leaveWorld(): void {
+    this.house.abort();
+    this.audio.stopLoops();
+    this.hud.setActivity(null);
     this.hud.clearBubbles();
     for (const off of this.worldUnsub) off();
     this.worldUnsub = [];
@@ -617,6 +642,22 @@ export class Game {
       },
       dt,
     );
+    this.hud.setActivity(this.house.status);
+    this.hud.setNeeds(attention(s.needs).map((a) => ({ key: a.key, text: a.label.label, urgency: a.label.urgency })));
+  }
+
+  /** A house panel (fridge, recipe book, bed...): the world waits while it's open. */
+  private housePanel(make: (close: () => void) => Screen, closed?: () => void): void {
+    this.state = 'paused';
+    this.touch.release();
+    this.input.flush();
+    this.updateTouchVisibility();
+    const close = () => {
+      this.ui.replaceAll(null);
+      this.resume();
+      closed?.();
+    };
+    this.ui.replaceAll(make(close));
   }
 
   /** The map's route, as a line for the HUD: which way, through which exit, how far. */
@@ -812,6 +853,8 @@ export class Game {
     if (id === 'mirror') return this.openSheet('home', at);
     if (id === 'clothes_counter' || id === 'changing') return this.openClothesShop();
     if (id === 'bike') return this.mountParkedBike();
+    // The house: the fridge, the cooker, the bathroom, the bed... (they freeze nothing until a list opens).
+    if (this.house.handles(id) && w.level.id === 'home') return this.house.open(id, station);
     this.state = 'paused';
     this.touch.release();
     this.input.flush();
@@ -880,22 +923,6 @@ export class Game {
         }
         if (w.startSpar()) this.hud.toast('Gloves up. Mo hits softly and it stops before anyone’s hurt. Walk away to stop.', 'item');
         return;
-      case 'kitchen':
-        screen = kitchenScreen(p, close, () => {
-          const v = w.player.vitals;
-          const before = v.health;
-          v.health = v.maxHealth;
-          v.stamina = v.maxStamina;
-          // A brew and a sit down takes the edge off training fatigue too.
-          recover(p.save.gym, p.save.playTime, 10);
-          return Math.round(v.health - before);
-        }, () => {
-          if (p.save.mealBuff) recover(p.save.gym, p.save.playTime, 30);
-          // A proper meal sees off bruising.
-          treatInjury(p.save.condition, 'bruising');
-          changed();
-        });
-        break;
       case 'garage':
         screen = workshopScreen(p, close, () => {
           saved();
@@ -1481,6 +1508,7 @@ export class Game {
   private conditionClock(dt: number): void {
     const p = this.progress!;
     const w = this.world;
+    this.house.tickNeeds(dt);
     const home = w?.level.id === 'home' || w?.level.id === 'basement';
     const healed = healOverTime(p.save.condition, dt, home ? 3 : 1);
     if (healed.length && w) {
@@ -1829,6 +1857,14 @@ export class Game {
       this.ui.handle(a, src);
       return;
     }
+    // Doing something in the house: Esc stops it; opening a menu stops it first.
+    if (this.state === 'playing' && this.house.active) {
+      if (a === 'pause' || a === 'back') {
+        this.house.cancel();
+        return;
+      }
+      if (a === 'inventory' || a === 'map' || a === 'character' || a === 'crew') this.house.abort();
+    }
     if (this.state === 'playing' && a === 'character' && this.world && !this.mode) {
       this.openProfile();
       return;
@@ -2014,11 +2050,14 @@ export class Game {
     }
     let interact = false;
     const it = this.world?.interactable;
-    if (!text && it && p.isFree) {
+    if (this.house.active) text = '';
+    else if (!text && it && p.isFree) {
       const locked = it.kind === 'exit' && it.locked;
       const done = it.kind === 'lever' && it.done;
       if (!done) {
-        text = `${k('E', 'LB', 'GRAB')}  ${it.label}${locked ? ' \u2014 locked' : ''}`;
+        // House labels are "THING|What it does": FRIDGE  [E]  Open fridge.
+        const [what, how] = it.label.includes('|') ? it.label.split('|') : [null, it.label];
+        text = what ? `${what}   ${k('E', 'LB', 'GRAB')}   ${how}` : `${k('E', 'LB', 'GRAB')}  ${how}${locked ? ' \u2014 locked' : ''}`;
         interact = true;
       }
     }
@@ -2057,6 +2096,7 @@ export class Game {
           cmd = { ...cmd, special: false, block: false, pressed: { ...cmd.pressed, lp: false, hp: false, lk: false, hk: false, dodge: false, jump: false, swap: false } };
         }
         if (this.world) {
+          if (this.house.active) cmd = this.house.command(cmd, DT);
           this.world.step(cmd);
           this.businessClock(DT);
         } else this.mode!.step(cmd);
@@ -2076,6 +2116,7 @@ export class Game {
       this.input.flush();
     }
 
+    if (this.state === 'playing') this.house.update();
     const player = this.activePlayer;
     const inFight = (this.state === 'playing' || this.state === 'paused' || this.state === 'transition' || this.state === 'editing' || this.state === 'training') && !!player;
     this.updateStairs(dt);
