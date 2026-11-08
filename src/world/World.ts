@@ -8,6 +8,9 @@ import { randomAppearance, sparringPartnerAppearance, type CharacterAppearance, 
 import { CivilianBrain, CIVILIAN_DENSITY, DESPAWN, SPAWN_MAX, SPAWN_MIN, type Hotspot } from './civilians';
 import { CompanionBrain } from '../companions/brain';
 import { companionGainXp, crewState, type CompanionDef } from '../companions/companions';
+import type { CrewOrder } from '../companions/brain';
+import { HomeBrain, HomeLife } from '../companions/home';
+import { FIGHT_STYLES, PERSONALITIES, lineFor, type LineKind } from '../companions/personality';
 import { applyCrewModifiers, companionFighter } from '../companions/crewFighter';
 import { HitLedger, type Injury } from '../condition/condition';
 import type { WeaponMods } from '../combat/weaponMods';
@@ -79,6 +82,8 @@ export interface WorldEvents {
   /** A companion levelled up. */
   'companion:level': { id: string; name: string; level: number };
   'companion:up': { name: string };
+  /** A crew member says something (shown over their head). */
+  'crew:say': { fighter: Fighter; name: string; text: string };
   'duel:start': { kind: 'spar' | 'challenge'; name: string };
   'duel:end': { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
 }
@@ -214,27 +219,103 @@ export class World {
   /** Mo, in the home gym. */
   sparPartner: Fighter | null = null;
 
-  // ---- companion ---------------------------------------------------------------------
+  // ---- your crew ---------------------------------------------------------------------
 
-  companion: Fighter | null = null;
-  companionDef: CompanionDef | null = null;
-  private companionBrain: CompanionBrain | null = null;
-  private companionDownAt = -1;
+  readonly crew: CrewMember[] = [];
+  /** The house's side of home life (at home only). */
+  homeLife: HomeLife | null = null;
+  private crewRng = new Rng(4711);
+  private lastSay = -999;
+  /** At home: you've moved away from the front door since coming in (so heading back to it means going out). */
+  private doorArmed = false;
 
-  private spawnCompanion(def: CompanionDef): void {
+  /** First crew member (older single-companion code and tests). */
+  get companion(): Fighter | null {
+    return this.crew[0]?.f ?? null;
+  }
+  get companionDef(): CompanionDef | null {
+    return this.crew[0]?.def ?? null;
+  }
+  memberOf(f: Fighter): CrewMember | null {
+    return this.crew.find((m) => m.f === f) ?? null;
+  }
+
+  /** Bring a crew member in: next to you, or (at home) through the door / already settled. */
+  private spawnCrew(def: CompanionDef, how: 'beside' | 'door' | 'settled', index: number): void {
     const p = this.player;
-    const spot = this.freeSpot(p.pos.x - p.facing * 1.3, Math.max(this.arena.bounds.minZ + 0.3, p.pos.z - 0.4));
-    // Same build as the crew screen shows: look, level, injuries, health carried over, their weapon.
+    const spot = how === 'beside'
+      ? this.freeSpot(p.pos.x - p.facing * (1.3 + index * 0.7), Math.max(this.arena.bounds.minZ + 0.3, p.pos.z + (index % 2 ? 0.45 : -0.4)))
+      : { x: p.pos.x, z: p.pos.z };
+    // Same build as the crew screen shows: look, style, level, injuries, health carried over, their weapon.
     const f = companionFighter(this.progress, def, this.nextId++, spot.x, spot.z);
     f.facing = p.facing;
     this.sim.add(f);
-    const a = { ...ARCHETYPES.boxer, ...def.ai, id: 'boxer' as const, name: def.nickname, style: def.style, attributes: def.attributes, retreatsWhenTired: true, look: () => ({}) };
+    const moves = FIGHT_STYLES[def.fightStyle];
+    const a = { ...ARCHETYPES.boxer, ...def.ai, ...moves.ai, id: 'boxer' as const, name: def.nickname, style: moves.moves, attributes: def.attributes, retreatsWhenTired: true, look: () => ({}), buttonBias: { heavy: moves.heavyBias, kick: moves.kickBias } };
     const fight = new FighterAI(f, a, this.sim.rng, this.tokens, this.arena);
-    const brain = new CompanionBrain(f, p, fight, this.arena, () => this.duel?.f ?? this.sparPartner, () => !!this.activeEncounter || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 7) || this.police.some((e) => !e.isKO));
+    const rng = () => this.crewRng.next();
+    const brain = new CompanionBrain(f, def, p, fight, this.arena, {
+      ignore: () => this.duel?.f ?? this.sparPartner,
+      engaged: () => !!this.activeEncounter || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 9) || this.police.some((e) => !e.isKO),
+      enemies: () => [...this.enemies, ...this.police],
+      crew: () => this.crew.map((m) => m.f),
+      weaponNear: (x, z, r) => {
+        const g = this.items.find((it) => ITEMS[it.stack.id]?.weapon && Math.abs(it.x - x) < r && Math.abs(it.z - z) < r * 0.6);
+        return g ? { x: g.x, z: g.z } : null;
+      },
+      say: (kind) => this.crewSay(m, kind),
+      rng,
+    });
+    const m: CrewMember = { f, def, brain, downAt: -1, pocket: null, weaponId: f.weapon?.data.id ?? null };
     this.brains.set(f, brain);
-    this.companion = f;
-    this.companionDef = def;
-    this.companionBrain = brain;
+    this.crew.push(m);
+    if (this.homeLife) {
+      const hb = new HomeBrain(f, def.personality, this.homeLife, this.arena, rng, (frame) => brain.followOnly(frame));
+      brain.home = hb;
+      if (how === 'door') {
+        // Through the front door a step behind you, then into the house.
+        const door = this.level.exits.find((e) => e.kind === 'door' && e.to !== 'basement') ?? { x: p.pos.x, z: p.pos.z };
+        f.pos.x = door.x + (index + 1) * 0.35 * (index % 2 ? -1 : 1);
+        f.pos.z = Math.max(this.arena.bounds.minZ + 0.25, door.z + 0.3);
+        m.enterAt = this.sim.frame + 25 + index * 35;
+        this.sim.remove(f); // added when they come through the door
+        m.waiting = true;
+        hb.enter({ x: door.x, z: door.z });
+      } else hb.settle();
+    }
+  }
+
+  /** A line from a crew member, if they're the talkative sort and nobody's just spoken. */
+  private crewSay(m: CrewMember, kind: LineKind): void {
+    const frame = this.sim.frame;
+    if (frame - this.lastSay < SIM_HZ * 2.5 || frame - (m.saidAt ?? -999) < SIM_HZ * 7) return;
+    if (kind !== 'down' && this.crewRng.next() > PERSONALITIES[m.def.personality].chatty) return;
+    const text = lineFor(m.def.personality, kind, this.crewRng.next());
+    if (!text) return;
+    this.lastSay = frame;
+    m.saidAt = frame;
+    this.events.emit('crew:say', { fighter: m.f, name: m.def.nickname, text });
+  }
+
+  /** Give orders to everyone out with you: follow, wait here, or stay close and ready. */
+  orderCrew(order: CrewOrder): number {
+    let n = 0;
+    for (const m of this.crew) {
+      if (m.brain.home) continue;
+      m.brain.setOrder(order);
+      n++;
+    }
+    return n;
+  }
+
+  /** Call the crew at home to come with you round the house (or let them go back to relaxing). */
+  callHomeCrew(on: boolean, ids?: string[]): void {
+    for (const m of this.crew) if (m.brain.home && (!ids || ids.includes(m.def.id))) m.brain.home.following = on;
+  }
+
+  /** Who's sat down resting at home right now (for faster recovery). */
+  restingIds(): string[] {
+    return this.crew.filter((m) => m.brain.home?.resting).map((m) => m.def.id);
   }
 
   /** Their level and injuries, as stat modifiers. */
@@ -242,31 +323,31 @@ export class World {
     applyCrewModifiers(f, def, this.progress);
   }
 
-  /** Write your companion's live health and weapon back to the save (called every second and on leaving). */
+  /** Write your crew's live health and weapons back to the save (called every second and on leaving). */
   syncCompanion(): void {
-    const f = this.companion;
-    const def = this.companionDef;
-    if (!f || !def) return;
-    const st = crewState(this.progress, def.id);
-    st.health = Math.max(0.05, Math.min(1, f.vitals.health / Math.max(1, f.vitals.maxHealth)));
-    const held = f.weapon ?? this.companionPocket;
-    if (st.weapon) {
-      if (!held) st.weapon = null; // broke in the fight
-      else if (weaponItemId(held.data.id) !== st.weapon.id) st.weapon = this.progress.newStack(weaponItemId(held.data.id), 1, { hits: held.hits, mods: held.mods });
-      else st.weapon.hits = held.hits;
+    for (const m of this.crew) {
+      const f = m.f;
+      const st = crewState(this.progress, m.def.id);
+      if (!m.waiting) st.health = Math.max(0.05, Math.min(1, f.vitals.health / Math.max(1, f.vitals.maxHealth)));
+      const held = f.weapon ?? m.pocket;
+      if (st.weapon) {
+        if (!held) st.weapon = null; // broke in the fight
+        else if (weaponItemId(held.data.id) !== st.weapon.id) st.weapon = this.progress.newStack(weaponItemId(held.data.id), 1, { hits: held.hits, mods: held.mods });
+        else st.weapon.hits = held.hits;
+      } else if (held) {
+        // Picked one up in a fight (weapons specialists do): theirs now.
+        st.weapon = this.progress.newStack(weaponItemId(held.data.id), 1, { hits: held.hits, mods: held.mods });
+      }
     }
   }
 
-  /** A companion's weapon knocked out of their hand: they keep hold of it and pick it back up when they're up. */
-  private companionPocket: { data: WeaponData; hits: number; mods?: WeaponMods } | null = null;
-
-  // ---- injuries: counting what you and your companion take in a fight ----
+  // ---- injuries: counting what you and your crew take in a fight ----
 
   private ledgers = new Map<Fighter, HitLedger>();
   private fightWasOn = false;
 
   private ledgerFor(f: Fighter): HitLedger | null {
-    if (f !== this.player && f !== this.companion) return null;
+    if (f !== this.player && !this.memberOf(f)) return null;
     if (this.duel?.kind === 'spar') return null; // Mo pulls his punches
     let l = this.ledgers.get(f);
     if (!l) this.ledgers.set(f, (l = new HitLedger()));
@@ -289,15 +370,17 @@ export class World {
           this.progress.applyModifiers(f, this.difficulty);
           this.events.emit('injury', { who: 'you', name: 'You', injuries: hurt });
         }
-      } else if (f === this.companion && this.companionDef) {
-        const st = crewState(this.progress, this.companionDef.id);
-        const hurt = l.settle(st.condition, f.vitals.maxHealth);
-        st.fights++;
-        if (hurt.length) {
-          this.applyCompanionCondition(f, this.companionDef);
-          this.events.emit('injury', { who: this.companionDef.id, name: this.companionDef.nickname, injuries: hurt });
-        }
+        continue;
       }
+      const m = this.memberOf(f);
+      if (!m) continue;
+      const st = crewState(this.progress, m.def.id);
+      const hurt = l.settle(st.condition, f.vitals.maxHealth);
+      st.fights++;
+      // A fight takes it out of them: rest brings it back down.
+      st.fatigue = Math.min(100, st.fatigue + 12 + Math.min(18, l.total / 10));
+      this.applyCompanionCondition(f, m.def);
+      if (hurt.length) this.events.emit('injury', { who: m.def.id, name: m.def.nickname, injuries: hurt });
     }
     this.ledgers.clear();
   }
@@ -308,35 +391,70 @@ export class World {
     this.fightWasOn = on;
   }
 
-  /** Back on their feet once the fight's over; walks in from the edge if left far behind. */
+  /** Back on their feet once the fight's over; walk in from the edge if left far behind; pick weapons up. */
   private updateCompanion(): void {
-    const f = this.companion;
-    if (!f || !this.companionBrain) return;
     const p = this.player;
     const fightOn = !!this.activeEncounter || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 9);
-    if (f.isKO) {
-      if (this.companionDownAt < 0) this.companionDownAt = this.sim.frame;
-      if (!fightOn && this.sim.frame - this.companionDownAt > SIM_HZ * 3) {
-        const pos = { ...f.pos };
-        f.respawn();
-        f.pos = { x: pos.x, y: 0, z: pos.z };
-        f.vitals.health = Math.round(f.vitals.maxHealth * 0.4);
-        if (this.companionPocket) {
-          f.equipWeapon(this.companionPocket.data.id, this.companionPocket.hits, this.companionPocket.mods);
-          this.companionPocket = null;
+    if (this.homeLife) this.homeLife.update(1 / SIM_HZ, this.crew.map((m) => m.brain.home!).filter(Boolean));
+    for (const m of this.crew) {
+      const f = m.f;
+      if (m.waiting) {
+        // Coming through the front door behind you.
+        if (this.sim.frame >= (m.enterAt ?? 0)) {
+          m.waiting = false;
+          this.sim.add(f);
         }
-        this.companionDownAt = -1;
-        this.events.emit('companion:up', { name: f.name });
+        continue;
       }
-      return;
-    }
-    this.companionDownAt = -1;
-    // Left a long way behind (pushed back by a crowd, a long run): come in from just off-screen.
-    if (!fightOn && (this.companionBrain.catchUp || Math.abs(f.pos.x - p.pos.x) > 16)) {
-      const spot = this.freeSpot(p.pos.x - p.facing * 10, p.pos.z);
-      f.pos.x = spot.x;
-      f.pos.z = spot.z;
-      this.companionBrain.catchUp = false;
+      if (f.isKO) {
+        if (m.downAt < 0) m.downAt = this.sim.frame;
+        if (!fightOn && this.sim.frame - m.downAt > SIM_HZ * 3) {
+          const pos = { ...f.pos };
+          f.respawn();
+          f.pos = { x: pos.x, y: 0, z: pos.z };
+          f.vitals.health = Math.round(f.vitals.maxHealth * 0.4);
+          if (m.pocket) {
+            f.equipWeapon(m.pocket.data.id, m.pocket.hits, m.pocket.mods);
+            m.pocket = null;
+          }
+          m.downAt = -1;
+          this.events.emit('companion:up', { name: f.name });
+        }
+        continue;
+      }
+      m.downAt = -1;
+      // Weapons specialist: picks up whatever they walk onto.
+      if (m.brain.style.weaponClasses && !f.weapon && f.isFree) {
+        const i = this.items.findIndex((it) => ITEMS[it.stack.id]?.weapon && Math.abs(it.x - f.pos.x) < 0.5 && Math.abs(it.z - f.pos.z) < 0.4);
+        if (i >= 0) {
+          const it = this.items[i];
+          this.items.splice(i, 1);
+          f.equipWeapon(ITEMS[it.stack.id].weapon!, it.stack.hits, it.stack.mods);
+          this.crewSay(m, 'win');
+        }
+      }
+      // What's in their hands changed: their weapon skill applies to the new one.
+      const wid = f.weapon?.data.id ?? null;
+      if (wid !== m.weaponId) {
+        m.weaponId = wid;
+        this.applyCompanionCondition(f, m.def);
+      }
+      if (m.brain.home) {
+        // Heading for the front door: the ones following you get up and come along.
+        const door = this.level.exits.find((e) => e.kind === 'door' && e.to !== 'basement');
+        const following = this.progress.save.companions.following.includes(m.def.id);
+        // Only once you've been away from the door (not the moment you walk in through it).
+        if (door && Math.abs(p.pos.x - door.x) > 2.5) this.doorArmed = true;
+        if (door && this.doorArmed && following && Math.abs(p.pos.x - door.x) < 1.4 && p.pos.z < door.z + 0.9) m.brain.home.following = true;
+        continue;
+      }
+      // Left a long way behind (pushed back by a crowd, a long run): come in from just off-screen.
+      if (!fightOn && m.brain.order !== 'wait' && (m.brain.catchUp || Math.abs(f.pos.x - p.pos.x) > 16)) {
+        const spot = this.freeSpot(p.pos.x - p.facing * 10, p.pos.z);
+        f.pos.x = spot.x;
+        f.pos.z = spot.z;
+        m.brain.catchUp = false;
+      }
     }
   }
 
@@ -525,6 +643,10 @@ export class World {
       keepCleared?: string[];
       /** Companion who follows you here. */
       companion?: CompanionDef | null;
+      /** Everyone following you (newer than \`companion\`). */
+      companions?: CompanionDef[];
+      /** At home: the crew who live there (relaxing), and who's coming in with you through the door. */
+      home?: { residents: CompanionDef[]; arriving: CompanionDef[] };
       /** Ambient pedestrians (off in tests unless asked for). */
       civilians?: boolean;
     },
@@ -595,7 +717,20 @@ export class World {
       if (s.npc) this.spawnNpc(s);
     }
 
-    if (opts.companion) this.spawnCompanion(opts.companion);
+    if (opts.home) {
+      this.homeLife = new HomeLife(level, this.arena, () => this.crewRng.next(), (f, text) => {
+        const m = this.memberOf(f);
+        if (m) this.events.emit('crew:say', { fighter: f, name: m.def.nickname, text });
+      });
+      opts.home.residents.forEach((d, i) => this.spawnCrew(d, 'settled', i));
+      opts.home.arriving.forEach((d, i) => this.spawnCrew(d, 'door', i));
+    } else {
+      const list = opts.companions ?? (opts.companion ? [opts.companion] : []);
+      list.forEach((d, i) => this.spawnCrew(d, 'beside', i));
+    }
+    // Counter-fighters answer blocks and parries.
+    this.sim.bus.on('hit:blocked', ({ target }) => this.memberOf(target)?.brain.onBlocked(this.sim.frame));
+    this.sim.bus.on('hit:parried', ({ target }) => this.memberOf(target)?.brain.onBlocked(this.sim.frame));
     if (opts.civilians !== false) this.setUpCivilians();
     this.events.on('encounter:start', () => {
       for (const c of this.civilians) c.brain.flee(this.player.pos.x);
@@ -617,14 +752,18 @@ export class World {
     this.sim.bus.on('fighter:ko', ({ fighter, by }) => {
       const l = this.ledgerFor(fighter);
       if (l) l.knockedOut = true;
-      // Your companion learns from every fight they're in.
-      if (fighter.team === 'enemy' && this.companion && this.companionDef && !this.companion.isKO) {
-        const st = crewState(this.progress, this.companionDef.id);
-        if (by === this.companion) st.kos++;
-        const up = companionGainXp(st, by === this.companion ? 25 : 12);
-        if (up) {
-          this.applyCompanionCondition(this.companion, this.companionDef);
-          this.events.emit('companion:level', { id: this.companionDef.id, name: this.companionDef.nickname, level: st.level });
+      // Your crew learn from every fight they're in.
+      if (fighter.team === 'enemy') {
+        for (const m of this.crew) {
+          if (m.f.isKO || m.waiting) continue;
+          const st = crewState(this.progress, m.def.id);
+          if (by === m.f) st.kos++;
+          const up = companionGainXp(st, by === m.f ? 25 : 12);
+          if (up) {
+            this.applyCompanionCondition(m.f, m.def);
+            this.events.emit('companion:level', { id: m.def.id, name: m.def.nickname, level: st.level });
+          }
+          if (by === m.f) this.crewSay(m, 'win');
         }
       }
       if (fighter === this.player) return;
@@ -781,8 +920,9 @@ export class World {
       if (!f.droppedWeapon) continue;
       const w = f.droppedWeapon;
       f.droppedWeapon = null;
-      if (f === this.companion && this.companionDef && crewState(this.progress, this.companionDef.id).weapon) {
-        this.companionPocket = w;
+      const member = this.memberOf(f);
+      if (member && (crewState(this.progress, member.def.id).weapon || member.brain.style.weaponClasses)) {
+        member.pocket = w;
         continue;
       }
       if (w.data.breaks && w.hits <= 1 && f !== this.player) continue; // nearly done anyway
@@ -1528,3 +1668,18 @@ const BREAK_LABELS: Record<BreakableDef['kind'], string> = {
   window: 'Window smashed',
   barrel: 'Barrel knocked over',
 };
+
+/** One of your crew in this area. */
+export interface CrewMember {
+  f: Fighter;
+  def: CompanionDef;
+  brain: CompanionBrain;
+  downAt: number;
+  /** A weapon knocked out of their hand: they keep hold of it and pick it back up when they're up. */
+  pocket: { data: WeaponData; hits: number; mods?: WeaponMods } | null;
+  weaponId: string | null;
+  /** Not in yet (coming through the door after you). */
+  waiting?: boolean;
+  enterAt?: number;
+  saidAt?: number;
+}

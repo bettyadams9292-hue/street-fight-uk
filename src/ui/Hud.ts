@@ -289,7 +289,49 @@ export class Hud {
     setTimeout(() => f.remove(), 800);
   }
 
+  // ---- speech bubbles over your crew's heads ----
+  private bubbles: { f: Fighter; el: HTMLElement; until: number }[] = [];
+  private bubbleLayer: HTMLElement | null = null;
+  private clock = 0;
+
+  /** A crew member says something: a bubble over their head for a few seconds. */
+  speech(f: Fighter, name: string, text: string): void {
+    if (!this.bubbleLayer) {
+      this.bubbleLayer = h('div', { class: 'speech-layer' });
+      this.el.append(this.bubbleLayer);
+    }
+    for (const b of this.bubbles.filter((x) => x.f === f)) b.until = 0;
+    const el = h('div', { class: 'speech' }, h('b', { text: name }), h('span', { text }));
+    this.bubbleLayer.append(el);
+    this.bubbles.push({ f, el, until: this.clock + Math.min(6, 2.2 + text.length * 0.045) });
+  }
+
+  /** Keep bubbles over heads (call every frame with the renderer's projection). */
+  updateBubbles(project: (x: number, y: number, z: number) => { x: number; y: number } | null): void {
+    for (let i = this.bubbles.length - 1; i >= 0; i--) {
+      const b = this.bubbles[i];
+      if (this.clock > b.until) {
+        b.el.remove();
+        this.bubbles.splice(i, 1);
+        continue;
+      }
+      const pt = project(b.f.pos.x, b.f.pos.y + (b.f.activity?.startsWith('sit') ? 1.55 : 2.05), b.f.pos.z);
+      if (!pt) {
+        b.el.style.display = 'none';
+        continue;
+      }
+      b.el.style.display = '';
+      b.el.style.transform = `translate(${Math.round(pt.x)}px, ${Math.round(pt.y)}px) translate(-50%, -100%)`;
+    }
+  }
+
+  clearBubbles(): void {
+    for (const b of this.bubbles) b.el.remove();
+    this.bubbles = [];
+  }
+
   update(dt: number, player: Fighter, enemy: Fighter | null): void {
+    this.clock += dt;
     this.updateBars(this.player, player, dt);
     this.enemy.root.style.visibility = enemy ? 'visible' : 'hidden';
     this.vs.style.visibility = enemy ? 'visible' : 'hidden';

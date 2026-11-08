@@ -150,8 +150,16 @@ export class Fighter {
   styleLevels: Partial<Record<string, number>> | null;
   /** Render-only: what a pedestrian is doing when stood still (sitting, chatting, browsing). */
   ambientPose: 'sit' | 'talk' | 'browse' | null = null;
-  /** Render-only: a training activity the player is performing (home gym). */
+  /** Render-only: a training activity the player is performing (home gym), or what a companion's doing at home. */
   activity: string | null = null;
+  /** Render-only: face this way (radians, 0 = towards the camera) instead of left/right. Sitting on furniture. */
+  yawOverride: number | null = null;
+  /** Held in place by the world (sat on furniture): not pushed, clamped or moved by physics. */
+  anchored = false;
+  /** One of your crew (not you): crew members keep apart from each other. */
+  crew = false;
+  /** Someone this fighter would rather fight than whoever's nearest (set by its brain each frame). */
+  preferredTarget: Fighter | null = null;
   /** Moves chained so far in the current string (0 = the starter). */
   private chainDepth = 0;
   private airAttackUsed = false;

@@ -99,12 +99,12 @@ const pub: LevelDef = {
   name: 'The Red Lion',
   district: 'High Street',
   theme: 'pub',
-  bounds: { minX: 0, maxX: 32, ...ROOM },
+  bounds: { minX: 0, maxX: 37, ...ROOM },
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'pub', label: 'Back out to the High Street' }],
   facades: [
     { kind: 'interior', x0: 0, x1: 22, label: 'THE RED LION', colour: '#3a1a12' },
-    { kind: 'interior', x0: 22, x1: 32, label: 'THE SNUG — FIGHTERS FOR HIRE', colour: '#2a1410' },
+    { kind: 'interior', x0: 22, x1: 37, label: 'THE SNUG — FIGHTERS FOR HIRE', colour: '#2a1410' },
   ],
   props: [
     { kind: 'bar', x: 6.5, z: -0.6 },
@@ -116,6 +116,7 @@ const pub: LevelDef = {
     { kind: 'pub_table', x: 20.2, z: 0.8 },
     { kind: 'pub_table', x: 26.0, z: 0.95 },
     { kind: 'pub_table', x: 30.4, z: 0.95 },
+    { kind: 'pub_table', x: 34.8, z: 0.95 },
   ],
   stations: [
     {

@@ -37,14 +37,17 @@ export class Simulation {
   /** Advance one 1/60 s step. Commands are keyed by fighter id. */
   step(commands: Map<number, CommandFrame>): void {
     this.frame++;
-    for (const f of this.fighters) f.target = this.nearestOpponent(f);
+    for (const f of this.fighters) {
+      const pt = f.preferredTarget;
+      f.target = pt && !pt.isKO && pt.team !== f.team && pt.team !== 'neutral' && f.team !== 'neutral' && this.fighters.includes(pt) ? pt : this.nearestOpponent(f);
+    }
 
     for (const f of this.fighters) f.update(commands.get(f.id) ?? emptyCommand(), this.frame, this.bus);
 
     updateGrapples(this.fighters, commands, this.frame, this.bus, this.rng, this.arena);
     this.separate();
     // Passers-by and shopkeepers aren't held inside a locked fight.
-    for (const f of this.fighters) this.arena.clamp(f.pos, undefined, f.team === 'neutral');
+    for (const f of this.fighters) if (!f.anchored) this.arena.clamp(f.pos, undefined, f.team === 'neutral');
 
     resolveCombat(this.fighters, this.frame, this.bus, this.rng, this.arena);
 
@@ -74,8 +77,9 @@ export class Simulation {
         const b = list[j];
         if (a.isKO || b.isKO || a.state === 'knockdown' || b.state === 'knockdown') continue;
         if (a.grapple?.partner === b) continue;
-        // You and your companion never shove each other about: they step round you instead.
-        if (a.team === 'player' && b.team === 'player') continue;
+        if (a.anchored || b.anchored) continue;
+        // You and your crew never shove each other about: they step round you instead. Crew mates keep apart.
+        if (a.team === 'player' && b.team === 'player' && !(a.crew && b.crew)) continue;
         if (Math.abs(a.pos.z - b.pos.z) > PUSH_DEPTH) continue;
         if (Math.abs(a.pos.y - b.pos.y) > 1.0) continue;
         const dx = b.pos.x - a.pos.x;

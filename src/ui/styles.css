@@ -1126,3 +1126,10 @@ kbd { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing:
   .pf-portrait { height: 52vh; }
   .pf-name { font-size: 26px; }
 }
+/* Crew speech bubbles */
+.speech-layer { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+.speech { position: absolute; left: 0; top: 0; max-width: 240px; padding: 6px 10px 7px; border-radius: 10px; background: rgba(250, 248, 242, 0.95); color: #15171c; font-size: 14px; line-height: 1.25; box-shadow: 0 4px 14px rgba(0,0,0,.4); animation: bubble-in .18s var(--ease); }
+.speech::after { content: ''; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: rgba(250, 248, 242, 0.95); }
+.speech b { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #a01818; }
+@keyframes bubble-in { from { opacity: 0; } }
+.pf-desc { margin: 4px 0 6px; color: #cfccc4; font-size: 14px; line-height: 1.4; }

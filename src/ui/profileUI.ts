@@ -1,6 +1,6 @@
 import { BACKGROUNDS } from '../character/Character';
 import {
-  ACTIVE_SLOTS,
+  activeSlots,
   COMPANIONS,
   COMPANION_LEVEL_CAP,
   COMPANION_LIST,
@@ -12,11 +12,11 @@ import {
   fightRating,
   firstAidCompanion,
   giveWeapon,
-  setActiveCompanion,
   takeWeapon,
   type CompanionDef,
 } from '../companions/companions';
 import { companionFighter, companionLook } from '../companions/crewFighter';
+import { FIGHT_STYLES, PERSONALITIES } from '../companions/personality';
 import {
   CONDITION_INFO,
   SEVERITY_NAMES,
@@ -54,8 +54,10 @@ export interface ProfileOptions {
   progress: Progress;
   /** Your fighter as they are right now (live health, stamina, modifiers). */
   player: Fighter;
-  /** The companion out with you right now, if any (live health and stamina). */
-  liveCompanion: { id: string; f: Fighter } | null;
+  /** Your crew in this area right now (live health and stamina). */
+  liveCrew: { id: string; f: Fighter }[];
+  /** Give someone an order (see Game.crewOrder). */
+  order(id: string, order: 'follow' | 'home' | 'wait' | 'ready' | 'callover' | 'relax'): { ok: boolean; text: string; rebuild?: boolean };
   tab?: 'character' | 'crew';
   crewId?: string;
   /** Something changed that the world needs to rebuild for (who's following, their weapon). */
@@ -124,7 +126,7 @@ function weaponLine(st: { id: string; hits?: number } | null, f: Fighter | null)
 export function profileScreen(o: ProfileOptions): Screen {
   const p = o.progress;
   let tab: 'character' | 'crew' = o.tab ?? 'character';
-  let crewId: string | null = o.crewId ?? p.save.companions.active ?? p.save.companions.recruited[0] ?? null;
+  let crewId: string | null = o.crewId ?? p.save.companions.following[0] ?? p.save.companions.recruited[0] ?? null;
   let message = '';
   let bad = false;
   let confirmLetGo = false;
@@ -223,31 +225,44 @@ export function profileScreen(o: ProfileOptions): Screen {
   }
 
   // ---- crew tab ----
+  const liveOf = (id: string) => o.liveCrew.find((c) => c.id === id)?.f ?? null;
+  const atHomeNow = () => p.save.area === 'home';
+
   function memberStatus(def: CompanionDef): { text: string; cls: string } {
     const s = p.save.companions;
     const st = crewState(p, def.id);
     const ok = companionAvailable(st);
     if (!ok.ok) return { text: 'Recovering', cls: 'down' };
-    if (s.active === def.id) return { text: 'Following you', cls: 'active' };
-    if (st.condition.injuries.some((i) => i.part !== 'bruising') || st.health < 0.6) return { text: 'Injured', cls: 'hurt' };
-    return { text: 'Available', cls: 'ready' };
+    const following = s.following.includes(def.id);
+    if (st.condition.injuries.some((i) => i.part !== 'bruising') || st.health < 0.6) return { text: following ? 'With you, hurt' : 'Injured', cls: 'hurt' };
+    if (following) return { text: atHomeNow() ? 'With you (home)' : 'Following you', cls: 'active' };
+    if (st.fatigue >= 50) return { text: 'Tired, resting', cls: 'hurt' };
+    return { text: 'At home', cls: 'ready' };
   }
 
   function live(def: CompanionDef): Fighter {
-    if (o.liveCompanion?.id === def.id) return o.liveCompanion.f;
-    return companionFighter(p, def);
+    return liveOf(def.id) ?? companionFighter(p, def);
   }
+
+  const giveOrder = (id: string, order: Parameters<ProfileOptions['order']>[1]) => {
+    const r = o.order(id, order);
+    message = r.text;
+    bad = !r.ok;
+    if (r.rebuild) o.crewChanged();
+  };
 
   function crewTab(): HTMLElement {
     const s = p.save.companions;
     const recruited = s.recruited.map((id) => COMPANIONS[id]).filter(Boolean);
     if (crewId && !s.recruited.includes(crewId)) crewId = recruited[0]?.id ?? null;
+    const slots = activeSlots(p);
 
-    // Active crew strip: everyone following (one slot).
-    const activeDef = s.active ? COMPANIONS[s.active] : null;
+    // Active crew: everyone following you, and how many places there are.
+    const followers = s.following.map((id) => COMPANIONS[id]).filter(Boolean);
     const activeStrip = h('div', { class: 'pf-active' },
-      h('div', { class: 'pf-active-head' }, h('b', { text: 'Active crew' }), h('span', { text: `${activeDef ? 1 : 0} / ${ACTIVE_SLOTS} following` })),
-      activeDef ? activeCard(activeDef) : h('p', { class: 'pf-none', text: recruited.length ? 'Nobody with you. Pick someone below and tap “Follow me”.' : 'No crew yet. Fighters for hire in the Snug at the Red Lion (High Street).' }),
+      h('div', { class: 'pf-active-head' }, h('b', { text: 'Active crew' }), h('span', { text: `${followers.length} / ${slots} following${slots < 2 ? ' · 2nd place after Sully Kane' : ''}` })),
+      ...(followers.length ? followers.map((d) => activeCard(d)) : [h('p', { class: 'pf-none', text: recruited.length ? 'Nobody with you. Pick someone below and tap “Follow me”.' : 'No crew yet. Fighters for hire in the Snug at the Red Lion (High Street).' })]),
+      followers.length ? h('p', { class: 'pf-hint', text: `${followers.every((d) => companionAvailable(crewState(p, d.id)).ok && crewState(p, d.id).fatigue < 50) ? 'Everyone’s fit to go.' : 'Someone needs rest before a big fight.'} G: quick orders (follow / wait / ready).` }) : null,
     );
 
     const list = h('div', { class: 'pf-crew-list' }, ...recruited.map((def) => {
@@ -259,7 +274,7 @@ export function profileScreen(o: ProfileOptions): Screen {
         img ? h('img', { class: 'crew-pic', src: img, alt: '' }) : h('span', { class: 'crew-pic' }, icon('contact')),
         h('div', { class: 'crew-txt' },
           h('b', { text: def.name }),
-          h('small', { text: `Lv ${st.level} · ${def.role}` }),
+          h('small', { text: `Lv ${st.level} · ${PERSONALITIES[def.personality].name} · ${FIGHT_STYLES[def.fightStyle].name}` }),
           bar(f.vitals.health, f.vitals.maxHealth, 'hp thin', ''),
         ),
         h('span', { class: `crew-status ${ms.cls}`, text: ms.text }),
@@ -276,50 +291,74 @@ export function profileScreen(o: ProfileOptions): Screen {
     const f = live(def);
     const fs = f.stats;
     const cond = companionCondition({ ...st, health: f.vitals.health / f.vitals.maxHealth });
-    const isLive = o.liveCompanion?.id === def.id;
+    const liveF = liveOf(def.id);
+    const isLive = !!liveF;
     const a = def.attributes;
     const need = st.level >= COMPANION_LEVEL_CAP ? 0 : companionXpFor(st.level);
     const ms = memberStatus(def);
     const avail = companionAvailable(st);
+    const per = PERSONALITIES[def.personality];
+    const sty = FIGHT_STYLES[def.fightStyle];
+    const wpn = sty.weaponClasses ? `${Math.round((sty.weaponMult - 1) * 100)}% more damage with ${sty.weaponClasses.join(', ')} weapons; ${Math.round((1 - sty.unarmedMult) * 100)}% less without` : sty.weaponMult > 1 ? `+${Math.round((sty.weaponMult - 1) * 100)}% damage with any weapon` : sty.weaponMult < 1 ? `${Math.round((1 - sty.weaponMult) * 100)}% less damage with weapons` : 'Ordinary';
 
     const centre = h('div', { class: 'pf-col pf-centre' },
       h('div', { class: 'pf-crew-head' },
         h('div', { class: 'pf-portrait small' }, livePortrait(`crew:${def.id}:${st.weapon?.id ?? ''}`, companionLook(def), f.weapon)),
         h('div', {},
           h('h2', { class: 'pf-name', text: def.name }),
-          h('div', { class: 'pf-sub', text: `${def.role} · ${STYLES[def.style].name}` }),
+          h('div', { class: 'pf-sub', text: `${def.role}` }),
           h('div', { class: 'pf-tags' }, condBadge(cond), h('span', { class: `crew-status ${ms.cls}`, text: ms.text })),
           h('p', { class: 'pf-quote', text: `“${def.line}”` }),
           h('div', { class: 'pf-rating', title: 'From their attributes, damage share, level, health, injuries and weapon' }, h('span', { text: 'Fight rating' }), h('b', { text: String(fightRating(def, { ...st, health: f.vitals.health / f.vitals.maxHealth })) }), h('small', { text: '/ 100' })),
         ),
       ),
-      section('Level', 'side',
-        h('div', { class: 'pf-xp' }, h('span', { text: `Level ${st.level}${st.level < COMPANION_LEVEL_CAP ? ` → ${st.level + 1}` : ' (top)'}` }), bar(st.xp, need || 1, 'xp', need ? `${st.xp} / ${need} XP` : 'MAX')),
-        row('Fights', String(st.fights), `${st.kos} knockouts of their own`),
-        row('Each level', '+4% damage, +6 health'),
+      section('Personality', 'contact',
+        row('Type', per.name),
+        h('p', { class: 'pf-desc', text: per.text }),
+        row('In a fight', per.targeting === 'onPlayer' ? 'Goes for whoever’s on you' : per.targeting === 'weakest' ? 'Finishes off the weakest' : 'Takes on the nearest', `Joins in within ${per.engageRange} m${per.retreatAt ? ` · backs off under ${Math.round(per.retreatAt * 100)}% health` : ''}${per.helpsCrew ? ' · helps a crew mate who’s down' : ''}`),
       ),
-      section('Stats', 'gym',
-        ...(['strength', 'endurance', 'agility', 'speed', 'defence', 'technique'] as const).map((k) =>
-          h('div', { class: 'pf-attr' }, h('span', { class: 'k', text: k[0].toUpperCase() + k.slice(1) }), h('div', { class: 'pf-attr-bar' }, h('i', { style: `width:${Math.min(100, a[k] * 10)}%` })), h('b', { text: String(a[k]) }))),
-        row('Damage', pct(fs.damageMultiplier), `${Math.round(def.damageMult * 100)}% share, plus level and Strength`),
-        row('Clean hit chance', `${Math.round(fs.cleanHitChance * 100)}%`),
+      section('Fighting style', 'gym',
+        row('Style', sty.name, `Uses ${STYLES[sty.moves].name} moves`),
+        h('p', { class: 'pf-desc', text: sty.text }),
+        row('Attack speed', pct(fs.attackSpeed)),
+        row('Damage', pct(fs.damageMultiplier), `${Math.round(def.damageMult * 100)}% share × style × level × weapon`),
+        row('Weapon proficiency', wpn),
+        row('Move speed', pct(fs.moveSpeedMultiplier)),
         row('Damage taken', `${Math.round((1 - fs.defenceReduction) * fs.damageTakenMultiplier * 100)}%`),
+        row('Clean hit chance', `${Math.round(fs.cleanHitChance * 100)}%`),
         row('Good at', def.strengths),
         row('Weak at', def.weaknesses),
+      ),
+      section('Level and stats', 'side',
+        h('div', { class: 'pf-xp' }, h('span', { text: `Level ${st.level}${st.level < COMPANION_LEVEL_CAP ? ` → ${st.level + 1}` : ' (top)'}` }), bar(st.xp, need || 1, 'xp', need ? `${st.xp} / ${need} XP` : 'MAX')),
+        row('Fights', String(st.fights), `${st.kos} knockouts of their own · each level +4% damage, +6 health`),
+        ...(['strength', 'endurance', 'agility', 'speed', 'defence', 'technique'] as const).map((k) =>
+          h('div', { class: 'pf-attr' }, h('span', { class: 'k', text: k[0].toUpperCase() + k.slice(1) }), h('div', { class: 'pf-attr-bar' }, h('i', { style: `width:${Math.min(100, a[k] * 10)}%` })), h('b', { text: String(a[k]) }))),
       ),
     );
 
     const ex = st.health < 1 ? `Health back in about ${mmss(((1 - st.health) * 300) / 3)} resting (they rest whenever they’re not out with you)` : null;
     const pocketsWeapons = p.save.inventory.filter((x) => ITEMS[x.id].weapon && WEAPONS[ITEMS[x.id].weapon!].cls !== 'thrown');
     const actions: HTMLElement[] = [];
-    if (s.active === def.id) actions.push(actBtn('Stand down', 'back', () => { say(setActiveCompanion(p, null), `${def.nickname} heads home`); o.crewChanged(); }));
-    else actions.push(actBtn('Follow me', 'walk', () => { say(setActiveCompanion(p, def.id), `${def.nickname} is with you`); o.crewChanged(); }, 'primary', avail.ok ? (s.active ? `Swaps with ${COMPANIONS[s.active].nickname}` : undefined) : avail.reason, !avail.ok));
+    const following = s.following.includes(def.id);
+    const m = liveF;
+    if (following) actions.push(actBtn('Relax at home', 'home', () => giveOrder(def.id, 'home'), '', 'Stays home resting until you call them'));
+    else actions.push(actBtn('Follow me', 'walk', () => giveOrder(def.id, 'follow'), 'primary', avail.ok ? (s.following.length >= slots ? (slots === 1 ? `Swaps with ${COMPANIONS[s.following[0]].nickname}` : 'All places taken') : undefined) : avail.reason, !avail.ok || (s.following.length >= slots && slots > 1)));
+    if (m && following && !atHomeNow()) {
+      actions.push(actBtn('Wait here', 'pin', () => giveOrder(def.id, 'wait'), '', 'Stays put until you say follow (G cycles orders)'));
+      actions.push(actBtn('Get ready', 'target', () => giveOrder(def.id, 'ready'), '', 'Stays close and goes in sooner'));
+      actions.push(actBtn('Back in with the crew', 'walk', () => giveOrder(def.id, 'follow'), 'quiet'));
+    }
+    if (m && atHomeNow()) {
+      actions.push(actBtn('Come with me', 'walk', () => giveOrder(def.id, 'callover'), '', 'Gets up and follows you round the house'));
+      actions.push(actBtn('Make yourself at home', 'home', () => giveOrder(def.id, 'relax'), 'quiet', 'Back to the sofa'));
+    }
     const kits = p.save.inventory.filter((x) => x.id === 'first_aid').reduce((n, x) => n + x.qty, 0);
-    if (st.health < 1 || st.condition.injuries.length) actions.push(actBtn('Patch them up', 'consumable', () => { say(firstAidCompanion(p, def.id), `${def.nickname} patched up`); if (isLive) o.crewChanged(); }, '', kits ? `Uses a first aid kit (${kits} on you)` : 'Needs a first aid kit from your pockets', !kits));
+    if (st.health < 1 || st.condition.injuries.length) actions.push(actBtn('Patch them up', 'consumable', () => { say(firstAidCompanion(p, def.id), `${def.nickname} patched up`); if (isLive && !atHomeNow()) o.crewChanged(); }, '', kits ? `Uses a first aid kit (${kits} on you)` : 'Needs a first aid kit from your pockets', !kits));
     if (st.weapon) actions.push(actBtn('Take weapon back', 'weapon', () => { say(takeWeapon(p, def.id), 'Back in your pockets'); if (isLive) o.crewChanged(); }));
     if (picking) {
       actions.push(h('div', { class: 'pf-pick' }, h('div', { class: 'pf-sub2', text: 'Give them…' }),
-        ...pocketsWeapons.map((w) => h('button', { class: 'pf-pick-item', 'data-nav': true, onclick: () => { say(giveWeapon(p, def.id, w.uid), `${def.nickname} has the ${ITEMS[w.id].name.toLowerCase()}`); picking = false; if (isLive || s.active === def.id) o.crewChanged(); render(); } },
+        ...pocketsWeapons.map((w) => h('button', { class: 'pf-pick-item', 'data-nav': true, onclick: () => { say(giveWeapon(p, def.id, w.uid), `${def.nickname} has the ${ITEMS[w.id].name.toLowerCase()}`); picking = false; if (isLive) o.crewChanged(); render(); } },
           h('img', { src: itemIconUrl(w.id), alt: '' }), h('span', { text: ITEMS[w.id].name }), h('small', { text: `${w.hits ?? ''} hits` }))),
         actBtn('Cancel', 'back', () => { picking = false; render(); })));
     } else actions.push(actBtn(st.weapon ? 'Swap weapon' : 'Give a weapon', 'weapon', () => { picking = true; render(); }, '', pocketsWeapons.length ? `${pocketsWeapons.length} in your pockets` : 'No weapons in your pockets', !pocketsWeapons.length));
@@ -332,9 +371,11 @@ export function profileScreen(o: ProfileOptions): Screen {
       section('Condition', 'info',
         h('label', { class: 'pf-lab', text: 'Health' }), bar(f.vitals.health, f.vitals.maxHealth, 'hp'),
         h('label', { class: 'pf-lab', text: isLive ? 'Stamina' : 'Stamina (rested)' }), bar(f.vitals.stamina, f.vitals.maxStamina, 'st'),
-        row('Ready to fight', avail.ok ? (cond === 'excellent' || cond === 'good' ? 'Yes' : 'Yes, but hurt') : 'No', avail.ok ? undefined : avail.reason),
+        h('div', { class: 'pf-fatigue' }, h('span', { class: 'k', text: 'Fatigue' }), bar(st.fatigue, 100, 'fat', `${Math.round(st.fatigue)}%`)),
+        row('Ready to fight', avail.ok ? (st.fatigue >= 50 ? 'Yes, but tired' : cond === 'excellent' || cond === 'good' ? 'Yes' : 'Yes, but hurt') : 'No', avail.ok ? undefined : avail.reason),
+        row('Recovering', atHomeNow() && isLive ? 'Resting at home' : following ? 'Out with you' : 'Resting at home', 'Sat on a sofa at home is quickest for health and fatigue'),
         h('div', { class: 'pf-sub2', text: 'Injuries' }),
-        injuryList(st.condition, s.active !== def.id || !isLive),
+        injuryList(st.condition, !following || atHomeNow()),
         ex ? h('p', { class: 'pf-hint', text: ex }) : null,
       ),
       section('Equipment', 'bag',
@@ -357,7 +398,7 @@ export function profileScreen(o: ProfileOptions): Screen {
       h('div', { class: 'pf-active-row' }, h('b', { text: def.nickname }), condBadge(cond)),
       bar(f.vitals.health, f.vitals.maxHealth, 'hp thin'),
       bar(f.vitals.stamina, f.vitals.maxStamina, 'st thin'),
-      h('small', { text: `${w} · ${avail.ok ? 'Ready' : 'Recovering: stays home'}` }),
+      h('small', { text: `${PERSONALITIES[def.personality].name} · ${w} · ${avail.ok ? (st.fatigue >= 50 ? 'Tired' : 'Ready') : 'Recovering: stays home'}` }),
     );
   }
 

@@ -270,7 +270,7 @@ export function contactsScreen(progress: Progress, close: () => void, openMap: (
     return [
       h('div', { class: 'phone-msg' }, h('b', { text: 'Mo' }), h('p', { text: next ? `“${hintFor(next.flag)}”` : '“You did it. Nobody runs these streets now. Mad.”' })),
       shopRow('Dave’s Cabs', `£${TAXI_COST} a ride from the tin. Pick where on the map.`, 'Open map', openMap),
-      ...(crew ? [shopRow('Your crew', s.companions.active ? `Following you: ${COMPANIONS[s.companions.active]?.name ?? s.companions.active}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage (H)', crew)] : []),
+      ...(crew ? [shopRow('Your crew', s.companions.following.length ? `Following you: ${s.companions.following.map((id) => COMPANIONS[id]?.nickname ?? id).join(', ')}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage (H)', crew)] : []),
     ];
   }, close);
 }

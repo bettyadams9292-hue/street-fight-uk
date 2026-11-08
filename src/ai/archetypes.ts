@@ -16,6 +16,8 @@ export interface Archetype {
   secondaryStyle?: StyleId;
   attributes: Attributes;
   level: number;
+  /** Button habits (crew fighting styles): chance a punch or kick is the heavy one, and a strike is a kick (−1: never kicks). */
+  buttonBias?: { heavy: number; kick: number };
   /** 0..1: how readily it attacks. */
   aggression: number;
   /** Chances to defend against an incoming attack it can see. */

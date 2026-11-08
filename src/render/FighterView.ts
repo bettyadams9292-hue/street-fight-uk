@@ -137,6 +137,48 @@ export function activityPose(act: string, time: number): Pose {
     }
     case 'browse':
       return base({ head: [0.25, 0.1 * sn(t * 0.5), 0], lShoulder: [0.15, 0, -0.1], rShoulder: [0.15, 0, 0.1], lElbow: [-0.35, 0, 0], rElbow: [-0.35, 0, 0] });
+    // ---- crew at home: sitting variations (hips stay on the seat; only the top half changes) ----
+    case 'sit_back': // leaning back, arms along the cushions
+      return base({
+        spine: [-0.22, 0, 0], head: [0.08 + 0.03 * sn(t * 0.4), 0.12 * sn(t * 0.23), 0], lHip: [-1.4, 0, 0.16], rHip: [-1.4, 0, -0.16], lKnee: [1.35, 0, 0], rKnee: [1.35, 0, 0],
+        lShoulder: [0.2, 0, -0.75], rShoulder: [0.2, 0, 0.75], lElbow: [-0.5, 0, 0], rElbow: [-0.5, 0, 0],
+      }, 0.47);
+    case 'sit_phone': // looking down at a phone held in both hands
+      return base({
+        spine: [0.28, 0, 0], head: [0.5, 0, 0], lHip: [-1.5, 0, 0.12], rHip: [-1.5, 0, -0.12], lKnee: [1.5, 0, 0], rKnee: [1.5, 0, 0],
+        lShoulder: [-0.75, 0, -0.05], rShoulder: [-0.75, 0, 0.05], lElbow: [-1.55 - 0.05 * sn(t * 3), 0, 0], rElbow: [-1.55, 0, 0],
+      }, 0.47);
+    case 'sit_talk': // sat, turned a little, one hand going
+      return base({
+        spine: [0.1, 0.25 * sn(t * 0.5), 0], head: [0.05, 0.35 + 0.1 * sn(t * 1.1), 0], lHip: [-1.5, 0, 0.12], rHip: [-1.5, 0, -0.12], lKnee: [1.5, 0, 0], rKnee: [1.5, 0, 0],
+        rShoulder: [-0.6 - 0.25 * sn(t * 2.2), 0, 0.3], rElbow: [-1.2 - 0.3 * sn(t * 2.2), 0, 0], lShoulder: [-0.45, 0, -0.1], lElbow: [-0.7, 0, 0],
+      }, 0.47);
+    case 'sit_arms': // sat with arms folded
+      return base({
+        spine: [0.05, 0, 0], head: [0, 0.2 * sn(t * 0.3), 0], lHip: [-1.5, 0, 0.12], rHip: [-1.5, 0, -0.12], lKnee: [1.5, 0, 0], rKnee: [1.5, 0, 0],
+        lShoulder: [-0.55, 0, -0.35], rShoulder: [-0.55, 0, 0.35], lElbow: [-2.1, 0.6, 0], rElbow: [-2.1, -0.6, 0],
+      }, 0.47);
+    // ---- standing at home ----
+    case 'phone':
+      return base({ head: [0.55, 0, 0], spine: [0.12, 0, 0], lShoulder: [-0.7, 0, -0.05], rShoulder: [-0.7, 0, 0.05], lElbow: [-1.6, 0, 0], rElbow: [-1.6 - 0.05 * sn(t * 3), 0, 0] });
+    case 'arms':
+      return base({ head: [0, 0.25 * sn(t * 0.35), 0], lShoulder: [-0.55, 0, -0.35], rShoulder: [-0.55, 0, 0.35], lElbow: [-2.1, 0.6, 0], rElbow: [-2.1, -0.6, 0] });
+    case 'look':
+      return base({ head: [0.05, 0.6 * sn(t * 0.45), 0], spine: [0.03, 0.15 * sn(t * 0.45), 0], lShoulder: [-0.05, 0, -0.12], rShoulder: [-0.05, 0, 0.12] });
+    case 'stretch': {
+      const k = (sn(t * 0.9) + 1) / 2;
+      return base({ spine: [-0.1 * k, 0.4 * sn(t * 0.45), 0.25 * sn(t * 0.45)], lShoulder: [-2.6 * k - 0.2, 0, -0.25], rShoulder: [-2.6 * k - 0.2, 0, 0.25], lElbow: [-0.3, 0, 0], rElbow: [-0.3, 0, 0], head: [-0.2 * k, 0, 0] });
+    }
+    case 'laugh': {
+      const b = Math.abs(sn(t * 9));
+      return base({ spine: [0.15 + 0.12 * b, 0, 0], head: [-0.25 + 0.1 * b, 0, 0], lShoulder: [-0.4, 0, -0.25], rShoulder: [-0.4, 0, 0.25], lElbow: [-1.2, 0, 0], rElbow: [-1.2, 0, 0] });
+    }
+    case 'drink': {
+      const k = Math.max(0, sn(t * 0.8));
+      return base({ head: [-0.35 * k, 0, 0], rShoulder: [-1.2 - 0.6 * k, 0, 0.2], rElbow: [-1.9 + 0.2 * k, 0, 0], lShoulder: [-0.1, 0, -0.15] });
+    }
+    case 'lean': // leaning on a counter or wall, weight on one leg
+      return base({ hips: [0, 0, 0.05], spine: [0.22, 0, 0], lShoulder: [-0.9, 0, -0.2], rShoulder: [-0.9, 0, 0.2], lElbow: [-0.9, 0, 0], rElbow: [-0.9, 0, 0], lHip: [0.1, 0, 0.1], lKnee: [0.25, 0, 0] });
     default:
       return base({});
   }
@@ -208,9 +250,12 @@ export class FighterView {
     const f = this.fighter;
     this.root.position.set(f.pos.x, f.pos.y, f.pos.z);
 
-    // Turn smoothly to face left/right.
-    const targetYaw = (f.facing * Math.PI) / 2;
-    this.yaw += (targetYaw - this.yaw) * (1 - Math.exp(-28 * dt));
+    // Turn smoothly to face left/right (or the way they're sat, on furniture), the short way round.
+    const targetYaw = f.yawOverride ?? (f.facing * Math.PI) / 2;
+    let dy = targetYaw - this.yaw;
+    while (dy > Math.PI) dy -= 2 * Math.PI;
+    while (dy < -Math.PI) dy += 2 * Math.PI;
+    this.yaw += dy * (1 - Math.exp(-(f.yawOverride !== null ? 9 : 28) * dt));
     this.root.rotation.y = this.yaw + this.extraYaw;
 
     const moved = Math.hypot(f.pos.x - this.lastX, f.pos.z - this.lastZ);

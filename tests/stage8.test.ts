@@ -245,13 +245,13 @@ test('two pedestrians walking into each other pass, and everyone calms down afte
 console.log('\nStage 8: companions');
 
 test('companions: seven fighters for hire in the Red Lion snug, each different, fees and unlocks enforced', () => {
-  assert(COMPANION_LIST.length === 7 && new Set(COMPANION_LIST.map((c) => c.role)).size === 7, 'seven roles');
+  assert(COMPANION_LIST.length >= 7 && new Set(COMPANION_LIST.map((c) => c.role)).size === COMPANION_LIST.length, 'seven roles');
   const pub = LEVELS.pub;
   assert(COMPANION_LIST.every((c) => pub.stations!.some((s) => s.id === 'recruit' && s.tab === c.id && s.npc)), 'all in the pub');
   const p = fresh(5000);
   const before = wallet(p);
   assert(hireCompanion(p, 'shaz').ok && wallet(p) === before - COMPANIONS.shaz.fee, 'hired, fee paid');
-  assert(p.save.companions.active === 'shaz', 'first hire follows you');
+  assert(p.save.companions.following[0] === 'shaz', 'first hire follows you');
   assert(!hireCompanion(p, 'shaz').ok, 'not twice');
   assert(!hireCompanion(p, 'tank').ok && !p.save.companions.recruited.includes('tank'), 'locked until the story says so');
   p.save.flags.boss_sully = true;
@@ -259,8 +259,8 @@ test('companions: seven fighters for hire in the Red Lion snug, each different, 
   assert(!hireCompanion(p, 'jonno').ok, 'challenge-only');
   winChallenge(p, 'jonno');
   assert(p.save.companions.recruited.includes('jonno'), 'won over');
-  assert(setActiveCompanion(p, 'tank').ok && p.save.companions.active === 'tank', 'choose who follows');
-  assert(dismissCompanion(p, 'tank').ok && p.save.companions.active === null, 'dismissed');
+  assert(setActiveCompanion(p, 'tank').ok && p.save.companions.following.includes('tank'), 'choose who follows');
+  assert(dismissCompanion(p, 'tank').ok && !p.save.companions.following.includes('tank'), 'dismissed');
   const poor = fresh(10);
   assert(!hireCompanion(poor, 'danny').ok && wallet(poor) === 10, 'no money, no hire');
   const q = roundtrip(p);
@@ -289,8 +289,10 @@ test('companion fights enemies, never civilians or Mo, and gets back up after th
   const c = w.companion!;
   walk(w, 1, 60);
   assert(w.activeEncounter, 'fight on (your companion didn’t get in your way)');
-  const enemies = () => w.enemies.filter((e) => !e.isKO);
-  const hp0 = enemies().reduce((n, e) => n + e.vitals.health, 0);
+  let dealt = 0;
+  w.sim.bus.on('hit:landed', (e) => {
+    if (e.attacker === c && e.target.team === 'enemy') dealt += e.damage;
+  });
   let civHit = false;
   for (let i = 0; i < 60 * 25 && w.activeEncounter; i++) {
     const cmd = emptyCommand();
@@ -299,8 +301,7 @@ test('companion fights enemies, never civilians or Mo, and gets back up after th
     for (const civ of w.civilians) if (civ.f.vitals.health < civ.f.vitals.maxHealth) civHit = true;
   }
   assert(!civHit, 'no civilian hurt');
-  const hp1 = enemies().reduce((n, e) => n + e.vitals.health, 0);
-  assert(hp1 < hp0 || !w.activeEncounter, 'enemies took damage');
+  assert(dealt > 0, 'the companion hurt the enemies');
   // Knock the companion out and check they get back up once it's quiet.
   c.vitals.health = 1;
   c.knockOut();

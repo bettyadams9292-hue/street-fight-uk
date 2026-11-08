@@ -242,6 +242,15 @@ export class GameRenderer {
     cam.lookAt(offX, st.camY + offY, 0);
   }
 
+  /** Where a point in the world is on screen (CSS pixels), or null if it's behind the camera. */
+  screenOf(x: number, y: number, z: number): { x: number; y: number } | null {
+    const v = new THREE.Vector3(x, y, z).project(this.cameraRig.camera);
+    if (v.z > 1) return null;
+    const el = this.renderer.domElement;
+    const r = el.getBoundingClientRect();
+    return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height };
+  }
+
   /** @param focus the player fighter (camera follows), or null for the menu drift */
   render(dt: number, time: number, focus: Fighter | null): void {
     if (this.sim) {

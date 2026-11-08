@@ -53,8 +53,9 @@ import { coachBoardScreen, DrillGame, gymStoreScreen, RepGame, styleCoachScreen 
 import { workshopScreen } from './ui/workshopUI';
 import { recruitScreen } from './ui/companionUI';
 import { computerScreen } from './ui/propertyUI';
-import { COMPANIONS, COMPANION_WAITS_OUTSIDE, companionAvailable, companionRecover, crewState, winChallenge } from './companions/companions';
+import { COMPANIONS, COMPANION_WAITS_OUTSIDE, companionAvailable, companionRecover, crewState, followMe, relaxAtHome, winChallenge } from './companions/companions';
 import { healOverTime, injuryName, treatInjury } from './condition/condition';
+import { applyCrewModifiers } from './companions/crewFighter';
 import { GYM_KIT, SPAR_FATIGUE, SPAR_TRAINS, canTrain, finishSession, recover, type RepGrade } from './training/gym';
 import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, type FightGym } from './training/styleGyms';
 import { themeProfile } from './render/themes';
@@ -511,12 +512,26 @@ export class Game {
     if (area === 'home' && from !== 'home' && p.save.mealBuff) p.save.mealBuff = false;
     // Rebuilding the area you're in (after a menu) keeps this visit's finished side-fights finished.
     const keepCleared = leaving && leaving.area === area && this.world ? this.world.clearedOptional() : [];
-    const active = p.save.companions.active ? COMPANIONS[p.save.companions.active] : null;
-    // Too hurt to come out: they stay home resting until they're fit.
-    const fit = active ? companionAvailable(crewState(p, active.id)) : { ok: true as const };
-    if (active && !fit.ok && area !== from && !COMPANION_WAITS_OUTSIDE.has(area)) this.hud.toast(`${active.nickname} is resting at home: ${fit.reason.toLowerCase()}`, 'warn');
-    const companion = active && fit.ok && !COMPANION_WAITS_OUTSIDE.has(area) ? active : null;
-    const world = new World(level, p, { entry, touch: this.touchWanted(), carry, difficulty: this.settings.get().difficulty, at: opts.at, keepCleared, companion });
+    // Your crew: whoever's following you and fit comes along. Too hurt: they stay home resting until they're fit.
+    const following = p.save.companions.following.map((id) => COMPANIONS[id]).filter(Boolean);
+    const fit = following.filter((d) => companionAvailable(crewState(p, d.id)).ok);
+    if (area !== from && area !== 'home' && !COMPANION_WAITS_OUTSIDE.has(area)) {
+      for (const d of following) {
+        const ok = companionAvailable(crewState(p, d.id));
+        if (!ok.ok) this.hud.toast(`${d.nickname} is resting at home: ${ok.reason.toLowerCase()}`, 'warn');
+      }
+    }
+    let companions: typeof fit = [];
+    let home: { residents: typeof fit; arriving: typeof fit } | undefined;
+    if (area === 'home') {
+      // Everyone lives here. Those who came out with you walk in through the front door behind you;
+      // the rest are already in, relaxing. (Rebuilding the house in place: everyone's already settled.)
+      const arrivingNow = from !== 'home' && entry === 'door';
+      const arriving = arrivingNow ? fit : [];
+      const residents = p.save.companions.recruited.map((id) => COMPANIONS[id]).filter((d) => d && !arriving.includes(d));
+      home = { residents, arriving };
+    } else if (!COMPANION_WAITS_OUTSIDE.has(area)) companions = fit;
+    const world = new World(level, p, { entry, touch: this.touchWanted(), carry, difficulty: this.settings.get().difficulty, at: opts.at, keepCleared, companions, home });
     this.world = world;
     p.save.area = area;
     p.save.entry = level.entries.some((e) => e.id === entry) ? entry : level.entries[0].id;
@@ -550,6 +565,7 @@ export class Game {
   }
 
   private leaveWorld(): void {
+    this.hud.clearBubbles();
     for (const off of this.worldUnsub) off();
     this.worldUnsub = [];
     this.world = null;
@@ -634,6 +650,7 @@ export class Game {
         this.hud.toast(who === 'you' ? `You’re hurt: ${list}. Rest at home or use first aid (H to check).` : `${name} is hurt: ${list}.`, 'warn');
       }),
       ev.on('companion:level', ({ name, level }) => this.hud.toast(`${name} is level ${level} now`, 'item')),
+      ev.on('crew:say', ({ fighter, name, text }) => this.hud.speech(fighter, name, text)),
       // A real hit while riding knocks you off; the bike's left where you fell.
       w.sim.bus.on('hit:landed', ({ target }) => {
         if (target === w.player && this.progress?.save.property.riding && this.world === w) this.knockOff = true;
@@ -1470,13 +1487,29 @@ export class Game {
       p.applyModifiers(w.player, w.difficulty);
       this.hud.toast(`Healed: ${healed.join(', ').toLowerCase()}`, 'item');
     }
+    // Crew in the house: sat down rests best (health and fatigue), stood about less so.
+    const resting = new Set(w?.restingIds() ?? []);
+    for (const m of w?.crew ?? []) {
+      if (!m.brain.home || m.f.isKO) continue;
+      const rate = resting.has(m.def.id) ? 1 / 100 : 1 / 200;
+      m.f.vitals.health = Math.min(m.f.vitals.maxHealth, m.f.vitals.health + m.f.vitals.maxHealth * rate * dt);
+    }
     w?.syncCompanion();
-    const out = w?.companion && this.world?.companionDef ? this.world.companionDef.id : null;
+    const out = new Set((w?.crew ?? []).filter((m) => !m.brain.home).map((m) => m.def.id));
+    const inHouse = new Set((w?.crew ?? []).filter((m) => m.brain.home).map((m) => m.def.id));
     for (const id of p.save.companions.recruited) {
       const st = crewState(p, id);
-      healOverTime(st.condition, dt, id === out ? 1 : 3);
-      // The one out with you heals in the fight's own time; everyone else rests.
-      if (id !== out) companionRecover(st, dt, true);
+      healOverTime(st.condition, dt, out.has(id) ? 1 : 3);
+      // Out with you: health comes back in the fight's own time. At home (off-screen): resting.
+      if (!out.has(id) && !inHouse.has(id)) companionRecover(st, dt, true);
+      // Fatigue: sat on the sofa clears it quickest.
+      const fatigueDrop = resting.has(id) ? 1.2 : inHouse.has(id) || !out.has(id) ? 0.5 : 0.12;
+      const before = st.fatigue;
+      st.fatigue = Math.max(0, st.fatigue - fatigueDrop * dt);
+      if (before >= 50 !== st.fatigue >= 50 || (before >= 75) !== (st.fatigue >= 75)) {
+        const m = w?.crew.find((c) => c.def.id === id);
+        if (m) applyCrewModifiers(m.f, m.def, p);
+      }
     }
   }
 
@@ -1492,6 +1525,7 @@ export class Game {
       const st = crewState(p, id);
       for (const i of [...st.condition.injuries]) treatInjury(st.condition, i.part);
       st.health = 1;
+      st.fatigue = Math.max(0, st.fatigue - 50);
     }
     if (this.world) p.applyModifiers(this.world.player, this.world.difficulty);
     return fixed.length ? `Rested: ${fixed.join(', ').toLowerCase()} feel${fixed.length === 1 ? 's' : ''} better. The crew are rested too.` : 'Rested. The crew are fit and ready.';
@@ -1567,6 +1601,65 @@ export class Game {
     );
   }
 
+  /**
+   * Crew orders. Saved: 'follow' (comes out with you) and 'home' (stays home relaxing).
+   * For now only: 'wait' (stay here), 'ready' (close and ready for a fight), 'callover' / 'relax' (at home).
+   * Returns a line to show, and whether the area needs rebuilding (someone joins or leaves you).
+   */
+  private crewOrder(id: string, order: 'follow' | 'home' | 'wait' | 'ready' | 'callover' | 'relax'): { ok: boolean; text: string; rebuild?: boolean } {
+    const p = this.progress!;
+    const w = this.world;
+    const def = COMPANIONS[id];
+    const m = w?.crew.find((c) => c.def.id === id);
+    switch (order) {
+      case 'follow': {
+        const r = followMe(p, id);
+        if (!r.ok) return { ok: false, text: r.reason };
+        if (m && !m.brain.home) {
+          m.brain.setOrder('follow');
+          return { ok: true, text: `${def.nickname}: “Right behind you.”` };
+        }
+        return { ok: true, text: `${def.nickname} will come out with you`, rebuild: !w?.homeLife };
+      }
+      case 'home': {
+        const r = relaxAtHome(p, id);
+        if (!r.ok) return { ok: false, text: r.reason };
+        if (m?.brain.home) m.brain.home.following = false;
+        return { ok: true, text: `${def.nickname} is staying home to relax`, rebuild: !!m && !m.brain.home };
+      }
+      case 'wait':
+      case 'ready':
+        if (!m || m.brain.home) return { ok: false, text: 'Only for someone out with you' };
+        m.brain.setOrder(order);
+        return { ok: true, text: order === 'wait' ? `${def.nickname} waits here` : `${def.nickname} stays close, ready for trouble` };
+      case 'callover':
+      case 'relax':
+        if (!m?.brain.home) return { ok: false, text: 'Only at home' };
+        m.brain.home.following = order === 'callover';
+        return { ok: true, text: order === 'callover' ? `${def.nickname} gets up and comes with you` : `${def.nickname} goes back to relaxing` };
+    }
+  }
+
+  /** G: quick orders for everyone with you: follow → wait here → ready → follow. At home: come with me / relax. */
+  private quickCrewOrder(): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    const out = w.crew.filter((m) => !m.brain.home && !m.waiting);
+    if (out.length) {
+      const now = out[0].brain.order;
+      const next = now === 'follow' ? 'wait' : now === 'wait' ? 'ready' : 'follow';
+      w.orderCrew(next);
+      this.hud.toast(next === 'wait' ? 'Crew: wait here' : next === 'ready' ? 'Crew: stay close, ready for trouble' : 'Crew: follow me', 'item');
+      return;
+    }
+    const mine = w.crew.filter((m) => m.brain.home && p.save.companions.following.includes(m.def.id));
+    if (!mine.length) return this.hud.toast(p.save.companions.recruited.length ? 'Nobody’s with you. H → Crew to pick who follows you.' : 'No crew yet: fighters for hire at the Red Lion', 'item');
+    const on = !mine[0].brain.home!.following;
+    w.callHomeCrew(on, mine.map((m) => m.def.id));
+    this.hud.toast(on ? 'Crew: up you get, come with me' : 'Crew: make yourselves at home', 'item');
+  }
+
   /** Character & Crew (H): your numbers, condition and kit; your crew's. */
   private openProfile(tab: 'character' | 'crew' = 'character', crewId?: string): void {
     const w = this.world;
@@ -1582,7 +1675,8 @@ export class Game {
       profileScreen({
         progress: p,
         player: w.player,
-        liveCompanion: w.companion && w.companionDef ? { id: w.companionDef.id, f: w.companion } : null,
+        liveCrew: w.crew.filter((m) => !m.waiting).map((m) => ({ id: m.def.id, f: m.f })),
+        order: (id, order) => this.crewOrder(id, order),
         tab,
         crewId,
         crewChanged: () => {
@@ -1737,6 +1831,10 @@ export class Game {
     }
     if (this.state === 'playing' && a === 'character' && this.world && !this.mode) {
       this.openProfile();
+      return;
+    }
+    if (this.state === 'playing' && a === 'crew' && this.world && !this.mode) {
+      this.quickCrewOrder();
       return;
     }
     if (this.state === 'playing' && (a === 'inventory' || a === 'map') && this.world) {
@@ -1987,6 +2085,7 @@ export class Game {
       const enemy = this.world ? this.world.focusEnemy : this.mode!.focusEnemy;
       // In story mode the boss has its own bar along the bottom.
       this.hud.update(dt, player, this.world?.activeBoss && enemy === this.world.activeBoss ? null : enemy);
+      this.hud.updateBubbles((x, y, z) => this.renderer.screenOf(x, y, z));
       if (this.world && this.progress) this.updateStoryHud(dt);
       this.updatePrompt();
     }

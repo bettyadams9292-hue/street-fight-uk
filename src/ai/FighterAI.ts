@@ -276,6 +276,13 @@ export class FighterAI {
   private pickStarter(): AttackButton {
     const r = this.rng.next();
     const tired = this.self.stats.hasTag('state.tired') || this.self.stats.hasTag('state.exhausted');
+    const bias = this.archetype.buttonBias;
+    if (bias) {
+      // A crew member's fighting style: their own mix of kicks and punches, heavy and light.
+      const kick = bias.kick > 0 && this.rng.next() < bias.kick;
+      const heavy = !tired && this.rng.next() < bias.heavy;
+      return kick ? (heavy ? 'hk' : 'lk') : heavy ? 'hp' : 'lp';
+    }
     if (r < 0.42) return 'lp';
     if (r < 0.67) return 'lk';
     if (r < 0.85) return tired ? 'lp' : 'hp';
@@ -288,8 +295,17 @@ export class FighterAI {
     const plan: AttackButton[] = [];
     let current = style.moves[style.starters[starter]];
     for (let i = 0; i < length && current; i++) {
-      const options = Object.keys(current.next) as AttackButton[];
+      let options = Object.keys(current.next) as AttackButton[];
       if (!options.length) break;
+      const bias = this.archetype.buttonBias;
+      if (bias) {
+        // Follow-ups in their style: no kicks for a boxer; heavy hitters finish heavy, quick fighters keep it light.
+        if (bias.kick < 0) options = options.filter((o) => o === 'lp' || o === 'hp');
+        const heavy = this.rng.next() < bias.heavy;
+        const pref = options.filter((o) => (o === 'hp' || o === 'hk') === heavy);
+        if (pref.length) options = pref;
+        if (!options.length) break;
+      }
       const b = options[Math.floor(this.rng.next() * options.length)];
       plan.push(b);
       current = style.moves[current.next[b]!];
