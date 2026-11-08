@@ -669,6 +669,103 @@ The full `npm test` (nine suites) passed.
 - A gamepad can step through places with the D-pad but can't pan the map.
 - The shop, stash and pawn screens share the new styles but keep their tile grids rather than the inventory's cards.
 
+## Stage 10 report: Character & Crew, injuries and condition
+
+**One screen, two tabs.** Open it with **H**, the person button on the HUD, the pause menu ("Character & crew"), or the phone ("Your crew"). Esc or H closes it. Everything on it is read from the real game state; nothing is a placeholder.
+
+**Character tab**
+
+- **Left: you.**
+  - A live 3D portrait using the game's own character model, in your guard, holding your weapon.
+  - Name, level, background, an overall condition badge, and live health and stamina.
+- **Centre: your numbers.**
+  - **Progress.** Level, XP to the next level, total XP, training points, money on you and in the tin, and your fighting styles with their ranks.
+  - **Physical.** The six real attributes: Strength, Endurance, Agility, Speed, Defence and Technique. Each shows its current value, how much gear, training or injuries change it, and what it does.
+  - **Fitness.** Your home-gym training ranks.
+  - **In a fight.** Damage multiplier, clean-hit chance (the game's ×1.3 "crit"), share of damage taken, attack and move speed, stamina recovery per second, poise, and your record (KOs, bosses, times beaten).
+- **Right: condition and kit.**
+  - Health, stamina, training fatigue, and each injury with its severity, effect, a recovery bar and time left.
+  - The weapon in your hands (damage and hits left), everything you're wearing with its bonuses, and your pockets and stash.
+- **Left out:** accuracy and per-weapon proficiency, because the game doesn't have them.
+
+**Injuries** (`src/condition/condition.ts`)
+
+- **How damage is counted.** During a fight, damage you take is counted by where it lands: high hits on the head, mid on the body, low on the legs. Heavy blows you block land on the arms, and clean hits also add bruising.
+- **When it turns into an injury.** When the fight ends (or you go down), any part that took 30% or more of your max health is injured; 65% or more is a level worse. A knockout adds a level to the worst-hit part. Sparring with Mo never injures you.
+- **Levels.** Minor, Serious or Severe. Each level's effect goes through the normal stat modifiers, so it really changes your fighter:
+
+  | Injury | Effect (minor / serious / severe) |
+  |---|---|
+  | Head | Hits hurt 5 / 10 / 18% more |
+  | Arm | 7 / 14 / 22% less damage and slightly slower swings |
+  | Leg | 7 / 14 / 22% slower |
+  | Body | −10 / −20 / −35 max stamina and slower stamina recovery |
+  | Bruising | −8 / −16 / −25 max health |
+
+- **Exhaustion.** Training fatigue of 50 or more slows stamina recovery by 15%; 75 or more slows it by 30%.
+- **Overall condition.** Excellent, Good, Tired, Injured, Badly injured or Critical, each with a colour and a line of text.
+- **Recovery.**
+  - Each level heals with play time (3, 5 or 7 minutes) and three times as fast at home.
+  - The sofa takes a level off every injury, yours and your crew's.
+  - A first aid kit takes a level off your worst injury.
+  - Plasters or a meal clear bruising.
+  - You get a toast when you're hurt and when you heal.
+
+**Crew tab**
+
+- **Active crew panel.** Shows who's following you (1 of 1 slots) with their health, stamina, condition, weapon and whether they're ready.
+- **Crew list.** A card for everyone you've hired, with a portrait, level, role, a health bar and a clear status: Following you, Available, Injured or Recovering.
+- **Profile.**
+  - A live 3D portrait, role and style, condition, their line, and a 0–100 fight rating. The rating is worked out from their attributes, damage share, level, health, injuries and weapon.
+  - Level and XP, fights and KOs, attributes, damage, clean-hit chance, damage taken, and what they're good and bad at.
+  - Health, stamina, whether they're ready to fight, injuries with recovery, and their weapon and clothes.
+  - The numbers are built exactly the way the fight builds them (`src/companions/crewFighter.ts`), so they match what turns up in a fight.
+- **Actions.** All of them work:
+  - **Follow me / Stand down.** Swaps who's following, applied straight away (or after the fight, if one's on).
+  - **Patch them up.** Uses a first aid kit from your pockets: worst injury down a level, +40% health.
+  - **Give a weapon / Swap weapon / Take weapon back.** Takes a real item from your pockets. They hold it in fights, its wear is saved, and they keep hold of it if they're knocked down.
+  - **Let them go.** Asks you to confirm; their weapon comes back to you.
+
+**Companion state** (saved per companion)
+
+- **Level.** XP from every enemy KO while they're out with you (more for their own KOs), up to level 10. Each level is +4% damage and +6 health.
+- **Health** carries over between fights and areas instead of resetting to full.
+- **Injuries** use the same system as yours.
+- **Recovery.**
+  - Anyone not out with you gets their health back resting: full in about 100 seconds of play.
+  - A companion with a severe injury, or under 25% health, can't follow you; they rest at home until they're fit.
+- They still get back up at 40% health three seconds after a fight, as before.
+
+**Saving.** Two new save fields: `condition` (your injuries) and `companions.state` (each companion's level, XP, health, injuries, weapon, fights and KOs). Older saves load with no injuries and everyone fit at level 1. Weapons held by the crew are checked like every other item stack.
+
+**Tests.** `tests/stage10.test.ts` has 12 tests, covering:
+
+- hit counting and the injury thresholds;
+- injury effects on real stats;
+- healing over time, at home, and with first aid and plasters;
+- the condition levels;
+- a real fight leaving injuries;
+- sparring never injuring you;
+- crew health carried into and out of the world;
+- the crew screen's numbers matching the fight;
+- levelling, and XP from real KOs;
+- the availability rule and recovery;
+- giving and taking weapons;
+- save migration.
+
+The full `npm test` (ten suites) passed.
+
+**Files.**
+
+- New: `src/condition/condition.ts`, `src/companions/crewFighter.ts`, `src/ui/profileUI.ts`, `src/ui/portrait.ts`, `tests/stage10.test.ts`.
+- Changed: `src/companions/companions.ts`, `src/world/World.ts`, `src/progress/Progress.ts`, `src/Game.ts`, `src/input/InputManager.ts`, `src/ui/Hud.ts`, `src/ui/hub.ts`, `src/ui/screens.ts`, `src/ui/styles.css`, `package.json`.
+
+**Limits.**
+
+- Only one companion follows at a time (that's the game's existing rule; the panel shows the slot).
+- Companions wear their own fixed clothes, and there's no armour in the game.
+- Your health still refills when you change area, as it always has. Injuries are the lasting damage.
+
 ## Characters: Quaternius Universal Base Characters (CC0)
 
 - **Source.** Fighters use the male and female models from Quaternius' **Universal Base Characters** (Standard, CC0, public domain). The originals and their licence are in [`assets/quaternius-ubc`](assets/quaternius-ubc/README.md).
