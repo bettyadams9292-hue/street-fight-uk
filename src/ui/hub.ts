@@ -261,43 +261,15 @@ export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: st
   { area: 'casino', entry: 'door', where: 'Slots, roulette, blackjack, prize motors. Market Square' },
 ];
 
-export function contactsScreen(progress: Progress, close: () => void, travel: (area: AreaId, entry: string) => void, changed: () => void, crew?: () => void): Screen {
-  return panelScreen('Phone', progress, (msg) => {
+export function contactsScreen(progress: Progress, close: () => void, openMap: () => void, crew?: () => void): Screen {
+  return panelScreen('Phone', progress, () => {
     const s = progress.save;
     const next = DISTRICT_ORDER.find((d) => !d.optional && !progress.has(d.flag));
-    const rows: HTMLElement[] = [
+    return [
+      h('div', { class: 'phone-msg' }, h('b', { text: 'Mo' }), h('p', { text: next ? `“${hintFor(next.flag)}”` : '“You did it. Nobody runs these streets now. Mad.”' })),
+      shopRow('Dave’s Cabs', `£${TAXI_COST} a ride from the tin. Pick where on the map.`, 'Open map', openMap),
       ...(crew ? [shopRow('Your crew', s.companions.active ? `Following you: ${s.companions.active}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage', crew)] : []),
-      h('h3', { text: 'Messages' }),
-      h('p', { text: next ? `Mo: "${hintFor(next.flag)}"` : 'Mo: "You did it. Nobody runs these streets now. Mad."' }),
-      h('h3', { text: `Dave’s Cabs: £${TAXI_COST} a ride, paid from the tin` }),
     ];
-    rows.push(h('p', { class: 'hint', text: 'Shops (dropped at the door):' }));
-    for (const stop of SHOP_STOPS) {
-      const lvl = LEVELS[stop.area];
-      const shut = !!stop.shop && !progress.isShopOpen(stop.shop);
-      rows.push(
-        shopRow(lvl.name, shut ? 'Shutters down after the robbery' : stop.where, shut ? 'Closed' : `£${TAXI_COST}`, shut ? null : () => {
-          if (s.cash.bank < TAXI_COST) return msg(`Need £${TAXI_COST} in the tin`, true);
-          s.cash.bank -= TAXI_COST;
-          changed();
-          travel(stop.area, stop.entry);
-        }),
-      );
-    }
-    rows.push(h('p', { class: 'hint', text: 'Streets:' }));
-    for (const stop of TAXI_STOPS) {
-      const lvl = LEVELS[stop.area];
-      const locked = !!stop.requires && !progress.has(stop.requires);
-      rows.push(
-        shopRow(lvl.district, locked ? stop.requiresText ?? 'Not yet' : lvl.name, locked ? 'Locked' : `£${TAXI_COST}`, locked ? null : () => {
-          if (s.cash.bank < TAXI_COST) return msg(`Need £${TAXI_COST} in the tin`, true);
-          s.cash.bank -= TAXI_COST;
-          changed();
-          travel(stop.area, stop.entry);
-        }),
-      );
-    }
-    return rows;
   }, close);
 }
 
@@ -340,7 +312,7 @@ export function tinScreen(progress: Progress, close: () => void, changed: () => 
 
 // ---- story menus --------------------------------------------------------------------------
 
-export function storyPauseMenu(actions: { resume: () => void; inventory: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; quit: () => void }): Screen {
+export function storyPauseMenu(actions: { resume: () => void; inventory: () => void; map: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; quit: () => void }): Screen {
   const el = h(
     'div',
     { class: 'screen pause-menu' },
@@ -348,13 +320,15 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
     h(
       'nav',
       { class: 'menu-list' },
-      menuButton('Resume', actions.resume),
-      menuButton('Inventory', actions.inventory, 'B / right-stick click / BAG'),
-      actions.home ? menuButton('Head home', actions.home, 'Back to your house. Fights here will still be waiting.') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
-      menuButton('Save', actions.save),
-      menuButton('Settings', actions.settings),
-      menuButton('Controls', actions.controls),
-      menuButton('Save and quit to menu', actions.quit),
+      menuButton('Resume', actions.resume, undefined, 'primary', 'play', 'Esc'),
+      menuButton('Map', actions.map, undefined, '', 'map', 'M'),
+      menuButton('Inventory', actions.inventory, undefined, '', 'bag', 'I'),
+      actions.home ? menuButton('Head home', actions.home, 'Fights here will still be waiting', '', 'home') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
+      h('div', { class: 'menu-gap' }),
+      menuButton('Save', actions.save, undefined, '', 'save'),
+      menuButton('Settings', actions.settings, undefined, '', 'settings'),
+      menuButton('Controls', actions.controls, undefined, '', 'controls'),
+      menuButton('Save and quit', actions.quit, undefined, '', 'quit'),
     ),
   );
   return {
@@ -363,6 +337,14 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
     onAction: (a) => {
       if (a === 'pause') {
         actions.resume();
+        return true;
+      }
+      if (a === 'map') {
+        actions.map();
+        return true;
+      }
+      if (a === 'inventory') {
+        actions.inventory();
         return true;
       }
       return false;

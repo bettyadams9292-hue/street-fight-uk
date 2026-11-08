@@ -1,4 +1,5 @@
 import { h } from './dom';
+import { icon, type IconName } from './icons';
 
 /**
  * Reusable menu controls. Each focusable control carries `data-nav`, and
@@ -6,11 +7,13 @@ import { h } from './dom';
  * well as mouse and touch.
  */
 
-export function menuButton(label: string, onClick: () => void, sub?: string, extraClass = ''): HTMLButtonElement {
+export function menuButton(label: string, onClick: () => void, sub?: string, extraClass = '', ic?: IconName, key?: string): HTMLButtonElement {
   return h(
     'button',
-    { class: `menu-btn ${extraClass}`, 'data-nav': true, onclick: () => onClick() },
+    { class: `menu-btn ${extraClass}${ic ? ' has-icon' : ''}`, 'data-nav': true, onclick: () => onClick() },
+    ic ? icon(ic, 'btn-icon') : null,
     h('span', { class: 'label', text: label }),
+    key ? h('kbd', { text: key }) : null,
     sub ? h('span', { class: 'sub', text: sub }) : null,
   );
 }

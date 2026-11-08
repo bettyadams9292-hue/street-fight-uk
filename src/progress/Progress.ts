@@ -11,6 +11,7 @@ import { defaultBasement, sanitiseBasement, type BasementSave } from '../busines
 import { defaultGym, sanitiseGym, type GymSave } from '../training/gym';
 import { sanitiseStyleTraining, type StyleTraining } from '../training/styleGyms';
 import { defaultCompanions, sanitiseCompanions, type CompanionSave } from '../companions/companions';
+import { DISTRICT_ORDER } from '../world/levels';
 import {
   GEAR_IDS,
   LEVEL_CAP,
@@ -106,6 +107,10 @@ export interface GameSave {
   basement: BasementSave;
   /** Seconds actually spent playing in the world: the business's clock. */
   playTime: number;
+  /** Places you've been (the map shows the rest as "not visited yet"). */
+  visited: AreaId[];
+  /** Where the map's route is set to, if anywhere. */
+  destination: AreaId | null;
   savedAt: string;
 }
 
@@ -146,6 +151,8 @@ export function newSave(character: PlayerCharacter): GameSave {
     companions: defaultCompanions(),
     basement: defaultBasement(),
     playTime: 0,
+    visited: ['home', 'estate'],
+    destination: null,
     savedAt: new Date().toISOString(),
   };
   // Starter kit: your hand wraps on, a couple of sandwiches in your pocket.
@@ -215,6 +222,8 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     companions: sanitiseCompanions(r.companions),
     playTime: typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0,
     basement: sanitiseBasement(r.basement, typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0),
+    visited: sanitiseVisited(r.visited, r.area, flags),
+    destination: (AREA_IDS as readonly string[]).includes(r.destination as string) ? (r.destination as AreaId) : null,
     savedAt: typeof r.savedAt === 'string' ? r.savedAt : base.savedAt,
   };
   const p = new Progress(out);
@@ -731,3 +740,17 @@ export class Progress {
     f.poise = f.stats.maxPoise;
   }
 }
+
+/** Places you've been. Saves from before the map: home, the estate, where you are and every district you've won. */
+function sanitiseVisited(raw: unknown, area: unknown, flags: Record<string, boolean>): AreaId[] {
+  const ok = (x: unknown): x is AreaId => typeof x === 'string' && (AREA_IDS as readonly string[]).includes(x);
+  const out = new Set<AreaId>(Array.isArray(raw) ? raw.filter(ok) : []);
+  if (!Array.isArray(raw)) {
+    for (const d of DISTRICT_ORDER) if (flags[d.flag]) out.add(d.area);
+    if (ok(area)) out.add(area);
+  }
+  out.add('home');
+  out.add('estate');
+  return [...out];
+}
+

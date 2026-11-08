@@ -2,6 +2,7 @@ import { ARCHETYPES, type ArchetypeId } from '../ai/archetypes';
 import { TRAINING_MODE_LABELS, type TrainingOpponent } from '../core/TrainingMode';
 import type { Fighter } from '../fighter/Fighter';
 import { h } from './dom';
+import { icon } from './icons';
 
 interface BarSet {
   root: HTMLElement;
@@ -79,8 +80,11 @@ export class Hud {
   private weaponChip: HTMLElement;
   private weaponBar: HTMLElement;
   private heatChip: HTMLElement;
+  private route: HTMLElement;
+  private routeText: HTMLElement;
+  private vs: HTMLElement;
 
-  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void }) {
+  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
       const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, `${i + 1} \u00b7 ${TRAINING_MODE_LABELS[m]}`) as HTMLButtonElement;
       this.modeButtons.set(m, b);
@@ -99,13 +103,17 @@ export class Hud {
     this.xpFill = h('div', { class: 'xp-fill' });
     this.objective = h('div', { class: 'objective' });
     this.weaponText = h('span', { class: 'weapon-held' });
+    this.routeText = h('span');
+    this.route = h('div', { class: 'route-line off' }, icon('route'), this.routeText);
     this.story = h(
       'div',
       { class: 'story-info' },
       h('div', { class: 'story-row' }, this.levelText, this.money, this.weaponText),
       h('div', { class: 'xp-bar' }, this.xpFill),
       this.objective,
+      this.route,
     );
+    this.vs = h('div', { class: 'vs', text: 'VS' });
     this.banner = h('div', { class: 'area-banner' });
     this.bossName = h('div', { class: 'boss-name' });
     this.bossFill = h('div', { class: 'fill hp' });
@@ -124,7 +132,7 @@ export class Hud {
       this.banner,
       this.bossBar,
       this.toasts,
-      h('div', { class: 'hud-top' }, this.player.root, h('div', { class: 'vs', text: 'VS' }), this.enemy.root),
+      h('div', { class: 'hud-top' }, this.player.root, this.vs, this.enemy.root),
       h(
         'div',
         { class: 'training-bar' },
@@ -133,7 +141,13 @@ export class Hud {
         this.opponentButton,
         h('button', { class: 'chip', title: 'Key R', onclick: () => actions.reset() }, 'R \u00b7 Reset'),
       ),
-      h('button', { class: 'pause-btn', 'aria-label': 'Pause', onclick: () => actions.pause() }, '\u275a\u275a'),
+      h(
+        'div',
+        { class: 'hud-buttons' },
+        h('button', { class: 'hud-btn story-only', 'aria-label': 'Map', title: 'Map (M / Tab)', onclick: () => actions.map() }, icon('map'), h('span', { class: 'k', text: 'M' })),
+        h('button', { class: 'hud-btn story-only', 'aria-label': 'Inventory', title: 'Inventory (I / B)', onclick: () => actions.inventory() }, icon('bag'), h('span', { class: 'k', text: 'I' })),
+        h('button', { class: 'hud-btn pause-btn', 'aria-label': 'Pause', title: 'Pause (Esc)', onclick: () => actions.pause() }, '\u275a\u275a'),
+      ),
       h('div', { class: 'prompt-wrap' }, this.prompt, this.subBar),
       this.notices,
       this.combo,
@@ -171,14 +185,24 @@ export class Hud {
       boss: { name: string; title: string; health: number; max: number } | null;
       /** Pocket slots used / available; weapon condition 0..1; police heat 0..100. */
       slots?: { used: number; cap: number }; condition?: number | null; heat?: number; police?: boolean;
+      /** The map's route, if one is set. */
+      route?: string | null;
+      /** In a fight (or one close by): show the fight details, hide the rest. */
+      fighting?: boolean;
     },
     dt: number,
   ): void {
+    this.el.classList.toggle('fighting', !!info.fighting);
     if (info.slots) {
-      const t = `POCKETS ${info.slots.used}/${info.slots.cap}`;
+      // Only worth showing when your pockets are nearly full.
+      const t = info.slots.used >= info.slots.cap ? 'POCKETS FULL' : `POCKETS ${info.slots.used}/${info.slots.cap}`;
       if (this.bagChip.textContent !== t) this.bagChip.textContent = t;
       this.bagChip.classList.toggle('full', info.slots.used >= info.slots.cap);
+      this.bagChip.classList.toggle('off', info.slots.used < info.slots.cap - 1);
     }
+    const r = info.route ?? '';
+    this.route.classList.toggle('off', !r);
+    if (this.routeText.textContent !== r) this.routeText.textContent = r;
     const c = info.condition;
     const showW = c !== null && c !== undefined && !!info.weapon;
     this.weaponChip.classList.toggle('off', !showW);
@@ -194,13 +218,14 @@ export class Hud {
     this.heatChip.classList.toggle('hot', !!info.police || heat >= 60);
     const ht = info.police ? 'POLICE' : heat >= 60 ? `WANTED ${Math.round(heat)}` : `HEAT ${Math.round(heat)}`;
     if (this.heatChip.textContent !== ht) this.heatChip.textContent = ht;
-    const m = `\u00a3${info.pocket}  \u00b7  bank \u00a3${info.bank}`;
+    const m = `\u00a3${info.pocket}`;
     if (this.money.textContent !== m) this.money.textContent = m;
     const l = `LVL ${info.level}`;
     if (this.levelText.textContent !== l) this.levelText.textContent = l;
     this.xpFill.style.width = `${Math.min(100, (info.xp / Math.max(1, info.xpNext)) * 100)}%`;
     if (this.objective.textContent !== info.objective) this.objective.textContent = info.objective;
-    const w = info.weapon ? `\u2694 ${info.weapon}` : '';
+    // The weapon chip shows what's in your hands; no need to say it twice.
+    const w = '';
     if (this.weaponText.textContent !== w) this.weaponText.textContent = w;
     const b = info.boss;
     this.bossBar.classList.toggle('on', !!b);
@@ -266,6 +291,7 @@ export class Hud {
   update(dt: number, player: Fighter, enemy: Fighter | null): void {
     this.updateBars(this.player, player, dt);
     this.enemy.root.style.visibility = enemy ? 'visible' : 'hidden';
+    this.vs.style.visibility = enemy ? 'visible' : 'hidden';
     if (enemy) this.updateBars(this.enemy, enemy, dt);
 
     if (this.comboTimer > 0) {

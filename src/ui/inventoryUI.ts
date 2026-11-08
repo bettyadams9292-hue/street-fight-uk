@@ -3,20 +3,21 @@ import { defOf, sortStacks, type ItemStack, type SortMode } from '../items/Inven
 import {
   CATEGORY_LABELS,
   ITEMS,
-  ITEM_CATEGORIES,
   RARITY_COLOURS,
   RARITY_LABELS,
   WEAR_SLOTS,
   WEAR_SLOT_LABELS,
-  type ItemCategory,
   type ItemDef,
   type WearSlot,
 } from '../items/items';
 import { STORAGE_UPGRADE, type Progress } from '../progress/Progress';
 import { buyItem, pawnOffer, SHOP_STOCK, shopPrice } from '../items/shops';
 export { pawnOffer, SHOP_STOCK, shopPrice };
+import { MATERIAL_IDS } from '../workshop/workshop';
+import type { AreaId } from '../progress/Progress';
 import { menuButton } from './controls';
 import { h } from './dom';
+import { icon, type IconName } from './icons';
 import { itemIconUrl } from './itemIcons';
 import type { Screen, UIManager } from './UIManager';
 
@@ -33,9 +34,34 @@ export interface InventoryActions {
   drop(uid: string, qty: number): boolean;
   /** Called after anything changes (save, rebuild the player's look). */
   changed(): void;
+  /** Open the map at a place (e.g. where to sell something). */
+  showOnMap?(area: AreaId): void;
 }
 
-type Filter = 'all' | ItemCategory;
+/** The inventory's tabs. Item data keeps its own categories; these group them the way players think. */
+type Filter = 'all' | 'weapons' | 'clothing' | 'equipment' | 'consumables' | 'materials' | 'valuables' | 'other';
+const GROUPS: { id: Filter; label: string; icon: IconName }[] = [
+  { id: 'all', label: 'All', icon: 'all' },
+  { id: 'weapons', label: 'Weapons', icon: 'weapon' },
+  { id: 'clothing', label: 'Clothing', icon: 'clothes' },
+  { id: 'equipment', label: 'Equipment', icon: 'equipment' },
+  { id: 'consumables', label: 'Consumables', icon: 'consumable' },
+  { id: 'materials', label: 'Materials', icon: 'material' },
+  { id: 'valuables', label: 'Valuables', icon: 'valuable' },
+  { id: 'other', label: 'Other', icon: 'misc' },
+];
+const MATERIALS = new Set<string>(MATERIAL_IDS);
+
+export function groupOf(d: ItemDef): Exclude<Filter, 'all'> {
+  if (d.weapon || d.category === 'weapon') return 'weapons';
+  if (d.id.startsWith('bag_')) return 'equipment';
+  if (d.category === 'clothing' || d.category === 'accessory' || d.wear) return 'clothing';
+  if (d.category === 'consumable' || d.use) return 'consumables';
+  if (MATERIALS.has(d.id)) return 'materials';
+  if (d.category === 'valuable' || d.category === 'collectible') return 'valuables';
+  return 'other';
+}
+
 const SORTS: { id: SortMode; label: string }[] = [
   { id: 'category', label: 'Type' },
   { id: 'value', label: 'Value' },
@@ -71,9 +97,6 @@ function conditionBar(hits: number, max: number): HTMLElement {
   return bar;
 }
 
-function emptyTile(label = ''): HTMLElement {
-  return h('div', { class: 'item-tile empty' }, label ? h('span', { class: 'slot-label', text: label }) : null);
-}
 
 /** Lines describing an item (stats, use, condition, value). */
 function detailLines(d: ItemDef, st: ItemStack | null): HTMLElement[] {
@@ -96,7 +119,7 @@ function detailLines(d: ItemDef, st: ItemStack | null): HTMLElement[] {
   out.push(statLine('Value', d.value > 0 ? `£${d.value}${st && st.qty > 1 ? ` each (£${d.value * st.qty} total)` : ''}` : 'Worthless'));
   out.push(statLine('Space', `1 slot${d.stack > 1 ? `, stacks to ${d.stack}` : ''}`));
   if (st?.stolen) out.push(h('p', { class: 'warn-line', text: 'Stolen. The pawn shop pays less, and the police will take it if they catch you.' }));
-  if (d.category === 'valuable' || d.category === 'collectible') out.push(h('p', { class: 'hint', text: 'Sell it at Pawn & Gold (Market Square). Phone → cabs can drop you at the door.' }));
+  if (d.category === 'valuable' || d.category === 'collectible') out.push(h('p', { class: 'hint', text: 'Sell it at Pawn & Gold (Market Square). A cab from the map (M) drops you at the door.' }));
   if (d.questFlag) out.push(h('p', { class: 'warn-line', text: 'Quest item: can’t be dropped or sold.' }));
   return out;
 }
@@ -153,16 +176,16 @@ function cmpLine(k: string, a: number, b: number, fmt: (v: number) => string = (
 }
 
 function tabsRow(current: Filter, counts: Partial<Record<Filter, number>>, onPick: (f: Filter) => void): HTMLElement {
-  const tabs: Filter[] = ['all', ...ITEM_CATEGORIES];
   return h(
     'div',
     { class: 'inv-tabs' },
-    ...tabs.map((t) =>
+    ...GROUPS.filter((g) => g.id === 'all' || counts[g.id] || g.id === current).map((g) =>
       h(
         'button',
-        { class: `inv-tab${t === current ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => onPick(t) },
-        t === 'all' ? 'All' : CATEGORY_LABELS[t],
-        counts[t] ? h('span', { class: 'count', text: String(counts[t]) }) : null,
+        { class: `inv-tab${g.id === current ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => onPick(g.id) },
+        icon(g.icon),
+        h('span', { text: g.label }),
+        counts[g.id] ? h('span', { class: 'count', text: String(counts[g.id]) }) : null,
       ),
     ),
   );
@@ -171,10 +194,48 @@ function tabsRow(current: Filter, counts: Partial<Record<Filter, number>>, onPic
 function countBy(list: readonly ItemStack[]): Partial<Record<Filter, number>> {
   const c: Partial<Record<Filter, number>> = { all: list.length };
   for (const s of list) {
-    const cat = defOf(s).category;
-    c[cat] = (c[cat] ?? 0) + 1;
+    const g = groupOf(defOf(s));
+    c[g] = (c[g] ?? 0) + 1;
   }
   return c;
+}
+
+const matches = (f: Filter, st: ItemStack) => f === 'all' || groupOf(defOf(st)) === f;
+
+/** One line under an item's name: what matters about it at a glance. */
+function oneLine(d: ItemDef, st: ItemStack): string {
+  if (d.weapon) {
+    const w = WEAPONS[d.weapon];
+    return `Damage ${w.light.damage}/${w.heavy.damage} · ${st.hits ?? w.durability}/${w.durability} hits`;
+  }
+  if (d.use) return d.use.text;
+  if (d.wear) return `${WEAR_SLOT_LABELS[d.wear.slot]}${d.stats?.length ? ` · ${d.stats[0].text}` : ''}`;
+  if (MATERIALS.has(d.id)) return 'Workbench material';
+  if (d.questFlag) return 'Quest item';
+  return d.value > 0 ? `Worth £${d.value}` : d.text;
+}
+
+/** A card in the inventory list: picture, name, the key fact, quantity, and whether it's equipped. */
+function itemCard(st: ItemStack, opts: { selected: boolean; equipped?: string; onClick: () => void; onDouble: () => void }): HTMLElement {
+  const d = defOf(st);
+  const card = h(
+    'button',
+    { class: `item-card${opts.selected ? ' selected' : ''}${opts.equipped ? ' equipped' : ''}`, 'data-nav': true, 'data-grid': true, title: `${d.name} (double-click to ${primaryVerb(d, !!opts.equipped)})`, onclick: () => opts.onClick(), ondblclick: () => opts.onDouble() },
+    h('span', { class: 'card-pic' }, h('img', { src: itemIconUrl(st.id, st.colour), alt: '', draggable: 'false' }), st.qty > 1 ? h('span', { class: 'qty', text: `×${st.qty}` }) : null),
+    h('span', { class: 'card-text' }, h('b', { text: d.name }), h('small', { text: oneLine(d, st) })),
+    opts.equipped ? h('span', { class: 'eq-tag' }, icon('check'), opts.equipped) : st.stolen ? h('span', { class: 'stolen', text: 'STOLEN' }) : null,
+    d.weapon && st.hits !== undefined ? conditionBar(st.hits, WEAPONS[d.weapon].durability) : null,
+  );
+  card.style.setProperty('--rarity', RARITY_COLOURS[d.rarity]);
+  return card;
+}
+
+function primaryVerb(d: ItemDef, equipped: boolean): string {
+  if (equipped) return d.weapon ? 'put it away' : 'take it off';
+  if (d.use) return 'use it';
+  if (d.weapon) return 'hold it';
+  if (d.wear) return 'wear it';
+  return 'see it';
 }
 
 // ---- inventory -----------------------------------------------------------------------------------
@@ -193,83 +254,98 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
     bad = b;
   };
 
+  /** Everything you have: in your hands, worn, and in your pockets. */
+  type Entry = { st: ItemStack; where: 'hands' | WearSlot | 'pocket' };
+  const entries = (): Entry[] => {
+    const s = progress.save;
+    const out: Entry[] = [];
+    if (s.held) out.push({ st: s.held, where: 'hands' });
+    for (const slot of WEAR_SLOTS) if (s.worn[slot]) out.push({ st: s.worn[slot]!, where: slot });
+    const pockets = [...s.inventory];
+    sortStacks(pockets, sort);
+    for (const st of pockets) out.push({ st, where: 'pocket' });
+    return out;
+  };
+
+  /** The obvious thing to do with an item (double-click, or the highlighted button). */
+  const primary = (e: Entry): (() => void) | null => {
+    const d = defOf(e.st);
+    const uid = e.st.uid;
+    if (e.where === 'hands') return () => { if (actions.putAway()) { say('Put away'); actions.changed(); } else say('Your pockets are full', true); };
+    if (e.where !== 'pocket') return () => { const r = progress.unwear(e.where as WearSlot, false); if (r.ok) { say('Taken off'); actions.changed(); } else say(r.reason, true); };
+    if (d.use) return () => { const r = actions.use(uid); say(r.text, !r.ok); actions.changed(); };
+    if (d.weapon) return () => { if (actions.hold(uid)) { say(`Holding the ${d.name.toLowerCase()}`); actions.changed(); } else say('Can’t right now', true); };
+    if (d.wear) return () => { const r = progress.wear(uid); if (r.ok) { say(`Wearing the ${d.name.toLowerCase()}`); actions.changed(); } else say(r.reason, true); };
+    return null;
+  };
+
   const build = (focusUid?: string) => {
     const s = progress.save;
-    const list = [...s.inventory];
-    sortStacks(list, sort);
-    const shown = list.filter((x) => filter === 'all' || defOf(x).category === filter);
+    const all = entries();
+    const shown = all.filter((e) => matches(filter, e.st));
     const cap = progress.inventoryCap;
-    if (selected && !s.inventory.some((x) => x.uid === selected) && !Object.values(s.worn).some((x) => x?.uid === selected) && s.held?.uid !== selected) selected = null;
-    if (!selected && shown.length) selected = shown[0].uid;
+    if (selected && !all.some((e) => e.st.uid === selected)) selected = null;
+    if (!selected && shown.length) selected = shown[0].st.uid;
+    const sel = all.find((e) => e.st.uid === selected) ?? null;
 
-    // The grid: carried items, then empty slots up to capacity.
-    const tiles: HTMLElement[] = shown.map((st) => itemTile(st, { selected: st.uid === selected, onClick: () => { selected = st.uid; confirmDrop = null; build(st.uid); } }));
-    if (filter === 'all') for (let i = list.length; i < cap; i++) tiles.push(emptyTile());
-
-    // Equipped strip: hands and every wear slot.
-    const worn: HTMLElement[] = [
-      h('div', { class: 'eq-slot' }, s.held ? itemTile(s.held, { selected: s.held.uid === selected, tag: 'HANDS', onClick: () => { selected = s.held!.uid; build(s.held!.uid); } }) : emptyTile('Hands'), h('span', { class: 'eq-label', text: 'Hands' })),
-      ...WEAR_SLOTS.map((slot) => {
-        const st = s.worn[slot];
-        return h('div', { class: 'eq-slot' }, st ? itemTile(st, { selected: st.uid === selected, tag: 'WORN', onClick: () => { selected = st.uid; build(st.uid); } }) : emptyTile(), h('span', { class: 'eq-label', text: WEAR_SLOT_LABELS[slot] }));
+    const eqLabel = (e: Entry) => (e.where === 'hands' ? 'In hands' : e.where === 'pocket' ? undefined : `Worn`);
+    const cards = shown.map((e) =>
+      itemCard(e.st, {
+        selected: e.st.uid === selected,
+        equipped: eqLabel(e),
+        onClick: () => { selected = e.st.uid; confirmDrop = null; build(e.st.uid); },
+        onDouble: () => { const f = primary(e); if (f) { f(); build(); } },
       }),
-    ];
+    );
+    if (!cards.length) cards.push(h('div', { class: 'inv-empty', text: filter === 'all' ? 'Nothing on you. Pick things up out there with E.' : 'Nothing of this kind on you.' }));
 
-    // Detail for the selected item.
-    let detail: HTMLElement = h('div', { class: 'detail-panel empty', text: 'Nothing selected. Pick something up out there with E / LB / GRAB.' });
-    const carried = s.inventory.find((x) => x.uid === selected);
-    const wornSlot = WEAR_SLOTS.find((sl) => s.worn[sl]?.uid === selected) ?? null;
-    const isHeld = s.held?.uid === selected;
-    const st = carried ?? (wornSlot ? s.worn[wornSlot]! : isHeld ? s.held : null);
-    if (st) {
+    // Detail for the selected item: the main action first and highlighted.
+    let detail: HTMLElement = h('div', { class: 'detail-panel empty', text: 'Pick an item to see what it does.' });
+    if (sel) {
+      const st = sel.st;
       const d = defOf(st);
       const acts: HTMLElement[] = [];
-      if (carried) {
-        if (d.use) acts.push(menuButton('Use', () => { const r = actions.use(st.uid); say(r.text, !r.ok); actions.changed(); build(); }));
-        if (d.weapon) acts.push(menuButton('Hold in hands', () => { if (actions.hold(st.uid)) { say(`Holding the ${d.name.toLowerCase()}`); actions.changed(); } else say('Can’t right now', true); build(st.uid); }));
-        if (d.wear) acts.push(menuButton(`Wear (${WEAR_SLOT_LABELS[d.wear.slot]})`, () => { const r = progress.wear(st.uid); if (r.ok) { say(`Wearing the ${d.name.toLowerCase()}`); actions.changed(); } else say(r.reason, true); build(st.uid); }));
+      const main = primary(sel);
+      const verb = primaryVerb(d, sel.where !== 'pocket');
+      if (main) acts.push(menuButton(verb[0].toUpperCase() + verb.slice(1), () => { main(); build(); }, sel.where === 'pocket' && d.wear ? WEAR_SLOT_LABELS[d.wear.slot] : undefined, 'primary'));
+      if (sel.where === 'pocket') {
         if (opts.atHome) acts.push(menuButton('Put in the stash', () => { const r = progress.deposit(st.uid); if (r.ok) { say('Put in the stash'); actions.changed(); } else say(r.reason, true); build(); }));
+        if (pawnOffer(d, st) > 0 && (d.category === 'valuable' || d.category === 'collectible') && actions.showOnMap) acts.push(menuButton('Where to sell it', () => actions.showOnMap!('pawn_shop'), 'Pawn & Gold, on the map'));
         if (!d.questFlag) {
           if (confirmDrop === st.uid) {
             acts.push(menuButton(`Drop ${st.qty > 1 ? 'all' : 'it'}: sure?`, () => { actions.drop(st.uid, st.qty); confirmDrop = null; say(`Dropped the ${d.name.toLowerCase()}`); actions.changed(); build(); }, d.value >= 50 ? `Worth £${d.value * st.qty}` : undefined, 'danger'));
+            acts.push(menuButton('Keep it', () => { confirmDrop = null; build(st.uid); }));
           } else {
-            if (st.qty > 1) acts.push(menuButton('Drop one', () => { actions.drop(st.uid, 1); say(`Dropped one ${d.name.toLowerCase()}`); actions.changed(); build(st.uid); }));
-            acts.push(menuButton(st.qty > 1 ? 'Drop all' : 'Drop', () => { confirmDrop = st.uid; build(st.uid); }));
+            if (st.qty > 1) acts.push(menuButton('Drop one', () => { actions.drop(st.uid, 1); say(`Dropped one ${d.name.toLowerCase()}`); actions.changed(); build(st.uid); }, undefined, 'quiet'));
+            acts.push(menuButton(st.qty > 1 ? 'Drop all' : 'Drop', () => { confirmDrop = st.uid; build(st.uid); }, undefined, 'quiet'));
           }
         }
-      } else if (wornSlot) {
-        acts.push(menuButton('Take off', () => { const r = progress.unwear(wornSlot, false); if (r.ok) { say('Taken off'); actions.changed(); } else say(r.reason, true); build(); }));
-        if (opts.atHome) acts.push(menuButton('Take off into the stash', () => { const r = progress.unwear(wornSlot, true); if (r.ok) { say('In the stash'); actions.changed(); } else say(r.reason, true); build(); }));
-      } else if (isHeld) {
-        acts.push(menuButton('Put away', () => { if (actions.putAway()) { say('Put away'); actions.changed(); } else say('Your pockets are full', true); build(); }));
+      } else if (sel.where !== 'hands' && opts.atHome) {
+        acts.push(menuButton('Take off into the stash', () => { const r = progress.unwear(sel.where as WearSlot, true); if (r.ok) { say('In the stash'); actions.changed(); } else say(r.reason, true); build(); }));
       }
-      detail = detailPanel(d, st, acts, carried ? compareBlock(progress, d) : null);
+      detail = detailPanel(d, st, acts, sel.where === 'pocket' ? compareBlock(progress, d) : null);
+      if (sel.where !== 'pocket') detail.querySelector('.detail-title')?.append(h('div', { class: 'eq-now' }, icon('check'), sel.where === 'hands' ? 'In your hands' : `Wearing (${WEAR_SLOT_LABELS[sel.where as WearSlot]})`));
     }
 
-    const capLine = `${s.inventory.length} / ${cap} slots${cap > 12 ? ' (bag)' : ''}`;
+    const used = s.inventory.length;
     el.replaceChildren(
-      h('div', { class: 'inv-top' }, h('h2', { text: 'Inventory' }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} at home` }), h('span', { class: `cap${s.inventory.length >= cap ? ' full' : ''}`, text: capLine })),
-      tabsRow(filter, countBy(s.inventory), (f) => { filter = f; selected = null; build(); }),
-      h(
-        'div',
-        { class: 'inv-body' },
-        h(
-          'div',
-          { class: 'inv-left' },
-          h('div', { class: 'item-grid' }, ...tiles),
-          h('div', { class: 'eq-title', text: 'Equipped' }),
-          h('div', { class: 'eq-strip' }, ...worn),
-        ),
+      h('div', { class: 'inv-top' },
+        h('div', { class: 'inv-title' }, icon('bag'), h('h2', { text: 'Inventory' })),
+        h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` }),
+        h('span', { class: `cap${used >= cap ? ' full' : ''}` }, h('i', { class: 'cap-bar' }, h('i', { style: `width:${Math.min(100, (used / cap) * 100)}%` })), `${used}/${cap} pockets`),
+        h('button', { class: 'icon-btn', 'aria-label': 'Close', title: 'Close (Esc / I)', onclick: close }, icon('close')),
+      ),
+      tabsRow(filter, countBy(all.map((e) => e.st)), (f) => { filter = f; selected = null; build(); }),
+      h('div', { class: 'inv-body' },
+        h('div', { class: 'inv-left' }, h('div', { class: 'item-list' }, ...cards)),
         h('div', { class: 'inv-right' }, detail, h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message })),
       ),
-      h(
-        'div',
-        { class: 'panel-actions' },
-        menuButton(`Sort: ${SORTS.find((x) => x.id === sort)!.label}`, () => { sort = SORTS[(SORTS.findIndex((x) => x.id === sort) + 1) % SORTS.length].id; build(); }),
-        menuButton('Close', close),
+      h('div', { class: 'panel-actions slim' },
+        h('span', { class: 'hint', text: 'Double-click an item to use, hold or wear it' }),
+        menuButton(`Sort: ${SORTS.find((x) => x.id === sort)!.label}`, () => { sort = SORTS[(SORTS.findIndex((x) => x.id === sort) + 1) % SORTS.length].id; build(); }, undefined, 'quiet'),
       ),
     );
-    if (focusUid) ui.focusElement(el.querySelector('.item-tile.selected') as HTMLElement | null);
+    if (focusUid) ui.focusElement(el.querySelector('.item-card.selected') as HTMLElement | null);
     else ui.keepFocus();
   };
   return {

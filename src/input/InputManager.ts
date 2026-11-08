@@ -2,7 +2,7 @@ import { emptyCommand, type CommandFrame, type PressButton } from './Commands';
 
 type GameButton = PressButton;
 const PRESS_BUTTONS: readonly GameButton[] = ['lp', 'hp', 'lk', 'hk', 'jump', 'dodge', 'grab', 'swap'];
-export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory';
+export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory' | 'map';
 export type InputSource = 'keyboard' | 'gamepad' | 'touch';
 
 /** Keyboard layout. Kept in one place so a rebinding screen can edit it later. */
@@ -23,6 +23,7 @@ export const KEY_BINDINGS = {
   swap: ['Tab'],
   pause: ['Escape', 'KeyP'],
   inventory: ['KeyB'],
+  map: ['KeyM'],
 } as const;
 
 /** Standard gamepad mapping (Xbox names). */
@@ -37,7 +38,7 @@ const STICK_DEADZONE = 0.25;
 export class InputManager {
   private held = new Set<string>();
   private pressedQueue = new Set<GameButton>();
-  private menuListeners = new Set<(a: MenuAction, source: InputSource) => void>();
+  private menuListeners = new Set<(a: MenuAction, source: InputSource, fightKey?: boolean) => void>();
   private padPrev: boolean[] = [];
   private padAxesPrev = { x: 0, y: 0 };
   /** Set by the touch controls. */
@@ -56,7 +57,7 @@ export class InputManager {
    * Menu/navigation actions. Escape arrives as 'back' from the keyboard;
    * screens decide whether that means "go back" or "pause".
    */
-  onMenu(fn: (a: MenuAction, source: InputSource) => void): () => void {
+  onMenu(fn: (a: MenuAction, source: InputSource, fightKey?: boolean) => void): () => void {
     this.menuListeners.add(fn);
     return () => this.menuListeners.delete(fn);
   }
@@ -67,8 +68,14 @@ export class InputManager {
     this.lastDevice = 'touch';
   }
 
-  private emitMenu(a: MenuAction, source: InputSource = 'keyboard'): void {
-    for (const fn of [...this.menuListeners]) fn(a, source);
+  /** `fightKey`: the key also does something in a fight (Tab swaps style, I is heavy punch). */
+  private emitMenu(a: MenuAction, source: InputSource = 'keyboard', fightKey = false): void {
+    for (const fn of [...this.menuListeners]) fn(a, source, fightKey);
+  }
+
+  /** A fight key was used to open a menu instead: don't also throw the punch / swap style. */
+  cancelPress(b: GameButton): void {
+    this.pressedQueue.delete(b);
   }
 
   /** Touch UI (e.g. the pause button) can raise menu actions too. */
@@ -101,6 +108,10 @@ export class InputManager {
       if (code === 'Escape') this.emitMenu('back');
       else if (code === 'KeyP') this.emitMenu('pause');
       else if (code === 'KeyB') this.emitMenu('inventory');
+      else if (code === 'KeyM') this.emitMenu('map');
+      // Outside a fight these open the map and inventory; in one they stay swap style and heavy punch.
+      else if (code === 'Tab') this.emitMenu('map', 'keyboard', true);
+      else if (code === 'KeyI') this.emitMenu('inventory', 'keyboard', true);
     }
     // Menu navigation (arrow keys / WASD / Enter).
     if (code === 'ArrowUp' || code === 'KeyW') this.emitMenu('up');

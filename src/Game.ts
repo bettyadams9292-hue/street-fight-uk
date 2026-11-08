@@ -34,6 +34,8 @@ import { arrest, ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
 import { World } from './world/World';
 import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
+import { mapScreen } from './ui/mapUI';
+import { nextExit } from './map/worldMap';
 import { barScreen, contactsScreen, kitchenScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
@@ -124,6 +126,12 @@ export class Game {
       nextOpponent: () => this.nextOpponent(),
       reset: () => this.resetPositions(),
       pause: () => this.pause(),
+      map: () => {
+        if (this.state === 'playing') this.openMap();
+      },
+      inventory: () => {
+        if (this.state === 'playing' && this.world) this.openInventory();
+      },
     });
     this.hud.el.style.display = 'none';
     uiRoot.append(this.hud.el);
@@ -133,7 +141,7 @@ export class Game {
     this.fadeEl = h('div', { class: 'fade' });
     uiRoot.append(this.fadeEl);
 
-    this.input.onMenu((a, src) => this.onMenuAction(a, src));
+    this.input.onMenu((a, src, fightKey) => this.onMenuAction(a, src, fightKey));
     window.addEventListener('keydown', (e) => this.onKey(e));
 
     // Audio can only start after a user gesture.
@@ -365,6 +373,10 @@ export class Game {
         storyPauseMenu({
           resume: () => this.resume(),
           inventory: () => this.openInventory(),
+          map: () => {
+            this.state = 'playing';
+            this.openMap();
+          },
           home: atHome || w.locked || w.player.isKO ? null : () => this.goHome(false),
           homeWhy: atHome ? '' : 'Can\u2019t head home in the middle of a fight',
           save: () => {
@@ -506,13 +518,17 @@ export class Game {
     this.input.flush();
     this.updateTouchVisibility();
     if (area !== from || !opts.at) this.hud.showBanner(level.district, level.name);
-    // Point out shop doors on this street (they're easy to walk past).
-    if (area !== from) {
-      const shops = level.exits.filter((e) => e.kind === 'door' && ['clothes_shop', 'pawn_shop', 'pub', 'furniture_shop', 'car_dealer', 'bike_shop', 'casino', 'grow_shop'].includes(e.to));
-      for (const e of shops) {
-        const where = e.x < (level.bounds.minX + level.bounds.maxX) / 2 ? 'west end' : 'east end';
-        this.hud.toast(`${LEVELS[e.to].name} is on this street (${where}). Walk up to its door.`, 'item');
-      }
+    // First time here: one line pointing out what's on the street (the map has the rest).
+    const firstVisit = !p.save.visited.includes(area);
+    if (firstVisit) {
+      p.save.visited.push(area);
+      const doors = level.exits.filter((e) => e.kind === 'door' && e.to !== 'home' && LEVELS[e.to] && !LEVELS[e.to].exits.some((x) => x.kind === 'edge'));
+      if (doors.length) this.hud.toast(`On this street: ${doors.map((e) => LEVELS[e.to].name).join(', ')}. M for the map.`, 'item');
+    }
+    // Arrived where the map's route was going.
+    if (p.save.destination && (p.save.destination === area || (p.save.destination === 'basement' && area === 'home'))) {
+      this.hud.toast(`You’ve arrived: ${LEVELS[area].name}`, 'cash');
+      p.save.destination = null;
     }
     if (area === 'home' && p.save.cash.pocket > 0) this.hud.toast(`£${p.save.cash.pocket} in your pocket: put it in the biscuit tin (bedroom desk)`, 'cash');
   }
@@ -564,9 +580,26 @@ export class Game {
         condition: w.player.weapon ? w.player.weapon.hits / w.player.weapon.data.durability : null,
         heat: s.heat,
         police: w.policeActive,
+        route: this.routeHint(),
+        fighting: !this.calm(),
       },
       dt,
     );
+  }
+
+  /** The map's route, as a line for the HUD: which way, through which exit, how far. */
+  private routeHint(): string | null {
+    const w = this.world!;
+    const p = this.progress!;
+    const dest = p.save.destination;
+    if (!dest) return null;
+    const name = LEVELS[dest].name;
+    const ex = nextExit(p, w.level.id, dest);
+    if (!ex) return `${name}: no way through from here yet`;
+    const dx = ex.x - w.player.pos.x;
+    const m = Math.round(Math.abs(dx));
+    if (ex.kind === 'door') return m < 2 ? `${name}: this door (E)` : `${name}: door ${dx > 0 ? '→' : '←'} ${m} m (${LEVELS[ex.to].name})`;
+    return `${name}: ${dx > 0 ? '→ east' : '← west'} ${m} m to ${LEVELS[ex.to].name}`;
   }
 
   private wireWorld(w: World): void {
@@ -840,11 +873,11 @@ export class Game {
         screen = sofaScreen(p, close, () => this.saveGame());
         break;
       case 'contacts':
-        screen = contactsScreen(p, close, (area, entry) => {
+        screen = contactsScreen(p, close, () => {
           this.ui.replaceAll(null);
           this.state = 'playing';
-          this.changeArea(area, entry, null);
-        }, saved, () => this.ui.replaceAll(crewScreen(p, close, () => {
+          this.openMap();
+        }, () => this.ui.replaceAll(crewScreen(p, close, () => {
           saved();
           this.hubDirty = true;
         })));
@@ -1419,6 +1452,58 @@ export class Game {
 
   // ---- inventory ------------------------------------------------------------------
 
+  /** Nothing going on: no fight, no police, not down. Cabs, heading home and the Tab / I shortcuts need it. */
+  private calm(): boolean {
+    const w = this.world;
+    if (!w) return false;
+    const p = w.player;
+    if (w.activeEncounter || w.locked || w.policeActive || w.duel || p.isKO) return false;
+    return !w.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 12);
+  }
+
+  /** The town map: see everything, set a route, take a cab or head home (with a confirm step). */
+  private openMap(select?: AreaId): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p || (this.state !== 'playing' && this.state !== 'paused')) return;
+    this.state = 'paused';
+    this.touch.release();
+    this.input.flush();
+    this.updateTouchVisibility();
+    const close = () => this.resume();
+    this.ui.replaceAll(
+      mapScreen({
+        progress: p,
+        here: { area: w.level.id, x: w.player.pos.x },
+        calm: this.calm(),
+        select,
+        close,
+        setDestination: (area) => {
+          p.save.destination = area;
+          this.saveGame();
+        },
+        travel: (area, opt) => {
+          if (opt.kind === 'home') {
+            this.ui.replaceAll(null);
+            this.state = 'playing';
+            if (p.save.property.riding) this.dismount();
+            return this.goHome(false);
+          }
+          if (opt.kind !== 'cab' || !opt.entry) return;
+          if (p.save.cash.bank < opt.cost) return this.hud.toast(`Need £${opt.cost} in the tin`, 'warn');
+          p.save.cash.bank -= opt.cost;
+          if (p.save.destination === area) p.save.destination = null;
+          this.ui.replaceAll(null);
+          this.state = 'playing';
+          // The bike stays parked where you got off it.
+          if (p.save.property.riding) this.dismount();
+          this.hud.toast(`Dave’s Cabs: £${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
+          this.changeArea(area, opt.entry, w.carry());
+        },
+      }),
+    );
+  }
+
   private openInventory(): void {
     const w = this.world;
     const p = this.progress;
@@ -1451,6 +1536,10 @@ export class Game {
           putAway: () => w.putAwayWeapon(),
           drop: (uid, qty) => w.dropFromInventory(uid, qty),
           changed: () => this.saveGame(),
+          showOnMap: (area) => {
+            close();
+            this.openMap(area);
+          },
         },
         close,
         { atHome: w.level.id === 'home' },
@@ -1541,14 +1630,18 @@ export class Game {
 
   // ---- input -----------------------------------------------------------------
 
-  private onMenuAction(a: MenuAction, src: InputSource): void {
+  private onMenuAction(a: MenuAction, src: InputSource, fightKey = false): void {
     this.audio.unlock();
     if (this.ui.isOpen) {
       this.ui.handle(a, src);
       return;
     }
-    if (this.state === 'playing' && a === 'inventory' && this.world) {
-      this.openInventory();
+    if (this.state === 'playing' && (a === 'inventory' || a === 'map') && this.world) {
+      // Tab and I are fight keys too (swap style, heavy punch): in a fight they stay that.
+      if (fightKey && !this.calm()) return;
+      if (fightKey) this.input.cancelPress(a === 'map' ? 'swap' : 'hp');
+      if (a === 'map') this.openMap();
+      else this.openInventory();
       return;
     }
     if (this.state === 'playing' && (a === 'pause' || (a === 'back' && src === 'keyboard'))) this.pause();
