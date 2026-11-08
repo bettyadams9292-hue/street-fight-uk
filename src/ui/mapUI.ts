@@ -67,7 +67,7 @@ const FILTERS: { id: FilterId; label: string; icon: IconName; kinds: MarkerKind[
   { id: 'streets', label: 'Streets', icon: 'street', kinds: ['street'] },
 ];
 
-const MIN_W = 520;
+const MIN_W = 360;
 const MAX_W = MAP_W * 1.08;
 
 /** A seeded random number from a string, for the town's decoration. */
@@ -196,7 +196,7 @@ export function mapScreen(o: MapOptions): Screen {
   let confirm: TravelOption | null = null;
   const filters = new Set<FilterId>(FILTERS.map((f) => f.id));
   // View: centre and visible width in map units; `target` eases towards.
-  const view = { x: here.x, y: here.y, w: 1500 };
+  const view = { x: here.x, y: here.y, w: 900 };
   const target = { ...view };
   let dest: AreaId | null = p.save.destination;
 
@@ -213,17 +213,13 @@ export function mapScreen(o: MapOptions): Screen {
     g.setAttribute('class', `mp-marker k-${m.kind}${open ? '' : ' locked'}${street ? ' street' : ''}${!visited && open ? ' new' : ''}`);
     const col = KIND_COLOUR[m.kind];
     g.innerHTML = street
-      ? `<circle class="pin" r="9" fill="#0d0f13" stroke="${open ? col : '#5b5852'}" stroke-width="3"/>`
-      : `<circle class="halo" r="22"/><circle class="pin" r="16" fill="${open ? col : '#3a3936'}" stroke="#0d0f13" stroke-width="3"/>` +
-        `<g transform="translate(-9.5 -9.5) scale(.8)" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${iconPaths(KIND_ICON[m.kind])}</g>` +
-        (open ? '' : `<g transform="translate(7 -20) scale(.5)"><circle cx="12" cy="12" r="12" fill="#0d0f13"/><g fill="none" stroke="#f2c230" stroke-width="2.6" stroke-linecap="round">${iconPaths('lock')}</g></g>`);
+      ? `<circle class="pin" r="7" fill="#0d0f13" stroke="${open ? col : '#5b5852'}" stroke-width="3"/>`
+      : `<circle class="halo" r="19"/><circle class="pin" r="13.5" fill="${open ? col : '#3a3936'}" stroke="#0d0f13" stroke-width="2.5"/>` +
+        `<g transform="translate(-8 -8) scale(.667)" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${iconPaths(KIND_ICON[m.kind])}</g>` +
+        (open ? '' : `<g transform="translate(6 -17) scale(.45)"><circle cx="12" cy="12" r="12" fill="#0d0f13"/><g fill="none" stroke="#f2c230" stroke-width="2.6" stroke-linecap="round">${iconPaths('lock')}</g></g>`);
     g.addEventListener('pointerenter', (e) => showTip(m, e as PointerEvent));
     g.addEventListener('pointerleave', () => tip.classList.remove('on'));
-    g.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (dragMoved) return;
-      select(m.area, m.key, false);
-    });
+    g.setAttribute('data-key', m.key);
     markG.append(g);
     markerEls.set(m.key, g);
     markerOf.set(m.key, m);
@@ -270,7 +266,9 @@ export function mapScreen(o: MapOptions): Screen {
       const m = markerOf.get(key)!;
       const s = m.kind === 'street' ? k * 0.9 : k;
       g.setAttribute('transform', `translate(${m.at.x.toFixed(1)} ${m.at.y.toFixed(1)}) scale(${(s * (key === selKey ? 1.25 : 1)).toFixed(3)})`);
-      g.style.display = shown.has(key) ? '' : 'none';
+      // Zoomed right out: just the story, home and the district pins; zoom in for the rest.
+      const far = view.w > 1700 && !['mission', 'home', 'street', 'side'].includes(m.kind) && key !== selKey;
+      g.style.display = shown.has(key) && !far ? '' : 'none';
       g.classList.toggle('sel', key === selKey);
     }
     (youG.firstElementChild as SVGGElement).setAttribute('transform', `translate(${here.x.toFixed(1)} ${here.y.toFixed(1)}) scale(${k.toFixed(3)})`);
@@ -320,7 +318,10 @@ export function mapScreen(o: MapOptions): Screen {
   const pointers = new Map<number, { x: number; y: number }>();
   let dragMoved = false;
   let pinch0 = 0;
+  // A tap on a marker selects it; pointer capture would retarget the click, so remember what was under the finger.
+  let downKey: string | null = null;
   svg.addEventListener('pointerdown', (e) => {
+    downKey = (e.target as Element).closest?.('[data-key]')?.getAttribute('data-key') ?? null;
     svg.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     dragMoved = false;
@@ -362,16 +363,14 @@ export function mapScreen(o: MapOptions): Screen {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch0 = 0;
   };
-  svg.addEventListener('pointerup', up);
-  svg.addEventListener('pointercancel', up);
-  svg.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    zoomBy(Math.exp(e.deltaY * 0.0012), toMap(e.clientX, e.clientY));
-  }, { passive: false });
-  // Clicking empty map clears the selection.
-  svg.addEventListener('click', () => {
-    if (dragMoved) return;
-    if (selected) {
+  svg.addEventListener('pointerup', (e) => {
+    up(e);
+    if (dragMoved || pointers.size) return;
+    const m = downKey ? markerOf.get(downKey) : null;
+    downKey = null;
+    if (m) select(m.area, m.key, false);
+    else if (selected) {
+      // A tap on empty map clears the card.
       selected = null;
       selKey = null;
       confirm = null;
@@ -379,6 +378,11 @@ export function mapScreen(o: MapOptions): Screen {
       apply();
     }
   });
+  svg.addEventListener('pointercancel', up);
+  svg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    zoomBy(Math.exp(e.deltaY * 0.0012), toMap(e.clientX, e.clientY));
+  }, { passive: false });
 
   // ---- keyboard: arrows/WASD pan, +/- zoom, [ ] step through places ----
   const held = new Set<string>();

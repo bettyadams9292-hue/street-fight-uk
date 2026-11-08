@@ -1,7 +1,6 @@
 import { WEAPONS } from '../combat/Weapons';
 import { defOf, sortStacks, type ItemStack, type SortMode } from '../items/Inventory';
 import {
-  CATEGORY_LABELS,
   ITEMS,
   RARITY_COLOURS,
   RARITY_LABELS,
@@ -124,6 +123,10 @@ function detailLines(d: ItemDef, st: ItemStack | null): HTMLElement[] {
   return out;
 }
 
+const CATEGORY_ONE: Record<ItemDef['category'], string> = {
+  weapon: 'Weapon', clothing: 'Clothing', accessory: 'Accessory', consumable: 'Consumable', collectible: 'Collectible', valuable: 'Valuable', quest: 'Quest item', misc: 'Item',
+};
+
 function speedWord(startup: number): string {
   return startup <= 5 ? 'Very fast' : startup <= 7 ? 'Fast' : startup <= 9 ? 'Medium' : startup <= 12 ? 'Slow' : 'Very slow';
 }
@@ -141,7 +144,7 @@ function detailPanel(d: ItemDef, st: ItemStack | null, actions: HTMLElement[], c
       'div',
       { class: 'detail-title' },
       h('h3', { text: d.name }),
-      h('div', { class: 'rarity', text: `${RARITY_LABELS[d.rarity]} · ${CATEGORY_LABELS[d.category].replace(/s$/, '')}` }),
+      h('div', { class: 'rarity', text: `${RARITY_LABELS[d.rarity]} · ${CATEGORY_ONE[d.category]}` }),
     ),
   );
   (head.querySelector('.rarity') as HTMLElement).style.color = RARITY_COLOURS[d.rarity];
@@ -255,11 +258,11 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
   };
 
   /** Everything you have: in your hands, worn, and in your pockets. */
-  type Entry = { st: ItemStack; where: 'hands' | WearSlot | 'pocket' };
+  type Entry = { st: ItemStack; where: 'held' | WearSlot | 'pocket' };
   const entries = (): Entry[] => {
     const s = progress.save;
     const out: Entry[] = [];
-    if (s.held) out.push({ st: s.held, where: 'hands' });
+    if (s.held) out.push({ st: s.held, where: 'held' });
     for (const slot of WEAR_SLOTS) if (s.worn[slot]) out.push({ st: s.worn[slot]!, where: slot });
     const pockets = [...s.inventory];
     sortStacks(pockets, sort);
@@ -271,7 +274,7 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
   const primary = (e: Entry): (() => void) | null => {
     const d = defOf(e.st);
     const uid = e.st.uid;
-    if (e.where === 'hands') return () => { if (actions.putAway()) { say('Put away'); actions.changed(); } else say('Your pockets are full', true); };
+    if (e.where === 'held') return () => { if (actions.putAway()) { say('Put away'); actions.changed(); } else say('Your pockets are full', true); };
     if (e.where !== 'pocket') return () => { const r = progress.unwear(e.where as WearSlot, false); if (r.ok) { say('Taken off'); actions.changed(); } else say(r.reason, true); };
     if (d.use) return () => { const r = actions.use(uid); say(r.text, !r.ok); actions.changed(); };
     if (d.weapon) return () => { if (actions.hold(uid)) { say(`Holding the ${d.name.toLowerCase()}`); actions.changed(); } else say('Can’t right now', true); };
@@ -288,7 +291,7 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
     if (!selected && shown.length) selected = shown[0].st.uid;
     const sel = all.find((e) => e.st.uid === selected) ?? null;
 
-    const eqLabel = (e: Entry) => (e.where === 'hands' ? 'In hands' : e.where === 'pocket' ? undefined : `Worn`);
+    const eqLabel = (e: Entry) => (e.where === 'held' ? 'Holding' : e.where === 'pocket' ? undefined : 'Worn');
     const cards = shown.map((e) =>
       itemCard(e.st, {
         selected: e.st.uid === selected,
@@ -320,11 +323,11 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
             acts.push(menuButton(st.qty > 1 ? 'Drop all' : 'Drop', () => { confirmDrop = st.uid; build(st.uid); }, undefined, 'quiet'));
           }
         }
-      } else if (sel.where !== 'hands' && opts.atHome) {
+      } else if (sel.where !== 'held' && opts.atHome) {
         acts.push(menuButton('Take off into the stash', () => { const r = progress.unwear(sel.where as WearSlot, true); if (r.ok) { say('In the stash'); actions.changed(); } else say(r.reason, true); build(); }));
       }
       detail = detailPanel(d, st, acts, sel.where === 'pocket' ? compareBlock(progress, d) : null);
-      if (sel.where !== 'pocket') detail.querySelector('.detail-title')?.append(h('div', { class: 'eq-now' }, icon('check'), sel.where === 'hands' ? 'In your hands' : `Wearing (${WEAR_SLOT_LABELS[sel.where as WearSlot]})`));
+      if (sel.where !== 'pocket') detail.querySelector('.detail-title')?.append(h('div', { class: 'eq-now' }, icon('check'), sel.where === 'held' ? 'Holding it' : `Wearing (${WEAR_SLOT_LABELS[sel.where as WearSlot]})`));
     }
 
     const used = s.inventory.length;

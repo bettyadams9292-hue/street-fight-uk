@@ -223,8 +223,22 @@ export function placePoint(area: AreaId): Pt {
   }
   const d = doorOf(area)!;
   const p = streetPoint(d.street, d.x)!;
-  // Places sit just off the road, on the "shop" side.
-  return { x: p.x, y: p.y - 34 };
+  // Places sit just off the road, alternating sides along the street so neighbours don't overlap.
+  const doors = LEVELS[d.street].exits.filter((e) => e.kind === 'door' && !LAYOUT[e.to] && e.to !== 'basement').sort((a, b) => a.x - b.x);
+  const i = Math.max(0, doors.findIndex((e) => e.to === area));
+  const b = LEVELS[d.street].bounds;
+  const span = Math.max(1, b.maxX - b.minX);
+  const a1 = streetPoint(d.street, Math.max(b.minX, d.x - span * 0.02))!;
+  const a2 = streetPoint(d.street, Math.min(b.maxX, d.x + span * 0.02))!;
+  const len = Math.hypot(a2.x - a1.x, a2.y - a1.y) || 1;
+  let nx = -(a2.y - a1.y) / len;
+  let ny = (a2.x - a1.x) / len;
+  if (ny > 0) {
+    nx = -nx;
+    ny = -ny;
+  }
+  const side = i % 2 === 0 ? 1 : -1;
+  return { x: p.x + nx * 40 * side, y: p.y + ny * 40 * side };
 }
 
 export function roads(): MapRoad[] {
