@@ -35,13 +35,17 @@ import { World } from './world/World';
 import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
 import { barScreen, contactsScreen, gymScreen, kitchenScreen, repairScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
-import type { StationId } from './world/LevelTypes';
+import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
 import { resolveLevel } from './property/levels';
 import { FURNITURE, ROOMS, bikeSpeedMult, type RoomId } from './property/catalogue';
-import { checkPlacement, suggestSpot, wallZ, BACK_Z, LANE_Z } from './property/home';
+import { checkPlacement, suggestSpot, wallZ } from './property/home';
 import { mountBike, parkBike, placeFurniture, ridingBike, sellFurniture, storeBike, storeFurniture, type PlacedAt } from './property/state';
 import { buildBikeModel } from './render/propModels';
+import { EQUIPMENT, equipmentResale } from './business/catalogue';
+import { checkEquipmentPlacement, equipmentWallZ, installEquipment, sellEquipment, suggestEquipmentSpot, uninstallEquipment } from './business/basement';
+import { tickBusiness } from './business/production';
+import { growShopScreen, terminalScreen } from './ui/businessUI';
 import { themeProfile } from './render/themes';
 import {
   bikeShopScreen,
@@ -498,7 +502,7 @@ export class Game {
     if (area !== from || !opts.at) this.hud.showBanner(level.district, level.name);
     // Point out shop doors on this street (they're easy to walk past).
     if (area !== from) {
-      const shops = level.exits.filter((e) => e.kind === 'door' && ['clothes_shop', 'pawn_shop', 'pub', 'furniture_shop', 'car_dealer', 'bike_shop', 'casino'].includes(e.to));
+      const shops = level.exits.filter((e) => e.kind === 'door' && ['clothes_shop', 'pawn_shop', 'pub', 'furniture_shop', 'car_dealer', 'bike_shop', 'casino', 'grow_shop'].includes(e.to));
       for (const e of shops) {
         const where = e.x < (level.bounds.minX + level.bounds.maxX) / 2 ? 'west end' : 'east end';
         this.hud.toast(`${LEVELS[e.to].name} is on this street (${where}). Walk up to its door.`, 'item');
@@ -662,7 +666,7 @@ export class Game {
         this.hud.notify(`LEVEL ${level}`, 'big');
         this.hud.toast('+1 training point: spend it at the gym', 'item');
       }),
-      ev.on('station', ({ id }) => this.openStation(id)),
+      ev.on('station', ({ id, station }) => this.openStation(id, station)),
       ev.on('player:defeated', ({ byPolice }) => {
         const p = this.progress!;
         if (byPolice || p.save.heat >= ARREST_HEAT) {
@@ -711,11 +715,11 @@ export class Game {
   }
 
   /** Hub rooms: freeze the world and open the room's panel. */
-  private openStation(id: StationId): void {
+  private openStation(id: StationId, from?: StationDef): void {
     const w = this.world;
     const p = this.progress;
     if (!w || !p) return;
-    const station = w.level.stations?.find((s) => s.id === id);
+    const station = from ?? w.level.stations?.find((s) => s.id === id);
     const at = station ? { x: w.player.pos.x, z: w.player.pos.z } : undefined;
     if (id === 'wardrobe') return this.openCreator('edit', 'home', at);
     if (id === 'mirror') return this.openSheet('home', at);
@@ -825,6 +829,16 @@ export class Game {
           this.hud.toast('Car swapped', 'item');
         });
         break;
+      case 'terminal':
+        screen = terminalScreen(p, close, saved, (uid) => this.startInstalling(uid), () => {
+          this.ui.replaceAll(null);
+          this.enterArea('basement', 'stairs', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+        });
+        break;
+      case 'grow_counter':
+      case 'grow_display':
+        screen = growShopScreen(p, close, saved, station?.tab ?? 'room');
+        break;
       case 'casino_slots':
         screen = slotsScreen(p, close, saved);
         break;
@@ -916,15 +930,23 @@ export class Game {
     if (reason) this.hud.toast(reason, 'warn');
   }
 
-  // ---- placement editor ------------------------------------------------------------------------
+  // ---- placement editor (house furniture and basement equipment) ------------------------------------
 
-  private editor: { uid: string; id: string; colour: string; at: PlacedAt; prev: PlacedAt | null; bar: HTMLElement; status: HTMLElement } | null = null;
+  private editor: {
+    space: 'home' | 'basement';
+    uid: string;
+    id: string;
+    colour: string;
+    at: { x: number; z: number; rot: number; room?: RoomId };
+    prev: { x: number; z: number; rot: number; room?: RoomId } | null;
+    bar: HTMLElement;
+    status: HTMLElement;
+  } | null = null;
 
-  /** Lift a piece (or take it out of its box) and move it about with a see-through preview. */
+  /** Lift a house piece (or take it out of its box) and move it about with a see-through preview. */
   private startPlacing(uid: string, room: RoomId): void {
     const p = this.progress;
-    const w = this.world;
-    if (!p || !w) return;
+    if (!p) return;
     const piece = p.save.property.furniture.find((f) => f.uid === uid);
     if (!piece) return;
     const def = FURNITURE[piece.id];
@@ -933,44 +955,72 @@ export class Game {
     const r = ROOMS[room];
     const at: PlacedAt =
       prev ?? suggestSpot(p.save.property, def, room, uid) ?? { room, x: Math.round(((r.x0 + r.x1) / 2) * 10) / 10, z: def.mount === 'wall' ? wallZ(def) : -1.2, rot: 0 };
+    this.openEditor('home', uid, piece.id, piece.colour, def.name, def.mount === 'wall', Math.floor(def.price / 2), at, prev);
+  }
+
+  /** Same for a piece of basement equipment. */
+  private startInstalling(uid: string): void {
+    const p = this.progress;
+    if (!p) return;
+    const b = p.save.basement;
+    const piece = b.equipment.find((e) => e.uid === uid);
+    if (!piece) return;
+    const def = EQUIPMENT[piece.id];
+    const prev = piece.at ? { ...piece.at } : null;
+    piece.at = null;
+    const at = prev ?? suggestEquipmentSpot(b, def, uid) ?? { x: 4, z: def.mount === 'wall' ? equipmentWallZ(def) : -1.2, rot: 0 };
+    this.openEditor('basement', uid, piece.id, '', def.name, def.mount === 'wall', piece.faulty ? Math.floor(equipmentResale(def.price) / 2) : equipmentResale(def.price), at, prev);
+  }
+
+  private openEditor(space: 'home' | 'basement', uid: string, id: string, colour: string, name: string, wall: boolean, resale: number, at: { x: number; z: number; rot: number; room?: RoomId }, prev: typeof at | null): void {
     this.ui.replaceAll(null);
-    this.enterArea('home', 'start', { at: { x: at.x, z: 1.0 } });
+    this.enterArea(space, space === 'home' ? 'start' : 'stairs', { at: { x: at.x, z: 1.0 } });
     this.state = 'editing';
     const status = h('div', { class: 'editor-status' });
     const btn = (label: string, fn: () => void, cls = '') => h('button', { class: `editor-btn ${cls}`, onclick: (e: Event) => (e.preventDefault(), fn()), text: label });
     const bar = h('div', { class: 'placement-bar' },
-      h('div', { class: 'editor-title', text: `Placing: ${def.name}` }),
+      h('div', { class: 'editor-title', text: `${space === 'home' ? 'Placing' : 'Installing'}: ${name}` }),
       status,
       h('div', { class: 'editor-pad' },
         btn('◀', () => this.nudge(-0.1, 0)),
-        def.mount === 'wall' ? null : btn('▲', () => this.nudge(0, -0.1)),
-        def.mount === 'wall' ? null : btn('▼', () => this.nudge(0, 0.1)),
+        wall ? null : btn('▲', () => this.nudge(0, -0.1)),
+        wall ? null : btn('▼', () => this.nudge(0, 0.1)),
         btn('▶', () => this.nudge(0.1, 0)),
-        def.mount === 'wall' ? null : btn('⟲', () => this.turn(-1)),
-        def.mount === 'wall' ? null : btn('⟳', () => this.turn(1)),
+        wall ? null : btn('⟲', () => this.turn(-1)),
+        wall ? null : btn('⟳', () => this.turn(1)),
       ),
       h('div', { class: 'editor-pad' },
-        btn('Place', () => this.confirmPlacing(), 'ok'),
+        btn(space === 'home' ? 'Place' : 'Install', () => this.confirmPlacing(), 'ok'),
         btn('Cancel', () => this.endPlacing('cancel')),
         btn('Store', () => this.endPlacing('store')),
-        btn(`Sell £${Math.floor(def.price / 2)}`, () => this.endPlacing('sell'), 'bad'),
+        btn(`Sell £${resale}`, () => this.endPlacing('sell'), 'bad'),
       ),
       h('div', { class: 'editor-keys', text: 'Arrows/WASD move · Q/E turn · Shift = bigger steps · Enter place · Esc cancel · Delete store' }),
     );
     this.uiRoot.append(bar);
-    this.editor = { uid, id: piece.id, colour: piece.colour, at, prev, bar, status };
+    this.editor = { space, uid, id, colour, at, prev, bar, status };
     this.refreshGhost();
+  }
+
+  private editorCheck(): { ok: true; room?: RoomId } | { ok: false; reason: string } {
+    const ed = this.editor!;
+    const p = this.progress!;
+    if (ed.space === 'home') return checkPlacement(p.save.property, FURNITURE[ed.id], ed.at, ed.uid);
+    return checkEquipmentPlacement(p.save.basement, EQUIPMENT[ed.id], ed.at, ed.uid);
+  }
+
+  private editorWall(): boolean {
+    const ed = this.editor!;
+    return (ed.space === 'home' ? FURNITURE[ed.id] : EQUIPMENT[ed.id]).mount === 'wall';
   }
 
   private refreshGhost(): void {
     const ed = this.editor;
-    const p = this.progress;
     const w = this.world;
-    if (!ed || !p || !w) return;
-    const def = FURNITURE[ed.id];
-    const chk = checkPlacement(p.save.property, def, ed.at, ed.uid);
+    if (!ed || !w) return;
+    const chk = this.editorCheck();
     this.renderer.setGhost(ed.id, ed.colour, ed.at, chk.ok);
-    ed.status.textContent = chk.ok ? `Fits here (${ROOMS[chk.room].name})` : chk.reason;
+    ed.status.textContent = chk.ok ? (ed.space === 'home' && chk.room ? `Fits here (${ROOMS[chk.room].name})` : 'Fits here') : chk.reason;
     ed.status.className = `editor-status ${chk.ok ? 'ok' : 'bad'}`;
     // Keep the camera on it: the player stands in the walkway opposite.
     w.player.pos.x = Math.max(w.arena.bounds.minX + 0.4, Math.min(w.arena.bounds.maxX - 0.4, ed.at.x));
@@ -979,18 +1029,20 @@ export class Game {
 
   private nudge(dx: number, dz: number): void {
     const ed = this.editor;
-    if (!ed) return;
-    const def = FURNITURE[ed.id];
-    const x = Math.max(-25.9, Math.min(1.9, Math.round((ed.at.x + dx) * 100) / 100));
+    const w = this.world;
+    if (!ed || !w) return;
+    const b = w.level.bounds;
+    const x = Math.max(b.minX + 0.1, Math.min(b.maxX - 0.1, Math.round((ed.at.x + dx) * 100) / 100));
     let z = ed.at.z;
-    if (def.mount !== 'wall') z = Math.max(BACK_Z - 0.2, Math.min(LANE_Z + 0.4, Math.round((ed.at.z + dz) * 100) / 100));
-    ed.at = { ...ed.at, x, z, room: (Object.keys(ROOMS) as RoomId[]).find((r) => x > ROOMS[r].x0 && x < ROOMS[r].x1) ?? ed.at.room };
+    if (!this.editorWall()) z = Math.max(b.minZ - 0.7, Math.min(b.maxZ - 0.4, Math.round((ed.at.z + dz) * 100) / 100));
+    const room = ed.space === 'home' ? (Object.keys(ROOMS) as RoomId[]).find((r) => x > ROOMS[r].x0 && x < ROOMS[r].x1) ?? ed.at.room : undefined;
+    ed.at = { ...ed.at, x, z, room };
     this.refreshGhost();
   }
 
   private turn(d: number): void {
     const ed = this.editor;
-    if (!ed || FURNITURE[ed.id].mount === 'wall') return;
+    if (!ed || this.editorWall()) return;
     ed.at = { ...ed.at, rot: (ed.at.rot + d + 4) % 4 };
     this.refreshGhost();
   }
@@ -999,32 +1051,64 @@ export class Game {
     const ed = this.editor;
     const p = this.progress;
     if (!ed || !p) return;
-    const r = placeFurniture(p, ed.uid, ed.at);
+    const r = ed.space === 'home'
+      ? placeFurniture(p, ed.uid, { ...ed.at, room: ed.at.room ?? 'living' })
+      : installEquipment(p, ed.uid, ed.at);
     if (!r.ok) {
       this.hud.toast(r.reason, 'warn');
       return;
     }
-    this.hud.toast(`${FURNITURE[ed.id].name} placed`, 'item');
+    this.hud.toast(`${ed.space === 'home' ? FURNITURE[ed.id].name : EQUIPMENT[ed.id].name} ${ed.space === 'home' ? 'placed' : 'installed'}`, 'item');
     this.endPlacing('done');
   }
 
-  /** Leave the editor: put the piece back where it was (cancel), in its box (store), sold, or where you placed it. */
+  /** Leave the editor: put the piece back where it was (cancel), in storage (store), sold, or where you placed it. */
   private endPlacing(how: 'done' | 'cancel' | 'store' | 'sell'): void {
     const ed = this.editor;
     const p = this.progress;
     if (!ed || !p) return;
-    const piece = p.save.property.furniture.find((f) => f.uid === ed.uid);
-    if (how === 'cancel' && piece) piece.at = ed.prev;
-    if (how === 'store') storeFurniture(p, ed.uid);
-    if (how === 'sell') {
-      const r = sellFurniture(p, ed.uid);
-      if (r.ok) this.hud.toast(`Sold for £${r.refund}`, 'cash');
+    if (ed.space === 'home') {
+      const piece = p.save.property.furniture.find((f) => f.uid === ed.uid);
+      if (how === 'cancel' && piece && ed.prev) piece.at = { ...ed.prev, room: ed.prev.room ?? 'living' };
+      if (how === 'store') storeFurniture(p, ed.uid);
+      if (how === 'sell') {
+        const r = sellFurniture(p, ed.uid);
+        if (r.ok) this.hud.toast(`Sold for £${r.refund}`, 'cash');
+      }
+    } else {
+      const piece = p.save.basement.equipment.find((e) => e.uid === ed.uid);
+      if (how === 'cancel' && piece) piece.at = ed.prev ? { x: ed.prev.x, z: ed.prev.z, rot: ed.prev.rot } : null;
+      if (how === 'store') uninstallEquipment(p, ed.uid);
+      if (how === 'sell') {
+        const r = sellEquipment(p, ed.uid);
+        if (r.ok) this.hud.toast(`Sold for £${r.refund}`, 'cash');
+      }
     }
     ed.bar.remove();
     this.editor = null;
     this.renderer.setGhost(null, '');
     const at = { x: this.world?.player.pos.x ?? ed.at.x, z: 1.0 };
-    this.enterArea('home', 'start', { at });
+    this.enterArea(ed.space, ed.space === 'home' ? 'start' : 'stairs', { at });
+  }
+
+  // ---- the basement business clock ----------------------------------------------------------------
+
+  private bizTimer = 0;
+
+  /** Play time drives the business. Checked once a second; news comes up as toasts. */
+  private businessClock(dt: number): void {
+    const p = this.progress;
+    if (!p) return;
+    p.save.playTime += dt;
+    this.bizTimer += dt;
+    if (this.bizTimer < 1) return;
+    this.bizTimer = 0;
+    const b = p.save.basement;
+    if (!b.business.active) {
+      b.business.lastTick = p.save.playTime;
+      return;
+    }
+    for (const e of tickBusiness(b, p.save.playTime, p.save.heat)) this.hud.toast(`Basement: ${e.text}`, e.kind === 'storage_full' ? 'item' : 'warn');
   }
 
   private editorKey(e: KeyboardEvent): void {
@@ -1387,8 +1471,10 @@ export class Game {
           }
           cmd = { ...cmd, special: false, block: false, pressed: { ...cmd.pressed, lp: false, hp: false, lk: false, hk: false, dodge: false, jump: false, swap: false } };
         }
-        if (this.world) this.world.step(cmd);
-        else this.mode!.step(cmd);
+        if (this.world) {
+          this.world.step(cmd);
+          this.businessClock(DT);
+        } else this.mode!.step(cmd);
         this.accumulator -= DT;
         steps++;
       }

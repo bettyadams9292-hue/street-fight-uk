@@ -2,7 +2,8 @@ import type { AreaId } from '../progress/Progress';
 import { DISTRICTS } from './districts';
 import { INTERIORS } from './interiors';
 import type { LevelDef } from './LevelTypes';
-import { FRONT_DOOR_X, HOME_BOUNDS, buildHomeLevel } from '../property/home';
+import { BASEMENT_DOOR_X, FRONT_DOOR_X, HOME_BOUNDS, buildHomeLevel } from '../property/home';
+import { buildBasementLevel, defaultBasement } from '../business/basement';
 import { defaultProperty } from '../property/state';
 
 /**
@@ -27,8 +28,12 @@ const homeBase: LevelDef = {
   entries: [
     { id: 'start', x: -16, z: 0.4, facing: 1 },
     { id: 'door', x: -8, z: -0.6, facing: 1 },
+    { id: 'basement', x: BASEMENT_DOOR_X, z: -0.6, facing: 1 },
   ],
-  exits: [{ id: 'front_door', kind: 'door', x: FRONT_DOOR_X, z: -1.4, to: 'estate', toEntry: 'home', label: 'Go out (front door)' }],
+  exits: [
+    { id: 'front_door', kind: 'door', x: FRONT_DOOR_X, z: -1.4, to: 'estate', toEntry: 'home', label: 'Go out (front door)' },
+    { id: 'basement_door', kind: 'door', x: BASEMENT_DOOR_X, z: -1.4, to: 'basement', toEntry: 'stairs', label: 'Down to the basement' },
+  ],
   facades: [
     { kind: 'room', x0: -26, x1: -20, label: 'Bathroom', colour: '#e8e2cc' },
     { kind: 'room', x0: -20, x1: -13, label: 'Bedroom', colour: '#6d7a8c' },
@@ -576,7 +581,7 @@ export const CORE_LEVELS = {
 };
 
 
-export const LEVELS: Record<AreaId, LevelDef> = { ...CORE_LEVELS, ...DISTRICTS, ...INTERIORS };
+export const LEVELS: Record<AreaId, LevelDef> = { ...CORE_LEVELS, ...DISTRICTS, ...INTERIORS, basement: buildBasementLevel(defaultBasement()) };
 
 /** The story's spine, in order: who to beat next, for the story screen and the phone. */
 export const DISTRICT_ORDER: { flag: string; area: AreaId; label: string; optional?: boolean }[] = [

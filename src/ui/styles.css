@@ -701,3 +701,20 @@ input[type='range'].focused, input[type='range']:focus { filter: drop-shadow(0 0
 .editor-btn.ok { border-color: #6ad04a; } .editor-btn.bad { border-color: #ff6a6a; }
 .editor-keys { color: var(--muted); font-size: 12px; text-align: center; }
 @media (max-width: 720px) { .prop-shop { grid-template-columns: 1fr; } .prop-list { max-height: 30vh; } .stat-row { grid-template-columns: 110px 1fr 30px; } }
+
+/* ------------------------------------------------------------ basement business (Stage 7) ----- */
+.hub-warn { color: #ff9a8a; font-size: 14px; margin: 4px 0; }
+.biz-status { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 800; font-size: 15px; margin: 6px 0 10px; background: rgba(255,255,255,0.08); }
+.biz-status.running { background: rgba(64, 255, 120, 0.15); color: #6ad04a; }
+.biz-status.down, .biz-status.unpaid, .biz-status.full, .biz-status.not_ready { background: rgba(255, 120, 100, 0.15); color: #ff9a8a; }
+.biz-status.paused, .biz-status.not_started { color: var(--yellow); }
+.biz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; margin: 6px 0; }
+.biz-stat { background: rgba(255,255,255,0.04); border: 1px solid var(--edge); border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column; }
+.biz-stat span { color: var(--muted); font-size: 12px; }
+.biz-stat b { font-size: 16px; }
+.biz-stat.warn { border-color: #ff7a6a; }
+.biz-progress { margin: 6px 0 10px; height: 10px; }
+.shop-row.faulty { border-color: #ff7a6a; }
+.ledger-row { display: grid; grid-template-columns: 50px 1fr auto; gap: 8px; font-size: 13px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.ledger-row span:first-child { color: var(--muted); }
+.ledger-row .neg { color: #ff9a8a; } .ledger-row .pos { color: #6ad04a; }

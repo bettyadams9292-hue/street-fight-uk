@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { BIKES, CARS, FURNITURE, type BikeDef, type CarDef, type FurnitureDef } from '../property/catalogue';
 import { signTexture } from './levelTextures';
+import { EQUIPMENT } from '../business/catalogue';
 
 /**
  * Furniture, cars and off-road bikes, built from primitives so they share
@@ -654,4 +655,220 @@ function bike(g: THREE.Group, def: BikeDef, colour: string): void {
 /** Car or bike, whichever the id is. */
 export function buildVehicleModel(id: string, colour?: string): THREE.Group {
   return CARS[id] ? buildCarModel(id, colour) : buildBikeModel(id, colour);
+}
+
+// ---- basement business equipment -------------------------------------------------------------------
+
+/**
+ * Grow shop and basement equipment. `state` is 'ok|fill|on': faulty kit has
+ * no glow and a hazard tag; storage fills with boxes as stock builds; lights
+ * glow when the business is running.
+ */
+export function buildEquipmentModel(id: string, state = 'ok|0|on'): THREE.Group {
+  const def = EQUIPMENT[id];
+  const g = new THREE.Group();
+  if (!def) return g;
+  const [cond, fillS, power] = state.split('|');
+  const faulty = cond === 'faulty';
+  const on = power === 'on' && !faulty;
+  const fill = Math.max(0, Math.min(1, Number(fillS) || 0));
+  const W = def.size[0] * 2;
+  const D = def.size[1] * 2;
+  const y0 = def.mount === 'wall' ? def.wallY ?? 1.6 : 0;
+  const steel = mat('#8a8e94', 0.4, 0.7);
+  const dark = mat('#1c1e22', 0.5, 0.4);
+  const black = mat('#111214', 0.6);
+  const glow = (c: number, k = 1) => mat('#ffffff', 0.4, 0, { emissive: c, emissiveIntensity: on ? k : 0.05 });
+  const foliage = (x: number, z: number, h: number, r: number) => {
+    // Stylised greenery: clusters, nothing botanical.
+    for (let i = 0; i < 4; i++) {
+      const s = new THREE.Mesh(new THREE.IcosahedronGeometry(r * (0.7 + 0.1 * i), 0), mat(i % 2 ? '#2f7a32' : '#3d8f3a', 0.85));
+      s.position.set(x + Math.cos(i * 1.9) * r * 0.4, h - i * r * 0.35, z + Math.sin(i * 1.9) * r * 0.3);
+      s.castShadow = true;
+      g.add(s);
+    }
+    C(g, r * 0.6, r * 0.5, 0.22, x, 0.11, z, mat('#2a2a2a', 0.8), 10);
+  };
+  switch (id) {
+    case 'tent_s':
+    case 'tent_d': {
+      const H = 1.9;
+      const fabric = mat('#1a1a1c', 0.95);
+      // Frame, fabric walls (front rolled half up), silver lining glowing inside.
+      for (const dx of [-W / 2, W / 2]) for (const dz of [-D / 2, D / 2]) C(g, 0.015, 0.015, H, dx, H / 2, dz, steel, 6, false);
+      B(g, W, 0.02, D, 0, H, 0, fabric);
+      B(g, 0.02, H, D, -W / 2, H / 2, 0, fabric);
+      B(g, 0.02, H, D, W / 2, H / 2, 0, fabric);
+      B(g, W, H, 0.02, 0, H / 2, -D / 2, fabric);
+      B(g, W, H * 0.35, 0.02, 0, H - H * 0.175, D / 2, fabric);
+      B(g, W, 0.12, 0.08, 0, H * 0.62, D / 2 + 0.02, fabric);
+      B(g, W - 0.04, H * 0.6, 0.01, 0, H * 0.31, -D / 2 + 0.02, mat('#c8ccd0', 0.2, 0.8, { emissive: 0xf0d8ff, emissiveIntensity: on ? 0.25 : 0 }), false);
+      // Lamp hanging inside.
+      B(g, W * 0.7, 0.04, D * 0.6, 0, H - 0.25, 0, glow(0xf4d8ff, 1.3), false);
+      const n = id === 'tent_d' ? 4 : 2;
+      for (let i = 0; i < n; i++) foliage(-W / 2 + (W / n) * (i + 0.5), 0.05, 0.75, 0.16);
+      if (id === 'tent_d') B(g, 0.02, H * 0.6, 0.03, 0, H * 0.31, D / 2 + 0.01, mat('#2a2a2e', 0.6), false);
+      break;
+    }
+    case 'module': {
+      const H = 2.2;
+      const panel = mat('#e8ece8', 0.5);
+      B(g, W, H, D, 0, H / 2, 0, panel);
+      for (let x = -W / 2 + 0.6; x < W / 2; x += 0.6) B(g, 0.02, H, D + 0.01, x, H / 2, 0, mat('#c8ccc8', 0.5), false);
+      B(g, 0.8, 1.9, 0.03, -W / 4, 0.95, D / 2 + 0.01, mat('#d0d4d0', 0.4, 0.3), false);
+      B(g, 0.05, 0.2, 0.04, -W / 4 + 0.3, 1.0, D / 2 + 0.04, steel, false);
+      // Window into the lit room.
+      B(g, 0.9, 0.5, 0.02, W / 4, 1.4, D / 2 + 0.01, glow(0xe8d0ff, 0.9), false);
+      B(g, W, 0.08, D, 0, H + 0.04, 0, dark);
+      C(g, 0.12, 0.12, 0.5, W / 3, H + 0.3, 0, steel, 12);
+      B(g, 0.3, 0.12, 0.02, W / 2 - 0.3, 1.9, D / 2 + 0.012, glow(on ? 0x40ff70 : 0x400000, 0.9), false);
+      break;
+    }
+    case 'shelving':
+    case 'pallet_rack': {
+      const H = id === 'pallet_rack' ? 2.2 : 1.8;
+      const frame = id === 'pallet_rack' ? mat('#1f4fa8', 0.5, 0.4) : steel;
+      for (const dx of [-W / 2 + 0.03, W / 2 - 0.03]) for (const dz of [-D / 2 + 0.02, D / 2 - 0.02]) B(g, 0.05, H, 0.04, dx, H / 2, dz, frame);
+      const levels = id === 'pallet_rack' ? 3 : 4;
+      let shown = Math.round(fill * levels * (id === 'pallet_rack' ? 4 : 3));
+      for (let l = 0; l < levels; l++) {
+        const y = 0.1 + l * (H - 0.15) / levels;
+        B(g, W, 0.03, D, 0, y, 0, id === 'pallet_rack' ? mat('#e86a10', 0.5, 0.3) : steel, false);
+        const per = id === 'pallet_rack' ? 4 : 3;
+        for (let k = 0; k < per && shown > 0; k++, shown--) B(g, W / per - 0.06, 0.26, D - 0.08, -W / 2 + (W / per) * (k + 0.5), y + 0.15, 0, mat(k % 2 ? '#b8946a' : '#a8845a', 0.95));
+      }
+      break;
+    }
+    case 'cabinet':
+      B(g, W, 1.8, D, 0, 0.9, 0, mat('#5a6a5a', 0.4, 0.4));
+      B(g, 0.01, 1.7, 0.01, 0, 0.9, D / 2 + 0.005, black, false);
+      B(g, 0.08, 0.08, 0.03, 0.1, 1.0, D / 2 + 0.02, mat('#c9a227', 0.3, 0.8), false);
+      for (const y of [0.3, 1.6]) B(g, W - 0.1, 0.03, 0.01, 0, y, D / 2 + 0.005, mat('#4a5a4a', 0.5), false);
+      break;
+    case 'workbench2':
+      B(g, W, 0.06, D, 0, 0.9, 0, mat('#a87a4a', 0.6));
+      for (const dx of [-W / 2 + 0.05, W / 2 - 0.05]) B(g, 0.06, 0.9, D - 0.06, dx, 0.45, 0, steel);
+      B(g, W - 0.1, 0.03, D - 0.1, 0, 0.25, 0, steel, false);
+      B(g, W, 0.7, 0.03, 0, 1.3, -D / 2 + 0.015, mat('#c8a870', 0.9), false);
+      B(g, 0.25, 0.12, 0.2, -W / 4, 0.99, 0, mat('#2a2a2e', 0.4), false);
+      B(g, 0.2, 0.1, 0.15, W / 4, 0.98, 0.02, mat('#b8946a', 0.95));
+      C(g, 0.04, 0.04, 0.12, 0.05, 0.99, 0.05, mat('#e8e4dc', 0.4), 10);
+      break;
+    case 'led_rig':
+    case 'led_array':
+    case 'light_bars': {
+      // Floor stand with a hanging panel; plants under it on bigger rigs.
+      const H = 1.7;
+      for (const dx of [-W / 2 + 0.03, W / 2 - 0.03]) {
+        C(g, 0.02, 0.02, H, dx, H / 2, 0, steel, 6);
+        B(g, 0.06, 0.03, D, dx, 0.015, 0, steel, false);
+      }
+      B(g, W, 0.03, 0.03, 0, H, 0, steel, false);
+      const bars = id === 'led_rig' ? 1 : id === 'led_array' ? 3 : 6;
+      for (let i = 0; i < bars; i++) {
+        const x = bars === 1 ? 0 : -W / 2 + 0.1 + ((W - 0.2) / (bars - 1)) * i;
+        B(g, bars === 1 ? W * 0.8 : 0.06, 0.04, D * 0.8, x, H - 0.3, 0, dark, false);
+        B(g, bars === 1 ? W * 0.75 : 0.05, 0.01, D * 0.75, x, H - 0.325, 0, glow(0xffd8ff, 1.6), false);
+      }
+      B(g, 0.12, 0.08, 0.06, W / 2 - 0.1, H - 0.2, 0, dark, false);
+      if (id !== 'led_rig') foliage(0, 0, 0.6, 0.15);
+      break;
+    }
+    case 'fan': {
+      const f = C(g, 0.12, 0.12, 0.35, 0, 0.6, 0, steel, 16);
+      f.rotation.z = Math.PI / 2;
+      C(g, 0.16, 0.16, 0.7, 0, 0.35, 0, mat('#2a2a2a', 0.9), 16);
+      C(g, 0.17, 0.17, 0.03, 0, 0.71, 0, steel, 16);
+      const duct = C(g, 0.08, 0.08, 1.4, 0, 1.45, 0, mat('#b8b8b0', 0.4, 0.6, { flatShading: true }), 10);
+      duct.castShadow = false;
+      break;
+    }
+    case 'air_handler':
+    case 'air_system': {
+      const H = id === 'air_system' ? 1.5 : 1.1;
+      B(g, W, H, D, 0, H / 2, 0, mat('#c8ccd0', 0.4, 0.6));
+      for (let y = 0.2; y < H - 0.1; y += 0.07) B(g, W * 0.45, 0.02, 0.01, -W / 4, y, D / 2 + 0.005, dark, false);
+      const r = C(g, Math.min(W, H) * 0.22, Math.min(W, H) * 0.22, 0.03, W / 4, H / 2, D / 2 + 0.01, dark, 20, false);
+      r.rotation.x = Math.PI / 2;
+      B(g, 0.08, 0.05, 0.01, W / 4, H - 0.12, D / 2 + 0.01, glow(on ? 0x40ff70 : 0x200000, 0.9), false);
+      const duct = B(g, 0.35, 2.6 - H, 0.35, -W / 4, H + (2.6 - H) / 2, 0, mat('#b8b8b0', 0.4, 0.6));
+      duct.castShadow = false;
+      break;
+    }
+    case 'cooler':
+      B(g, W, 0.8, D, 0, 0.42, 0, mat('#f0eee8', 0.4));
+      for (let y = 0.5; y < 0.75; y += 0.05) B(g, W - 0.08, 0.015, 0.01, 0, y, D / 2 + 0.005, mat('#8a8a8a', 0.5), false);
+      B(g, 0.1, 0.04, 0.01, 0, 0.25, D / 2 + 0.005, glow(0x40c0ff, 0.9), false);
+      for (const dx of [-W / 3, W / 3]) C(g, 0.03, 0.03, 0.04, dx, 0.02, D / 3, black, 8);
+      {
+        const hose = C(g, 0.06, 0.06, 1.6, 0, 1.6, -D / 2 + 0.08, mat('#c8c8c0', 0.5, 0.4), 10);
+        hose.castShadow = false;
+      }
+      break;
+    case 'climate':
+      B(g, W, 1.8, D, 0, 0.9, 0, mat('#e8ece8', 0.4, 0.3));
+      B(g, W - 0.12, 0.5, 0.01, 0, 1.4, D / 2 + 0.005, mat('#2a2e34', 0.3), false);
+      B(g, W - 0.2, 0.22, 0.01, 0, 1.45, D / 2 + 0.01, glow(0x40c0ff, 0.8), false);
+      for (let y = 0.2; y < 1.0; y += 0.06) B(g, W - 0.1, 0.02, 0.01, 0, y, D / 2 + 0.005, mat('#a8acb0', 0.5), false);
+      break;
+    case 'control':
+      B(g, W, 0.5, D, 0, y0, -D / 2 + 0.04, mat('#d8dcd8', 0.4, 0.3));
+      for (let i = 0; i < 5; i++) B(g, 0.04, 0.08, 0.02, -W / 2 + 0.08 + i * 0.12, y0 + 0.08, 0.005, mat(i % 2 ? '#2a2a2e' : '#c81010', 0.5), false);
+      B(g, W - 0.08, 0.1, 0.01, 0, y0 - 0.12, 0.003, glow(0x40ff70, 0.8), false);
+      C(g, 0.02, 0.02, 0.8, W / 2 - 0.05, y0 + 0.65, -D / 2 + 0.04, black, 6, false);
+      break;
+    case 'sensor':
+      B(g, W, 0.24, D, 0, y0, -D / 2 + 0.03, mat('#f0eee8', 0.4));
+      B(g, W - 0.06, 0.12, 0.01, 0, y0 + 0.03, 0.005, glow(0x40ffc0, 1.1), false);
+      break;
+    case 'cctv': {
+      B(g, 0.06, 0.06, 0.16, 0, y0, -D / 2 + 0.08, mat('#e8e8e4', 0.4));
+      const cam = B(g, 0.12, 0.1, 0.24, 0, y0 - 0.05, 0.05, mat('#e8e8e4', 0.4));
+      cam.rotation.x = 0.35;
+      const lens = C(g, 0.03, 0.03, 0.02, 0, y0 - 0.1, 0.17, black, 10, false);
+      lens.rotation.x = Math.PI / 2 + 0.35;
+      B(g, 0.015, 0.015, 0.01, 0.04, y0 - 0.02, 0.17, glow(0xff2020, 1.5), false);
+      break;
+    }
+    case 'monitors':
+      B(g, W, 0.05, D, 0, 0.75, 0, mat('#2a2a2e', 0.5));
+      for (const dx of [-W / 2 + 0.05, W / 2 - 0.05]) B(g, 0.05, 0.75, D - 0.05, dx, 0.375, 0, mat('#2a2a2e', 0.5));
+      for (let i = 0; i < 4; i++) {
+        const x = (i % 2 ? 0.27 : -0.27) * (W / 1.2);
+        const y = i < 2 ? 1.05 : 1.37;
+        B(g, 0.5, 0.3, 0.04, x, y, -D / 2 + 0.06, black, false);
+        B(g, 0.46, 0.26, 0.01, x, y, -D / 2 + 0.085, mat('#101820', 0.2, 0, { emissive: on ? [0x3a6a5a, 0x4a5a7a, 0x5a6a4a, 0x3a5a7a][i] : 0x050505, emissiveIntensity: 0.9 }), false);
+      }
+      B(g, 0.4, 0.02, 0.14, 0, 0.785, 0.05, dark, false);
+      break;
+    case 'alarm':
+      B(g, W * 1.4, 0.26, D, 0, y0, -D / 2 + 0.03, mat('#f0eee8', 0.4));
+      B(g, 0.2, 0.08, 0.01, 0, y0 + 0.05, 0.004, glow(0x40c0ff, 0.8), false);
+      for (let i = 0; i < 6; i++) B(g, 0.035, 0.035, 0.01, -0.05 + (i % 3) * 0.05, y0 - 0.05 - Math.floor(i / 3) * 0.05, 0.004, mat('#2a2a2e', 0.5), false);
+      B(g, 0.03, 0.03, 0.01, 0.12, y0 + 0.08, 0.004, glow(0xff2020, 1.2), false);
+      break;
+    case 'safe':
+      B(g, W, 0.75, D, 0, 0.38, 0, mat('#3a3e44', 0.35, 0.7));
+      B(g, W - 0.08, 0.67, 0.01, 0, 0.38, D / 2 + 0.005, mat('#2e3238', 0.35, 0.7), false);
+      {
+        const dial = C(g, 0.07, 0.07, 0.03, 0.05, 0.45, D / 2 + 0.02, mat('#c8c8c8', 0.2, 0.9), 20, false);
+        dial.rotation.x = Math.PI / 2;
+      }
+      B(g, 0.03, 0.15, 0.03, 0.18, 0.38, D / 2 + 0.02, mat('#c8c8c8', 0.2, 0.9), false);
+      break;
+    default:
+      B(g, W, 1, D, 0, def.mount === 'wall' ? y0 : 0.5, 0, steel);
+  }
+  if (faulty) {
+    // Hazard tag and tape.
+    B(g, Math.min(W, 0.5), 0.06, 0.01, 0, def.mount === 'wall' ? y0 - 0.2 : 0.6, (def.mount === 'wall' ? 0.02 : D / 2 + 0.03), mat('#e8c020', 0.6, 0, { emissive: 0x7a5a00, emissiveIntensity: 0.4 }), false);
+  }
+  return g;
+}
+
+/** Whatever a catalogue id is: furniture, a vehicle or basement equipment. */
+export function buildAnyModel(id: string, colour?: string, state?: string): THREE.Group {
+  if (FURNITURE[id]) return buildFurnitureModel(id, colour);
+  if (EQUIPMENT[id]) return buildEquipmentModel(id, state);
+  return buildVehicleModel(id, colour);
 }

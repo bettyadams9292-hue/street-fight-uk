@@ -13,6 +13,7 @@ import { AREA_IDS } from '../src/progress/Progress';
 import { PROP_SIZE, type FacadeKind, type PropKind } from '../src/world/LevelTypes';
 import { LEVELS } from '../src/world/levels';
 import { BIKE_LIST, CAR_LIST, FINISH_LIST, FURNITURE_LIST } from '../src/property/catalogue';
+import { EQUIPMENT_LIST } from '../src/business/catalogue';
 
 type Row = { name: string; file: string; appears: string; status: string; needs: string; replacement: string; material: string; animation: string; collision: string; checked: string };
 
@@ -115,6 +116,17 @@ rows.push({
     { name: 'Facade: showroom', file: 'src/render/LevelView.ts showroom', appears: 'High Street (Home & Hearth), trading estate (Brackley Motors, Mudlark Moto)', status: 'New (Stage 6)', needs: '—', replacement: 'Glazed bays, stock silhouettes, lit fascia, canopy, totem and flags', material: 'Brick or cladding, emissive glass', animation: 'none', collision: 'Back wall', checked: 'Integrated' },
     { name: 'Facade: casino', file: 'src/render/LevelView.ts casinoFront', appears: 'Market Square', status: 'New (Stage 6)', needs: '—', replacement: 'Black and gold front, neon name, marquee bulbs, red carpet, rope posts', material: 'PBR + neon', animation: 'none', collision: 'Back wall', checked: 'Integrated' },
     { name: 'Facade: 14 Tanner Road', file: 'src/render/LevelView.ts houseFront', appears: 'Tanner Road Estate', status: 'Rebuilt (Stage 6)', needs: '—', replacement: 'Panelled door, letterbox, handle, porch light, bay, tiled roof, gutter, downpipe, chimney, garden wall, drive, path', material: 'Brick, tile canvas textures', animation: 'none', collision: 'Back wall + garden wall', checked: 'Screenshot-checked' },
+  ],
+});
+
+rows.push({
+  section: 'Basement and grow shop (Stage 7)',
+  intro: 'Procedural models in src/render/propModels.ts (buildEquipmentModel) and src/render/LevelView.ts. No external GLB was used: none suitable and licensed was available in the project, and downloads are blocked in the build environment.',
+  rows: [
+    ...EQUIPMENT_LIST.map((e) => ({ name: `Equipment: ${e.name}`, file: 'src/render/propModels.ts buildEquipmentModel', appears: 'basement (installed by the player), Green Fingers displays, shop preview', status: 'New (Stage 7)', needs: 'Texture detail', replacement: `Procedural ${e.mount} model; glows when running, hazard tag when broken${e.storage ? ', fills with boxes as stock builds' : ''}`, material: 'PBR, emissive panels', animation: 'Lights on/off with the business', collision: e.mount === 'floor' ? `${(e.size[0] * 2).toFixed(1)} × ${(e.size[1] * 2).toFixed(1)} m, swaps on quarter turns` : 'none (on the wall)', checked: 'Integrated' })),
+    { name: 'Basement walls, joists, pipes, fuse board, lighting', file: 'src/render/LevelView.ts basementWalls / basementFloor', appears: 'basement', status: 'New (Stage 7)', needs: 'Normal maps', replacement: 'Changes with tier and improvements: damp brick and a bare bulb → painted or tiled walls, epoxy floor, ducting, LED panels, rewired board, branding', material: 'Canvas textures', animation: 'none', collision: 'Back wall', checked: 'Screenshot-checked' },
+    { name: 'Basement stairs, terminal desk, junk', file: 'src/render/LevelView.ts', appears: 'basement', status: 'New (Stage 7)', needs: '—', replacement: 'Timber stairs with stringers and rail (steel door once reinforced), desk with laptop (monitors at the top tier), boxes/mattress/paint tins', material: 'PBR', animation: 'none', collision: 'Solid', checked: 'Screenshot-checked' },
+    { name: 'Grow shop interior and shelves', file: 'src/render/LevelView.ts growShopInterior / grow_shelf', appears: 'Green Fingers Hydroponics', status: 'New (Stage 7)', needs: '—', replacement: 'Branded walls, product shelving with price strips, lit demo corner', material: 'PBR', animation: 'none', collision: 'Shelves solid', checked: 'Integrated' },
   ],
 });
 

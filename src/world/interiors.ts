@@ -1,5 +1,6 @@
 import type { LevelDef, PropDef } from './LevelTypes';
 import { FURNITURE } from '../property/catalogue';
+import { EQUIPMENT } from '../business/catalogue';
 
 /**
  * Buildings you can walk into. Same rules as the streets: what you see is
@@ -328,7 +329,58 @@ const casino: LevelDef = {
   objective: 'Slots, roulette, blackjack, and a motor on the podium. Play responsibly: it’s only game money.',
 };
 
+// ---- Green Fingers Hydroponics: grow shop on the trading estate ------------------------------------
+const EQ = (item: string, x: number, z: number, extra: Partial<PropDef> = {}): PropDef => ({
+  kind: 'equipment', item, x, z, size: EQUIPMENT[item].size, solid: EQUIPMENT[item].mount === 'floor', wallY: EQUIPMENT[item].wallY, plinth: EQUIPMENT[item].mount === 'floor', label: 'ok|0|on', ...extra,
+});
+
+const growShop: LevelDef = {
+  id: 'grow_shop',
+  name: 'Green Fingers Hydroponics',
+  district: 'Trading Estate',
+  theme: 'grow_shop',
+  bounds: { minX: 0, maxX: 20, ...ROOM },
+  entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
+  exits: [
+    { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'ind_estate', toEntry: 'grow', label: 'Back out to the trading estate' },
+    { id: 'cab_home', kind: 'door', x: 19.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Back door: Kez’s van home' },
+  ],
+  facades: [{ kind: 'interior', x0: 0, x1: 20, label: 'GREEN FINGERS — HYDROPONICS · LIGHTING · VENTILATION', colour: '#e8ece4' }],
+  props: [
+    { kind: 'grow_shelf', x: 3.0, z: -1.85, label: 'room' },
+    { kind: 'grow_shelf', x: 5.6, z: -1.85, label: 'environment' },
+    EQ('tent_d', 8.7, -1.55),
+    EQ('led_array', 11.1, -1.75),
+    EQ('air_handler', 12.9, -1.65),
+    EQ('monitors', 14.9, -1.8),
+    EQ('cctv', 14.9, -2.0, { plinth: false }),
+    EQ('control', 10.0, -2.0, { plinth: false }),
+    { kind: 'shop_counter', x: 17.6, z: -0.6 },
+  ],
+  stations: [
+    { id: 'grow_display', x: 3.0, z: -1.1, label: 'Browse room equipment', tab: 'room' },
+    { id: 'grow_display', x: 5.6, z: -1.1, label: 'Browse lighting, air and climate kit', tab: 'environment' },
+    { id: 'grow_display', x: 8.7, z: -0.55, label: 'Look at the grow tents', tab: 'room' },
+    { id: 'grow_display', x: 12.0, z: -0.85, label: 'Look at the environmental kit', tab: 'environment' },
+    { id: 'grow_display', x: 14.9, z: -1.1, label: 'Browse security', tab: 'security' },
+    {
+      id: 'grow_counter', x: 17.6, z: 0.2, label: 'Talk to Kez (checkout, upgrades, basement works)', tab: 'upgrades',
+      npc: { name: 'Kez', seed: 6120, body: 'female', top: 'hoodie', topColour: '#2a8a3a', dz: -1.65 },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    { x: 4, y: 2.8, z: -0.4, colour: 0xf0fff0, intensity: 9, range: 9 },
+    { x: 10, y: 2.6, z: -0.8, colour: 0xd8b0ff, intensity: 6, range: 6 },
+    { x: 16, y: 2.8, z: -0.4, colour: 0xf0fff0, intensity: 9, range: 9 },
+  ],
+  weather: 'indoors',
+  objective: 'Kit out the basement. Everything you buy goes into basement storage.',
+};
+
 export const INTERIORS = {
+  grow_shop: growShop,
   clothes_shop: clothesShop, pawn_shop: pawnShop, pub,
   furniture_shop: furnitureShop, car_dealer: carDealer, bike_shop: bikeShop, casino,
 };

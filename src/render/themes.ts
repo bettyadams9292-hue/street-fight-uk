@@ -32,6 +32,8 @@ export const THEMES: Record<Theme, ThemeProfile> = {
   furniture_store: { interior: true, roofed: true, ground: 'wood', road: false, skyline: 'none', bg: 0x07080b, fog: 0, graffiti: 0 },
   car_showroom: { interior: true, roofed: true, ground: 'tiles', road: false, skyline: 'none', bg: 0x07080b, fog: 0, graffiti: 0 },
   bike_shop: { interior: true, roofed: true, ground: 'concrete', road: false, skyline: 'none', bg: 0x07080b, fog: 0, graffiti: 0 },
+  basement: { interior: true, roofed: true, ground: 'concrete', road: false, skyline: 'none', bg: 0x050506, fog: 0, graffiti: 0 },
+  grow_shop: { interior: true, roofed: true, ground: 'tiles', road: false, skyline: 'none', bg: 0x07080b, fog: 0, graffiti: 0 },
   casino: { interior: true, roofed: true, ground: 'carpet', road: false, skyline: 'none', bg: 0x07080b, fog: 0, graffiti: 0 },
   estate: { ...STREET, ground: 'paving', graffiti: 10 },
   high_street: { ...STREET, ground: 'paving', graffiti: 16 },

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { buildFurnitureModel, buildVehicleModel } from '../render/propModels';
-import { CARS, FURNITURE } from '../property/catalogue';
+import { buildAnyModel } from '../render/propModels';
+import { CARS } from '../property/catalogue';
 
 /**
  * A little turntable for the shop screens: one shared WebGL canvas that shows
@@ -40,8 +40,7 @@ class Turntable {
     if (k === this.key) return;
     this.key = k;
     this.holder.clear();
-    const isFurniture = !!FURNITURE[id];
-    const model = isFurniture ? buildFurnitureModel(id, colour) : buildVehicleModel(id, colour);
+    const model = buildAnyModel(id, colour);
     // Wall pieces come down to eye level; everything is centred and framed by its size.
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());

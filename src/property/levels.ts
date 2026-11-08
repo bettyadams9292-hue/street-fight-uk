@@ -5,6 +5,7 @@ import { BIKES, BIKE_SIZE, CARS } from './catalogue';
 import { compPrize } from './casino';
 import { buildHomeLevel } from './home';
 import { DRIVEWAY } from './state';
+import { buildBasementLevel } from '../business/basement';
 
 /**
  * Areas as they are for this save: the house with your furniture, your car
@@ -13,7 +14,7 @@ import { DRIVEWAY } from './state';
  */
 export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
   const prop = save.property;
-  let level: LevelDef = area === 'home' ? buildHomeLevel(HOME_BASE, prop) : LEVELS[area];
+  let level: LevelDef = area === 'home' ? buildHomeLevel(HOME_BASE, prop) : area === 'basement' ? buildBasementLevel(save.basement) : LEVELS[area];
   const props: PropDef[] = [];
   const stations: StationDef[] = [];
 

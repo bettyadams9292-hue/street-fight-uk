@@ -380,6 +380,61 @@ Every visual asset, with where it appears, its status and collision, is listed i
 - The planner is keyboard, mouse or touch only; there's no gamepad support in the editor.
 - Gym and garage can't be decorated.
 
+## Stage 7 report: the basement business
+
+A fictional passive-income business in the basement of 14 Tanner Road. Production is abstract throughout: capacity, light, air, cycles and units of stock. Nothing real-world is modelled.
+
+**The basement.** Go through the cellar door next to the front door to reach it. Stairs come down the left wall, the business terminal is on a desk by the stairs, and the room has brick walls, joists, copper pipes, a cable tray and a fuse board. It starts dirty: damp brick, two bare bulbs, cobwebs and junk taking up the far end. Basement works (from Green Fingers or the terminal) change the actual room:
+
+- **Tiers.**
+  - Renovated: junk cleared, sealed floor, strip lights.
+  - Expanded: 22 m.
+  - Professional: 30 m, with branding and an office desk.
+- **Improvements.** Epoxy floor, painted walls, tiled walls, LED lighting, ducting, a reinforced steel door, an electrical upgrade, a three-phase supply and an office lounge.
+
+**Green Fingers Hydroponics.** The grow shop is on the Brackley Trading Estate, next to the carpet unit; Dave's Cabs also goes there.
+
+- **The shop.** Shopfront, lit fascia and totem sign, shelves, demo kit on plinths and Kez at the till.
+- **Product displays.** Each one opens its own section.
+- **What's on sale.** 21 products in room, environmental and security categories, plus business upgrades and basement works. Each has a price, description, starter/intermediate/professional tier and an ownership count.
+- **Buying.** You see what one more would do to your numbers and the £ per point. Buying several takes two clicks to confirm, and there's a not-enough-money warning. You can sell back from storage at half price.
+- Everything is delivered to basement storage.
+
+**Placing equipment.** At the terminal, open Equipment → Install/Move. This uses the same editor as the house furniture: a green/red preview, arrows/WASD, Q/E to turn, Enter, Esc, Store and Sell, with on-screen buttons for touch.
+
+- Kit can't overlap other kit, the walls, the stairs, the terminal, the walkway or the junk.
+- Installed kit has collision and stays where you put it.
+
+**How income is worked out** (`src/business/production.ts`):
+
+- **Capacity.** Capacity = grow units, limited by light and air (whichever is lowest), then +10% per capacity upgrade.
+- **Output per cycle.** Units per cycle = capacity × efficiency (coolers, climate unit, sensors, workbench, upgrades and improvements).
+- **Cycle length.** A cycle is 8 minutes of play, 12% shorter per automation point (control panels and upgrades, maximum 4).
+- **Stock.** Stock fills to the storage limit (shelving, cabinets, racks, safe, upgrades), then production stops until you sell.
+- **Selling.** Each unit sells for £10, +4% per business level (5 levels by units sold).
+- **Running costs.** Every installed piece has an hourly cost. Costs are paid from the business's takings; if more than £300 is owed, the power is cut until you pay.
+- **Power.** Kit draws power; you need the electrical upgrade or three-phase supply to run more than 4 kW.
+- **Starting and collecting.** Starting costs £200. Sell stock into the business balance, then take it into your pocket or the tin.
+- **Rough numbers.** A starter setup (about £1,000) makes about £280 per hour of play. A full professional setup makes about £11,000 per hour but fills its storage in about a minute and a half, so you have to keep coming back.
+
+**Clock and exploits.** Production runs only on time spent in the game world (`save.playTime`). Closing the game or changing the computer's clock earns nothing, and any catch-up is capped at 15 minutes. Loading a save doesn't produce anything, and a save with a clock from the future is reset.
+
+**Risk.** At the end of each cycle there's a chance of trouble: about 10% with no security, lowered by security and raised by your heat (wanted level).
+
+- **Power trip:** 2 minutes of downtime and a £40 call-out.
+- **Fault:** one piece of kit runs at half power until you repair it at 25% of its price.
+- **Theft:** you lose 40% of stock, or 15% with locked storage.
+- **Nosy neighbours:** 5 minutes of downtime.
+
+Rolls are seeded from the save, so reloading doesn't re-roll them.
+
+**Saving.** `save.basement` holds the tier, improvements, every piece of equipment with its position, rotation and fault state, upgrades, business state (active/paused, cycle progress, stock, balance, bills, downtime, totals, events), a purchase ledger and the event seed. Older saves load with an untouched basement. Bad data is repaired: kit that no longer fits goes back to storage and duplicates are dropped.
+
+**Files.**
+
+- New: `src/business/catalogue.ts`, `basement.ts`, `production.ts`, `src/ui/businessUI.ts`, `tests/stage7.test.ts`.
+- Changed: `Game.ts` (editor for both spaces, business clock, terminal and shop stations), `LevelView.ts`, `propModels.ts`, `propPreview.ts`, `LevelTypes.ts`, `levels.ts`, `districts.ts`, `interiors.ts`, `Progress.ts`, `themes.ts`, `hub.ts`, `property/home.ts` (cellar door kept clear), `property/levels.ts`, `styles.css`.
+
 ## Characters: Quaternius Universal Base Characters (CC0)
 
 - **Source.** Fighters use the male and female models from Quaternius' **Universal Base Characters** (Standard, CC0, public domain). The originals and their licence are in [`assets/quaternius-ubc`](assets/quaternius-ubc/README.md).

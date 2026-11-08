@@ -7,6 +7,7 @@ import { STYLE_IDS, type StyleId } from '../styles/StyleData';
 import type { Fighter, FighterConfig, Perk } from '../fighter/Fighter';
 import { getStyle } from '../data/styles';
 import { defaultProperty, sanitiseProperty, type PropertySave } from '../property/state';
+import { defaultBasement, sanitiseBasement, type BasementSave } from '../business/basement';
 import {
   GEAR_IDS,
   LEVEL_CAP,
@@ -30,6 +31,8 @@ export const AREA_IDS = [
   'clothes_shop', 'pawn_shop', 'pub',
   // Stage 6: furniture shop, car dealer, bike shop, casino
   'furniture_shop', 'car_dealer', 'bike_shop', 'casino',
+  // Stage 7: the basement and the grow shop
+  'basement', 'grow_shop',
   // Stage 5: districts
   'residential', 'leisure', 'stadium', 'market', 'docks', 'ind_estate', 'factory', 'precinct', 'mall', 'car_park', 'nightlife', 'underground', 'hq',
 ] as const;
@@ -88,6 +91,10 @@ export interface GameSave {
   stats: { kos: number; secrets: number; bosses: number; deaths: number; robberies: number; arrests: number };
   /** The house's furniture and decor, your cars and bikes, the casino. */
   property: PropertySave;
+  /** The basement and the business in it. */
+  basement: BasementSave;
+  /** Seconds actually spent playing in the world: the business's clock. */
+  playTime: number;
   savedAt: string;
 }
 
@@ -123,6 +130,8 @@ export function newSave(character: PlayerCharacter): GameSave {
     mealBuff: false,
     stats: { kos: 0, secrets: 0, bosses: 0, deaths: 0, robberies: 0, arrests: 0 },
     property: defaultProperty(),
+    basement: defaultBasement(),
+    playTime: 0,
     savedAt: new Date().toISOString(),
   };
   // Starter kit: your hand wraps on, a couple of sandwiches in your pocket.
@@ -181,6 +190,8 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     mealBuff: r.mealBuff === true,
     stats: { kos: num(st.kos, 0), secrets: num(st.secrets, 0), bosses: num(st.bosses, 0), deaths: num(st.deaths, 0), robberies: num(st.robberies, 0), arrests: num(st.arrests, 0) },
     property: sanitiseProperty(r.property, AREA_IDS),
+    playTime: typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0,
+    basement: sanitiseBasement(r.basement, typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0),
     savedAt: typeof r.savedAt === 'string' ? r.savedAt : base.savedAt,
   };
   const p = new Progress(out);

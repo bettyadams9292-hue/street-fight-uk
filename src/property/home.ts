@@ -17,6 +17,8 @@ export const LANE_Z = 0.55;
 /** Gap kept from the side walls. */
 export const SIDE_MARGIN = 0.15;
 export const FRONT_DOOR_X = -8;
+/** The cellar door, under the stairs next to the front door. */
+export const BASEMENT_DOOR_X = -6.4;
 /** Pieces may not touch: keep this much air between them. */
 const ALLOWED_GAP = 0.02;
 
@@ -87,7 +89,7 @@ function clearZones(): Box[] {
   const z: Box[] = [];
   for (const s of FIXED_STATIONS) z.push({ minX: s.x - 0.4, maxX: s.x + 0.4, minZ: s.z - 0.3, maxZ: 1.4 });
   for (const c of HOME_CONTAINERS) z.push({ minX: c.x - 0.4, maxX: c.x + 0.4, minZ: c.z - 0.3, maxZ: 1.4 });
-  z.push({ minX: FRONT_DOOR_X - 0.8, maxX: FRONT_DOOR_X + 0.8, minZ: -2.4, maxZ: 1.4 });
+  for (const d of [FRONT_DOOR_X, BASEMENT_DOOR_X]) z.push({ minX: d - 0.8, maxX: d + 0.8, minZ: -2.4, maxZ: 1.4 });
   return z;
 }
 const CLEAR = clearZones();
@@ -128,6 +130,7 @@ export function checkPlacement(prop: PropertySave, def: FurnitureDef, at: { x: n
   const others = prop.furniture.filter((f) => f.uid !== ignoreUid && f.at && FURNITURE[f.id]);
   if (def.mount === 'wall') {
     if (Math.abs(at.x - FRONT_DOOR_X) < 0.75 + def.size[0]) return { ok: false, reason: 'That’s where the front door is' };
+    if (Math.abs(at.x - BASEMENT_DOOR_X) < 0.75 + def.size[0]) return { ok: false, reason: 'That’s the basement door' };
     if (Math.abs(at.x - r.window) < (room === 'bathroom' ? 0.5 : 1.12) + def.size[0]) return { ok: false, reason: 'Covers the window' };
     if (room === 'bedroom' && Math.abs(at.x + 16.9) < 0.4 + def.size[0]) return { ok: false, reason: 'Covers the mirror' };
     for (const o of others) {

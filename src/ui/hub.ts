@@ -253,6 +253,7 @@ export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: st
   { area: 'furniture_shop', entry: 'door', where: 'Furniture, floors and walls. High Street' },
   { area: 'car_dealer', entry: 'door', where: 'Cars. Brackley Trading Estate' },
   { area: 'bike_shop', entry: 'door', where: 'Off-road bikes. Brackley Trading Estate' },
+  { area: 'grow_shop', entry: 'door', where: 'Basement equipment. Brackley Trading Estate' },
   { area: 'casino', entry: 'door', where: 'Slots, roulette, blackjack, prize motors. Market Square' },
 ];
 
