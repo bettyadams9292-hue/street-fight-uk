@@ -400,6 +400,7 @@ export function mapScreen(o: MapOptions): Screen {
   window.addEventListener('keyup', keyUp);
 
   let last = performance.now();
+  let lastSize = { w: 0, h: 0 };
   const tick = (now: number) => {
     if (!el.isConnected) {
       window.removeEventListener('keydown', keyDown);
@@ -415,7 +416,11 @@ export function mapScreen(o: MapOptions): Screen {
     if (held.has('ArrowDown') || held.has('KeyS')) target.y += speed;
     clampView(target);
     const e = 1 - Math.exp(-dt * 12);
-    const moved = Math.abs(target.x - view.x) + Math.abs(target.y - view.y) + Math.abs(target.w - view.w) > 0.05;
+    // Window resized or phone turned: redraw at the new shape.
+    const r = svg.getBoundingClientRect();
+    const resized = Math.abs(r.width - lastSize.w) + Math.abs(r.height - lastSize.h) > 1;
+    lastSize = { w: r.width, h: r.height };
+    const moved = resized || Math.abs(target.x - view.x) + Math.abs(target.y - view.y) + Math.abs(target.w - view.w) > 0.05;
     if (moved) {
       view.x += (target.x - view.x) * e;
       view.y += (target.y - view.y) * e;

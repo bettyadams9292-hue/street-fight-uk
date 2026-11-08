@@ -128,6 +128,10 @@ const STATION_ACTIVITY: Record<string, string> = {
   wardrobe: 'Wardrobe', garage: 'Workbench', gym: 'Coach’s board', computer: 'Computer', train: 'Home gym', sparring: 'Sparring', shop_counter: 'Shop',
   furniture: 'Furniture', cars: 'Cars', bikes: 'Bikes', casino: 'Gambling', grow: 'Basement kit', terminal: 'Business terminal', gym_counter: 'Gym kit',
   style_coach: 'Style lessons', style_drill: 'Drills', recruit: 'Hire fighters', pawn: 'Sell valuables',
+  clothes_counter: 'Buy clothes, shoes and bags', changing: 'Try things on', pawn_counter: 'Sell valuables and collectibles',
+  furniture_counter: 'Buy furniture, floors and walls', car_counter: 'Buy and sell cars', bike_counter: 'Buy and sell bikes',
+  casino_cashier: 'Chips and prizes', casino_slots: 'Slots', casino_roulette: 'Roulette', casino_blackjack: 'Blackjack',
+  grow_counter: 'Buy basement equipment', grow_display: 'Look at the kit', mirror: 'Mirror', bike_rack: 'Bikes and cars',
 };
 
 export interface MapPlace {
@@ -271,6 +275,8 @@ export function place(id: AreaId): MapPlace {
   if (secrets) acts.add(`${secrets} hidden stash${secrets > 1 ? 'es' : ''}`);
   if ((lvl.containers ?? []).length) acts.add('Things to search');
   if (lvl.levers?.length) acts.add('A shortcut to open');
+  const boss = lvl.encounters.find((e) => e.boss);
+  if (boss) acts.add('A boss fight');
   const people = new Set<string>();
   for (const s of lvl.stations ?? []) {
     if (!s.npc) continue;
