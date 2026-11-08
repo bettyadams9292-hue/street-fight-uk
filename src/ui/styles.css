@@ -811,7 +811,7 @@ kbd { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing:
 .hud-btn .k { position: absolute; right: 2px; bottom: 1px; font-size: 10px; font-weight: 700; color: var(--muted); }
 .hud:not(.story) .story-only { display: none; }
 .touch-ui .hud-btn .k { display: none; }
-.route-line { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 16px; font-weight: 600; color: #ffd75a; }
+.route-line { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 16px; font-weight: 600; color: #7fd8ff; }
 .route-line .icon { width: 17px; height: 17px; }
 .route-line.off { display: none; }
 .hud.story .style-row { opacity: 0; transition: opacity .2s; }
@@ -892,9 +892,9 @@ kbd { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing:
 .mp-street { fill: #e9e6df; font: 700 15px var(--ui); letter-spacing: .06em; text-anchor: middle; paint-order: stroke; stroke: #0b0d10; stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
 .map-svg.far .mp-street { opacity: 0; }
 .map-svg.near .mp-district { opacity: .5; }
-.mp-route { fill: none; stroke: #ffd75a; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 18 14; animation: route-run 1s linear infinite; }
+.mp-route { fill: none; stroke: #49c6ff; stroke-width: 9; filter: drop-shadow(0 0 6px rgba(73,198,255,.7)); stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 18 14; animation: route-run 1s linear infinite; }
 @keyframes route-run { to { stroke-dashoffset: -32; } }
-.mp-dest circle { fill: none; stroke: #ffd75a; stroke-width: 3; animation: pulse-ring 1.4s ease-out infinite; transform-origin: center; }
+.mp-dest circle { fill: none; stroke: #49c6ff; stroke-width: 3; animation: pulse-ring 1.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
 .mp-marker { cursor: pointer; }
 .mp-marker .halo { fill: rgba(242,194,48,0); transition: fill .15s; }
 .mp-marker:hover .halo, .mp-marker.sel .halo { fill: rgba(242,194,48,.28); }
@@ -930,7 +930,7 @@ kbd { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing:
 .chip-tag.here { color: #111; background: var(--yellow); border-color: var(--yellow); }
 .chip-tag.locked { color: #ffb070; border-color: rgba(255,176,112,.5); }
 .chip-tag.new { color: #9ad0ff; border-color: rgba(154,208,255,.4); }
-.chip-tag.dest { color: #ffd75a; border-color: rgba(255,215,90,.5); }
+.chip-tag.dest { color: #7fd8ff; border-color: rgba(127,216,255,.5); }
 .mp-blurb { margin: 10px 0 4px; font-size: 16px; line-height: 1.35; }
 .mp-lock { display: flex; gap: 8px; align-items: center; margin: 8px 0; padding: 8px 10px; border-radius: 8px; background: rgba(255,176,112,.08); color: #ffc79a; font-size: 15px; }
 .mp-sub { margin-top: 10px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
@@ -949,7 +949,7 @@ kbd { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing:
 .mp-confirm { font-size: 17px; font-weight: 700; color: var(--yellow); }
 .mp-confirm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .mp-here-note { color: var(--muted); font-size: 14px; }
-.mp-dest-line { display: flex; align-items: center; gap: 6px; color: #ffd75a; margin: 8px 0; font-weight: 600; }
+.mp-dest-line { display: flex; align-items: center; gap: 6px; color: #7fd8ff; margin: 8px 0; font-weight: 600; }
 .mp-dest-line .icon { width: 16px; height: 16px; }
 .mp-districts { display: flex; flex-direction: column; gap: 4px; }
 .mp-district-btn { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center; text-align: left; padding: 6px 8px; border-radius: 6px; background: transparent; border: 1px solid transparent; color: var(--text); cursor: pointer; font-size: 16px; }
@@ -966,3 +966,6 @@ kbd { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing:
   .map-filters .chip span { display: none; }
 }
 .inv-screen { background: rgba(8, 9, 12, 0.94); }
+/* The fade sits over everything; it must only block clicks while it's actually fading. */
+#ui > .fade { pointer-events: none; }
+#ui > .fade.on { pointer-events: auto; }

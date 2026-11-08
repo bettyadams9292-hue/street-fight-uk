@@ -598,7 +598,7 @@ export class Game {
     if (!ex) return `${name}: no way through from here yet`;
     const dx = ex.x - w.player.pos.x;
     const m = Math.round(Math.abs(dx));
-    if (ex.kind === 'door') return m < 2 ? `${name}: this door (E)` : `${name}: door ${dx > 0 ? '→' : '←'} ${m} m (${LEVELS[ex.to].name})`;
+    if (ex.kind === 'door') return m < 2 ? `${name}: through this door (E) to ${LEVELS[ex.to].name}` : `${name}: door ${dx > 0 ? '→' : '←'} ${m} m (${LEVELS[ex.to].name})`;
     return `${name}: ${dx > 0 ? '→ east' : '← west'} ${m} m to ${LEVELS[ex.to].name}`;
   }
 
