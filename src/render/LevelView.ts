@@ -1130,15 +1130,6 @@ export class LevelView {
       this.group.add(n);
       this.box(0.25, 0.4, 0.25, 3.75, 0.98, this.back + 0.4, this.mat('#2a2a2e', 0.3, 0.6), false);
     }
-    if (tier === 0) {
-      // Cobwebs in the corners.
-      for (const x of [f.x0 + 2.2, f.x1 - 0.4]) {
-        const web = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), this.mat('#d8d8d8', 1, 0, { transparent: true, opacity: 0.16, side: THREE.DoubleSide }));
-        web.position.set(x, H - 0.6, this.back + 0.05);
-        web.rotation.z = 0.78;
-        this.group.add(web);
-      }
-    }
   }
 
   /** Green Fingers: bright white walls, green branding, product boards, a purple-lit demo corner. */
@@ -2330,11 +2321,6 @@ export class LevelView {
             b.rotation.y = ((i * 13) % 5 - 2) * 0.06;
           }
         }
-        // Dust and cobwebs.
-        const web = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), this.mat('#d8d8d8', 1, 0, { transparent: true, opacity: 0.18, side: THREE.DoubleSide }));
-        web.position.set(0.3, 2.2, -D / 2);
-        web.rotation.z = 0.7;
-        g.add(web);
         break;
       }
       case 'grow_shelf': {

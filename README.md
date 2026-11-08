@@ -384,7 +384,7 @@ Every visual asset, with where it appears, its status and collision, is listed i
 
 A fictional passive-income business in the basement of 14 Tanner Road. Production is abstract throughout: capacity, light, air, cycles and units of stock. Nothing real-world is modelled.
 
-**The basement.** Go through the cellar door next to the front door to reach it. Stairs come down the left wall, the business terminal is on a desk by the stairs, and the room has brick walls, joists, copper pipes, a cable tray and a fuse board. It starts dirty: damp brick, two bare bulbs, cobwebs and junk taking up the far end. Basement works (from Green Fingers or the terminal) change the actual room:
+**The basement.** Go through the cellar door next to the front door to reach it. Stairs come down the left wall, the business terminal is on a desk by the stairs, and the room has brick walls, joists, copper pipes, a cable tray and a fuse board. It starts dirty: damp brick, two bare bulbs and junk taking up the far end. Basement works (from Green Fingers or the terminal) change the actual room:
 
 - **Tiers.**
   - Renovated: junk cleared, sealed floor, strip lights.
