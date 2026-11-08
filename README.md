@@ -766,6 +766,148 @@ The full `npm test` (ten suites) passed.
 - Companions wear their own fixed clothes, and there's no armour in the game.
 - Your health still refills when you change area, as it always has. Injuries are the lasting damage.
 
+## Stage 11 report: crew personalities, fighting styles and home life
+
+**Ten companions.** Seven from before, plus three new ones in the Snug:
+
+| Companion | Personality | Fighting style |
+|---|---|---|
+| Shaz | Joker | MMA |
+| Danny | Hothead | Fast combinations (boxing) |
+| Mia | Fast fighter | Kickboxing |
+| Leah | Quiet professional | Defensive counter-fighting (karate) |
+| Jonno | Loyal friend | Wrestling |
+| Tank | Heavy hitter | Heavy boxing |
+| Old Reg | Calm veteran | Technical boxing |
+| Kay (new, £900, after the Gaffer) | Aggressive fighter | Muay Thai |
+| Paddy (new, £550) | Street brawler | Street fighting |
+| Bats (new, £1,000, after the Gaffer) | Weapons specialist | Weapons |
+
+The Snug is now wider to fit everyone.
+
+**Personalities** (`src/companions/personality.ts`) change what companions actually do:
+
+- **Following.** How far behind you they walk.
+- **Joining a fight.** How far away an enemy can be before they go in (6.5–11 m; more when told to get ready, less when told to wait).
+- **Who they go for.**
+  - The nearest enemy (default).
+  - Whoever's on you (loyal friend, veteran).
+  - The weakest enemy (professional, fast fighter).
+- **Backing off.** Some step back behind you, guard up, when badly hurt: the veteran under 30%, the professional, fast fighter and weapons specialist under 25%, the joker under 20%.
+- **Helping crew mates.** Loyal friends and veterans go after whoever is on a crew mate who's down or under 30%.
+- **Talk.** Each personality has its own lines, and some talk more than others: fight starts, taunts, wins, being hurt, a crew mate down, jokes and stories at home, and reactions to each other.
+- **Home.** Each personality has its own favourite things to do at home.
+
+**Fighting styles** change how they fight:
+
+- **Move set.** They use a real game style: boxing, kickboxing, Muay Thai, karate, wrestling, BJJ or street.
+- **Stats.** Attack speed, damage, move speed, damage taken and poise (stagger resistance), all through stat modifiers.
+- **Button habits.** Starters and combo follow-ups are chosen in the AI itself:
+  - heavy boxers throw mostly heavy shots;
+  - boxers never kick;
+  - kickboxers kick;
+  - wrestlers and grapplers grab a lot.
+- **Counters.** Counter-fighters hit straight back after a block or parry.
+- **Weapons.**
+  - The weapons specialist does 35% more damage with bats, bars and pipes and 18% less with his fists.
+  - He picks weapons up off the floor, even mid-fight if nobody's right on him, and keeps them.
+
+Every style except MMA has a real upside and a real downside, so nobody is better at everything.
+
+**Measured in real fights** (`tests/stage11.test.ts`):
+
+- Tank's heavy share was clearly higher than Mia's, and Tank never kicked.
+- Mia kicked in more than a quarter of her attacks.
+- Jonno grabbed more than Tank.
+- Bats picked up a metal bar mid-fight.
+- The loyal friend went for whoever was on you more than 85% of the time.
+
+**Crew of two.** One companion follows you at first; two once Sully Kane is beaten.
+
+- **Saving.** The follow list is saved as `companions.following`. An old save's single companion becomes the first follower.
+- **Positions.** Followers spread out behind you and keep apart from each other (crew members now push apart, but never push you).
+- **Orders.** From the Crew tab, or **G** to cycle through everyone with you:
+  - **Follow me.**
+  - **Relax at home.** They stay home until you call them.
+  - **Wait here.**
+  - **Get ready.** Closer to you, and they join a fight sooner.
+  - **At home:** "Come with me" (follow you round the house) and "Make yourself at home".
+
+**Home life** (`src/companions/home.ts`)
+
+- **Who's there.**
+  - Everyone you've hired lives at your house.
+  - Those who were out with you come in through the front door a step behind you and walk into the house.
+  - The rest are already inside, relaxing.
+- **Seats.** Seats come from the furniture you've actually placed. Each piece has seat points: three on a 3-seater, two on a 2-seater, one on an armchair or dining chair, and two stools at the kitchen island. They're placed using the piece's size and rotation.
+  - Seats are claimed so no two people share one.
+  - A seat is skipped if its front is boxed in.
+  - Seats near a telly get a "watching TV" lean.
+- **Standing spots.** Kitchen counter, cooker, fridge, windows, a living-room corner, the gym floor (stretching), and places to stand on the phone.
+- **Getting about.** Companions walk along the hallway that runs past every room's doorway, so they never cut through walls or furniture. If someone's in the way, they skip ahead or re-route.
+- **Sitting down.** They walk to the front of the seat, turn, and lower onto it over half a second while the pose blends from standing to sitting. While seated they're held in place (not pushed or clamped). Standing up is the reverse.
+- **What they do.**
+  - Seated: sitting, leaning back, on the phone, arms folded, turning to talk.
+  - Standing: leaning on the counter, having a drink, looking about, arms folded, stretching, on the phone, talking, laughing.
+  - They pick by personality and change every so often.
+- **Conversations.** Every so often the chattiest free companion starts one with someone nearby. The joker tells a joke; others tell a story or chat. The listener reacts by personality:
+  - veterans, professionals and the weapons specialist ignore it;
+  - aggressive types and hotheads get annoyed (the joker laughs at that);
+  - loyal friends, fast fighters and brawlers join in;
+  - the rest laugh.
+
+  Lines show as speech bubbles over their heads, rate-limited so they don't repeat or talk over each other.
+- **Going out.** Walk back to the front door and your followers get up and come with you. Anyone you told to relax at home stays sat down.
+- **Recovery.**
+  - Health and fatigue come back fastest sat on a sofa at home, more slowly standing at home, and slowly out with you.
+  - Fights add fatigue: 12 plus up to 18 more for damage taken. Fatigue of 50 or more slows a companion's stamina.
+  - The sofa rest takes 50 off everyone's fatigue.
+  - Injuries heal three times as fast at home.
+  - The Crew tab shows fatigue, recovery and readiness.
+
+**Crew screen.**
+
+- **Personality:** type, description, and how they behave in a fight.
+- **Fighting style:** the moves it uses, a description, attack speed, damage, weapon skill, move speed, damage taken and clean-hit chance, plus strengths and weaknesses.
+- **Level and stats.**
+- **Status:** following you, at home, injured, tired or recovering.
+- **Active crew panel:** 1 or 2 of 2 places, depending on whether Sully Kane is beaten.
+- **Orders:** as listed above.
+
+**Animations.**
+
+- **Reused:** the existing character rig, walk cycle, guard, combat moves and the bench 'sit' pose.
+- **Added:** seated variants (leaning back, on the phone, talking, arms folded) and standing ones (phone, arms folded, looking around, stretching, laughing, drinking, leaning).
+- **Blending and turning:** all of them blend through the existing pose blending. A render-only facing direction lets seated characters face out of the furniture, turning the short way round.
+
+**Saving.**
+
+- `companions.following` replaces the old `companions.active`.
+- Each companion's state gains `fatigue`.
+- Personality and style come from who the companion is, so they don't need saving.
+- Sitting and other moment-to-moment states are not saved.
+- Older saves load fine.
+
+**Bugs fixed along the way.**
+
+- Crew members could stand inside each other (they now push apart).
+- A Stage 8 test checked the enemies' total health, which new waves arriving with full health could push back up; it now checks damage the companion actually dealt.
+
+**Tests.** `tests/stage11.test.ts` has 18 tests. The full `npm test` (eleven suites) passed.
+
+**Files.**
+
+- New: `src/companions/personality.ts`, `src/companions/home.ts`, `tests/stage11.test.ts`.
+- Changed: `src/companions/brain.ts` (rewritten), `src/companions/companions.ts`, `src/companions/crewFighter.ts`, `src/ai/FighterAI.ts`, `src/ai/archetypes.ts`, `src/world/World.ts`, `src/world/interiors.ts`, `src/core/Simulation.ts`, `src/fighter/Fighter.ts`, `src/render/FighterView.ts`, `src/render/GameRenderer.ts`, `src/ui/Hud.ts`, `src/ui/profileUI.ts`, `src/ui/companionUI.ts`, `src/ui/hub.ts`, `src/Game.ts`, `src/input/InputManager.ts`, `src/ui/styles.css`, `tests/stage8.test.ts`.
+
+**Limits.**
+
+- Poses are procedural on the shared rig; there are no motion-captured animations.
+- No phone or cup props are held in hand.
+- Companions don't go upstairs to the basement.
+- Seats come only from sofas, armchairs, dining chairs and the island. With no free seat, a companion stands somewhere sensible instead.
+- Up to two followers.
+
 ## Characters: Quaternius Universal Base Characters (CC0)
 
 - **Source.** Fighters use the male and female models from Quaternius' **Universal Base Characters** (Standard, CC0, public domain). The originals and their licence are in [`assets/quaternius-ubc`](assets/quaternius-ubc/README.md).
