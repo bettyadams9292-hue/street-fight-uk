@@ -562,6 +562,113 @@ Rolls are seeded from the save, so reloading doesn't re-roll them.
 - The training and drill minigames use keyboard or tap only.
 - The `stage3` "defender never landed a hit" soak test is unseeded and fails roughly one run in five; that's unrelated to these changes.
 
+## Stage 9 report: town map, travel, inventory and UI clean-up
+
+**Town map** (`src/map/worldMap.ts` for the data, `src/ui/mapUI.ts` for the screen). Open it with **M**, with **Tab** when no fight is on, with the map button on the HUD, from the pause menu, or from the phone.
+
+- **What it shows.** A drawn town: district shading, main roads with centre lines, side streets, blocks, roundabouts at junctions, the canal, the River Brack, parks and the Kirkgate pitch. Every one of the 34 areas is on it.
+  - Streets are drawn as roads, because each street is a side-scroller from its left end to its right end.
+  - Shops, gyms and the pub sit next to their own front door on the street.
+  - Your position is placed along the street by how far along it you are.
+- **Markers.** There's an icon for:
+  - places: home (safehouse), shops, clothes shop, pawn shop, fighting gyms, the pub, the casino, the car and bike dealers;
+  - your things: your basement business and where you left your bike;
+  - people: the Snug's fighters for hire;
+  - the story: the main mission, side bosses and bosses you've beaten.
+
+  Hovering shows a tooltip; clicking opens a card. Filters hide or show each group.
+- **The card.** It shows:
+  - the name and type of place;
+  - "You are here", "Locked" or "Not visited yet";
+  - a description;
+  - things to do, worked out from the place's real stations, side fights, hidden stashes, search spots and boss;
+  - the people there;
+  - the lock reason, if it's locked;
+  - the travel options.
+- **Locks.** These come from the game's own exits, by searching from home through the open links. The reason shown is the first lock on the easiest way there, for example "Beat Gaz Mullins (The Gaffer) first" or "Needs the stadium service key".
+- **Travel.** Nothing happens until you confirm.
+  - **Take a cab.** Dave's Cabs, £5 from the tin. Cabs only go to the stops the phone already served, and not while a fight's on, with the police after you, to a locked place, or to a shop that's shut after a robbery.
+  - **Head home.** Free, as before.
+  - **Set as destination.** Draws your route on the map, and the HUD then shows which way to go, which exit and how far. The route clears when you arrive.
+  - Getting into a cab while riding parks the bike where you are.
+- **Controls.** Drag to pan, scroll or pinch to zoom, the + and − buttons, and "centre on me" (C). The arrow keys and WASD pan; `[` and `]` step through places; Esc backs out. The districts list in the side panel jumps to each district. The layout works at desktop, landscape phone and portrait phone sizes.
+
+**Replacing the location menu.** The phone's long list of cab destinations is gone; the phone now has Mo's message, "Dave's Cabs → Open map" and your crew. The stop data (`TAXI_STOPS`, `SHOP_STOPS`) is unchanged and is what the map uses. The street-by-street "X is on this street" toasts are replaced by a single line the first time you visit a street.
+
+**Inventory.**
+
+- **Tabs.** All, Weapons, Clothing, Equipment (bags), Consumables, Materials (workbench), Valuables and Other.
+  - These group the existing item categories; the item data is unchanged.
+  - Empty tabs are hidden.
+  - All the weapons are melee, so there's no separate "melee" tab.
+- **Item cards.** Each card shows the picture, name, the key fact, quantity, condition and rarity colour.
+  - Equipped items appear in the list with a "Holding" or "Worn" tag.
+  - Double-click a card to use, hold, wear, take off or put away.
+  - The detail panel puts the main action first, then the stash, drop (with a confirm step) and compare.
+- **Selling.** Valuables have a "Where to sell it" button that opens the map at Pawn & Gold. Selling still happens at the pawn shop.
+- **Keys.** **I** opens the inventory when no fight is on; **B** still works anywhere.
+
+**HUD.**
+
+- **Always shown:** your health and stamina, level, cash on you, the objective, and the route line when you have a destination.
+- **Only when needed:**
+  - the opponent bar and "VS", when you have a target;
+  - your style, when you're in a fight;
+  - pockets, when they're nearly full;
+  - the weapon chip with its condition, when you're holding a weapon.
+- **Buttons:** Map, Inventory and Pause, top right.
+- There's no ammo display because there are no guns.
+
+**Menus and design.**
+
+- **Icon set.** One set of icons, drawn for this game in `src/ui/icons.ts`, used on the map markers, menu buttons, inventory tabs and HUD buttons.
+- **Shared styles.** Buttons, close buttons, chips, cards and panels share one look: rounded panels, a fade-in, consistent hover, pressed and selected states, and a primary style.
+- **Main and pause menus** have icons and key hints; the pause menu has Map and Inventory.
+- **Every panel screen** (shops, gym, workshop, crew, business, property) has a close button in its header as well as Back.
+- **Controls screen** is updated with the new keys.
+
+**Keys.**
+
+| Key | What it does |
+|---|---|
+| M | Map |
+| Tab | Map outside a fight; swaps style in a fight |
+| I | Inventory outside a fight; heavy punch in a fight |
+| B | Inventory |
+| Esc | Closes the current menu, or pauses |
+
+Opening a menu pauses the game and clears any queued input, so you can't move or attack while a menu is open. Opening the map from another menu replaces that menu, so menus never stack.
+
+**Bugs fixed.** The screen-fade layer (there since Stage 4) was catching every mouse click and tap on menus while invisible, so only the keyboard worked. Mouse clicks now work on all menus.
+
+**Saving.** Two new save fields: `visited` (places you've been) and `destination`. Older saves get home, the estate, where they were, and every district whose boss they've beaten.
+
+**Tests.** `tests/stage9.test.ts` has 9 tests:
+
+- every area is on the map and inside it;
+- streets meet where their exits join;
+- markers point at real areas;
+- locks match the level links and give a reason;
+- routes follow real exits;
+- cab rules;
+- save fields and migration;
+- every item has a tab;
+- key bindings.
+
+The full `npm test` (nine suites) passed.
+
+**Files.**
+
+- New: `src/map/worldMap.ts`, `src/ui/mapUI.ts`, `src/ui/icons.ts`, `tests/stage9.test.ts`.
+- Changed: `Game.ts`, `InputManager.ts`, `Progress.ts`, `Hud.ts`, `inventoryUI.ts`, `hub.ts`, `controls.ts`, `screens.ts`, `styles.css`, `package.json`.
+
+**Still needs attention.**
+
+- The map is stylised, not drawn to real-world scale.
+- Older saves don't know which shops you'd already been in, so they show as "Not visited yet" until you go in again.
+- A gamepad can step through places with the D-pad but can't pan the map.
+- The shop, stash and pawn screens share the new styles but keep their tile grids rather than the inventory's cards.
+
 ## Characters: Quaternius Universal Base Characters (CC0)
 
 - **Source.** Fighters use the male and female models from Quaternius' **Universal Base Characters** (Standard, CC0, public domain). The originals and their licence are in [`assets/quaternius-ubc`](assets/quaternius-ubc/README.md).

@@ -17,6 +17,7 @@ import { LEVELS, DISTRICT_ORDER } from '../world/levels';
 import { cycleRow, menuButton } from './controls';
 import { h } from './dom';
 import { icon } from './icons';
+import { COMPANIONS } from '../companions/companions';
 import type { Screen } from './UIManager';
 
 /**
@@ -269,7 +270,7 @@ export function contactsScreen(progress: Progress, close: () => void, openMap: (
     return [
       h('div', { class: 'phone-msg' }, h('b', { text: 'Mo' }), h('p', { text: next ? `“${hintFor(next.flag)}”` : '“You did it. Nobody runs these streets now. Mad.”' })),
       shopRow('Dave’s Cabs', `£${TAXI_COST} a ride from the tin. Pick where on the map.`, 'Open map', openMap),
-      ...(crew ? [shopRow('Your crew', s.companions.active ? `Following you: ${s.companions.active}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage', crew)] : []),
+      ...(crew ? [shopRow('Your crew', s.companions.active ? `Following you: ${COMPANIONS[s.companions.active]?.name ?? s.companions.active}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage', crew)] : []),
     ];
   }, close);
 }
