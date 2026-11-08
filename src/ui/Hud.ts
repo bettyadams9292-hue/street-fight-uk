@@ -84,7 +84,7 @@ export class Hud {
   private routeText: HTMLElement;
   private vs: HTMLElement;
 
-  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void }) {
+  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
       const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, `${i + 1} \u00b7 ${TRAINING_MODE_LABELS[m]}`) as HTMLButtonElement;
       this.modeButtons.set(m, b);
@@ -146,6 +146,7 @@ export class Hud {
         { class: 'hud-buttons' },
         h('button', { class: 'hud-btn story-only', 'aria-label': 'Map', title: 'Map (M / Tab)', onclick: () => actions.map() }, icon('map'), h('span', { class: 'k', text: 'M' })),
         h('button', { class: 'hud-btn story-only', 'aria-label': 'Inventory', title: 'Inventory (I / B)', onclick: () => actions.inventory() }, icon('bag'), h('span', { class: 'k', text: 'I' })),
+        h('button', { class: 'hud-btn story-only', 'aria-label': 'Character and crew', title: 'Character & crew (H)', onclick: () => actions.character() }, icon('contact'), h('span', { class: 'k', text: 'H' })),
         h('button', { class: 'hud-btn pause-btn', 'aria-label': 'Pause', title: 'Pause (Esc)', onclick: () => actions.pause() }, '\u275a\u275a'),
       ),
       h('div', { class: 'prompt-wrap' }, this.prompt, this.subBar),

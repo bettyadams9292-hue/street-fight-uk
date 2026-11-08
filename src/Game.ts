@@ -35,6 +35,7 @@ import { World } from './world/World';
 import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
 import { mapScreen } from './ui/mapUI';
+import { profileScreen } from './ui/profileUI';
 import { nextExit } from './map/worldMap';
 import { barScreen, contactsScreen, kitchenScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationDef, StationId } from './world/LevelTypes';
@@ -50,9 +51,10 @@ import { tickBusiness } from './business/production';
 import { growShopScreen, terminalScreen } from './ui/businessUI';
 import { coachBoardScreen, DrillGame, gymStoreScreen, RepGame, styleCoachScreen } from './ui/gymUI';
 import { workshopScreen } from './ui/workshopUI';
-import { crewScreen, recruitScreen } from './ui/companionUI';
+import { recruitScreen } from './ui/companionUI';
 import { computerScreen } from './ui/propertyUI';
-import { COMPANIONS, COMPANION_WAITS_OUTSIDE, winChallenge } from './companions/companions';
+import { COMPANIONS, COMPANION_WAITS_OUTSIDE, companionAvailable, companionRecover, crewState, winChallenge } from './companions/companions';
+import { healOverTime, injuryName, treatInjury } from './condition/condition';
 import { GYM_KIT, SPAR_FATIGUE, SPAR_TRAINS, canTrain, finishSession, recover, type RepGrade } from './training/gym';
 import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, type FightGym } from './training/styleGyms';
 import { themeProfile } from './render/themes';
@@ -131,6 +133,9 @@ export class Game {
       },
       inventory: () => {
         if (this.state === 'playing' && this.world) this.openInventory();
+      },
+      character: () => {
+        if (this.state === 'playing' && this.world) this.openProfile();
       },
     });
     this.hud.el.style.display = 'none';
@@ -377,6 +382,10 @@ export class Game {
             this.state = 'playing';
             this.openMap();
           },
+          character: () => {
+            this.state = 'playing';
+            this.openProfile();
+          },
           home: atHome || w.locked || w.player.isKO ? null : () => this.goHome(false),
           homeWhy: atHome ? '' : 'Can\u2019t head home in the middle of a fight',
           save: () => {
@@ -456,6 +465,7 @@ export class Game {
 
   private saveGame(): boolean {
     if (!this.progress) return false;
+    this.world?.syncCompanion();
     this.progress.save.savedAt = new Date().toISOString();
     return this.store.write(this.progress.save);
   }
@@ -481,6 +491,9 @@ export class Game {
   private enterArea(area: AreaId, entry: string, opts: { carry?: { health: number; stamina: number } | null; at?: { x: number; z: number } } = {}): void {
     const p = this.progress!;
     const leaving = this.world ? { area: this.world.level.id, x: this.world.player.pos.x, z: this.world.player.pos.z } : null;
+    // Your companion's health and weapon go with them; anything you took in a fight left half-done still counts.
+    this.world?.settleInjuries();
+    this.world?.syncCompanion();
     this.bikeArrivals(area, leaving);
     const level = resolveLevel(area, p.save);
     this.unwire();
@@ -499,7 +512,10 @@ export class Game {
     // Rebuilding the area you're in (after a menu) keeps this visit's finished side-fights finished.
     const keepCleared = leaving && leaving.area === area && this.world ? this.world.clearedOptional() : [];
     const active = p.save.companions.active ? COMPANIONS[p.save.companions.active] : null;
-    const companion = active && !COMPANION_WAITS_OUTSIDE.has(area) ? active : null;
+    // Too hurt to come out: they stay home resting until they're fit.
+    const fit = active ? companionAvailable(crewState(p, active.id)) : { ok: true as const };
+    if (active && !fit.ok && area !== from && !COMPANION_WAITS_OUTSIDE.has(area)) this.hud.toast(`${active.nickname} is resting at home: ${fit.reason.toLowerCase()}`, 'warn');
+    const companion = active && fit.ok && !COMPANION_WAITS_OUTSIDE.has(area) ? active : null;
     const world = new World(level, p, { entry, touch: this.touchWanted(), carry, difficulty: this.settings.get().difficulty, at: opts.at, keepCleared, companion });
     this.world = world;
     p.save.area = area;
@@ -613,6 +629,11 @@ export class Game {
       ev.on('area:locked', ({ text }) => this.hud.toast(text, 'warn')),
       ev.on('duel:end', (e) => this.duelEnded(w, e)),
       ev.on('companion:up', ({ name }) => this.hud.toast(`${name}’s back on their feet`, 'item')),
+      ev.on('injury', ({ who, name, injuries }) => {
+        const list = injuries.map((i) => injuryName(i).toLowerCase()).join(', ');
+        this.hud.toast(who === 'you' ? `You’re hurt: ${list}. Rest at home or use first aid (H to check).` : `${name} is hurt: ${list}.`, 'warn');
+      }),
+      ev.on('companion:level', ({ name, level }) => this.hud.toast(`${name} is level ${level} now`, 'item')),
       // A real hit while riding knocks you off; the bike's left where you fell.
       w.sim.bus.on('hit:landed', ({ target }) => {
         if (target === w.player && this.progress?.save.property.riding && this.world === w) this.knockOff = true;
@@ -853,6 +874,8 @@ export class Game {
           return Math.round(v.health - before);
         }, () => {
           if (p.save.mealBuff) recover(p.save.gym, p.save.playTime, 30);
+          // A proper meal sees off bruising.
+          treatInjury(p.save.condition, 'bruising');
           changed();
         });
         break;
@@ -868,8 +891,9 @@ export class Game {
         screen = storageScreen(p, this.ui, changed, close);
         break;
       case 'sofa':
-        // Sitting down to catch up is rest: fatigue drops.
+        // Sitting down to catch up is rest: fatigue drops, injuries ease, the crew recover.
         recover(p.save.gym, p.save.playTime, 25);
+        this.hud.toast(this.restAtHome(), 'item');
         screen = sofaScreen(p, close, () => this.saveGame());
         break;
       case 'contacts':
@@ -877,10 +901,10 @@ export class Game {
           this.ui.replaceAll(null);
           this.state = 'playing';
           this.openMap();
-        }, () => this.ui.replaceAll(crewScreen(p, close, () => {
-          saved();
-          this.hubDirty = true;
-        })));
+        }, () => {
+          this.state = 'playing';
+          this.openProfile('crew');
+        });
         break;
       case 'tin':
         screen = tinScreen(p, close, saved);
@@ -1425,13 +1449,52 @@ export class Game {
     p.save.playTime += dt;
     this.bizTimer += dt;
     if (this.bizTimer < 1) return;
+    const step = this.bizTimer;
     this.bizTimer = 0;
+    this.conditionClock(step);
     const b = p.save.basement;
     if (!b.business.active) {
       b.business.lastTick = p.save.playTime;
       return;
     }
     for (const e of tickBusiness(b, p.save.playTime, p.save.heat)) this.hud.toast(`Basement: ${e.text}`, e.kind === 'storage_full' ? 'item' : 'warn');
+  }
+
+  /** Injuries heal with time (three times faster at home); your crew get their strength back. */
+  private conditionClock(dt: number): void {
+    const p = this.progress!;
+    const w = this.world;
+    const home = w?.level.id === 'home' || w?.level.id === 'basement';
+    const healed = healOverTime(p.save.condition, dt, home ? 3 : 1);
+    if (healed.length && w) {
+      p.applyModifiers(w.player, w.difficulty);
+      this.hud.toast(`Healed: ${healed.join(', ').toLowerCase()}`, 'item');
+    }
+    w?.syncCompanion();
+    const out = w?.companion && this.world?.companionDef ? this.world.companionDef.id : null;
+    for (const id of p.save.companions.recruited) {
+      const st = crewState(p, id);
+      healOverTime(st.condition, dt, id === out ? 1 : 3);
+      // The one out with you heals in the fight's own time; everyone else rests.
+      if (id !== out) companionRecover(st, dt, true);
+    }
+  }
+
+  /** A proper rest at home: every injury (yours and your crew's) down a level, crew back to full health. */
+  private restAtHome(): string {
+    const p = this.progress!;
+    const fixed: string[] = [];
+    for (const i of [...p.save.condition.injuries]) {
+      const r = treatInjury(p.save.condition, i.part);
+      if (r) fixed.push(r.name);
+    }
+    for (const id of p.save.companions.recruited) {
+      const st = crewState(p, id);
+      for (const i of [...st.condition.injuries]) treatInjury(st.condition, i.part);
+      st.health = 1;
+    }
+    if (this.world) p.applyModifiers(this.world.player, this.world.difficulty);
+    return fixed.length ? `Rested: ${fixed.join(', ').toLowerCase()} feel${fixed.length === 1 ? 's' : ''} better. The crew are rested too.` : 'Rested. The crew are fit and ready.';
   }
 
   private editorKey(e: KeyboardEvent): void {
@@ -1499,6 +1562,42 @@ export class Game {
           if (p.save.property.riding) this.dismount();
           this.hud.toast(`Dave’s Cabs: £${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
           this.changeArea(area, opt.entry, w.carry());
+        },
+      }),
+    );
+  }
+
+  /** Character & Crew (H): your numbers, condition and kit; your crew's. */
+  private openProfile(tab: 'character' | 'crew' = 'character', crewId?: string): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p || (this.state !== 'playing' && this.state !== 'paused')) return;
+    this.state = 'paused';
+    this.touch.release();
+    this.input.flush();
+    this.updateTouchVisibility();
+    w.syncCompanion();
+    let crewDirty = false;
+    this.ui.replaceAll(
+      profileScreen({
+        progress: p,
+        player: w.player,
+        liveCompanion: w.companion && w.companionDef ? { id: w.companionDef.id, f: w.companion } : null,
+        tab,
+        crewId,
+        crewChanged: () => {
+          crewDirty = true;
+        },
+        saved: () => this.saveGame(),
+        close: () => {
+          this.ui.replaceAll(null);
+          if (!crewDirty) return this.resume();
+          if (!this.calm()) {
+            this.hud.toast('Crew changes take effect once this fight’s over and you move on', 'item');
+            return this.resume();
+          }
+          // Bring the new crew in (or send them home) right where you stand.
+          this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
         },
       }),
     );
@@ -1634,6 +1733,10 @@ export class Game {
     this.audio.unlock();
     if (this.ui.isOpen) {
       this.ui.handle(a, src);
+      return;
+    }
+    if (this.state === 'playing' && a === 'character' && this.world && !this.mode) {
+      this.openProfile();
       return;
     }
     if (this.state === 'playing' && (a === 'inventory' || a === 'map') && this.world) {

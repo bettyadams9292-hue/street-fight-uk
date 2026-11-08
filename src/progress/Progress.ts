@@ -12,6 +12,8 @@ import { defaultGym, sanitiseGym, type GymSave } from '../training/gym';
 import { sanitiseStyleTraining, type StyleTraining } from '../training/styleGyms';
 import { defaultCompanions, sanitiseCompanions, type CompanionSave } from '../companions/companions';
 import { DISTRICT_ORDER } from '../world/levels';
+import { conditionModifiers, defaultCondition, sanitiseCondition, treatInjury, type ConditionSave } from '../condition/condition';
+import { currentFatigue } from '../training/gym';
 import {
   GEAR_IDS,
   LEVEL_CAP,
@@ -111,6 +113,8 @@ export interface GameSave {
   visited: AreaId[];
   /** Where the map's route is set to, if anywhere. */
   destination: AreaId | null;
+  /** Your injuries. */
+  condition: ConditionSave;
   savedAt: string;
 }
 
@@ -153,6 +157,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     playTime: 0,
     visited: ['home', 'estate'],
     destination: null,
+    condition: defaultCondition(),
     savedAt: new Date().toISOString(),
   };
   // Starter kit: your hand wraps on, a couple of sandwiches in your pocket.
@@ -224,6 +229,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     basement: sanitiseBasement(r.basement, typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0),
     visited: sanitiseVisited(r.visited, r.area, flags),
     destination: (AREA_IDS as readonly string[]).includes(r.destination as string) ? (r.destination as AreaId) : null,
+    condition: sanitiseCondition(r.condition),
     savedAt: typeof r.savedAt === 'string' ? r.savedAt : base.savedAt,
   };
   const p = new Progress(out);
@@ -240,6 +246,8 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     }
     const held = sanitiseStack(r.held, seen);
     out.held = held && ITEMS[held.id].weapon ? held : null;
+    // Weapons you've handed to your crew are items too.
+    out.companions = sanitiseCompanions(r.companions, (x) => sanitiseStack(x, seen));
     out.inventory = stacks(r.inventory, 99);
     // If the pockets hold more than fit (a bag was removed by hand), overflow goes to the stash.
     while (out.inventory.length > p.inventoryCap) {
@@ -548,12 +556,19 @@ export class Progress {
   }
 
   /** Eat, drink or patch up. Returns what it does for the caller to apply. */
-  use(uid: string): { ok: true; heal: number; healPct: number; stamina: number; name: string } | { ok: false; reason: string } {
+  use(uid: string): { ok: true; heal: number; healPct: number; stamina: number; name: string; treated: string | null } | { ok: false; reason: string } {
     const st = this.findCarried(uid);
     const use = st ? ITEMS[st.id].use : undefined;
     if (!st || !use) return { ok: false, reason: 'You can\u2019t use that' };
     takeStack(this.save.inventory, uid, 1, () => this.newUid());
-    return { ok: true, heal: use.heal ?? 0, healPct: use.healPct ?? 0, stamina: use.stamina ?? 0, name: ITEMS[st.id].name };
+    // First aid patches up your worst injury by a level; plasters see to bruising.
+    let treated: string | null = null;
+    const c = this.save.condition;
+    if (st.id === 'first_aid') {
+      const target = c.injuries.filter((i) => i.part !== 'bruising').sort((a, b) => b.severity - a.severity)[0] ?? c.injuries[0];
+      treated = target ? treatInjury(c, target.part)?.name ?? null : null;
+    } else if (st.id === 'plasters') treated = treatInjury(c, 'bruising')?.name ?? null;
+    return { ok: true, heal: use.heal ?? 0, healPct: use.healPct ?? 0, stamina: use.stamina ?? 0, name: ITEMS[st.id].name, treated };
   }
 
   /** Remove from your pockets to leave on the ground. Quest items stay. */
@@ -737,6 +752,9 @@ export class Progress {
     f.stats.removeModifiersFrom('cross');
     const cross = Math.min(4, Object.values(s.styleTraining).filter((v) => (v?.rank ?? 0) >= 3).length);
     if (cross) f.stats.addModifier({ id: 'cross_training', source: 'cross', attribute: 'technique', add: cross });
+    // Injuries and training exhaustion.
+    f.stats.removeModifiersFrom('injury');
+    for (const m of conditionModifiers(s.condition, currentFatigue(s.gym, s.playTime))) f.stats.addModifier(m);
     f.poise = f.stats.maxPoise;
   }
 }

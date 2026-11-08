@@ -122,6 +122,7 @@ export function controlsScreen(ui: UIManager): Screen {
     ['Jump', 'C', 'Left stick click', 'JUMP'],
     ['Pause', 'Esc / P', 'Start', '\u275a\u275a'],
     ['Inventory (story)', 'B (or I outside a fight)', 'Right-stick click', 'BAG'],
+    ['Character & crew (stats, injuries, companions)', 'H', 'Pause → Character & crew', 'Person button'],
     ['Close a menu', 'Esc', 'B', 'Back'],
     ['Training ground: partner stand / block / spar / group', '1 / 2 / 3 / 4', '\u2014', 'Top bar'],
     ['Training ground: next opponent / reset', 'N / R', '\u2014', 'Top bar'],

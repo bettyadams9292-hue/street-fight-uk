@@ -7,7 +7,10 @@ import { FighterAI } from '../ai/FighterAI';
 import { randomAppearance, sparringPartnerAppearance, type CharacterAppearance, type TopStyle } from '../character/Appearance';
 import { CivilianBrain, CIVILIAN_DENSITY, DESPAWN, SPAWN_MAX, SPAWN_MIN, type Hotspot } from './civilians';
 import { CompanionBrain } from '../companions/brain';
-import type { CompanionDef } from '../companions/companions';
+import { companionGainXp, crewState, type CompanionDef } from '../companions/companions';
+import { applyCrewModifiers, companionFighter } from '../companions/crewFighter';
+import { HitLedger, type Injury } from '../condition/condition';
+import type { WeaponMods } from '../combat/weaponMods';
 import { SPAR_SPOT } from '../training/gym';
 import { hitSphereOf, resolveHit } from '../combat/CombatSystem';
 import { move, startMove } from '../combat/MoveData';
@@ -71,6 +74,10 @@ export interface WorldEvents {
   'police:arrive': { count: number };
   'alarm': { shop: string };
   'player:defeated': { byPolice: boolean };
+  /** A fight left someone hurt: `who` is 'you' or a companion id. */
+  'injury': { who: string; name: string; injuries: Injury[] };
+  /** A companion levelled up. */
+  'companion:level': { id: string; name: string; level: number };
   'companion:up': { name: string };
   'duel:start': { kind: 'spar' | 'challenge'; name: string };
   'duel:end': { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
@@ -217,25 +224,9 @@ export class World {
   private spawnCompanion(def: CompanionDef): void {
     const p = this.player;
     const spot = this.freeSpot(p.pos.x - p.facing * 1.3, Math.max(this.arena.bounds.minZ + 0.3, p.pos.z - 0.4));
-    const rng = new Rng(def.seed);
-    const look: CharacterAppearance = { ...randomAppearance(() => rng.next(), def.body), accessories: [], ...def.look };
-    const f = new Fighter({
-      id: this.nextId++,
-      name: def.nickname,
-      team: 'player',
-      attributes: { ...def.attributes },
-      level: Math.max(1, this.progress.save.level - 1),
-      style: getStyle(def.style),
-      x: spot.x,
-      z: spot.z,
-      appearance: look,
-    });
+    // Same build as the crew screen shows: look, level, injuries, health carried over, their weapon.
+    const f = companionFighter(this.progress, def, this.nextId++, spot.x, spot.z);
     f.facing = p.facing;
-    f.stats.addModifier({ id: 'companion_dmg', source: 'companion', stat: 'damageMult', mul: def.damageMult });
-    if (def.health) f.stats.addModifier({ id: 'companion_hp', source: 'companion', flat: 'maxHealth', add: def.health });
-    // Keeps up with you: a touch quicker than their stance would be.
-    f.stats.addModifier({ id: 'companion_pace', source: 'companion', stat: 'moveSpeedMult', mul: 1.15 });
-    f.vitals.reset();
     this.sim.add(f);
     const a = { ...ARCHETYPES.boxer, ...def.ai, id: 'boxer' as const, name: def.nickname, style: def.style, attributes: def.attributes, retreatsWhenTired: true, look: () => ({}) };
     const fight = new FighterAI(f, a, this.sim.rng, this.tokens, this.arena);
@@ -244,6 +235,77 @@ export class World {
     this.companion = f;
     this.companionDef = def;
     this.companionBrain = brain;
+  }
+
+  /** Their level and injuries, as stat modifiers. */
+  private applyCompanionCondition(f: Fighter, def: CompanionDef): void {
+    applyCrewModifiers(f, def, this.progress);
+  }
+
+  /** Write your companion's live health and weapon back to the save (called every second and on leaving). */
+  syncCompanion(): void {
+    const f = this.companion;
+    const def = this.companionDef;
+    if (!f || !def) return;
+    const st = crewState(this.progress, def.id);
+    st.health = Math.max(0.05, Math.min(1, f.vitals.health / Math.max(1, f.vitals.maxHealth)));
+    const held = f.weapon ?? this.companionPocket;
+    if (st.weapon) {
+      if (!held) st.weapon = null; // broke in the fight
+      else if (weaponItemId(held.data.id) !== st.weapon.id) st.weapon = this.progress.newStack(weaponItemId(held.data.id), 1, { hits: held.hits, mods: held.mods });
+      else st.weapon.hits = held.hits;
+    }
+  }
+
+  /** A companion's weapon knocked out of their hand: they keep hold of it and pick it back up when they're up. */
+  private companionPocket: { data: WeaponData; hits: number; mods?: WeaponMods } | null = null;
+
+  // ---- injuries: counting what you and your companion take in a fight ----
+
+  private ledgers = new Map<Fighter, HitLedger>();
+  private fightWasOn = false;
+
+  private ledgerFor(f: Fighter): HitLedger | null {
+    if (f !== this.player && f !== this.companion) return null;
+    if (this.duel?.kind === 'spar') return null; // Mo pulls his punches
+    let l = this.ledgers.get(f);
+    if (!l) this.ledgers.set(f, (l = new HitLedger()));
+    return l;
+  }
+
+  /** Is a fight going on around you? */
+  private get fightOn(): boolean {
+    const p = this.player;
+    return !!this.activeEncounter || this.locked || (!!this.duel && this.duel.kind !== 'spar') || this.police.some((e) => !e.isKO) || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 9);
+  }
+
+  /** The fight's over (or you went down): turn hits taken into injuries. */
+  settleInjuries(): void {
+    for (const [f, l] of this.ledgers) {
+      if (!l.total && !l.knockedOut) continue;
+      if (f === this.player) {
+        const hurt = l.settle(this.progress.save.condition, f.vitals.maxHealth);
+        if (hurt.length) {
+          this.progress.applyModifiers(f, this.difficulty);
+          this.events.emit('injury', { who: 'you', name: 'You', injuries: hurt });
+        }
+      } else if (f === this.companion && this.companionDef) {
+        const st = crewState(this.progress, this.companionDef.id);
+        const hurt = l.settle(st.condition, f.vitals.maxHealth);
+        st.fights++;
+        if (hurt.length) {
+          this.applyCompanionCondition(f, this.companionDef);
+          this.events.emit('injury', { who: this.companionDef.id, name: this.companionDef.nickname, injuries: hurt });
+        }
+      }
+    }
+    this.ledgers.clear();
+  }
+
+  private updateInjuries(): void {
+    const on = this.fightOn;
+    if (this.fightWasOn && !on) this.settleInjuries();
+    this.fightWasOn = on;
   }
 
   /** Back on their feet once the fight's over; walks in from the edge if left far behind. */
@@ -259,6 +321,10 @@ export class World {
         f.respawn();
         f.pos = { x: pos.x, y: 0, z: pos.z };
         f.vitals.health = Math.round(f.vitals.maxHealth * 0.4);
+        if (this.companionPocket) {
+          f.equipWeapon(this.companionPocket.data.id, this.companionPocket.hits, this.companionPocket.mods);
+          this.companionPocket = null;
+        }
         this.companionDownAt = -1;
         this.events.emit('companion:up', { name: f.name });
       }
@@ -276,6 +342,8 @@ export class World {
 
   // ---- ambient pedestrians -------------------------------------------------------------
 
+  /** Difficulty this world was built at (for re-applying your modifiers). */
+  difficulty: 'easy' | 'normal' | 'hard' = 'normal';
   readonly civilians: { f: Fighter; brain: CivilianBrain }[] = [];
   private hotspots: Hotspot[] = [];
   private civLanes: number[] = [];
@@ -487,7 +555,8 @@ export class World {
     const entry = level.entries.find((e) => e.id === opts.entry) ?? level.entries[0];
     const cfg = progress.fighterConfig(PLAYER_ID, entry.x, entry.z, !!opts.touch);
     this.player = this.sim.add(new Fighter(cfg));
-    progress.applyModifiers(this.player, opts.difficulty ?? 'normal');
+    this.difficulty = opts.difficulty ?? 'normal';
+    progress.applyModifiers(this.player, this.difficulty);
     this.player.vitals.reset();
     if (opts.carry) {
       this.player.vitals.health = Math.max(1, Math.min(this.player.vitals.maxHealth, opts.carry.health));
@@ -536,11 +605,28 @@ export class World {
       if (!this.duel) return;
       if (attacker === this.player && target === this.duel.f) this.duel.landed++;
     });
-    this.sim.bus.on('hit:blocked', ({ attacker, target }) => {
+    this.sim.bus.on('hit:blocked', ({ attacker, target, move }) => {
       if (this.duel && target === this.player && attacker === this.duel.f) this.duel.blocked++;
+      // Blocking a heavy blow still hurts the arms.
+      if (move.damage >= 12) this.ledgerFor(target)?.record(move.height, move.damage * 0.4, true);
+    });
+    this.sim.bus.on('hit:landed', ({ target, move, damage }) => {
+      this.ledgerFor(target)?.record(move.height, damage, false);
     });
 
-    this.sim.bus.on('fighter:ko', ({ fighter }) => {
+    this.sim.bus.on('fighter:ko', ({ fighter, by }) => {
+      const l = this.ledgerFor(fighter);
+      if (l) l.knockedOut = true;
+      // Your companion learns from every fight they're in.
+      if (fighter.team === 'enemy' && this.companion && this.companionDef && !this.companion.isKO) {
+        const st = crewState(this.progress, this.companionDef.id);
+        if (by === this.companion) st.kos++;
+        const up = companionGainXp(st, by === this.companion ? 25 : 12);
+        if (up) {
+          this.applyCompanionCondition(this.companion, this.companionDef);
+          this.events.emit('companion:level', { id: this.companionDef.id, name: this.companionDef.nickname, level: st.level });
+        }
+      }
       if (fighter === this.player) return;
       this.koAt.set(fighter, this.sim.frame);
       this.tokens.release(fighter);
@@ -657,6 +743,7 @@ export class World {
     this.updatePolice();
     this.cleanUpKOs();
     this.updateCompanion();
+    this.updateInjuries();
     this.updateCivilians();
     this.updateDuel();
     this.checkEdgeExits(cmd);
@@ -665,6 +752,7 @@ export class World {
       if (this.defeatAt < 0) this.defeatAt = this.sim.frame;
       if (this.sim.frame - this.defeatAt >= DEFEAT_DELAY) {
         this.defeated = true;
+        this.settleInjuries();
         this.events.emit('player:defeated', { byPolice: this.policeActive });
       }
     }
@@ -693,6 +781,10 @@ export class World {
       if (!f.droppedWeapon) continue;
       const w = f.droppedWeapon;
       f.droppedWeapon = null;
+      if (f === this.companion && this.companionDef && crewState(this.progress, this.companionDef.id).weapon) {
+        this.companionPocket = w;
+        continue;
+      }
       if (w.data.breaks && w.hits <= 1 && f !== this.player) continue; // nearly done anyway
       this.dropOnGround(this.progress.newStack(weaponItemId(w.data.id), 1, { hits: w.hits, mods: w.mods }), f.pos.x - f.facing * 0.4, f.pos.z);
     }
@@ -1344,13 +1436,15 @@ export class World {
   useItem(uid: string): { ok: boolean; text: string } {
     const r = this.progress.use(uid);
     if (!r.ok) return { ok: false, text: r.reason };
+    if (r.treated) this.progress.applyModifiers(this.player, this.difficulty);
     const v = this.player.vitals;
     const before = v.health;
     const heal = r.heal + r.healPct * v.maxHealth;
     if (heal > 0) v.heal(heal);
     if (r.stamina > 0) v.restoreStamina(r.stamina);
     const gained = Math.round(v.health - before);
-    return { ok: true, text: `${r.name}${gained > 0 ? `: +${gained} health` : ''}${r.stamina > 0 ? `${gained > 0 ? ',' : ':'} +${r.stamina} stamina` : ''}` };
+    const treated = r.treated ? ` · treated: ${r.treated.toLowerCase()}` : '';
+    return { ok: true, text: `${r.name}${gained > 0 ? `: +${gained} health` : ''}${r.stamina > 0 ? `${gained > 0 ? ',' : ':'} +${r.stamina} stamina` : ''}${treated}` };
   }
 
   /** Put something down from the inventory screen. */

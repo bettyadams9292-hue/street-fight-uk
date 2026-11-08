@@ -270,7 +270,7 @@ export function contactsScreen(progress: Progress, close: () => void, openMap: (
     return [
       h('div', { class: 'phone-msg' }, h('b', { text: 'Mo' }), h('p', { text: next ? `“${hintFor(next.flag)}”` : '“You did it. Nobody runs these streets now. Mad.”' })),
       shopRow('Dave’s Cabs', `£${TAXI_COST} a ride from the tin. Pick where on the map.`, 'Open map', openMap),
-      ...(crew ? [shopRow('Your crew', s.companions.active ? `Following you: ${COMPANIONS[s.companions.active]?.name ?? s.companions.active}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage', crew)] : []),
+      ...(crew ? [shopRow('Your crew', s.companions.active ? `Following you: ${COMPANIONS[s.companions.active]?.name ?? s.companions.active}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage (H)', crew)] : []),
     ];
   }, close);
 }
@@ -314,7 +314,7 @@ export function tinScreen(progress: Progress, close: () => void, changed: () => 
 
 // ---- story menus --------------------------------------------------------------------------
 
-export function storyPauseMenu(actions: { resume: () => void; inventory: () => void; map: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; quit: () => void }): Screen {
+export function storyPauseMenu(actions: { resume: () => void; inventory: () => void; map: () => void; character: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; quit: () => void }): Screen {
   const el = h(
     'div',
     { class: 'screen pause-menu' },
@@ -325,6 +325,7 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
       menuButton('Resume', actions.resume, undefined, 'primary', 'play', 'Esc'),
       menuButton('Map', actions.map, undefined, '', 'map', 'M'),
       menuButton('Inventory', actions.inventory, undefined, '', 'bag', 'I'),
+      menuButton('Character & crew', actions.character, undefined, '', 'contact', 'H'),
       actions.home ? menuButton('Head home', actions.home, 'Fights here will still be waiting', '', 'home') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
       h('div', { class: 'menu-gap' }),
       menuButton('Save', actions.save, undefined, '', 'save'),
@@ -347,6 +348,10 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
       }
       if (a === 'inventory') {
         actions.inventory();
+        return true;
+      }
+      if (a === 'character') {
+        actions.character();
         return true;
       }
       return false;
