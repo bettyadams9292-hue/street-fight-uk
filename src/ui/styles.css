@@ -988,3 +988,5 @@ kbd { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing:
   .pause-menu .menu-btn .sub { display: none; }
   .menu-gap { height: 2px; }
 }
+.hub-head { width: min(720px, 94vw); align-items: center; }
+.hub-head .wallet { margin-left: auto; }

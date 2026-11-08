@@ -16,6 +16,7 @@ import type { StyleId } from '../styles/StyleData';
 import { LEVELS, DISTRICT_ORDER } from '../world/levels';
 import { cycleRow, menuButton } from './controls';
 import { h } from './dom';
+import { icon } from './icons';
 import type { Screen } from './UIManager';
 
 /**
@@ -42,7 +43,7 @@ export function panelScreen(title: string, progress: Progress, body: (msg: (text
       build();
     };
     el.replaceChildren(
-      h('div', { class: 'hub-head' }, h('h2', { text: title }), h('span', { class: 'wallet', text: wallet })),
+      h('div', { class: 'hub-head' }, h('h2', { text: title }), h('span', { class: 'wallet', text: wallet }), h('button', { class: 'icon-btn', 'aria-label': 'Close', title: 'Close (Esc)', onclick: () => close() }, icon('close'))),
       h('div', { class: 'panel' }, ...body(set, build), msgEl),
       h('div', { class: 'panel-actions' }, menuButton('Back', close)),
     );
