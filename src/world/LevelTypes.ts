@@ -13,7 +13,8 @@ export type Theme =
   | 'residential' | 'leisure' | 'stadium' | 'market' | 'docks' | 'ind_estate' | 'factory' | 'precinct' | 'mall' | 'car_park'
   | 'nightlife' | 'underground' | 'hq' | 'shop' | 'pawn' | 'pub'
   | 'furniture_store' | 'car_showroom' | 'bike_shop' | 'casino'
-  | 'basement' | 'grow_shop';
+  | 'basement' | 'grow_shop'
+  | 'gym_store' | 'boxing_gym' | 'karate_dojo' | 'wrestling_club';
 
 /** Solid things on the ground. Size comes from the kind unless given. */
 export type PropKind =
@@ -33,7 +34,9 @@ export type PropKind =
   | 'furniture' | 'vehicle' | 'bath' | 'toilet' | 'basin'
   | 'slot_machine' | 'roulette_table' | 'blackjack_table' | 'casino_cage' | 'prize_podium' | 'tyre_stack' | 'bike_stand'
   // Stage 7: basement business and the grow shop
-  | 'equipment' | 'basement_stairs' | 'terminal_desk' | 'junk' | 'grow_shelf';
+  | 'equipment' | 'basement_stairs' | 'terminal_desk' | 'junk' | 'grow_shelf'
+  // Stage 8: house computer, gym kit, garage stairwell, fighting gyms
+  | 'computer_desk' | 'coach_board' | 'stairwell' | 'gym_kit' | 'boxing_ring' | 'dojo_mat' | 'wrestling_mat' | 'gym_rack';
 
 export interface PropDef {
   kind: PropKind;
@@ -62,7 +65,7 @@ export interface PropDef {
 export type FacadeKind =
   | 'terrace' | 'shop' | 'pub' | 'tower' | 'garages' | 'warehouse' | 'fence' | 'hoarding' | 'subway' | 'office' | 'club' | 'house_front' | 'room'
   | 'semi' | 'precinct' | 'mall' | 'stand' | 'leisure' | 'dock' | 'containers' | 'market' | 'car_park' | 'ruin' | 'platform' | 'fortress'
-  | 'interior' | 'showroom' | 'casino' | 'basement';
+  | 'interior' | 'showroom' | 'casino' | 'basement' | 'gym_front';
 
 export interface FacadeDef {
   kind: FacadeKind;
@@ -198,7 +201,8 @@ export type StationId =
   | 'clothes_counter' | 'changing' | 'pawn_counter' | 'bar'
   | 'planner' | 'bike_rack' | 'car' | 'bike' | 'furniture_counter' | 'car_counter' | 'bike_counter'
   | 'casino_slots' | 'casino_roulette' | 'casino_blackjack' | 'casino_cashier'
-  | 'terminal' | 'grow_counter' | 'grow_display';
+  | 'terminal' | 'grow_counter' | 'grow_display'
+  | 'computer' | 'train' | 'style_coach' | 'style_drill' | 'recruit' | 'gym_counter';
 
 /** A non-hostile character standing at a station (shopkeepers, barmen). */
 export interface NpcDef {
@@ -277,6 +281,7 @@ export const PROP_SIZE: Record<PropKind, [number, number]> = {
   furniture: [0.5, 0.5], vehicle: [1.0, 0.5], bath: [0.85, 0.4], toilet: [0.22, 0.3], basin: [0.3, 0.22],
   slot_machine: [0.38, 0.32], roulette_table: [1.2, 0.6], blackjack_table: [1.1, 0.55], casino_cage: [1.4, 0.4], prize_podium: [2.6, 1.15], tyre_stack: [0.4, 0.4], bike_stand: [1.0, 0.35],
   equipment: [0.5, 0.5], basement_stairs: [0.75, 0.75], terminal_desk: [0.7, 0.32], junk: [0.6, 0.5], grow_shelf: [1.0, 0.25],
+  computer_desk: [0.6, 0.32], coach_board: [0.4, 0.06], stairwell: [0.85, 0.9], gym_kit: [0.5, 0.5], boxing_ring: [2.2, 1.0], dojo_mat: [2.4, 1.1], wrestling_mat: [2.4, 1.1], gym_rack: [0.9, 0.3],
 };
 
 /** Half extents after rotation. */

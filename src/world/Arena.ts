@@ -30,7 +30,8 @@ export class Arena {
     this.obstacles = obstacles;
   }
 
-  clamp(pos: { x: number; z: number }, radius = BODY_RADIUS): void {
+  /** @param ignoreLock bystanders aren't held inside a locked fight. */
+  clamp(pos: { x: number; z: number }, radius = BODY_RADIUS, ignoreLock = false): void {
     const b = this.bounds;
     // Push out of obstacles (two passes handles corners between neighbouring boxes).
     for (let pass = 0; pass < 2; pass++) {
@@ -39,8 +40,9 @@ export class Arena {
         pushOut(pos, o, radius);
       }
     }
-    const minX = this.lock ? Math.max(b.minX, this.lock.minX) : b.minX;
-    const maxX = this.lock ? Math.min(b.maxX, this.lock.maxX) : b.maxX;
+    const lock = ignoreLock ? null : this.lock;
+    const minX = lock ? Math.max(b.minX, lock.minX) : b.minX;
+    const maxX = lock ? Math.min(b.maxX, lock.maxX) : b.maxX;
     pos.x = Math.min(maxX, Math.max(minX, pos.x));
     pos.z = Math.min(b.maxZ, Math.max(b.minZ, pos.z));
   }

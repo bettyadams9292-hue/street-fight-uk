@@ -34,18 +34,25 @@ import { arrest, ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
 import { World } from './world/World';
 import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
-import { barScreen, contactsScreen, gymScreen, kitchenScreen, repairScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
+import { barScreen, contactsScreen, kitchenScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
 import { resolveLevel } from './property/levels';
-import { FURNITURE, ROOMS, bikeSpeedMult, type RoomId } from './property/catalogue';
-import { checkPlacement, suggestSpot, wallZ } from './property/home';
+import { BIKES, FURNITURE, ROOMS, bikeSpeedMult, type RoomId } from './property/catalogue';
+import { STAIRWELL, checkPlacement, suggestSpot, wallZ } from './property/home';
 import { mountBike, parkBike, placeFurniture, ridingBike, sellFurniture, storeBike, storeFurniture, type PlacedAt } from './property/state';
 import { buildBikeModel } from './render/propModels';
 import { EQUIPMENT, equipmentResale } from './business/catalogue';
 import { checkEquipmentPlacement, equipmentWallZ, installEquipment, sellEquipment, suggestEquipmentSpot, uninstallEquipment } from './business/basement';
 import { tickBusiness } from './business/production';
 import { growShopScreen, terminalScreen } from './ui/businessUI';
+import { coachBoardScreen, DrillGame, gymStoreScreen, RepGame, styleCoachScreen } from './ui/gymUI';
+import { workshopScreen } from './ui/workshopUI';
+import { crewScreen, recruitScreen } from './ui/companionUI';
+import { computerScreen } from './ui/propertyUI';
+import { COMPANIONS, COMPANION_WAITS_OUTSIDE, winChallenge } from './companions/companions';
+import { GYM_KIT, SPAR_FATIGUE, SPAR_TRAINS, canTrain, finishSession, recover, type RepGrade } from './training/gym';
+import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, type FightGym } from './training/styleGyms';
 import { themeProfile } from './render/themes';
 import {
   bikeShopScreen,
@@ -61,7 +68,7 @@ import {
 } from './ui/propertyUI';
 import * as THREE from 'three';
 
-type GameState = 'menu' | 'studio' | 'playing' | 'paused' | 'transition' | 'editing';
+type GameState = 'menu' | 'studio' | 'playing' | 'paused' | 'transition' | 'editing' | 'training';
 const MAX_STEPS_PER_FRAME = 5;
 
 /**
@@ -477,12 +484,11 @@ export class Game {
     if (area !== from) p.tick();
     // Home: the trip's meal is used up.
     if (area === 'home' && from !== 'home' && p.save.mealBuff) p.save.mealBuff = false;
-    const world = new World(level, p, { entry, touch: this.touchWanted(), carry, difficulty: this.settings.get().difficulty });
-    if (opts.at) {
-      world.player.pos.x = opts.at.x;
-      world.player.pos.z = opts.at.z;
-      world.arena.clamp(world.player.pos);
-    }
+    // Rebuilding the area you're in (after a menu) keeps this visit's finished side-fights finished.
+    const keepCleared = leaving && leaving.area === area && this.world ? this.world.clearedOptional() : [];
+    const active = p.save.companions.active ? COMPANIONS[p.save.companions.active] : null;
+    const companion = active && !COMPANION_WAITS_OUTSIDE.has(area) ? active : null;
+    const world = new World(level, p, { entry, touch: this.touchWanted(), carry, difficulty: this.settings.get().difficulty, at: opts.at, keepCleared, companion });
     this.world = world;
     p.save.area = area;
     p.save.entry = level.entries.some((e) => e.id === entry) ? entry : level.entries[0].id;
@@ -566,8 +572,18 @@ export class Game {
   private wireWorld(w: World): void {
     const ev = w.events;
     this.worldUnsub.push(
-      ev.on('area:exit', ({ to, entry }) => this.changeArea(to, entry, w.carry())),
+      ev.on('area:exit', ({ to, entry }) => {
+        // The basement is down a real flight of stairs: walk down (or up) them, then arrive.
+        if ((w.level.id === 'home' && to === 'basement') || (w.level.id === 'basement' && to === 'home')) return this.walkStairs(w, to, entry);
+        this.changeArea(to, entry, w.carry());
+      }),
       ev.on('area:locked', ({ text }) => this.hud.toast(text, 'warn')),
+      ev.on('duel:end', (e) => this.duelEnded(w, e)),
+      ev.on('companion:up', ({ name }) => this.hud.toast(`${name}’s back on their feet`, 'item')),
+      // A real hit while riding knocks you off; the bike's left where you fell.
+      w.sim.bus.on('hit:landed', ({ target }) => {
+        if (target === w.player && this.progress?.save.property.riding && this.world === w) this.knockOff = true;
+      }),
       ev.on('encounter:start', ({ boss }) => {
         if (boss) {
           this.hud.notify(boss.name.toUpperCase(), 'big');
@@ -719,18 +735,12 @@ export class Game {
     const w = this.world;
     const p = this.progress;
     if (!w || !p) return;
-    const station = from ?? w.level.stations?.find((s) => s.id === id);
+    const station = from ?? w.stations.find((s) => s.id === id);
     const at = station ? { x: w.player.pos.x, z: w.player.pos.z } : undefined;
     if (id === 'wardrobe') return this.openCreator('edit', 'home', at);
     if (id === 'mirror') return this.openSheet('home', at);
     if (id === 'clothes_counter' || id === 'changing') return this.openClothesShop();
-    if (id === 'bike') {
-      const r = mountBike(p, w.level.id);
-      if (!r.ok) return this.hud.toast(r.reason, 'warn');
-      this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
-      this.hud.toast('On the bike. Interact again (away from doors) to get off.', 'item');
-      return;
-    }
+    if (id === 'bike') return this.mountParkedBike();
     this.state = 'paused';
     this.touch.release();
     this.input.flush();
@@ -759,24 +769,74 @@ export class Game {
     let screen;
     switch (id) {
       case 'gym':
-        screen = gymScreen(p, close, changed);
+        screen = coachBoardScreen(p, close, changed);
         break;
+      case 'computer':
+        screen = computerScreen(p, close, saved, (uid, room) => this.startPlacing(uid, room));
+        break;
+      case 'gym_counter':
+        screen = gymStoreScreen(p, close, saved, station?.tab);
+        break;
+      case 'style_coach':
+        screen = styleCoachScreen(p, close, changed, (station?.tab ?? 'boxing_gym') as FightGym['id']);
+        break;
+      case 'recruit':
+        screen = recruitScreen(p, station?.tab ?? '', close, () => {
+          saved();
+          this.hubDirty = true;
+        }, () => {
+          this.ui.replaceAll(null);
+          this.state = 'playing';
+          const def = COMPANIONS[station?.tab ?? ''];
+          if (station && def && w.startChallenge(station, def)) this.hud.toast(`${def.nickname} squares up. Beat them and they’ll join you.`, 'warn');
+        });
+        break;
+      case 'train':
+        this.state = 'playing';
+        return this.startGymSession(station?.tab ?? '');
+      case 'style_drill':
+        this.state = 'playing';
+        return this.startDrill((station?.tab ?? 'boxing_gym') as FightGym['id']);
+      case 'sparring':
+        this.state = 'playing';
+        if (w.duel) {
+          w.stopDuel();
+          return;
+        }
+        {
+          const can = canTrain(p, SPAR_TRAINS);
+          if (!can.ok) return this.hud.toast(can.reason, 'warn');
+        }
+        if (w.startSpar()) this.hud.toast('Gloves up. Mo hits softly and it stops before anyone’s hurt. Walk away to stop.', 'item');
+        return;
       case 'kitchen':
         screen = kitchenScreen(p, close, () => {
           const v = w.player.vitals;
           const before = v.health;
           v.health = v.maxHealth;
           v.stamina = v.maxStamina;
+          // A brew and a sit down takes the edge off training fatigue too.
+          recover(p.save.gym, p.save.playTime, 10);
           return Math.round(v.health - before);
-        }, changed);
+        }, () => {
+          if (p.save.mealBuff) recover(p.save.gym, p.save.playTime, 30);
+          changed();
+        });
         break;
       case 'garage':
-        screen = repairScreen(p, close, saved);
+        screen = workshopScreen(p, close, () => {
+          saved();
+          // What's in your hands may have changed (repaired, upgraded): rebuild the fighter's weapon.
+          const held = p.save.held;
+          if (held) w.player.equipWeapon(ITEMS[held.id].weapon!, held.hits, held.mods);
+        });
         break;
       case 'storage':
         screen = storageScreen(p, this.ui, changed, close);
         break;
       case 'sofa':
+        // Sitting down to catch up is rest: fatigue drops.
+        recover(p.save.gym, p.save.playTime, 25);
         screen = sofaScreen(p, close, () => this.saveGame());
         break;
       case 'contacts':
@@ -784,7 +844,10 @@ export class Game {
           this.ui.replaceAll(null);
           this.state = 'playing';
           this.changeArea(area, entry, null);
-        }, saved);
+        }, saved, () => this.ui.replaceAll(crewScreen(p, close, () => {
+          saved();
+          this.hubDirty = true;
+        })));
         break;
       case 'tin':
         screen = tinScreen(p, close, saved);
@@ -858,6 +921,199 @@ export class Game {
     this.ui.replaceAll(screen);
   }
 
+  // ---- home gym training and fighting-gym drills -----------------------------------------
+
+  private session: { game: RepGame | DrillGame; restore: { x: number; z: number; facing: 1 | -1 } } | null = null;
+
+  /** Use a piece of home gym kit: the rep timing game while your fighter does the work. */
+  private startGymSession(kitId: string): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p || this.session) return;
+    const kit = GYM_KIT[kitId];
+    if (!kit) return;
+    if (!p.save.gym.owned.includes(kitId)) return this.hud.toast(`No ${kit.name.toLowerCase()} yet. Iron Temple in Leisure Park sells them.`, 'warn');
+    const can = canTrain(p, kit.trains);
+    if (!can.ok) return this.hud.toast(can.reason, 'warn');
+    const f = w.player;
+    const restore = { x: f.pos.x, z: f.pos.z, facing: f.facing };
+    f.pos.x = kit.slot.x + kit.use.dx;
+    f.pos.z = kit.slot.z + kit.use.dz;
+    f.pos.y = kit.use.y ?? 0;
+    f.facing = kit.use.facing;
+    f.activity = kit.activity;
+    const rank = p.save.upgrades[kit.trains];
+    const game = new RepGame(kit, kit.name, kit.attribute, rank, 10, () => this.endTraining(), () => this.endTraining());
+    this.session = { game, restore };
+    this.state = 'training';
+    this.uiRoot.append(game.el);
+  }
+
+  private endTraining(): void {
+    const s = this.session;
+    const w = this.world;
+    const p = this.progress;
+    if (!s || !w || !p) return;
+    this.session = null;
+    s.game.el.remove();
+    const f = w.player;
+    f.activity = null;
+    f.pos = { x: s.restore.x, y: 0, z: s.restore.z };
+    f.facing = s.restore.facing;
+    this.state = 'playing';
+    this.input.flush();
+    if (s.game instanceof RepGame) {
+      const kit = s.game.kit!;
+      const r = finishSession(p, kit.trains, kit.perRep, kit.fatigue, s.game.grades);
+      if (!r.ok) return;
+      const perfect = s.game.grades.filter((g) => g === 'perfect').length;
+      this.hud.toast(`${kit.attribute}: +${r.xp} XP (${perfect} perfect)${r.rankedUp ? ` — RANK ${r.rank}!` : ` · ${r.toNext}/${r.needed} to rank ${r.rank + 1}`} · fatigue ${r.fatigue}%`, r.rankedUp ? 'cash' : 'item');
+      // Rank ups change your stats: rebuild the fighter in place.
+      if (r.rankedUp) this.enterArea(w.level.id, 'start', { at: { x: f.pos.x, z: f.pos.z }, carry: w.carry() });
+      else this.saveGame();
+    } else {
+      const g = s.game;
+      const gymId = this.drillGym!;
+      const gym = FIGHT_GYMS.find((x) => x.id === gymId)!;
+      const style = this.drillStyle!;
+      if (!g.results.length) return;
+      const r = finishDrill(p, style, g.results);
+      const clean = g.results.filter((x) => x.clean).length;
+      const need = nextRankNeeds(p, style);
+      this.hud.toast(`${STYLES[style].name} drill: ${clean}/${g.results.length} clean, +${r.xp} drill XP${need?.xp ? ` (${Math.min(r.total, need.xp)}/${need.xp} for rank ${need.rank})` : ''}. See ${gym.coach} to rank up.`, 'item');
+      this.saveGame();
+    }
+  }
+
+  private drillGym: FightGym['id'] | null = null;
+  private drillStyle: StyleId | null = null;
+
+  /** Pad work at a fighting gym: throw the style's real combinations on cue. */
+  private startDrill(gymId: FightGym['id']): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p || this.session) return;
+    const gym = FIGHT_GYMS.find((g) => g.id === gymId)!;
+    // Drill your main style if it's taught here, otherwise the first one you know from this gym.
+    const style = gym.styles.includes(p.save.styles.primary) && styleRank(p, p.save.styles.primary) > 0 ? p.save.styles.primary : gym.styles.find((st) => styleRank(p, st) > 0);
+    if (!style) return this.hud.toast(`Learn ${gym.styles.map((st) => STYLES[st].name).join(' or ')} from ${gym.coach} first`, 'warn');
+    const can = canDrill(p, style);
+    if (!can.ok) return this.hud.toast(can.reason, 'warn');
+    const combos = drillSet(style, styleRank(p, style), p.save.gym.sessions + (p.save.styleTraining[style]?.xp ?? 0));
+    if (!combos.length) return;
+    p.save.gym.sessions++;
+    const f = w.player;
+    const restore = { x: f.pos.x, z: f.pos.z, facing: f.facing };
+    f.facing = 1;
+    f.activity = 'bag';
+    this.drillGym = gymId;
+    this.drillStyle = style;
+    const game = new DrillGame(combos, `${STYLES[style].name} pad drill`, () => this.endTraining());
+    this.session = { game, restore };
+    this.state = 'training';
+    this.uiRoot.append(game.el);
+  }
+
+  private trainingKey(e: KeyboardEvent): void {
+    const g = this.session?.game;
+    if (!g) return;
+    const k = e.code;
+    if (k === 'Escape') g instanceof RepGame ? g.finish(true) : g.end();
+    else if (g instanceof RepGame && (k === 'Space' || k === 'KeyE' || k === 'KeyU' || k === 'Enter')) g.press();
+    else if (g instanceof DrillGame) {
+      const map: Record<string, string> = { KeyJ: 'lp', KeyI: 'hp', KeyK: 'lk', KeyL: 'hk' };
+      if (map[k]) g.input(map[k]);
+      else return;
+    } else return;
+    e.preventDefault();
+  }
+
+  /** Sparring and challenge fights finishing. */
+  private duelEnded(w: World, e: { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number }): void {
+    const p = this.progress;
+    if (!p) return;
+    if (e.kind === 'spar') {
+      // Defence training from what you landed and blocked, worth less the shorter it was.
+      const reps = Math.min(10, Math.floor((e.landed + e.blocked * 1.5) / 2));
+      const grades = Array.from({ length: Math.max(1, reps) }, (_, i) => (i < e.landed / 2 ? 'perfect' : 'good') as RepGrade);
+      if (e.seconds < 8 || reps === 0) {
+        this.hud.toast('Spar over. Too short to count for much: go a few rounds next time.', 'item');
+        return;
+      }
+      const r = finishSession(p, SPAR_TRAINS, 9, SPAR_FATIGUE, grades);
+      if (r.ok) {
+        this.hud.toast(`Spar over (${e.landed} landed, ${e.blocked} blocked). Defence +${r.xp} XP${r.rankedUp ? ` — RANK ${r.rank}!` : ''} · fatigue ${r.fatigue}%`, r.rankedUp ? 'cash' : 'item');
+        if (r.rankedUp) this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+      }
+      this.saveGame();
+      return;
+    }
+    const def = COMPANIONS[e.id];
+    if (e.won && def) {
+      winChallenge(p, e.id);
+      this.saveGame();
+      this.hud.toast(`${def.nickname}: “Fair enough. I’m in.” Bring them along from your phone, or they’ll follow you now.`, 'cash');
+      this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+    } else if (def) this.hud.toast(e.stopped ? `You walked away from ${def.nickname}.` : `${def.nickname} put you down. Come back when you’re ready.`, 'warn');
+  }
+
+  // ---- the basement stairs ------------------------------------------------------------
+
+  private stairAnim: { t: number; dur: number; from: { x: number; y: number; z: number }; to: { x: number; y: number; z: number }; done: () => void } | null = null;
+
+  /** Walk down the garage stairwell (or up from the basement), fade, and arrive walking off the stairs. */
+  private walkStairs(w: World, to: AreaId, entry: string): void {
+    if (this.state === 'transition') return;
+    this.state = 'transition';
+    this.touch.release();
+    const p = w.player;
+    const carry = w.carry();
+    const down = to === 'basement';
+    const from = { x: p.pos.x, y: 0, z: p.pos.z };
+    const target = down ? { x: STAIRWELL.x, y: -1.45, z: STAIRWELL.z - 0.75 } : { x: 0.75, y: 1.6, z: -2.0 };
+    p.facing = target.x >= from.x ? 1 : -1;
+    // Fade as you disappear down (or up) the stairs.
+    window.setTimeout(() => this.fadeEl.classList.add('on'), 620);
+    this.stairAnim = {
+      t: 0, dur: 0.95, from, to: target,
+      done: () => {
+        window.setTimeout(() => {
+          if (!this.progress) return;
+          this.enterArea(to, entry, { carry });
+          // Arrive on the stairs and step off them.
+          const nw = this.world!;
+          const q = nw.player;
+          const land = { x: q.pos.x, y: 0, z: q.pos.z };
+          const start = down ? { x: 0.8, y: 1.3, z: -1.75 } : { x: STAIRWELL.x, y: -1.3, z: STAIRWELL.z - 0.6 };
+          q.pos.x = start.x;
+          q.pos.z = start.z;
+          q.pos.y = start.y;
+          this.state = 'transition';
+          this.stairAnim = { t: 0, dur: 0.8, from: start, to: land, done: () => (this.state = 'playing') };
+          window.setTimeout(() => this.fadeEl.classList.remove('on'), 60);
+        }, 260);
+      },
+    };
+  }
+
+  private updateStairs(dt: number): void {
+    const a = this.stairAnim;
+    const w = this.world;
+    if (!a || !w) return;
+    a.t += dt;
+    const k = Math.min(1, a.t / a.dur);
+    const e = k * k * (3 - 2 * k);
+    const p = w.player;
+    p.pos.x = a.from.x + (a.to.x - a.from.x) * e;
+    p.pos.z = a.from.z + (a.to.z - a.from.z) * e;
+    p.pos.y = a.from.y + (a.to.y - a.from.y) * e;
+    if (k >= 1) {
+      this.stairAnim = null;
+      if (a.to.y === 0) p.pos.y = 0;
+      a.done();
+    }
+  }
+
   // ---- bikes -------------------------------------------------------------------------
 
   /**
@@ -903,7 +1159,37 @@ export class Game {
     }
   }
 
-  /** Get off and leave the bike where you're stood. */
+  /**
+   * Get on the bike parked here. Done in place: the area is NOT rebuilt (rebuilding
+   * re-armed the street's fights and, before the encounter fix, set one off under you).
+   */
+  private mountParkedBike(): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    if (w.activeEncounter || w.locked) return this.hud.toast('Not with a fight on', 'warn');
+    const r = mountBike(p, w.level.id);
+    if (!r.ok) return this.hud.toast(r.reason, 'warn');
+    w.removeStation('bike');
+    this.renderer.setDynamicProp('parked_bike', null);
+    this.hideLevelBike(w);
+    // Stand on the bike's spot so you ride off from where it was.
+    const out = p.save.property.bikeOut!;
+    w.player.pos.x = out.x;
+    w.player.pos.z = out.z;
+    w.arena.clamp(w.player.pos);
+    this.applyRiding();
+    this.saveGame();
+    this.hud.toast('On the bike. Interact (away from doors) to get off.', 'item');
+  }
+
+  /** The level's own parked-bike prop (built with the area) goes when you ride off. */
+  private hideLevelBike(w: World): void {
+    const prop = w.level.props.find((x) => x.kind === 'vehicle' && x.solid === false && BIKES[x.item ?? ''] && x.label !== 'podium');
+    if (prop) this.renderer.hideLevelProp(prop);
+  }
+
+  /** Get off and leave the bike parked here, in place (no rebuild). */
   private dismount(reason?: string): void {
     const w = this.world;
     const p = this.progress;
@@ -924,9 +1210,11 @@ export class Game {
     parkBike(p, w.level.id, spot.x, spot.z);
     w.player.stats.removeModifier('riding');
     this.renderer.viewOf(w.player)?.setMount(null);
+    const owned = p.save.property.bikes.find((b) => b.uid === p.save.property.bikeOut!.uid)!;
+    w.removeStation('bike');
+    w.addStation({ id: 'bike', x: spot.x, z: spot.z + 0.2, label: `Your ${BIKES[owned.id].name}: get on` });
+    this.renderer.setDynamicProp('parked_bike', { kind: 'vehicle', item: owned.id, colour: owned.colour, x: spot.x, z: spot.z, size: [0.95, 0.3], solid: false });
     this.saveGame();
-    // Rebuild so the parked bike appears and can be got back on.
-    this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
     if (reason) this.hud.toast(reason, 'warn');
   }
 
@@ -1094,6 +1382,8 @@ export class Game {
   // ---- the basement business clock ----------------------------------------------------------------
 
   private bizTimer = 0;
+  /** Set by a hit landing on you while riding; handled at the top of the next step. */
+  private knockOff = false;
 
   /** Play time drives the business. Checked once a second; news comes up as toasts. */
   private businessClock(dt: number): void {
@@ -1266,6 +1556,7 @@ export class Game {
 
   private onKey(e: KeyboardEvent): void {
     if (this.state === 'editing') return this.editorKey(e);
+    if (this.state === 'training') return this.trainingKey(e);
     if (e.code === 'F1') {
       e.preventDefault();
       this.settings.update({ showHitboxes: !this.settings.get().showHitboxes });
@@ -1460,12 +1751,12 @@ export class Game {
       while (this.accumulator >= DT && steps < MAX_STEPS_PER_FRAME && this.state === 'playing') {
         let cmd = this.input.sample(pad);
         if (this.world && this.progress?.save.property.riding) {
-          // On a bike: no fighting. Interact away from anything gets you off; trouble knocks you off.
-          if (this.world.activeEncounter || this.world.locked) {
-            this.dismount('Off the bike: trouble');
-            break;
-          }
-          if (cmd.pressed.grab && !this.world.interactable) {
+          // On a bike: no fighting. Interact away from anything gets you off. Only a real hit
+          // knocks you off (see wireWorld), not a fight merely starting nearby.
+          if (this.knockOff) {
+            this.knockOff = false;
+            this.dismount('Knocked off the bike');
+          } else if (cmd.pressed.grab && !this.world.interactable) {
             this.dismount();
             break;
           }
@@ -1492,7 +1783,9 @@ export class Game {
     }
 
     const player = this.activePlayer;
-    const inFight = (this.state === 'playing' || this.state === 'paused' || this.state === 'transition' || this.state === 'editing') && !!player;
+    const inFight = (this.state === 'playing' || this.state === 'paused' || this.state === 'transition' || this.state === 'editing' || this.state === 'training') && !!player;
+    this.updateStairs(dt);
+    this.session?.game.update(dt);
     this.renderer.render(dt, this.time, inFight ? player : null);
     if (inFight && player) {
       const enemy = this.world ? this.world.focusEnemy : this.mode!.focusEnemy;

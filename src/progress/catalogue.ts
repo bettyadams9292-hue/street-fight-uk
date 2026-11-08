@@ -20,13 +20,18 @@ export interface UpgradeDef {
   modifiers: (rank: number) => Modifier[];
 }
 
+/** Ranks past 5 count for half: the top end takes far more training for less. */
+export const effectiveRank = (r: number) => Math.min(r, 5) + Math.max(0, r - 5) * 0.5;
+const attrRank = (r: number) => Math.floor(effectiveRank(r));
+
+/** Training tracks. Ranks are earned in the home gym (training/gym.ts), not bought. */
 export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
-  health: { id: 'health', name: 'Conditioning', per: '+15 max health', maxRank: 5, cost: (r) => 60 + 40 * r, modifiers: (r) => [{ id: 'up_health', source: 'upgrade', flat: 'maxHealth', add: 15 * r }] },
-  stamina: { id: 'stamina', name: 'Roadwork', per: '+15 max stamina', maxRank: 5, cost: (r) => 60 + 40 * r, modifiers: (r) => [{ id: 'up_stamina', source: 'upgrade', flat: 'maxStamina', add: 15 * r }] },
-  power: { id: 'power', name: 'Heavy bag', per: '+1 Strength', maxRank: 5, cost: (r) => 80 + 50 * r, modifiers: (r) => [{ id: 'up_power', source: 'upgrade', attribute: 'strength', add: r }] },
-  speed: { id: 'speed', name: 'Skipping', per: '+1 Speed', maxRank: 5, cost: (r) => 80 + 50 * r, modifiers: (r) => [{ id: 'up_speed', source: 'upgrade', attribute: 'speed', add: r }] },
-  toughness: { id: 'toughness', name: 'Sparring', per: '+1 Defence', maxRank: 5, cost: (r) => 80 + 50 * r, modifiers: (r) => [{ id: 'up_toughness', source: 'upgrade', attribute: 'defence', add: r }] },
-  technique: { id: 'technique', name: 'Pad work', per: '+1 Technique', maxRank: 5, cost: (r) => 80 + 50 * r, modifiers: (r) => [{ id: 'up_technique', source: 'upgrade', attribute: 'technique', add: r }] },
+  health: { id: 'health', name: 'Conditioning', per: '+15 max health (half past rank 5)', maxRank: 10, cost: (r) => 60 + 40 * r, modifiers: (r) => [{ id: 'up_health', source: 'upgrade', flat: 'maxHealth', add: Math.round(15 * effectiveRank(r)) }] },
+  stamina: { id: 'stamina', name: 'Roadwork', per: '+15 max stamina (half past rank 5)', maxRank: 10, cost: (r) => 60 + 40 * r, modifiers: (r) => [{ id: 'up_stamina', source: 'upgrade', flat: 'maxStamina', add: Math.round(15 * effectiveRank(r)) }] },
+  power: { id: 'power', name: 'Strength', per: '+1 Strength (half past rank 5)', maxRank: 10, cost: (r) => 80 + 50 * r, modifiers: (r) => [{ id: 'up_power', source: 'upgrade', attribute: 'strength', add: attrRank(r) }] },
+  speed: { id: 'speed', name: 'Agility', per: '+1 Speed (half past rank 5)', maxRank: 10, cost: (r) => 80 + 50 * r, modifiers: (r) => [{ id: 'up_speed', source: 'upgrade', attribute: 'speed', add: attrRank(r) }] },
+  toughness: { id: 'toughness', name: 'Defence', per: '+1 Defence (half past rank 5)', maxRank: 10, cost: (r) => 80 + 50 * r, modifiers: (r) => [{ id: 'up_toughness', source: 'upgrade', attribute: 'defence', add: attrRank(r) }] },
+  technique: { id: 'technique', name: 'Technique', per: '+1 Technique (half past rank 5)', maxRank: 10, cost: (r) => 80 + 50 * r, modifiers: (r) => [{ id: 'up_technique', source: 'upgrade', attribute: 'technique', add: attrRank(r) }] },
 };
 
 export const MOVE_UNLOCK_IDS = ['specials', 'finishers', 'counter_mastery', 'iron_chin'] as const;

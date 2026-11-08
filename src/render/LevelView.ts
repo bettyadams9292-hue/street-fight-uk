@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { Progress } from '../progress/Progress';
 import type { ExitDef, FacadeDef, LevelDef, PropDef, Theme } from '../world/LevelTypes';
 import { propHalf } from '../world/LevelTypes';
-import { buildAnyModel, buildEquipmentModel, buildFurnitureModel, buildVehicleModel } from './propModels';
+import { buildAnyModel, buildEquipmentModel, buildGymKitModel, buildFurnitureModel, buildVehicleModel } from './propModels';
 import { EQUIPMENT } from '../business/catalogue';
 import { CARS, FINISHES, FURNITURE } from '../property/catalogue';
 import { themeProfile } from './themes';
@@ -176,7 +176,11 @@ export class LevelView {
     }
     if (themeProfile(lvl.theme).skyline !== 'none') this.buildSkyline();
     for (const w of lvl.walls ?? []) this.buildWall(w);
-    for (const p of lvl.props) this.buildProp(p);
+    for (const p of lvl.props) {
+      const before = this.group.children.length;
+      this.buildProp(p);
+      this.propObjects.set(p, this.group.children.slice(before));
+    }
     for (const ex of lvl.exits) this.buildExit(ex);
     for (const g of lvl.gates ?? []) this.buildGate(g.id, g.x, g.z0, g.z1);
     for (const l of lvl.levers ?? []) this.buildLever(l.id, l.x);
@@ -200,7 +204,15 @@ export class LevelView {
       for (const f of this.level.facades) {
         const fin = f.floor ? FINISHES[f.floor] : undefined;
         const mat = fin ? this.floorFinish(fin.id, f.x1 - f.x0, front - this.back) : floors[f.label ?? ''] ?? new THREE.MeshStandardMaterial({ map: woodFloorTexture(4, 2) });
-        this.ground(f.x0, f.x1, this.back, front, mat);
+        // Leave a hole in the floor where the stairs go down.
+        const well = this.level.props.find((q) => q.kind === 'stairwell' && q.x > f.x0 && q.x < f.x1);
+        if (well) {
+          const [hx, hz] = propHalf(well);
+          const h = { x0: well.x - hx, x1: well.x + hx, z1: well.z + hz };
+          this.ground(f.x0, h.x0, this.back, front, mat);
+          this.ground(h.x1, f.x1, this.back, front, mat);
+          this.ground(h.x0, h.x1, h.z1, front, mat);
+        } else this.ground(f.x0, f.x1, this.back, front, mat);
         // Thresholds between rooms.
         if (f.x0 > minX) this.box(0.24, 0.015, front - 0.1, f.x0, 0.008, (front + 0.1) / 2 + 0.05, this.mat('#8a7a5a', 0.5, 0.3), false);
       }
@@ -301,6 +313,10 @@ export class LevelView {
         ? this.basementFloor(W, depth, flags)
         : theme === 'grow_shop'
           ? new THREE.MeshStandardMaterial({ map: tileTexture('#e8ece4', '#c8ccc4', W / 0.6, depth / 0.6, 64), roughness: 0.3 })
+          : theme === 'gym_store' || theme === 'wrestling_club'
+            ? new THREE.MeshStandardMaterial({ map: concreteTexture('#2a2c30', W / 3, depth / 3), roughness: 0.6 })
+            : theme === 'boxing_gym' || theme === 'karate_dojo'
+              ? new THREE.MeshStandardMaterial({ map: woodFloorTexture(W / 2, depth / 2), roughness: 0.5, color: theme === 'karate_dojo' ? 0xe8d0a0 : 0xa08060 })
           : theme === 'furniture_store'
         ? new THREE.MeshStandardMaterial({ map: woodFloorTexture(W / 2, depth / 2), roughness: 0.45, color: 0xc8a882 })
         : theme === 'car_showroom'
@@ -451,6 +467,8 @@ export class LevelView {
         return this.casinoFront(f);
       case 'basement':
         return this.basementWalls(f);
+      case 'gym_front':
+        return this.gymFront(f);
       case 'shop':
         return this.shop(f);
       case 'pub':
@@ -782,7 +800,9 @@ export class LevelView {
     const theme = this.level.theme;
     const H = 3.2;
     const colour = f.colour ?? '#8c7a5e';
-    if (theme === 'grow_shop') {
+    if (theme === 'gym_store' || theme === 'boxing_gym' || theme === 'karate_dojo' || theme === 'wrestling_club') {
+      this.gymInterior(f, theme);
+    } else if (theme === 'grow_shop') {
       this.growShopInterior(f);
     } else if (theme === 'furniture_store' || theme === 'car_showroom' || theme === 'bike_shop' || theme === 'casino') {
       this.showroomInterior(f, theme);
@@ -1132,6 +1152,29 @@ export class LevelView {
     }
   }
 
+  /** Gym store and fighting gyms: their own wall, posters, branding. */
+  private gymInterior(f: FacadeDef, theme: Theme): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const H = 3.2;
+    const wall = f.colour ?? '#3a3c40';
+    if (theme === 'boxing_gym') {
+      this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: brickTexture(w / 4, H / 4), color: 0xc8a898, roughness: 0.95 }), 0);
+    } else this.panel(w, H, cx, H / 2, new THREE.MeshStandardMaterial({ map: plasterTexture(wall, w / 3, 1), roughness: 0.85 }), 0);
+    if (f.label) {
+      const accent = theme === 'karate_dojo' ? '#7a1414' : theme === 'wrestling_club' ? '#e8c020' : theme === 'gym_store' ? '#9a1c1c' : '#f0eee8';
+      const t = signTexture(f.label, theme === 'karate_dojo' ? '#f0eee8' : '#141416', accent, { w: 1024, h: 112 });
+      this.panel(Math.min(w - 2, 10), 0.55, cx, 2.75, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.25 }), 0.05);
+    }
+    // Posters / scrolls / belts on the wall.
+    const items = theme === 'boxing_gym' ? ['FIGHT NIGHT', 'ABA CHAMPS 1994', 'NO PAIN'] : theme === 'karate_dojo' ? ['空手', 'RESPECT', 'BELT GRADING'] : theme === 'wrestling_club' ? ['TAKEDOWN', 'CLUB RULES', 'GRAPPLE'] : ['NEW IN', 'HOME GYM SALE', 'TRAIN HARD'];
+    items.forEach((text, i) => {
+      const t = signTexture(text, i % 2 ? '#f0eee8' : '#1a1a1c', i % 2 ? '#7a1414' : '#e8c020', { w: 256, h: 192 });
+      this.panel(0.9, 0.68, f.x0 + 2.2 + i * ((w - 4) / 2.6), 1.75, new THREE.MeshStandardMaterial({ map: t }), 0.04);
+    });
+    if (theme === 'gym_store') this.box(w, 1.0, 0.03, cx, 0.5, this.back + 0.02, this.mat('#1a1a1c', 0.5), false);
+  }
+
   /** Green Fingers: bright white walls, green branding, product boards, a purple-lit demo corner. */
   private growShopInterior(f: FacadeDef): void {
     const w = f.x1 - f.x0;
@@ -1148,6 +1191,29 @@ export class LevelView {
     for (const [x, text] of [[3.0, 'ROOM KIT'], [5.6, 'LIGHT · AIR'], [14.9, 'SECURITY']] as const) {
       const t = signTexture(text, '#ffffff', '#2a8a3a', { w: 512, h: 128 });
       this.panel(1.6, 0.4, x, 2.25, new THREE.MeshStandardMaterial({ map: t }), 0.05);
+    }
+  }
+
+  /** A fight gym in an old brick unit: painted sign, steel door, steamed-up windows with a bag in them. */
+  private gymFront(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    if (!f.label) return this.brickWall(f.x0, f.x1, 6);
+    this.brickWall(f.x0, f.x1, 6.2);
+    const colour = f.colour ?? '#7a1414';
+    const t = signTexture(f.label, colour, '#f0eee8', { w: 1024, h: 160, serif: true });
+    this.box(Math.min(w - 1, 9), 0.9, 0.12, cx, 3.6, this.back + 0.1, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.35 }), false);
+    const sil = this.mat('#1a1a1c', 0.6, 0, { transparent: true, opacity: 0.6 });
+    for (const x of [f.x0 + 2.2, f.x1 - 2.2]) {
+      this.box(2.6, 1.6, 0.05, x, 1.6, this.back + 0.04, this.mat('#a8b8c0', 0.3, 0.2, { emissive: 0xfff0d8, emissiveIntensity: 0.35 }), false);
+      this.box(0.4, 1.0, 0.02, x - 0.5, 1.7, this.back + 0.07, sil, false);
+      this.box(2.7, 0.08, 0.1, x, 0.78, this.back + 0.08, this.mat('#e8e4dc', 0.6), false);
+    }
+    const door = this.level.exits.find((e) => e.kind === 'door' && e.x >= f.x0 && e.x <= f.x1);
+    if (door) {
+      this.box(1.3, 2.3, 0.06, door.x, 1.15, this.back + 0.06, this.mat('#2a2e34', 0.4, 0.7), false);
+      this.box(1.6, 0.1, 0.5, door.x, 2.45, this.back + 0.25, this.mat(colour, 0.5), false);
+      this.box(0.1, 0.18, 0.1, door.x + 0.75, 2.2, this.back + 0.08, this.mat('#fff4d8', 0.3, 0, { emissive: 0xffd8a0, emissiveIntensity: 1.2 }), false);
     }
   }
 
@@ -1638,7 +1704,7 @@ export class LevelView {
   // ---- props --------------------------------------------------------------------
 
   private buildProp(p: PropDef): void {
-    if (p.kind === 'furniture' || p.kind === 'vehicle' || p.kind === 'equipment') return this.buildModelProp(p);
+    if (p.kind === 'furniture' || p.kind === 'vehicle' || p.kind === 'equipment' || p.kind === 'gym_kit') return this.buildModelProp(p);
     const [hx, hz] = propHalf(p);
     const W = hx * 2;
     const D = hz * 2;
@@ -2271,6 +2337,91 @@ export class LevelView {
         C(0.015, 0.015, 0.14, 0, 0.98, -D / 2 + 0.05, this.mat('#d8d8d8', 0.15, 1), 8);
         break;
       }
+      case 'computer_desk': {
+        const wood = this.mat('#3a2a1e', 0.5);
+        B(W, 0.05, D, 0, 0.75, 0, wood);
+        for (const dx of [-W / 2 + 0.04, W / 2 - 0.04]) B(0.05, 0.75, D - 0.04, dx, 0.375, 0, this.mat('#1a1a1c', 0.4, 0.4));
+        // Monitor, keyboard, mouse, a tower, a lamp: obviously the computer.
+        B(0.62, 0.38, 0.03, -0.05, 1.1, -D / 2 + 0.12, this.mat('#111', 0.3, 0.3), false);
+        B(0.58, 0.34, 0.01, -0.05, 1.1, -D / 2 + 0.14, this.mat('#0a1220', 0.2, 0, { emissive: 0x4a8aff, emissiveIntensity: 0.75 }), false);
+        B(0.06, 0.14, 0.06, -0.05, 0.85, -D / 2 + 0.12, this.mat('#111', 0.3, 0.3), false);
+        B(0.42, 0.02, 0.14, -0.05, 0.785, 0.06, this.mat('#1a1a1c', 0.5), false);
+        B(0.06, 0.02, 0.1, 0.25, 0.785, 0.08, this.mat('#1a1a1c', 0.5), false);
+        B(0.2, 0.42, 0.42, W / 2 - 0.16, 0.21, 0, this.mat('#1a1a1c', 0.4, 0.3));
+        B(0.01, 0.08, 0.02, W / 2 - 0.06, 0.36, 0.2, this.mat('#40ff90', 0.3, 0, { emissive: 0x40ff90, emissiveIntensity: 1.2 }), false);
+        C(0.18, 0.2, 0.06, -0.05, 0.5, D / 2 + 0.3, this.mat('#1a1a1c', 0.8), 14);
+        C(0.03, 0.03, 0.45, -0.05, 0.22, D / 2 + 0.3, this.mat('#2a2a2e', 0.4, 0.6), 8);
+        break;
+      }
+      case 'coach_board': {
+        B(0.9, 0.6, 0.03, 0, 1.5, 0, this.mat('#f4f4f0', 0.4), false);
+        B(0.94, 0.64, 0.02, 0, 1.5, -0.01, this.mat('#8a8e94', 0.3, 0.7), false);
+        const t = signTexture('TRAINING PLAN', '#f4f4f0', '#1f4fa8', { w: 256, h: 64 });
+        this.panel(0.8, 0.2, p.x, 1.66, new THREE.MeshStandardMaterial({ map: t }), p.z - this.back + 0.03);
+        break;
+      }
+      case 'stairwell': {
+        // A hole in the garage floor with a steel balustrade, and stairs dropping away to the back.
+        const concrete = this.mat('#8a8884', 0.9);
+        const n = 8;
+        for (let i = 0; i < n; i++) {
+          const d = (D * 0.9) / n;
+          B(W - 0.1, 0.05, d + 0.02, 0, -0.18 * (i + 1), D / 2 - 0.05 - d * (i + 0.5), concrete, false);
+          B(W - 0.1, 0.18, 0.02, 0, -0.18 * (i + 0.5), D / 2 - 0.05 - d * i, this.mat('#6a6864', 0.95), false);
+        }
+        // Side walls of the stairwell going down.
+        for (const dx of [-W / 2, W / 2]) B(0.05, 1.5, D, dx, -0.75, 0, this.mat('#6a6864', 0.95), false);
+        // Hazard nosing, rail and posts.
+        B(W, 0.03, 0.06, 0, 0.015, D / 2 - 0.03, this.mat('#e8c020', 0.6, 0, { emissive: 0x5a4a00, emissiveIntensity: 0.3 }), false);
+        const rail = this.mat('#c8c8c8', 0.25, 0.85);
+        for (const dx of [-W / 2 + 0.03, W / 2 - 0.03]) {
+          for (const dz of [-D / 2 + 0.05, 0, D / 2 - 0.15]) C(0.02, 0.02, 1.0, dx, 0.5, dz, rail, 8);
+          B(0.04, 0.04, D - 0.1, dx, 1.0, -0.05, rail, false);
+          B(0.02, 0.02, D - 0.1, dx, 0.5, -0.05, rail, false);
+        }
+        B(W - 0.06, 0.04, 0.04, 0, 1.0, -D / 2 + 0.05, rail, false);
+        // A warm light down the well.
+        const glow = this.mat('#fff4d8', 0.3, 0, { emissive: 0xffd8a0, emissiveIntensity: 1.2 });
+        B(0.3, 0.06, 0.1, 0, -1.0, -D / 2 + 0.06, glow, false);
+        break;
+      }
+      case 'boxing_ring': {
+        B(W, 0.35, D * 2, 0, 0.175, 0, this.mat('#1f3a6a', 0.7));
+        B(W - 0.1, 0.03, D * 2 - 0.1, 0, 0.36, 0, this.mat('#e8e4dc', 0.9), false);
+        for (const dx of [-W / 2 + 0.06, W / 2 - 0.06]) for (const dz of [-D + 0.06, D - 0.06]) C(0.05, 0.05, 1.3, dx, 0.95, dz, this.mat(dx < 0 ? '#c81010' : '#1f4fa8', 0.4), 10);
+        for (const y of [0.7, 1.0, 1.3]) {
+          B(W - 0.12, 0.025, 0.025, 0, y, -D + 0.06, this.mat('#e8e4dc', 0.6), false);
+          for (const dx of [-W / 2 + 0.06, W / 2 - 0.06]) B(0.025, 0.025, D * 2 - 0.12, dx, y, 0, this.mat('#e8e4dc', 0.6), false);
+        }
+        break;
+      }
+      case 'dojo_mat':
+      case 'wrestling_mat': {
+        const dojo = p.kind === 'dojo_mat';
+        B(W, 0.05, D * 2, 0, 0.025, 0, this.mat(dojo ? '#c8b070' : '#1f4fa8', 0.9), false);
+        if (dojo) {
+          for (let x = -W / 2 + 0.9; x < W / 2; x += 0.9) B(0.02, 0.052, D * 2, x, 0.026, 0, this.mat('#9a8450', 0.9), false);
+          B(W, 0.054, 0.08, 0, 0.027, -D + 0.04, this.mat('#7a1414', 0.9), false);
+        } else {
+          const ring = new THREE.Mesh(new THREE.RingGeometry(0.85, 0.95, 40), this.mat('#e8c020', 0.8));
+          ring.rotation.x = -Math.PI / 2;
+          ring.position.y = 0.055;
+          g.add(ring);
+        }
+        break;
+      }
+      case 'gym_rack': {
+        const black = this.mat('#141416', 0.5, 0.3);
+        for (const dx of [-W / 2 + 0.04, W / 2 - 0.04]) B(0.05, 1.6, D, dx, 0.8, 0, black);
+        for (const y of [0.5, 1.0, 1.5]) B(W, 0.03, D, 0, y, 0, black, false);
+        for (let i = 0; i < 6; i++) {
+          const glove = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), this.mat(['#c81010', '#1f4fa8', '#1a1a1a'][i % 3], 0.5));
+          glove.scale.set(1, 0.8, 1.2);
+          glove.position.set(-W / 2 + 0.2 + (i % 3) * 0.28, i < 3 ? 1.08 : 0.58, 0);
+          g.add(glove);
+        }
+        break;
+      }
       case 'basement_stairs': {
         // Timber stairs coming down the left wall, with a handrail and the door at the top.
         const tread = this.mat('#7a5a3a', 0.7);
@@ -2444,6 +2595,20 @@ export class LevelView {
     g.position.set(p.x, 0, p.z);
     this.group.add(g);
     const rot = p.rot ?? 0;
+    if (p.kind === 'gym_kit') {
+      const m = buildGymKitModel(p.item ?? '');
+      g.add(m);
+      if (p.plinth && p.item !== 'speed_ball' && p.item !== 'bag') {
+        const [hx, hz] = propHalf(p);
+        const r = Math.max(hx, hz) + 0.12;
+        const plinth = this.cyl(r, r + 0.04, 0.08, 0, 0.04, 0, this.mat('#2a2c30', 0.3, 0.3), 32, g);
+        plinth.scale.z = (hz + 0.15) / r;
+        plinth.castShadow = false;
+        m.position.y = 0.08;
+      }
+      if (p.item === 'speed_ball') g.position.z = this.back + 0.25;
+      return;
+    }
     if (p.kind === 'equipment') {
       const def = EQUIPMENT[p.item ?? ''];
       const m = buildEquipmentModel(p.item ?? '', p.label);
@@ -2490,6 +2655,32 @@ export class LevelView {
       // A parked bike leans on its stand.
       model.rotation.x = -0.12;
     }
+  }
+
+  private dynamic = new Map<string, THREE.Object3D[]>();
+  /** Meshes each level prop was built into (so one can be hidden mid-visit). */
+  private propObjects = new Map<PropDef, THREE.Object3D[]>();
+
+  hideProp(p: PropDef): void {
+    for (const o of this.propObjects.get(p) ?? []) o.visible = false;
+  }
+
+  /** Add a prop after the level is built (a bike parked mid-visit). Replaces any with the same key. */
+  addDynamicProp(key: string, p: PropDef): void {
+    this.removeDynamicProp(key);
+    const before = new Set(this.group.children);
+    this.buildProp(p);
+    this.dynamic.set(key, this.group.children.filter((c: THREE.Object3D) => !before.has(c)));
+  }
+
+  removeDynamicProp(key: string): void {
+    const list = this.dynamic.get(key);
+    if (!list) return;
+    for (const o of list) {
+      this.group.remove(o);
+      disposeGroup(o);
+    }
+    this.dynamic.delete(key);
   }
 
   /** Things that turn slowly (the casino podium). */

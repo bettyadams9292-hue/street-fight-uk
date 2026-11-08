@@ -8,7 +8,8 @@ import { Stats, type Attributes } from '../stats/Stats';
 import { Vitals, type FatigueState } from '../stats/Vitals';
 import { defaultAppearance, type CharacterAppearance } from '../character/Appearance';
 import type { StyleData } from '../styles/StyleData';
-import { WEAPONS, type WeaponData, type WeaponId } from '../combat/Weapons';
+import { upgradedWeapon, type WeaponMods } from '../combat/weaponMods';
+import type { WeaponData, WeaponId } from '../combat/Weapons';
 
 export type FighterState =
   | 'idle'
@@ -62,6 +63,14 @@ export interface FighterConfig {
   weaponHits?: number;
   /** Moves bought at the gym (story mode). Leave out to allow everything. */
   unlocks?: { specials: boolean; finishers: boolean };
+  /**
+   * Technique ranks per style from the fighting gyms (player only). Rank 2 opens
+   * the style's specials; rank 3 its long strings, clinch power move and
+   * submissions. Not set (enemies, companions) = everything open.
+   */
+  styleLevels?: Partial<Record<string, number>>;
+  /** Workshop upgrades on the weapon in hand. */
+  weaponMods?: WeaponMods;
 }
 
 const WALK_SPEED = 2.6; // m/s
@@ -132,12 +141,19 @@ export class Fighter {
   slowUntil = -1;
   swapReadyAt = 0;
   /** Weapon in hand, with hits left before it breaks. */
-  weapon: { data: WeaponData; hits: number } | null = null;
+  weapon: { data: WeaponData; hits: number; mods?: WeaponMods } | null = null;
   /** A weapon this fighter just dropped; the world turns it into a pickup. */
-  droppedWeapon: { data: WeaponData; hits: number } | null = null;
+  droppedWeapon: { data: WeaponData; hits: number; mods?: WeaponMods } | null = null;
   /** A weapon this fighter just threw; the world turns it into a projectile. */
-  thrownWeapon: { data: WeaponData; hits: number } | null = null;
+  thrownWeapon: { data: WeaponData; hits: number; mods?: WeaponMods } | null = null;
   unlocks: { specials: boolean; finishers: boolean };
+  styleLevels: Partial<Record<string, number>> | null;
+  /** Render-only: what a pedestrian is doing when stood still (sitting, chatting, browsing). */
+  ambientPose: 'sit' | 'talk' | 'browse' | null = null;
+  /** Render-only: a training activity the player is performing (home gym). */
+  activity: string | null = null;
+  /** Moves chained so far in the current string (0 = the starter). */
+  private chainDepth = 0;
   private airAttackUsed = false;
   private airVX = 0;
 
@@ -167,7 +183,8 @@ export class Fighter {
     this.poise = this.stats.maxPoise;
     this.bufferFrames = cfg.inputBufferFrames ?? INPUT_BUFFER_FRAMES;
     this.unlocks = cfg.unlocks ?? { specials: true, finishers: true };
-    if (cfg.weapon) this.equipWeapon(cfg.weapon, cfg.weaponHits);
+    this.styleLevels = cfg.styleLevels ?? null;
+    if (cfg.weapon) this.equipWeapon(cfg.weapon, cfg.weaponHits, cfg.weaponMods);
     this.spawn = { x: cfg.x ?? 0, z: cfg.z ?? 0 };
     this.pos.x = this.spawn.x;
     this.pos.z = this.spawn.z;
@@ -211,10 +228,16 @@ export class Fighter {
     return PARRY_WINDOW + Math.floor(this.stats.attr('technique') / 5) + this.stats.flat('parryFrames');
   }
 
-  /** @param hits remaining durability (defaults to brand new). */
-  equipWeapon(id: WeaponId, hits?: number): void {
-    const data = WEAPONS[id];
-    this.weapon = { data, hits: Math.max(1, Math.min(data.durability, hits ?? data.durability)) };
+  /** @param hits remaining durability (defaults to brand new). @param mods workshop upgrades. */
+  equipWeapon(id: WeaponId, hits?: number, mods?: WeaponMods): void {
+    const data = upgradedWeapon(id, mods);
+    this.weapon = { data, hits: Math.max(1, Math.min(data.durability, hits ?? data.durability)), mods: mods && Object.keys(mods).length ? { ...mods } : undefined };
+  }
+
+  /** Technique rank in a style (fighting gyms). Without gym ranks (AI), everything's open. */
+  techLevel(style: string): number {
+    if (!this.styleLevels || style === 'street') return 5;
+    return this.styleLevels[style] ?? 0;
   }
 
   /** Let go of the weapon (it lands as a pickup unless it broke). */
@@ -479,7 +502,7 @@ export class Fighter {
   private tryAttack(button: AttackButton, special: boolean, frame: number, bus: EventBus<GameEvents>): boolean {
     const style = this.style;
     const toward = this.buffered?.toward ?? false;
-    if (!this.unlocks.specials) special = special && button === 'hp' && this.canFinish();
+    if (!this.unlocks.specials || this.techLevel(style.id) < 2) special = special && button === 'hp' && this.canFinish();
     // A weapon in hand replaces punches and kicks with swings (no combos).
     if (this.weapon && !(special && button === 'hp' && this.canFinish())) {
       if (this.state === 'attack') return false;
@@ -487,6 +510,7 @@ export class Fighter {
       return this.startMove(button === 'lp' || button === 'lk' ? this.weapon.data.light : this.weapon.data.heavy, frame, bus);
     }
     let moveId: string | undefined;
+    let depth = 0;
     if (!special && button === 'hp' && toward && this.state !== 'attack') {
       moveId = style.dash;
     } else if (special && button === 'hp' && this.state !== 'attack' && this.canFinish()) {
@@ -494,13 +518,18 @@ export class Fighter {
     } else if (this.state === 'attack' && this.move) {
       moveId = special ? style.specials[button] : this.move.data.next[button];
       if (!moveId) return false; // no chain for this button; keep it buffered until the move ends
+      depth = special ? 0 : this.chainDepth + 1;
+      // Third hits and beyond are rank-3 technique: until then the string stops at two.
+      if (depth >= 2 && this.techLevel(style.id) < 3) return false;
     } else {
       moveId = (special ? style.specials[button] : undefined) ?? style.starters[button];
     }
     const data = moveId ? style.moves[moveId] : undefined;
     if (!data) return false;
     this.buffered = null;
-    return this.startMove(data, frame, bus);
+    const started = this.startMove(data, frame, bus);
+    if (started) this.chainDepth = depth;
+    return started;
   }
 
   startMoveById(id: string, frame: number, bus: EventBus<GameEvents>): boolean {

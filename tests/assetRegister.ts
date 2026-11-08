@@ -10,6 +10,8 @@ import { ACCESSORIES, BOTTOM_STYLES, SHOE_STYLES, TOP_STYLES } from '../src/char
 import { ITEM_LIST } from '../src/items/items';
 import { LOOT } from '../src/items/loot';
 import { AREA_IDS } from '../src/progress/Progress';
+import { GYM_KIT_LIST } from '../src/training/gym';
+import { COMPANION_LIST } from '../src/companions/companions';
 import { PROP_SIZE, type FacadeKind, type PropKind } from '../src/world/LevelTypes';
 import { LEVELS } from '../src/world/levels';
 import { BIKE_LIST, CAR_LIST, FINISH_LIST, FURNITURE_LIST } from '../src/property/catalogue';
@@ -127,6 +129,20 @@ rows.push({
     { name: 'Basement walls, joists, pipes, fuse board, lighting', file: 'src/render/LevelView.ts basementWalls / basementFloor', appears: 'basement', status: 'New (Stage 7)', needs: 'Normal maps', replacement: 'Changes with tier and improvements: damp brick and a bare bulb → painted or tiled walls, epoxy floor, ducting, LED panels, rewired board, branding', material: 'Canvas textures', animation: 'none', collision: 'Back wall', checked: 'Screenshot-checked' },
     { name: 'Basement stairs, terminal desk, junk', file: 'src/render/LevelView.ts', appears: 'basement', status: 'New (Stage 7)', needs: '—', replacement: 'Timber stairs with stringers and rail (steel door once reinforced), desk with laptop (monitors at the top tier), boxes/mattress/paint tins', material: 'PBR', animation: 'none', collision: 'Solid', checked: 'Screenshot-checked' },
     { name: 'Grow shop interior and shelves', file: 'src/render/LevelView.ts growShopInterior / grow_shelf', appears: 'Green Fingers Hydroponics', status: 'New (Stage 7)', needs: '—', replacement: 'Branded walls, product shelving with price strips, lit demo corner', material: 'PBR', animation: 'none', collision: 'Shelves solid', checked: 'Integrated' },
+  ],
+});
+
+rows.push({
+  section: 'House, gyms, crew and pedestrians (Stage 8)',
+  intro: 'Procedural models in src/render/propModels.ts (buildGymKitModel) and src/render/LevelView.ts. Training, sitting, chatting and browsing are procedural poses in src/render/FighterView.ts activityPose, layered on the existing rig; no motion capture.',
+  rows: [
+    ...GYM_KIT_LIST.map((k) => ({ name: `Gym kit: ${k.name}`, file: 'src/render/propModels.ts buildGymKitModel', appears: 'home gym (once bought), Iron Temple Fitness displays, shop preview', status: 'New (Stage 8)', needs: 'Texture detail', replacement: `Procedural model in its own gym spot; trains ${k.trains}`, material: 'PBR rubber, steel, vinyl', animation: `Player ${k.activity} pose while training`, collision: k.solid ? 'Solid' : 'none (stand on it)', checked: 'Integrated' })),
+    { name: 'Garage stairwell', file: 'src/render/LevelView.ts stairwell', appears: 'garage, 14 Tanner Road', status: 'New (Stage 8)', needs: '—', replacement: 'Opening cut in the garage floor, steps going down, side walls, hazard nosing, railings, light', material: 'PBR concrete and steel', animation: 'Player walks down/up with a fade', collision: 'Solid opening, walk-in at the top step', checked: 'Integrated' },
+    { name: 'Computer desk', file: 'src/render/LevelView.ts computer_desk', appears: 'living room', status: 'New (Stage 8)', needs: '—', replacement: 'Desk, monitor (lit), tower, keyboard, chair', material: 'PBR, emissive screen', animation: 'none', collision: 'Solid', checked: 'Integrated' },
+    { name: 'Coach board, boxing ring, dojo mat, wrestling mat, gym racks', file: 'src/render/LevelView.ts', appears: 'home gym; Del’s Boxing Club, Okafor Karate Dojo, Kev’s Wrestling', status: 'New (Stage 8)', needs: 'Rope physics', replacement: 'Ring with posts, ropes and canvas; tatami-pattern mat; circle mat; racks of gloves and pads', material: 'Canvas textures, PBR', animation: 'none', collision: 'Ring and racks solid, mats walkable', checked: 'Integrated' },
+    { name: 'Facade: gym front', file: 'src/render/LevelView.ts gymFront', appears: 'Tanner Road Estate (Del’s Boxing Club); the dojo, Iron Temple and Kev’s use shopfronts', status: 'New (Stage 8)', needs: '—', replacement: 'Shuttered unit with a lit sign and posters', material: 'Brick, emissive sign', animation: 'none', collision: 'Back wall', checked: 'Integrated' },
+    ...COMPANION_LIST.map((c) => ({ name: `Companion: ${c.name}`, file: 'src/companions/companions.ts (look) + src/render/FighterView.ts', appears: 'The Snug in the Red Lion; follows you when active', status: 'New (Stage 8)', needs: 'Unique head models', replacement: `Character rig with a fixed look; ${c.role}`, material: 'Character materials', animation: 'Shared fighter animation set', collision: 'Fighter capsule; doesn’t push you', checked: 'Integrated' })),
+    { name: 'Pedestrians', file: 'src/world/civilians.ts + src/render/FighterView.ts', appears: 'streets (density per area)', status: 'New (Stage 8)', needs: 'More body/clothing variety', replacement: 'Random appearance from the character system; walk, browse, chat, group and sit poses', material: 'Character materials', animation: 'Walk speeds vary; ambient poses', collision: 'Avoid scenery and each other; can’t be hit', checked: 'Integrated' },
   ],
 });
 

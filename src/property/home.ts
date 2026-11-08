@@ -2,6 +2,7 @@ import type { ContainerDef, LevelDef, PropDef, StationDef } from '../world/Level
 import { propHalf } from '../world/LevelTypes';
 import { BIKE_SIZE, BIKES, FURNITURE, GARAGE_SPACES, ROOMS, ROOM_IDS, allowedRooms, roomAt, type FurnitureDef, type RoomId } from './catalogue';
 import type { PlacedAt, PropertySave } from './state';
+import { gymProps, gymStations, type GymSave } from '../training/gym';
 
 /**
  * 14 Tanner Road, built from the save: the fixed fittings (wardrobe, desk,
@@ -17,12 +18,12 @@ export const LANE_Z = 0.55;
 /** Gap kept from the side walls. */
 export const SIDE_MARGIN = 0.15;
 export const FRONT_DOOR_X = -8;
-/** The cellar door, under the stairs next to the front door. */
-export const BASEMENT_DOOR_X = -6.4;
+/** The stairs down to the basement, in the garage floor. */
+export const STAIRWELL = { x: 16.6, z: -1.45, hx: 0.85, hz: 0.9 };
 /** Pieces may not touch: keep this much air between them. */
 const ALLOWED_GAP = 0.02;
 
-export const HOME_BOUNDS = { minX: -26, maxX: 18, minZ: -1.8, maxZ: 1.4 };
+export const HOME_BOUNDS = { minX: -26, maxX: 22, minZ: -1.8, maxZ: 1.4 };
 
 /** Internal walls with a doorway at the front (z 0.1..1.4). */
 export const HOME_WALLS = [
@@ -30,7 +31,7 @@ export const HOME_WALLS = [
   { minX: -13.1, maxX: -12.9, minZ: -2.4, maxZ: 0.1 },
   { minX: -4.1, maxX: -3.9, minZ: -2.4, maxZ: 0.1 },
   { minX: 1.9, maxX: 2.1, minZ: -2.4, maxZ: 0.1 },
-  { minX: 9.9, maxX: 10.1, minZ: -2.4, maxZ: 0.1 },
+  { minX: 11.9, maxX: 12.1, minZ: -2.4, maxZ: 0.1 },
 ];
 
 /** Fittings that come with the house. */
@@ -43,34 +44,33 @@ export const HOME_FIXTURES: PropDef[] = [
   { kind: 'wardrobe', x: -15.4, z: -1.45 },
   { kind: 'desk', x: -13.9, z: -1.45 },
   { kind: 'furniture', item: 'bedside', x: -17.55, z: -2.08, size: [0.25, 0.22], colour: '#8a5a32' },
-  // living room: the hall table with the phone
-  { kind: 'table', x: -5.3, z: -1.3 },
+  // living room: the hall table with the phone, and the computer desk
+  { kind: 'table', x: -6.4, z: -1.3 },
+  { kind: 'computer_desk', x: -5.0, z: -1.95, size: [0.6, 0.32] },
   // kitchen
   { kind: 'counter', x: -1.2, z: -1.45 },
   { kind: 'cooker', x: -3.2, z: -1.45 },
   { kind: 'fridge', x: 1.3, z: -1.45 },
-  // gym
-  { kind: 'weights', x: 3.4, z: -1.4 },
-  { kind: 'bag', x: 8.6, z: -1.3 },
-  { kind: 'rack', x: 6, z: -1.6 },
-  // garage: no car any more, it's the bike store
-  { kind: 'workbench', x: 16.6, z: -1.4 },
-  { kind: 'chest', x: 14.2, z: -1.55 },
-  { kind: 'tyre_stack', x: 15.5, z: 0.1 },
+  // gym: the kit itself comes from the save (training/gymKit.ts)
+  { kind: 'coach_board', x: 2.45, z: -2.2, size: [0.4, 0.06], solid: false },
+  // garage: bikes, the stash, the workbench, and the stairs down to the basement
+  { kind: 'workbench', x: 20.6, z: -1.4 },
+  { kind: 'chest', x: 18.75, z: -1.55 },
+  { kind: 'tyre_stack', x: 21.4, z: 0.15 },
+  { kind: 'stairwell', x: STAIRWELL.x, z: STAIRWELL.z, size: [STAIRWELL.hx, STAIRWELL.hz] },
 ];
 
 const FIXED_STATIONS: StationDef[] = [
   { id: 'wardrobe', x: -15.4, z: -0.8, label: 'Wardrobe: change your look' },
   { id: 'mirror', x: -16.9, z: -1.15, label: 'Mirror: check yourself' },
-  { id: 'contacts', x: -5.3, z: -0.75, label: 'Phone: contacts' },
-  { id: 'planner', x: -4.55, z: -0.8, label: 'Home planner: furniture, floors and walls' },
+  { id: 'contacts', x: -6.4, z: -0.75, label: 'Phone: contacts' },
+  { id: 'computer', x: -5.0, z: -1.25, label: 'Computer: shop for furniture, arrange the house, decorate' },
   { id: 'tin', x: -13.9, z: -0.9, label: 'Biscuit tin: your savings' },
   { id: 'kitchen', x: -1.2, z: -0.85, label: 'Kitchen: eat and recover' },
-  { id: 'gym', x: 3.4, z: -0.75, label: 'Gym: train and learn' },
-  { id: 'sparring', x: 7.6, z: 0.2, label: 'Spar with Mo' },
-  { id: 'garage', x: 16.6, z: -0.75, label: 'Workbench: repair weapons' },
-  { id: 'storage', x: 14.2, z: -0.9, label: 'Stash: your storage chest' },
-  { id: 'bike_rack', x: 12.4, z: 0.75, label: 'Bike store: take a bike out or put one away' },
+  { id: 'gym', x: 2.45, z: -1.2, label: 'Coach’s board: training plan, moves and styles' },
+  { id: 'garage', x: 20.6, z: -0.75, label: 'Workbench: repair, craft and upgrade weapons' },
+  { id: 'storage', x: 18.75, z: -0.9, label: 'Stash: your storage chest' },
+  { id: 'bike_rack', x: 13.75, z: 0.75, label: 'Bike store: take a bike out or put one away' },
 ];
 
 export const HOME_CONTAINERS: ContainerDef[] = [
@@ -79,7 +79,7 @@ export const HOME_CONTAINERS: ContainerDef[] = [
 ];
 
 /** Bike bays in the garage: pointing into the room, side by side. */
-export const GARAGE_SLOTS = [10.75, 11.65, 12.55].slice(0, GARAGE_SPACES).map((x) => ({ x, z: -0.85 }));
+export const GARAGE_SLOTS = [12.85, 13.75, 14.65].slice(0, GARAGE_SPACES).map((x) => ({ x, z: -0.85 }));
 
 type Box = { minX: number; maxX: number; minZ: number; maxZ: number };
 const overlap = (a: Box, b: Box, gap = 0) => a.minX < b.maxX + gap && a.maxX > b.minX - gap && a.minZ < b.maxZ + gap && a.maxZ > b.minZ - gap;
@@ -89,7 +89,7 @@ function clearZones(): Box[] {
   const z: Box[] = [];
   for (const s of FIXED_STATIONS) z.push({ minX: s.x - 0.4, maxX: s.x + 0.4, minZ: s.z - 0.3, maxZ: 1.4 });
   for (const c of HOME_CONTAINERS) z.push({ minX: c.x - 0.4, maxX: c.x + 0.4, minZ: c.z - 0.3, maxZ: 1.4 });
-  for (const d of [FRONT_DOOR_X, BASEMENT_DOOR_X]) z.push({ minX: d - 0.8, maxX: d + 0.8, minZ: -2.4, maxZ: 1.4 });
+  z.push({ minX: FRONT_DOOR_X - 0.8, maxX: FRONT_DOOR_X + 0.8, minZ: -2.4, maxZ: 1.4 });
   return z;
 }
 const CLEAR = clearZones();
@@ -130,7 +130,6 @@ export function checkPlacement(prop: PropertySave, def: FurnitureDef, at: { x: n
   const others = prop.furniture.filter((f) => f.uid !== ignoreUid && f.at && FURNITURE[f.id]);
   if (def.mount === 'wall') {
     if (Math.abs(at.x - FRONT_DOOR_X) < 0.75 + def.size[0]) return { ok: false, reason: 'That’s where the front door is' };
-    if (Math.abs(at.x - BASEMENT_DOOR_X) < 0.75 + def.size[0]) return { ok: false, reason: 'That’s the basement door' };
     if (Math.abs(at.x - r.window) < (room === 'bathroom' ? 0.5 : 1.12) + def.size[0]) return { ok: false, reason: 'Covers the window' };
     if (room === 'bedroom' && Math.abs(at.x + 16.9) < 0.4 + def.size[0]) return { ok: false, reason: 'Covers the mirror' };
     for (const o of others) {
@@ -199,8 +198,8 @@ export function garageBikes(prop: PropertySave): PropDef[] {
 }
 
 /** The whole house from the save. */
-export function buildHomeLevel(base: LevelDef, prop: PropertySave): LevelDef {
-  const props: PropDef[] = [...HOME_FIXTURES, ...garageBikes(prop)];
+export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave): LevelDef {
+  const props: PropDef[] = [...HOME_FIXTURES, ...garageBikes(prop), ...(gym ? gymProps(gym) : [])];
   for (const f of prop.furniture) {
     const def = FURNITURE[f.id];
     if (!def || !f.at) continue;
@@ -221,7 +220,7 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave): LevelDef {
     facades,
     walls: HOME_WALLS.map((w) => ({ ...w })),
     props,
-    stations: [...FIXED_STATIONS, seatStation(prop)],
+    stations: [...FIXED_STATIONS, seatStation(prop), ...gymStations(gym)],
     containers: HOME_CONTAINERS.map((c) => ({ ...c })),
   };
 }

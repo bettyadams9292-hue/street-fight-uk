@@ -157,14 +157,16 @@ export function updateGrapples(fighters: Fighter[], commands: Map<number, Comman
       continue;
     }
     const style = holder.style;
+    // Submissions and the clinch power move are rank-3 technique (fighting gyms).
+    const advanced = holder.techLevel(style.id) >= 3;
     let moveId: string | undefined;
     if (link.phase === 'ground') {
       if (hc.pressed.lp || hc.pressed.lk) moveId = style.ground?.strike;
-      else if (hc.pressed.hp || hc.pressed.hk) moveId = style.ground?.submission;
+      else if (hc.pressed.hp || hc.pressed.hk) moveId = advanced ? style.ground?.submission : style.ground?.strike;
     } else {
       if (hc.pressed.lp || hc.pressed.hp) moveId = style.clinch.strike;
       else if (hc.pressed.lk) moveId = style.clinch.throw;
-      else if (hc.pressed.hk) moveId = style.clinch.power;
+      else if (hc.pressed.hk) moveId = advanced ? style.clinch.power : style.clinch.throw;
     }
     const data = moveId ? style.moves[moveId] : undefined;
     if (data) holder.startMove(data, frame, bus);

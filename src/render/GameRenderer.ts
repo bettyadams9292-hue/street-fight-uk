@@ -204,6 +204,16 @@ export class GameRenderer {
     for (const f of this.sim.fighters) if (!this.views.has(f.id)) this.addFighter(f);
   }
 
+  /** Props that come and go during a visit (a parked bike). */
+  setDynamicProp(key: string, p: import('../world/LevelTypes').PropDef | null): void {
+    if (p) this.levelView?.addDynamicProp(key, p);
+    else this.levelView?.removeDynamicProp(key);
+  }
+
+  hideLevelProp(p: import('../world/LevelTypes').PropDef): void {
+    this.levelView?.hideProp(p);
+  }
+
   /** The home placement editor's preview piece. */
   setGhost(item: string | null, colour: string, at?: { x: number; z: number; rot: number }, ok = true): void {
     this.levelView?.setGhost(item, colour, at, ok);

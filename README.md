@@ -384,7 +384,7 @@ Every visual asset, with where it appears, its status and collision, is listed i
 
 A fictional passive-income business in the basement of 14 Tanner Road. Production is abstract throughout: capacity, light, air, cycles and units of stock. Nothing real-world is modelled.
 
-**The basement.** Go through the cellar door next to the front door to reach it. Stairs come down the left wall, the business terminal is on a desk by the stairs, and the room has brick walls, joists, copper pipes, a cable tray and a fuse board. It starts dirty: damp brick, two bare bulbs and junk taking up the far end. Basement works (from Green Fingers or the terminal) change the actual room:
+**The basement.** Reached by the stairs in the garage (moved there in Stage 8; it was a cellar door by the front door). Stairs come down the left wall, the business terminal is on a desk by the stairs, and the room has brick walls, joists, copper pipes, a cable tray and a fuse board. It starts dirty: damp brick, two bare bulbs and junk taking up the far end. Basement works (from Green Fingers or the terminal) change the actual room:
 
 - **Tiers.**
   - Renovated: junk cleared, sealed floor, strip lights.
@@ -434,6 +434,131 @@ Rolls are seeded from the save, so reloading doesn't re-roll them.
 
 - New: `src/business/catalogue.ts`, `basement.ts`, `production.ts`, `src/ui/businessUI.ts`, `tests/stage7.test.ts`.
 - Changed: `Game.ts` (editor for both spaces, business clock, terminal and shop stations), `LevelView.ts`, `propModels.ts`, `propPreview.ts`, `LevelTypes.ts`, `levels.ts`, `districts.ts`, `interiors.ts`, `Progress.ts`, `themes.ts`, `hub.ts`, `property/home.ts` (cellar door kept clear), `property/levels.ts`, `styles.css`.
+
+## Stage 8 report: gyms, crew, workbench, pedestrians and the bike fix
+
+**Motorbike bug (fixed at the source).** Getting on or off the bike rebuilt the whole area and put you back at the bike's position. The fight-trigger check then ran from the area's entry point to the bike, so it "crossed" every fight line in between, started a fight, and a separate rule knocked you off whenever a fight was on.
+
+- The World now takes `at` (where you are) and starts its trigger line from there, so a rebuild can't cross anything.
+- Side fights you'd cleared on this visit stay cleared when the area is rebuilt (`keepCleared`).
+- Mounting and dismounting now happen in place, without a rebuild: the parked bike is added or removed as a live prop and station.
+- You're only knocked off by an actual hit landing on you while riding, not just because a fight exists.
+- Tested by mounting and parking 12 times across two streets, and with a rebuild past every fight line in four districts (`tests/stage8.test.ts`).
+
+**Basement stairs.** The cellar door in the living room is gone. The garage now has a stairwell cut into the floor, with steps, side walls, hazard nosing, railings and a light. Interacting at the top walks you down the steps with a fade, and you arrive walking off the basement stairs; coming up is the reverse. The opening has collision. The house is wider to fit it (the garage is now 12–22 m).
+
+**House computer.** A desk with a PC in the living room replaces the old planner board. It has two tabs:
+- *My furniture*: place, move, turn, store and sell what you own, and change floors and walls.
+- *Shop online*: the Home & Hearth catalogue, delivered to storage.
+
+**Pedestrians** (`src/world/civilians.ts`).
+- Each street has its own density cap.
+- They walk the pavement lanes at different speeds, browse at shop doors, stand in groups outside pubs, clubs and the casino, chat in pairs, and sit on benches.
+- They step round scenery and each other.
+- They spawn 11–17 m from you, off-screen, and despawn beyond 22 m.
+- They're neutral and can't be hit; when a fight starts they scatter.
+- They're never pulled into a locked fight zone (that was a bug found by the soak test and fixed in `Arena.clamp`).
+
+**Companions** (`src/companions/`). Seven fighters sit in the Snug, a new back room of the Red Lion:
+
+| Fighter | Type | How you get them |
+|---|---|---|
+| Shaz | street fighter | £250 |
+| Danny | boxer | £450 |
+| Mia | fast and agile | £650, after Gaffer |
+| Leah | defensive | £700, after Sully |
+| Jonno | wrestler | beat him in a challenge fight |
+| Tank | heavyweight | £1,200, after Sully |
+| Old Reg | experienced | £1,800, after the Ratcatcher |
+
+- **Managing your crew.** Use the phone's Crew page to see your recruits, choose who follows you, or dismiss them.
+- **Following.** The active companion follows a step behind and to one side. They go round you rather than through you (allies no longer shove each other), detour round obstacles, and catch up from off-screen if they're left far behind, so there's no constant teleporting.
+- **Fighting.** In a fight they use the normal fighting AI tuned per companion. They hit for 70–85% of normal damage and have extra health. They never target pedestrians or your sparring partner.
+- **After a fight.** If they're knocked out, they get back up at 40% health three seconds after the fight ends.
+- **At home.** They wait outside your house and basement.
+
+**Garage workbench** (`src/workshop/workshop.ts`).
+
+- **Repair.** Shows the weapon's condition before and after, and costs money plus duct tape. Bottles and other smashables can't be repaired.
+- **Craft.** Nine recipes (pipe to machete). Each needs its listed materials and some cash, and some come with a free upgrade. The finished weapon goes to your pockets, or to the stash if they're full.
+- **Upgrade.** Four tracks, each up to three levels, with limits that differ per weapon. Each level costs more and needs rarer materials.
+
+  | Track | Effect per level |
+  |---|---|
+  | Power | +12% damage |
+  | Speed | quicker start-up and recovery |
+  | Handling | −15% stamina cost |
+  | Durability | +35% condition |
+
+  The weapon you hold really swings the upgraded numbers. Upgrades stay on the weapon when it's dropped, picked up, stored or saved.
+- **Materials.** New materials (duct tape, bolts, leather strip, steel bar, spring steel, carbon fibre) drop from bins, skips, cars and fighters. Basics can also be bought at the bench. Weapons can be salvaged for materials.
+
+**Iron Temple Fitness** (Leisure Park, cab stop). Sells dumbbells, a barbell and bench, a treadmill, an exercise bike, a speed ball, a heavy bag and a mat, one of each. Bought kit is set up in its own spot in the home gym. You can sell it back.
+
+**Home gym training** (`src/training/gym.ts`).
+
+- **What each piece trains.**
+
+  | Kit | Trains |
+  |---|---|
+  | Bag, dumbbells, barbell | Strength |
+  | Treadmill | Roadwork (stamina) |
+  | Bike | Conditioning (health) |
+  | Speed ball | Technique |
+  | Mat (skipping) | Agility |
+  | Sparring with Mo | Defence |
+
+- **How a session works.** Each session is 10 reps on a timing bar, and you're animated on the kit (running, cycling, curling, pressing, hitting the bag). Perfect, good and missed reps earn full, part and no XP.
+- **Fatigue.** Each session adds fatigue. Tired sessions earn less, and at 85 you have to rest: play time, a brew, a meal or the sofa brings it down.
+- **Ranks.** Each rank needs 32% more XP than the last, and the top rank is 10. Ranks 6–10 count half towards your stats.
+- **Training points.** These are no longer spent on the attributes above; they go on moves and fighting styles.
+
+**Sparring.** Mo is on the mat and isn't an enemy. You start a spar at the mat, and he becomes a soft, low-damage opponent. It ends when either of you is nearly out, when you walk away, or when you press the mat again. Both of you are patched up afterwards, and it trains Defence.
+
+**Fighting gyms** (`src/training/styleGyms.ts`). Each gym has a coach and a drill spot:
+
+| Gym | Where | Styles |
+|---|---|---|
+| Del's Boxing Club | Tanner Road Estate | boxing, kickboxing |
+| Okafor Karate & Muay Thai | Leisure Park | karate, Muay Thai |
+| Kev's Wrestling | Precinct | wrestling, BJJ |
+
+- **Ranks.** Styles have ranks 1–5. Rank 1 is the lesson fee. Higher ranks need drill XP, training points and cash, and some styles are locked behind story bosses.
+- **Drills.** You repeat real combo strings from that style's own move graph, pressing the buttons in time.
+- **What ranks unlock in combat.**
+  - Rank 2: the style's specials.
+  - Rank 3: three-hit strings and beyond, clinch power moves and submissions.
+- **Cross-training.** Every style at rank 3 gives +1 Technique, up to +4.
+- These limits only apply to you; enemies and Street style are never locked.
+
+**Saving.** New save fields `gym`, `styleTraining` and `companions` are added; weapon stacks gain `mods` and `crafted`. All of them are sanitised. Older saves keep their trained ranks, get the old bag and dumbbells in the gym, and any style learned before keeps its specials (rank 2).
+
+**Tests.** `tests/stage8.test.ts` has 25 tests. Full `npm test` (all eight suites) passed in this build.
+
+**Files.**
+
+- New:
+  - `src/training/gym.ts`, `src/training/styleGyms.ts`
+  - `src/companions/companions.ts`, `src/companions/brain.ts`
+  - `src/world/civilians.ts`
+  - `src/workshop/workshop.ts`, `src/combat/weaponMods.ts`
+  - `src/ui/gymUI.ts`, `src/ui/workshopUI.ts`, `src/ui/companionUI.ts`
+  - `tests/stage8.test.ts`
+- Changed:
+  - Core: `Game.ts`, `World.ts`, `Arena.ts`, `Simulation.ts`
+  - Fighting: `Fighter.ts`, `Grapple.ts`
+  - Progress and items: `Progress.ts`, `catalogue.ts`, `Inventory.ts`, `items.ts`, `loot.ts`
+  - Levels: `levels.ts`, `districts.ts`, `interiors.ts`, `LevelTypes.ts`, `property/home.ts`, `property/levels.ts`
+  - Rendering: `LevelView.ts`, `GameRenderer.ts`, `FighterView.ts`, `propModels.ts`, `themes.ts`
+  - UI: `propertyUI.ts`, `hub.ts`, `styles.css`
+  - Tests and docs: `tests/assetRegister.ts`, the area counts in the stage 5 and 7 tests
+
+**Not done or limited.**
+- All new models are procedural, not GLB.
+- The placement editor has no gamepad support.
+- Companions don't come into the house.
+- The training and drill minigames use keyboard or tap only.
+- The `stage3` "defender never landed a hit" soak test is unseeded and fails roughly one run in five; that's unrelated to these changes.
 
 ## Characters: Quaternius Universal Base Characters (CC0)
 

@@ -104,13 +104,13 @@ function statBar(label: string, value: number, max: number, compare?: number): H
 
 // ---- furniture shop -------------------------------------------------------------------------------
 
-export function furnitureShopScreen(progress: Progress, close: () => void, saved: () => void): Screen {
+export function furnitureShopBody(progress: Progress, saved: () => void) {
   let cat: FurnitureCategory | 'finishes' = 'living';
   let sel = FURNITURE_LIST.find((f) => f.cat === cat)!.id;
   let colour = FURNITURE[sel].colours[0];
   let qty = 1;
   let room: RoomId = 'living';
-  return panelScreen('Home & Hearth', progress, (msg, rebuild) => {
+  return (msg: (t: string, bad?: boolean) => void, rebuild: () => void): HTMLElement[] => {
     const prop = progress.save.property;
     const owned = (id: string) => prop.furniture.filter((f) => f.id === id).length;
     const rows: HTMLElement[] = [
@@ -151,7 +151,11 @@ export function furnitureShopScreen(progress: Progress, close: () => void, saved
     );
     rows.push(h('div', { class: 'prop-shop' }, list, detail));
     return rows;
-  }, close);
+  };
+}
+
+export function furnitureShopScreen(progress: Progress, close: () => void, saved: () => void): Screen {
+  return panelScreen('Home & Hearth', progress, furnitureShopBody(progress, saved), close);
 }
 
 function finishesBlock(progress: Progress, room: RoomId, pickRoom: (r: RoomId) => void, msg: (t: string, bad?: boolean) => void, saved: () => void): HTMLElement {
@@ -179,11 +183,11 @@ function finishesBlock(progress: Progress, room: RoomId, pickRoom: (r: RoomId) =
  * Everything you own for the house, room by room. `place` starts the
  * placement editor for a piece (moving it if it's already placed).
  */
-export function plannerScreen(progress: Progress, close: () => void, saved: () => void, place: (uid: string, room: RoomId) => void): Screen {
+export function plannerBody(progress: Progress, saved: () => void, place: (uid: string, room: RoomId) => void) {
   let room: RoomId = 'living';
   let recolour: string | null = null;
   let tab: 'furniture' | 'decor' = 'furniture';
-  return panelScreen('Home planner', progress, (msg, rebuild) => {
+  return (msg: (t: string, bad?: boolean) => void, rebuild: () => void): HTMLElement[] => {
     const prop = progress.save.property;
     const rows: HTMLElement[] = [
       tabs(ROOM_IDS.map((r) => ({ id: r, name: ROOMS[r].name })), room, (r) => ((room = r), rebuild())),
@@ -236,7 +240,11 @@ export function plannerScreen(progress: Progress, close: () => void, saved: () =
       );
     }
     return rows;
-  }, close);
+  };
+}
+
+export function plannerScreen(progress: Progress, close: () => void, saved: () => void, place: (uid: string, room: RoomId) => void): Screen {
+  return panelScreen('Home planner', progress, plannerBody(progress, saved, place), close);
 }
 
 // ---- car dealer ------------------------------------------------------------------------------------
@@ -556,6 +564,32 @@ export function cashierScreen(progress: Progress, close: () => void, saved: () =
       h('h3', { text: 'Your night so far' }),
       h('p', { text: `Staked ${money(c.staked)} · won ${money(c.won)} · ${c.plays} plays · biggest win ${money(c.biggestWin)}${c.prizes.length ? ` · motors won: ${c.prizes.map((id) => (CARS[id] ?? BIKES[id]).name).join(', ')}` : ''}` }),
     ];
+    return rows;
+  }, close);
+}
+
+
+// ---- the house computer -------------------------------------------------------------------------
+
+/**
+ * The PC in the living room: the one place to run the house. Shop for
+ * furniture (delivered straight away), arrange what you own (place, move,
+ * turn, store, sell, recolour), redo floors and walls.
+ */
+export function computerScreen(progress: Progress, close: () => void, saved: () => void, place: (uid: string, room: RoomId) => void, extraTabs: { id: string; name: string; body: (msg: (t: string, bad?: boolean) => void, rebuild: () => void) => HTMLElement[] }[] = []): Screen {
+  let tab = 'mine';
+  const shop = furnitureShopBody(progress, saved);
+  const mine = plannerBody(progress, saved, place);
+  return panelScreen('Home computer', progress, (msg, rebuild) => {
+    const all = [{ id: 'mine', name: 'My furniture' }, { id: 'shop', name: 'Shop online' }, ...extraTabs.map((t) => ({ id: t.id, name: t.name }))];
+    const owned = progress.save.property.furniture;
+    const rows: HTMLElement[] = [
+      h('p', { class: 'hint', text: `${owned.filter((f) => f.at).length} pieces placed, ${owned.filter((f) => !f.at).length} in boxes. Buy here and it’s delivered at once; then place it from “My furniture”.` }),
+      tabs(all, tab, (t) => ((tab = t), rebuild())),
+    ];
+    if (tab === 'shop') rows.push(...shop(msg, rebuild));
+    else if (tab === 'mine') rows.push(...mine(msg, rebuild));
+    else rows.push(...(extraTabs.find((t) => t.id === tab)?.body(msg, rebuild) ?? []));
     return rows;
   }, close);
 }

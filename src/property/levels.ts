@@ -14,7 +14,7 @@ import { buildBasementLevel } from '../business/basement';
  */
 export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
   const prop = save.property;
-  let level: LevelDef = area === 'home' ? buildHomeLevel(HOME_BASE, prop) : area === 'basement' ? buildBasementLevel(save.basement) : LEVELS[area];
+  let level: LevelDef = area === 'home' ? buildHomeLevel(HOME_BASE, prop, save.gym) : area === 'basement' ? buildBasementLevel(save.basement) : LEVELS[area];
   const props: PropDef[] = [];
   const stations: StationDef[] = [];
 

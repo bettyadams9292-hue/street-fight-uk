@@ -102,10 +102,14 @@ const leisure: LevelDef = {
   theme: 'leisure',
   bounds: { minX: 0, maxX: 80, ...STREET },
   entries: [
+    { id: 'dojo', x: 20, z: -1.0, facing: 1 },
+    { id: 'irontemple', x: 47.5, z: -1.0, facing: 1 },
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 78, z: 0, facing: -1 },
   ],
   exits: [
+    { id: 'dojo_door', kind: 'door', x: 20, z: -1.6, to: 'karate_dojo', toEntry: 'door', label: 'Into the leisure centre: Okafor Karate & Muay Thai' },
+    { id: 'irontemple_door', kind: 'door', x: 47.5, z: -1.6, to: 'gym_store', toEntry: 'door', label: 'Into Iron Temple (gym equipment)' },
     { id: 'to_stadium', kind: 'edge', side: 'left', x: 0, z: 0, to: 'stadium', toEntry: 'right', label: 'Kirkgate Ground', requires: 'has_stadium_key', lockedText: 'The stadium service gate is locked. Someone at the Old Market has a key.' },
     { id: 'to_residential', kind: 'edge', side: 'right', x: 80, z: 0, to: 'residential', toEntry: 'left', label: 'Hollins Estate' },
   ],
@@ -489,10 +493,12 @@ const precinct: LevelDef = {
   theme: 'precinct',
   bounds: { minX: 0, maxX: 88, ...STREET },
   entries: [
+    { id: 'wrestling', x: 79, z: -1.0, facing: -1 },
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 86, z: 0, facing: -1 },
   ],
   exits: [
+    { id: 'wrestling_door', kind: 'door', x: 79, z: -1.6, to: 'wrestling_club', toEntry: 'door', label: 'Upstairs: Kev’s Wrestling & Grappling' },
     { id: 'to_city', kind: 'edge', side: 'left', x: 0, z: 0, to: 'city', toEntry: 'precinct', label: 'Market Square' },
     { id: 'to_mall', kind: 'edge', side: 'right', x: 88, z: 0, to: 'mall', toEntry: 'left', label: 'Riverside Centre' },
   ],
@@ -502,7 +508,7 @@ const precinct: LevelDef = {
     { kind: 'precinct', x0: 30, x1: 44, label: 'BOOKMAKERS', colour: '#1f6a3a' },
     { kind: 'precinct', x0: 44, x1: 56, label: 'NAILS & BEAUTY', colour: '#c060a0' },
     { kind: 'precinct', x0: 56, x1: 70, label: 'FRIED CHICKEN', colour: '#d84a1a' },
-    { kind: 'precinct', x0: 70, x1: 88, label: 'TO LET', colour: '#4a4d55' },
+    { kind: 'precinct', x0: 70, x1: 88, label: 'KEV’S WRESTLING', colour: '#1f2a44' },
   ],
   props: [
     { kind: 'mall_planter', x: 8, z: 1.2 },

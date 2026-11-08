@@ -256,6 +256,13 @@ quest('stadium_key', 'Stadium service key', 'key', 'Opens the service tunnel und
 
 // ---- misc ------------------------------------------------------------------------------------
 add({ id: 'scrap_metal', name: 'Scrap metal', text: 'Copper pipe and bits. The pawn shop takes it by weight.', category: 'misc', rarity: 'common', value: 6, stack: 10, icon: 'scrap', colour: '#b87333' });
+// Workshop materials (the garage workbench).
+add({ id: 'duct_tape', name: 'Duct tape', text: 'Fixes most things. Workbench material.', category: 'misc', rarity: 'common', value: 3, stack: 10, icon: 'scrap', colour: '#8a8e94' });
+add({ id: 'bolts', name: 'Nuts and bolts', text: 'A tub of mixed fixings. Workbench material.', category: 'misc', rarity: 'common', value: 4, stack: 10, icon: 'scrap', colour: '#c8c8c8' });
+add({ id: 'leather_strip', name: 'Leather strip', text: 'For grips and wraps. Workbench material.', category: 'misc', rarity: 'uncommon', value: 10, stack: 10, icon: 'scrap', colour: '#6a4028' });
+add({ id: 'steel_bar', name: 'Steel bar stock', text: 'Proper steel. Workbench material.', category: 'misc', rarity: 'uncommon', value: 18, stack: 10, icon: 'scrap', colour: '#6a6e74' });
+add({ id: 'spring_steel', name: 'Spring steel', text: 'Hard, whippy, valuable. Workbench material.', category: 'misc', rarity: 'rare', value: 40, stack: 5, icon: 'scrap', colour: '#3a4a5a' });
+add({ id: 'carbon_fibre', name: 'Carbon fibre sheet', text: 'Light and stupidly strong. Workbench material.', category: 'misc', rarity: 'epic', value: 90, stack: 5, icon: 'scrap', colour: '#1a1a1c' });
 add({ id: 'lighter', name: 'Zippo lighter', text: 'Engraved steel lighter. Sells for a few quid.', category: 'misc', rarity: 'common', value: 12, stack: 3, icon: 'scrap', colour: '#c9ccd2' });
 add({ id: 'bus_pass', name: 'Bus pass', text: 'Somebody’s. Dave’s Cabs take it as a free ride.', category: 'misc', rarity: 'common', value: 0, stack: 5, icon: 'card', colour: '#2f6fa8', unsellable: true });
 

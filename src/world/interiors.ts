@@ -1,6 +1,9 @@
 import type { LevelDef, PropDef } from './LevelTypes';
 import { FURNITURE } from '../property/catalogue';
 import { EQUIPMENT } from '../business/catalogue';
+import { GYM_KIT } from '../training/gym';
+import { COMPANION_LIST } from '../companions/companions';
+import type { AreaId } from '../progress/Progress';
 
 /**
  * Buildings you can walk into. Same rules as the streets: what you see is
@@ -96,10 +99,13 @@ const pub: LevelDef = {
   name: 'The Red Lion',
   district: 'High Street',
   theme: 'pub',
-  bounds: { minX: 0, maxX: 22, ...ROOM },
+  bounds: { minX: 0, maxX: 32, ...ROOM },
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'pub', label: 'Back out to the High Street' }],
-  facades: [{ kind: 'interior', x0: 0, x1: 22, label: 'THE RED LION', colour: '#3a1a12' }],
+  facades: [
+    { kind: 'interior', x0: 0, x1: 22, label: 'THE RED LION', colour: '#3a1a12' },
+    { kind: 'interior', x0: 22, x1: 32, label: 'THE SNUG — FIGHTERS FOR HIRE', colour: '#2a1410' },
+  ],
   props: [
     { kind: 'bar', x: 6.5, z: -0.6 },
     { kind: 'fruit_machine', x: 10.2, z: -1.35 },
@@ -108,12 +114,18 @@ const pub: LevelDef = {
     { kind: 'dj_booth', x: 20.6, z: -1.3 },
     { kind: 'pub_table', x: 3.4, z: 0.9 },
     { kind: 'pub_table', x: 20.2, z: 0.8 },
+    { kind: 'pub_table', x: 26.0, z: 0.95 },
+    { kind: 'pub_table', x: 30.4, z: 0.95 },
   ],
   stations: [
     {
       id: 'bar', x: 6.5, z: 0.2, label: 'Order at the bar (Ray)', shop: 'pub',
       npc: { name: 'Ray', seed: 2210, body: 'male', top: 'tshirt', topColour: '#2b2e35', dz: -1.65 },
     },
+    ...COMPANION_LIST.map((c, i) => ({
+      id: 'recruit' as const, x: 22.9 + i * 1.3, z: -0.25, label: `${c.name}, ${c.role.toLowerCase()}`, tab: c.id,
+      npc: { name: c.nickname, seed: c.seed, body: c.body, top: c.look.top ?? 'tshirt', topColour: c.look.topColour, dz: -0.95 },
+    })),
   ],
   pickups: [
     { id: 'cue', kind: 'item', item: 'w_pool_cue', x: 12.4, z: -0.6 },
@@ -125,7 +137,7 @@ const pub: LevelDef = {
   ],
   breakables: [
     { id: 'chair1', kind: 'chair', x: 2.4, z: 0.2, hp: 1, drops: 'chair' },
-    { id: 'chair2', kind: 'chair', x: 19.0, z: 0.1, hp: 1, drops: 'chair' },
+    { id: 'chair2', kind: 'chair', x: 17.9, z: 0.95, hp: 1, drops: 'chair' },
     { id: 'table3', kind: 'table', x: 8.6, z: 1.0, hp: 2, drops: 'table_leg' },
   ],
   encounters: [
@@ -379,7 +391,114 @@ const growShop: LevelDef = {
   objective: 'Kit out the basement. Everything you buy goes into basement storage.',
 };
 
+// ---- Iron Temple: gym equipment store (Leisure Park) ------------------------------------------------
+const KIT = (item: string, x: number, z: number): PropDef => ({ kind: 'gym_kit', item, x, z, size: GYM_KIT[item].size, solid: GYM_KIT[item].solid, plinth: true });
+
+const gymStore: LevelDef = {
+  id: 'gym_store',
+  name: 'Iron Temple Fitness',
+  district: 'Leisure Park',
+  theme: 'gym_store',
+  bounds: { minX: 0, maxX: 22, ...ROOM },
+  entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
+  exits: [
+    { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'leisure', toEntry: 'irontemple', label: 'Back out to Leisure Park' },
+    { id: 'cab_home', kind: 'door', x: 21.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Delivery bay: ride home with the van' },
+  ],
+  facades: [{ kind: 'interior', x0: 0, x1: 22, label: 'IRON TEMPLE — HOME GYM EQUIPMENT', colour: '#2a2c30' }],
+  props: [
+    KIT('dumbbells', 3.0, -1.85),
+    KIT('barbell', 5.2, -1.75),
+    KIT('treadmill', 7.9, -1.7),
+    KIT('exercise_bike', 10.3, -1.8),
+    KIT('bag', 12.2, -1.55),
+    KIT('mat', 14.6, -1.3),
+    KIT('speed_ball', 16.3, -2.0),
+    { kind: 'shop_counter', x: 19.2, z: -0.6 },
+  ],
+  stations: [
+    { id: 'gym_counter', x: 3.0, z: -1.0, label: 'Dumbbell rack: strength', tab: 'dumbbells' },
+    { id: 'gym_counter', x: 5.2, z: -0.9, label: 'Barbell & squat rack: strength', tab: 'barbell' },
+    { id: 'gym_counter', x: 7.9, z: -0.9, label: 'Treadmill: stamina', tab: 'treadmill' },
+    { id: 'gym_counter', x: 10.3, z: -1.0, label: 'Exercise bike: conditioning', tab: 'exercise_bike' },
+    { id: 'gym_counter', x: 12.2, z: -0.85, label: 'Heavy bag: punch power', tab: 'bag' },
+    { id: 'gym_counter', x: 14.6, z: 0.3, label: 'Training mat: agility', tab: 'mat' },
+    { id: 'gym_counter', x: 16.3, z: -1.0, label: 'Speed ball: technique', tab: 'speed_ball' },
+    {
+      id: 'gym_counter', x: 19.2, z: 0.2, label: 'Talk to Sam (all equipment)', tab: 'dumbbells',
+      npc: { name: 'Sam', seed: 4471, body: 'male', top: 'vest', topColour: '#9a1c1c', dz: -1.65 },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    { x: 4, y: 2.8, z: -0.4, colour: 0xf4f8ff, intensity: 10, range: 9 },
+    { x: 11, y: 2.8, z: -0.4, colour: 0xf4f8ff, intensity: 10, range: 9 },
+    { x: 18, y: 2.8, z: -0.4, colour: 0xfff4e0, intensity: 8, range: 8 },
+  ],
+  weather: 'indoors',
+  objective: 'Kit out the home gym. Everything’s delivered and set up for you.',
+};
+
+// ---- fighting gyms ------------------------------------------------------------------------------------
+function fightGym(
+  id: 'boxing_gym' | 'karate_dojo' | 'wrestling_club',
+  name: string,
+  district: string,
+  street: AreaId,
+  streetEntry: string,
+  floor: 'boxing_ring' | 'dojo_mat' | 'wrestling_mat',
+  coach: { name: string; seed: number; body: 'male' | 'female'; top: string; colour: string },
+  sign: string,
+  wall: string,
+): LevelDef {
+  return {
+    id,
+    name,
+    district,
+    theme: id,
+    bounds: { minX: 0, maxX: 20, ...ROOM },
+    entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
+    exits: [
+      { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: street, toEntry: streetEntry, label: 'Back outside' },
+      { id: 'cab_home', kind: 'door', x: 19.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Fire exit: lift home' },
+    ],
+    facades: [{ kind: 'interior', x0: 0, x1: 20, label: sign, colour: wall }],
+    props: [
+      { kind: floor, x: 8.5, z: -1.0 },
+      { kind: 'bag', x: 13.4, z: -1.55 },
+      { kind: 'bag', x: 15.0, z: -1.55 },
+      { kind: 'gym_rack', x: 17.6, z: -1.85 },
+      { kind: 'bench', x: 3.4, z: -1.5 },
+    ],
+    stations: [
+      {
+        id: 'style_coach', x: 4.6, z: -0.6, label: `Talk to ${coach.name} (learn styles and techniques)`, tab: id,
+        npc: { name: coach.name, seed: coach.seed, body: coach.body, top: coach.top, topColour: coach.colour, dz: -0.9 },
+      },
+      { id: 'style_drill', x: 8.5, z: 0.45, label: 'Drill combinations on the pads', tab: id },
+    ],
+    pickups: [],
+    encounters: [],
+    lights: [
+      { x: 5, y: 2.8, z: -0.4, colour: 0xfff0d8, intensity: 9, range: 9 },
+      { x: 9, y: 2.6, z: -0.8, colour: 0xffffff, intensity: 10, range: 7 },
+      { x: 15, y: 2.8, z: -0.4, colour: 0xfff0d8, intensity: 8, range: 8 },
+    ],
+    weather: 'indoors',
+    objective: `${coach.name} teaches here. Learn the style, drill it, earn its techniques.`,
+  };
+}
+
+const boxingGym = fightGym('boxing_gym', 'Del’s Boxing Club', 'Tanner Road Estate', 'estate', 'boxing', 'boxing_ring', { name: 'Coach Del', seed: 3301, body: 'male', top: 'tshirt', colour: '#7a1414' }, 'DEL’S BOXING CLUB — EST. 1979', '#5a2a22');
+const karateDojo = fightGym('karate_dojo', 'Okafor Karate & Muay Thai', 'Leisure Park', 'leisure', 'dojo', 'dojo_mat', { name: 'Mrs Okafor', seed: 3302, body: 'female', top: 'tshirt', colour: '#f0eee8' }, 'OKAFOR KARATE & MUAY THAI', '#e8e0d0');
+const wrestlingClub = fightGym('wrestling_club', 'Kev’s Wrestling & Grappling', 'Kingsway Precinct', 'precinct', 'wrestling', 'wrestling_mat', { name: 'Big Kev', seed: 3303, body: 'male', top: 'vest', colour: '#1f2a44' }, 'KEV’S WRESTLING & GRAPPLING', '#3a4a5a');
+
 export const INTERIORS = {
+  gym_store: gymStore,
+  boxing_gym: boxingGym,
+  karate_dojo: karateDojo,
+  wrestling_club: wrestlingClub,
   grow_shop: growShop,
   clothes_shop: clothesShop, pawn_shop: pawnShop, pub,
   furniture_shop: furnitureShop, car_dealer: carDealer, bike_shop: bikeShop, casino,

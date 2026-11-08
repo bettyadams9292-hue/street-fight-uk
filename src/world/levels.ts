@@ -2,9 +2,10 @@ import type { AreaId } from '../progress/Progress';
 import { DISTRICTS } from './districts';
 import { INTERIORS } from './interiors';
 import type { LevelDef } from './LevelTypes';
-import { BASEMENT_DOOR_X, FRONT_DOOR_X, HOME_BOUNDS, buildHomeLevel } from '../property/home';
+import { FRONT_DOOR_X, HOME_BOUNDS, STAIRWELL, buildHomeLevel } from '../property/home';
 import { buildBasementLevel, defaultBasement } from '../business/basement';
 import { defaultProperty } from '../property/state';
+import { defaultGym } from '../training/gym';
 
 /**
  * The neighbourhood. Areas join end to end (walk off an edge) or through
@@ -28,19 +29,19 @@ const homeBase: LevelDef = {
   entries: [
     { id: 'start', x: -16, z: 0.4, facing: 1 },
     { id: 'door', x: -8, z: -0.6, facing: 1 },
-    { id: 'basement', x: BASEMENT_DOOR_X, z: -0.6, facing: 1 },
+    { id: 'basement', x: STAIRWELL.x, z: 0.25, facing: 1 },
   ],
   exits: [
     { id: 'front_door', kind: 'door', x: FRONT_DOOR_X, z: -1.4, to: 'estate', toEntry: 'home', label: 'Go out (front door)' },
-    { id: 'basement_door', kind: 'door', x: BASEMENT_DOOR_X, z: -1.4, to: 'basement', toEntry: 'stairs', label: 'Down to the basement' },
+    { id: 'basement_stairs', kind: 'door', x: STAIRWELL.x, z: -0.3, to: 'basement', toEntry: 'stairs', label: 'Down the stairs to the basement' },
   ],
   facades: [
     { kind: 'room', x0: -26, x1: -20, label: 'Bathroom', colour: '#e8e2cc' },
     { kind: 'room', x0: -20, x1: -13, label: 'Bedroom', colour: '#6d7a8c' },
     { kind: 'room', x0: -13, x1: -4, label: 'Living room', colour: '#8c7a5e' },
     { kind: 'room', x0: -4, x1: 2, label: 'Kitchen', colour: '#c9c2a8' },
-    { kind: 'room', x0: 2, x1: 10, label: 'Gym', colour: '#5d6660' },
-    { kind: 'room', x0: 10, x1: 18, label: 'Garage', colour: '#6a6a6a' },
+    { kind: 'room', x0: 2, x1: 12, label: 'Gym', colour: '#5d6660' },
+    { kind: 'room', x0: 12, x1: 22, label: 'Garage', colour: '#6a6a6a' },
   ],
   props: [],
   pickups: [],
@@ -51,14 +52,18 @@ const homeBase: LevelDef = {
     { x: -16.5, y: 2.6, z: -0.3, colour: 0xffd8a0, intensity: 9, range: 9 },
     { x: -8.5, y: 2.6, z: -0.3, colour: 0xffd090, intensity: 10, range: 10 },
     { x: -1, y: 2.6, z: -0.3, colour: 0xf4f6ff, intensity: 10, range: 8 },
-    { x: 6, y: 2.6, z: -0.3, colour: 0xe8f0ff, intensity: 10, range: 9 },
-    { x: 14, y: 2.6, z: -0.3, colour: 0xd8e4ff, intensity: 9, range: 9 },
+    { x: 4.5, y: 2.6, z: -0.3, colour: 0xe8f0ff, intensity: 10, range: 8 },
+    { x: 9.5, y: 2.6, z: -0.3, colour: 0xe8f0ff, intensity: 10, range: 8 },
+    { x: 14.5, y: 2.6, z: -0.3, colour: 0xd8e4ff, intensity: 9, range: 8 },
+    // Over the stairwell, so the way down is lit.
+    { x: 16.6, y: 2.4, z: -1.0, colour: 0xfff0d0, intensity: 7, range: 5 },
+    { x: 20.0, y: 2.6, z: -0.3, colour: 0xd8e4ff, intensity: 8, range: 7 },
   ],
   objective: 'Head out the front door when you’re ready',
 };
 
 /** The house as it comes (the save's own layout is built in property/levels.ts). */
-const home: LevelDef = buildHomeLevel(homeBase, defaultProperty());
+const home: LevelDef = buildHomeLevel(homeBase, defaultProperty(), defaultGym());
 export const HOME_BASE = homeBase;
 
 // ---- the estate ------------------------------------------------------------------
@@ -70,12 +75,14 @@ const estate: LevelDef = {
   theme: 'estate',
   bounds: { minX: -12, maxX: 56, ...STREET_Z },
   entries: [
+    { id: 'boxing', x: 50, z: -1.0, facing: -1 },
     { id: 'home', x: -6, z: -1.0, facing: 1 },
     { id: 'left', x: -10, z: 0, facing: 1 },
     { id: 'right', x: 54, z: 0, facing: -1 },
     { id: 'subway', x: 38, z: -1.0, facing: -1 },
   ],
   exits: [
+    { id: 'boxing_door', kind: 'door', x: 50, z: -1.6, to: 'boxing_gym', toEntry: 'door', label: 'Into Del’s Boxing Club' },
     { id: 'home_door', kind: 'door', x: -6, z: -1.6, to: 'home', toEntry: 'door', label: 'Go home' },
     { id: 'to_residential', kind: 'edge', side: 'left', x: -12, z: 0, to: 'residential', toEntry: 'right', label: 'Hollins Estate' },
     { id: 'to_high_street', kind: 'edge', side: 'right', x: 56, z: 0, to: 'high_street', toEntry: 'left', label: 'High Street' },
@@ -86,7 +93,7 @@ const estate: LevelDef = {
     { kind: 'terrace', x0: 0, x1: 18 },
     { kind: 'tower', x0: 18, x1: 32 },
     { kind: 'garages', x0: 32, x1: 44 },
-    { kind: 'terrace', x0: 44, x1: 56 },
+    { kind: 'gym_front', x0: 44, x1: 56, label: 'DEL’S BOXING CLUB', colour: '#7a1414' },
   ],
   // Number 14's low garden wall (drawn with the house front).
   walls: [{ minX: -5.2, maxX: -0.2, minZ: -2.4, maxZ: -1.67, visual: 'none' }],

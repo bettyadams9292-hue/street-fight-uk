@@ -253,15 +253,20 @@ export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: st
   { area: 'furniture_shop', entry: 'door', where: 'Furniture, floors and walls. High Street' },
   { area: 'car_dealer', entry: 'door', where: 'Cars. Brackley Trading Estate' },
   { area: 'bike_shop', entry: 'door', where: 'Off-road bikes. Brackley Trading Estate' },
+  { area: 'gym_store', entry: 'door', where: 'Home gym equipment. Leisure Park' },
+  { area: 'boxing_gym', entry: 'door', where: 'Boxing and kickboxing. Tanner Road Estate' },
+  { area: 'karate_dojo', entry: 'door', where: 'Karate and Muay Thai. Leisure Park' },
+  { area: 'wrestling_club', entry: 'door', where: 'Wrestling and BJJ. Kingsway Precinct' },
   { area: 'grow_shop', entry: 'door', where: 'Basement equipment. Brackley Trading Estate' },
   { area: 'casino', entry: 'door', where: 'Slots, roulette, blackjack, prize motors. Market Square' },
 ];
 
-export function contactsScreen(progress: Progress, close: () => void, travel: (area: AreaId, entry: string) => void, changed: () => void): Screen {
+export function contactsScreen(progress: Progress, close: () => void, travel: (area: AreaId, entry: string) => void, changed: () => void, crew?: () => void): Screen {
   return panelScreen('Phone', progress, (msg) => {
     const s = progress.save;
     const next = DISTRICT_ORDER.find((d) => !d.optional && !progress.has(d.flag));
     const rows: HTMLElement[] = [
+      ...(crew ? [shopRow('Your crew', s.companions.active ? `Following you: ${s.companions.active}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage', crew)] : []),
       h('h3', { text: 'Messages' }),
       h('p', { text: next ? `Mo: "${hintFor(next.flag)}"` : 'Mo: "You did it. Nobody runs these streets now. Mad."' }),
       h('h3', { text: `Dave’s Cabs: £${TAXI_COST} a ride, paid from the tin` }),

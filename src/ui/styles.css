@@ -718,3 +718,39 @@ input[type='range'].focused, input[type='range']:focus { filter: drop-shadow(0 0
 .ledger-row { display: grid; grid-template-columns: 50px 1fr auto; gap: 8px; font-size: 13px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .ledger-row span:first-child { color: var(--muted); }
 .ledger-row .neg { color: #ff9a8a; } .ledger-row .pos { color: #6ad04a; }
+
+/* ------------------------------------------------------------ training, workshop, crew (Stage 8) ----- */
+.training-overlay { position: absolute; left: 50%; bottom: calc(18px + var(--safe-b)); transform: translateX(-50%); z-index: 40; background: rgba(12, 13, 17, 0.94); border: 1px solid var(--edge); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; align-items: stretch; width: min(560px, 94vw); pointer-events: auto; }
+.training-overlay .hint { color: var(--muted); font-size: 13px; }
+.rep-bar { position: relative; height: 22px; border-radius: 11px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.rep-zone { position: absolute; top: 0; bottom: 0; background: rgba(106, 208, 74, 0.35); }
+.rep-perfect { position: absolute; top: 0; bottom: 0; background: rgba(106, 208, 74, 0.85); }
+.rep-marker { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+.rep-count { text-align: center; font-weight: 700; }
+.rep-flash { text-align: center; min-height: 20px; font-weight: 800; font-size: 16px; }
+.rep-flash.perfect { color: #6ad04a; } .rep-flash.good { color: var(--yellow); } .rep-flash.miss { color: #ff8a8a; }
+.rep-hit { min-width: 120px; font-weight: 800; }
+.drill-seq { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.drill-step { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--edge); background: rgba(255,255,255,0.05); font-weight: 700; font-size: 14px; }
+.drill-step.next { border-color: var(--yellow); background: rgba(255, 210, 61, 0.12); }
+.drill-step.hit { border-color: #6ad04a; color: #6ad04a; }
+.drill-clock { height: 6px; }
+.train-row { display: grid; grid-template-columns: 1fr 200px; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.train-row .what b { display: block; }
+.train-row .what span { color: var(--muted); font-size: 13px; }
+.train-xp { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; font-size: 12px; }
+.train-xp em { font-style: normal; color: var(--muted); }
+.stat-bar.warn i { background: linear-gradient(90deg, #ff8a5a, #ff4a4a); }
+.rank-line { display: grid; grid-template-columns: 60px 1fr; gap: 8px; font-size: 13px; color: var(--muted); padding: 2px 0; }
+.rank-line.done { color: #6ad04a; }
+.mat-strip { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; font-size: 12px; color: var(--muted); }
+.mat-strip .mat { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.04); border: 1px solid var(--edge); border-radius: 999px; padding: 2px 8px; }
+.mat-strip .mat i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.req { display: block; font-size: 12px; color: #ff9a8a; }
+.req.ok { color: #6ad04a; }
+.cond { display: grid; grid-template-columns: 120px auto; gap: 8px; align-items: center; font-size: 12px; margin-top: 3px; }
+.cond em { font-style: normal; color: var(--muted); }
+.owned-tag { color: #6ad04a; font-weight: 700; font-size: 13px; padding: 4px 8px; }
+.menu-btn.dim { opacity: 0.55; }
+.quote { font-style: italic; color: #e8e4dc; font-size: 15px; margin: 4px 0 8px; }
+@media (max-width: 720px) { .train-row { grid-template-columns: 1fr; } }

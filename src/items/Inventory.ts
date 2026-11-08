@@ -1,3 +1,4 @@
+import { cleanMods, maxDurability, type WeaponMods } from '../combat/weaponMods';
 import { ITEMS, type ItemCategory, type ItemDef } from './items';
 
 /**
@@ -16,6 +17,10 @@ export interface ItemStack {
   colour?: string;
   /** Came from a robbery. Pawn shop pays less; the police take it if they catch you. */
   stolen?: boolean;
+  /** Weapons: workshop upgrades. */
+  mods?: WeaponMods;
+  /** Weapons: made at the workbench. */
+  crafted?: boolean;
 }
 
 export type SortMode = 'category' | 'value' | 'name' | 'rarity';
@@ -123,5 +128,12 @@ export function sanitiseStack(raw: unknown, seen: Set<string>): ItemStack | null
   if (typeof r.hits === 'number' && Number.isFinite(r.hits)) out.hits = Math.max(1, Math.floor(r.hits));
   if (typeof r.colour === 'string' && /^#[0-9a-f]{6}$/i.test(r.colour)) out.colour = r.colour;
   if (r.stolen === true) out.stolen = true;
+  if (d.weapon) {
+    const mods = cleanMods(r.mods, d.weapon);
+    if (mods) out.mods = mods;
+    if (r.crafted === true) out.crafted = true;
+    // Hits can't exceed what the (upgraded) weapon holds.
+    if (out.hits !== undefined) out.hits = Math.min(out.hits, maxDurability(d.weapon, mods));
+  }
   return out;
 }

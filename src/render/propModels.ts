@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { BIKES, CARS, FURNITURE, type BikeDef, type CarDef, type FurnitureDef } from '../property/catalogue';
 import { signTexture } from './levelTextures';
 import { EQUIPMENT } from '../business/catalogue';
+import { GYM_KIT } from '../training/gym';
 
 /**
  * Furniture, cars and off-road bikes, built from primitives so they share
@@ -868,7 +869,120 @@ export function buildEquipmentModel(id: string, state = 'ok|0|on'): THREE.Group 
 
 /** Whatever a catalogue id is: furniture, a vehicle or basement equipment. */
 export function buildAnyModel(id: string, colour?: string, state?: string): THREE.Group {
+  if (GYM_KIT[id]) return buildGymKitModel(id);
   if (FURNITURE[id]) return buildFurnitureModel(id, colour);
   if (EQUIPMENT[id]) return buildEquipmentModel(id, state);
   return buildVehicleModel(id, colour);
+}
+
+// ---- home gym kit ------------------------------------------------------------------------------------
+
+/** Gym kit, facing the camera, standing on y = 0 (the speed ball hangs on the wall). */
+export function buildGymKitModel(id: string): THREE.Group {
+  const g = new THREE.Group();
+  const black = mat('#141416', 0.5, 0.3);
+  const steel = mat('#b8bcc2', 0.3, 0.85);
+  const rubber = mat('#1c1c1e', 0.95);
+  const red = mat('#9a1c1c', 0.5);
+  switch (id) {
+    case 'dumbbells': {
+      // Two-tier rack of hex dumbbells.
+      for (const dx of [-0.38, 0.38]) B(g, 0.05, 0.75, 0.5, dx, 0.375, 0, black);
+      for (const [y, dz] of [[0.42, 0.1], [0.72, -0.1]] as const) {
+        const tier = B(g, 0.82, 0.03, 0.2, 0, y, dz, black);
+        tier.rotation.x = -0.25;
+        for (let i = 0; i < 4; i++) {
+          const x = -0.28 + i * 0.19;
+          const bar = C(g, 0.015, 0.015, 0.16, x, y + 0.07, dz, steel, 6, false);
+          bar.rotation.x = Math.PI / 2;
+          for (const ez of [-0.07, 0.07]) {
+            const hex = C(g, 0.045 + i * 0.006, 0.045 + i * 0.006, 0.05, x, y + 0.07, dz + ez, rubber, 6);
+            hex.rotation.x = Math.PI / 2;
+          }
+        }
+      }
+      break;
+    }
+    case 'barbell': {
+      // Squat rack with a loaded bar, and a flat bench in front.
+      for (const dx of [-0.6, 0.6]) {
+        B(g, 0.07, 1.9, 0.07, dx, 0.95, -0.15, black);
+        B(g, 0.07, 0.07, 0.6, dx, 0.035, 0.0, black);
+        B(g, 0.1, 0.05, 0.12, dx, 1.35, -0.06, red, false);
+      }
+      B(g, 1.27, 0.07, 0.07, 0, 1.88, -0.15, black);
+      const bar = C(g, 0.016, 0.016, 1.7, 0, 1.42, -0.06, steel, 8);
+      bar.rotation.z = Math.PI / 2;
+      for (const s of [-1, 1]) for (let k = 0; k < 2; k++) {
+        const plate = C(g, 0.22 - k * 0.05, 0.22 - k * 0.05, 0.04, s * (0.68 + k * 0.05), 1.42, -0.06, k ? red : black, 20);
+        plate.rotation.z = Math.PI / 2;
+      }
+      B(g, 0.32, 0.08, 0.22, 0, 0.42, 0.22, red);
+      B(g, 0.06, 0.38, 0.06, 0, 0.19, 0.22, black);
+      break;
+    }
+    case 'treadmill': {
+      B(g, 1.7, 0.16, 0.66, 0, 0.08, 0, black);
+      B(g, 1.5, 0.02, 0.5, -0.05, 0.17, 0, mat('#2a2a2c', 0.9), false);
+      for (const dz of [-0.3, 0.3]) {
+        const up = B(g, 0.05, 1.15, 0.05, 0.72, 0.6, dz, steel);
+        up.rotation.z = 0.25;
+        B(g, 0.4, 0.04, 0.04, 0.6, 1.05, dz, black, false);
+      }
+      B(g, 0.25, 0.22, 0.6, 0.86, 1.2, 0, black);
+      B(g, 0.02, 0.14, 0.4, 0.735, 1.22, 0, mat('#0a1018', 0.2, 0, { emissive: 0x40c0ff, emissiveIntensity: 0.6 }), false);
+      break;
+    }
+    case 'exercise_bike': {
+      B(g, 1.0, 0.06, 0.4, 0, 0.03, 0, black);
+      const frame = B(g, 0.08, 0.85, 0.08, -0.05, 0.45, 0, mat('#d8d8dc', 0.4, 0.6));
+      frame.rotation.z = -0.35;
+      const fly = C(g, 0.24, 0.24, 0.08, 0.3, 0.3, 0, mat('#3a3a3e', 0.35, 0.8), 24);
+      fly.rotation.x = Math.PI / 2;
+      B(g, 0.3, 0.07, 0.18, -0.2, 0.86, 0, black);
+      C(g, 0.025, 0.025, 0.4, -0.15, 0.68, 0, steel, 8, false);
+      const stem = B(g, 0.05, 0.55, 0.05, 0.32, 0.85, 0, steel);
+      stem.rotation.z = 0.25;
+      const bars = C(g, 0.02, 0.02, 0.45, 0.42, 1.1, 0, black, 8, false);
+      bars.rotation.x = Math.PI / 2;
+      B(g, 0.12, 0.08, 0.14, 0.42, 1.18, 0, mat('#0a1018', 0.2, 0, { emissive: 0x40ff90, emissiveIntensity: 0.6 }), false);
+      for (const dz of [-0.12, 0.12]) B(g, 0.1, 0.03, 0.06, 0.1, 0.3 + dz * 0.8, dz * 1.5, black, false);
+      break;
+    }
+    case 'speed_ball': {
+      const y = 1.7;
+      B(g, 0.6, 0.06, 0.4, 0, y + 0.3, 0, mat('#6a4a2a', 0.6));
+      B(g, 0.6, 0.5, 0.04, 0, y + 0.05, -0.18, mat('#6a4a2a', 0.6));
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), mat('#7a1414', 0.4));
+      ball.scale.set(1, 1.3, 1);
+      ball.position.set(0, y + 0.08, 0.05);
+      ball.castShadow = true;
+      g.add(ball);
+      C(g, 0.01, 0.01, 0.1, 0, y + 0.24, 0.05, black, 4, false);
+      break;
+    }
+    case 'bag': {
+      // Ceiling bracket, chain, the bag.
+      B(g, 0.08, 0.08, 0.7, 0, 2.75, -0.25, black, false);
+      C(g, 0.01, 0.01, 0.55, 0, 2.45, 0, steel, 4, false);
+      C(g, 0.2, 0.2, 1.05, 0, 1.6, 0, mat('#7a1414', 0.7), 18);
+      C(g, 0.205, 0.205, 0.08, 0, 2.1, 0, black, 18);
+      C(g, 0.205, 0.205, 0.05, 0, 1.1, 0, black, 18);
+      break;
+    }
+    case 'mat': {
+      B(g, 1.5, 0.04, 1.6, 0, 0.02, 0, mat('#1f3a6a', 0.9), false);
+      B(g, 1.46, 0.042, 0.04, 0, 0.022, 0, mat('#e8e4dc', 0.9), false);
+      for (const dx of [-0.4, 0.4]) B(g, 0.02, 0.042, 1.56, dx, 0.022, 0, mat('#16305a', 0.9), false);
+      // A skipping rope coiled at the edge.
+      const rope = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.008, 4, 16), mat('#e8c020', 0.6));
+      rope.rotation.x = Math.PI / 2;
+      rope.position.set(0.55, 0.05, -0.6);
+      g.add(rope);
+      break;
+    }
+    default:
+      B(g, 0.8, 1, 0.5, 0, 0.5, 0, black);
+  }
+  return g;
 }

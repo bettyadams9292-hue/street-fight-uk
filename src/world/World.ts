@@ -5,6 +5,10 @@ import { BOSSES, type BossDef, type BossPhase } from '../ai/bosses';
 import { DummyBrain } from '../ai/DummyBrain';
 import { FighterAI } from '../ai/FighterAI';
 import { randomAppearance, sparringPartnerAppearance, type CharacterAppearance, type TopStyle } from '../character/Appearance';
+import { CivilianBrain, CIVILIAN_DENSITY, DESPAWN, SPAWN_MAX, SPAWN_MIN, type Hotspot } from './civilians';
+import { CompanionBrain } from '../companions/brain';
+import type { CompanionDef } from '../companions/companions';
+import { SPAR_SPOT } from '../training/gym';
 import { hitSphereOf, resolveHit } from '../combat/CombatSystem';
 import { move, startMove } from '../combat/MoveData';
 import type { WeaponData, WeaponId } from '../combat/Weapons';
@@ -67,6 +71,9 @@ export interface WorldEvents {
   'police:arrive': { count: number };
   'alarm': { shop: string };
   'player:defeated': { byPolice: boolean };
+  'companion:up': { name: string };
+  'duel:start': { kind: 'spar' | 'challenge'; name: string };
+  'duel:end': { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
 }
 
 interface EncounterState {
@@ -164,7 +171,7 @@ export class World {
   /** Frames left of searching a container (the player stands still). */
   searching = 0;
   private searchTarget: ContainerDef | null = null;
-  private brains = new Map<Fighter, FighterAI | DummyBrain>();
+  private brains = new Map<Fighter, FighterAI | DummyBrain | CivilianBrain | CompanionBrain>();
   private archetypeOf = new Map<Fighter, string>();
   private koAt = new Map<Fighter, number>();
   private gateObstacles = new Map<string, Obstacle>();
@@ -181,12 +188,278 @@ export class World {
   private policeDue: { at: number; count: number } | null = null;
   private policeSpawned = false;
   readonly police: Fighter[] = [];
+  /** This visit's stations: the level's, plus things that come and go (a parked bike). */
+  readonly stations: StationDef[];
+
+  /** Optional fights finished on this visit (so rebuilding the area doesn't re-arm them). */
+  clearedOptional(): string[] {
+    return this.encounters.filter((e) => e.def.optional && e.status === 'cleared').map((e) => e.def.id);
+  }
+
+  addStation(s: StationDef): void {
+    this.stations.push(s);
+  }
+
+  removeStation(id: string): void {
+    for (let i = this.stations.length - 1; i >= 0; i--) if (this.stations[i].id === id) this.stations.splice(i, 1);
+  }
+
+  /** Mo, in the home gym. */
+  sparPartner: Fighter | null = null;
+
+  // ---- companion ---------------------------------------------------------------------
+
+  companion: Fighter | null = null;
+  companionDef: CompanionDef | null = null;
+  private companionBrain: CompanionBrain | null = null;
+  private companionDownAt = -1;
+
+  private spawnCompanion(def: CompanionDef): void {
+    const p = this.player;
+    const spot = this.freeSpot(p.pos.x - p.facing * 1.3, Math.max(this.arena.bounds.minZ + 0.3, p.pos.z - 0.4));
+    const rng = new Rng(def.seed);
+    const look: CharacterAppearance = { ...randomAppearance(() => rng.next(), def.body), accessories: [], ...def.look };
+    const f = new Fighter({
+      id: this.nextId++,
+      name: def.nickname,
+      team: 'player',
+      attributes: { ...def.attributes },
+      level: Math.max(1, this.progress.save.level - 1),
+      style: getStyle(def.style),
+      x: spot.x,
+      z: spot.z,
+      appearance: look,
+    });
+    f.facing = p.facing;
+    f.stats.addModifier({ id: 'companion_dmg', source: 'companion', stat: 'damageMult', mul: def.damageMult });
+    if (def.health) f.stats.addModifier({ id: 'companion_hp', source: 'companion', flat: 'maxHealth', add: def.health });
+    // Keeps up with you: a touch quicker than their stance would be.
+    f.stats.addModifier({ id: 'companion_pace', source: 'companion', stat: 'moveSpeedMult', mul: 1.15 });
+    f.vitals.reset();
+    this.sim.add(f);
+    const a = { ...ARCHETYPES.boxer, ...def.ai, id: 'boxer' as const, name: def.nickname, style: def.style, attributes: def.attributes, retreatsWhenTired: true, look: () => ({}) };
+    const fight = new FighterAI(f, a, this.sim.rng, this.tokens, this.arena);
+    const brain = new CompanionBrain(f, p, fight, this.arena, () => this.duel?.f ?? this.sparPartner, () => !!this.activeEncounter || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 7) || this.police.some((e) => !e.isKO));
+    this.brains.set(f, brain);
+    this.companion = f;
+    this.companionDef = def;
+    this.companionBrain = brain;
+  }
+
+  /** Back on their feet once the fight's over; walks in from the edge if left far behind. */
+  private updateCompanion(): void {
+    const f = this.companion;
+    if (!f || !this.companionBrain) return;
+    const p = this.player;
+    const fightOn = !!this.activeEncounter || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 9);
+    if (f.isKO) {
+      if (this.companionDownAt < 0) this.companionDownAt = this.sim.frame;
+      if (!fightOn && this.sim.frame - this.companionDownAt > SIM_HZ * 3) {
+        const pos = { ...f.pos };
+        f.respawn();
+        f.pos = { x: pos.x, y: 0, z: pos.z };
+        f.vitals.health = Math.round(f.vitals.maxHealth * 0.4);
+        this.companionDownAt = -1;
+        this.events.emit('companion:up', { name: f.name });
+      }
+      return;
+    }
+    this.companionDownAt = -1;
+    // Left a long way behind (pushed back by a crowd, a long run): come in from just off-screen.
+    if (!fightOn && (this.companionBrain.catchUp || Math.abs(f.pos.x - p.pos.x) > 16)) {
+      const spot = this.freeSpot(p.pos.x - p.facing * 10, p.pos.z);
+      f.pos.x = spot.x;
+      f.pos.z = spot.z;
+      this.companionBrain.catchUp = false;
+    }
+  }
+
+  // ---- ambient pedestrians -------------------------------------------------------------
+
+  readonly civilians: { f: Fighter; brain: CivilianBrain }[] = [];
+  private hotspots: Hotspot[] = [];
+  private civLanes: number[] = [];
+  private civCap = 0;
+
+  private setUpCivilians(): void {
+    const cap = CIVILIAN_DENSITY[this.level.id as AreaId] ?? 0;
+    if (!cap) return;
+    this.civCap = cap;
+    const b = this.arena.bounds;
+    this.civLanes = [b.minZ + 0.45, b.minZ + 1.0, b.maxZ - 0.4].filter((z) => z < b.maxZ - 0.1);
+    const hs: Hotspot[] = [];
+    for (const ex of this.level.exits) if (ex.kind === 'door') hs.push({ kind: 'browse', x: ex.x + 1.3, z: b.minZ + 0.35, facing: -1, slots: 1, taken: 0 });
+    for (const f of this.level.facades) {
+      if (f.kind === 'pub' || f.kind === 'club' || f.kind === 'casino') hs.push({ kind: 'group', x: (f.x0 + f.x1) / 2 + 2, z: b.minZ + 0.7, slots: 3, taken: 0 });
+    }
+    for (const pr of this.level.props) if (pr.kind === 'bench') hs.push({ kind: 'sit', x: pr.x, z: pr.z + 0.15, facing: 1, slots: 1, taken: 0 });
+    for (let x = b.minX + 8; x < b.maxX - 6; x += 18) hs.push({ kind: 'chat', x: x + this.lootRng.next() * 6, z: b.minZ + 0.6, slots: 2, taken: 0 });
+    // Hotspots must be standable.
+    this.hotspots = hs.filter((h) => !this.arena.blocked(h.x, h.z, 0.3) && h.x > b.minX + 1 && h.x < b.maxX - 1);
+    // A few people already about when you arrive (just off-screen).
+    for (let i = 0; i < Math.ceil(cap / 2); i++) this.spawnCivilian();
+  }
+
+  private spawnCivilian(): void {
+    const p = this.player;
+    const b = this.arena.bounds;
+    const rng = this.lootRng;
+    // Sometimes they're stood at a hotspot already; otherwise walking in from either side.
+    const free = this.hotspots.filter((h) => h.taken < h.slots && Math.abs(h.x - p.pos.x) > SPAWN_MIN && Math.abs(h.x - p.pos.x) < SPAWN_MAX + 4);
+    let x: number;
+    let z: number;
+    const spot = free.length && rng.next() < 0.5 ? free[Math.floor(rng.next() * free.length)] : null;
+    if (spot) {
+      x = spot.x;
+      z = spot.z;
+    } else {
+      const side = rng.next() < 0.5 ? -1 : 1;
+      x = p.pos.x + side * (SPAWN_MIN + rng.next() * (SPAWN_MAX - SPAWN_MIN));
+      if (x < b.minX + 0.5 || x > b.maxX - 0.5) x = p.pos.x - side * (SPAWN_MIN + rng.next() * (SPAWN_MAX - SPAWN_MIN));
+      if (x < b.minX + 0.5 || x > b.maxX - 0.5) return;
+      z = this.civLanes[Math.floor(rng.next() * this.civLanes.length)];
+    }
+    if (this.arena.blocked(x, z, 0.3)) return;
+    if (this.sim.fighters.some((o) => Math.abs(o.pos.x - x) < 0.8 && Math.abs(o.pos.z - z) < 0.6)) return;
+    const seed = Math.floor(rng.next() * 1e6);
+    const r = new Rng(seed);
+    const body = r.next() < 0.5 ? 'female' : 'male';
+    const look: CharacterAppearance = { ...randomAppearance(() => r.next(), body), accessories: [] };
+    const f = new Fighter({ id: this.nextId++, name: 'Passer-by', team: 'neutral', attributes: defaultAttributes(4), style: getStyle('street'), x, z, appearance: look });
+    f.stats.addModifier({ id: 'stroll', source: 'civilian', stat: 'moveSpeedMult', mul: 0.42 + r.next() * 0.3 });
+    this.sim.add(f);
+    const brain = new CivilianBrain(f, this.arena, r, this.civLanes, 'walk');
+    if (spot) brain.claim(spot, spot.taken, this.sim.frame);
+    else brain.dir = x < p.pos.x ? 1 : -1;
+    if (this.activeEncounter) brain.flee(p.pos.x);
+    this.brains.set(f, brain);
+    this.civilians.push({ f, brain });
+  }
+
+  private removeCivilian(i: number): void {
+    const c = this.civilians[i];
+    c.brain.release();
+    this.sim.remove(c.f);
+    this.brains.delete(c.f);
+    this.civilians.splice(i, 1);
+  }
+
+  private updateCivilians(): void {
+    if (!this.civCap) return;
+    const p = this.player;
+    const frame = this.sim.frame;
+    for (const c of this.civilians) {
+      c.f.ambientPose = c.brain.pose;
+      // Walkers passing a free hotspot sometimes stop there.
+      if (c.brain.activity === 'walk' && frame % 20 === c.f.id % 20) {
+        const h = this.hotspots.find((s) => s.taken < s.slots && Math.abs(s.x - c.f.pos.x) < 0.6);
+        if (h && this.lootRng.next() < 0.35) c.brain.claim(h, h.taken, frame);
+      }
+    }
+    if (frame % 30 !== 0) return;
+    for (let i = this.civilians.length - 1; i >= 0; i--) {
+      const f = this.civilians[i].f;
+      const b = this.arena.bounds;
+      const gone = Math.abs(f.pos.x - p.pos.x) > DESPAWN || f.pos.x <= b.minX + 0.3 || f.pos.x >= b.maxX - 0.3;
+      if (gone) this.removeCivilian(i);
+    }
+    if (!this.activeEncounter && !this.locked && this.civilians.length < this.civCap) this.spawnCivilian();
+  }
+
+  // ---- sparring and challenge fights -----------------------------------------------------
+
+  duel: { f: Fighter; kind: 'spar' | 'challenge'; id: string; landed: number; blocked: number; started: number } | null = null;
+
+  /** Mo puts his gloves up. He hits softly and stops before anyone gets hurt. */
+  startSpar(): boolean {
+    const f = this.sparPartner;
+    if (!f || this.duel || this.activeEncounter) return false;
+    f.team = 'enemy';
+    f.stats.addModifier({ id: 'spar_soft', source: 'spar', stat: 'damageMult', mul: 0.35 });
+    this.brains.set(f, new FighterAI(f, { ...ARCHETYPES.casual, aggression: 0.35, blockChance: 0.45, comboLength: 2, specialChance: 0, grabChance: 0.05 }, this.sim.rng, this.tokens, this.arena));
+    this.duel = { f, kind: 'spar', id: 'mo', landed: 0, blocked: 0, started: this.sim.frame };
+    this.events.emit('duel:start', { kind: 'spar', name: f.name });
+    return true;
+  }
+
+  /** A pub regular wants a straightener before they'll join you. */
+  startChallenge(station: StationDef, def: CompanionDef): boolean {
+    const f = this.npcs.get(station);
+    if (!f || this.duel || this.activeEncounter) return false;
+    f.team = 'enemy';
+    // A proper scrap: tougher than an ordinary regular.
+    f.stats.addModifier({ id: 'challenger', source: 'challenge', flat: 'maxHealth', add: 40 });
+    f.vitals.reset();
+    const a = { ...ARCHETYPES.grappler, ...def.ai, style: def.style, look: () => ({}) };
+    this.brains.set(f, new FighterAI(f, a, this.sim.rng, this.tokens, this.arena));
+    this.duel = { f, kind: 'challenge', id: def.id, landed: 0, blocked: 0, started: this.sim.frame };
+    this.events.emit('duel:start', { kind: 'challenge', name: def.nickname });
+    return true;
+  }
+
+  /** Stop sparring (walk away or ask). */
+  stopDuel(): void {
+    if (this.duel) this.endDuel(false, true);
+  }
+
+  private updateDuel(): void {
+    const d = this.duel;
+    if (!d) return;
+    const p = this.player;
+    const them = d.f;
+    const pLow = p.isKO || p.vitals.health <= p.vitals.maxHealth * 0.25;
+    const tLow = them.isKO || them.vitals.health <= them.vitals.maxHealth * 0.2;
+    // Walked well away: it's over.
+    const walked = Math.abs(p.pos.x - them.pos.x) > 7;
+    if (tLow) this.endDuel(true, false);
+    else if (pLow) this.endDuel(false, false);
+    else if (walked) this.endDuel(false, true);
+  }
+
+  private endDuel(won: boolean, stopped: boolean): void {
+    const d = this.duel!;
+    const p = this.player;
+    const f = d.f;
+    f.team = 'neutral';
+    f.stats.removeModifier('spar_soft');
+    const brain = new DummyBrain(f, this.sim.rng);
+    brain.mode = 'stand';
+    this.brains.set(f, brain);
+    // Nobody leaves hurt: you both get patched up.
+    for (const x of [p, f]) {
+      if (x.isKO) {
+        const pos = { ...x.pos };
+        x.respawn();
+        x.pos = { x: pos.x, y: 0, z: pos.z };
+      }
+      x.vitals.health = Math.max(x.vitals.health, Math.round(x.vitals.maxHealth * 0.6));
+    }
+    this.tokens.release(f);
+    const frames = this.sim.frame - d.started;
+    this.duel = null;
+    this.events.emit('duel:end', { kind: d.kind, id: d.id, won, stopped, landed: d.landed, blocked: d.blocked, seconds: Math.round(frames / SIM_HZ) });
+  }
 
   constructor(
     readonly level: LevelDef,
     readonly progress: Progress,
-    opts: { entry: string; touch?: boolean; carry?: { health: number; stamina: number } | null; seed?: number; difficulty?: 'easy' | 'normal' | 'hard' },
+    opts: {
+      entry: string;
+      touch?: boolean;
+      carry?: { health: number; stamina: number } | null;
+      seed?: number;
+      difficulty?: 'easy' | 'normal' | 'hard';
+      /** Start here instead of at the entry (rebuilding the area around the player). */
+      at?: { x: number; z: number };
+      /** Optional fights already done on this visit (kept when the area is rebuilt in place). */
+      keepCleared?: string[];
+      /** Companion who follows you here. */
+      companion?: CompanionDef | null;
+      /** Ambient pedestrians (off in tests unless asked for). */
+      civilians?: boolean;
+    },
   ) {
+    this.stations = [...(level.stations ?? [])];
     const obstacles: Obstacle[] = [];
     for (const p of level.props) {
       const box = propBox(p);
@@ -219,10 +492,19 @@ export class World {
       this.player.vitals.stamina = Math.min(this.player.vitals.maxStamina, opts.carry.stamina);
     }
     this.player.facing = entry.facing;
-    this.lastX = entry.x;
+    if (opts.at) {
+      this.player.pos.x = opts.at.x;
+      this.player.pos.z = opts.at.z;
+      this.arena.clamp(this.player.pos);
+    }
+    // Fights trigger when you cross their line. Start the line-check from where you
+    // actually are, or a rebuild that puts you mid-street "crosses" every line on the way.
+    this.lastX = this.player.pos.x;
 
     for (const def of level.encounters) {
-      const cleared = !def.optional && (progress.has(this.clearedKey(def)) || (def.boss ? progress.has(BOSSES[def.boss].flag) : false));
+      const cleared =
+        (def.optional && !!opts.keepCleared?.includes(def.id)) ||
+        (!def.optional && (progress.has(this.clearedKey(def)) || (def.boss ? progress.has(BOSSES[def.boss].flag) : false)));
       this.encounters.push({ def, status: cleared ? 'cleared' : 'waiting', wave: 0, enemies: [], boss: null, bossDef: null, phasesDone: 0 });
     }
     for (const p of level.pickups) {
@@ -237,10 +519,24 @@ export class World {
         this.items.push({ key: `lvl_${p.id}`, stack: { uid: '', id: p.item, qty: p.qty ?? 1 }, x: p.x, z: p.z, pickupId: p.id, once: p.once, bornAt: -999 });
       }
     }
-    for (const s of level.stations ?? []) {
+    for (const s of this.stations) {
       if (s.id === 'sparring') this.spawnSparringPartner(s);
       if (s.npc) this.spawnNpc(s);
     }
+
+    if (opts.companion) this.spawnCompanion(opts.companion);
+    if (opts.civilians !== false) this.setUpCivilians();
+    this.events.on('encounter:start', () => {
+      for (const c of this.civilians) c.brain.flee(this.player.pos.x);
+    });
+    // Duel bookkeeping: what you landed and blocked against your sparring partner or challenger.
+    this.sim.bus.on('hit:landed', ({ attacker, target }) => {
+      if (!this.duel) return;
+      if (attacker === this.player && target === this.duel.f) this.duel.landed++;
+    });
+    this.sim.bus.on('hit:blocked', ({ attacker, target }) => {
+      if (this.duel && target === this.player && attacker === this.duel.f) this.duel.blocked++;
+    });
 
     this.sim.bus.on('fighter:ko', ({ fighter }) => {
       if (fighter === this.player) return;
@@ -358,9 +654,12 @@ export class World {
     this.updateEncounters();
     this.updatePolice();
     this.cleanUpKOs();
+    this.updateCompanion();
+    this.updateCivilians();
+    this.updateDuel();
     this.checkEdgeExits(cmd);
 
-    if (p.isKO && !this.defeated) {
+    if (p.isKO && !this.defeated && !this.duel) {
       if (this.defeatAt < 0) this.defeatAt = this.sim.frame;
       if (this.sim.frame - this.defeatAt >= DEFEAT_DELAY) {
         this.defeated = true;
@@ -383,7 +682,7 @@ export class World {
     if (!s.held || s.held.id !== id) {
       // Picked up, or broke into something else (bottle -> broken bottle).
       const stolen = s.held?.stolen;
-      s.held = this.progress.newStack(id, 1, { hits: w.hits, stolen });
+      s.held = this.progress.newStack(id, 1, { hits: w.hits, stolen, mods: w.mods });
     } else s.held.hits = w.hits;
   }
 
@@ -393,7 +692,7 @@ export class World {
       const w = f.droppedWeapon;
       f.droppedWeapon = null;
       if (w.data.breaks && w.hits <= 1 && f !== this.player) continue; // nearly done anyway
-      this.dropOnGround(this.progress.newStack(weaponItemId(w.data.id), 1, { hits: w.hits }), f.pos.x - f.facing * 0.4, f.pos.z);
+      this.dropOnGround(this.progress.newStack(weaponItemId(w.data.id), 1, { hits: w.hits, mods: w.mods }), f.pos.x - f.facing * 0.4, f.pos.z);
     }
   }
 
@@ -765,23 +1064,25 @@ export class World {
     return f;
   }
 
+  /** Cousin Mo: stands on the gym mat, not a target, until you ask him to spar. */
   private spawnSparringPartner(s: StationDef): void {
     const f = new Fighter({
       id: this.nextId++,
       name: 'Cousin Mo',
-      team: 'enemy',
+      team: 'neutral',
       attributes: defaultAttributes(6),
       style: getStyle('street'),
-      x: s.x,
-      z: s.z - 0.6,
+      x: SPAR_SPOT.x,
+      z: SPAR_SPOT.z,
       appearance: sparringPartnerAppearance(),
     });
     f.facing = -1;
     this.sim.add(f);
-    this.enemies.push(f);
     const brain = new DummyBrain(f, this.sim.rng);
-    brain.mode = 'block';
+    brain.mode = 'stand';
     this.brains.set(f, brain);
+    this.sparPartner = f;
+    void s;
   }
 
   /** Shopkeepers and bar staff: they stand at their station and can't be hit unless things turn nasty. */
@@ -873,8 +1174,9 @@ export class World {
       options.push({ kind: 'exit', x: ex.x, z: ex.z, label: ex.label, exit: ex, locked: exitLocked(ex, this.progress) });
     }
     for (const l of this.level.levers ?? []) options.push({ kind: 'lever', x: l.x, z: l.z, label: l.label, lever: l, done: this.progress.has(l.sets) });
-    for (const s of this.level.stations ?? []) {
-      if (s.id === 'sparring') continue;
+    for (const s of this.stations) {
+      if (s.id === 'sparring' && (this.duel || !this.sparPartner)) continue;
+      if (s.id === 'recruit' && this.duel) continue;
       const npc = this.npcs.get(s);
       if (npc && (npc.team !== 'neutral' || npc.isKO)) continue;
       options.push({ kind: 'station', x: s.x, z: s.z, label: s.label, station: s, closed: !!s.shop && !this.progress.isShopOpen(s.shop) });
@@ -965,7 +1267,7 @@ export class World {
           if (left) this.dropOnGround(left, p.pos.x, p.pos.z);
         }
       }
-      p.equipWeapon(d.weapon, stack.hits);
+      p.equipWeapon(d.weapon, stack.hits, stack.mods);
       this.progress.save.held = stack;
       this.markPickupTaken(g);
       this.events.emit('item:held', { name: d.name });
@@ -1059,7 +1361,7 @@ export class World {
     const r = this.progress.hold(uid);
     if (!r.ok) return false;
     const st = this.progress.save.held!;
-    this.player.equipWeapon(ITEMS[st.id].weapon!, st.hits);
+    this.player.equipWeapon(ITEMS[st.id].weapon!, st.hits, st.mods);
     return true;
   }
 

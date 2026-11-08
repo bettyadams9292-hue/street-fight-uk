@@ -50,6 +50,98 @@ const RIDING: Pose = {
   drop: -0.02,
 };
 
+type J = [number, number, number];
+/** Poses for training on gym kit, and for pedestrians sitting, chatting and window-shopping. */
+export function activityPose(act: string, time: number): Pose {
+  const t = time;
+  const sn = Math.sin;
+  const base = (j: Partial<Record<string, J>>, drop = 0.03): Pose => ({
+    joints: {
+      hips: [0, 0, 0], spine: [0.05, 0, 0], head: [0, 0, 0],
+      lShoulder: [-0.1, 0, -0.15], lElbow: [-0.2, 0, 0], rShoulder: [-0.1, 0, 0.15], rElbow: [-0.2, 0, 0],
+      lHip: [0, 0, 0.05], lKnee: [0.05, 0, 0], rHip: [0, 0, -0.05], rKnee: [0.05, 0, 0],
+      ...j,
+    } as Pose['joints'],
+    drop,
+  });
+  switch (act) {
+    case 'run': {
+      const p = t * 9;
+      return base({
+        spine: [0.2, 0, 0], lHip: [-0.7 * sn(p), 0, 0.05], rHip: [0.7 * sn(p), 0, -0.05],
+        lKnee: [0.4 + 0.8 * Math.max(0, sn(p + 1.2)), 0, 0], rKnee: [0.4 + 0.8 * Math.max(0, -sn(p + 1.2)), 0, 0],
+        lShoulder: [0.6 * sn(p), 0, -0.15], rShoulder: [-0.6 * sn(p), 0, 0.15], lElbow: [-1.5, 0, 0], rElbow: [-1.5, 0, 0],
+      }, 0.04 + 0.04 * Math.abs(sn(p)));
+    }
+    case 'cycle': {
+      const p = t * 6;
+      return base({
+        spine: [0.45, 0, 0], head: [-0.3, 0, 0],
+        lHip: [-1.25 + 0.4 * sn(p), 0, 0.12], rHip: [-1.25 - 0.4 * sn(p), 0, -0.12],
+        lKnee: [1.5 - 0.45 * sn(p), 0, 0], rKnee: [1.5 + 0.45 * sn(p), 0, 0],
+        lShoulder: [-1.1, 0, -0.2], rShoulder: [-1.1, 0, 0.2], lElbow: [-0.4, 0, 0], rElbow: [-0.4, 0, 0],
+      }, 0.32);
+    }
+    case 'curl': {
+      const a = Math.abs(sn(t * 2.6));
+      const b = Math.abs(sn(t * 2.6 + Math.PI / 2));
+      return base({ lShoulder: [-0.15, 0, -0.12], rShoulder: [-0.15, 0, 0.12], lElbow: [-(0.2 + 1.9 * a), 0, 0], rElbow: [-(0.2 + 1.9 * b), 0, 0], lHip: [0, 0, 0.12], rHip: [0, 0, -0.12] }, 0.05);
+    }
+    case 'press': {
+      // Squat and press: dip, then drive the bar overhead.
+      const k = (sn(t * 2.2) + 1) / 2;
+      return base({
+        lShoulder: [-1.6 - 1.4 * k, 0, -0.35], rShoulder: [-1.6 - 1.4 * k, 0, 0.35], lElbow: [-(1.9 - 1.8 * k), 0, 0], rElbow: [-(1.9 - 1.8 * k), 0, 0],
+        lHip: [-0.9 * (1 - k), 0, 0.2], rHip: [-0.9 * (1 - k), 0, -0.2], lKnee: [1.3 * (1 - k), 0, 0], rKnee: [1.3 * (1 - k), 0, 0], spine: [0.15 * (1 - k), 0, 0],
+      }, 0.05 + 0.32 * (1 - k));
+    }
+    case 'bag': {
+      // One-two on the bag.
+      const p = (t * 3.2) % 2;
+      const left = p < 1;
+      const ext = Math.sin(Math.PI * (p % 1));
+      return base({
+        hips: [0, left ? -0.3 : 0.2, 0], spine: [0.15, left ? -0.25 : 0.25, 0],
+        lShoulder: [-0.95 - (left ? 0.75 * ext : 0), 0, -0.3], lElbow: [-(1.85 - (left ? 1.75 * ext : 0)), 0, 0],
+        rShoulder: [-0.8 - (!left ? 0.85 * ext : 0), 0, 0.4], rElbow: [-(2.1 - (!left ? 2.0 * ext : 0)), 0, 0],
+        lHip: [-0.3, 0, 0.06], lKnee: [0.35, 0, 0], rHip: [0.3, 0, -0.06], rKnee: [0.45, 0, 0],
+      }, 0.06);
+    }
+    case 'speedball': {
+      const p = t * 12;
+      return base({
+        spine: [0.05, 0, 0], head: [-0.1, 0, 0],
+        lShoulder: [-1.55 + 0.25 * sn(p), 0, -0.35], rShoulder: [-1.55 - 0.25 * sn(p), 0, 0.35],
+        lElbow: [-1.5 - 0.3 * sn(p), 0, 0], rElbow: [-1.5 + 0.3 * sn(p), 0, 0],
+      }, 0.04);
+    }
+    case 'skip': {
+      const p = t * 8;
+      const hop = Math.abs(sn(p));
+      return base({
+        lShoulder: [-0.3, 0, -0.5], rShoulder: [-0.3, 0, 0.5], lElbow: [-0.6, 0, 0], rElbow: [-0.6, 0, 0],
+        lHip: [-0.15 * hop, 0, 0.05], rHip: [-0.15 * hop, 0, -0.05], lKnee: [0.3 * hop, 0, 0], rKnee: [0.3 * hop, 0, 0],
+      }, 0.02 - 0.09 * hop);
+    }
+    case 'sit':
+      return base({
+        spine: [0.12, 0, 0], lHip: [-1.5, 0, 0.12], rHip: [-1.5, 0, -0.12], lKnee: [1.5, 0, 0], rKnee: [1.5, 0, 0],
+        lShoulder: [-0.45, 0, -0.1], rShoulder: [-0.45, 0, 0.1], lElbow: [-0.7, 0, 0], rElbow: [-0.7, 0, 0],
+      }, 0.47);
+    case 'talk': {
+      const g = sn(t * 2.1);
+      return base({
+        head: [0.05 * sn(t * 1.3), 0.15 * sn(t * 0.7), 0],
+        rShoulder: [-0.5 - 0.25 * g, 0, 0.35], rElbow: [-1.3 - 0.3 * g, 0, 0], lShoulder: [-0.15, 0, -0.15], lElbow: [-0.4, 0, 0],
+      });
+    }
+    case 'browse':
+      return base({ head: [0.25, 0.1 * sn(t * 0.5), 0], lShoulder: [0.15, 0, -0.1], rShoulder: [0.15, 0, 0.1], lElbow: [-0.35, 0, 0], rElbow: [-0.35, 0, 0] });
+    default:
+      return base({});
+  }
+}
+
 export class FighterView {
   readonly root: THREE.Group;
   private rig: Rig;
@@ -171,6 +263,8 @@ export class FighterView {
 
   private targetPose(moved: number, time: number): { pose: Pose; speed: number } {
     const f = this.fighter;
+    const act = f.activity ?? (moved < 0.002 ? f.ambientPose : null);
+    if (act) return { pose: activityPose(act, time), speed: act === 'speedball' || act === 'run' ? 22 : 14 };
     if (this.mount) {
       // Riding: sat on the seat, hands on the bars, a little lean when moving.
       const lean = Math.min(0.25, moved * 4);

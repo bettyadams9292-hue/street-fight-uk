@@ -43,7 +43,8 @@ export class Simulation {
 
     updateGrapples(this.fighters, commands, this.frame, this.bus, this.rng, this.arena);
     this.separate();
-    for (const f of this.fighters) this.arena.clamp(f.pos);
+    // Passers-by and shopkeepers aren't held inside a locked fight.
+    for (const f of this.fighters) this.arena.clamp(f.pos, undefined, f.team === 'neutral');
 
     resolveCombat(this.fighters, this.frame, this.bus, this.rng, this.arena);
 
@@ -73,6 +74,8 @@ export class Simulation {
         const b = list[j];
         if (a.isKO || b.isKO || a.state === 'knockdown' || b.state === 'knockdown') continue;
         if (a.grapple?.partner === b) continue;
+        // You and your companion never shove each other about: they step round you instead.
+        if (a.team === 'player' && b.team === 'player') continue;
         if (Math.abs(a.pos.z - b.pos.z) > PUSH_DEPTH) continue;
         if (Math.abs(a.pos.y - b.pos.y) > 1.0) continue;
         const dx = b.pos.x - a.pos.x;

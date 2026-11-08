@@ -8,6 +8,9 @@ import type { Fighter, FighterConfig, Perk } from '../fighter/Fighter';
 import { getStyle } from '../data/styles';
 import { defaultProperty, sanitiseProperty, type PropertySave } from '../property/state';
 import { defaultBasement, sanitiseBasement, type BasementSave } from '../business/basement';
+import { defaultGym, sanitiseGym, type GymSave } from '../training/gym';
+import { sanitiseStyleTraining, type StyleTraining } from '../training/styleGyms';
+import { defaultCompanions, sanitiseCompanions, type CompanionSave } from '../companions/companions';
 import {
   GEAR_IDS,
   LEVEL_CAP,
@@ -33,6 +36,8 @@ export const AREA_IDS = [
   'furniture_shop', 'car_dealer', 'bike_shop', 'casino',
   // Stage 7: the basement and the grow shop
   'basement', 'grow_shop',
+  // Stage 8: gym equipment store and the fighting gyms
+  'gym_store', 'boxing_gym', 'karate_dojo', 'wrestling_club',
   // Stage 5: districts
   'residential', 'leisure', 'stadium', 'market', 'docks', 'ind_estate', 'factory', 'precinct', 'mall', 'car_park', 'nightlife', 'underground', 'hq',
 ] as const;
@@ -91,6 +96,12 @@ export interface GameSave {
   stats: { kos: number; secrets: number; bosses: number; deaths: number; robberies: number; arrests: number };
   /** The house's furniture and decor, your cars and bikes, the casino. */
   property: PropertySave;
+  /** Home gym kit, training XP and fatigue. */
+  gym: GymSave;
+  /** Technique ranks in each style, from the fighting gyms. */
+  styleTraining: StyleTraining;
+  /** People you've hired to fight with you. */
+  companions: CompanionSave;
   /** The basement and the business in it. */
   basement: BasementSave;
   /** Seconds actually spent playing in the world: the business's clock. */
@@ -130,6 +141,9 @@ export function newSave(character: PlayerCharacter): GameSave {
     mealBuff: false,
     stats: { kos: 0, secrets: 0, bosses: 0, deaths: 0, robberies: 0, arrests: 0 },
     property: defaultProperty(),
+    gym: defaultGym(),
+    styleTraining: {},
+    companions: defaultCompanions(),
     basement: defaultBasement(),
     playTime: 0,
     savedAt: new Date().toISOString(),
@@ -149,6 +163,12 @@ const GEAR_TO_ITEM: Record<GearId, string> = { wraps: 'wraps', mouthguard: 'mout
 const COSMETIC_TO_ITEM: Record<string, string> = { 'top:bomber': 'bomber_jacket', 'acc:chain': 'chain_silver', 'acc:cap': 'cap_black', 'acc:headguard': 'headguard', 'top:tracksuit': 'tracksuit_top' };
 
 /** Repair a loaded save, migrating a version 2 save. Returns null if it can't be used. */
+function mergeRanks(base: Record<string, number>, gym: StyleTraining): Record<string, number> {
+  const out = { ...base };
+  for (const [k, v] of Object.entries(gym)) if (v && v.rank > 0) out[k] = Math.max(out[k] ?? 1, v.rank);
+  return out;
+}
+
 export function sanitiseSave(raw: unknown): GameSave | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Partial<GameSave> & Record<string, unknown>;
@@ -190,6 +210,9 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     mealBuff: r.mealBuff === true,
     stats: { kos: num(st.kos, 0), secrets: num(st.secrets, 0), bosses: num(st.bosses, 0), deaths: num(st.deaths, 0), robberies: num(st.robberies, 0), arrests: num(st.arrests, 0) },
     property: sanitiseProperty(r.property, AREA_IDS),
+    gym: sanitiseGym(r.gym, typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0),
+    styleTraining: sanitiseStyleTraining(r.styleTraining, learned, list(r.moves, MOVE_UNLOCK_IDS).includes('specials')),
+    companions: sanitiseCompanions(r.companions),
     playTime: typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0,
     basement: sanitiseBasement(r.basement, typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0),
     savedAt: typeof r.savedAt === 'string' ? r.savedAt : base.savedAt,
@@ -658,12 +681,15 @@ export class Progress {
       x,
       z,
       appearance: this.appearance(),
-      styleRanks: c.styleRanks,
+      // Gym ranks add to the background's style ranks (+5% damage a rank).
+      styleRanks: mergeRanks(c.styleRanks, s.styleTraining),
       perks,
       inputBufferFrames: touch ? 12 : undefined,
       grabProtectFrames: 150,
       weapon: s.held ? ITEMS[s.held.id].weapon ?? null : null,
       weaponHits: s.held?.hits,
+      weaponMods: s.held?.mods,
+      styleLevels: Object.fromEntries(Object.entries(s.styleTraining).map(([k, v]) => [k, v?.rank ?? 0])),
       unlocks: { specials: s.moves.includes('specials'), finishers: s.moves.includes('finishers') },
     };
   }
@@ -698,6 +724,10 @@ export class Progress {
     if (s.moves.includes('counter_mastery')) f.stats.addModifier({ id: 'counter_mastery', source: 'move', flat: 'parryFrames', add: 3 });
     if (s.moves.includes('iron_chin')) f.stats.addModifier({ id: 'iron_chin', source: 'move', flat: 'maxPoise', add: 30 });
     if (s.mealBuff) f.stats.addModifier({ id: 'meal', source: 'meal', flat: 'maxHealth', add: 25 });
+    // Cross-training: each style taken to rank 3 at a fighting gym is +1 Technique (up to 4).
+    f.stats.removeModifiersFrom('cross');
+    const cross = Math.min(4, Object.values(s.styleTraining).filter((v) => (v?.rank ?? 0) >= 3).length);
+    if (cross) f.stats.addModifier({ id: 'cross_training', source: 'cross', attribute: 'technique', add: cross });
     f.poise = f.stats.maxPoise;
   }
 }
