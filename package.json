@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "balance": "tsx tests/balance.ts",
-    "test": "tsx tests/sim.test.ts && tsx tests/character.test.ts && tsx tests/stage3.test.ts && tsx tests/world.test.ts && tsx tests/stage5.test.ts && tsx tests/stage6.test.ts && tsx tests/stage7.test.ts && tsx tests/stage8.test.ts && tsx tests/stage9.test.ts && tsx tests/stage10.test.ts && tsx tests/stage11.test.ts && tsx tests/stage12.test.ts"
+    "test": "tsx tests/sim.test.ts && tsx tests/character.test.ts && tsx tests/stage3.test.ts && tsx tests/world.test.ts && tsx tests/stage5.test.ts && tsx tests/stage6.test.ts && tsx tests/stage7.test.ts && tsx tests/stage8.test.ts && tsx tests/stage9.test.ts && tsx tests/stage10.test.ts && tsx tests/stage11.test.ts && tsx tests/stage12.test.ts && tsx tests/stage13.test.ts"
   },
   "dependencies": {
     "three": "^0.170.0"

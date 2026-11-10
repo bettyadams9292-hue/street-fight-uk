@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { CharacterAppearance, TattooSlot } from '../character/Appearance';
-import type { JointName } from './poses';
+import { JOINTS as JOINT_NAMES, type JointName } from './poses';
+import { CLASSIC_METRICS, MODEL_METRICS, type Metrics } from './anim/skeleton';
 import { characterModelsReady, cloneCharacterModel } from './characterModels';
 import { paintedSkinMaterial } from './skinPainter';
 
@@ -15,6 +16,10 @@ export interface Rig {
   /** Rotated around the feet for knockdowns. */
   pitch: THREE.Group;
   joints: Record<JointName, THREE.Object3D>;
+  /** Joint positions and bone lengths, for the animator. */
+  metrics: Metrics;
+  /** Where the hips joint sits at rest. */
+  hipsRest: THREE.Vector3;
   /** Materials that flash white when hit. */
   flashMaterials: THREE.MeshStandardMaterial[];
   dispose(): void;
@@ -336,8 +341,15 @@ export function buildCharacterRig(a: CharacterAppearance): Rig {
       strip.position.y = -0.22;
       knee.add(strip);
     }
-    buildShoe(knee, a, mesh, shoeMat, soleMat);
-    return { hip, knee };
+    // The foot turns at the ankle so the sole can sit flat whatever the shin is doing.
+    const foot = new THREE.Group();
+    foot.position.y = -CLASSIC_METRICS.shin;
+    knee.add(foot);
+    const shoe = new THREE.Group();
+    shoe.position.y = CLASSIC_METRICS.shin;
+    foot.add(shoe);
+    buildShoe(shoe, a, mesh, shoeMat, soleMat);
+    return { hip, knee, foot };
   };
 
   const lArm = makeArm(1);
@@ -361,7 +373,11 @@ export function buildCharacterRig(a: CharacterAppearance): Rig {
       lKnee: lLeg.knee,
       rHip: rLeg.hip,
       rKnee: rLeg.knee,
+      lFoot: lLeg.foot,
+      rFoot: rLeg.foot,
     },
+    metrics: { ...CLASSIC_METRICS, shoulder: [shoulderX, CLASSIC_METRICS.shoulder[1], 0], hip: [hipX * (1 + 0.15 * wt), -0.06, 0] },
+    hipsRest: new THREE.Vector3(0, 0.95, 0),
     dispose() {
       for (const d of disposables) d.dispose();
     },
@@ -534,12 +550,32 @@ function buildModelRig(a: CharacterAppearance): Rig | null {
     wear.add(ring);
   }
 
-  const joints = Object.fromEntries(need.map((n) => [n, bones[n]])) as Record<JointName, THREE.Object3D>;
+  // Feet: bones added when the model loads (characterModels.ts). Without them the foot is one piece with the shin.
+  for (const n of ['lFoot', 'rFoot']) if (!bones[n]) bones[n] = new THREE.Object3D();
+  const joints = Object.fromEntries(JOINT_NAMES.map((n) => [n, bones[n]])) as Record<JointName, THREE.Object3D>;
+  // Measure this body (the female model is a little smaller than the male one).
+  const P = (n: string) => bones[n].position;
+  const v3 = (n: string): [number, number, number] => [P(n).x, P(n).y, P(n).z];
+  const kneeY = P('hips').y + P('lHip').y + P('lKnee').y;
+  const metrics: Metrics = {
+    ...MODEL_METRICS,
+    hipsY: P('hips').y,
+    spine: v3('spine'),
+    head: v3('head'),
+    shoulder: v3('lShoulder'),
+    upperArm: P('lElbow').length(),
+    foreArm: P('lElbow').length() * 1.16,
+    hip: v3('lHip'),
+    thigh: P('lKnee').length(),
+    shin: kneeY - MODEL_METRICS.ankleH,
+  };
   return {
     root,
     pitch,
     flashMaterials,
     joints,
+    metrics,
+    hipsRest: bones.hips.position.clone(),
     dispose() {
       // Geometry and textures are shared with the loaded template; only per-fighter materials and headwear are freed.
       for (const d of disposables) d.dispose();

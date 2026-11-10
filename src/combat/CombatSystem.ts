@@ -30,6 +30,13 @@ export interface HitSphere {
 }
 
 export const COUNTER_MULTIPLIER = 1.5;
+/** Hitting someone out of their own attack: a bit more damage and a few more frames of stun. */
+export const COUNTER_HIT_MULTIPLIER = 1.2;
+export const COUNTER_HIT_STUN = 4;
+/** Damage multiplier for the nth hit of a combo: 100%, 100%, 90%, 80%... down to 50%. */
+export function comboScaling(hit: number): number {
+  return Math.max(0.5, 1 - 0.1 * Math.max(0, hit - 2));
+}
 
 /** Where the attacking limb's hit sphere is this frame. */
 export function hitSphereOf(f: Fighter, m: ActiveMove): HitSphere {
@@ -119,6 +126,19 @@ export function resolveHit(
   target.vitals.markCombat(frame);
   target.lastHitTakenFrame = frame;
 
+  // What the hit looked like, for the reaction animation.
+  const round = ['hook', 'haymaker', 'overhand', 'roundhouse', 'low_kick', 'spin_kick', 'spin_backfist', 'elbow'].includes(move.anim) || isWeaponMove(move);
+  const rear = move.limb === 'rearHand' || move.limb === 'rearFoot';
+  const front = target.isFacing(attacker);
+  target.hitSeq++;
+  target.lastHit = {
+    height: move.height,
+    power: move.kind === 'light' ? 0.5 : move.kind === 'finisher' ? 1 : 0.85 + Math.min(0.15, move.knockback / 40),
+    dir: front ? 1 : -1,
+    side: round ? (rear === front ? 1 : -1) : 0,
+    blocked: false,
+  };
+
   // Hitting someone held by somebody else breaks the hold.
   if (target.grapple) endGrapple(target, bus, 'hit');
 
@@ -141,6 +161,7 @@ export function resolveHit(
   // ---- Parry: block pressed just before impact ----------------------------------
   const parryState = target.state === 'block' || target.state === 'idle' || target.state === 'walk' || target.state === 'blockstun';
   if (canDefend && parryState && frame - target.lastBlockPressFrame <= target.parryWindow) {
+    target.hitSeq--; // turned aside: nothing to react to
     attacker.enterParried(26);
     attacker.knockVel = -dir * 1.5;
     target.counterUntil = frame + COUNTER_WINDOW + (target.style.id === 'karate' ? 15 : 0);
@@ -152,11 +173,18 @@ export function resolveHit(
   }
 
   const repeat = repetitionMultiplier(attacker.repeatCount);
-  const counter = attacker.counterUntil >= frame;
-  const baseDamage = computeDamage(move.damage, attacker.stats, target.stats, repeat, counter ? COUNTER_MULTIPLIER : 1, attacker.masteryMultiplier(move.style));
+  const riposte = attacker.counterUntil >= frame;
+  // Counter hit: caught them mid-swing, before their own attack had come out.
+  const tm = target.state === 'attack' ? target.move : null;
+  const caught = !!tm && tm.frame < tm.startup + tm.active && tm.data.kind !== 'clinch' && !target.grapple;
+  const counter = riposte || caught;
+  // Combo scaling: each hit after the second in a combo does a little less (never below half).
+  const scaling = target.isReeling ? comboScaling(attacker.comboHits + 1) : 1;
+  const baseDamage = computeDamage(move.damage, attacker.stats, target.stats, repeat, (riposte ? COUNTER_MULTIPLIER : caught ? COUNTER_HIT_MULTIPLIER : 1) * scaling, attacker.masteryMultiplier(move.style));
 
   // ---- Blocked ---------------------------------------------------------------
   if (canDefend && target.isBlocking) {
+    target.lastHit.blocked = true;
     const absorb = target.style.blockAbsorb;
     const kick = move.limb === 'leadFoot' || move.limb === 'rearFoot';
     const checked = kick && target.style.defence === 'check';
@@ -195,7 +223,7 @@ export function resolveHit(
   // ---- Clean hit -------------------------------------------------------------
   const clean = rng.chance(attacker.stats.cleanHitChance);
   const damage = baseDamage * (clean ? CLEAN_HIT_DAMAGE : 1);
-  const poiseDamage = move.poiseDamage * attacker.stats.poiseDamageMultiplier * (clean ? CLEAN_HIT_POISE : 1) * (counter ? 1.5 : 1);
+  const poiseDamage = move.poiseDamage * attacker.stats.poiseDamageMultiplier * (clean ? CLEAN_HIT_POISE : 1) * (riposte ? 1.5 : caught ? 1.2 : 1);
   const wasReeling = target.isReeling;
   const wasStaggered = target.state === 'stagger' || target.state === 'guardbreak';
   const airborne = !target.grounded;
@@ -206,8 +234,8 @@ export function resolveHit(
   let reaction: 'flinch' | 'stagger' | 'knockdown' = move.reaction;
   if (airborne) reaction = 'knockdown';
   else if (reaction === 'knockdown' && !poiseBroken && !wasStaggered) reaction = 'stagger';
-  else if (reaction === 'flinch' && (poiseBroken || counter)) reaction = 'stagger';
-  if (counter) attacker.counterUntil = -1;
+  else if (reaction === 'flinch' && (poiseBroken || riposte)) reaction = 'stagger';
+  if (riposte) attacker.counterUntil = -1;
 
   target.vitals.takeDamage(damage, frame, false);
   if (move.staminaDamage) target.vitals.spendStamina(move.staminaDamage * (clean ? 1.3 : 1), frame);
@@ -230,7 +258,7 @@ export function resolveHit(
     return;
   }
 
-  target.enterHitReaction(reaction, move.hitstun);
+  target.enterHitReaction(reaction, move.hitstun + (caught ? COUNTER_HIT_STUN : 0));
   info.reaction = reaction;
   attacker.hitstop = move.hitstop + (counter ? 3 : 0);
   target.hitstop = move.hitstop + (counter ? 3 : 0);

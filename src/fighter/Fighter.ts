@@ -76,6 +76,10 @@ export interface FighterConfig {
 const WALK_SPEED = 2.6; // m/s
 const DEPTH_SPEED = 2.0; // m/s
 const KNOCKBACK_DECEL = 14; // m/s^2
+/** Getting up to walking speed takes about a tenth of a second; stopping a little less. */
+const WALK_ACCEL = 28;
+const WALK_DECEL = 36;
+const approach = (v: number, to: number, step: number) => (Math.abs(to - v) <= step ? to : v + Math.sign(to - v) * step);
 const KNOCKDOWN_FRAMES = 60;
 const GETUP_FRAMES = 28;
 const QUICK_RISE_FROM = 18;
@@ -133,6 +137,15 @@ export class Fighter {
   lastMoveId = '';
   repeatCount = 0;
   lastHitTakenFrame = -9999;
+  /** Counts every hit taken (blocked or not); with `lastHit`, tells the animation how to react. */
+  hitSeq = 0;
+  /** Counts every move started (so the animation knows a new one from a repeat). */
+  moveSeq = 0;
+  /**
+   * The last hit taken: how high, how hard (0..1), from the front (1) or behind (−1),
+   * and which side it came round (+1 the fighter's left, −1 the right, 0 straight on).
+   */
+  lastHit: { height: 'high' | 'mid' | 'low'; power: number; dir: 1 | -1; side: number; blocked: boolean } | null = null;
   /** Frame block was last pressed (for parries). */
   lastBlockPressFrame = -9999;
   /** Counter hits are possible until this frame (after a parry). */
@@ -461,9 +474,15 @@ export class Fighter {
       }
     }
 
-    // Integrate movement.
-    this.vel.x = wantVX;
-    this.vel.z = wantVZ;
+    // Integrate movement. On your feet you have weight: a few frames to get going, a few to stop
+    // (quick enough to stay sharp). Everything else (air control, dodges) is immediate.
+    if ((this.state === 'idle' || this.state === 'walk') && this.grounded) {
+      this.vel.x = approach(this.vel.x, wantVX, (Math.abs(wantVX) > Math.abs(this.vel.x) || wantVX * this.vel.x < 0 ? WALK_ACCEL : WALK_DECEL) * dt);
+      this.vel.z = approach(this.vel.z, wantVZ, (Math.abs(wantVZ) > Math.abs(this.vel.z) || wantVZ * this.vel.z < 0 ? WALK_ACCEL : WALK_DECEL) * dt);
+    } else {
+      this.vel.x = wantVX;
+      this.vel.z = wantVZ;
+    }
 
     if (this.knockVel !== 0) {
       const s = Math.sign(this.knockVel);
@@ -561,6 +580,7 @@ export class Fighter {
     if (!chained && data.kind !== 'clinch') this.comboHits = 0;
 
     this.setState('attack');
+    this.moveSeq++;
     this.move = startMove(data, this.stats.attackSpeed);
     bus.emit('move:started', { fighter: this, move: data });
     return true;

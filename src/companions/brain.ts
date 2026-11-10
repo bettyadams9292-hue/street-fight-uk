@@ -174,7 +174,7 @@ export class CompanionBrain {
     const p = cmd.pressed;
     const s = this.style;
     // Counter-fighters hit straight back after blocking or parrying.
-    if (s.counters && frame - this.lastBlocked < 14 && frame - this.counterSent > 20 && me.isFree) {
+    if (s.counters && frame - this.lastBlocked < 26 && frame - this.counterSent > 30 && me.isFree) {
       this.counterSent = frame;
       cmd.block = false;
       if (rng() < 0.5) p.lp = true;

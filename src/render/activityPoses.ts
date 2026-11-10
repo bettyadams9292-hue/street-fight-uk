@@ -13,7 +13,7 @@ export function activityPose(act: string, time: number): Pose {
   const base = (j: Partial<Record<string, J>>, drop = 0.03): Pose => ({
     joints: {
       hips: [0, 0, 0], spine: [0.05, 0, 0], head: [0, 0, 0],
-      lShoulder: [-0.1, 0, -0.15], lElbow: [-0.2, 0, 0], rShoulder: [-0.1, 0, 0.15], rElbow: [-0.2, 0, 0],
+      lShoulder: [-0.05, 0, 0.06], lElbow: [-0.2, 0, 0], rShoulder: [-0.05, 0, -0.06], rElbow: [-0.2, 0, 0],
       lHip: [0, 0, 0.05], lKnee: [0.05, 0, 0], rHip: [0, 0, -0.05], rKnee: [0.05, 0, 0],
       ...j,
     } as Pose['joints'],

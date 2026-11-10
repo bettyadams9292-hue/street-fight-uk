@@ -28,6 +28,19 @@ export class FighterAI {
   private nextSwapAt = 0;
   private hover: number;
   private detour = 0;
+  /** 0 never trained .. 1 seasoned: decides how much of the craft below they use. */
+  private skill = 0.5;
+  /** Step back out of range until this frame (in and out, not stood in the pocket). */
+  private outUntil = -1;
+  /** My last attack, to see how it went once it's over. */
+  private watched: ActiveMove | null = null;
+  private foeHitSeq = 0;
+  private myHitSeq = 0;
+  /** Attacks of mine blocked in a row; hits I've taken lately. */
+  private blockedStreak = 0;
+  private rattled = 0;
+  private lastStarters: AttackButton[] = [];
+  private bob: number;
 
   constructor(
     readonly self: Fighter,
@@ -37,6 +50,8 @@ export class FighterAI {
     private readonly arena: Arena | null = null,
   ) {
     this.hover = 2.2 + rng.next() * 0.8;
+    this.bob = rng.next() * 6.28;
+    this.skill = Math.max(0, Math.min(1, (self.stats.attr('technique') - 2) / 8));
     this.nextSwapAt = 300 + Math.floor(rng.next() * 300);
   }
 
@@ -144,6 +159,32 @@ export class FighterAI {
     const dist = Math.abs(dx);
     const toward = Math.sign(dx) || me.facing;
 
+    // ---- how's it going? -------------------------------------------------------------------
+    // Taking hits rattles a fighter (more so a novice): they cover up more for a few seconds.
+    if (me.hitSeq !== this.myHitSeq) {
+      if (me.lastHit && !me.lastHit.blocked) this.rattled = Math.min(3, this.rattled + 1);
+      this.myHitSeq = me.hitSeq;
+    }
+    if (frame % 90 === 0 && this.rattled > 0) this.rattled--;
+    // My attack just finished: did it land, get blocked, or miss?
+    if (this.watched && me.move !== this.watched) {
+      const w = this.watched;
+      this.watched = null;
+      const strike = w.data.kind !== 'grab' && w.data.kind !== 'clinch' && !me.grapple;
+      const landed = w.connected && foe.hitSeq !== this.foeHitSeq && !foe.lastHit?.blocked;
+      const blocked = w.connected && !landed;
+      this.blockedStreak = blocked ? this.blockedStreak + 1 : 0;
+      // Hit and move: trained fighters step out after an exchange unless they've hurt you; brawlers stay in your face.
+      const press = landed && (foe.isReeling || this.rng.chance(aggression));
+      if (strike && !press && this.rng.chance(0.25 + this.skill * 0.6 - aggression * 0.25)) this.outUntil = frame + 14 + Math.floor(this.rng.next() * 22);
+      // Missed completely: get out before the receipt arrives.
+      if (strike && !w.connected && this.rng.chance(0.3 + this.skill * 0.5)) this.outUntil = frame + 18;
+    }
+    if (me.state === 'attack' && me.move && me.move !== this.watched) {
+      this.watched = me.move;
+      this.foeHitSeq = foe.hitSeq;
+    }
+
     // ---- keep a planned combo going ----------------------------------------------------
     if (me.state === 'attack' && me.move) {
       const m = me.move;
@@ -188,8 +229,16 @@ export class FighterAI {
           this.mode = 'defend';
           return cmd;
         }
+        // Seen it coming and it's slow: just step back out of range and make it miss.
+        const slow = fm.startup - fm.frame >= 8;
+        if (!grab && slow && dist > fm.data.reach - 0.15 && this.rng.chance(this.skill * 0.35)) {
+          this.outUntil = frame + (fm.startup - fm.frame) + fm.active + 2;
+          cmd.moveX = -toward;
+          this.mode = 'defend';
+          return cmd;
+        }
         if (!grab || me.style.defence === 'sprawl') {
-          if (r < a.parryChance + a.dodgeChance + a.blockChance) {
+          if (r < a.parryChance + a.dodgeChance + a.blockChance + this.rattled * 0.12) {
             this.blockUntil = frame + (fm.startup - fm.frame) + fm.active + 4;
             cmd.block = true;
             this.mode = 'defend';
@@ -222,30 +271,53 @@ export class FighterAI {
       const want = this.hover;
       if (dist < want - 0.3) cmd.moveX = -toward;
       else if (dist > want + 0.5) cmd.moveX = toward * 0.6;
-      const lane = ((me.id % 3) - 1) * 0.9;
-      if (Math.abs(me.pos.z - lane) > 0.2) cmd.moveZ = Math.sign(lane - me.pos.z) * 0.6;
+      // Prowl: drift up and down their lane and shuffle in and out while they wait their turn.
+      const lane = ((me.id % 3) - 1) * 0.9 + 0.35 * Math.sin(frame * 0.021 + this.bob);
+      if (Math.abs(me.pos.z - lane) > 0.2) cmd.moveZ = Math.sign(lane - me.pos.z) * 0.5;
+      if (cmd.moveX === 0 && Math.sin(frame * 0.05 + this.bob * 2) > 0.92) cmd.moveX = toward * 0.4;
       return cmd;
     }
 
     // ---- spacing ------------------------------------------------------------------------------
     if (Math.abs(dz) > 0.22) cmd.moveZ = Math.sign(dz);
-    const range = a.range;
+    // Stepping out after an exchange (or away from a swing): back to just outside their reach, hands up.
+    if (frame <= this.outUntil) {
+      this.mode = 'space';
+      if (dist < a.range + 0.75) cmd.moveX = -toward;
+      else if (this.skill > 0.4) cmd.block = foe.state === 'attack';
+      return cmd;
+    }
+    // Whiff punish: they've swung and missed and are still recovering. Trained fighters make them pay.
+    const fmNow = foe.state === 'attack' ? foe.move : null;
+    const punish = !!fmNow && !fmNow.connected && fmNow.frame >= fmNow.startup + fmNow.active && dist < a.range + 0.45 && Math.abs(dz) < 0.35;
+    if (punish && frame >= this.nextAttackAt - 40 && this.rng.chance(0.06 + this.skill * 0.3)) this.nextAttackAt = frame;
+    // Hurt and not the brave sort: keep a bit more distance.
+    const wary = !a.boss && me.vitals.health < me.vitals.maxHealth * 0.3 && aggression < 0.55 ? 0.25 : 0;
+    const range = a.range + wary;
     if (dist > range + 0.3) {
       this.mode = 'approach';
       cmd.moveX = toward;
-      return cmd;
+      // Untrained and keyed up: sometimes swings before they're close enough.
+      const wild = this.skill < 0.3 && dist < range + 0.75 && frame >= this.nextAttackAt && Math.abs(dz) < 0.35 && this.rng.chance(0.02);
+      if (!wild) return cmd;
     }
     if (dist < range - 0.35) {
       this.mode = 'space';
       cmd.moveX = -toward * 0.6;
     } else {
       this.mode = 'engage';
+      // In range and waiting for the moment: small steps in and out, never flat-footed.
+      if (this.skill > 0.25 && a.grabChance < 0.2) cmd.moveX = toward * 0.3 * Math.sin(frame * 0.09 + this.bob);
     }
 
     // ---- attack -------------------------------------------------------------------------------
     if (frame < this.nextAttackAt || Math.abs(dz) > 0.35) return cmd;
     this.nextAttackAt = frame + Math.round((55 + this.rng.next() * 75) / (aggression + 0.3));
-    if (!this.rng.chance(aggression + 0.1)) return cmd;
+    if (!this.rng.chance(aggression + 0.1)) {
+      // Thought about it and didn't: a short hesitation, not a whole fresh wait.
+      this.nextAttackAt = frame + 65 + Math.floor(this.rng.next() * 45);
+      return cmd;
+    }
     cmd.moveX = 0;
 
     if (me.canFinish(foe)) {
@@ -267,7 +339,21 @@ export class FighterAI {
       cmd.pressed[specials[Math.floor(this.rng.next() * specials.length)]] = true;
       return cmd;
     }
-    const starter = this.pickStarter();
+    // Keep getting blocked? Change it up: grab them, or go to the legs.
+    if (this.blockedStreak >= 2 && this.rng.chance(0.3 + this.skill * 0.4)) {
+      this.blockedStreak = 0;
+      const bias = a.buttonBias;
+      if (dist < 0.85 && this.rng.chance(0.5)) cmd.pressed.grab = true;
+      else if (bias && bias.kick < 0) cmd.pressed[this.rng.chance(bias.heavy) ? 'hp' : 'lp'] = true;
+      else cmd.pressed.lk = true;
+      return cmd;
+    }
+    let starter = this.pickStarter();
+    // Don't lead with the same thing three times running.
+    const ls = this.lastStarters;
+    if (!a.buttonBias && ls.length >= 2 && ls[ls.length - 1] === starter && ls[ls.length - 2] === starter) starter = this.pickStarter();
+    ls.push(starter);
+    if (ls.length > 3) ls.shift();
     cmd.pressed[starter] = true;
     this.plan = this.planCombo(starter, a.comboLength - 1);
     return cmd;
@@ -280,7 +366,9 @@ export class FighterAI {
     if (bias) {
       // A crew member's fighting style: their own mix of kicks and punches, heavy and light.
       const kick = bias.kick > 0 && this.rng.next() < bias.kick;
-      const heavy = !tired && this.rng.next() < bias.heavy;
+      // A heavy hitter keeps loading up when tired (less often); only being spent stops them.
+      const spent = this.self.stats.hasTag('state.exhausted');
+      const heavy = !spent && this.rng.next() < bias.heavy * (tired ? 0.75 : 1);
       return kick ? (heavy ? 'hk' : 'lk') : heavy ? 'hp' : 'lp';
     }
     if (r < 0.42) return 'lp';

@@ -103,20 +103,27 @@ test('the weapons specialist is better armed, worse unarmed', () => {
 });
 
 /** Put a companion in a real fight and count what they throw. */
-function measure(id: string, seconds = 40): { lp: number; hp: number; lk: number; hk: number; grabs: number; blocks: number; counters: number; pickedUp: boolean } {
+function measure(id: string, seconds = 40, seed = 11): { lp: number; hp: number; lk: number; hk: number; grabs: number; blocks: number; counters: number; pickedUp: boolean; leads: number; heavyLeads: number } {
   const p = fresh();
   hireCompanion(p, id);
   const def = COMPANIONS[id];
   const lvl = LEVELS.residential;
   const enc = lvl.encounters.find((e) => !e.optional)!;
-  const w = new World(lvl, p, { entry: lvl.entries[0].id, at: { x: enc.triggerX - 1.5, z: 0 }, seed: 11, companions: [def], civilians: false });
+  const w = new World(lvl, p, { entry: lvl.entries[0].id, at: { x: enc.triggerX - 1.5, z: 0 }, seed, companions: [def], civilians: false });
   const me = w.crew[0].f;
-  const out = { lp: 0, hp: 0, lk: 0, hk: 0, grabs: 0, blocks: 0, counters: 0, pickedUp: false };
+  const out = { lp: 0, hp: 0, lk: 0, hk: 0, grabs: 0, blocks: 0, counters: 0, pickedUp: false, leads: 0, heavyLeads: 0 };
   let lastBlock = -99;
+  let lastMove = -99;
   w.sim.bus.on('move:started', ({ fighter, move }) => {
     if (fighter !== me) return;
     if (move.button in out) (out as unknown as Record<string, number>)[move.button]++;
-    if (w.sim.frame - lastBlock < 16) out.counters++;
+    // The shot that opens an exchange (not a follow-up in a string, which the combo itself decides).
+    if (w.sim.frame - lastMove > 50 && move.button in out) {
+      out.leads++;
+      if (move.button === 'hp' || move.button === 'hk') out.heavyLeads++;
+    }
+    lastMove = w.sim.frame;
+    if (w.sim.frame - lastBlock < 30) out.counters++;
   });
   w.sim.bus.on('grapple:start', ({ holder }) => {
     if (holder === me) out.grabs++;
@@ -153,7 +160,11 @@ test('fighting styles look different in a real fight (what they actually throw)'
   const heavyShare = (o: ReturnType<typeof measure>) => (o.hp + o.hk) / Math.max(1, total(o));
   const kickShare = (o: ReturnType<typeof measure>) => (o.lk + o.hk) / Math.max(1, total(o));
   console.log(JSON.stringify({tank, mia}));
-  assert(heavyShare(tank) > heavyShare(mia) + 0.2, `heavy boxer throws heavy (${heavyShare(tank).toFixed(2)} vs ${heavyShare(mia).toFixed(2)})`);
+  // What a fighter leads with in one 40-second scrap varies a lot, so the habit is measured over several fights,
+  // against the other boxer (same moves, opposite habits: Tank loads up, Jabs picks his shots).
+  const sum = (id: string) => [1, 2, 3, 4, 5, 6].map((sd) => measure(id, 40, sd)).reduce((a, o) => ({ heavy: a.heavy + o.heavyLeads, all: a.all + o.leads }), { heavy: 0, all: 0 });
+  const th = sum('tank'), dh = sum('danny');
+  assert(th.heavy / th.all > dh.heavy / dh.all + 0.15, `heavy boxer leads with heavy shots more than the technical one (${(th.heavy / th.all).toFixed(2)} vs ${(dh.heavy / dh.all).toFixed(2)} over ${th.all}/${dh.all} exchanges)`);
   assert(kickShare(tank) === 0, 'boxer never kicks');
   assert(kickShare(mia) > 0.25, `kickboxer kicks (${kickShare(mia).toFixed(2)})`);
   assert(jonno.grabs > tank.grabs, `wrestler grabs more (${jonno.grabs} vs ${tank.grabs})`);
