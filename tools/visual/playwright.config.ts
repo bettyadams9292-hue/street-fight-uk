@@ -24,6 +24,8 @@ export default defineConfig({
   timeout: 120_000,
   reporter: [['list'], ['html', { outputFolder: './report', open: 'never' }]],
   expect: {
+    // Software WebGL can take several seconds to hand over a frame drawn through the post-processing chain.
+    timeout: 30_000,
     // A few stray pixels of anti-aliasing are not a regression; a moved limb or a changed light is.
     toHaveScreenshot: { maxDiffPixelRatio: 0.002, threshold: 0.15, animations: 'disabled', caret: 'hide' },
   },
