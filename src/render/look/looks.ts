@@ -3,8 +3,9 @@
  * scene without touching a single model: the light the world reflects, the
  * glow around bright things, and the final colour grade.
  *
- * No look is on by default: `?look=<id>` turns one on. Without it the game
- * draws exactly as it always has.
+ * Sodium Night was signed off in phase 2 and is the default. The others stay
+ * selectable with `?look=<id>`; `?look=off` or the Display setting gives the
+ * plain picture, as does low quality.
  *
  * Pure data, no Three.js, so it can be tested and read by tools.
  */
@@ -190,8 +191,18 @@ export const LOOKS: readonly Look[] = [
 
 export const LOOK_BY_ID: Readonly<Record<string, Look>> = Object.fromEntries(LOOKS.map((l) => [l.id, l]));
 
-/** `?look=sodium` → that look; anything else (or nothing) → null, the game as it has always drawn. */
-export function lookFromQuery(search: string): Look | null {
+/** The look signed off in phase 2. It is on by default at medium and high quality. */
+export const DEFAULT_LOOK_ID = 'sodium';
+
+/**
+ * Which look to draw with.
+ *   `?look=off`     the plain picture, whatever the setting says
+ *   `?look=<id>`    that look (for comparing candidates)
+ *   otherwise       the signed-off look if the player's setting is on, else the plain picture
+ */
+export function resolveLook(search: string, settingOn: boolean): Look | null {
   const id = new URLSearchParams(search).get('look');
-  return id ? LOOK_BY_ID[id] ?? null : null;
+  if (id === 'off') return null;
+  if (id && LOOK_BY_ID[id]) return LOOK_BY_ID[id];
+  return settingOn ? LOOK_BY_ID[DEFAULT_LOOK_ID] : null;
 }

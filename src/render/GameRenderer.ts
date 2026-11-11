@@ -13,7 +13,7 @@ import { FRAMING, StudioView, type StudioFraming } from './StudioView';
 import type { CharacterAppearance } from '../character/Appearance';
 import type { World } from '../world/World';
 import { LevelView } from './LevelView';
-import { lookFromQuery, type Look } from './look/looks';
+import { resolveLook, type Look } from './look/looks';
 import { PostFX } from './look/PostFX';
 
 const BG = 0x0a0c12;
@@ -48,7 +48,7 @@ export class GameRenderer {
   /** The look the scene is drawn through (`?look=`), or null for the plain picture. */
   private postfx: PostFX | null = null;
 
-  constructor(private readonly container: HTMLElement, quality: Quality) {
+  constructor(private readonly container: HTMLElement, quality: Quality, lighting = true) {
     this.quality = quality;
     this.renderer = new THREE.WebGLRenderer({ antialias: quality !== 'low', powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -65,7 +65,8 @@ export class GameRenderer {
     this.resize();
     window.addEventListener('resize', () => this.resize());
     this.applyQuality(quality);
-    this.setLook(lookFromQuery(window.location.search));
+    this.lighting = lighting;
+    this.setLook(resolveLook(window.location.search, lighting));
   }
 
   /** Draw through a look, or pass null for the plain picture. Low quality never uses one: it is the fallback for weak devices. */
@@ -73,8 +74,9 @@ export class GameRenderer {
     this.wantedLook = look;
     this.postfx?.dispose();
     this.postfx = null;
-    if (look && this.quality !== 'low') {
-      this.postfx = new PostFX(this.renderer, this.scene, this.cameraRig.camera, look, true);
+    if (look && this.quality !== 'low' && !this.lookDropped) {
+      // Multisampling through the look is the dearest part; only high quality pays for it.
+      this.postfx = new PostFX(this.renderer, this.scene, this.cameraRig.camera, look, this.quality === 'high');
       this.postfx.setInterior(this.interior);
       this.resize();
     }
@@ -86,6 +88,17 @@ export class GameRenderer {
 
   private interior = false;
   private wantedLook: Look | null = null;
+  private lighting = true;
+  /** Set when a device proved too slow for the look even at the lowest resolution; it stays off until reload. */
+  private lookDropped = false;
+
+  /** The player's Display setting: lighting and glow on or off. */
+  setLighting(on: boolean): void {
+    if (on === this.lighting) return;
+    this.lighting = on;
+    this.lookDropped = false;
+    this.setLook(resolveLook(window.location.search, on));
+  }
 
   get canvas(): HTMLCanvasElement {
     return this.renderer.domElement;
@@ -101,9 +114,9 @@ export class GameRenderer {
   }
 
   applyQuality(q: Quality): void {
-    const crossedLow = (q === 'low') !== (this.quality === 'low');
+    const changed = q !== this.quality;
     this.quality = q;
-    if (crossedLow && this.wantedLook) this.setLook(this.wantedLook);
+    if (changed && this.wantedLook) this.setLook(this.wantedLook);
     const dpr = window.devicePixelRatio || 1;
     this.renderer.setPixelRatio((q === 'low' ? Math.min(dpr, 1) : q === 'medium' ? Math.min(dpr, 1.5) : Math.min(dpr, 2)) * (this.resScale ?? 1));
     this.renderer.shadowMap.enabled = q !== 'low';
@@ -336,6 +349,11 @@ export class GameRenderer {
     }
     if (this.slowTime > 1.5 && this.resScale > 0.55) {
       this.setResScale(this.resScale - 0.15);
+      this.slowTime = 0;
+    } else if (this.slowTime > 3 && this.postfx) {
+      // Already at the lowest resolution and still slow: the look goes before the frame rate does.
+      this.lookDropped = true;
+      this.setLook(this.wantedLook);
       this.slowTime = 0;
     } else if (this.fastTime > 6 && this.resScale < 1) {
       this.setResScale(this.resScale + 0.1);

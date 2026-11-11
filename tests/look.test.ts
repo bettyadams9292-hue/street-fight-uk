@@ -1,5 +1,5 @@
-/** Art-direction tests: every candidate look is well formed, and no look is on unless asked for. */
-import { LOOKS, LOOK_BY_ID, lookFromQuery, type EnvSpec, type RGB } from '../src/render/look/looks';
+/** Art-direction tests: every look is well formed, and the default can always be turned off. */
+import { DEFAULT_LOOK_ID, LOOKS, LOOK_BY_ID, resolveLook, type EnvSpec, type RGB } from '../src/render/look/looks';
 
 let passed = 0;
 let failed = 0;
@@ -21,11 +21,15 @@ const rgbOk = (c: RGB, hi = 1) => c.length === 3 && c.every((v) => inRange(v, 0,
 
 console.log('Looks');
 
-test('the game draws plainly unless a look is asked for', () => {
-  assert(lookFromQuery('') === null, 'a look was on with no ?look=');
-  assert(lookFromQuery('?debug&shot=menu') === null, 'other switches turned a look on');
-  assert(lookFromQuery('?look=nonsense') === null, 'an unknown look was accepted');
-  assert(lookFromQuery('?look=sodium')?.id === 'sodium', '?look=sodium not recognised');
+test('the signed-off look is the default, and can always be turned off', () => {
+  assert(DEFAULT_LOOK_ID === 'sodium' && LOOK_BY_ID[DEFAULT_LOOK_ID], 'the default look does not exist');
+  assert(resolveLook('', true)?.id === 'sodium', 'default look not used');
+  assert(resolveLook('?debug&shot=menu', true)?.id === 'sodium', 'other switches changed the look');
+  assert(resolveLook('', false) === null, 'the setting did not turn the look off');
+  assert(resolveLook('?look=off', true) === null, '?look=off did not give the plain picture');
+  assert(resolveLook('?look=ink', false)?.id === 'ink', '?look=<id> should work for comparisons');
+  assert(resolveLook('?look=nonsense', true)?.id === 'sodium', 'an unknown look should fall back to the default');
+  assert(resolveLook('?look=nonsense', false) === null, 'an unknown look turned a look on');
 });
 
 test('there are three distinct looks with file-safe ids', () => {

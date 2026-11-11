@@ -123,7 +123,7 @@ export class Game {
   constructor(gameRoot: HTMLElement, private readonly uiRoot: HTMLElement) {
     const s = this.settings.get();
     this.audio = new AudioManager(s);
-    this.renderer = new GameRenderer(gameRoot, s.quality);
+    this.renderer = new GameRenderer(gameRoot, s.quality, s.lighting);
     this.renderer.onFootstep = () => this.audio.step();
     this.ui = new UIManager(uiRoot);
     this.house = new HouseController({
@@ -1913,6 +1913,7 @@ export class Game {
     }
     this.audio.applySettings(s);
     this.renderer.applyQuality(s.quality);
+    this.renderer.setLighting(s.lighting);
     this.renderer.hitboxes.visible = s.showHitboxes;
     this.hud.setFpsVisible(s.showFps);
     this.updateTouchVisibility();

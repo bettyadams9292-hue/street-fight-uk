@@ -13,6 +13,8 @@ export interface Settings {
   ambienceVolume: number; // 0..1
   screenShake: boolean;
   quality: Quality;
+  /** The Sodium Night look: reflections, glow and colour grade. Never used at low quality. */
+  lighting: boolean;
   touchControls: TouchMode;
   showHitboxes: boolean;
   showFps: boolean;
@@ -29,6 +31,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ambienceVolume: 0.5,
   screenShake: true,
   quality: 'medium',
+  lighting: true,
   touchControls: 'auto',
   showHitboxes: false,
   showFps: false,

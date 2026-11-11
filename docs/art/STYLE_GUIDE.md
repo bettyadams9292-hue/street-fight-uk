@@ -1,12 +1,12 @@
 # STREET FIGHT UK: art direction (phase 2, zero budget)
 
-Status: **awaiting sign-off on one look.** Nothing here changes the default game; every look is behind `?look=`.
+Status: **Look A, Sodium Night, signed off on 11 November 2026.** It is the default at medium and high quality. `?look=off` or Settings > Display > Lighting and glow gives the plain picture; low quality always uses the plain picture.
 
 ## The constraint
 
 There is no money for generators, asset packs or artists. That rules out photoreal characters and bespoke modelled streets, and it decides the style: **stylised, lighting-led, low-detail models made to look deliberate.** The look has to come from light, colour and post-processing, which cost nothing, plus free public-domain (CC0) assets.
 
-## Three candidate looks
+## The three candidates (A was chosen)
 
 Side-by-side frames, each showing the current game and the three looks: `looks_spar.jpg`, `looks_estate.jpg`, `looks_home.jpg`.
 Try them live: add `?look=sodium`, `?look=overcast` or `?look=ink` to the game's address.
@@ -17,7 +17,7 @@ Try them live: add `?look=sodium`, `?look=overcast` or `?look=ink` to the game's
 | B | **Kitchen Sink** (`overcast`) | British social-realist film: drained colour, flat grey light, soft blacks, grain | Most distinctive tone; very British | Shows up low-detail models most; can look drab on a phone |
 | C | **Back-Page Ink** (`ink`) | Printed comic: ink outlines, bold colour, stepped tones | Hides low-detail models best; reads well small | Furthest from "gritty"; outlines are heavy on brick and small text |
 
-**Recommendation: A, Sodium Night.** It needs the least new art to look finished, which matters most with no budget.
+**Chosen: A, Sodium Night.** B and C stay selectable with `?look=overcast` and `?look=ink` for reference.
 
 ## Rules that hold whichever look is chosen
 
@@ -48,7 +48,7 @@ Not used: Higgsfield, Meshy or any paid generator. Revisit when there is a budge
 
 ## What sign-off unlocks (phase 3, the vertical slice)
 
-1. The chosen look becomes the default at medium and high quality, with a setting to turn it off; low quality keeps the plain picture.
+1. Done: the chosen look is the default at medium and high quality, with a setting to turn it off; low quality keeps the plain picture. If a device is still slow at the lowest resolution, the look switches itself off for that session.
 2. One street (the estate) is rebuilt to the guide with CC0 props and proper light placement.
 3. Three characters get the fuller skeleton.
 4. Recorded CC0 sound replaces the synthesised effects for that street.

@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
 import { SHOT_NAMES } from '../../src/debug/shotList';
-import { LOOKS } from '../../src/render/look/looks';
 
 interface ShotState {
   ready: boolean;
@@ -8,11 +7,14 @@ interface ShotState {
   error?: string;
 }
 
-/** Every scene plain (the game as shipped), plus each candidate look on the scenes that show it best. */
-const LOOK_SCENES = ['spar', 'estate', 'home'] as const;
+/**
+ * Every scene as the game ships (the Sodium Night look), plus three scenes with the look off:
+ * the plain picture is what low quality and slow devices get, so it must keep working.
+ */
+const PLAIN_SCENES = ['spar', 'estate', 'home'] as const;
 const cases: { title: string; url: string; file: string }[] = [
   ...SHOT_NAMES.map((n) => ({ title: `scene: ${n}`, url: `/?shot=${n}`, file: `${n}.png` })),
-  ...LOOKS.flatMap((l) => LOOK_SCENES.map((n) => ({ title: `look ${l.id}: ${n}`, url: `/?shot=${n}&look=${l.id}`, file: `look-${l.id}-${n}.png` }))),
+  ...PLAIN_SCENES.map((n) => ({ title: `plain: ${n}`, url: `/?shot=${n}&look=off`, file: `plain-${n}.png` })),
 ];
 
 for (const { title, url, file } of cases) {

@@ -1075,3 +1075,11 @@ No money is available, so the look comes from lighting, colour and post-processi
 - `tests/look.test.ts` (5 tests): no look without `?look=`, and every look stays inside safe limits.
 
 Gate: choose one look. See the style guide for what that unlocks.
+
+### Look signed off: Sodium Night is now the default
+
+- On by default at medium and high quality; **Settings > Display > Lighting and glow** or `?look=off` turns it off. Low quality always draws the plain picture.
+- If frames stay slow at the lowest dynamic resolution, the look turns itself off for the session.
+- Multisampling through the look is used at high quality only.
+- The alley's puddles are now see-through like the street's, so they no longer look like black holes.
+- Visual tests: all ten scenes with the look, plus three with it off. Baselines re-recorded because the default picture changed on purpose.

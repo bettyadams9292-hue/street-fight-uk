@@ -45,8 +45,8 @@ export class ArenaView {
     road.receiveShadow = true;
     g.add(road);
 
-    // Puddles: low roughness picks up the sodium lamps as glints.
-    const puddleMat = new THREE.MeshStandardMaterial({ color: 0x0c0d10, roughness: 0.04, metalness: 0.6 });
+    // Puddles: low roughness picks up the sodium lamps as glints. See-through, like the street's, so they read as water and not as holes.
+    const puddleMat = new THREE.MeshStandardMaterial({ color: 0x2a2e36, roughness: 0.05, metalness: 0.4, transparent: true, opacity: 0.55 });
     const puddles: [number, number, number, number][] = [
       [-3.5, 0.8, 1.1, 0.6], [4.5, -1.2, 0.9, 0.5], [9, 1.2, 1.4, 0.7], [-8.5, -0.6, 1.0, 0.45], [1.2, 3.6, 2.2, 0.8],
     ];

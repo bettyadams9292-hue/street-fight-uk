@@ -63,6 +63,10 @@ export function settingsScreen(store: SettingsStore, ui: UIManager): Screen {
           { value: 'medium', label: 'Medium' },
           { value: 'high', label: 'High' },
         ], s.quality, (v) => store.update({ quality: v })),
+        cycleRow<boolean>('Lighting and glow', [
+          { value: true, label: s.quality === 'low' ? 'On (needs Medium or High)' : 'On' },
+          { value: false, label: 'Off' },
+        ], s.lighting, (v) => store.update({ lighting: v })),
         cycleRow<boolean>('Screen shake', [
           { value: true, label: 'On' },
           { value: false, label: 'Off' },
