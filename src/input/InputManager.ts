@@ -1,6 +1,6 @@
 import { emptyCommand, type CommandFrame, type PressButton } from './Commands';
 
-type GameButton = PressButton;
+export type GameButton = PressButton;
 const PRESS_BUTTONS: readonly GameButton[] = ['lp', 'hp', 'lk', 'hk', 'jump', 'dodge', 'grab', 'swap'];
 export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory' | 'map' | 'character' | 'crew';
 export type InputSource = 'keyboard' | 'gamepad' | 'touch';

@@ -2071,7 +2071,27 @@ export class Game {
 
   // ---- main loop -------------------------------------------------------------
 
-  private frame(t: number): void {
+  /** Visual tests drive the clock themselves (see `advance`); the browser's own frames are then ignored. */
+  manualClock = false;
+
+  /** Run exactly n frames at 60 a second, whatever the real clock says. For the visual tests and debugging. */
+  advance(n: number): void {
+    for (let i = 0; i < n; i++) {
+      // Every frame is simulated and animated; only the last two are drawn, which is all a picture needs.
+      this.renderer.skipDraw = i < n - 2;
+      this.last = this.manualTime;
+      this.manualTime += 1000 / 60;
+      this.frame(this.manualTime, true);
+    }
+  }
+
+  private manualTime = 1000;
+
+  private frame(t: number, forced = false): void {
+    if (this.manualClock && !forced) {
+      requestAnimationFrame((n) => this.frame(n));
+      return;
+    }
     const dt = this.last === 0 ? 1 / 60 : Math.max(0, Math.min(0.1, (t - this.last) / 1000));
     this.last = t;
     this.time += dt;
@@ -2131,7 +2151,7 @@ export class Game {
       this.updatePrompt();
     }
 
-    requestAnimationFrame((n) => this.frame(n));
+    if (!forced) requestAnimationFrame((n) => this.frame(n));
   }
 }
 

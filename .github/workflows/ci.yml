@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: Accept the current pictures as the new visual baseline
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Type check, tests, build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Tests
+        run: npm test
+      - name: Build
+        run: npx vite build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  visual:
+    name: Visual regression
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Install the browser
+        run: |
+          npm install --no-save --no-audit --no-fund @playwright/test@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Record baselines (first run, or when asked)
+        id: record
+        if: ${{ inputs.update_baselines || hashFiles('tools/visual/baseline/*.png') == '' }}
+        run: npx playwright test -c tools/visual/playwright.config.ts --update-snapshots=all
+      - name: Compare with the baselines
+        run: npx playwright test -c tools/visual/playwright.config.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-report
+          path: |
+            tools/visual/report
+            tools/visual/out
+            tools/visual/baseline
+          retention-days: 14
+      - name: Commit the recorded baselines
+        if: ${{ steps.record.outcome == 'success' && github.event_name != 'pull_request' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/visual/baseline
+          if git diff --cached --quiet; then
+            echo "Baselines unchanged."
+          else
+            git commit -m "Visual baselines recorded by CI [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          fi

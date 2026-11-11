@@ -1030,3 +1030,35 @@ Ingredients are taken when prep starts. Stopping during prep puts them back. Sto
 **Tests.** `tests/stage13.test.ts` (24 tests) runs real fights and measures the skeleton every frame: feet on the floor, zero slide on planted feet, legs within reach, joints bending the right way, no jumps between frames, strikes within range of their target, reactions differing by hit, falls and get-ups, stance differences, counter hits, scaling, AI behaviour, and cost (16 fighters well under a millisecond a frame). Dev tools `tools/sheet_sim.ts` and `tools/posesheet.py` draw stick-figure sheets of any move from the real pipeline.
 
 **Not done.** No wrist or neck joints. No medium attack tier or launchers. Kick heights and hook arcs were checked on stick-figure sheets and by measurement, with only one screenshot of the real model (stances).
+
+## Phase 1 report: foundations (CI, visual regression, asset pipeline)
+
+No change to how the game looks or plays. This phase adds the safety net the later visual work needs.
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `dev` or `main` and on pull requests:
+
+1. **Type check, tests, build**: `tsc --noEmit`, all 14 test suites (`npm test`), then `vite build`.
+2. **Visual regression**: draws ten fixed scenes in headless Chrome and compares each with its stored picture.
+
+### Visual regression
+
+- `?shot=<scene>` builds one scripted scene on a fixed clock with fixed random numbers and a blank in-memory save, so it can never read or change a real save. Scenes: `menu`, `stance`, `jab`, `cross`, `kick`, `blocked`, `spar`, `group`, `home`, `estate` (`src/debug/shots.ts`, names in `src/debug/shotList.ts`).
+- `Game.advance(n)` runs exactly `n` frames at 60 a second; only the last two are drawn, so a scene takes a few seconds even with software WebGL.
+- `tools/visual/` holds the Playwright config and spec. Baselines live in `tools/visual/baseline/` and are recorded by CI (pictures depend on the machine that draws them). A scene fails if more than 0.2% of its pixels differ.
+- To accept an intended visual change: run the CI workflow by hand with **update_baselines** ticked. CI records the new pictures, checks they reproduce on a second load, and commits them.
+- Locally: `npm i --no-save @playwright/test && npx playwright install chromium`, then `npm run build && npm run visual`.
+
+### Asset pipeline
+
+- `src/assets/manifest.ts` lists every external file with its size, group, source and built-in fallback.
+- `src/assets/AssetStore.ts` loads them. Loading never throws and never hangs: each asset ends `ready`, `failed`, `timeout` or `off`, and anything not `ready` uses the built-in version.
+- Switches: `?assets=builtin` (or the older `?classic`) uses built-in versions of everything; `?assets=-character_male` turns one asset off.
+- A loading screen with a real progress bar shows from the first paint until the game starts.
+- `tests/assets.test.ts` (11 tests) covers all of the above and checks the manifest against the files in `public/`.
+
+### Not done in this phase
+
+- Model and texture compression (Draco/Meshopt, KTX2): needs `gltf-transform`, to be added as a CI build step when the first new assets arrive in phase 2.
+- No `package-lock.json` yet, so CI installs the newest versions allowed by `package.json`.

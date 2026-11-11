@@ -17,6 +17,11 @@
   <body>
     <div id="game"></div>
     <div id="ui"></div>
+    <div id="boot" role="status" aria-live="polite" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0a0c12;color:#e8e6df;font-family:'Barlow Condensed',system-ui,sans-serif;z-index:50;transition:opacity .25s ease">
+      <div style="font-family:Anton,Impact,sans-serif;font-size:34px;letter-spacing:.04em;color:#f2c230">STREET FIGHT UK</div>
+      <div style="width:min(260px,60vw);height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden"><div id="boot-bar" style="height:100%;width:4%;background:#f2c230;transition:width .2s linear"></div></div>
+      <div id="boot-text" style="font-size:14px;letter-spacing:.08em;opacity:.65">LOADING</div>
+    </div>
     <div class="rotate-hint">Turn your phone sideways to fight</div>
     <script type="module" src="/src/main.ts"></script>
   </body>

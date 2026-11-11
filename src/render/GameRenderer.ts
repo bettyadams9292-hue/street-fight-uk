@@ -18,6 +18,8 @@ const BG = 0x0a0c12;
 
 /** Owns the Three.js renderer and every view of the current simulation. */
 export class GameRenderer {
+  /** Update everything but don't draw. The visual tests fast-forward with this; only the last frames are drawn. */
+  skipDraw = false;
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
   readonly cameraRig: CameraRig;
@@ -274,7 +276,7 @@ export class GameRenderer {
     }
     this.fx.update(dt);
     this.house.update(dt);
-    this.renderer.render(this.scene, this.cameraRig.camera);
+    if (!this.skipDraw) this.renderer.render(this.scene, this.cameraRig.camera);
     this.adaptResolution(dt);
   }
 

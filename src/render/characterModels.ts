@@ -4,48 +4,52 @@
  *
  * Each skeleton has exactly the game's 11 joint names with identity rest
  * rotations, so the pose code in FighterView drives the bones the same way it
- * drove the old procedural groups. If a file fails to load, or `?classic` is in
- * the URL, fighters fall back to the procedural rig.
+ * drove the old procedural groups. If a file fails to load, or `?assets=builtin`
+ * (or the older `?classic`) is in the URL, fighters fall back to the procedural rig.
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { AssetStore, assetOptionsFromQuery, type LoadProgress } from '../assets/AssetStore';
 
 export type ModelBody = 'male' | 'female';
-const templates: Partial<Record<ModelBody, THREE.Object3D>> = {};
+
+/** The game's assets (see assets/manifest.ts). Models are read with the glTF loader and given ankles. */
+export const assets = new AssetStore(typeof window !== 'undefined' ? assetOptionsFromQuery(window.location.search) : {});
+assets.register('model', async (entry) => {
+  const gltf = await new GLTFLoader().loadAsync(entry.url);
+  if (entry.id.startsWith('character_')) {
+    try {
+      addFootBones(gltf.scene);
+    } catch (e) {
+      console.warn('Could not add foot bones; feet stay fixed to the shins.', e);
+    }
+  }
+  return gltf.scene;
+});
+
 let loading: Promise<void> | null = null;
 
-/** Starts loading once; resolves when both are ready (or failed, which falls back). */
-export function loadCharacterModels(): Promise<void> {
-  if (loading) return loading;
-  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('classic')) {
-    loading = Promise.resolve();
-    return loading;
+/**
+ * Starts loading once; resolves when both bodies are ready, or have failed
+ * (in which case fighters use the classic rig). Never rejects.
+ */
+export function loadCharacterModels(onProgress?: (p: LoadProgress) => void): Promise<void> {
+  if (!loading) {
+    loading = assets.load(['character_male', 'character_female'], onProgress).then(() => {
+      for (const r of assets.report()) if (r.usingFallback && r.status !== 'off') console.warn(`${r.id} ${r.status}${r.error ? ` (${r.error})` : ''}; using: ${r.fallback}`);
+    });
   }
-  const loader = new GLTFLoader();
-  const one = (body: ModelBody) =>
-    loader
-      .loadAsync(`/models/character_${body}.glb`)
-      .then((gltf) => {
-        try {
-          addFootBones(gltf.scene);
-        } catch (e) {
-          console.warn('Could not add foot bones; feet stay fixed to the shins.', e);
-        }
-        templates[body] = gltf.scene;
-      })
-      .catch((e: unknown) => console.warn(`The ${body} character model failed to load; using the classic rig.`, e));
-  loading = Promise.all([one('male'), one('female')]).then(() => undefined);
   return loading;
 }
 
 export function characterModelsReady(body: ModelBody = 'male'): boolean {
-  return !!templates[body];
+  return assets.status(`character_${body}`) === 'ready';
 }
 
 /** A fresh, independent copy of the rigged model (own skeleton, shared geometry and textures). */
 export function cloneCharacterModel(body: ModelBody): THREE.Object3D | null {
-  const t = templates[body];
+  const t = assets.get<THREE.Object3D>(`character_${body}`);
   return t ? cloneSkinned(t) : null;
 }
 
