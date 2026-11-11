@@ -1000,3 +1000,33 @@ Ingredients are taken when prep starts. Stopping during prep puts them back. Sto
 - Fixed a Stage 11 bug where a companion re-choosing their own seat could let someone else sit on them.
 
 **Tests.** `tests/stage12.test.ts` has 25 tests covering needs, recipes, saves, every activity, stopping, crew and reachability. The full `npm test` (12 suites, 255 tests) passed.
+
+## Stage 13 report: animation, movement and combat overhaul
+
+**What the engine is.** Characters are an 11-joint skeleton (now 13 with ankles) posed in code; there are no motion-capture clips. This stage replaced how those poses are produced.
+
+**The animator** (`src/render/anim/animator.ts`, `skeleton.ts`; pure maths, no Three.js):
+
+- **Feet.** Each foot is locked to the floor where it stands and only moves by taking a step. Walking, backing off, sidestepping, lunging and being knocked back never slide a planted foot. Hips sink if a leg can't reach; the trailing heel lifts.
+- **Ankles.** Both rigs gained a foot joint. The skinned models had none (feet were part of the shin), so foot bones are added and the foot's skin re-weighted when the model loads (`characterModels.ts`). Soles sit flat; toes never dig into the floor.
+- **Strikes on target.** The striking hand or foot is aimed with two-bone IK at the opponent's surface, so it lands on them and stops there.
+- **Attack timing.** Wind-up, acceleration into the first active frame, follow-through of hips and shoulders, then recovery. Rear-hand punches pivot the rear foot and move the weight forward; kicks stand on one planted leg with the hips over it.
+- **Blending.** Changing state carries the difference from the old pose and fades it out, so nothing snaps.
+- **Hit reactions.** Springs driven by where, how hard and from which side the hit landed: the head snaps back from a jab, the body folds over a body shot, the leg buckles under a low kick; blocked shots drive the gloves back. Stun sways and recovers into the stance instead of freezing. Neck and arm angles are limited.
+- **Falling and getting up.** Knees go, arms come out, land, settle; then sit up, crouch, stand. Hit from behind falls face down. KO lies limp.
+- **Stances.** Seven style stances rewritten, each with its own foot placement. Fighters carry them differently: novices drop their hands and lift their chin, big builds hold their arms wider, tired fighters sag.
+- **Relaxed or fighting.** With no opponent near, characters stand and walk relaxed with swinging arms and turn to face the way they walk. The guard comes up when a fight is on.
+- **Guard.** High guard for head shots, low guard for body and leg attacks.
+
+**Combat.**
+
+- Counter hits: catching someone mid-swing does 20% more damage and 4 more frames of stun.
+- Combo scaling: from the third hit of a combo each hit does 10% less, never below half.
+- Movement has weight: about 6 frames to reach walking speed, 5 to stop.
+- Unchanged: four attack buttons plus special, combo strings, cancel windows, hitstun, blockstun, parry ripostes, hitstop, the anti-spam penalty. There is no separate medium attack button.
+
+**Enemy behaviour** (`FighterAI.ts`): trained fighters step out after an exchange, pull back from slow attacks to make them miss, punish whiffs, and change tactics when blocked repeatedly. Novices sometimes swing from too far. Fighters hit a lot cover up more. Waiting enemies prowl. Hesitating no longer costs a full wait, so low-aggression enemies attack somewhat more often.
+
+**Tests.** `tests/stage13.test.ts` (24 tests) runs real fights and measures the skeleton every frame: feet on the floor, zero slide on planted feet, legs within reach, joints bending the right way, no jumps between frames, strikes within range of their target, reactions differing by hit, falls and get-ups, stance differences, counter hits, scaling, AI behaviour, and cost (16 fighters well under a millisecond a frame). Dev tools `tools/sheet_sim.ts` and `tools/posesheet.py` draw stick-figure sheets of any move from the real pipeline.
+
+**Not done.** No wrist or neck joints. No medium attack tier or launchers. Kick heights and hook arcs were checked on stick-figure sheets and by measurement, with only one screenshot of the real model (stances).
