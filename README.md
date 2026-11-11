@@ -1039,7 +1039,7 @@ No change to how the game looks or plays. This phase adds the safety net the lat
 
 `.github/workflows/ci.yml` runs on every push to `dev` or `main` and on pull requests:
 
-1. **Type check, tests, build**: `tsc --noEmit`, all 15 test suites (`npm test`), then `vite build`.
+1. **Type check, tests, build**: `tsc --noEmit`, all 16 test suites (`npm test`), then `vite build`.
 2. **Visual regression**: draws ten fixed scenes in headless Chrome and compares each with its stored picture.
 
 ### Visual regression
@@ -1083,3 +1083,14 @@ Gate: choose one look. See the style guide for what that unlocks.
 - Multisampling through the look is used at high quality only.
 - The alley's puddles are now see-through like the street's, so they no longer look like black holes.
 - Visual tests: all ten scenes with the look, plus three with it off. Baselines re-recorded because the default picture changed on purpose.
+
+## Phase 3 report (part 1): the estate street pass
+
+Zero-budget work on the vertical slice, all in code. No gameplay data changed.
+
+- **Street pass** (`src/render/street/StreetDressing.ts`) on Tanner Road Estate: lamp pools and beams, uneven puddles, wet gutter, rain splashes, drainpipes, wall grime, weeds, litter, contact shadows. One extra draw call for the splashes; everything else is static.
+- **Cars** (`src/render/street/carModel.ts`): a shaped hatchback replaces the box car in every district. A car between the camera and the player fades to 22% so the fighter is never hidden.
+- **Fallback:** `?street=classic` draws streets and cars the old way.
+- **Tests:** `tests/street.test.ts` (4 tests) and four new pictures along the street (`estate_terrace`, `estate_fight`, `estate_garages`, `estate_gym`) plus one of the classic street. 16 suites, 18 pictures.
+
+Not yet done for the slice: fuller character skeletons, recorded sound and music, modelled hero props, and a frame-rate check on a real device. See `docs/art/STYLE_GUIDE.md` for what each needs.

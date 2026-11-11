@@ -52,3 +52,19 @@ Not used: Higgsfield, Meshy or any paid generator. Revisit when there is a budge
 2. One street (the estate) is rebuilt to the guide with CC0 props and proper light placement.
 3. Three characters get the fuller skeleton.
 4. Recorded CC0 sound replaces the synthesised effects for that street.
+
+## Phase 3 progress: the estate street
+
+Done in code, at no cost:
+
+- **Street pass on Tanner Road Estate:** lamp light pools on the ground and wall, faint beams through the rain, uneven puddles and a wet gutter, rain splashes, drainpipes, damp at the foot of the wall, weeds, litter, and soft contact shadows under street furniture. `?street=classic` turns it off.
+- **Cars:** a shaped hatchback replaces the box car everywhere, and a car standing between the camera and the player fades so you can always see your fighter.
+
+Still to do for the slice, and what each needs:
+
+| Item | Needs |
+|---|---|
+| Fuller character skeleton (hands, neck, clavicles) on three characters | The original 65-bone Quaternius source files |
+| Recorded impacts, footsteps, rain and one music track | CC0 audio files downloaded and attached |
+| Modelled hero props (bins, bench, skip, trolley) | CC0 models downloaded, or built in Blender on a linked computer |
+| 60 frames a second on the minimum device | A real phone to measure on |

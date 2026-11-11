@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { StreetDressing } from './street/StreetDressing';
+import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
+import { buildCar, fadeCar } from './street/carModel';
 import type { Progress } from '../progress/Progress';
 import type { ExitDef, FacadeDef, LevelDef, PropDef, Theme } from '../world/LevelTypes';
 import { propHalf } from '../world/LevelTypes';
@@ -63,6 +66,11 @@ export class LevelView {
   private water: THREE.Mesh | null = null;
   private rain: THREE.LineSegments | null = null;
   private rainBase: Float32Array | null = null;
+  /** Phase 3 street pass (`?street=classic` turns it off). */
+  private readonly streetPass = streetPassEnabled(window.location.search);
+  private dressing: StreetDressing | null = null;
+  /** Cars between the camera and the play area: they fade when the player walks behind one. */
+  private foreCars: { car: THREE.Object3D; x: number; z: number; hx: number; hz: number }[] = [];
 
   constructor(readonly level: LevelDef, private readonly progress: Progress) {
     this.back = backWallZ(level);
@@ -187,6 +195,10 @@ export class LevelView {
     this.buildGraffiti();
     this.buildLights();
     this.buildWeather();
+    if (this.streetPass && SLICE_LEVELS.includes(lvl.id)) {
+      this.dressing = new StreetDressing(lvl, this.back, lvl.bounds.maxZ + 0.4, this.X0, this.X1, seeded(hash(`${lvl.id}:dressing`)));
+      this.group.add(this.dressing.group);
+    }
   }
 
   private buildGround(): void {
@@ -1730,8 +1742,15 @@ export class LevelView {
       }
       case 'car':
       case 'homecar':
-        this.car(g, W, D, c ?? (p.kind === 'homecar' ? '#2a4a6a' : ['#1f2a44', '#6b6b70', '#2a2a2a', '#8a8a82'][Math.floor(this.rnd() * 4)]), p.kind === 'homecar');
+      {
+        const colour = c ?? (p.kind === 'homecar' ? '#2a4a6a' : ['#1f2a44', '#6b6b70', '#2a2a2a', '#8a8a82'][Math.floor(this.rnd() * 4)]);
+        if (this.streetPass) {
+          const car = buildCar(W, D, colour, p.kind === 'homecar');
+          g.add(car);
+          if (p.z > 0.6) this.foreCars.push({ car, x: p.x, z: p.z, hx, hz });
+        } else this.car(g, W, D, colour, p.kind === 'homecar');
         break;
+      }
       case 'van': {
         const paint = this.mat(c ?? '#e8e8e2', 0.35, 0.4);
         B(W, 1.9, D, 0, 1.25, 0, paint);
@@ -2963,6 +2982,11 @@ export class LevelView {
 
   update(dt: number, time: number, world: World, camX: number): void {
     for (const sp of this.spinners) sp.rotation.y = time * 0.25;
+    this.dressing?.update(time, camX);
+    if (this.foreCars.length) {
+      const pl = world.player.pos;
+      for (const c of this.foreCars) fadeCar(c.car, pl.z < c.z - c.hz + 0.2 && Math.abs(pl.x - c.x) < c.hx + 0.6 ? 0.22 : 1, dt);
+    }
     // Shadows follow the action.
     this.sun.position.set(camX - 4, 12, 8);
     this.sun.target.position.set(camX, 0, 0);
@@ -3243,6 +3267,7 @@ export class LevelView {
   }
 
   dispose(): void {
+    this.dressing?.dispose();
     disposeGroup(this.group);
   }
 }

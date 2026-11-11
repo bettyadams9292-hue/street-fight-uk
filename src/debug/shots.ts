@@ -25,6 +25,7 @@ interface Internals {
   showMainMenu(): void;
   startTraining(): void;
   enterArea(area: AreaId, entry: string): void;
+  world: { player: { pos: { x: number; z: number } } } | null;
 }
 
 type SceneFn = (game: Game, g: Internals) => void;
@@ -79,6 +80,19 @@ export const SHOTS: Record<ShotName, SceneFn> = {
   group: (game, g) => training(game, g, 'group', 240),
   home: (game, g) => story(game, g, 'home', 'start'),
   estate: (game, g) => story(game, g, 'estate', 'home'),
+  // The rest of the phase 3 street: terrace, the first fight under the tower, the garages, the boxing club.
+  estate_terrace: (game, g) => {
+    story(game, g, 'estate', 'home', 10);
+    if (g.world) g.world.player.pos.x = 9;
+    game.advance(240);
+  },
+  estate_fight: (game, g) => {
+    story(game, g, 'estate', 'home', 10);
+    if (g.world) g.world.player.pos.x = 20;
+    game.advance(260);
+  },
+  estate_garages: (game, g) => story(game, g, 'estate', 'subway'),
+  estate_gym: (game, g) => story(game, g, 'estate', 'boxing'),
 };
 
 interface ShotState {
