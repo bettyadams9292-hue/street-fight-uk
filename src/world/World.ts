@@ -4,6 +4,7 @@ import { AttackTokens } from '../ai/AttackTokens';
 import { BOSSES, type BossDef, type BossPhase } from '../ai/bosses';
 import { DummyBrain } from '../ai/DummyBrain';
 import { FighterAI } from '../ai/FighterAI';
+import { npc } from '../characters/npcs';
 import { randomAppearance, sparringPartnerAppearance, type CharacterAppearance, type TopStyle } from '../character/Appearance';
 import { CivilianBrain, CIVILIAN_DENSITY, DESPAWN, SPAWN_MAX, SPAWN_MIN, type Hotspot } from './civilians';
 import { CompanionBrain } from '../companions/brain';
@@ -487,6 +488,7 @@ export class World {
   }
 
   private spawnCivilian(): void {
+    const NPC_POOL = 400;
     const p = this.player;
     const b = this.arena.bounds;
     const rng = this.lootRng;
@@ -509,8 +511,8 @@ export class World {
     if (this.sim.fighters.some((o) => Math.abs(o.pos.x - x) < 0.8 && Math.abs(o.pos.z - z) < 0.6)) return;
     const seed = Math.floor(rng.next() * 1e6);
     const r = new Rng(seed);
-    const body = r.next() < 0.5 ? 'female' : 'male';
-    const look: CharacterAppearance = { ...randomAppearance(() => r.next(), body), accessories: [] };
+    // One of the district's regulars (a stable pool of people: the same one always looks the same).
+    const look: CharacterAppearance = npc(this.level.id, seed % NPC_POOL).appearance;
     const f = new Fighter({ id: this.nextId++, name: 'Passer-by', team: 'neutral', attributes: defaultAttributes(4), style: getStyle('street'), x, z, appearance: look });
     f.stats.addModifier({ id: 'stroll', source: 'civilian', stat: 'moveSpeedMult', mul: 0.42 + r.next() * 0.3 });
     this.sim.add(f);

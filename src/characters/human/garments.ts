@@ -69,7 +69,7 @@ export const GARMENTS: Record<GarmentKind, Style> = {
   puffer: { drape: 12, part: 'top', gap: 0.04, fabric: 'nylon', sleeve: 1, hem: 0.0, zip: true, quilt: true, collar: true },
   leather: { drape: 7, part: 'top', gap: 0.016, fabric: 'leather', sleeve: 1, hem: 0.2, zip: true, collar: true },
   denim_jacket: { drape: 8, flare: 0.006, part: 'top', gap: 0.018, fabric: 'denim', sleeve: 1, hem: 0.25, zip: true, collar: true },
-  coat: { drape: 10, flare: 0.02, part: 'top', gap: 0.028, fabric: 'canvas', sleeve: 1, hem: -0.35, zip: true, collar: true },
+  coat: { drape: 10, flare: 0.02, part: 'top', gap: 0.028, fabric: 'canvas', sleeve: 1, hem: -0.14, zip: true, collar: true },
   hivis: { drape: 9, flare: 0.01, part: 'top', gap: 0.02, fabric: 'nylon', sleeve: 1, hem: 0.05, zip: true, bands: true, collar: true },
   vest: { drape: 3, part: 'top', gap: 0.006, fabric: 'cotton', sleeve: 0, hem: 0.1, vest: true },
   trackies: { drape: 10, flare: 0.018, part: 'bottoms', gap: 0.016, fabric: 'nylon', leg: 1, rib: true, stripe: true },

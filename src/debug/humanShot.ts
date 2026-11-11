@@ -10,6 +10,7 @@ import { buildHumanRig } from '../render/human/HumanRig';
 import { araPose, loadAraMocap } from '../render/anim/araPose';
 import { JOINTS } from '../render/poses';
 import { randomAppearance } from '../character/Appearance';
+import { npc } from '../characters/npcs';
 
 const shape = (s: Partial<BodyShape>): BodyShape => ({ ...DEFAULT_SHAPE, ...s, sliders: { ...(s.sliders ?? {}) } });
 
@@ -98,7 +99,8 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
     scene.add(floor);
     const gap = 0.78;
     const q = new URLSearchParams(location.search);
-    const clips = q.get('clips')?.split(',') ?? ANIM_CLIPS;
+    const crowd = q.get('npcs');
+    const clips = crowd ? Array.from({ length: 10 }, (_, i) => (i % 3 === 0 ? 'walk' : 'idle')) : q.get('clips')?.split(',') ?? ANIM_CLIPS;
     const count = mode === 'anims' ? clips.length : LINEUP.length;
     if (mode === 'anims') {
       // Each character plays one Ara clip, frozen at the same moment.
@@ -107,7 +109,7 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
       let seed = 7;
       const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
       clips.forEach((id, i) => {
-        const rig = buildHumanRig(randomAppearance(rnd));
+        const rig = buildHumanRig(crowd ? npc(crowd, i).appearance : randomAppearance(rnd));
         if (!rig) throw new Error('could not build a rig');
         const pose = araPose(id, t, rig.metrics);
         if (!pose) throw new Error(`no clip ${id}`);
