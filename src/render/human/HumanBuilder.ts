@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { BodyData, footY, morph, placeBones, type BodyMeta, type BodyShape } from '../../characters/human/body';
 import { ProxyData, fitProxy, proxySkin, type ProxyMeta } from '../../characters/human/proxy';
+import { cutGarment, hoodShell, GARMENTS, type Fabric, type GarmentKind } from '../../characters/human/garments';
 
 export interface SkinInfo {
   id: string;
@@ -26,7 +27,15 @@ export interface HumanItem {
   colour?: string;
 }
 
+export interface HumanGarment {
+  kind: GarmentKind;
+  colour: string;
+  trim?: string;
+}
+
 export interface HumanSpec {
+  /** Clothes cut from the body (garments.ts), under or instead of pack items. */
+  garments?: HumanGarment[];
   shape: BodyShape;
   skin: string;
   /** Tints the skin texture (for the plain skin, or to adjust a tone). */
@@ -42,7 +51,7 @@ const BASE = '/models/human/';
  * normals by their layer so skin never pokes through, and outer layers (a jumper) cover inner ones
  * (the waistband of trousers).
  */
-const LAYER_GAP: Record<string, number> = { socks: 0.002, bottoms: 0.004, shoes: 0.004, top: 0.007, gloves: 0.003, beard: 0.001 };
+const LAYER_GAP: Record<string, number> = { socks: 0.002, bottoms: 0.004, shoes: 0.004, top: 0.007, suit: 0.006, gloves: 0.003, beard: 0.001 };
 
 interface Assets {
   body: BodyData;
@@ -178,6 +187,62 @@ function dyed(mat: THREE.MeshStandardMaterial, colour: THREE.Color, mean: number
   mat.customProgramCacheKey = () => 'dyed';
 }
 
+const fabrics = new Map<Fabric, THREE.Texture>();
+
+/** A small tiling weave for each fabric (grey; garments are coloured per vertex). */
+function fabricTexture(kind: Fabric): THREE.Texture | null {
+  const hit = fabrics.get(kind);
+  if (hit) return hit;
+  if (typeof document === 'undefined') return null;
+  const S = 64;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const x = c.getContext('2d');
+  if (!x) return null;
+  const img = x.createImageData(S, S);
+  let seed = 1234 + kind.length * 77;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let j = 0; j < S; j++)
+    for (let i = 0; i < S; i++) {
+      let v = 0.85;
+      const n = rnd();
+      switch (kind) {
+        case 'knit':
+          v = 0.72 + 0.22 * Math.abs(Math.sin((i / S) * Math.PI * 8)) + 0.06 * n;
+          break;
+        case 'fleece':
+          v = 0.86 + 0.1 * n;
+          break;
+        case 'denim':
+          v = 0.7 + 0.2 * (((i + j) % 4) < 2 ? 1 : 0) + 0.12 * n;
+          break;
+        case 'nylon':
+          v = 0.9 + 0.05 * n;
+          break;
+        case 'leather':
+          v = 0.8 + 0.18 * n * n;
+          break;
+        case 'canvas':
+          v = 0.75 + 0.15 * ((i % 2) ^ (j % 2)) + 0.1 * n;
+          break;
+        default:
+          v = 0.82 + 0.12 * (((i + j * 2) % 3) === 0 ? 1 : 0) * n;
+      }
+      const k = (j * S + i) * 4;
+      img.data[k] = img.data[k + 1] = img.data[k + 2] = Math.round(Math.min(1, v) * 255);
+      img.data[k + 3] = 255;
+    }
+  x.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(kind === 'denim' || kind === 'canvas' ? 60 : 40, kind === 'denim' || kind === 'canvas' ? 60 : 40);
+  t.colorSpace = THREE.SRGBColorSpace;
+  fabrics.set(kind, t);
+  return t;
+}
+
+const FABRIC_ROUGH: Record<Fabric, number> = { fleece: 0.95, knit: 0.95, nylon: 0.45, denim: 0.9, leather: 0.38, cotton: 0.88, canvas: 0.85 };
+
 /** Smooth normals for points indexed by base vertex, so UV seams don't show as creases. */
 function smoothNormals(pos: Float32Array, nBase: number, tris: ArrayLike<number>, toBase: ArrayLike<number>): Float32Array {
   const n = new Float32Array(nBase * 3);
@@ -252,6 +317,15 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
   // ---- body, minus what clothes cover ----
   const hidden = new Uint8Array(body.meta.baseCount);
   for (const { data } of items) for (const v of data.hides) hidden[v] = 1;
+  const nb = smoothNormals(pos, body.meta.baseCount, body.index, body.renderBase);
+  const cut = (spec.garments ?? []).map((g) => {
+    const lin = (hex: string): [number, number, number] => {
+      const c = new THREE.Color(hex);
+      return [c.r, c.g, c.b];
+    };
+    return { g, mesh: cutGarment(body, pos, nb, g.kind, { main: lin(g.colour), trim: g.trim ? lin(g.trim) : undefined }) };
+  });
+  for (const { mesh } of cut) for (let v = 0; v < mesh.covers.length; v++) if (mesh.covers[v]) hidden[v] = 1;
   const keep: number[] = [];
   const idx = body.index;
   for (let i = 0; i < idx.length; i += 3) {
@@ -260,7 +334,6 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
     const b2 = body.renderBase[idx[i + 2]];
     if (!(hidden[b0] && hidden[b1] && hidden[b2])) keep.push(idx[i], idx[i + 1], idx[i + 2]);
   }
-  const nb = smoothNormals(pos, body.meta.baseCount, body.index, body.renderBase);
   const rc = body.meta.renderCount;
   const P = new Float32Array(rc * 3);
   const N = new Float32Array(rc * 3);
@@ -357,6 +430,68 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
     mesh.frustumCulled = false;
   };
   if (eyes) addProxy(eyes, spec.eyeColour);
+
+  // ---- clothes cut from the body ----
+  for (const { g, mesh } of cut) {
+    const m = mesh.render.length;
+    const gg = new THREE.BufferGeometry();
+    const uv = new Float32Array(m * 2);
+    const si = new Uint16Array(m * 4);
+    const sw = new Float32Array(m * 4);
+    for (let l = 0; l < m; l++) {
+      const r = mesh.render[l];
+      const v = body.renderBase[r];
+      uv[l * 2] = body.uv[r * 2];
+      uv[l * 2 + 1] = body.uv[r * 2 + 1];
+      for (let k = 0; k < 4; k++) {
+        si[l * 4 + k] = body.skinIndex[v * 4 + k];
+        sw[l * 4 + k] = body.skinWeight[v * 4 + k] / 255;
+      }
+    }
+    gg.setAttribute('position', new THREE.BufferAttribute(mesh.position, 3));
+    gg.setAttribute('normal', new THREE.BufferAttribute(mesh.normal, 3));
+    gg.setAttribute('color', new THREE.BufferAttribute(mesh.colour, 3));
+    gg.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    gg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
+    gg.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
+    gg.setIndex(new THREE.BufferAttribute(mesh.index, 1));
+    disposables.push(gg);
+    const mat = new THREE.MeshStandardMaterial({ map: fabricTexture(mesh.fabric), vertexColors: true, roughness: FABRIC_ROUGH[mesh.fabric], side: THREE.DoubleSide });
+    disposables.push(mat);
+    const gm = new THREE.SkinnedMesh(gg, mat);
+    gm.name = g.kind;
+    root.add(gm);
+    gm.bind(skeleton);
+    gm.castShadow = true;
+    gm.receiveShadow = true;
+    gm.frustumCulled = false;
+    if (GARMENTS[g.kind].hood) {
+      const h = hoodShell(body, pos, 0.02);
+      const hg = new THREE.BufferGeometry();
+      hg.setAttribute('position', new THREE.BufferAttribute(h.position, 3));
+      hg.setAttribute('normal', new THREE.BufferAttribute(h.normal, 3));
+      const bi = body.meta.boneNames.indexOf(h.bone);
+      const cnt = h.position.length / 3;
+      const hsi = new Uint16Array(cnt * 4);
+      const hsw = new Float32Array(cnt * 4);
+      for (let i = 0; i < cnt; i++) {
+        hsi[i * 4] = bi;
+        hsw[i * 4] = 1;
+      }
+      hg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(hsi, 4));
+      hg.setAttribute('skinWeight', new THREE.BufferAttribute(hsw, 4));
+      hg.setIndex(new THREE.BufferAttribute(h.index, 1));
+      disposables.push(hg);
+      const hm = new THREE.MeshStandardMaterial({ color: new THREE.Color(g.colour).multiplyScalar(0.92), roughness: FABRIC_ROUGH[mesh.fabric] });
+      disposables.push(hm);
+      const hood = new THREE.SkinnedMesh(hg, hm);
+      hood.name = 'hood';
+      root.add(hood);
+      hood.bind(skeleton);
+      hood.castShadow = true;
+      hood.frustumCulled = false;
+    }
+  }
   for (const { it, data } of items) addProxy(data, it.colour);
 
   let top = 0;

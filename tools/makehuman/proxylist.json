@@ -1,0 +1,344 @@
+[
+ {
+  "id": "eyes",
+  "slot": "eyes",
+  "mhclo": "/tmp/mhdata/data/eyes/high-poly/high-poly.mhclo",
+  "source": "MakeHuman data (eyes/high-poly), CC0",
+  "tint": false
+ },
+ {
+  "id": "polo_shirt",
+  "slot": "top",
+  "mhclo": "/tmp/mh/shirts01/clothes/namuhekam_male_polo_shirt/namuhekam_male_polo_shirt.mhclo",
+  "source": "MakeHuman asset pack shirts01 (namuhekam_male_polo_shirt), CC0",
+  "tags": [
+   "male",
+   "casual"
+  ]
+ },
+ {
+  "id": "tee_male",
+  "slot": "top",
+  "mhclo": "/tmp/mh/shirts01/clothes/elvs_crude_t-shirt_male/elvs_crude_t-shirt_male.mhclo",
+  "source": "MakeHuman asset pack shirts01 (elvs_crude_t-shirt_male), CC0",
+  "tags": [
+   "male",
+   "casual"
+  ]
+ },
+ {
+  "id": "tee_female",
+  "slot": "top",
+  "mhclo": "/tmp/mh/shirts01/clothes/joepal_crude_t-shirt_female/joepal_crude_t-shirt_female.mhclo",
+  "source": "MakeHuman asset pack shirts01 (joepal_crude_t-shirt_female), CC0",
+  "tags": [
+   "female",
+   "casual"
+  ]
+ },
+ {
+  "id": "tee_tucked",
+  "slot": "top",
+  "mhclo": "/tmp/mh/shirts01/clothes/toigo_basic_tucked_t-shirt/toigo_basic_tucked_t-shirt.mhclo",
+  "source": "MakeHuman asset pack shirts01 (toigo_basic_tucked_t-shirt), CC0",
+  "tags": [
+   "female",
+   "casual"
+  ]
+ },
+ {
+  "id": "jumper_fisherman",
+  "slot": "top",
+  "mhclo": "/tmp/mh/shirts01/clothes/toigo_fisherman_sweater/toigo_fisherman_sweater.mhclo",
+  "source": "MakeHuman asset pack shirts01 (toigo_fisherman_sweater), CC0",
+  "tags": [
+   "unisex",
+   "warm"
+  ]
+ },
+ {
+  "id": "vest_top",
+  "slot": "top",
+  "mhclo": "/tmp/mh/shirts01/clothes/toigo_keyhole_tank_top/toigo_keyhole_tank_top.mhclo",
+  "source": "MakeHuman asset pack shirts01 (toigo_keyhole_tank_top), CC0",
+  "tags": [
+   "female",
+   "night"
+  ]
+ },
+ {
+  "id": "camisole",
+  "slot": "top",
+  "mhclo": "/tmp/mh/shirts01/clothes/toigo_camisole_top/toigo_camisole_top.mhclo",
+  "source": "MakeHuman asset pack shirts01 (toigo_camisole_top), CC0",
+  "tags": [
+   "female",
+   "night"
+  ]
+ },
+ {
+  "id": "cargo_trousers",
+  "slot": "bottoms",
+  "mhclo": "/tmp/mh/pants01/clothes/cortu_cargo_pants/cortu_cargo_pants.mhclo",
+  "source": "MakeHuman asset pack pants01 (cortu_cargo_pants), CC0",
+  "tags": [
+   "unisex",
+   "work"
+  ]
+ },
+ {
+  "id": "denim_shorts",
+  "slot": "bottoms",
+  "mhclo": "/tmp/mh/pants01/clothes/cortu_jeans_shorts/cortu_jeans_shorts.mhclo",
+  "source": "MakeHuman asset pack pants01 (cortu_jeans_shorts), CC0",
+  "tags": [
+   "unisex",
+   "summer"
+  ]
+ },
+ {
+  "id": "wool_trousers",
+  "slot": "bottoms",
+  "mhclo": "/tmp/mh/pants01/clothes/toigo_wool_pants/toigo_wool_pants.mhclo",
+  "source": "MakeHuman asset pack pants01 (toigo_wool_pants), CC0",
+  "tags": [
+   "unisex",
+   "smart"
+  ]
+ },
+ {
+  "id": "plimsolls",
+  "slot": "shoes",
+  "mhclo": "/tmp/mh/shoes01/clothes/toigo_mj_cloth_shoes/toigo_mj_cloth_shoes.mhclo",
+  "source": "MakeHuman asset pack shoes01 (toigo_mj_cloth_shoes), CC0",
+  "tags": [
+   "unisex"
+  ]
+ },
+ {
+  "id": "ankle_boots_m",
+  "slot": "shoes",
+  "mhclo": "/tmp/mh/shoes01/clothes/toigo_ankle_boots_male/toigo_ankle_boots_male.mhclo",
+  "source": "MakeHuman asset pack shoes01 (toigo_ankle_boots_male), CC0",
+  "tags": [
+   "male"
+  ]
+ },
+ {
+  "id": "ankle_boots_f",
+  "slot": "shoes",
+  "mhclo": "/tmp/mh/shoes01/clothes/toigo_ankle_boots_female/toigo_ankle_boots_female.mhclo",
+  "source": "MakeHuman asset pack shoes01 (toigo_ankle_boots_female), CC0",
+  "tags": [
+   "female"
+  ]
+ },
+ {
+  "id": "t_bars",
+  "slot": "shoes",
+  "mhclo": "/tmp/mh/shoes01/clothes/cortu_t-bar/cortu_t-bar.mhclo",
+  "source": "MakeHuman asset pack shoes01 (cortu_t-bar), CC0",
+  "tags": [
+   "female",
+   "smart"
+  ]
+ },
+ {
+  "id": "flat_cap",
+  "slot": "hat",
+  "mhclo": "/tmp/mh/hats01/clothes/jujube_newsboy_cap/jujube_newsboy_cap.mhclo",
+  "source": "MakeHuman asset pack hats01 (jujube_newsboy_cap), CC0",
+  "tags": [
+   "male"
+  ]
+ },
+ {
+  "id": "cloche_hat",
+  "slot": "hat",
+  "mhclo": "/tmp/mh/hats01/clothes/aethelraed_unraed_cloche_hat/aethelraed_unraed_cloche_hat.mhclo",
+  "source": "MakeHuman asset pack hats01 (aethelraed_unraed_cloche_hat), CC0",
+  "tags": [
+   "female"
+  ]
+ },
+ {
+  "id": "glasses_library",
+  "slot": "glasses",
+  "mhclo": "/tmp/mh/glasses01/clothes/frankyaye_glasses_library_male/frankyaye_glasses_library_male.mhclo",
+  "source": "MakeHuman asset pack glasses01 (frankyaye_glasses_library_male), CC0"
+ },
+ {
+  "id": "glasses_frames",
+  "slot": "glasses",
+  "mhclo": "/tmp/mh/glasses01/clothes/spamrakuen_tbm_glasses_frames_01/spamrakuen_tbm_glasses_frames_01.mhclo",
+  "source": "MakeHuman asset pack glasses01 (spamrakuen_tbm_glasses_frames_01), CC0"
+ },
+ {
+  "id": "fight_gloves",
+  "slot": "gloves",
+  "mhclo": "/tmp/mh/gloves01/clothes/learning_mma_fighting_gloves/learning_mma_fighting_gloves.mhclo",
+  "source": "MakeHuman asset pack gloves01 (learning_mma_fighting_gloves), CC0"
+ },
+ {
+  "id": "gloves_short",
+  "slot": "gloves",
+  "mhclo": "/tmp/mh/gloves01/clothes/toigo_gloves_short/toigo_gloves_short.mhclo",
+  "source": "MakeHuman asset pack gloves01 (toigo_gloves_short), CC0"
+ },
+ {
+  "id": "socks_low",
+  "slot": "socks",
+  "mhclo": "/tmp/mh/underwear04/clothes/joepal_crude_low_socks/joepal_crude_low_socks.mhclo",
+  "source": "MakeHuman asset pack underwear04 (joepal_crude_low_socks), CC0"
+ },
+ {
+  "id": "socks_high",
+  "slot": "socks",
+  "mhclo": "/tmp/mh/underwear04/clothes/joepal_crude_high_socks/joepal_crude_high_socks.mhclo",
+  "source": "MakeHuman asset pack underwear04 (joepal_crude_high_socks), CC0"
+ },
+ {
+  "id": "face_mask",
+  "slot": "mask",
+  "mhclo": "/tmp/mh/masks01/clothes/joepal_medical_mouth_protection/joepal_medical_mouth_protection.mhclo",
+  "source": "MakeHuman asset pack masks01 (joepal_medical_mouth_protection), CC0"
+ },
+ {
+  "id": "beard_scruffy",
+  "slot": "beard",
+  "mhclo": "/tmp/mh/bodyparts05/clothes/wdg_scruffy_beard/wdg_scruffy_beard.mhclo",
+  "source": "MakeHuman asset pack bodyparts05 (wdg_scruffy_beard), CC0"
+ },
+ {
+  "id": "beard_viking",
+  "slot": "beard",
+  "mhclo": "/tmp/mh/bodyparts05/clothes/rehmanpolanski_beard_viking/rehmanpolanski_beard_viking.mhclo",
+  "source": "MakeHuman asset pack bodyparts05 (rehmanpolanski_beard_viking), CC0"
+ },
+ {
+  "id": "moustache_viking",
+  "slot": "beard",
+  "mhclo": "/tmp/mh/bodyparts05/clothes/rehmanpolanski_moustache_viking/rehmanpolanski_moustache_viking.mhclo",
+  "source": "MakeHuman asset pack bodyparts05 (rehmanpolanski_moustache_viking), CC0"
+ },
+ {
+  "id": "hair_short_messy",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/cortu_short_messy_hair/cortu_short_messy_hair.mhclo",
+  "source": "MakeHuman asset pack hair01 (cortu_short_messy_hair), CC0",
+  "tags": [
+   "male",
+   "short"
+  ]
+ },
+ {
+  "id": "hair_crop",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/culturalibre_hair_02/culturalibre_hair_02.mhclo",
+  "source": "MakeHuman asset pack hair01 (culturalibre_hair_02), CC0",
+  "tags": [
+   "male",
+   "short"
+  ]
+ },
+ {
+  "id": "hair_swept",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/culturalibre_hair_05/culturalibre_hair_05.mhclo",
+  "source": "MakeHuman asset pack hair01 (culturalibre_hair_05), CC0",
+  "tags": [
+   "male",
+   "short"
+  ]
+ },
+ {
+  "id": "hair_shaggy",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/faydaen_hair_1/faydaen_hair_1.mhclo",
+  "source": "MakeHuman asset pack hair01 (faydaen_hair_1), CC0",
+  "tags": [
+   "unisex",
+   "medium"
+  ]
+ },
+ {
+  "id": "hair_bob",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/toigo_blunt_bob/toigo_blunt_bob.mhclo",
+  "source": "MakeHuman asset pack hair01 (toigo_blunt_bob), CC0",
+  "tags": [
+   "female",
+   "medium"
+  ]
+ },
+ {
+  "id": "hair_bob_bangs",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/toigo_inverted_bob_with_bangs/toigo_inverted_bob_with_bangs.mhclo",
+  "source": "MakeHuman asset pack hair01 (toigo_inverted_bob_with_bangs), CC0",
+  "tags": [
+   "female",
+   "medium"
+  ]
+ },
+ {
+  "id": "hair_bobcut",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/littleright_bobcut_hair/littleright_bobcut_hair.mhclo",
+  "source": "MakeHuman asset pack hair01 (littleright_bobcut_hair), CC0",
+  "tags": [
+   "female",
+   "short"
+  ]
+ },
+ {
+  "id": "hair_bun",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/rehmanpolanski_hair_bun_brown/rehmanpolanski_hair_bun_brown.mhclo",
+  "source": "MakeHuman asset pack hair01 (rehmanpolanski_hair_bun_brown), CC0",
+  "tags": [
+   "female",
+   "updo"
+  ]
+ },
+ {
+  "id": "hair_braid",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/elvs_french_braid_variation/elvs_french_braid_variation.mhclo",
+  "source": "MakeHuman asset pack hair01 (elvs_french_braid_variation), CC0",
+  "tags": [
+   "female",
+   "long"
+  ]
+ },
+ {
+  "id": "hair_long",
+  "slot": "hair",
+  "mhclo": "/tmp/mhpk/hair01/hair/culturalibre_hair_01/culturalibre_hair_01.mhclo",
+  "source": "MakeHuman asset pack hair01 (culturalibre_hair_01), CC0",
+  "tags": [
+   "female",
+   "long"
+  ]
+ },
+ {
+  "id": "suit_m",
+  "slot": "suit",
+  "mhclo": "/tmp/mh/suits01/clothes/toigo_male_double-breasted_suit/toigo_male_double-breasted_suit.mhclo",
+  "source": "MakeHuman asset pack suits01 (toigo_male_double-breasted_suit), CC0",
+  "tags": [
+   "male",
+   "formal"
+  ]
+ },
+ {
+  "id": "suit_f",
+  "slot": "suit",
+  "mhclo": "/tmp/mh/suits01/clothes/toigo_female_double-breasted_suit/toigo_female_double-breasted_suit.mhclo",
+  "source": "MakeHuman asset pack suits01 (toigo_female_double-breasted_suit), CC0",
+  "tags": [
+   "female",
+   "formal"
+  ]
+ }
+]

@@ -14,23 +14,25 @@ export const LINEUP: HumanSpec[] = [
     shape: shape({ gender: 1, age: 0.12, muscle: 0.75, weight: 0.45, height: 0.6 }),
     skin: 'm_light',
     eyeColour: '#5a7da0',
-    items: [{ id: 'tee_tucked', colour: '#e8e4dc' }, { id: 'cargo_trousers', colour: '#3c4434' }, { id: 'plimsolls' }, { id: 'fight_gloves', colour: '#a01818' }],
+    garments: [{ kind: 'hoodie', colour: '#2b2e35' }, { kind: 'trackies', colour: '#1b1d22' }],
+    items: [{ id: 'plimsolls' }, { id: 'fight_gloves', colour: '#a01818' }, { id: 'hair_crop', colour: '#3a2a1c' }],
   },
   {
     shape: shape({ gender: 0, age: 0.1, muscle: 0.5, weight: 0.4, height: 0.45, caucasian: 0.3, african: 0, asian: 0.7 }),
     skin: 'f_eurasian_young',
-    items: [{ id: 'tee_female', colour: '#2a4d7a' }, { id: 'denim_shorts' }, { id: 'socks_high' }, { id: 'plimsolls' }],
+    items: [{ id: 'tee_female', colour: '#2a4d7a' }, { id: 'denim_shorts' }, { id: 'socks_high' }, { id: 'plimsolls' }, { id: 'hair_bob_bangs', colour: '#151210' }],
   },
   {
     shape: shape({ gender: 1, age: 0.2, muscle: 0.6, weight: 0.65, height: 0.55, african: 1, caucasian: 0 }),
     skin: 'm_african',
     eyeColour: '#3a2414',
-    items: [{ id: 'polo_shirt', colour: '#1d1d1d' }, { id: 'wool_trousers', colour: '#55504a' }, { id: 'ankle_boots_m' }, { id: 'beard_scruffy' }],
+    garments: [{ kind: 'puffer', colour: '#1f2a44' }, { kind: 'jeans', colour: '#2a3d5c' }],
+    items: [ { id: 'ankle_boots_m' }, { id: 'beard_scruffy' }, { id: 'hair_short_messy', colour: '#121010' }],
   },
   {
     shape: shape({ gender: 0, age: 0.45, muscle: 0.4, weight: 0.7, height: 0.4, african: 0, asian: 0, caucasian: 0.4 }),
     skin: 'f_indian',
-    items: [{ id: 'jumper_fisherman', colour: '#7a2a3a' }, { id: 'wool_trousers', colour: '#2b2b33' }, { id: 't_bars' }, { id: 'glasses_frames' }],
+    items: [{ id: 'jumper_fisherman', colour: '#7a2a3a' }, { id: 'wool_trousers', colour: '#2b2b33' }, { id: 't_bars' }, { id: 'glasses_frames' }, { id: 'hair_bun', colour: '#1c1612' }],
   },
   {
     shape: shape({ gender: 1, age: 0.8, muscle: 0.4, weight: 0.6, height: 0.45 }),
@@ -40,12 +42,14 @@ export const LINEUP: HumanSpec[] = [
   {
     shape: shape({ gender: 1, age: 0.15, muscle: 0.9, weight: 0.85, height: 0.75 }),
     skin: 'm_tattooed',
-    items: [{ id: 'tee_male', colour: '#c8c4bc' }, { id: 'cargo_trousers', colour: '#22252a' }, { id: 'ankle_boots_m' }, { id: 'beard_viking' }],
+    garments: [{ kind: 'tracksuit_top', colour: '#7d1a1a' }, { kind: 'trackies', colour: '#7d1a1a' }],
+    items: [ { id: 'ankle_boots_m' }, { id: 'beard_viking' }, { id: 'hair_swept', colour: '#6a4a2c' }],
   },
   {
     shape: shape({ gender: 0, age: 0.15, muscle: 0.55, weight: 0.5, height: 0.6 }),
     skin: 'f_redhead',
-    items: [{ id: 'camisole', colour: '#141414' }, { id: 'cargo_trousers', colour: '#5c6650' }, { id: 'ankle_boots_f' }, { id: 'gloves_short' }],
+    garments: [{ kind: 'hivis', colour: '#e8a010' }, { kind: 'work_trousers', colour: '#2b2e35' }],
+    items: [ { id: 'ankle_boots_f' }, { id: 'gloves_short' }, { id: 'hair_braid', colour: '#9a4a1e' }],
   },
 ];
 

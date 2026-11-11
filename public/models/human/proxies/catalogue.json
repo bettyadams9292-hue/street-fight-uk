@@ -1391,5 +1391,641 @@
   },
   "zDepth": 50,
   "source": "MakeHuman asset pack bodyparts05 (rehmanpolanski_moustache_viking), CC0"
+ },
+ "hair_short_messy": {
+  "slot": "hair",
+  "name": "hair short messy",
+  "tags": [
+   "male",
+   "short"
+  ],
+  "count": 832,
+  "renderCount": 832,
+  "indexCount": 3276,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 4992,
+   "off": 14976,
+   "renderProxy": 24960,
+   "uv": 26624,
+   "index": 33280,
+   "delete": 39832
+  },
+  "bytes": 39832,
+  "material": {
+   "diffuse": "hair_short_messy_d.webp",
+   "normal": "hair_short_messy_n.webp",
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (cortu_short_messy_hair), CC0"
+ },
+ "hair_crop": {
+  "slot": "hair",
+  "name": "hair crop",
+  "tags": [
+   "male",
+   "short"
+  ],
+  "count": 2314,
+  "renderCount": 2541,
+  "indexCount": 10380,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 13884,
+   "off": 41652,
+   "renderProxy": 69420,
+   "uv": 74504,
+   "index": 94832,
+   "delete": 115592
+  },
+  "bytes": 115592,
+  "material": {
+   "diffuse": "hair_crop_d.webp",
+   "normal": null,
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (culturalibre_hair_02), CC0"
+ },
+ "hair_swept": {
+  "slot": "hair",
+  "name": "hair swept",
+  "tags": [
+   "male",
+   "short"
+  ],
+  "count": 2604,
+  "renderCount": 4713,
+  "indexCount": 14844,
+  "index32": false,
+  "deleteCount": 60,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 15624,
+   "off": 46872,
+   "renderProxy": 78120,
+   "uv": 87548,
+   "index": 125252,
+   "delete": 154940
+  },
+  "bytes": 155060,
+  "material": {
+   "diffuse": "hair_swept_d.webp",
+   "normal": null,
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (culturalibre_hair_05), CC0"
+ },
+ "hair_shaggy": {
+  "slot": "hair",
+  "name": "hair shaggy",
+  "tags": [
+   "unisex",
+   "medium"
+  ],
+  "count": 541,
+  "renderCount": 647,
+  "indexCount": 2508,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    3924,
+    10589,
+    2.9301
+   ],
+   "y_scale": [
+    1524,
+    4370,
+    5.724
+   ],
+   "z_scale": [
+    1892,
+    3946,
+    1.8311
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 3248,
+   "off": 9740,
+   "renderProxy": 16232,
+   "uv": 17528,
+   "index": 22704,
+   "delete": 27720
+  },
+  "bytes": 27720,
+  "material": {
+   "diffuse": "hair_shaggy_d.webp",
+   "normal": null,
+   "colour": [
+    0.588,
+    0.588,
+    0.588
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (faydaen_hair_1), CC0"
+ },
+ "hair_bob": {
+  "slot": "hair",
+  "name": "hair bob",
+  "tags": [
+   "female",
+   "medium"
+  ],
+  "count": 1510,
+  "renderCount": 1837,
+  "indexCount": 8574,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 9060,
+   "off": 27180,
+   "renderProxy": 45300,
+   "uv": 48976,
+   "index": 63672,
+   "delete": 80820
+  },
+  "bytes": 80820,
+  "material": {
+   "diffuse": "hair_bob_d.webp",
+   "normal": "hair_bob_n.webp",
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (toigo_blunt_bob), CC0"
+ },
+ "hair_bob_bangs": {
+  "slot": "hair",
+  "name": "hair bob bangs",
+  "tags": [
+   "female",
+   "medium"
+  ],
+  "count": 2670,
+  "renderCount": 3031,
+  "indexCount": 14988,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 16020,
+   "off": 48060,
+   "renderProxy": 80100,
+   "uv": 86164,
+   "index": 110412,
+   "delete": 140388
+  },
+  "bytes": 140388,
+  "material": {
+   "diffuse": "hair_bob_bangs_d.webp",
+   "normal": "hair_bob_bangs_n.webp",
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (toigo_inverted_bob_with_bangs), CC0"
+ },
+ "hair_bobcut": {
+  "slot": "hair",
+  "name": "hair bobcut",
+  "tags": [
+   "female",
+   "short"
+  ],
+  "count": 1901,
+  "renderCount": 1919,
+  "indexCount": 8076,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.48
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.3298
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.9221
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 11408,
+   "off": 34220,
+   "renderProxy": 57032,
+   "uv": 60872,
+   "index": 76224,
+   "delete": 92376
+  },
+  "bytes": 92376,
+  "material": {
+   "diffuse": "hair_bobcut_d.webp",
+   "normal": null,
+   "colour": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (littleright_bobcut_hair), CC0"
+ },
+ "hair_bun": {
+  "slot": "hair",
+  "name": "hair bun",
+  "tags": [
+   "female",
+   "updo"
+  ],
+  "count": 2524,
+  "renderCount": 2756,
+  "indexCount": 13296,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 15144,
+   "off": 45432,
+   "renderProxy": 75720,
+   "uv": 81232,
+   "index": 103280,
+   "delete": 129872
+  },
+  "bytes": 129872,
+  "material": {
+   "diffuse": "hair_bun_d.webp",
+   "normal": null,
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (rehmanpolanski_hair_bun_brown), CC0"
+ },
+ "hair_braid": {
+  "slot": "hair",
+  "name": "hair braid",
+  "tags": [
+   "female",
+   "long"
+  ],
+  "count": 6452,
+  "renderCount": 6902,
+  "indexCount": 24456,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 38712,
+   "off": 116136,
+   "renderProxy": 193560,
+   "uv": 207364,
+   "index": 262580,
+   "delete": 311492
+  },
+  "bytes": 311492,
+  "material": {
+   "diffuse": "hair_braid_d.webp",
+   "normal": null,
+   "colour": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (elvs_french_braid_variation), CC0"
+ },
+ "hair_long": {
+  "slot": "hair",
+  "name": "hair long",
+  "tags": [
+   "female",
+   "long"
+  ],
+  "count": 3138,
+  "renderCount": 3406,
+  "indexCount": 12684,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2048
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8461
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 18828,
+   "off": 56484,
+   "renderProxy": 94140,
+   "uv": 100952,
+   "index": 128200,
+   "delete": 153568
+  },
+  "bytes": 153568,
+  "material": {
+   "diffuse": "hair_long_d.webp",
+   "normal": "hair_long_n.webp",
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hair01 (culturalibre_hair_01), CC0"
+ },
+ "suit_m": {
+  "slot": "suit",
+  "name": "suit m",
+  "tags": [
+   "male",
+   "formal"
+  ],
+  "count": 5393,
+  "renderCount": 6021,
+  "indexCount": 30186,
+  "index32": false,
+  "deleteCount": 3596,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 32360,
+   "off": 97076,
+   "renderProxy": 161792,
+   "uv": 173836,
+   "index": 222004,
+   "delete": 282376
+  },
+  "bytes": 289568,
+  "material": {
+   "diffuse": "suit_m_d.webp",
+   "normal": "suit_m_n.webp",
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack suits01 (toigo_male_double-breasted_suit), CC0"
+ },
+ "suit_f": {
+  "slot": "suit",
+  "name": "suit f",
+  "tags": [
+   "female",
+   "formal"
+  ],
+  "count": 5393,
+  "renderCount": 6021,
+  "indexCount": 30186,
+  "index32": false,
+  "deleteCount": 3608,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 32360,
+   "off": 97076,
+   "renderProxy": 161792,
+   "uv": 173836,
+   "index": 222004,
+   "delete": 282376
+  },
+  "bytes": 289592,
+  "material": {
+   "diffuse": "suit_f_d.webp",
+   "normal": "suit_f_n.webp",
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack suits01 (toigo_female_double-breasted_suit), CC0"
  }
 }
