@@ -13,6 +13,7 @@ import { Progress, newSave, type AreaId } from '../progress/Progress';
 import type { TrainingMode, TrainingOpponent } from '../core/TrainingMode';
 import type { GameButton } from '../input/InputManager';
 import { reseed } from './deterministic';
+import { LEVELS } from '../world/levels';
 import type { ShotName } from './shotList';
 
 /** The private parts of Game the scenes drive. Kept here so Game itself stays closed to everything else. */
@@ -54,6 +55,12 @@ function story(game: Game, g: Internals, area: AreaId, entry: string, frames = 1
   game.advance(frames);
 }
 
+function district(game: Game, g: Internals, area: string): void {
+  const lvl = (LEVELS as Record<string, { entries: { id: string }[] }>)[area];
+  if (!lvl) throw new Error(`no area ${area}`);
+  story(game, g, area as AreaId, lvl.entries[0].id, 150);
+}
+
 export const SHOTS: Record<ShotName, SceneFn> = {
   menu: (game, g) => {
     g.showMainMenu();
@@ -93,6 +100,17 @@ export const SHOTS: Record<ShotName, SceneFn> = {
   },
   estate_garages: (game, g) => story(game, g, 'estate', 'subway'),
   estate_gym: (game, g) => story(game, g, 'estate', 'boxing'),
+  // One picture per district, from its first entrance, for the city rebuild.
+  high_street: (game, g) => district(game, g, 'high_street'),
+  city: (game, g) => district(game, g, 'city'),
+  industrial: (game, g) => district(game, g, 'industrial'),
+  residential: (game, g) => district(game, g, 'residential'),
+  precinct: (game, g) => district(game, g, 'precinct'),
+  nightlife: (game, g) => district(game, g, 'nightlife'),
+  docks: (game, g) => district(game, g, 'docks'),
+  market: (game, g) => district(game, g, 'market'),
+  ind_estate: (game, g) => district(game, g, 'ind_estate'),
+  alleys: (game, g) => district(game, g, 'alleys'),
 };
 
 interface ShotState {

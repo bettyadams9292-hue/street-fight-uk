@@ -1,6 +1,7 @@
 import './ui/styles.css';
 import { Game } from './Game';
 import { loadCharacterModels } from './render/characterModels';
+import { loadCityKit } from './render/city/CityKit';
 
 const gameRoot = document.getElementById('game');
 const uiRoot = document.getElementById('ui');
@@ -44,13 +45,16 @@ const start = (): void => {
 const begin = async (): Promise<void> => {
   // The visual tests need every run to be identical: fixed random numbers and a fixed clock.
   if (shot) (await import('./debug/deterministic')).makeDeterministic();
+  // The city kit loads alongside the characters (about 3 MB); without it streets keep their built-in frontages.
+  const kit = new URLSearchParams(location.search).get('city') === 'classic' ? Promise.resolve(null) : loadCityKit();
   const models = loadCharacterModels((p) => {
     if (bootBar) bootBar.style.width = `${Math.round(4 + p.fraction * 96)}%`;
     if (bootText) bootText.textContent = p.done < p.total ? 'LOADING CHARACTERS' : 'READY';
   });
   // Load the character models first, but never hold the game up for long: without them fighters use the
   // classic rig. (The visual tests wait for however long it takes, so their pictures don't depend on the network.)
-  await (shot ? models : Promise.race([models, new Promise((r) => setTimeout(r, 6000))]));
+  const assets = Promise.all([models, kit]);
+  await (shot ? assets : Promise.race([assets, new Promise((r) => setTimeout(r, 6000))]));
   start();
 };
 

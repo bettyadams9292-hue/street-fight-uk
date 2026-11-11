@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
+import { KIT_KINDS } from '../city/catalogue';
+import { hashString, planFacade, type FacadePlan } from '../city/compose';
+import { cityKit } from './city/CityKit';
+import { buildCityFacades, type SignedFacade } from './city/CityFacades';
 import { buildCar, fadeCar } from './street/carModel';
 import type { Progress } from '../progress/Progress';
 import type { ExitDef, FacadeDef, LevelDef, PropDef, Theme } from '../world/LevelTypes';
@@ -51,6 +55,10 @@ export class LevelView {
   private readonly X0: number;
   private readonly X1: number;
   private readonly rnd: () => number;
+  /** How many buildings the city kit put up in this area (0 = none, the built-in frontages). */
+  cityBuilt = 0;
+  /** Doorways the city kit built, so exits use them instead of drawing their own. */
+  private kitDoors: number[] = [];
   private mats = new Map<string, THREE.MeshStandardMaterial>();
   private pickupMeshes = new Map<string, THREE.Object3D>();
   private itemMeshes = new Map<string, THREE.Object3D>();
@@ -177,10 +185,32 @@ export class LevelView {
     // Carry the end facades on past the edges so the camera never sees a gap.
     const fac = [...lvl.facades].sort((a, b) => a.x0 - b.x0);
     if (fac.length) {
-      this.buildFacade({ ...fac[0], x0: this.X0, x1: fac[0].x0, label: undefined });
-      for (const f of fac) this.buildFacade(f);
       const last = fac[fac.length - 1];
-      this.buildFacade({ ...last, x0: last.x1, x1: this.X1, label: undefined });
+      const run: FacadeDef[] = [{ ...fac[0], x0: this.X0, x1: fac[0].x0, label: undefined }, ...fac, { ...last, x0: last.x1, x1: this.X1, label: undefined }];
+      // Kit-built frontages (the city builder) where the kit has loaded; everything else keeps its own builder.
+      const kit = new URLSearchParams(window.location.search).get('city') === 'classic' ? null : cityKit();
+      const plans: FacadePlan[] = [];
+      const signs: SignedFacade[] = [];
+      let recent: string[] = [];
+      for (const f of run) {
+        if (f.x1 - f.x0 < 0.05) continue;
+        if (!kit || !KIT_KINDS.has(f.kind)) {
+          this.buildFacade(f);
+          recent = [];
+          continue;
+        }
+        const doors = lvl.exits.filter((e) => e.kind === 'door' && e.x >= f.x0 && e.x <= f.x1).map((e) => e.x);
+        const plan = planFacade({ kind: f.kind, x0: f.x0, x1: f.x1, label: f.label, theme: lvl.theme, seed: hashString(`${lvl.id}:${f.x0}`), doors, recent });
+        recent = [...recent, ...plan.buildings.map((b) => b.design.id)].slice(-2);
+        plans.push(plan);
+        signs.push({ kind: f.kind, label: f.label === 'back' ? undefined : f.label, colour: f.colour, buildings: plan.buildings });
+      }
+      if (kit && plans.length) {
+        const city = buildCityFacades(kit, plans, this.back, signs);
+        this.group.add(city);
+        this.cityBuilt = plans.reduce((n, p) => n + p.buildings.length, 0);
+        this.kitDoors = plans.flatMap((p) => p.buildings.flatMap((b) => b.doors));
+      }
     }
     if (themeProfile(lvl.theme).skyline !== 'none') this.buildSkyline();
     for (const w of lvl.walls ?? []) this.buildWall(w);
@@ -2842,8 +2872,14 @@ export class LevelView {
 
   private buildExit(ex: ExitDef): void {
     if (ex.kind === 'door') {
-      // A lit doorway on the wall behind the door point.
       const z = this.back + 0.05;
+      // The building already has a real doorway here: just sign it.
+      const kitDoor = this.kitDoors.find((d) => Math.abs(d - ex.x) <= 1.2);
+      if (kitDoor !== undefined) {
+        this.exitSign(ex, kitDoor, 3.25, this.back + 0.35);
+        return;
+      }
+      // A lit doorway on the wall behind the door point.
       const isStairs = ex.id.includes('stairs') || ex.id.includes('steps');
       const frame = this.mat('#e8e4d8', 0.6);
       this.box(1.4, 0.12, 0.14, ex.x, 2.35, z + 0.05, frame, false);

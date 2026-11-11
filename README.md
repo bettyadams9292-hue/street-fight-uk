@@ -1100,3 +1100,13 @@ Not yet done for the slice: fuller character skeletons, recorded sound and music
 - `docs/characters/ASSESSMENT.md`: findings from the real model files, root causes, an honest statement of what is reachable, and the plan.
 - **Pedestrians rewritten** (`src/world/civilians.ts`): committed passing sides, overtaking, alternative lines when blocked, staged stuck recovery, individual tempers, and reactions to fights. `tests/npc.test.ts` (7 tests) and `tools/npc_metrics.ts`.
 - The character model work itself needs Blender running on the development PC; it has not started.
+
+## City rebuild (System A, part 1): Downtown City MegaKit
+
+- **Kit import:** `tools/megakit/convert.py` turns the Quaternius Downtown City MegaKit (Standard, CC0) into `public/models/city/`: 144 pieces in one geometry file and 26 textures at 1024 px WebP, 3 MB in all (the download is 235 MB). Licence copied alongside.
+- **Building catalogue** (`src/city/catalogue.ts`): 70 designs (15 residential, 15 commercial, 10 office, 10 industrial, 10 entertainment, 10 civic). Each is a composition of ground floor, upper-floor bay rhythm, wall, bands, pilasters and roofline; a test rejects two designs with the same composition.
+- **Composer** (`src/city/compose.ts`): splits each frontage into plots, picks designs by district profile (`src/city/districts.ts`) without repeating a neighbour, and lays pieces storey by storey on the kit's 2 m by 3 m grid. Doorways land on the game's door exits.
+- **Rendering** (`src/render/city/`): one instanced mesh per piece and material for the whole area; paint, brick tone and lit or dark windows per instance. Shop, pub, club, casino, office and house signs drawn over the kit buildings.
+- **Coverage:** 16 frontage kinds across 14 outdoor districts are now kit-built. Garages, fences, hoardings, containers, stands, platforms, the multi-storey, ruins and the HQ keep their previous builders.
+- **Fallback:** `?city=classic`, or the kit failing to load, gives the previous frontages.
+- **Tests:** `tests/city.test.ts` (10). Ten new district scenes in the visual tests.
