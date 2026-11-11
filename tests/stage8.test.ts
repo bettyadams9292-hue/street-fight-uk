@@ -198,7 +198,13 @@ test('pedestrians: neutral, capped, on standable ground, untouchable, and they s
       assert(!w.arena.blocked(f.pos.x, f.pos.z, 0.2), `inside something at ${f.pos.x.toFixed(2)},${f.pos.z.toFixed(2)}`);
     }
     if (w.activeEncounter) {
-      assert(w.civilians.every((c2) => c2.brain.activity === 'flee'), 'everyone scatters when a fight starts');
+      // Stage 13 overhaul: people react by temper. The nervy run, the nosy watch, the steady walk away; nobody near carries on as if nothing happened.
+      for (const c2 of w.civilians) {
+        const near = Math.abs(c2.f.pos.x - w.player.pos.x) < 13;
+        if (near && c2.brain.temper === 'nervy') assert(c2.brain.activity === 'flee', 'a nervy bystander did not run');
+        if (near && c2.brain.temper === 'nosy') assert(c2.brain.activity === 'watch', 'a nosy bystander did not stop to watch');
+        if (near) assert(!c2.brain.pose || c2.brain.temper === 'steady', 'someone near a fight carried on chatting');
+      }
       break;
     }
   }

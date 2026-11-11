@@ -1039,7 +1039,7 @@ No change to how the game looks or plays. This phase adds the safety net the lat
 
 `.github/workflows/ci.yml` runs on every push to `dev` or `main` and on pull requests:
 
-1. **Type check, tests, build**: `tsc --noEmit`, all 16 test suites (`npm test`), then `vite build`.
+1. **Type check, tests, build**: `tsc --noEmit`, all 17 test suites (`npm test`), then `vite build`.
 2. **Visual regression**: draws ten fixed scenes in headless Chrome and compares each with its stored picture.
 
 ### Visual regression
@@ -1094,3 +1094,9 @@ Zero-budget work on the vertical slice, all in code. No gameplay data changed.
 - **Tests:** `tests/street.test.ts` (4 tests) and four new pictures along the street (`estate_terrace`, `estate_fight`, `estate_garages`, `estate_gym`) plus one of the classic street. 16 suites, 18 pictures.
 
 Not yet done for the slice: fuller character skeletons, recorded sound and music, modelled hero props, and a frame-rate check on a real device. See `docs/art/STYLE_GUIDE.md` for what each needs.
+
+## Character overhaul (priority zero): assessment and pedestrian rewrite
+
+- `docs/characters/ASSESSMENT.md`: findings from the real model files, root causes, an honest statement of what is reachable, and the plan.
+- **Pedestrians rewritten** (`src/world/civilians.ts`): committed passing sides, overtaking, alternative lines when blocked, staged stuck recovery, individual tempers, and reactions to fights. `tests/npc.test.ts` (7 tests) and `tools/npc_metrics.ts`.
+- The character model work itself needs Blender running on the development PC; it has not started.

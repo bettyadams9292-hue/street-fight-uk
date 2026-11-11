@@ -517,7 +517,7 @@ export class World {
     const brain = new CivilianBrain(f, this.arena, r, this.civLanes, 'walk', () => this.sim.fighters);
     if (spot) brain.claim(spot, spot.taken, this.sim.frame);
     else brain.dir = x < p.pos.x ? 1 : -1;
-    if (this.activeEncounter) brain.flee(p.pos.x);
+    if (this.activeEncounter) brain.react(p.pos.x, this.sim.frame);
     this.brains.set(f, brain);
     this.civilians.push({ f, brain });
   }
@@ -536,12 +536,12 @@ export class World {
     const frame = this.sim.frame;
     const calm = !this.activeEncounter && !this.locked && !this.enemies.some((e) => !e.isKO);
     for (const c of this.civilians) {
-      if (calm) c.brain.calm();
+      if (calm) c.brain.calm(frame);
       c.f.ambientPose = c.brain.pose;
       // Walkers passing a free hotspot sometimes stop there.
       if (c.brain.activity === 'walk' && frame % 20 === c.f.id % 20) {
         const h = this.hotspots.find((s) => s.taken < s.slots && Math.abs(s.x - c.f.pos.x) < 0.6);
-        if (h && this.lootRng.next() < 0.35) c.brain.claim(h, h.taken, frame);
+        if (h && this.lootRng.next() < 0.35 && !this.sim.fighters.some((o) => o !== c.f && Math.abs(o.pos.x - h.x) < 0.5 && Math.abs(o.pos.z - h.z) < 0.4 && !this.civilians.some((q) => q.f === o && q.brain.spot === h))) c.brain.claim(h, h.taken, frame);
       }
     }
     if (frame % 30 !== 0) return;
@@ -733,7 +733,11 @@ export class World {
     this.sim.bus.on('hit:parried', ({ target }) => this.memberOf(target)?.brain.onBlocked(this.sim.frame));
     if (opts.civilians !== false) this.setUpCivilians();
     this.events.on('encounter:start', () => {
-      for (const c of this.civilians) c.brain.flee(this.player.pos.x);
+      for (const c of this.civilians) c.brain.react(this.player.pos.x, this.sim.frame);
+    });
+    // A punch thrown anywhere on the street turns heads, not just a scripted fight.
+    this.sim.bus.on('hit:landed', ({ target }) => {
+      for (const c of this.civilians) if (Math.abs(c.f.pos.x - target.pos.x) < 9) c.brain.react(target.pos.x, this.sim.frame);
     });
     // Duel bookkeeping: what you landed and blocked against your sparring partner or challenger.
     this.sim.bus.on('hit:landed', ({ attacker, target }) => {
