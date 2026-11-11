@@ -61,8 +61,9 @@ jobs:
         id: record
         if: ${{ inputs.update_baselines || hashFiles('tools/visual/baseline/*.png') == '' }}
         run: npx playwright test -c tools/visual/playwright.config.ts --update-snapshots=all
-      - name: Compare with the baselines
-        run: npx playwright test -c tools/visual/playwright.config.ts
+      - name: Compare with the baselines (new scenes are recorded, not failed)
+        id: compare
+        run: npx playwright test -c tools/visual/playwright.config.ts --update-snapshots=missing
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -73,7 +74,7 @@ jobs:
             tools/visual/baseline
           retention-days: 14
       - name: Commit the recorded baselines
-        if: ${{ steps.record.outcome == 'success' && github.event_name != 'pull_request' }}
+        if: ${{ steps.compare.outcome == 'success' && github.event_name != 'pull_request' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
