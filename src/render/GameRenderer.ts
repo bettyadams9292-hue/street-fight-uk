@@ -13,6 +13,8 @@ import { FRAMING, StudioView, type StudioFraming } from './StudioView';
 import type { CharacterAppearance } from '../character/Appearance';
 import type { World } from '../world/World';
 import { LevelView } from './LevelView';
+import { lookFromQuery, type Look } from './look/looks';
+import { PostFX } from './look/PostFX';
 
 const BG = 0x0a0c12;
 
@@ -43,6 +45,8 @@ export class GameRenderer {
     camDist: number;
   } | null = null;
   onFootstep: (() => void) | null = null;
+  /** The look the scene is drawn through (`?look=`), or null for the plain picture. */
+  private postfx: PostFX | null = null;
 
   constructor(private readonly container: HTMLElement, quality: Quality) {
     this.quality = quality;
@@ -61,7 +65,27 @@ export class GameRenderer {
     this.resize();
     window.addEventListener('resize', () => this.resize());
     this.applyQuality(quality);
+    this.setLook(lookFromQuery(window.location.search));
   }
+
+  /** Draw through a look, or pass null for the plain picture. Low quality never uses one: it is the fallback for weak devices. */
+  setLook(look: Look | null): void {
+    this.wantedLook = look;
+    this.postfx?.dispose();
+    this.postfx = null;
+    if (look && this.quality !== 'low') {
+      this.postfx = new PostFX(this.renderer, this.scene, this.cameraRig.camera, look, true);
+      this.postfx.setInterior(this.interior);
+      this.resize();
+    }
+  }
+
+  get look(): Look | null {
+    return this.postfx?.look ?? null;
+  }
+
+  private interior = false;
+  private wantedLook: Look | null = null;
 
   get canvas(): HTMLCanvasElement {
     return this.renderer.domElement;
@@ -71,12 +95,15 @@ export class GameRenderer {
     const w = this.container.clientWidth || window.innerWidth;
     const h = this.container.clientHeight || window.innerHeight;
     this.renderer.setSize(w, h, false);
+    this.postfx?.setSize(w, h, this.renderer.getPixelRatio());
     this.cameraRig.setAspect(w / h);
     this.cameraRig.compact = Math.min(w, h) < 520;
   }
 
   applyQuality(q: Quality): void {
+    const crossedLow = (q === 'low') !== (this.quality === 'low');
     this.quality = q;
+    if (crossedLow && this.wantedLook) this.setLook(this.wantedLook);
     const dpr = window.devicePixelRatio || 1;
     this.renderer.setPixelRatio((q === 'low' ? Math.min(dpr, 1) : q === 'medium' ? Math.min(dpr, 1.5) : Math.min(dpr, 2)) * (this.resScale ?? 1));
     this.renderer.shadowMap.enabled = q !== 'low';
@@ -96,6 +123,8 @@ export class GameRenderer {
   attach(sim: Simulation): void {
     this.detach();
     this.sim = sim;
+    this.interior = false;
+    this.postfx?.setInterior(false);
     this.arenaView = new ArenaView(sim.arena);
     this.scene.add(this.arenaView.group);
     this.applyQuality(this.quality);
@@ -114,6 +143,8 @@ export class GameRenderer {
     this.scene.background = new THREE.Color(bg);
     const mist = world.level.weather === 'mist' ? 1.8 : 1;
     this.scene.fog = prof.interior || !prof.fog ? null : new THREE.FogExp2(bg, prof.fog * mist);
+    this.interior = !!prof.interior;
+    this.postfx?.setInterior(this.interior);
     this.cameraRig.resetWorld();
     this.applyQuality(this.quality);
     for (const f of world.sim.fighters) this.addFighter(f);
@@ -276,7 +307,10 @@ export class GameRenderer {
     }
     this.fx.update(dt);
     this.house.update(dt);
-    if (!this.skipDraw) this.renderer.render(this.scene, this.cameraRig.camera);
+    if (!this.skipDraw) {
+      if (this.postfx) this.postfx.render(this.cameraRig.camera, time);
+      else this.renderer.render(this.scene, this.cameraRig.camera);
+    }
     this.adaptResolution(dt);
   }
 

@@ -23,6 +23,11 @@ export function makeDeterministic(): void {
   Date.now = () => fixed;
   performance.now = () => 0;
 
+  // Anything on a real-time timer (fades, toasts, the area banner) would make pictures depend on when they were taken.
+  const style = document.createElement('style');
+  style.textContent = '*,*::before,*::after{animation:none!important;transition:none!important}.area-banner,.toast,.notice{display:none!important}';
+  document.head.appendChild(style);
+
   // A shot page must never read or change a real save: storage becomes a blank in-memory one.
   const mem = new Map<string, string>();
   const proto = Storage.prototype;

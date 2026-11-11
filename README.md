@@ -1039,7 +1039,7 @@ No change to how the game looks or plays. This phase adds the safety net the lat
 
 `.github/workflows/ci.yml` runs on every push to `dev` or `main` and on pull requests:
 
-1. **Type check, tests, build**: `tsc --noEmit`, all 14 test suites (`npm test`), then `vite build`.
+1. **Type check, tests, build**: `tsc --noEmit`, all 15 test suites (`npm test`), then `vite build`.
 2. **Visual regression**: draws ten fixed scenes in headless Chrome and compares each with its stored picture.
 
 ### Visual regression
@@ -1062,3 +1062,16 @@ No change to how the game looks or plays. This phase adds the safety net the lat
 
 - Model and texture compression (Draco/Meshopt, KTX2): needs `gltf-transform`, to be added as a CI build step when the first new assets arrive in phase 2.
 - No `package-lock.json` yet, so CI installs the newest versions allowed by `package.json`.
+
+## Phase 2 report: art direction on a zero budget
+
+No money is available, so the look comes from lighting, colour and post-processing rather than generated or bought art. **The default game is unchanged**; every look is behind `?look=`.
+
+- **Three candidate looks**, each a reflection environment, bloom and colour grade: `?look=sodium` (Sodium Night), `?look=overcast` (Kitchen Sink), `?look=ink` (Back-Page Ink). Definitions in `src/render/look/looks.ts`; the renderer side in `src/render/look/PostFX.ts`.
+- **Style guide and comparison frames** in `docs/art/`: `STYLE_GUIDE.md`, `looks_spar.jpg`, `looks_estate.jpg`, `looks_home.jpg`.
+- Looks are off at low quality, which stays the plain picture for weak devices.
+- Uses only what ships with Three.js (`EffectComposer`, `UnrealBloomPass`, `OutputPass`); no new dependency.
+- Visual tests now cover each look on three scenes (19 pictures in all), and shot pages hide timed interface elements (banner, toasts) so pictures can't depend on timing. The baselines were re-recorded for that reason.
+- `tests/look.test.ts` (5 tests): no look without `?look=`, and every look stays inside safe limits.
+
+Gate: choose one look. See the style guide for what that unlocks.
