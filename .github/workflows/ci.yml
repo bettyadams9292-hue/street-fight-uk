@@ -56,7 +56,7 @@ jobs:
       - name: Install the browser
         run: |
           npm install --no-save --no-audit --no-fund @playwright/test@1.56.1
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Record baselines (first run, or when asked)
         id: record
         if: ${{ inputs.update_baselines || hashFiles('tools/visual/baseline/*.png') == '' }}
