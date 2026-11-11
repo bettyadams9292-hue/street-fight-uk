@@ -83,7 +83,41 @@ export interface CharacterAppearance {
   chainColour: 'gold' | 'silver';
   /** Colour of a cap, beanie or face covering. */
   headColour?: string;
+  /** Fine shaping from the creator's detail sliders (-1..1 each, see DETAIL_SLIDERS). Absent = average. */
+  detail?: Partial<Record<DetailKey, number>>;
 }
+
+/** The creator's detail sliders: MakeHuman shape targets, by the creator section they appear in. */
+export const DETAIL_SLIDERS = {
+  face: [
+    ['forehead-height', 'Forehead'],
+    ['cheekbones', 'Cheekbones'],
+    ['cheek-volume', 'Cheeks'],
+    ['eye-bags', 'Eye bags'],
+    ['nose-length', 'Nose length'],
+    ['nose-hump', 'Nose bridge'],
+    ['nose-tip', 'Nose tip'],
+    ['mouth-width', 'Mouth width'],
+    ['lip-upper', 'Upper lip'],
+    ['lip-lower', 'Lower lip'],
+    ['chin-height', 'Chin length'],
+    ['chin-prominent', 'Chin'],
+    ['ear-flap', 'Ears stick out'],
+    ['head-fat', 'Face fullness'],
+  ],
+  body: [
+    ['torso-vshape', 'Shoulders'],
+    ['chest-muscle', 'Chest'],
+    ['back-muscle', 'Back'],
+    ['arm-muscle', 'Arms'],
+    ['belly', 'Belly'],
+    ['hip-width', 'Hips'],
+    ['glutes', 'Backside'],
+    ['neck-width', 'Neck'],
+  ],
+} as const;
+export type DetailKey = (typeof DETAIL_SLIDERS)['face' | 'body'][number][0];
+const DETAIL_KEYS: readonly string[] = [...DETAIL_SLIDERS.face, ...DETAIL_SLIDERS.body].map((x) => x[0]);
 
 export const SKIN_TONES = [
   '#f6d7c3', '#eac0a2', '#e0ac87', '#cf9670', '#c68e6b', '#b07752',
@@ -248,7 +282,19 @@ export function sanitiseAppearance(raw: unknown): CharacterAppearance {
     accessories: Array.isArray(a.accessories) ? (a.accessories.filter((x) => ACCESSORIES.includes(x as Accessory)) as Accessory[]) : d.accessories,
     chainColour: a.chainColour === 'silver' ? 'silver' : 'gold',
     headColour: typeof a.headColour === 'string' && /^#[0-9a-f]{6}$/i.test(a.headColour) ? a.headColour : undefined,
+    detail: sanitiseDetail(a.detail),
   };
+}
+
+function sanitiseDetail(raw: unknown): CharacterAppearance['detail'] {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const out: Partial<Record<DetailKey, number>> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (!DETAIL_KEYS.includes(k) || typeof v !== 'number' || !Number.isFinite(v)) continue;
+    const c = Math.max(-1, Math.min(1, v));
+    if (Math.abs(c) > 0.001) out[k as DetailKey] = c;
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 /** Display names for option lists. */

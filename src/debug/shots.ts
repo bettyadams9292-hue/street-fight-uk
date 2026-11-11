@@ -24,6 +24,7 @@ interface Internals {
   training: { mode: TrainingOpponent; archetype: string; primary: string; secondary: string | null };
   input: { pressFromTouch(b: GameButton): void };
   showMainMenu(): void;
+  openCreator(mode: 'new' | 'edit'): void;
   startTraining(): void;
   enterArea(area: AreaId, entry: string): void;
   world: { player: { pos: { x: number; z: number }; equipWeapon(id: string): void }; items: { key: string; stack: { uid: string; id: string; qty: number }; x: number; z: number; bornAt: number }[] } | null;
@@ -121,6 +122,18 @@ export const SHOTS: Record<ShotName, SceneFn> = {
     const lay = ['w_hammer', 'w_crowbar', 'w_wrench', 'w_baseball_bat', 'w_pipe', 'watch_gold', 'sunglasses', 'phone_cheap', 'lockup_key'];
     lay.forEach((id, i) => w.items.push({ key: `shot_${i}`, stack: { uid: '', id, qty: 1 }, x: 66 + i * 0.85, z: 0.9, bornAt: -999 }));
     game.advance(120);
+  },
+  // The character creator with the new bodies: the body tab, then the face tab with its detail sliders.
+  creator: (game, g) => {
+    g.openCreator('new');
+    game.advance(30);
+  },
+  creator_face: (game, g) => {
+    g.openCreator('new');
+    game.advance(5);
+    const tab = [...document.querySelectorAll<HTMLButtonElement>('.creator-tabs .tab')].find((b) => b.textContent === 'Face');
+    tab?.click();
+    game.advance(30);
   },
 };
 

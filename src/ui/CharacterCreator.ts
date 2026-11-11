@@ -7,6 +7,8 @@ import {
   FACIAL_HAIR,
   HAIR_COLOURS,
   HAIR_STYLES,
+  DETAIL_SLIDERS,
+  type DetailKey,
   INK_COLOURS,
   LABELS,
   SHOE_STYLES,
@@ -205,6 +207,16 @@ export function characterCreator(
     if (on) list.push(acc);
     set('accessories', list);
   };
+  /** The fine shaping sliders for a section, starting at average. */
+  const detailRows = (part: 'face' | 'body') => [
+    h('p', { class: 'hint', text: part === 'face' ? 'Fine detail' : 'Shape' }),
+    ...DETAIL_SLIDERS[part].map(([key, label]) =>
+      sliderRow(label, appearance.detail?.[key] ?? 0, (v) => {
+        appearance = { ...appearance, detail: { ...appearance.detail, [key]: v } };
+        update();
+      }, { min: -1, max: 1, step: 0.1, format: sign }),
+    ),
+  ];
   const faceSlider = (label: string, key: keyof CharacterAppearance['face']) =>
     sliderRow(label, appearance.face[key], (v) => setFace(key, v), { min: -1, max: 1, step: 0.1, format: sign });
 
@@ -227,6 +239,7 @@ export function characterCreator(
           sliderRow('Muscle', a.muscle, (v) => set('muscle', v)),
           sliderRow('Weight', a.weight, (v) => set('weight', v)),
           sliderRow('Height', a.height, (v) => set('height', v), { min: 0.93, max: 1.07, step: 0.01, format: (v) => `${Math.round(177 * v)} cm` }),
+          ...detailRows('body'),
           h('p', { class: 'hint', text: 'Height and build are cosmetic: your attributes decide how you fight.' }),
         );
         break;
@@ -238,9 +251,12 @@ export function characterCreator(
           faceSlider('Brow', 'brow'),
           faceSlider('Eye spacing', 'eyeSpacing'),
           faceSlider('Ears', 'ears'),
+          ...detailRows('face'),
           menuButton('Random face', () => {
             const r = randomAppearance();
-            appearance = { ...appearance, face: r.face };
+            const detail: Partial<Record<DetailKey, number>> = { ...appearance.detail };
+            for (const [k] of DETAIL_SLIDERS.face) detail[k] = Math.round((Math.random() * 1.2 - 0.6) * 10) / 10;
+            appearance = { ...appearance, face: r.face, detail };
             update();
             render();
           }),

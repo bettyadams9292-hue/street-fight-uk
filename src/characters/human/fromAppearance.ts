@@ -135,6 +135,8 @@ export function appearanceToHuman(a: CharacterAppearance, skins: readonly SkinCh
     sliders['arm-muscle'] = (a.muscle - 0.6) * 1.5;
     sliders['chest-muscle'] = (a.muscle - 0.6) * 1.5;
   }
+  // The creator's detail sliders add on top.
+  for (const [k, v] of Object.entries(a.detail ?? {})) sliders[k] = Math.max(-1, Math.min(1, (sliders[k] ?? 0) + (v ?? 0)));
   const shape: BodyShape = {
     ...DEFAULT_SHAPE,
     gender: female ? 0 : 1,

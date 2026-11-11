@@ -344,7 +344,7 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
     let edge = 1;
     if (st.part === 'top') {
       const neckCut = f.neckY + (st.vest ? 0.01 : st.collar || st.hood ? 0.015 : 0.0);
-      if (st.hood && g === 'neck' && pos[v * 3 + 2] < f.neckZ + 0.01) {
+      if (st.hood && g === 'neck' && pos[v * 3 + 2] < f.neckZ - 0.01 && y < f.neckY + 0.07) {
         // A hood bunched round the back of the neck.
         inn = true;
         edge = 1;
@@ -411,7 +411,7 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
     if (st.rib) gp *= 1 - 0.35 * trim[v];
     if (st.flare && (g.startsWith('arm') || g.startsWith('leg'))) gp += st.flare * clamp01(f.t[v]) * (st.rib ? 1 - trim[v] : 1);
     if (st.quilt) gp += 0.012 * (0.5 + 0.5 * Math.cos((pos[v * 3 + 1] * Math.PI * 2) / 0.085));
-    if (st.hood && (g === 'neck' || pos[v * 3 + 1] > f.neckY - 0.02) && pos[v * 3 + 2] < f.neckZ) gp += 0.035;
+    if (st.hood && (g === 'neck' || pos[v * 3 + 1] > f.neckY - 0.02) && pos[v * 3 + 2] < f.neckZ) gp += 0.022;
     return gp;
   };
   for (let v = 0; v < n; v++)
