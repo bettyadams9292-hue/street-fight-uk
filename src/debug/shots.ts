@@ -26,7 +26,7 @@ interface Internals {
   showMainMenu(): void;
   startTraining(): void;
   enterArea(area: AreaId, entry: string): void;
-  world: { player: { pos: { x: number; z: number } } } | null;
+  world: { player: { pos: { x: number; z: number }; equipWeapon(id: string): void }; items: { key: string; stack: { uid: string; id: string; qty: number }; x: number; z: number; bornAt: number }[] } | null;
 }
 
 type SceneFn = (game: Game, g: Internals) => void;
@@ -111,6 +111,17 @@ export const SHOTS: Record<ShotName, SceneFn> = {
   market: (game, g) => district(game, g, 'market'),
   ind_estate: (game, g) => district(game, g, 'ind_estate'),
   alleys: (game, g) => district(game, g, 'alleys'),
+  // Every modelled prop: weapons and loot on the ground, a crowbar in hand, the estate dumpster behind.
+  props: (game, g) => {
+    story(game, g, 'residential', 'right', 10);
+    const w = g.world;
+    if (!w) return;
+    w.player.pos.x = 70;
+    w.player.equipWeapon('crowbar');
+    const lay = ['w_hammer', 'w_crowbar', 'w_wrench', 'w_baseball_bat', 'w_pipe', 'watch_gold', 'sunglasses', 'phone_cheap', 'lockup_key'];
+    lay.forEach((id, i) => w.items.push({ key: `shot_${i}`, stack: { uid: '', id, qty: 1 }, x: 66 + i * 0.85, z: 0.9, bornAt: -999 }));
+    game.advance(120);
+  },
 };
 
 interface ShotState {

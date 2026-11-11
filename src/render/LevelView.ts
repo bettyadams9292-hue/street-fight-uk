@@ -5,6 +5,7 @@ import { KIT_KINDS } from '../city/catalogue';
 import { hashString, planFacade, type FacadePlan } from '../city/compose';
 import { cityKit } from './city/CityKit';
 import { buildCityFacades, type SignedFacade } from './city/CityFacades';
+import { fittedProp, lootModel } from './props/PropLibrary';
 import { buildCar, fadeCar } from './street/carModel';
 import type { Progress } from '../progress/Progress';
 import type { ExitDef, FacadeDef, LevelDef, PropDef, Theme } from '../world/LevelTypes';
@@ -2038,6 +2039,11 @@ export class LevelView {
         break;
       }
       case 'dumpster': {
+        const model = fittedProp('dumpster', W, 1.35, D);
+        if (model) {
+          g.add(model);
+          break;
+        }
         const m = this.mat(c ?? '#2a5a3a', 0.6, 0.4);
         B(W, 1.2, D, 0, 0.7, 0, m);
         const lid = B(W, 0.06, D * 0.55, 0, 1.36, -D * 0.2, this.mat('#1a1a1a', 0.7));
@@ -3187,6 +3193,18 @@ export class LevelView {
       return g;
     }
     const spin = new THREE.Group();
+    // Watches, phones, keys and sunglasses are modelled: show the real thing turning over.
+    const model = def ? lootModel(def.icon) : null;
+    if (model) {
+      model.rotation.x = 0.5;
+      spin.add(model);
+      const glow3 = new THREE.Mesh(new THREE.CircleGeometry(0.2, 20), new THREE.MeshBasicMaterial({ color: rarity, transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false }));
+      glow3.position.z = -0.12;
+      spin.add(glow3);
+      g.add(spin);
+      g.userData.spin = spin;
+      return g;
+    }
     const tex = new THREE.TextureLoader().load(itemIconUrl(id, colour));
     tex.colorSpace = THREE.SRGBColorSpace;
     const card = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.42), new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));

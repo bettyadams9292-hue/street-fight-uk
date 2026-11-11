@@ -1110,3 +1110,9 @@ Not yet done for the slice: fuller character skeletons, recorded sound and music
 - **Coverage:** 16 frontage kinds across 14 outdoor districts are now kit-built. Garages, fences, hoardings, containers, stands, platforms, the multi-storey, ruins and the HQ keep their previous builders.
 - **Fallback:** `?city=classic`, or the kit failing to load, gives the previous frontages.
 - **Tests:** `tests/city.test.ts` (10). Ten new district scenes in the visual tests.
+
+## Modelled props
+
+- `public/models/props/`: ten models packed by `tools/props/pack.py` (8.6 MB in, 3.1 MB out). Sources in `SOURCES.md` there.
+- `src/render/props/PropLibrary.ts` loads them at boot. Each tool is stood up the game's way (grip at the origin, working end up), worked out from its geometry.
+- **In use:** the hammer, crowbar, wrench, baseball bat and pipe weapons (held, dropped and thrown); the dumpster prop; and watches, sunglasses, phones and keys lying on the ground as loot. Each falls back to its previous built-in version if its file fails to load.

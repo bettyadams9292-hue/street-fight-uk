@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { WeaponData } from '../combat/Weapons';
+import { weaponModel } from './props/PropLibrary';
 
 /**
  * Procedural models for every melee weapon and improvised object.
@@ -7,6 +8,9 @@ import type { WeaponData } from '../combat/Weapons';
  * for `length` metres, so FighterView can put the origin in the hand.
  */
 export function buildWeaponMesh(w: WeaponData): THREE.Group {
+  // Modelled weapons (public/models/props) where there is one; primitives otherwise.
+  const model = weaponModel(w.id, w.length);
+  if (model) return model;
   const g = new THREE.Group();
   const L = w.length;
   const col = w.colour;
