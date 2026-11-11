@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import { BodyData, footY, morph, placeBones, type BodyMeta, type BodyShape } from '../../characters/human/body';
 import { ProxyData, fitProxy, proxySkin, type ProxyMeta } from '../../characters/human/proxy';
-import { cutGarment, hoodShell, GARMENTS, type Fabric, type GarmentKind } from '../../characters/human/garments';
+import { cutGarment, type Fabric, type GarmentKind } from '../../characters/human/garments';
 
 export interface SkinInfo {
   id: string;
@@ -40,6 +40,8 @@ export interface HumanSpec {
   skin: string;
   /** Tints the skin texture (for the plain skin, or to adjust a tone). */
   skinTint?: string;
+  /** The skin colour wanted: the texture is tinted so its average comes out this colour. */
+  skinColour?: string;
   eyeColour?: string;
   items: HumanItem[];
 }
@@ -66,6 +68,7 @@ const proxyReady = new Map<string, ProxyData>();
 const textures = new Map<string, THREE.Texture>();
 /** Mean brightness of each colour texture, so a tint can keep the weave and folds without the cloth's own colour. */
 const meanLum = new Map<string, number>();
+const meanRgb = new Map<string, [number, number, number]>();
 
 /** Load the body pack, item catalogue and skin list (once). Never rejects. */
 export function loadHumanAssets(): Promise<Assets | null> {
@@ -136,31 +139,41 @@ async function loadTexture(file: string, srgb: boolean): Promise<THREE.Texture> 
   const t = await new THREE.TextureLoader().loadAsync(BASE + 'tex/' + file);
   t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
   t.anisotropy = 4;
-  if (srgb) meanLum.set(file, measure(t.image as CanvasImageSource & { width: number; height: number }));
+  if (srgb) {
+    const m = measure(t.image as CanvasImageSource & { width: number; height: number });
+    meanLum.set(file, m.lum);
+    meanRgb.set(file, m.rgb);
+  }
   textures.set(file, t);
   return t;
 }
 
-function measure(img: CanvasImageSource & { width: number; height: number }): number {
+function measure(img: CanvasImageSource & { width: number; height: number }): { lum: number; rgb: [number, number, number] } {
+  const none = { lum: 0.5, rgb: [0.5, 0.5, 0.5] as [number, number, number] };
   try {
     const c = document.createElement('canvas');
     c.width = c.height = 32;
     const x = c.getContext('2d', { willReadFrequently: true });
-    if (!x) return 0.5;
+    if (!x) return none;
     x.drawImage(img, 0, 0, 32, 32);
     const d = x.getImageData(0, 0, 32, 32).data;
-    let sum = 0;
+    const lin = (v: number) => Math.pow(v / 255, 2.2);
+    let r = 0;
+    let g = 0;
+    let b = 0;
     let n = 0;
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3] < 128) continue;
-      // sRGB to linear, then luminance.
-      const lin = (v: number) => Math.pow(v / 255, 2.2);
-      sum += 0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2]);
+      r += lin(d[i]);
+      g += lin(d[i + 1]);
+      b += lin(d[i + 2]);
       n++;
     }
-    return n ? Math.max(0.02, sum / n) : 0.5;
+    if (!n) return none;
+    const rgb: [number, number, number] = [r / n, g / n, b / n];
+    return { lum: Math.max(0.02, 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]), rgb };
   } catch {
-    return 0.5;
+    return none;
   }
 }
 
@@ -272,6 +285,47 @@ function smoothNormals(pos: Float32Array, nBase: number, tris: ArrayLike<number>
   return n;
 }
 
+/** The colour to multiply a skin texture by so it averages out at spec.skinColour. */
+function skinTintFor(spec: HumanSpec, skin: SkinInfo): THREE.Color {
+  if (spec.skinTint) return new THREE.Color(spec.skinTint);
+  const avg = meanRgb.get(skin.diffuse);
+  if (!spec.skinColour || !avg) return new THREE.Color(1, 1, 1);
+  const want = new THREE.Color(spec.skinColour);
+  // Faces are lit darker than the flat swatch: aim a little lighter.
+  const k = 1.12;
+  return new THREE.Color(
+    Math.min(1.8, Math.max(0.25, (want.r * k) / avg[0])),
+    Math.min(1.8, Math.max(0.25, (want.g * k) / avg[1])),
+    Math.min(1.8, Math.max(0.25, (want.b * k) / avg[2])),
+  );
+}
+
+/** Load every item and skin, so any character can be built straight away. */
+export async function preloadAllHumans(): Promise<boolean> {
+  const a = await loadHumanAssets();
+  if (!a) return false;
+  const ids = Object.keys(a.catalogue);
+  await Promise.all(ids.map((id) => loadProxy(id)));
+  const tex = new Set<string>();
+  for (const id of ids) {
+    const m = a.catalogue[id].material;
+    if (m.diffuse) tex.add(m.diffuse);
+    if (m.normal) tex.add(m.normal);
+  }
+  for (const s of a.skins) {
+    tex.add(s.diffuse);
+    if (s.normal) tex.add(s.normal);
+  }
+  await Promise.all([...tex].map((t) => loadTexture(t, !t.endsWith('_n.webp')).catch(() => null)));
+  allReady = true;
+  return true;
+}
+
+let allReady = false;
+export function humansReady(): boolean {
+  return allReady;
+}
+
 export interface BuiltHuman {
   root: THREE.Group;
   skeleton: THREE.Skeleton;
@@ -325,14 +379,17 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
     };
     return { g, mesh: cutGarment(body, pos, nb, g.kind, { main: lin(g.colour), trim: g.trim ? lin(g.trim) : undefined }) };
   });
-  for (const { mesh } of cut) for (let v = 0; v < mesh.covers.length; v++) if (mesh.covers[v]) hidden[v] = 1;
+  // Skin under a garment: hidden if any corner is covered (the cloth's cut edge sits over it).
+  const under = new Uint8Array(body.meta.baseCount);
+  for (const { mesh } of cut) for (let v = 0; v < mesh.covers.length; v++) if (mesh.covers[v]) under[v] = 1;
+  const edgeTrim = (a: number, b: number, c: number) => (under[a] ? 1 : 0) + (under[b] ? 1 : 0) + (under[c] ? 1 : 0) >= 2;
   const keep: number[] = [];
   const idx = body.index;
   for (let i = 0; i < idx.length; i += 3) {
     const b0 = body.renderBase[idx[i]];
     const b1 = body.renderBase[idx[i + 1]];
     const b2 = body.renderBase[idx[i + 2]];
-    if (!(hidden[b0] && hidden[b1] && hidden[b2])) keep.push(idx[i], idx[i + 1], idx[i + 2]);
+    if (!(hidden[b0] && hidden[b1] && hidden[b2]) && !edgeTrim(b0, b1, b2)) keep.push(idx[i], idx[i + 1], idx[i + 2]);
   }
   const rc = body.meta.renderCount;
   const P = new Float32Array(rc * 3);
@@ -362,7 +419,7 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
   const skinMat = new THREE.MeshStandardMaterial({
     map: textures.get(skin.diffuse) ?? null,
     normalMap: skin.normal ? textures.get(skin.normal) ?? null : null,
-    color: new THREE.Color(spec.skinTint ?? '#ffffff'),
+    color: skinTintFor(spec, skin),
     roughness: 0.62,
     metalness: 0,
   });
@@ -465,32 +522,6 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
     gm.castShadow = true;
     gm.receiveShadow = true;
     gm.frustumCulled = false;
-    if (GARMENTS[g.kind].hood) {
-      const h = hoodShell(body, pos, 0.02);
-      const hg = new THREE.BufferGeometry();
-      hg.setAttribute('position', new THREE.BufferAttribute(h.position, 3));
-      hg.setAttribute('normal', new THREE.BufferAttribute(h.normal, 3));
-      const bi = body.meta.boneNames.indexOf(h.bone);
-      const cnt = h.position.length / 3;
-      const hsi = new Uint16Array(cnt * 4);
-      const hsw = new Float32Array(cnt * 4);
-      for (let i = 0; i < cnt; i++) {
-        hsi[i * 4] = bi;
-        hsw[i * 4] = 1;
-      }
-      hg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(hsi, 4));
-      hg.setAttribute('skinWeight', new THREE.BufferAttribute(hsw, 4));
-      hg.setIndex(new THREE.BufferAttribute(h.index, 1));
-      disposables.push(hg);
-      const hm = new THREE.MeshStandardMaterial({ color: new THREE.Color(g.colour).multiplyScalar(0.92), roughness: FABRIC_ROUGH[mesh.fabric] });
-      disposables.push(hm);
-      const hood = new THREE.SkinnedMesh(hg, hm);
-      hood.name = 'hood';
-      root.add(hood);
-      hood.bind(skeleton);
-      hood.castShadow = true;
-      hood.frustumCulled = false;
-    }
   }
   for (const { it, data } of items) addProxy(data, it.colour);
 

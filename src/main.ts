@@ -3,6 +3,8 @@ import { Game } from './Game';
 import { loadCharacterModels } from './render/characterModels';
 import { loadCityKit } from './render/city/CityKit';
 import { loadProps } from './render/props/PropLibrary';
+import { preloadAllHumans } from './render/human/HumanBuilder';
+import { loadAraMocap } from './render/anim/araPose';
 
 const gameRoot = document.getElementById('game');
 const uiRoot = document.getElementById('ui');
@@ -45,10 +47,10 @@ const start = (): void => {
 
 const begin = async (): Promise<void> => {
   // The character line-up draws on its own stage, without the game.
-  if (shot === 'humans') {
+  if (shot === 'humans' || shot === 'anims') {
     hideBoot();
     await (await import('./debug/deterministic')).makeDeterministic();
-    void import('./debug/humanShot').then((m) => m.runHumanShot(gameRoot));
+    void import('./debug/humanShot').then((m) => m.runHumanShot(gameRoot, shot));
     return;
   }
   // The visual tests need every run to be identical: fixed random numbers and a fixed clock.
@@ -61,7 +63,8 @@ const begin = async (): Promise<void> => {
   });
   // Load the character models first, but never hold the game up for long: without them fighters use the
   // classic rig. (The visual tests wait for however long it takes, so their pictures don't depend on the network.)
-  const assets = Promise.all([models, kit, loadProps()]);
+  const humans = query.get('humans') === 'off' ? Promise.resolve(false) : preloadAllHumans();
+  const assets = Promise.all([models, kit, loadProps(), humans, loadAraMocap()]);
   await (shot ? assets : Promise.race([assets, new Promise((r) => setTimeout(r, 6000))]));
   start();
 };

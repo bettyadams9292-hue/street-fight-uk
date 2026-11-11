@@ -116,6 +116,7 @@ export class FighterView {
     rig.pitch.rotation.x = out.pitch;
     // Lift slightly when lying down so limbs don't sink into the ground.
     rig.pitch.position.y = Math.abs(out.pitch) > 0.3 ? 0.12 * Math.min(1, Math.abs(out.pitch) / (Math.PI / 2)) : 0;
+    rig.sync?.();
 
     // Hit flash.
     this.flashTime = Math.max(0, this.flashTime - dt);

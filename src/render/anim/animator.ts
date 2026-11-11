@@ -1,3 +1,4 @@
+import { araMocapPose, araPose, mocapClip, mocapStride } from './araPose';
 import type { Fighter, FighterState } from '../../fighter/Fighter';
 import { isActiveFrame, type ActiveMove } from '../../combat/MoveData';
 import { activityPose } from '../activityPoses';
@@ -7,6 +8,15 @@ import {
   animPoses, easeIn, easeInOut, easeOut, lerpPose, type FootSpec, type JointName, type Pose, type Vec3,
 } from '../poses';
 import { add, apply, euler, lerp3, mul, solveBody, solveLimb, sub, toEuler, transpose, type M3, type Metrics, type Side } from './skeleton';
+
+/** Ara clips standing in for the simple ambient poses (several per pose, picked by fighter id). */
+const AMBIENT_CLIPS: Record<string, string[]> = {
+  talk: ['talk_gestures', 'laugh', 'talk', 'talk_gestures'],
+  browse: ['look_around', 'texting', 'phone_call'],
+  watch: ['texting', 'point', 'clap', 'cheer', 'look_around'],
+  phone: ['phone_call'],
+  laugh: ['laugh'],
+};
 
 /**
  * Turns what a fighter is doing into a pose, every frame.
@@ -148,6 +158,9 @@ export class FighterAnimator {
   private sBack = new Spring(11, 0.7, 0.2);
   private sGuard = new Spring(16, 0.55, 0.6);
 
+  private strollW = 0;
+  private strollPhase = 0;
+
   constructor(private f: Fighter, private m: Metrics, private traits: Traits, private scale = 1) {
     this.yaw = f.yawOverride ?? (f.facing * Math.PI) / 2;
     this.lastX = f.pos.x;
@@ -212,7 +225,7 @@ export class FighterAnimator {
 
     this.turn(dt, speed);
 
-    const passthrough = override ?? this.activity(time);
+    const passthrough = override ?? this.activity(time) ?? this.stroll(dt, speed);
     if (passthrough) {
       // Sat down, on gym kit, cooking, on a bike: the pose is used as it is.
       this.blendTo('act', passthrough, 0.18);
@@ -243,8 +256,36 @@ export class FighterAnimator {
     const still = Math.hypot(this.vx, this.vz) < 0.15;
     const act = f.activity ?? (still && f.isFree ? f.ambientPose : null);
     if (!act || f.isKO) return null;
+    // People about town: Ara 3D Gen's everyday clips and emotes, a different one per person.
+    const ara = AMBIENT_CLIPS[act];
+    if (ara && !f.activity) {
+      const id = ara[f.id % ara.length];
+      const p = araPose(id, time + (f.id % 11) * 0.53, this.m);
+      if (p) return p;
+    }
     const p = activityPose(act, time + (f.id % 7) * 0.37);
     return { ...p, ik: 0 };
+  }
+
+  /**
+   * Walking about (not fighting): Ara's motion-captured walk, or run when hurrying, with the cycle
+   * driven by the distance actually covered so the feet don't slide.
+   */
+  private stroll(dt: number, speed: number): Pose | null {
+    const f = this.f;
+    if (this.combat > 0.3 || f.weapon || f.isKO || (f.state !== 'walk' && f.state !== 'idle') || f.activity) {
+      this.strollW = 0;
+      return null;
+    }
+    const want = speed > 0.35 ? 1 : 0;
+    this.strollW += (want - this.strollW) * (1 - Math.exp(-10 * dt));
+    if (this.strollW < 0.02) return null;
+    const clip = speed > 2.6 ? 'run' : f.id % 5 === 0 ? 'walk_slouch' : 'walk';
+    const stride = mocapStride(clip, this.m);
+    this.strollPhase = (this.strollPhase + (speed * dt) / Math.max(0.3, stride)) % 1;
+    const c = mocapClip(clip);
+    if (!c) return null;
+    return araMocapPose(clip, this.strollPhase * c.duration, this.m);
   }
 
   private turn(dt: number, speed: number): void {

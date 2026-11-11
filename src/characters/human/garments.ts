@@ -124,6 +124,7 @@ interface Frame {
   hipY: number;
   waistY: number;
   neckY: number;
+  neckZ: number;
   shoulderX: number;
 }
 
@@ -190,6 +191,7 @@ export function bodyFrame(data: BodyData, pos: Float32Array): Frame {
   const hipY = (hp.L[1] + hp.R[1]) / 2;
   const waistY = headOf(data, pos, 'spine04')[1];
   const neckY = headOf(data, pos, 'neck01')[1];
+  const neckZ = headOf(data, pos, 'neck01')[2];
   for (let v = 0; v < n; v++) {
     let best = 0;
     let bw = -1;
@@ -238,7 +240,7 @@ export function bodyFrame(data: BodyData, pos: Float32Array): Frame {
       around[v] = 0;
     }
   }
-  const f: Frame = { group, t, around, hipY, waistY, neckY, shoulderX: Math.abs(sh.L[0]) };
+  const f: Frame = { group, t, around, hipY, waistY, neckY, neckZ, shoulderX: Math.abs(sh.L[0]) };
   memo.set(pos, f);
   return f;
 }
@@ -341,10 +343,18 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
     let inn = false;
     let edge = 1;
     if (st.part === 'top') {
-      const neckCut = f.neckY + (st.vest ? -0.05 : st.collar || st.hood ? 0.015 : 0.0);
-      if (g === 'torso' || g === 'hip') {
-        inn = y >= hemY && y <= neckCut;
-        if (st.vest && Math.abs(x) > f.shoulderX * 0.62 && y > f.waistY + 0.12) inn = false;
+      const neckCut = f.neckY + (st.vest ? 0.01 : st.collar || st.hood ? 0.015 : 0.0);
+      if (st.hood && g === 'neck' && pos[v * 3 + 2] < f.neckZ + 0.01) {
+        // A hood bunched round the back of the neck.
+        inn = true;
+        edge = 1;
+      } else if (g === 'torso' || g === 'hip') {
+        inn = y >= hemY && (y <= neckCut || (!!st.hood && pos[v * 3 + 2] < f.neckZ));
+        if (st.vest && y > f.neckY - 0.19) {
+          // Above the armpits a vest is just its two straps.
+          const ax = Math.abs(x) / f.shoulderX;
+          inn = y <= f.neckY + 0.01 && (y < f.neckY - 0.12 ? ax < 0.78 : ax > 0.36 && ax < 0.62);
+        }
         edge = Math.min((y - hemY) / 0.05, (neckCut - y) / 0.03);
         // A long coat carries on down the thighs.
       } else if ((g === 'armL' || g === 'armR') && !st.vest) {
@@ -401,6 +411,7 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
     if (st.rib) gp *= 1 - 0.35 * trim[v];
     if (st.flare && (g.startsWith('arm') || g.startsWith('leg'))) gp += st.flare * clamp01(f.t[v]) * (st.rib ? 1 - trim[v] : 1);
     if (st.quilt) gp += 0.012 * (0.5 + 0.5 * Math.cos((pos[v * 3 + 1] * Math.PI * 2) / 0.085));
+    if (st.hood && (g === 'neck' || pos[v * 3 + 1] > f.neckY - 0.02) && pos[v * 3 + 2] < f.neckZ) gp += 0.035;
     return gp;
   };
   for (let v = 0; v < n; v++)

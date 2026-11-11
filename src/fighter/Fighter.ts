@@ -162,7 +162,7 @@ export class Fighter {
   unlocks: { specials: boolean; finishers: boolean };
   styleLevels: Partial<Record<string, number>> | null;
   /** Render-only: what a pedestrian is doing when stood still (sitting, chatting, browsing). */
-  ambientPose: 'sit' | 'talk' | 'browse' | null = null;
+  ambientPose: 'sit' | 'talk' | 'browse' | 'watch' | null = null;
   /** Render-only: a training activity the player is performing (home gym), or what a companion's doing at home. */
   activity: string | null = null;
   /** Render-only: face this way (radians, 0 = towards the camera) instead of left/right. Sitting on furniture. */

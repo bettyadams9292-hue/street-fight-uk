@@ -5,7 +5,11 @@
  */
 import * as THREE from 'three';
 import { DEFAULT_SHAPE, type BodyShape } from '../characters/human/body';
-import { buildHuman, loadHumanAssets, preloadHuman, type HumanSpec } from '../render/human/HumanBuilder';
+import { buildHuman, loadHumanAssets, preloadHuman, preloadAllHumans, type HumanSpec } from '../render/human/HumanBuilder';
+import { buildHumanRig } from '../render/human/HumanRig';
+import { araPose, loadAraMocap } from '../render/anim/araPose';
+import { JOINTS } from '../render/poses';
+import { randomAppearance } from '../character/Appearance';
 
 const shape = (s: Partial<BodyShape>): BodyShape => ({ ...DEFAULT_SHAPE, ...s, sliders: { ...(s.sliders ?? {}) } });
 
@@ -48,8 +52,8 @@ export const LINEUP: HumanSpec[] = [
   {
     shape: shape({ gender: 0, age: 0.15, muscle: 0.55, weight: 0.5, height: 0.6 }),
     skin: 'f_redhead',
-    garments: [{ kind: 'hivis', colour: '#e8a010' }, { kind: 'work_trousers', colour: '#2b2e35' }],
-    items: [ { id: 'ankle_boots_f' }, { id: 'gloves_short' }, { id: 'hair_braid', colour: '#9a4a1e' }],
+    garments: [{ kind: 'vest', colour: '#7d1a1a' }, { kind: 'work_trousers', colour: '#2b2e35' }],
+    items: [ { id: 'hair_braid', colour: '#9a4a1e' }],
   },
 ];
 
@@ -59,8 +63,11 @@ interface ShotState {
   error?: string;
 }
 
-export async function runHumanShot(root: HTMLElement): Promise<void> {
-  const out: ShotState = { ready: false, scene: 'humans' };
+/** Clips shown by `?shot=anims` (pick others with &clips=a,b,c and the time with &t=). */
+const ANIM_CLIPS = ['walk', 'run', 'phone_call', 'texting', 'wave', 'cheer', 'point', 'talk_gestures', 'fight_idle', 'cry'];
+
+export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<void> {
+  const out: ShotState = { ready: false, scene: mode };
   (window as unknown as { __shot: ShotState }).__shot = out;
   try {
     if (!(await loadHumanAssets())) throw new Error('character packs did not load');
@@ -90,24 +97,51 @@ export async function runHumanShot(root: HTMLElement): Promise<void> {
     floor.receiveShadow = true;
     scene.add(floor);
     const gap = 0.78;
-    LINEUP.forEach((spec, i) => {
-      const hum = buildHuman(spec);
-      if (!hum) throw new Error(`could not build character ${i}`);
-      hum.root.position.x = (i - (LINEUP.length - 1) / 2) * gap;
-      scene.add(hum.root);
-    });
+    const q = new URLSearchParams(location.search);
+    const clips = q.get('clips')?.split(',') ?? ANIM_CLIPS;
+    const count = mode === 'anims' ? clips.length : LINEUP.length;
+    if (mode === 'anims') {
+      // Each character plays one Ara clip, frozen at the same moment.
+      await Promise.all([preloadAllHumans(), loadAraMocap()]);
+      const t = Number(q.get('t') ?? 0.4);
+      let seed = 7;
+      const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      clips.forEach((id, i) => {
+        const rig = buildHumanRig(randomAppearance(rnd));
+        if (!rig) throw new Error('could not build a rig');
+        const pose = araPose(id, t, rig.metrics);
+        if (!pose) throw new Error(`no clip ${id}`);
+        for (const j of JOINTS) {
+          const v = pose.joints[j] ?? [0, 0, 0];
+          rig.joints[j].rotation.set(v[0], v[1], v[2]);
+        }
+        const r = rig.hipsRest;
+        rig.joints.hips.position.set(r.x + (pose.shift?.[0] ?? 0), r.y - (pose.drop ?? 0), r.z + (pose.shift?.[1] ?? 0));
+        rig.pitch.rotation.x = pose.pitch ?? 0;
+        rig.sync?.();
+        rig.root.position.x = (i - (count - 1) / 2) * 0.95;
+        rig.root.rotation.y = q.get('side') ? Math.PI / 2 : 0;
+        scene.add(rig.root);
+      });
+    } else
+      LINEUP.forEach((spec, i) => {
+        const hum = buildHuman(spec);
+        if (!hum) throw new Error(`could not build character ${i}`);
+        hum.root.position.x = (i - (LINEUP.length - 1) / 2) * gap;
+        scene.add(hum.root);
+      });
     const cam = new THREE.PerspectiveCamera(30, w / h, 0.1, 50);
     const view = new URLSearchParams(location.search).get('view');
     if (view) {
       // ?view=<index>:<face|body|back> for close inspection.
       const [i, part] = view.split(':');
-      const x = (Number(i) - (LINEUP.length - 1) / 2) * gap;
+      const x = (Number(i) - (count - 1) / 2) * (mode === 'anims' ? 0.95 : gap);
       const y = part === 'face' ? 1.6 : 0.95;
       const d = part === 'face' ? 1.2 : 3.6;
       cam.position.set(x, y, part === 'back' ? -d : d);
       cam.lookAt(x, y, 0);
     } else {
-      cam.position.set(0, 1.0, 7.2);
+      cam.position.set(0, 1.0, mode === 'anims' ? 9.5 : 7.2);
       cam.lookAt(0, 0.9, 0);
     }
     await document.fonts.ready;

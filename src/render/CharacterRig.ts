@@ -4,6 +4,10 @@ import { JOINTS as JOINT_NAMES, type JointName } from './poses';
 import { CLASSIC_METRICS, MODEL_METRICS, type Metrics } from './anim/skeleton';
 import { characterModelsReady, cloneCharacterModel } from './characterModels';
 import { paintedSkinMaterial } from './skinPainter';
+import { buildHumanRig } from './human/HumanRig';
+
+/** `?humans=off` keeps the older Quaternius models (for comparison, or if the new bodies misbehave). */
+const HUMANS_OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('humans') === 'off';
 
 /**
  * Builds a fighter model from CharacterAppearance (TEMPORARY procedural
@@ -22,6 +26,8 @@ export interface Rig {
   hipsRest: THREE.Vector3;
   /** Materials that flash white when hit. */
   flashMaterials: THREE.MeshStandardMaterial[];
+  /** Copy the joints onto a skeleton that isn't driven by them directly (MakeHuman bodies). Call after posing. */
+  sync?(): void;
   dispose(): void;
 }
 
@@ -36,6 +42,14 @@ function darken(hex: string, amount: number): string {
 }
 
 export function buildCharacterRig(a: CharacterAppearance): Rig {
+  if (!HUMANS_OFF) {
+    try {
+      const human = buildHumanRig(a);
+      if (human) return human;
+    } catch (e) {
+      console.warn('[human] rig failed, using the older model', e);
+    }
+  }
   if (characterModelsReady(a.body === 'female' ? 'female' : 'male')) {
     const modelRig = buildModelRig(a);
     if (modelRig) return modelRig;

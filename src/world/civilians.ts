@@ -183,7 +183,9 @@ export class CivilianBrain {
   }
 
   /** Sat or chatting: the renderer reads this for the pose. */
-  get pose(): 'sit' | 'talk' | 'browse' | null {
+  get pose(): 'sit' | 'talk' | 'browse' | 'watch' | null {
+    // Stood watching a fight from a safe distance: filming it, pointing, cheering.
+    if (this.activity === 'watch' && this.danger !== null && Math.abs(this.self.pos.x - this.danger) >= 4.6) return 'watch';
     if (!this.standAt) return null;
     const at = Math.abs(this.self.pos.x - this.standAt.x) < 0.2 && Math.abs(this.self.pos.z - this.standAt.z) < 0.2;
     if (!at) return null;
