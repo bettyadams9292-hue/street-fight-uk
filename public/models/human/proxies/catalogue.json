@@ -1,0 +1,1395 @@
+{
+ "eyes": {
+  "slot": "eyes",
+  "name": "eyes",
+  "tags": [],
+  "count": 1064,
+  "renderCount": 1076,
+  "indexCount": 6120,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.6482
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.7213
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.2795
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 6384,
+   "off": 19152,
+   "renderProxy": 31920,
+   "uv": 34072,
+   "index": 42680,
+   "delete": 54920
+  },
+  "bytes": 54920,
+  "material": {
+   "diffuse": "eyes_d.webp",
+   "normal": null,
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": true,
+   "tint": false
+  },
+  "zDepth": 50,
+  "source": "MakeHuman data (eyes/high-poly), CC0"
+ },
+ "polo_shirt": {
+  "slot": "top",
+  "name": "polo shirt",
+  "tags": [
+   "male",
+   "casual"
+  ],
+  "count": 2189,
+  "renderCount": 2574,
+  "indexCount": 12318,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    3924,
+    10589,
+    3.1474
+   ],
+   "y_scale": [
+    1524,
+    4370,
+    5.7236
+   ],
+   "z_scale": [
+    1892,
+    3946,
+    1.9557
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 13136,
+   "off": 39404,
+   "renderProxy": 65672,
+   "uv": 70820,
+   "index": 91412,
+   "delete": 116048
+  },
+  "bytes": 116048,
+  "material": {
+   "diffuse": "polo_shirt_d.webp",
+   "normal": null,
+   "colour": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shirts01 (namuhekam_male_polo_shirt), CC0"
+ },
+ "tee_male": {
+  "slot": "top",
+  "name": "tee male",
+  "tags": [
+   "male",
+   "casual"
+  ],
+  "count": 1095,
+  "renderCount": 1150,
+  "indexCount": 6204,
+  "index32": false,
+  "deleteCount": 892,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 6572,
+   "off": 19712,
+   "renderProxy": 32852,
+   "uv": 35152,
+   "index": 44352,
+   "delete": 56760
+  },
+  "bytes": 58544,
+  "material": {
+   "diffuse": "tee_male_d.webp",
+   "normal": null,
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shirts01 (elvs_crude_t-shirt_male), CC0"
+ },
+ "tee_female": {
+  "slot": "top",
+  "name": "tee female",
+  "tags": [
+   "female",
+   "casual"
+  ],
+  "count": 1095,
+  "renderCount": 1152,
+  "indexCount": 6204,
+  "index32": false,
+  "deleteCount": 1560,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2048
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8461
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 6572,
+   "off": 19712,
+   "renderProxy": 32852,
+   "uv": 35156,
+   "index": 44372,
+   "delete": 56780
+  },
+  "bytes": 59900,
+  "material": {
+   "diffuse": "tee_female_d.webp",
+   "normal": null,
+   "colour": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shirts01 (joepal_crude_t-shirt_female), CC0"
+ },
+ "tee_tucked": {
+  "slot": "top",
+  "name": "tee tucked",
+  "tags": [
+   "female",
+   "casual"
+  ],
+  "count": 1391,
+  "renderCount": 1644,
+  "indexCount": 8100,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 8348,
+   "off": 25040,
+   "renderProxy": 41732,
+   "uv": 45020,
+   "index": 58172,
+   "delete": 74372
+  },
+  "bytes": 74372,
+  "material": {
+   "diffuse": "tee_tucked_d.webp",
+   "normal": null,
+   "colour": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shirts01 (toigo_basic_tucked_t-shirt), CC0"
+ },
+ "jumper_fisherman": {
+  "slot": "top",
+  "name": "jumper fisherman",
+  "tags": [
+   "unisex",
+   "warm"
+  ],
+  "count": 2126,
+  "renderCount": 2511,
+  "indexCount": 12492,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 12756,
+   "off": 38268,
+   "renderProxy": 63780,
+   "uv": 68804,
+   "index": 88892,
+   "delete": 113876
+  },
+  "bytes": 113876,
+  "material": {
+   "diffuse": "jumper_fisherman_d.webp",
+   "normal": null,
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shirts01 (toigo_fisherman_sweater), CC0"
+ },
+ "vest_top": {
+  "slot": "top",
+  "name": "vest top",
+  "tags": [
+   "female",
+   "night"
+  ],
+  "count": 726,
+  "renderCount": 823,
+  "indexCount": 4056,
+  "index32": false,
+  "deleteCount": 881,
+  "scales": {
+   "x_scale": [
+    3924,
+    10589,
+    2.7814
+   ],
+   "y_scale": [
+    1524,
+    4370,
+    5.7793
+   ],
+   "z_scale": [
+    1892,
+    3946,
+    1.7223
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 4356,
+   "off": 13068,
+   "renderProxy": 21780,
+   "uv": 23428,
+   "index": 30012,
+   "delete": 38124
+  },
+  "bytes": 39886,
+  "material": {
+   "diffuse": "vest_top_d.webp",
+   "normal": null,
+   "colour": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shirts01 (toigo_keyhole_tank_top), CC0"
+ },
+ "camisole": {
+  "slot": "top",
+  "name": "camisole",
+  "tags": [
+   "female",
+   "night"
+  ],
+  "count": 4224,
+  "renderCount": 5096,
+  "indexCount": 24696,
+  "index32": false,
+  "deleteCount": 917,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 25344,
+   "off": 76032,
+   "renderProxy": 126720,
+   "uv": 136912,
+   "index": 177680,
+   "delete": 227072
+  },
+  "bytes": 228906,
+  "material": {
+   "diffuse": "camisole_d.webp",
+   "normal": null,
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shirts01 (toigo_camisole_top), CC0"
+ },
+ "cargo_trousers": {
+  "slot": "bottoms",
+  "name": "cargo trousers",
+  "tags": [
+   "unisex",
+   "work"
+  ],
+  "count": 211,
+  "renderCount": 255,
+  "indexCount": 1176,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 1268,
+   "off": 3800,
+   "renderProxy": 6332,
+   "uv": 6844,
+   "index": 8884,
+   "delete": 11236
+  },
+  "bytes": 11236,
+  "material": {
+   "diffuse": "cargo_trousers_d.webp",
+   "normal": "cargo_trousers_n.webp",
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack pants01 (cortu_cargo_pants), CC0"
+ },
+ "denim_shorts": {
+  "slot": "bottoms",
+  "name": "denim shorts",
+  "tags": [
+   "unisex",
+   "summer"
+  ],
+  "count": 285,
+  "renderCount": 342,
+  "indexCount": 1500,
+  "index32": false,
+  "deleteCount": 277,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 1712,
+   "off": 5132,
+   "renderProxy": 8552,
+   "uv": 9236,
+   "index": 11972,
+   "delete": 14972
+  },
+  "bytes": 15526,
+  "material": {
+   "diffuse": "denim_shorts_d.webp",
+   "normal": "denim_shorts_n.webp",
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack pants01 (cortu_jeans_shorts), CC0"
+ },
+ "wool_trousers": {
+  "slot": "bottoms",
+  "name": "wool trousers",
+  "tags": [
+   "unisex",
+   "smart"
+  ],
+  "count": 1372,
+  "renderCount": 1593,
+  "indexCount": 8022,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 8232,
+   "off": 24696,
+   "renderProxy": 41160,
+   "uv": 44348,
+   "index": 57092,
+   "delete": 73136
+  },
+  "bytes": 73136,
+  "material": {
+   "diffuse": "wool_trousers_d.webp",
+   "normal": null,
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack pants01 (toigo_wool_pants), CC0"
+ },
+ "plimsolls": {
+  "slot": "shoes",
+  "name": "plimsolls",
+  "tags": [
+   "unisex"
+  ],
+  "count": 556,
+  "renderCount": 822,
+  "indexCount": 3012,
+  "index32": false,
+  "deleteCount": 1730,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 3336,
+   "off": 10008,
+   "renderProxy": 16680,
+   "uv": 18324,
+   "index": 24900,
+   "delete": 30924
+  },
+  "bytes": 34384,
+  "material": {
+   "diffuse": "plimsolls_d.webp",
+   "normal": "plimsolls_n.webp",
+   "colour": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shoes01 (toigo_mj_cloth_shoes), CC0"
+ },
+ "ankle_boots_m": {
+  "slot": "shoes",
+  "name": "ankle boots m",
+  "tags": [
+   "male"
+  ],
+  "count": 2084,
+  "renderCount": 2530,
+  "indexCount": 12360,
+  "index32": false,
+  "deleteCount": 2246,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 12504,
+   "off": 37512,
+   "renderProxy": 62520,
+   "uv": 67580,
+   "index": 87820,
+   "delete": 112540
+  },
+  "bytes": 117032,
+  "material": {
+   "diffuse": "ankle_boots_m_d.webp",
+   "normal": "ankle_boots_m_n.webp",
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shoes01 (toigo_ankle_boots_male), CC0"
+ },
+ "ankle_boots_f": {
+  "slot": "shoes",
+  "name": "ankle boots f",
+  "tags": [
+   "female"
+  ],
+  "count": 2084,
+  "renderCount": 2530,
+  "indexCount": 12360,
+  "index32": false,
+  "deleteCount": 2206,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 12504,
+   "off": 37512,
+   "renderProxy": 62520,
+   "uv": 67580,
+   "index": 87820,
+   "delete": 112540
+  },
+  "bytes": 116952,
+  "material": {
+   "diffuse": "ankle_boots_f_d.webp",
+   "normal": "ankle_boots_f_n.webp",
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shoes01 (toigo_ankle_boots_female), CC0"
+ },
+ "t_bars": {
+  "slot": "shoes",
+  "name": "t bars",
+  "tags": [
+   "female",
+   "smart"
+  ],
+  "count": 392,
+  "renderCount": 566,
+  "indexCount": 2112,
+  "index32": false,
+  "deleteCount": 2160,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 2352,
+   "off": 7056,
+   "renderProxy": 11760,
+   "uv": 12892,
+   "index": 17420,
+   "delete": 21644
+  },
+  "bytes": 25964,
+  "material": {
+   "diffuse": "t_bars_d.webp",
+   "normal": "t_bars_n.webp",
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack shoes01 (cortu_t-bar), CC0"
+ },
+ "flat_cap": {
+  "slot": "hat",
+  "name": "flat cap",
+  "tags": [
+   "male"
+  ],
+  "count": 517,
+  "renderCount": 572,
+  "indexCount": 2988,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.48
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.3298
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.9221
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 3104,
+   "off": 9308,
+   "renderProxy": 15512,
+   "uv": 16656,
+   "index": 21232,
+   "delete": 27208
+  },
+  "bytes": 27208,
+  "material": {
+   "diffuse": null,
+   "normal": null,
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hats01 (jujube_newsboy_cap), CC0"
+ },
+ "cloche_hat": {
+  "slot": "hat",
+  "name": "cloche hat",
+  "tags": [
+   "female"
+  ],
+  "count": 441,
+  "renderCount": 556,
+  "indexCount": 2313,
+  "index32": false,
+  "deleteCount": 273,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 2648,
+   "off": 7940,
+   "renderProxy": 13232,
+   "uv": 14344,
+   "index": 18792,
+   "delete": 23420
+  },
+  "bytes": 23966,
+  "material": {
+   "diffuse": "cloche_hat_d.webp",
+   "normal": null,
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack hats01 (aethelraed_unraed_cloche_hat), CC0"
+ },
+ "glasses_library": {
+  "slot": "glasses",
+  "name": "glasses library",
+  "tags": [],
+  "count": 816,
+  "renderCount": 1377,
+  "indexCount": 4236,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 4896,
+   "off": 14688,
+   "renderProxy": 24480,
+   "uv": 27236,
+   "index": 38252,
+   "delete": 46724
+  },
+  "bytes": 46724,
+  "material": {
+   "diffuse": "glasses_library_d.webp",
+   "normal": null,
+   "colour": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack glasses01 (frankyaye_glasses_library_male), CC0"
+ },
+ "glasses_frames": {
+  "slot": "glasses",
+  "name": "glasses frames",
+  "tags": [],
+  "count": 406,
+  "renderCount": 723,
+  "indexCount": 2424,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.3983
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.315
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.9038
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 2436,
+   "off": 7308,
+   "renderProxy": 12180,
+   "uv": 13628,
+   "index": 19412,
+   "delete": 24260
+  },
+  "bytes": 24260,
+  "material": {
+   "diffuse": "glasses_frames_d.webp",
+   "normal": null,
+   "colour": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack glasses01 (spamrakuen_tbm_glasses_frames_01), CC0"
+ },
+ "fight_gloves": {
+  "slot": "gloves",
+  "name": "fight gloves",
+  "tags": [],
+  "count": 2740,
+  "renderCount": 3092,
+  "indexCount": 13176,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.48
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.3298
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.9221
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 16440,
+   "off": 49320,
+   "renderProxy": 82200,
+   "uv": 88384,
+   "index": 113120,
+   "delete": 139472
+  },
+  "bytes": 139472,
+  "material": {
+   "diffuse": "fight_gloves_d.webp",
+   "normal": null,
+   "colour": [
+    0.3284,
+    0.3033,
+    0.3361
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack gloves01 (learning_mma_fighting_gloves), CC0"
+ },
+ "gloves_short": {
+  "slot": "gloves",
+  "name": "gloves short",
+  "tags": [],
+  "count": 2294,
+  "renderCount": 2954,
+  "indexCount": 13632,
+  "index32": false,
+  "deleteCount": 3490,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.398
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.2028
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 13764,
+   "off": 41292,
+   "renderProxy": 68820,
+   "uv": 74728,
+   "index": 98360,
+   "delete": 125624
+  },
+  "bytes": 132604,
+  "material": {
+   "diffuse": "gloves_short_d.webp",
+   "normal": null,
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack gloves01 (toigo_gloves_short), CC0"
+ },
+ "socks_low": {
+  "slot": "socks",
+  "name": "socks low",
+  "tags": [],
+  "count": 260,
+  "renderCount": 312,
+  "indexCount": 1488,
+  "index32": false,
+  "deleteCount": 2462,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.48
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.3298
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.9221
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 1560,
+   "off": 4680,
+   "renderProxy": 7800,
+   "uv": 8424,
+   "index": 10920,
+   "delete": 13896
+  },
+  "bytes": 18820,
+  "material": {
+   "diffuse": "socks_low_d.webp",
+   "normal": null,
+   "colour": [
+    0.662,
+    0.662,
+    0.662
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack underwear04 (joepal_crude_low_socks), CC0"
+ },
+ "socks_high": {
+  "slot": "socks",
+  "name": "socks high",
+  "tags": [],
+  "count": 360,
+  "renderCount": 394,
+  "indexCount": 2088,
+  "index32": false,
+  "deleteCount": 2688,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.48
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.3298
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.9221
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 2160,
+   "off": 6480,
+   "renderProxy": 10800,
+   "uv": 11588,
+   "index": 14740,
+   "delete": 18916
+  },
+  "bytes": 24292,
+  "material": {
+   "diffuse": "socks_high_d.webp",
+   "normal": null,
+   "colour": [
+    0.6299,
+    0.6299,
+    0.6299
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack underwear04 (joepal_crude_high_socks), CC0"
+ },
+ "face_mask": {
+  "slot": "mask",
+  "name": "face mask",
+  "tags": [],
+  "count": 139,
+  "renderCount": 147,
+  "indexCount": 612,
+  "index32": false,
+  "deleteCount": 406,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.4243
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.204
+   ],
+   "z_scale": [
+    962,
+    5320,
+    1.8441
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 836,
+   "off": 2504,
+   "renderProxy": 4172,
+   "uv": 4468,
+   "index": 5644,
+   "delete": 6868
+  },
+  "bytes": 7680,
+  "material": {
+   "diffuse": "face_mask_d.webp",
+   "normal": "face_mask_n.webp",
+   "colour": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "alpha": false,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack masks01 (joepal_medical_mouth_protection), CC0"
+ },
+ "beard_scruffy": {
+  "slot": "beard",
+  "name": "beard scruffy",
+  "tags": [],
+  "count": 2300,
+  "renderCount": 2300,
+  "indexCount": 8280,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 13800,
+   "off": 41400,
+   "renderProxy": 69000,
+   "uv": 73600,
+   "index": 92000,
+   "delete": 108560
+  },
+  "bytes": 108560,
+  "material": {
+   "diffuse": "beard_scruffy_d.webp",
+   "normal": null,
+   "colour": [
+    0.64,
+    0.64,
+    0.64
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack bodyparts05 (wdg_scruffy_beard), CC0"
+ },
+ "beard_viking": {
+  "slot": "beard",
+  "name": "beard viking",
+  "tags": [],
+  "count": 6557,
+  "renderCount": 6564,
+  "indexCount": 17046,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 39344,
+   "off": 118028,
+   "renderProxy": 196712,
+   "uv": 209840,
+   "index": 262352,
+   "delete": 296444
+  },
+  "bytes": 296444,
+  "material": {
+   "diffuse": "beard_viking_d.webp",
+   "normal": null,
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack bodyparts05 (rehmanpolanski_beard_viking), CC0"
+ },
+ "moustache_viking": {
+  "slot": "beard",
+  "name": "moustache viking",
+  "tags": [],
+  "count": 1598,
+  "renderCount": 1598,
+  "indexCount": 4092,
+  "index32": false,
+  "deleteCount": 0,
+  "scales": {
+   "x_scale": [
+    5399,
+    11998,
+    1.434
+   ],
+   "y_scale": [
+    791,
+    881,
+    2.4098
+   ],
+   "z_scale": [
+    962,
+    5320,
+    2.0001
+   ]
+  },
+  "layout": {
+   "refs": 0,
+   "w": 9588,
+   "off": 28764,
+   "renderProxy": 47940,
+   "uv": 51136,
+   "index": 63920,
+   "delete": 72104
+  },
+  "bytes": 72104,
+  "material": {
+   "diffuse": "moustache_viking_d.webp",
+   "normal": null,
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "alpha": true,
+   "tint": true
+  },
+  "zDepth": 50,
+  "source": "MakeHuman asset pack bodyparts05 (rehmanpolanski_moustache_viking), CC0"
+ }
+}

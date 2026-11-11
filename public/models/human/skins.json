@@ -1,0 +1,203 @@
+[
+ {
+  "id": "m_light",
+  "gender": "male",
+  "tone": 0.15,
+  "age": "young",
+  "tags": [],
+  "diffuse": "skin_m_light.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (toigo_light_skin_male_bronze), CC0"
+ },
+ {
+  "id": "m_freckles",
+  "gender": "male",
+  "tone": 0.08,
+  "age": "young",
+  "tags": [],
+  "diffuse": "skin_m_freckles.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (toigo_light_skin_male_freckles), CC0"
+ },
+ {
+  "id": "m_ginger",
+  "gender": "male",
+  "tone": 0.05,
+  "age": "young",
+  "tags": [
+   "ginger"
+  ],
+  "diffuse": "skin_m_ginger.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (toigo_light_skin_male_ginger), CC0"
+ },
+ {
+  "id": "m_aksel",
+  "gender": "male",
+  "tone": 0.2,
+  "age": "middle",
+  "tags": [],
+  "diffuse": "skin_m_aksel.webp",
+  "normal": "skin_m_aksel_n.webp",
+  "source": "MakeHuman skin pack (mindfront_aksel_skin), CC0"
+ },
+ {
+  "id": "m_african",
+  "gender": "male",
+  "tone": 0.9,
+  "age": "middle",
+  "tags": [],
+  "diffuse": "skin_m_african.webp",
+  "normal": "skin_m_african_n.webp",
+  "source": "MakeHuman skin pack (mindfront_skin_male_african_middleage), CC0"
+ },
+ {
+  "id": "m_eurasian_old",
+  "gender": "male",
+  "tone": 0.35,
+  "age": "old",
+  "tags": [],
+  "diffuse": "skin_m_eurasian_old.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (onlytheghosts_old_eurasian_male), CC0"
+ },
+ {
+  "id": "m_tattooed",
+  "gender": "male",
+  "tone": 0.15,
+  "age": "middle",
+  "tags": [
+   "tattoos"
+  ],
+  "diffuse": "skin_m_tattooed.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (ken1138_caucasian_male_tattooed_skin), CC0"
+ },
+ {
+  "id": "m_viking",
+  "gender": "male",
+  "tone": 0.12,
+  "age": "middle",
+  "tags": [
+   "tattoos",
+   "boss"
+  ],
+  "diffuse": "skin_m_viking.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (rehmanpolanski_skin_viking_tattoos), CC0"
+ },
+ {
+  "id": "f_light",
+  "gender": "female",
+  "tone": 0.12,
+  "age": "young",
+  "tags": [],
+  "diffuse": "skin_f_light.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (toigo_light_skin_female_freckles), CC0"
+ },
+ {
+  "id": "f_natural",
+  "gender": "female",
+  "tone": 0.15,
+  "age": "young",
+  "tags": [],
+  "diffuse": "skin_f_natural.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (toigo_light_skin_with_natural_makeup), CC0"
+ },
+ {
+  "id": "f_caucasian",
+  "gender": "female",
+  "tone": 0.18,
+  "age": "young",
+  "tags": [],
+  "diffuse": "skin_f_caucasian.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (darthfurby_caucasian_female), CC0"
+ },
+ {
+  "id": "f_redhead",
+  "gender": "female",
+  "tone": 0.05,
+  "age": "young",
+  "tags": [
+   "ginger"
+  ],
+  "diffuse": "skin_f_redhead.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (flower-angel_red_head_skin), CC0"
+ },
+ {
+  "id": "f_creamy",
+  "gender": "female",
+  "tone": 0.25,
+  "age": "young",
+  "tags": [],
+  "diffuse": "skin_f_creamy.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (skalldyrssuppe_creamy_female), CC0"
+ },
+ {
+  "id": "f_midtoned",
+  "gender": "female",
+  "tone": 0.55,
+  "age": "young",
+  "tags": [],
+  "diffuse": "skin_f_midtoned.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (callharvey3d_midtoned_female), CC0"
+ },
+ {
+  "id": "f_indian",
+  "gender": "female",
+  "tone": 0.6,
+  "age": "young",
+  "tags": [],
+  "diffuse": "skin_f_indian.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (cutoff3d_indian_female_skin), CC0"
+ },
+ {
+  "id": "f_eurasian_young",
+  "gender": "female",
+  "tone": 0.35,
+  "age": "young",
+  "tags": [],
+  "diffuse": "skin_f_eurasian_young.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (onlytheghosts_young_eurasian_female), CC0"
+ },
+ {
+  "id": "f_eurasian_middle",
+  "gender": "female",
+  "tone": 0.35,
+  "age": "middle",
+  "tags": [],
+  "diffuse": "skin_f_eurasian_middle.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (onlytheghosts_middle_aged_eurasian_female), CC0"
+ },
+ {
+  "id": "f_eurasian_old",
+  "gender": "female",
+  "tone": 0.35,
+  "age": "old",
+  "tags": [],
+  "diffuse": "skin_f_eurasian_old.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (onlytheghosts_old_eurasian_female), CC0"
+ },
+ {
+  "id": "uniform",
+  "gender": "any",
+  "tone": 0.0,
+  "age": "any",
+  "tags": [
+   "tintable"
+  ],
+  "diffuse": "skin_uniform.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (blindsaypatten_uniform_skin_texture), CC0"
+ }
+]

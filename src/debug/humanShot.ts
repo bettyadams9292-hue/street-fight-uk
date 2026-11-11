@@ -1,0 +1,121 @@
+/**
+ * `?shot=humans`: a line-up of characters built from the MakeHuman packs, on a
+ * plain stage, for checking the character builder by eye and in the visual tests.
+ * Runs instead of the game.
+ */
+import * as THREE from 'three';
+import { DEFAULT_SHAPE, type BodyShape } from '../characters/human/body';
+import { buildHuman, loadHumanAssets, preloadHuman, type HumanSpec } from '../render/human/HumanBuilder';
+
+const shape = (s: Partial<BodyShape>): BodyShape => ({ ...DEFAULT_SHAPE, ...s, sliders: { ...(s.sliders ?? {}) } });
+
+export const LINEUP: HumanSpec[] = [
+  {
+    shape: shape({ gender: 1, age: 0.12, muscle: 0.75, weight: 0.45, height: 0.6 }),
+    skin: 'm_light',
+    eyeColour: '#5a7da0',
+    items: [{ id: 'tee_tucked', colour: '#e8e4dc' }, { id: 'cargo_trousers', colour: '#3c4434' }, { id: 'plimsolls' }, { id: 'fight_gloves', colour: '#a01818' }],
+  },
+  {
+    shape: shape({ gender: 0, age: 0.1, muscle: 0.5, weight: 0.4, height: 0.45, caucasian: 0.3, african: 0, asian: 0.7 }),
+    skin: 'f_eurasian_young',
+    items: [{ id: 'tee_female', colour: '#2a4d7a' }, { id: 'denim_shorts' }, { id: 'socks_high' }, { id: 'plimsolls' }],
+  },
+  {
+    shape: shape({ gender: 1, age: 0.2, muscle: 0.6, weight: 0.65, height: 0.55, african: 1, caucasian: 0 }),
+    skin: 'm_african',
+    eyeColour: '#3a2414',
+    items: [{ id: 'polo_shirt', colour: '#1d1d1d' }, { id: 'wool_trousers', colour: '#55504a' }, { id: 'ankle_boots_m' }, { id: 'beard_scruffy' }],
+  },
+  {
+    shape: shape({ gender: 0, age: 0.45, muscle: 0.4, weight: 0.7, height: 0.4, african: 0, asian: 0, caucasian: 0.4 }),
+    skin: 'f_indian',
+    items: [{ id: 'jumper_fisherman', colour: '#7a2a3a' }, { id: 'wool_trousers', colour: '#2b2b33' }, { id: 't_bars' }, { id: 'glasses_frames' }],
+  },
+  {
+    shape: shape({ gender: 1, age: 0.8, muscle: 0.4, weight: 0.6, height: 0.45 }),
+    skin: 'm_eurasian_old',
+    items: [{ id: 'jumper_fisherman', colour: '#4a5a44' }, { id: 'wool_trousers', colour: '#3b3328' }, { id: 'ankle_boots_m' }, { id: 'flat_cap', colour: '#5a4c3c' }, { id: 'moustache_viking' }],
+  },
+  {
+    shape: shape({ gender: 1, age: 0.15, muscle: 0.9, weight: 0.85, height: 0.75 }),
+    skin: 'm_tattooed',
+    items: [{ id: 'tee_male', colour: '#c8c4bc' }, { id: 'cargo_trousers', colour: '#22252a' }, { id: 'ankle_boots_m' }, { id: 'beard_viking' }],
+  },
+  {
+    shape: shape({ gender: 0, age: 0.15, muscle: 0.55, weight: 0.5, height: 0.6 }),
+    skin: 'f_redhead',
+    items: [{ id: 'camisole', colour: '#141414' }, { id: 'cargo_trousers', colour: '#5c6650' }, { id: 'ankle_boots_f' }, { id: 'gloves_short' }],
+  },
+];
+
+interface ShotState {
+  ready: boolean;
+  scene: string;
+  error?: string;
+}
+
+export async function runHumanShot(root: HTMLElement): Promise<void> {
+  const out: ShotState = { ready: false, scene: 'humans' };
+  (window as unknown as { __shot: ShotState }).__shot = out;
+  try {
+    if (!(await loadHumanAssets())) throw new Error('character packs did not load');
+    await Promise.all(LINEUP.map(preloadHuman));
+    const w = root.clientWidth || innerWidth;
+    const h = root.clientHeight || innerHeight;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setSize(w, h);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.shadowMap.enabled = true;
+    root.innerHTML = '';
+    root.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#2a2c31');
+    scene.add(new THREE.HemisphereLight('#dfe6f0', '#3a3530', 1.4));
+    const key = new THREE.DirectionalLight('#fff2e0', 2.2);
+    key.position.set(2.5, 4, 5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    Object.assign(key.shadow.camera, { left: -5, right: 5, top: 3, bottom: -1 });
+    scene.add(key);
+    const rim = new THREE.DirectionalLight('#9fb8ff', 1.0);
+    rim.position.set(-3, 3, -4);
+    scene.add(rim);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), new THREE.MeshStandardMaterial({ color: '#45474c', roughness: 0.9 }));
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+    const gap = 0.78;
+    LINEUP.forEach((spec, i) => {
+      const hum = buildHuman(spec);
+      if (!hum) throw new Error(`could not build character ${i}`);
+      hum.root.position.x = (i - (LINEUP.length - 1) / 2) * gap;
+      scene.add(hum.root);
+    });
+    const cam = new THREE.PerspectiveCamera(30, w / h, 0.1, 50);
+    const view = new URLSearchParams(location.search).get('view');
+    if (view) {
+      // ?view=<index>:<face|body|back> for close inspection.
+      const [i, part] = view.split(':');
+      const x = (Number(i) - (LINEUP.length - 1) / 2) * gap;
+      const y = part === 'face' ? 1.6 : 0.95;
+      const d = part === 'face' ? 1.2 : 3.6;
+      cam.position.set(x, y, part === 'back' ? -d : d);
+      cam.lookAt(x, y, 0);
+    } else {
+      cam.position.set(0, 1.0, 7.2);
+      cam.lookAt(0, 0.9, 0);
+    }
+    await document.fonts.ready;
+    renderer.render(scene, cam);
+    // Close-up of the faces, inset at the top right.
+    const close = new THREE.PerspectiveCamera(22, 2, 0.05, 20);
+    close.position.set(-0.35, 1.62, 2.4);
+    close.lookAt(-0.35, 1.58, 0);
+    (window as unknown as { __humans: unknown }).__humans = { scene, renderer, cam, close };
+  } catch (e) {
+    out.error = (e as Error).message;
+    console.error(e);
+  }
+  out.ready = true;
+}

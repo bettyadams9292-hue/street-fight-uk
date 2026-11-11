@@ -16,6 +16,8 @@ const cases: { title: string; url: string; file: string }[] = [
   ...SHOT_NAMES.map((n) => ({ title: `scene: ${n}`, url: `/?shot=${n}`, file: `${n}.png` })),
   ...PLAIN_SCENES.map((n) => ({ title: `plain: ${n}`, url: `/?shot=${n}&look=off`, file: `plain-${n}.png` })),
   // The street as it was before the phase 3 pass: the fallback must keep drawing.
+  // Characters built from the MakeHuman packs (render/human/HumanBuilder).
+  { title: 'scene: humans', url: '/?shot=humans', file: 'humans.png' },
   { title: 'classic street: estate', url: '/?shot=estate_terrace&street=classic', file: 'classic-estate-terrace.png' },
 ];
 

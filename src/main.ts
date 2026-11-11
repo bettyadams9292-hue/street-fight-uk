@@ -44,6 +44,13 @@ const start = (): void => {
 };
 
 const begin = async (): Promise<void> => {
+  // The character line-up draws on its own stage, without the game.
+  if (shot === 'humans') {
+    hideBoot();
+    await (await import('./debug/deterministic')).makeDeterministic();
+    void import('./debug/humanShot').then((m) => m.runHumanShot(gameRoot));
+    return;
+  }
   // The visual tests need every run to be identical: fixed random numbers and a fixed clock.
   if (shot) (await import('./debug/deterministic')).makeDeterministic();
   // The city kit loads alongside the characters (about 3 MB); without it streets keep their built-in frontages.
