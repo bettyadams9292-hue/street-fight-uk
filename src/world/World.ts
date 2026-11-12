@@ -1284,9 +1284,29 @@ export class World {
     return { x, z };
   }
 
+  /**
+   * Enemies in the towns past Hale House: the same kinds of fighter, but each town out they are
+   * stronger all round, quicker to react, readier to block and they throw longer combinations.
+   */
+  private toughened(a: Archetype, id: ArchetypeId): Archetype {
+    const t = this.level.threat ?? 0;
+    if (!t || id === 'police') return a;
+    const up = (n: number): number => n + t;
+    const at = a.attributes;
+    return {
+      ...a,
+      level: a.level + t,
+      attributes: { strength: up(at.strength), speed: up(at.speed), endurance: up(at.endurance), agility: up(at.agility), defence: up(at.defence), technique: up(at.technique) },
+      reactionFrames: Math.max(6, a.reactionFrames - t * 2),
+      blockChance: Math.min(0.6, a.blockChance + t * 0.03),
+      aggression: Math.min(0.85, a.aggression + t * 0.03),
+      comboLength: Math.min(5, a.comboLength + (t >= 3 ? 1 : 0)),
+    };
+  }
+
   spawnEnemy(id: ArchetypeId, x: number, z: number, weapon?: WeaponId): Fighter {
     ({ x, z } = this.freeSpot(x, z));
-    const a = ARCHETYPES[id];
+    const a = this.toughened(ARCHETYPES[id], id);
     const f = new Fighter({
       id: this.nextId++,
       name: a.name,

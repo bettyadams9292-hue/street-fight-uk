@@ -40,7 +40,7 @@ console.log('The long street');
 test('every outdoor district is on the street, once, and the street is one line', () => {
   assert(new Set(STRIP).size === STRIP.length, 'a district appears twice');
   for (const id of STRIP) assert(L[id], `${id} is not a level`);
-  assert(STRIP[0] === 'stadium' && STRIP[STRIP.length - 1] === 'hq', 'the ends moved');
+  assert(STRIP[0] === 'stadium' && STRIP[19] === 'hq' && STRIP[STRIP.length - 1] === 't6d4', 'the ends moved');
   assert(stripLength(L) > 1500, `the street is only ${stripLength(L)} m`);
   const offs = stripOffsets(L);
   let at = 0;
@@ -188,7 +188,7 @@ test('buildings fill the frontage edge to edge without overlapping', () => {
     for (const pl of plan.placements) {
       const m = kit.models[pl.model];
       const depth = m.max[2] - m.min[2];
-      const tall = m.max[1] * pl.sy > 3.5 && depth > 3.5 && /bldg-|house|cottage|townhouse|storefront-unit|detached-garage/.test(pl.model);
+      const tall = m.max[1] * pl.sy > 3.5 && depth > 3.5 && /bldg-|house|cottage|townhouse|storefront-unit|restaurant-unit|detached-garage|picnic-shelter/.test(pl.model);
       // Front row only: the skyline stands well back.
       if (!tall || pl.z < plan.back - 14) continue;
       fronts.push([pl.x + m.min[0] * pl.sx, pl.x + m.max[0] * pl.sx, pl.model]);

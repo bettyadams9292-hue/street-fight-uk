@@ -11,6 +11,7 @@ import { defaultBasement, sanitiseBasement, type BasementSave } from '../busines
 import { defaultGym, sanitiseGym, type GymSave } from '../training/gym';
 import { sanitiseStyleTraining, type StyleTraining } from '../training/styleGyms';
 import { defaultCompanions, sanitiseCompanions, type CompanionSave } from '../companions/companions';
+import { TOWN_AREA_IDS, type TownAreaId } from '../world/townIds';
 import { DISTRICT_ORDER } from '../world/levels';
 import { defaultNeeds, eat, needsModifiers, sanitiseNeeds, type NeedsSave } from '../home/needs';
 import { putInto, sanitisePantry, STARTER_GROCERIES, type PantrySave } from '../home/recipes';
@@ -33,7 +34,8 @@ import {
   LEVEL_BONUS,
 } from './catalogue';
 
-export const AREA_IDS = [
+/** The hand-built areas. */
+export const CORE_AREA_IDS = [
   'home', 'estate', 'high_street', 'alleys', 'industrial', 'subway', 'city', 'territory',
   // Stage 5: interiors
   'clothes_shop', 'pawn_shop', 'pub',
@@ -46,7 +48,9 @@ export const AREA_IDS = [
   // Stage 5: districts
   'residential', 'leisure', 'stadium', 'market', 'docks', 'ind_estate', 'factory', 'precinct', 'mall', 'car_park', 'nightlife', 'underground', 'hq',
 ] as const;
-export type AreaId = (typeof AREA_IDS)[number];
+/** Every area: the hand-built ones, then the districts of the generated towns east of Hale House. */
+export type AreaId = (typeof CORE_AREA_IDS)[number] | TownAreaId;
+export const AREA_IDS: readonly AreaId[] = [...CORE_AREA_IDS, ...TOWN_AREA_IDS];
 
 export const SAVE_VERSION = 3;
 

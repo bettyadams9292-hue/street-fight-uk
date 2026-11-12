@@ -73,21 +73,6 @@ jobs:
             tools/visual/out
             tools/visual/baseline
           retention-days: 14
-      # The artifact store can't be reached from every tool that needs to look at the pictures, so a branch
-      # being reviewed also gets its pictures pushed to visual-out (overwritten each run, never merged).
-      - name: Publish this run's pictures to the visual-out branch
-        if: ${{ always() && github.event_name == 'pull_request' && github.head_ref == 'world-rebuild' }}
-        run: |
-          mkdir -p /tmp/vo
-          find tools/visual/out -name '*-actual.png' -exec cp {} /tmp/vo/ \;
-          for f in seam seam-crossed high-shops city-shops mall hq; do cp "tools/visual/baseline/$f.png" /tmp/vo/ 2>/dev/null || true; done
-          cd /tmp/vo
-          git init -q -b visual-out
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -q -m "Pictures from run ${{ github.run_id }}"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" visual-out
       - name: Commit the recorded baselines
         if: ${{ steps.compare.outcome == 'success' && github.event_name != 'pull_request' }}
         run: |

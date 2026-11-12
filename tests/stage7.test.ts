@@ -5,7 +5,8 @@
  */
 import { defaultAppearance } from '../src/character/Appearance';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
-import { AREA_IDS, newSave, Progress, sanitiseSave } from '../src/progress/Progress';
+import { AREA_IDS, CORE_AREA_IDS, newSave, Progress, sanitiseSave } from '../src/progress/Progress';
+import { TOWN_AREA_IDS } from '../src/world/townIds';
 import { BUSINESS_UPGRADES, EQUIPMENT, EQUIPMENT_LIST, IMPROVEMENTS, STARTUP_FEE, TIERS, equipmentResale } from '../src/business/catalogue';
 import {
   B_LANE_Z,
@@ -327,7 +328,8 @@ test('save and reload: basement, equipment and positions, business, upgrades, le
 
 test('every area still builds, and all 34 areas are reachable data', () => {
   const p = fresh();
-  assert(AREA_IDS.length === 34, `${AREA_IDS.length} areas`);
+  // 34 hand-built areas, then the generated towns east of Hale House.
+  assert(CORE_AREA_IDS.length === 34 && AREA_IDS.length === 34 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const lvl = resolveLevel(id, p.save);
     const w = new World(lvl, p, { entry: lvl.entries[0].id, seed: 4 });

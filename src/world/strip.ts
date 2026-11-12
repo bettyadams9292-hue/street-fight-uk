@@ -14,14 +14,21 @@ import type { ExitDef, LevelDef } from './LevelTypes';
  */
 
 /** West to east. Home is on the estate, a fifth of the way along. */
-export const STRIP: readonly AreaId[] = [
+const strip: AreaId[] = [
   'stadium', 'leisure', 'residential', 'estate', 'high_street', 'alleys', 'industrial', 'ind_estate', 'market', 'subway',
   'city', 'docks', 'precinct', 'mall', 'car_park', 'nightlife', 'factory', 'underground', 'territory', 'hq',
 ];
+export const STRIP: readonly AreaId[] = strip;
+
+/** Carry the street on eastwards (the generated towns). `lock` shuts the seam into the first of the new districts. */
+export function extendStrip(ids: readonly AreaId[], lock?: SeamLock): void {
+  for (const id of ids) if (!strip.includes(id)) strip.push(id);
+  if (lock && ids.length) SEAM_LOCKS[ids[0]] = lock;
+}
 
 const HOME_INDEX = STRIP.indexOf('estate');
 
-interface SeamLock {
+export interface SeamLock {
   requires?: string;
   requiresAll?: string[];
   lockedText: string;

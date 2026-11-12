@@ -6,6 +6,7 @@ import { SHOP_STOPS, TAXI_COST, TAXI_STOPS } from '../ui/hub';
 import { DISTRICT_ORDER, LEVELS } from '../world/levels';
 import type { ExitDef, LevelDef } from '../world/LevelTypes';
 import { STRIP, stripLength, stripOffsets } from '../world/strip';
+import { GENERATED_TOWNS } from '../world/towns';
 
 /**
  * The town map's data. Places, doors, links, locks, bosses, shops and people
@@ -60,7 +61,7 @@ const TINTS: Partial<Record<AreaId, { tint: string; road: RoadLayout['road'] }>>
  */
 const ROW_X0 = 260;
 const ROW_X1 = MAP_W - 260;
-const ROW_Y = [330, 850, 1370];
+const ROW_Y = [210, 530, 850, 1170, 1490];
 const ROW_LEN = ROW_X1 - ROW_X0;
 const BEND_LEN = ROW_Y[1] - ROW_Y[0];
 const SNAKE_LEN = ROW_LEN * ROW_Y.length + BEND_LEN * (ROW_Y.length - 1);
@@ -100,6 +101,18 @@ const LAYOUT: Partial<Record<AreaId, RoadLayout>> = (() => {
   }
   return out;
 })();
+
+/** The card text for a place: written by hand for the home town, made from the town's own facts for the generated ones. */
+function blurbOf(id: AreaId): string {
+  const own = BLURB[id];
+  if (own) return own;
+  const town = GENERATED_TOWNS.find((t) => t.districts.some((d) => d.id === id));
+  if (!town) return LEVELS[id].objective;
+  const last = town.districts[town.districts.length - 1].id === id;
+  return last
+    ? `The far end of ${town.name}. ${town.boss.name}, ${town.boss.title}, runs the town from here.`
+    : `A stretch of ${town.name}, east of Hale House. ${town.boss.name}, ${town.boss.title}, runs the town.`;
+}
 
 /** One line for the info card. */
 const BLURB: Record<AreaId, string> = {
@@ -330,7 +343,7 @@ export function place(id: AreaId): MapPlace {
     kind: INTERIOR_KIND[id] ?? 'street',
     street,
     at: placePoint(id),
-    blurb: BLURB[id],
+    blurb: blurbOf(id),
     activities: [...acts],
     people: [...people],
   };
@@ -544,5 +557,5 @@ export function onMap(id: AreaId): boolean {
 }
 
 export function blurb(id: AreaId): string {
-  return BLURB[id];
+  return blurbOf(id);
 }

@@ -113,13 +113,24 @@ export interface StreetPlan {
 
 export type GroundKind = 'street' | 'suburb' | 'plaza' | 'lane' | 'yard' | 'quay';
 
-interface District {
+export interface District {
   ground: GroundKind;
   /** Building colour washes, picked per building. */
   tints: string[];
   skyline: 'none' | 'low' | 'city';
   lamp: string;
   trees: boolean;
+  /** Paving model, where this district's differs from the usual for its kind of ground. */
+  pavement?: string;
+  /** This district's own building stock for some kinds of frontage (the generated towns each have their own). */
+  solid?: Partial<Record<FacadeKind, string[]>>;
+  /** The open-fronted unit its shops are built from. */
+  shell?: string;
+}
+
+/** Add a district the planner should know how to build (the generated towns register theirs). */
+export function registerDistrict(id: AreaId, d: District): void {
+  DISTRICTS[id] = d;
 }
 
 const WARM = ['#ffffff', '#f0dcc8', '#e6c8b0', '#d9d2c4', '#f4e6d0'];
@@ -368,7 +379,7 @@ const SOLID: Partial<Record<FacadeKind, string[]>> = {
   semi: ['hood/two-storey-family-house', 'hood/split-level-house', 'hood/porch-front-cottage', 'hood/single-storey-ranch-house'],
   office: ['nyc/bldg-office-tower', 'nyc/bldg-bank', 'nyc/bldg-setback-tower'],
   club: ['nyc/bldg-movie-palace', 'nyc/bldg-corner-tenement'],
-  casino: ['nyc/bldg-movie-palace'],
+  casino: ['nyc/bldg-movie-palace', 'nyc/bldg-corner-tenement'],
   stand: ['nyc/bldg-public-school', 'nyc/bldg-parking-garage'],
   leisure: ['nyc/bldg-public-school'],
   car_park: ['nyc/bldg-parking-garage'],
@@ -504,7 +515,8 @@ export function planStreet(level: LevelDef): StreetPlan {
   const far = front + 6.4;
   if (d.ground === 'street' || d.ground === 'suburb') {
     const suburb = d.ground === 'suburb';
-    tile('pavement', suburb ? 'hood/sidewalk-slab-tile' : 'nyc/tile-sidewalk', x0, x1, back, KERB_Z, { y: suburb ? -0.05 : 0 });
+    const paving = d.pavement ?? (suburb ? 'hood/sidewalk-slab-tile' : 'nyc/tile-sidewalk');
+    tile('pavement', paving, x0, x1, back, KERB_Z, { y: size(paving).h > 0.01 ? -size(paving).h : 0 });
     // Kerb stones, then the parking lane with its dashed edge line, then the carriageway.
     plan.surfaces.push({ kind: 'kerb', x0, x1, z0: KERB_Z, z1: KERB_Z + KERB_DEPTH });
     {
@@ -521,7 +533,7 @@ export function planStreet(level: LevelDef): StreetPlan {
     // Drains in the gutter and covers in the road.
     for (let x = x0 + 9 + rng.next() * 6; x < x1 - 4; x += 22 + rng.next() * 8) put('nyc/prop-manhole-cover', x, -0.24, KERB_Z + KERB_DEPTH + 1.9 + rng.next(), { sy: 0.9 });
   } else if (d.ground === 'plaza') {
-    tile('plaza', 'nyc/tile-plaza', x0, x1, back, far);
+    tile('plaza', d.pavement ?? 'nyc/tile-plaza', x0, x1, back, far, { y: d.pavement && size(d.pavement).h > 0.01 ? -size(d.pavement).h : 0 });
   } else if (d.ground === 'lane') {
     tile('cobbles', 'nyc/tile-plaza', x0, x1, back, far, { tint: '#8c8780', scale: 0.5 });
   } else if (d.ground === 'yard') {
@@ -601,7 +613,7 @@ export function planStreet(level: LevelDef): StreetPlan {
 
   /** A run of buildings with solid fronts, stretched slightly so they fill the frontage exactly. */
   function solid(f: FacadeDef, label: string, frng: Rng, prev: string): string {
-    const palette = SOLID[f.kind] ?? ['nyc/bldg-tenement', 'nyc/bldg-walkup-infill'];
+    const palette = d!.solid?.[f.kind] ?? SOLID[f.kind] ?? ['nyc/bldg-tenement', 'nyc/bldg-walkup-infill'];
     const span = f.x1 - f.x0;
     const chosen: string[] = [];
     let left = span;
@@ -609,7 +621,11 @@ export function planStreet(level: LevelDef): StreetPlan {
     while (left > 1.6 && guard++ < 40) {
       let options = palette.filter((m) => size(m).w <= left * 1.3);
       if (!options.length) options = [[...palette].sort((a, b) => size(a).w - size(b).w)[0]];
-      const fresh = options.filter((m) => m !== prev);
+      // Never two of the same building side by side: if only the last one fits, take another and let it stretch.
+      let fresh = options.filter((m) => m !== prev);
+      if (!fresh.length) fresh = palette.filter((m) => m !== prev).sort((a, b) => size(a).w - size(b).w).slice(0, 1);
+      // A stock of one: break the run with a narrow infill building.
+      if (!fresh.length && prev !== 'nyc/bldg-walkup-infill' && !/townhouse-row-unit|detached-garage/.test(prev)) fresh = ['nyc/bldg-walkup-infill'];
       const m = pick(frng, fresh.length ? fresh : options);
       chosen.push(m);
       prev = m;
@@ -706,7 +722,7 @@ export function planStreet(level: LevelDef): StreetPlan {
     const floor = SHOP_FLOOR[kind];
     for (let c = 0; c < n; c++) {
       const cx = f.x0 + cw * (c + 0.5);
-      put(SHELL, cx, 0, back - SHELL_DEPTH / 2, { sx: k, tint });
+      put(d!.shell ?? SHELL, cx, 0, back - SHELL_DEPTH / 2, { sx: k, tint });
       // The shop floor, a step up from the pavement.
       tile('shopfloor', floor.model, cx - 3.62 * k, cx + 3.62 * k, back - 7.3, back - 0.34, { y: 0.1, scale: floor.scale, tint: floor.tint });
       // What is inside. A wide shop repeats its layout, mirrored in alternate units so it doesn't look stamped.

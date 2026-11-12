@@ -6,7 +6,8 @@ import { FRONT_DOOR_X, HOME_BOUNDS, STAIRWELL, buildHomeLevel } from '../propert
 import { buildBasementLevel, defaultBasement } from '../business/basement';
 import { defaultProperty } from '../property/state';
 import { defaultGym } from '../training/gym';
-import { joinStrip } from './strip';
+import { extendStrip, joinStrip } from './strip';
+import { GENERATED_TOWNS, townGate } from './towns';
 
 /**
  * The neighbourhood. Areas join end to end (walk off an edge) or through
@@ -590,6 +591,12 @@ export const CORE_LEVELS = {
 
 
 export const LEVELS: Record<AreaId, LevelDef> = { ...CORE_LEVELS, ...DISTRICTS, ...INTERIORS, basement: buildBasementLevel(defaultBasement()) };
+// East of Hale House the street carries on through the generated towns, each shut until the boss before it is beaten.
+for (const town of GENERATED_TOWNS) {
+  for (const d of town.districts) LEVELS[d.id] = d;
+  const gate = townGate(town.index);
+  extendStrip(town.districts.map((d) => d.id), { requires: gate.flag, lockedText: gate.text });
+}
 // The outdoor districts are one long street: join them end to end.
 joinStrip(LEVELS);
 
@@ -608,4 +615,6 @@ export const DISTRICT_ORDER: { flag: string; area: AreaId; label: string; option
   { flag: 'boss_underground', area: 'underground', label: 'Find the Underground King on the Deep Line', optional: true },
   { flag: 'boss_dunc', area: 'territory', label: 'Finish Big Dunc in the Pit' },
   { flag: 'boss_final', area: 'hq', label: 'End it with Victor Hale at Hale House' },
+  // Then the towns east of Hale House, one boss at a time.
+  ...GENERATED_TOWNS.map((t) => ({ flag: t.boss.flag, area: t.districts[t.districts.length - 1].id, label: `Take ${t.name} from ${t.boss.name}, ${t.boss.title}` })),
 ];

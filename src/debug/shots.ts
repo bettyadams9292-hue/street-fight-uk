@@ -62,6 +62,13 @@ function district(game: Game, g: Internals, area: string): void {
   story(game, g, area as AreaId, lvl.entries[0].id, 150);
 }
 
+/** A generated town's street, seen from a quiet stretch a little way in. */
+function townStreet(game: Game, g: Internals, area: AreaId): void {
+  story(game, g, area, 'left', 10);
+  if (g.world) g.world.player.pos.x = 14;
+  game.advance(200);
+}
+
 export const SHOTS: Record<ShotName, SceneFn> = {
   menu: (game, g) => {
     g.showMainMenu();
@@ -120,6 +127,13 @@ export const SHOTS: Record<ShotName, SceneFn> = {
     if (g.world) g.world.player.pos.x = 40;
     game.advance(240);
   },
+  // One street from each generated town east of Hale House.
+  town1_quay: (game, g) => townStreet(game, g, 't1d3'),
+  town2_works: (game, g) => townStreet(game, g, 't2d2'),
+  town3_plaza: (game, g) => townStreet(game, g, 't3d2'),
+  town4_suburb: (game, g) => townStreet(game, g, 't4d1'),
+  town5_terraces: (game, g) => townStreet(game, g, 't5d2'),
+  town6_strip: (game, g) => townStreet(game, g, 't6d2'),
   mall: (game, g) => district(game, g, 'mall'),
   hq: (game, g) => district(game, g, 'hq'),
   high_street: (game, g) => district(game, g, 'high_street'),

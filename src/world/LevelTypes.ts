@@ -265,6 +265,11 @@ export interface LevelDef {
   lights: LightDef[];
   /** Objective when nothing else is going on. */
   objective: string;
+  /**
+   * How far past the home town this is (the generated towns: 1, 2, 3...). Enemies here are a level stronger
+   * per point, react sooner and string longer combinations together.
+   */
+  threat?: number;
 }
 
 /** Collision footprint (half width in x, half depth in z) for each prop. */

@@ -6,7 +6,9 @@ import type { Archetype, ArchetypeId } from './archetypes';
 
 export type BossId =
   | 'gaffer' | 'sully' | 'ratcatcher' | 'dunc'
-  | 'estate_king' | 'market_boss' | 'dock_bruiser' | 'industrial_enforcer' | 'precinct_enforcer' | 'nightclub_owner' | 'football_firm' | 'underground_king' | 'the_boss';
+  | 'estate_king' | 'market_boss' | 'dock_bruiser' | 'industrial_enforcer' | 'precinct_enforcer' | 'nightclub_owner' | 'football_firm' | 'underground_king' | 'the_boss'
+  // The bosses of the generated towns east of Hale House (world/towns.ts adds them to BOSSES).
+  | `town${number}`;
 
 export interface BossPhase {
   /** Starts when health drops below this fraction. */

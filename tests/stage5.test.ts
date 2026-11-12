@@ -18,6 +18,7 @@ import { SaveStore } from '../src/save/SaveStore';
 import { LEVELS } from '../src/world/levels';
 import { arrest, ARREST_HEAT, robShop, ROBBERY_CLOSED_TRIPS } from '../src/world/robbery';
 import { exitLocked, World } from '../src/world/World';
+import { TOWN_AREA_IDS } from '../src/world/townIds';
 
 let passed = 0;
 let failed = 0;
@@ -526,7 +527,8 @@ test('a Stage 4 (v2) save migrates: money, flags, gear, weapons and cosmetics al
 console.log('Stage 5: the campaign');
 
 test('every area (24 + Stage 6 and 7 buildings), every exit resolves, every new district has a boss or is an interior', () => {
-  assert(AREA_IDS.length === 34, `${AREA_IDS.length} areas`);
+  // 34 hand-built areas, then the generated towns east of Hale House.
+  assert(AREA_IDS.length === 34 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const l = LEVELS[id];
     assert(l, `no level ${id}`);
