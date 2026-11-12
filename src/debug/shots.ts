@@ -102,6 +102,26 @@ export const SHOTS: Record<ShotName, SceneFn> = {
   estate_garages: (game, g) => story(game, g, 'estate', 'subway'),
   estate_gym: (game, g) => story(game, g, 'estate', 'boxing'),
   // One picture per district, from its first entrance, for the city rebuild.
+  // The long street: the line between two districts (before and after walking over it), and shops you can see into.
+  seam: (game, g) => story(game, g, 'estate', 'right', 200),
+  seam_crossed: (game, g) => {
+    story(game, g, 'estate', 'right', 60);
+    const live = g as unknown as { world: unknown; crossSeam(w: unknown, to: AreaId, entry: string): void };
+    live.crossSeam(live.world, 'high_street', 'left');
+    game.advance(200);
+  },
+  high_shops: (game, g) => {
+    story(game, g, 'high_street', 'left', 10);
+    if (g.world) g.world.player.pos.x = 44;
+    game.advance(240);
+  },
+  city_shops: (game, g) => {
+    story(game, g, 'city', 'left', 10);
+    if (g.world) g.world.player.pos.x = 40;
+    game.advance(240);
+  },
+  mall: (game, g) => district(game, g, 'mall'),
+  hq: (game, g) => district(game, g, 'hq'),
   high_street: (game, g) => district(game, g, 'high_street'),
   city: (game, g) => district(game, g, 'city'),
   industrial: (game, g) => district(game, g, 'industrial'),

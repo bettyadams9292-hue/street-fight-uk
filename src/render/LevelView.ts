@@ -16,6 +16,8 @@ import { buildAnyModel, buildEquipmentModel, buildGymKitModel, buildFurnitureMod
 import { EQUIPMENT } from '../business/catalogue';
 import { CARS, FINISHES, FURNITURE } from '../property/catalogue';
 import { themeProfile } from './themes';
+import { kitStreet, planStreet, type StreetPlan } from '../city/street';
+import { buildKitStreet, polyKitReady, type KitStreetView } from './kit/PolyKit';
 import { exitLocked, type World } from '../world/World';
 import {
   concreteTexture,
@@ -83,10 +85,22 @@ export class LevelView {
   /** Cars between the camera and the play area: they fade when the player walks behind one. */
   private foreCars: { car: THREE.Object3D; x: number; z: number; hx: number; hz: number }[] = [];
 
+  /** The long street, built from the low-poly kits (city/street.ts). Null for interiors, or with `?world=classic`. */
+  readonly street: StreetPlan | null;
+  private kitView: KitStreetView | null = null;
+  /** The area's own sky and key lights. Only the district you are standing in has them switched on. */
+  private readonly lightRig = new THREE.Group();
+  /** Street lamps of a kit street: the renderer lights the nearest few from one shared pool, so walking between districts never changes how many lights the shaders are built for. */
+  readonly lampSpecs: { x: number; y: number; z: number; colour: number; intensity: number; range: number }[] = [];
+  private seamBlocks: { exit: ExitDef; group: THREE.Object3D }[] = [];
+
   constructor(readonly level: LevelDef, private readonly progress: Progress) {
     this.back = backWallZ(level);
-    this.X0 = level.bounds.minX - LEVEL_EXTENT;
-    this.X1 = level.bounds.maxX + LEVEL_EXTENT;
+    const classic = new URLSearchParams(window.location.search).get('world') === 'classic';
+    this.street = !classic && kitStreet(level) && polyKitReady() ? planStreet(level) : null;
+    this.X0 = this.street ? this.street.x0 : level.bounds.minX - LEVEL_EXTENT;
+    this.X1 = this.street ? this.street.x1 : level.bounds.maxX + LEVEL_EXTENT;
+    this.group.add(this.lightRig);
     this.rnd = seeded(hash(level.id));
     this.highlight = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.035, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd23d, transparent: true, opacity: 0.85 }));
     this.highlight.rotation.x = -Math.PI / 2;
@@ -184,9 +198,14 @@ export class LevelView {
 
   private build(): void {
     const lvl = this.level;
-    this.buildGround();
+    if (this.street) {
+      // Ground, buildings, shop interiors, street furniture and vehicles all come from the kit plan.
+      this.kitView = buildKitStreet(this.street);
+      if (this.kitView) this.group.add(this.kitView.group);
+      this.kitDoors = this.street.doors;
+    } else this.buildGround();
     // Carry the end facades on past the edges so the camera never sees a gap.
-    const fac = [...lvl.facades].sort((a, b) => a.x0 - b.x0);
+    const fac = this.street ? [] : [...lvl.facades].sort((a, b) => a.x0 - b.x0);
     if (fac.length) {
       const last = fac[fac.length - 1];
       const run: FacadeDef[] = [{ ...fac[0], x0: this.X0, x1: fac[0].x0, label: undefined }, ...fac, { ...last, x0: last.x1, x1: this.X1, label: undefined }];
@@ -215,9 +234,12 @@ export class LevelView {
         this.kitDoors = plans.flatMap((p) => p.buildings.flatMap((b) => b.doors));
       }
     }
-    if (themeProfile(lvl.theme).skyline !== 'none') this.buildSkyline();
+    if (!this.street && themeProfile(lvl.theme).skyline !== 'none') this.buildSkyline();
     for (const w of lvl.walls ?? []) this.buildWall(w);
-    for (const p of lvl.props) {
+    for (let i = 0; i < lvl.props.length; i++) {
+      const p = lvl.props[i];
+      // A kit model already stands in for this one.
+      if (this.street?.propDone[i]) continue;
       const before = this.group.children.length;
       this.buildProp(p);
       this.propObjects.set(p, this.group.children.slice(before));
@@ -225,10 +247,10 @@ export class LevelView {
     for (const ex of lvl.exits) this.buildExit(ex);
     for (const g of lvl.gates ?? []) this.buildGate(g.id, g.x, g.z0, g.z1);
     for (const l of lvl.levers ?? []) this.buildLever(l.id, l.x);
-    this.buildGraffiti();
+    if (!this.street) this.buildGraffiti();
     this.buildLights();
     this.buildWeather();
-    if (this.streetPass && SLICE_LEVELS.includes(lvl.id)) {
+    if (!this.street && this.streetPass && SLICE_LEVELS.includes(lvl.id)) {
       this.dressing = new StreetDressing(lvl, this.back, lvl.bounds.maxZ + 0.4, this.X0, this.X1, seeded(hash(`${lvl.id}:dressing`)));
       this.group.add(this.dressing.group);
     }
@@ -2820,6 +2842,11 @@ export class LevelView {
   /** Meshes each level prop was built into (so one can be hidden mid-visit). */
   private propObjects = new Map<PropDef, THREE.Object3D[]>();
 
+  /** Switch this district's own sky and key lights on or off. Districts streamed in beside the one you are in keep theirs off. */
+  setActive(on: boolean): void {
+    this.lightRig.visible = on;
+  }
+
   hideProp(p: PropDef): void {
     for (const o of this.propObjects.get(p) ?? []) o.visible = false;
   }
@@ -2980,7 +3007,32 @@ export class LevelView {
 
   // ---- doors, exits, gates, levers ------------------------------------------------------
 
+  /**
+   * The line between two districts of the long street. Nothing is drawn when the way is open;
+   * when the story still has it shut, a row of barriers stands across the pavement and the road.
+   */
+  private buildSeam(ex: ExitDef): void {
+    if (!ex.requires && !ex.requiresAll) return;
+    const g = new THREE.Group();
+    const { minZ, maxZ } = this.level.bounds;
+    const x = ex.x + (ex.side === 'left' ? 0.35 : -0.35);
+    const red = this.mat('#c0262a', 0.6);
+    const white = this.mat('#ecebe6', 0.6);
+    const leg = this.mat('#2a2d33', 0.5, 0.5);
+    for (let z = minZ + 0.5; z <= maxZ + 0.01; z += 1.25) {
+      for (let k = 0; k < 5; k++) this.box(0.07, 0.2, 0.22, x, 0.95, z - 0.44 + k * 0.22, k % 2 ? white : red, true, g);
+      this.box(0.06, 0.95, 0.06, x, 0.47, z - 0.45, leg, true, g);
+      this.box(0.06, 0.95, 0.06, x, 0.47, z + 0.45, leg, true, g);
+      this.box(0.4, 0.05, 0.08, x, 0.03, z - 0.45, leg, false, g);
+      this.box(0.4, 0.05, 0.08, x, 0.03, z + 0.45, leg, false, g);
+    }
+    g.visible = exitLocked(ex, this.progress);
+    this.group.add(g);
+    this.seamBlocks.push({ exit: ex, group: g });
+  }
+
   private buildExit(ex: ExitDef): void {
+    if (ex.seam) return this.buildSeam(ex);
     if (ex.kind === 'door') {
       const z = this.back + 0.05;
       // The building already has a real doorway here: just sign it.
@@ -3076,11 +3128,13 @@ export class LevelView {
     const theme = this.level.theme;
     const g = this.group;
     const prof = themeProfile(theme);
-    const indoor = prof.interior || prof.roofed;
-    g.add(new THREE.HemisphereLight(indoor ? 0x8a8070 : 0x55607e, 0x14100c, indoor ? 1.1 : 0.9));
-    const front = new THREE.DirectionalLight(0xffd2a8, indoor ? 0.6 : 0.75);
+    const indoor = !this.street && (prof.interior || prof.roofed);
+    // The kit's colours are painted for plain daylight; at night they need a little more sky to read.
+    const rig = this.lightRig;
+    rig.add(new THREE.HemisphereLight(indoor ? 0x8a8070 : this.street ? 0x6f7a9c : 0x55607e, this.street ? 0x2a2420 : 0x14100c, indoor ? 1.1 : this.street ? 1.25 : 0.9));
+    const front = new THREE.DirectionalLight(0xffd2a8, indoor ? 0.6 : this.street ? 0.9 : 0.75);
     front.position.set(2, 3, 12);
-    g.add(front);
+    rig.add(front);
     // Shadow-casting light that follows the camera along the street.
     this.sun.position.set(-4, 12, 8);
     this.sun.castShadow = true;
@@ -3092,9 +3146,14 @@ export class LevelView {
     this.sun.shadow.camera.near = 1;
     this.sun.shadow.camera.far = 40;
     this.sun.shadow.bias = -0.0008;
-    g.add(this.sun, this.sun.target);
+    rig.add(this.sun, this.sun.target);
     this.shadowLights.push(this.sun);
 
+    if (this.street) {
+      // Kit streets: the lamp posts are models in the plan, and the renderer's shared pool does the lighting.
+      for (const l of this.level.lights) this.lampSpecs.push({ x: l.x, y: l.y, z: l.z, colour: l.colour, intensity: l.intensity, range: l.range ?? 12 });
+      return;
+    }
     for (const l of this.level.lights) {
       const light = new THREE.PointLight(l.colour, l.intensity, l.range ?? 12, 1.6);
       light.position.set(l.x, l.y, l.z);
@@ -3128,6 +3187,7 @@ export class LevelView {
 
   update(dt: number, time: number, world: World, camX: number): void {
     for (const sp of this.spinners) sp.rotation.y = time * 0.25;
+    for (const b of this.seamBlocks) b.group.visible = exitLocked(b.exit, world.progress);
     this.dressing?.update(time, camX);
     if (this.foreCars.length) {
       const pl = world.player.pos;
@@ -3426,6 +3486,7 @@ export class LevelView {
 
   dispose(): void {
     this.dressing?.dispose();
+    this.kitView?.dispose();
     disposeGroup(this.group);
   }
 }

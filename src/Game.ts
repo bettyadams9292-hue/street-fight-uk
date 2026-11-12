@@ -599,6 +599,20 @@ export class Game {
     this.pending = null;
   }
 
+  /**
+   * Walk over the line into the next district of the long street. The new district's world starts
+   * with you exactly where you were, a step over the line, still moving, so there is no stop.
+   */
+  private crossSeam(w: World, to: AreaId, entry: string): void {
+    const there = LEVELS[to].bounds;
+    const pl = w.player;
+    const x = entry === 'left' ? there.minX + 0.08 : there.maxX - 0.08;
+    const z = Math.max(there.minZ, Math.min(there.maxZ, pl.pos.z));
+    const facing = pl.facing;
+    this.enterArea(to, entry, { carry: w.carry(), at: { x, z } });
+    if (this.world) this.world.player.facing = facing;
+  }
+
   /** Fade out, swap area, fade in. */
   private changeArea(area: AreaId, entry: string, carry: { health: number; stamina: number } | null): void {
     if (this.state === 'transition') return;
@@ -680,9 +694,11 @@ export class Game {
   private wireWorld(w: World): void {
     const ev = w.events;
     this.worldUnsub.push(
-      ev.on('area:exit', ({ to, entry }) => {
+      ev.on('area:exit', ({ to, entry, seam }) => {
         // The basement is down a real flight of stairs: walk down (or up) them, then arrive.
         if ((w.level.id === 'home' && to === 'basement') || (w.level.id === 'basement' && to === 'home')) return this.walkStairs(w, to, entry);
+        // The next district of the long street: no door, no fade, you just keep walking.
+        if (seam) return this.crossSeam(w, to, entry);
         this.changeArea(to, entry, w.carry());
       }),
       ev.on('area:locked', ({ text }) => this.hud.toast(text, 'warn')),

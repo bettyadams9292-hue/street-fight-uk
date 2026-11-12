@@ -382,7 +382,8 @@ test('bosses: unique flags, real drops, quest items open the way on', () => {
   }
   assert(Object.keys(BOSSES).length >= 13, `only ${Object.keys(BOSSES).length} bosses`);
   const p = fresh();
-  const neon = LEVELS.city.exits.find((e) => e.to === 'nightlife')!;
+  // The Neon Mile is the next stretch of the street after the multi-storey.
+  const neon = LEVELS.car_park.exits.find((e) => e.to === 'nightlife')!;
   assert(exitLocked(neon, p), 'Neon Mile open without the VIP pass');
   p.giveItem('vip_pass');
   assert(p.has('has_vip_pass') && !exitLocked(neon, p), 'VIP pass did not open the Neon Mile');

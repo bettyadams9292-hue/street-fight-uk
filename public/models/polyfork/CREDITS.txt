@@ -1,0 +1,260 @@
+Low-poly city, neighbourhood, cafe, office and vehicle models by Polyfork (https://polyfork.dev), used under CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+Changes made: the models were repacked into one file (kit.bin, index in kit.json) by tools/polyfork/pack.py.
+Each model is flattened into solid, paint, glass and lit parts; positions, normals and colours are quantised;
+vehicle bodywork is stored white so the game can respray it; some upstairs windows are marked as lit.
+In the game some models are also tinted, scaled or mirrored.
+
+One line per model, as its author asks:
+
+nyc/bldg-auto-garage  Auto Repair Garage by Polyfork (https://polyfork.dev/asset/auto-repair-garage-b91464), CC BY 4.0
+nyc/bldg-bank  Classical Bank by Polyfork (https://polyfork.dev/asset/classical-bank-04954e), CC BY 4.0
+nyc/bldg-brick-church  Brick Church by Polyfork (https://polyfork.dev/asset/brick-church-322885), CC BY 4.0
+nyc/bldg-brownstone  Brownstone Row House by Polyfork (https://polyfork.dev/asset/brownstone-row-house-1b84fd), CC BY 4.0
+nyc/bldg-corner-shop  Corner Shop by Polyfork (https://polyfork.dev/asset/corner-shop-5aec8c), CC BY 4.0
+nyc/bldg-corner-tenement  Corner Tenement by Polyfork (https://polyfork.dev/asset/corner-tenement-92fb62), CC BY 4.0
+nyc/bldg-department-store  Department Store by Polyfork (https://polyfork.dev/asset/department-store-ffbd58), CC BY 4.0
+nyc/bldg-diner  Street Diner by Polyfork (https://polyfork.dev/asset/street-diner-40fc87), CC BY 4.0
+nyc/bldg-firehouse  Fire Station by Polyfork (https://polyfork.dev/asset/fire-station-e2b756), CC BY 4.0
+nyc/bldg-loft-warehouse  Cast Iron Loft by Polyfork (https://polyfork.dev/asset/cast-iron-loft-b04b5a), CC BY 4.0
+nyc/bldg-movie-palace  Movie Theater by Polyfork (https://polyfork.dev/asset/movie-theater-40eeef), CC BY 4.0
+nyc/bldg-office-tower  Office Tower by Polyfork (https://polyfork.dev/asset/office-tower-1538cc), CC BY 4.0
+nyc/bldg-parking-garage  Parking Garage by Polyfork (https://polyfork.dev/asset/parking-garage-6e4f2c), CC BY 4.0
+nyc/bldg-postwar-apartment  Postwar Apartment Slab by Polyfork (https://polyfork.dev/asset/postwar-apartment-slab-cee5f9), CC BY 4.0
+nyc/bldg-prewar-apartment  Prewar Apartment House by Polyfork (https://polyfork.dev/asset/prewar-apartment-house-1081a6), CC BY 4.0
+nyc/bldg-public-school  Public School by Polyfork (https://polyfork.dev/asset/public-school-19ade5), CC BY 4.0
+nyc/bldg-setback-tower  Art Deco Setback Tower by Polyfork (https://polyfork.dev/asset/art-deco-setback-tower-b3a788), CC BY 4.0
+nyc/bldg-shop-row  One-Storey Shop Row by Polyfork (https://polyfork.dev/asset/one-storey-shop-row-83c958), CC BY 4.0
+nyc/bldg-subway  Subway Entrance by Polyfork (https://polyfork.dev/asset/subway-entrance-9ccc8b), CC BY 4.0
+nyc/bldg-tenement  Brick Tenement by Polyfork (https://polyfork.dev/asset/brick-tenement-7d2014), CC BY 4.0
+nyc/bldg-walkup-infill  Narrow Walk-Up by Polyfork (https://polyfork.dev/asset/narrow-walk-up-41f10c), CC BY 4.0
+nyc/curb-strip  Curb Strip by Polyfork (https://polyfork.dev/asset/curb-strip-28e992), CC BY 4.0
+nyc/prop-area-railing  Area Railing by Polyfork (https://polyfork.dev/asset/area-railing-a771da), CC BY 4.0
+nyc/prop-awning  Shop Awning by Polyfork (https://polyfork.dev/asset/shop-awning-f47171), CC BY 4.0
+nyc/prop-barricade  Police Barricade by Polyfork (https://polyfork.dev/asset/police-barricade-0bbf37), CC BY 4.0
+nyc/prop-bench  Park Bench by Polyfork (https://polyfork.dev/asset/park-bench-dc8b62), CC BY 4.0
+nyc/prop-bike-rack  Bike Rack by Polyfork (https://polyfork.dev/asset/bike-rack-a1e7c3), CC BY 4.0
+nyc/prop-blade-sign  Projecting Shop Sign by Polyfork (https://polyfork.dev/asset/projecting-shop-sign-aa1867), CC BY 4.0
+nyc/prop-bollard  Sidewalk Bollard by Polyfork (https://polyfork.dev/asset/sidewalk-bollard-c2567e), CC BY 4.0
+nyc/prop-bus-shelter  Bus Shelter by Polyfork (https://polyfork.dev/asset/bus-shelter-f786b4), CC BY 4.0
+nyc/prop-cellar-hatch  Sidewalk Cellar Hatch by Polyfork (https://polyfork.dev/asset/sidewalk-cellar-hatch-c717a8), CC BY 4.0
+nyc/prop-dining-shed  Curbside Dining Shed by Polyfork (https://polyfork.dev/asset/curbside-dining-shed-606329), CC BY 4.0
+nyc/prop-doorman-canopy  Doorman Canopy by Polyfork (https://polyfork.dev/asset/doorman-canopy-0d1796), CC BY 4.0
+nyc/prop-dumpster  Construction Dumpster by Polyfork (https://polyfork.dev/asset/construction-dumpster-2de7ae), CC BY 4.0
+nyc/prop-fire-escape  Fire Escape Section by Polyfork (https://polyfork.dev/asset/fire-escape-section-0b473a), CC BY 4.0
+nyc/prop-globe-lamp  Globe Lamp by Polyfork (https://polyfork.dev/asset/globe-lamp-346cb6), CC BY 4.0
+nyc/prop-hoarding-panel  Construction Hoarding by Polyfork (https://polyfork.dev/asset/construction-hoarding-c286ac), CC BY 4.0
+nyc/prop-hotdog-cart  Hot Dog Cart by Polyfork (https://polyfork.dev/asset/hot-dog-cart-115192), CC BY 4.0
+nyc/prop-manhole-cover  Manhole Cover by Polyfork (https://polyfork.dev/asset/manhole-cover-137569), CC BY 4.0
+nyc/prop-newsstand  Newsstand by Polyfork (https://polyfork.dev/asset/newsstand-6dfd65), CC BY 4.0
+nyc/prop-parking-meter  Parking Meter by Polyfork (https://polyfork.dev/asset/parking-meter-e9cf71), CC BY 4.0
+nyc/prop-roof-ac  Rooftop AC Unit by Polyfork (https://polyfork.dev/asset/rooftop-ac-unit-6ccb3c), CC BY 4.0
+nyc/prop-roof-bulkhead  Roof Bulkhead by Polyfork (https://polyfork.dev/asset/roof-bulkhead-0f0acc), CC BY 4.0
+nyc/prop-rooftop-billboard  Rooftop Billboard by Polyfork (https://polyfork.dev/asset/rooftop-billboard-48a23e), CC BY 4.0
+nyc/prop-scaffold  Scaffolding Section by Polyfork (https://polyfork.dev/asset/scaffolding-section-6554c0), CC BY 4.0
+nyc/prop-steam-stack  Steam Stack by Polyfork (https://polyfork.dev/asset/steam-stack-59baaf), CC BY 4.0
+nyc/prop-street-lamp  Street Lamp by Polyfork (https://polyfork.dev/asset/street-lamp-136745), CC BY 4.0
+nyc/prop-street-sign  Street Sign Pole by Polyfork (https://polyfork.dev/asset/street-sign-pole-1e9551), CC BY 4.0
+nyc/prop-street-tree  Street Tree by Polyfork (https://polyfork.dev/asset/street-tree-0d33f3), CC BY 4.0
+nyc/prop-theatre-vertical-sign  Theatre Vertical Sign by Polyfork (https://polyfork.dev/asset/theatre-vertical-sign-21c29b), CC BY 4.0
+nyc/prop-traffic-cone  Traffic Cone by Polyfork (https://polyfork.dev/asset/traffic-cone-33e81e), CC BY 4.0
+nyc/prop-traffic-light  Traffic Light by Polyfork (https://polyfork.dev/asset/traffic-light-b217a2), CC BY 4.0
+nyc/prop-trash-basket  Wire Trash Basket by Polyfork (https://polyfork.dev/asset/wire-trash-basket-269c1c), CC BY 4.0
+nyc/prop-trash-can  Metal Trash Can by Polyfork (https://polyfork.dev/asset/metal-trash-can-f57043), CC BY 4.0
+nyc/prop-wall-ad-panel  Painted Wall Ad by Polyfork (https://polyfork.dev/asset/painted-wall-ad-d8f971), CC BY 4.0
+nyc/prop-water-tower  Rooftop Water Tower by Polyfork (https://polyfork.dev/asset/rooftop-water-tower-b38362), CC BY 4.0
+nyc/tile-plaza  Plaza Tile by Polyfork (https://polyfork.dev/asset/plaza-tile-23b48e), CC BY 4.0
+nyc/tile-sidewalk  Sidewalk Tile by Polyfork (https://polyfork.dev/asset/sidewalk-tile-4dfa7b), CC BY 4.0
+nyc/tile-street  Street Tile by Polyfork (https://polyfork.dev/asset/street-tile-c7e3cf), CC BY 4.0
+nyc/veh-box-truck  Delivery Truck by Polyfork (https://polyfork.dev/asset/delivery-truck-a9537e), CC BY 4.0
+nyc/veh-bus  City Bus by Polyfork (https://polyfork.dev/asset/city-bus-49fd97), CC BY 4.0
+nyc/veh-compact-car  Compact Hatchback by Polyfork (https://polyfork.dev/asset/compact-hatchback-386417), CC BY 4.0
+nyc/veh-fire-engine  Fire Engine by Polyfork (https://polyfork.dev/asset/fire-engine-7d476b), CC BY 4.0
+nyc/veh-food-truck  Food Truck by Polyfork (https://polyfork.dev/asset/food-truck-3c4e0e), CC BY 4.0
+nyc/veh-garbage-truck  Garbage Truck by Polyfork (https://polyfork.dev/asset/garbage-truck-a7ffbf), CC BY 4.0
+nyc/veh-taxi  Yellow Cab by Polyfork (https://polyfork.dev/asset/yellow-cab-8df4a0), CC BY 4.0
+nyc/veh-town-car  Town Car by Polyfork (https://polyfork.dev/asset/town-car-56eeb6), CC BY 4.0
+hood/backyard-barbecue-grill  Backyard Barbecue Grill by Polyfork (https://polyfork.dev/asset/backyard-barbecue-grill-84d4ef), CC BY 4.0
+hood/backyard-deck-module  Backyard Deck Module by Polyfork (https://polyfork.dev/asset/backyard-deck-module-17ae3a), CC BY 4.0
+hood/backyard-doghouse  Backyard Doghouse by Polyfork (https://polyfork.dev/asset/backyard-doghouse-50a492), CC BY 4.0
+hood/backyard-garden-shed  Backyard Garden Shed by Polyfork (https://polyfork.dev/asset/backyard-garden-shed-38d79f), CC BY 4.0
+hood/backyard-swing-set  Backyard Swing Set by Polyfork (https://polyfork.dev/asset/backyard-swing-set-38637e), CC BY 4.0
+hood/board-privacy-fence-run  Board Privacy Fence Run by Polyfork (https://polyfork.dev/asset/board-privacy-fence-run-319bef), CC BY 4.0
+hood/broad-canopy-shade-tree  Broad Canopy Shade Tree by Polyfork (https://polyfork.dev/asset/broad-canopy-shade-tree-e7c4a2), CC BY 4.0
+hood/chain-link-fence-run  Chain-Link Fence Run by Polyfork (https://polyfork.dev/asset/chain-link-fence-run-6c3d68), CC BY 4.0
+hood/clipped-boundary-hedge-run  Clipped Boundary Hedge Run by Polyfork (https://polyfork.dev/asset/clipped-boundary-hedge-run-c9027b), CC BY 4.0
+hood/cobra-head-street-light  Cobra-Head Street Light by Polyfork (https://polyfork.dev/asset/cobra-head-street-light-3e25b8), CC BY 4.0
+hood/columnar-evergreen-shrub  Columnar Evergreen Shrub by Polyfork (https://polyfork.dev/asset/columnar-evergreen-shrub-35a00b), CC BY 4.0
+hood/detached-garage  Detached Garage by Polyfork (https://polyfork.dev/asset/detached-garage-38a178), CC BY 4.0
+hood/driveway-slab-tile  Driveway Slab Tile by Polyfork (https://polyfork.dev/asset/driveway-slab-tile-eb40ac), CC BY 4.0
+hood/family-crossover-suv  Family Crossover SUV by Polyfork (https://polyfork.dev/asset/family-crossover-suv-42027f), CC BY 4.0
+hood/family-minivan  Family Minivan by Polyfork (https://polyfork.dev/asset/family-minivan-924de0), CC BY 4.0
+hood/folding-lawn-chair  Folding Lawn Chair by Polyfork (https://polyfork.dev/asset/folding-lawn-chair-b7ddbe), CC BY 4.0
+hood/front-porch-bay-module  Front Porch Bay Module by Polyfork (https://polyfork.dev/asset/front-porch-bay-module-6c7864), CC BY 4.0
+hood/front-walk-path-run  Front Walk Path Run by Polyfork (https://polyfork.dev/asset/front-walk-path-run-03f90b), CC BY 4.0
+hood/garden-birdbath  Garden Birdbath by Polyfork (https://polyfork.dev/asset/garden-birdbath-9671de), CC BY 4.0
+hood/hvac-condenser-unit  HVAC Condenser Unit by Polyfork (https://polyfork.dev/asset/hvac-condenser-unit-a41b8d), CC BY 4.0
+hood/kerb-storm-drain-inlet  Kerb Storm Drain Inlet by Polyfork (https://polyfork.dev/asset/kerb-storm-drain-inlet-c721db), CC BY 4.0
+hood/kids-bmx-bike  Kid's BMX Bike by Polyfork (https://polyfork.dev/asset/kid-s-bmx-bike-cec43e), CC BY 4.0
+hood/landscape-block-retaining-wall  Landscape Block Retaining Wall by Polyfork (https://polyfork.dev/asset/landscape-block-retaining-wall-2732a2), CC BY 4.0
+hood/open-carport  Open Carport by Polyfork (https://polyfork.dev/asset/open-carport-c16151), CC BY 4.0
+hood/ornamental-front-yard-tree  Ornamental Front-Yard Tree by Polyfork (https://polyfork.dev/asset/ornamental-front-yard-tree-c6781a), CC BY 4.0
+hood/park-drinking-fountain  Park Drinking Fountain by Polyfork (https://polyfork.dev/asset/park-drinking-fountain-b1c25b), CC BY 4.0
+hood/park-picnic-shelter  Park Picnic Shelter by Polyfork (https://polyfork.dev/asset/park-picnic-shelter-9548a3), CC BY 4.0
+hood/picket-fence-run  Picket Fence Run by Polyfork (https://polyfork.dev/asset/picket-fence-run-9310c1), CC BY 4.0
+hood/playground-roundabout  Playground Roundabout by Polyfork (https://polyfork.dev/asset/playground-roundabout-e4d43b), CC BY 4.0
+hood/playground-slide  Playground Slide by Polyfork (https://polyfork.dev/asset/playground-slide-8b764c), CC BY 4.0
+hood/porch-front-cottage  Porch-Front Cottage by Polyfork (https://polyfork.dev/asset/porch-front-cottage-620c29), CC BY 4.0
+hood/residential-street-tile  Residential Street Tile by Polyfork (https://polyfork.dev/asset/residential-street-tile-f07dda), CC BY 4.0
+hood/roll-out-wheelie-bin  Roll-Out Wheelie Bin by Polyfork (https://polyfork.dev/asset/roll-out-wheelie-bin-3b540e), CC BY 4.0
+hood/rolled-kerb-run  Rolled Kerb Run by Polyfork (https://polyfork.dev/asset/rolled-kerb-run-3e8bc3), CC BY 4.0
+hood/sandbox  Sandbox by Polyfork (https://polyfork.dev/asset/sandbox-224517), CC BY 4.0
+hood/sidewalk-slab-tile  Sidewalk Slab Tile by Polyfork (https://polyfork.dev/asset/sidewalk-slab-tile-428214), CC BY 4.0
+hood/single-storey-ranch-house  Single-Storey Ranch House by Polyfork (https://polyfork.dev/asset/single-storey-ranch-house-3880ea), CC BY 4.0
+hood/skateboard  Skateboard by Polyfork (https://polyfork.dev/asset/skateboard-667a82), CC BY 4.0
+hood/split-level-house  Split-Level House by Polyfork (https://polyfork.dev/asset/split-level-house-40fe1a), CC BY 4.0
+hood/spring-rider  Spring Rider by Polyfork (https://polyfork.dev/asset/spring-rider-c8b8d8), CC BY 4.0
+hood/street-sign-post  Street Sign Post by Polyfork (https://polyfork.dev/asset/street-sign-post-c621b4), CC BY 4.0
+hood/suburban-pickup-truck  Suburban Pickup Truck by Polyfork (https://polyfork.dev/asset/suburban-pickup-truck-d15ea2), CC BY 4.0
+hood/teeter-totter  Teeter Totter by Polyfork (https://polyfork.dev/asset/teeter-totter-ee9c62), CC BY 4.0
+hood/timber-utility-pole  Timber Utility Pole by Polyfork (https://polyfork.dev/asset/timber-utility-pole-a93693), CC BY 4.0
+hood/townhouse-row-unit  Townhouse Row Unit by Polyfork (https://polyfork.dev/asset/townhouse-row-unit-b9544b), CC BY 4.0
+hood/trimmed-foundation-shrub  Trimmed Foundation Shrub by Polyfork (https://polyfork.dev/asset/trimmed-foundation-shrub-616ce0), CC BY 4.0
+hood/two-storey-family-house  Two-Storey Family House by Polyfork (https://polyfork.dev/asset/two-storey-family-house-c63c4a), CC BY 4.0
+hood/yard-fence-gate-bay  Yard Fence Gate Bay by Polyfork (https://polyfork.dev/asset/yard-fence-gate-bay-eb6a30), CC BY 4.0
+cafe/back-bar-shelf-unit  Back Bar Shelf Unit by Polyfork (https://polyfork.dev/asset/back-bar-shelf-unit-11ab89), CC BY 4.0
+cafe/banquette-bench-run  Banquette Bench Run by Polyfork (https://polyfork.dev/asset/banquette-bench-run-8e972f), CC BY 4.0
+cafe/batch-brew-urn  Batch Brew Urn by Polyfork (https://polyfork.dev/asset/batch-brew-urn-f54a3b), CC BY 4.0
+cafe/bistro-chair  Bistro Chair by Polyfork (https://polyfork.dev/asset/bistro-chair-7c354d), CC BY 4.0
+cafe/bistro-table  Bistro Table by Polyfork (https://polyfork.dev/asset/bistro-table-877a6d), CC BY 4.0
+cafe/booth-divider-screen  Booth Divider Screen by Polyfork (https://polyfork.dev/asset/booth-divider-screen-08f696), CC BY 4.0
+cafe/bus-tub-trolley  Bus Tub Trolley by Polyfork (https://polyfork.dev/asset/bus-tub-trolley-a37f63), CC BY 4.0
+cafe/cafe-encaustic-floor-tile  Cafe Encaustic Floor Tile by Polyfork (https://polyfork.dev/asset/cafe-encaustic-floor-tile-7b0bc4), CC BY 4.0
+cafe/cafe-parasol  Cafe Parasol by Polyfork (https://polyfork.dev/asset/cafe-parasol-61a313), CC BY 4.0
+cafe/cafe-storefront-unit  Cafe Storefront Unit by Polyfork (https://polyfork.dev/asset/cafe-storefront-unit-443728), CC BY 4.0
+cafe/cafe-wall-sconce  Cafe Wall Sconce by Polyfork (https://polyfork.dev/asset/cafe-wall-sconce-1ee40b), CC BY 4.0
+cafe/cake-stand  Cake Stand by Polyfork (https://polyfork.dev/asset/cake-stand-ee7396), CC BY 4.0
+cafe/chalkboard-menu-board  Chalkboard Menu Board by Polyfork (https://polyfork.dev/asset/chalkboard-menu-board-a24d9d), CC BY 4.0
+cafe/coffee-grinder  Coffee Grinder by Polyfork (https://polyfork.dev/asset/coffee-grinder-6f962a), CC BY 4.0
+cafe/coffee-kiosk  Coffee Kiosk by Polyfork (https://polyfork.dev/asset/coffee-kiosk-406d3e), CC BY 4.0
+cafe/commercial-range  Commercial Range by Polyfork (https://polyfork.dev/asset/commercial-range-a3b2d8), CC BY 4.0
+cafe/condiment-caddy  Condiment Caddy by Polyfork (https://polyfork.dev/asset/condiment-caddy-500e44), CC BY 4.0
+cafe/corner-restaurant-unit  Corner Restaurant Unit by Polyfork (https://polyfork.dev/asset/corner-restaurant-unit-d85304), CC BY 4.0
+cafe/drinks-fridge  Glass-Door Drinks Fridge by Polyfork (https://polyfork.dev/asset/glass-door-drinks-fridge-21f077), CC BY 4.0
+cafe/espresso-machine  Espresso Machine by Polyfork (https://polyfork.dev/asset/espresso-machine-a2db84), CC BY 4.0
+cafe/extraction-canopy  Kitchen Extraction Canopy by Polyfork (https://polyfork.dev/asset/kitchen-extraction-canopy-94df44), CC BY 4.0
+cafe/festoon-light-run  Festoon Light Run by Polyfork (https://polyfork.dev/asset/festoon-light-run-45629f), CC BY 4.0
+cafe/gelato-display-freezer  Gelato Display Freezer by Polyfork (https://polyfork.dev/asset/gelato-display-freezer-07eb8f), CC BY 4.0
+cafe/glazed-shopfront-screen  Glazed Shopfront Screen by Polyfork (https://polyfork.dev/asset/glazed-shopfront-screen-ecd5d3), CC BY 4.0
+cafe/hanging-plant-basket  Hanging Plant Basket by Polyfork (https://polyfork.dev/asset/hanging-plant-basket-66a002), CC BY 4.0
+cafe/interior-partition-wall  Interior Partition Wall by Polyfork (https://polyfork.dev/asset/interior-partition-wall-aa00ff), CC BY 4.0
+cafe/kitchen-resin-floor-tile  Kitchen Resin Floor Tile by Polyfork (https://polyfork.dev/asset/kitchen-resin-floor-tile-4c2150), CC BY 4.0
+cafe/milk-pitcher  Milk Steaming Pitcher by Polyfork (https://polyfork.dev/asset/milk-steaming-pitcher-4757b5), CC BY 4.0
+cafe/neon-window-sign  Neon Window Sign by Polyfork (https://polyfork.dev/asset/neon-window-sign-92a889), CC BY 4.0
+cafe/pass-heat-lamp  Pass Heat Lamp by Polyfork (https://polyfork.dev/asset/pass-heat-lamp-c79dc8), CC BY 4.0
+cafe/pastry-display-case  Pastry Display Case by Polyfork (https://polyfork.dev/asset/pastry-display-case-8bcce5), CC BY 4.0
+cafe/patio-heater  Patio Heater by Polyfork (https://polyfork.dev/asset/patio-heater-1559f3), CC BY 4.0
+cafe/pergola-bay-module  Pergola Bay Module by Polyfork (https://polyfork.dev/asset/pergola-bay-module-1ad452), CC BY 4.0
+cafe/planter-trough-divider  Planter Trough Divider by Polyfork (https://polyfork.dev/asset/planter-trough-divider-1b0ead), CC BY 4.0
+cafe/pos-terminal  POS Terminal by Polyfork (https://polyfork.dev/asset/pos-terminal-f1273c), CC BY 4.0
+cafe/poseur-table  Poseur Table by Polyfork (https://polyfork.dev/asset/poseur-table-1736f4), CC BY 4.0
+cafe/potted-olive-tree  Potted Olive Tree by Polyfork (https://polyfork.dev/asset/potted-olive-tree-7eee05), CC BY 4.0
+cafe/queue-belt-post  Queue Belt Post by Polyfork (https://polyfork.dev/asset/queue-belt-post-912b7e), CC BY 4.0
+cafe/restaurant-highchair  Restaurant Highchair by Polyfork (https://polyfork.dev/asset/restaurant-highchair-ef6224), CC BY 4.0
+cafe/retractable-box-awning  Retractable Box Awning by Polyfork (https://polyfork.dev/asset/retractable-box-awning-85d8dd), CC BY 4.0
+cafe/service-counter-module  Service Counter Module by Polyfork (https://polyfork.dev/asset/service-counter-module-3072ff), CC BY 4.0
+cafe/serving-tray  Serving Tray by Polyfork (https://polyfork.dev/asset/serving-tray-a1cf27), CC BY 4.0
+cafe/shop-coffee-roaster  Shop Coffee Roaster by Polyfork (https://polyfork.dev/asset/shop-coffee-roaster-c6a2b5), CC BY 4.0
+cafe/stainless-prep-table  Stainless Prep Table by Polyfork (https://polyfork.dev/asset/stainless-prep-table-5254d2), CC BY 4.0
+cafe/stemmed-wine-glass  Stemmed Wine Glass by Polyfork (https://polyfork.dev/asset/stemmed-wine-glass-a4f002), CC BY 4.0
+cafe/table-candle-lantern  Table Candle Lantern by Polyfork (https://polyfork.dev/asset/table-candle-lantern-a7b5af), CC BY 4.0
+cafe/table-herb-pot  Table Herb Pot by Polyfork (https://polyfork.dev/asset/table-herb-pot-3c0cf4), CC BY 4.0
+cafe/table-menu-holder  Table Menu Holder by Polyfork (https://polyfork.dev/asset/table-menu-holder-1a61dc), CC BY 4.0
+cafe/takeaway-cup  Takeaway Coffee Cup by Polyfork (https://polyfork.dev/asset/takeaway-coffee-cup-1fd6dd), CC BY 4.0
+cafe/terrace-barrier-set  Terrace Barrier Set by Polyfork (https://polyfork.dev/asset/terrace-barrier-set-30dd76), CC BY 4.0
+cafe/terrace-boundary-decal  Terrace Boundary Decal by Polyfork (https://polyfork.dev/asset/terrace-boundary-decal-daaa9e), CC BY 4.0
+cafe/timber-deck-tile  Timber Deck Tile by Polyfork (https://polyfork.dev/asset/timber-deck-tile-39324d), CC BY 4.0
+cafe/waste-sorting-station  Waste Sorting Station by Polyfork (https://polyfork.dev/asset/waste-sorting-station-adeefd), CC BY 4.0
+cafe/water-carafe  Water Carafe by Polyfork (https://polyfork.dev/asset/water-carafe-6f1774), CC BY 4.0
+cafe/wine-bottle  Wine Bottle by Polyfork (https://polyfork.dev/asset/wine-bottle-75a822), CC BY 4.0
+cafe/wire-shelving-rack  Wire Shelving Rack by Polyfork (https://polyfork.dev/asset/wire-shelving-rack-799aec), CC BY 4.0
+office/access-floor-tile  Raised Access Floor Tile by Polyfork (https://polyfork.dev/asset/raised-access-floor-tile-5b3174), CC BY 4.0
+office/access-gate  Access Control Speedgate by Polyfork (https://polyfork.dev/asset/access-control-speedgate-19705e), CC BY 4.0
+office/bench-desk  Bench Desk Module by Polyfork (https://polyfork.dev/asset/bench-desk-module-23c16f), CC BY 4.0
+office/boardroom-table  Boardroom Table by Polyfork (https://polyfork.dev/asset/boardroom-table-d5d666), CC BY 4.0
+office/boiling-water-tap  Boiling Water Tap by Polyfork (https://polyfork.dev/asset/boiling-water-tap-e594db), CC BY 4.0
+office/breakout-sofa  Breakout Sofa Module by Polyfork (https://polyfork.dev/asset/breakout-sofa-module-1bb15e), CC BY 4.0
+office/cable-bundle  Cable Spaghetti Bundle by Polyfork (https://polyfork.dev/asset/cable-spaghetti-bundle-d670a1), CC BY 4.0
+office/cable-tray  Under-Desk Cable Tray by Polyfork (https://polyfork.dev/asset/under-desk-cable-tray-4ae73d), CC BY 4.0
+office/call-headset  Call Headset by Polyfork (https://polyfork.dev/asset/call-headset-a95887), CC BY 4.0
+office/camera-bar  Conference Camera Bar by Polyfork (https://polyfork.dev/asset/conference-camera-bar-419e10), CC BY 4.0
+office/carpet-tile  Office Carpet Tile by Polyfork (https://polyfork.dev/asset/office-carpet-tile-99d407), CC BY 4.0
+office/ceiling-baffle  Acoustic Ceiling Baffle by Polyfork (https://polyfork.dev/asset/acoustic-ceiling-baffle-fa3c11), CC BY 4.0
+office/ceiling-grid-tile  Suspended Ceiling Tile by Polyfork (https://polyfork.dev/asset/suspended-ceiling-tile-018d2e), CC BY 4.0
+office/coat-rack  Coat Rack by Polyfork (https://polyfork.dev/asset/coat-rack-57bbbc), CC BY 4.0
+office/coffee-machine  Office Coffee Machine by Polyfork (https://polyfork.dev/asset/office-coffee-machine-9da5e6), CC BY 4.0
+office/column-casing  Structural Column Casing by Polyfork (https://polyfork.dev/asset/structural-column-casing-bc5956), CC BY 4.0
+office/delivery-box  Cardboard Delivery Box by Polyfork (https://polyfork.dev/asset/cardboard-delivery-box-59cc68), CC BY 4.0
+office/desk-screen  Fabric Desk Screen by Polyfork (https://polyfork.dev/asset/fabric-desk-screen-36a274), CC BY 4.0
+office/directory-totem  Office Directory Totem by Polyfork (https://polyfork.dev/asset/office-directory-totem-619d45), CC BY 4.0
+office/exit-sign  Illuminated Exit Sign by Polyfork (https://polyfork.dev/asset/illuminated-exit-sign-23becd), CC BY 4.0
+office/fire-door  Fire Door Set by Polyfork (https://polyfork.dev/asset/fire-door-set-5a3cca), CC BY 4.0
+office/fire-extinguisher  Fire Extinguisher by Polyfork (https://polyfork.dev/asset/fire-extinguisher-95dca1), CC BY 4.0
+office/first-aid-box  Wall First Aid Box by Polyfork (https://polyfork.dev/asset/wall-first-aid-box-7ffc6c), CC BY 4.0
+office/flipchart-easel  Flipchart Easel by Polyfork (https://polyfork.dev/asset/flipchart-easel-6d1844), CC BY 4.0
+office/floor-box  Recessed Floor Box by Polyfork (https://polyfork.dev/asset/recessed-floor-box-018add), CC BY 4.0
+office/glazed-partition-run  Glazed Partition System by Polyfork (https://polyfork.dev/asset/glazed-partition-system-2f150f), CC BY 4.0
+office/huddle-booth  Huddle Booth by Polyfork (https://polyfork.dev/asset/huddle-booth-4d63e7), CC BY 4.0
+office/keyboard  Desk Keyboard by Polyfork (https://polyfork.dev/asset/desk-keyboard-6cd4d9), CC BY 4.0
+office/laptop  Laptop by Polyfork (https://polyfork.dev/asset/laptop-e775ba), CC BY 4.0
+office/lift-landing-door  Lift Landing Door by Polyfork (https://polyfork.dev/asset/lift-landing-door-0e2c02), CC BY 4.0
+office/locker-bank  Locker Bank by Polyfork (https://polyfork.dev/asset/locker-bank-cdcd9d), CC BY 4.0
+office/meeting-chair  Meeting Chair by Polyfork (https://polyfork.dev/asset/meeting-chair-731ce0), CC BY 4.0
+office/microwave  Microwave Oven by Polyfork (https://polyfork.dev/asset/microwave-oven-7f60d4), CC BY 4.0
+office/monitor-arm  Monitor Arm by Polyfork (https://polyfork.dev/asset/monitor-arm-609448), CC BY 4.0
+office/mouse  Desk Mouse by Polyfork (https://polyfork.dev/asset/desk-mouse-2c7d42), CC BY 4.0
+office/multifunction-printer  Multifunction Printer by Polyfork (https://polyfork.dev/asset/multifunction-printer-3aa70b), CC BY 4.0
+office/office-mug  Office Mug by Polyfork (https://polyfork.dev/asset/office-mug-8afee0), CC BY 4.0
+office/paper-shredder  Paper Shredder by Polyfork (https://polyfork.dev/asset/paper-shredder-5366a6), CC BY 4.0
+office/paper-stack  Paper Stack by Polyfork (https://polyfork.dev/asset/paper-stack-713359), CC BY 4.0
+office/partition-run  Demountable Partition Run by Polyfork (https://polyfork.dev/asset/demountable-partition-run-cc608c), CC BY 4.0
+office/pedestal-unit  Pedestal Drawer Unit by Polyfork (https://polyfork.dev/asset/pedestal-drawer-unit-cbeab3), CC BY 4.0
+office/phone-booth  Acoustic Phone Booth by Polyfork (https://polyfork.dev/asset/acoustic-phone-booth-11b8bc), CC BY 4.0
+office/planter-divider  Acoustic Planter Divider by Polyfork (https://polyfork.dev/asset/acoustic-planter-divider-3e9130), CC BY 4.0
+office/reception-counter  Reception Counter Module by Polyfork (https://polyfork.dev/asset/reception-counter-module-7a9c01), CC BY 4.0
+office/recycling-station  Three-Stream Recycling Station by Polyfork (https://polyfork.dev/asset/three-stream-recycling-station-14da24), CC BY 4.0
+office/server-rack  Small Server Rack by Polyfork (https://polyfork.dev/asset/small-server-rack-8ae0a4), CC BY 4.0
+office/sit-stand-desk  Sit-Stand Desk by Polyfork (https://polyfork.dev/asset/sit-stand-desk-3ff7b8), CC BY 4.0
+office/speakerphone-puck  Speakerphone Puck by Polyfork (https://polyfork.dev/asset/speakerphone-puck-e3eb0d), CC BY 4.0
+office/tambour-cupboard  Tambour Storage Cupboard by Polyfork (https://polyfork.dev/asset/tambour-storage-cupboard-cebe40), CC BY 4.0
+office/task-chair  Task Chair by Polyfork (https://polyfork.dev/asset/task-chair-ccd944), CC BY 4.0
+office/tea-point-counter  Tea Point Counter Module by Polyfork (https://polyfork.dev/asset/tea-point-counter-module-1ad43e), CC BY 4.0
+office/wall-clock  Wall Clock by Polyfork (https://polyfork.dev/asset/wall-clock-05f8ff), CC BY 4.0
+office/wall-display  Meeting Room Display by Polyfork (https://polyfork.dev/asset/meeting-room-display-fddfc3), CC BY 4.0
+office/wastepaper-bin  Wastepaper Bin by Polyfork (https://polyfork.dev/asset/wastepaper-bin-8f76b5), CC BY 4.0
+office/whiteboard  Whiteboard by Polyfork (https://polyfork.dev/asset/whiteboard-ea98f7), CC BY 4.0
+cars/boombox  Boombox by Polyfork (https://polyfork.dev/asset/boombox-d0048f), CC BY 4.0
+cars/boxy-sedan-70s  Boxy-sedan-70s by Polyfork (https://polyfork.dev/asset/boxy-sedan-70s-7d55f7), CC BY 4.0
+cars/camper-van  Camper-van by Polyfork (https://polyfork.dev/asset/camper-van-8d10e2), CC BY 4.0
+cars/convertible-60s  Convertible-60s by Polyfork (https://polyfork.dev/asset/convertible-60s-b76f89), CC BY 4.0
+cars/guardrail  Guardrail by Polyfork (https://polyfork.dev/asset/guardrail-d3bd42), CC BY 4.0
+cars/hatchback-80s  Hatchback-80s by Polyfork (https://polyfork.dev/asset/hatchback-80s-e95554), CC BY 4.0
+cars/jukebox  Jukebox by Polyfork (https://polyfork.dev/asset/jukebox-1e2ea6), CC BY 4.0
+cars/lane-marking-decal  Lane-marking-decal by Polyfork (https://polyfork.dev/asset/lane-marking-decal-d1a212), CC BY 4.0
+cars/muscle-car-60s  Muscle-car-60s by Polyfork (https://polyfork.dev/asset/muscle-car-60s-524d46), CC BY 4.0
+cars/oil-drum  Oil-drum by Polyfork (https://polyfork.dev/asset/oil-drum-386c30), CC BY 4.0
+cars/phone-booth  Phone-booth by Polyfork (https://polyfork.dev/asset/phone-booth-10967f), CC BY 4.0
+cars/pickup-truck-70s  Pickup-truck-70s by Polyfork (https://polyfork.dev/asset/pickup-truck-70s-8c0080), CC BY 4.0
+cars/picnic-table  Picnic-table by Polyfork (https://polyfork.dev/asset/picnic-table-4ee33a), CC BY 4.0
+cars/planter  Planter by Polyfork (https://polyfork.dev/asset/planter-f0dab0), CC BY 4.0
+cars/road-tile  Road-tile by Polyfork (https://polyfork.dev/asset/road-tile-286319), CC BY 4.0
+cars/sidewalk-tile  Sidewalk-tile by Polyfork (https://polyfork.dev/asset/sidewalk-tile-09d894), CC BY 4.0
+cars/station-wagon-70s  Station-wagon-70s by Polyfork (https://polyfork.dev/asset/station-wagon-70s-11d67b), CC BY 4.0
+cars/street-lamp  Street-lamp by Polyfork (https://polyfork.dev/asset/street-lamp-b4fa26), CC BY 4.0
+cars/street-tile  Two-Lane Street Tile by Polyfork (https://polyfork.dev/asset/two-lane-street-tile-fe56b6), CC BY 4.0
+cars/suitcase  Suitcase by Polyfork (https://polyfork.dev/asset/suitcase-6c392f), CC BY 4.0
+cars/tire  Tire by Polyfork (https://polyfork.dev/asset/tire-ccf0eb), CC BY 4.0
+cars/traffic-cone  Traffic-cone by Polyfork (https://polyfork.dev/asset/traffic-cone-c421e4), CC BY 4.0
+cars/traffic-light  Traffic-light by Polyfork (https://polyfork.dev/asset/traffic-light-5e5ae6), CC BY 4.0
+cars/wedge-coupe-80s  Wedge-coupe-80s by Polyfork (https://polyfork.dev/asset/wedge-coupe-80s-9f8b5e), CC BY 4.0

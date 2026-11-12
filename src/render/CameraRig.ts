@@ -76,7 +76,18 @@ export class CameraRig {
    * dead zone, frames you and whoever you're fighting, and is clamped so it
    * never looks past the ends of the area (or out of a locked fight).
    */
-  updateWorld(dt: number, player: Fighter, target: Fighter | null, bounds: ArenaBounds, lock: { minX: number; maxX: number } | null): void {
+  /**
+   * Slide the whole frame sideways by dx in one step. Crossing from one district of the long street
+   * into the next re-bases the world on the new district; the camera moves with it so nothing is seen to jump.
+   */
+  shift(dx: number): void {
+    this.deadX += dx;
+    this.focus.x += dx;
+    this.camera.position.x += dx;
+  }
+
+  /** `open`: ends of the area where the street carries on into the next district, so the camera is not held back there. */
+  updateWorld(dt: number, player: Fighter, target: Fighter | null, bounds: ArenaBounds, lock: { minX: number; maxX: number } | null, open: { left: boolean; right: boolean } = { left: false, right: false }): void {
     const DEAD = 1.2;
     if (!this.worldReady) {
       this.deadX = player.pos.x;
@@ -102,7 +113,7 @@ export class CameraRig {
       cx = a <= b ? Math.min(b, Math.max(a, cx)) : (lo + hi) / 2;
     };
     if (lock) clampTo(lock.minX, lock.maxX, 1.5);
-    clampTo(bounds.minX, bounds.maxX, 1.0);
+    clampTo(open.left ? -1e6 : bounds.minX, open.right ? 1e6 : bounds.maxX, 1.0);
 
     const k = this.worldReady ? 1 - Math.exp(-6 * dt) : 1;
     this.worldReady = true;

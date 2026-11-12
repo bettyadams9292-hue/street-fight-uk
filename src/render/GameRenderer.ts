@@ -13,6 +13,8 @@ import { FRAMING, StudioView, type StudioFraming } from './StudioView';
 import type { CharacterAppearance } from '../character/Appearance';
 import type { World } from '../world/World';
 import { LevelView } from './LevelView';
+import { LEVELS } from '../world/levels';
+import { stripNeighbours } from '../world/strip';
 import { resolveLook, type Look } from './look/looks';
 import { PostFX } from './look/PostFX';
 
@@ -120,7 +122,7 @@ export class GameRenderer {
     const dpr = window.devicePixelRatio || 1;
     this.renderer.setPixelRatio((q === 'low' ? Math.min(dpr, 1) : q === 'medium' ? Math.min(dpr, 1.5) : Math.min(dpr, 2)) * (this.resScale ?? 1));
     this.renderer.shadowMap.enabled = q !== 'low';
-    const lights = [...(this.arenaView?.shadowLights ?? []), ...(this.levelView?.shadowLights ?? [])];
+    const lights = [...(this.arenaView?.shadowLights ?? []), ...(this.levelView?.shadowLights ?? []), ...(this.near.left?.shadowLights ?? []), ...(this.near.right?.shadowLights ?? [])];
     if (lights.length) {
       for (const l of lights) {
         l.castShadow = q !== 'low';
@@ -146,23 +148,147 @@ export class GameRenderer {
 
   /** Story mode: an area of the neighbourhood. */
   attachWorld(world: World): void {
+    // Walking over the line into the next district of the long street: its scenery is already standing there.
+    const side = this.world && this.levelView?.street ? (this.near.left?.level.id === world.level.id ? 'left' : this.near.right?.level.id === world.level.id ? 'right' : null) : null;
+    if (side) return this.crossSeam(world, side);
     this.detach();
     this.sim = world.sim;
     this.world = world;
     this.levelView = new LevelView(world.level, world.progress);
     this.scene.add(this.levelView.group);
-    const prof = themeProfile(world.level.theme);
-    const bg = prof.interior ? 0x07080b : prof.roofed ? prof.bg : world.level.theme === 'estate' || world.level.theme === 'high_street' ? BG : prof.bg;
-    this.scene.background = new THREE.Color(bg);
-    const mist = world.level.weather === 'mist' ? 1.8 : 1;
-    this.scene.fog = prof.interior || !prof.fog ? null : new THREE.FogExp2(bg, prof.fog * mist);
-    this.interior = !!prof.interior;
-    this.postfx?.setInterior(this.interior);
+    this.applyAtmosphere(world);
     this.cameraRig.resetWorld();
     this.applyQuality(this.quality);
     for (const f of world.sim.fighters) this.addFighter(f);
+    if (this.levelView.street) {
+      this.ensureLampPool();
+      this.streamNeighbours(world);
+    }
     // Compile every shader the area needs now, during the fade, instead of mid-fight.
     this.renderer.compile(this.scene, this.cameraRig.camera);
+  }
+
+  /** Sky colour and fog for the district you are in. */
+  private applyAtmosphere(world: World): void {
+    const prof = themeProfile(world.level.theme);
+    const street = !!this.levelView?.street;
+    const bg = prof.interior ? 0x07080b : prof.roofed && !street ? prof.bg : street || world.level.theme === 'estate' || world.level.theme === 'high_street' ? BG : prof.bg;
+    this.scene.background = new THREE.Color(bg);
+    const mist = world.level.weather === 'mist' ? 1.8 : 1;
+    this.scene.fog = prof.interior || (!prof.fog && !street) ? null : new THREE.FogExp2(bg, (street ? 0.016 : prof.fog) * mist);
+    this.interior = !!prof.interior;
+    this.postfx?.setInterior(this.interior);
+  }
+
+  // ---- the long street: the districts either side are kept standing so you can walk straight through ----
+
+  /** The districts either side of the one you are in, already built, each placed where it joins on. */
+  private near: { left: LevelView | null; right: LevelView | null } = { left: null, right: null };
+  /** One fixed set of lamp lights shared by every district of the street (see LevelView.lampSpecs). */
+  private lampPool: THREE.PointLight[] = [];
+  private streamJob = 0;
+
+  private ensureLampPool(): void {
+    if (this.lampPool.length) return;
+    for (let i = 0; i < 6; i++) {
+      const l = new THREE.PointLight(0xffb070, 0, 12, 1.6);
+      this.lampPool.push(l);
+      this.scene.add(l);
+    }
+  }
+
+  private dropNear(side: 'left' | 'right'): void {
+    const v = this.near[side];
+    if (!v) return;
+    this.scene.remove(v.group);
+    v.dispose();
+    this.near[side] = null;
+  }
+
+  /** Build whichever neighbouring districts are not standing yet. Done a moment later, so it never lands on the frame you cross a seam. */
+  private streamNeighbours(world: World): void {
+    const job = ++this.streamJob;
+    const here = world.level;
+    const ids = stripNeighbours(here.id);
+    const build = (side: 'left' | 'right'): void => {
+      if (job !== this.streamJob || this.world !== world || !this.levelView) return;
+      const id = ids[side];
+      if (this.near[side] && this.near[side]!.level.id !== id) this.dropNear(side);
+      if (!id || this.near[side]) return;
+      const v = new LevelView(LEVELS[id], world.progress);
+      v.setActive(false);
+      v.group.position.x = side === 'left' ? here.bounds.minX - v.level.bounds.maxX : here.bounds.maxX - v.level.bounds.minX;
+      this.near[side] = v;
+      this.scene.add(v.group);
+      this.applyQuality(this.quality);
+    };
+    // Whichever end you are nearer comes first.
+    const mid = (here.bounds.minX + here.bounds.maxX) / 2;
+    const order: ('left' | 'right')[] = world.player.pos.x < mid ? ['left', 'right'] : ['right', 'left'];
+    if (typeof window === 'undefined' || this.deterministicStream || /[?&](shot|human)=/.test(window.location.search)) {
+      order.forEach(build);
+      return;
+    }
+    window.setTimeout(() => build(order[0]), 60);
+    window.setTimeout(() => build(order[1]), 400);
+  }
+
+  /** The visual tests build both neighbours at once so every picture is the same. */
+  deterministicStream = false;
+
+  private crossSeam(world: World, side: 'left' | 'right'): void {
+    const old = this.levelView!;
+    const next = this.near[side]!;
+    const other = side === 'left' ? 'right' : 'left';
+    // Everything is re-based on the new district: it moves to the origin and the rest slides by the same amount.
+    const dx = -next.group.position.x;
+    this.dropNear(other);
+    this.near[other] = old;
+    this.near[side] = null;
+    next.group.position.x = 0;
+    old.group.position.x += dx;
+    old.setActive(false);
+    next.setActive(true);
+    this.levelView = next;
+    this.cameraRig.shift(dx);
+    this.house.clear();
+    for (const v of this.views.values()) {
+      this.scene.remove(v.root);
+      v.dispose();
+    }
+    this.views.clear();
+    this.sim = world.sim;
+    this.world = world;
+    this.applyAtmosphere(world);
+    for (const f of world.sim.fighters) this.addFighter(f);
+    this.streamNeighbours(world);
+  }
+
+  /** Point the shared lamp lights at the street lamps nearest the camera, across the district you are in and the ones beside it. */
+  private updateLamps(): void {
+    if (!this.lampPool.length) return;
+    const cx = this.cameraRig.focusX;
+    const all: { x: number; y: number; z: number; colour: number; intensity: number; range: number; d: number }[] = [];
+    for (const v of [this.levelView, this.near.left, this.near.right]) {
+      if (!v?.street) continue;
+      for (const l of v.lampSpecs) {
+        const x = l.x + v.group.position.x;
+        all.push({ ...l, x, d: Math.abs(x - cx) });
+      }
+    }
+    all.sort((a, b) => a.d - b.d);
+    this.lampPool.forEach((light, i) => {
+      const l = all[i];
+      if (!l) {
+        light.intensity = 0;
+        return;
+      }
+      light.position.set(l.x, l.y, l.z);
+      light.color.setHex(l.colour);
+      light.distance = l.range;
+      // Fade out towards the edge of what the camera can see, so a lamp never pops as the pool moves on.
+      light.intensity = l.intensity * Math.max(0, Math.min(1, (30 - l.d) / 8));
+    });
   }
 
   /** Character creator / sheet: one fighter on the studio set. */
@@ -216,6 +342,10 @@ export class GameRenderer {
       });
       this.arenaView = null;
     }
+    this.streamJob++;
+    this.dropNear('left');
+    this.dropNear('right');
+    for (const l of this.lampPool) l.intensity = 0;
     if (this.levelView) {
       this.scene.remove(this.levelView.group);
       this.levelView.dispose();
@@ -312,8 +442,9 @@ export class GameRenderer {
         this.hitboxes.update(this.sim.fighters);
         this.arenaView?.update(time);
         if (this.world && focus) {
-          this.cameraRig.updateWorld(dt, focus, focus.target, this.sim.arena.bounds, this.sim.arena.lock);
+          this.cameraRig.updateWorld(dt, focus, focus.target, this.sim.arena.bounds, this.sim.arena.lock, { left: !!this.near.left, right: !!this.near.right });
           this.levelView?.update(dt, time, this.world, this.cameraRig.focusX);
+          this.updateLamps();
         } else if (focus) this.cameraRig.update(dt, focus, focus.target, this.sim.arena.bounds);
         else this.cameraRig.attract(time);
       }

@@ -6,6 +6,7 @@ import { FRONT_DOOR_X, HOME_BOUNDS, STAIRWELL, buildHomeLevel } from '../propert
 import { buildBasementLevel, defaultBasement } from '../business/basement';
 import { defaultProperty } from '../property/state';
 import { defaultGym } from '../training/gym';
+import { joinStrip } from './strip';
 
 /**
  * The neighbourhood. Areas join end to end (walk off an edge) or through
@@ -589,6 +590,8 @@ export const CORE_LEVELS = {
 
 
 export const LEVELS: Record<AreaId, LevelDef> = { ...CORE_LEVELS, ...DISTRICTS, ...INTERIORS, basement: buildBasementLevel(defaultBasement()) };
+// The outdoor districts are one long street: join them end to end.
+joinStrip(LEVELS);
 
 /** The story's spine, in order: who to beat next, for the story screen and the phone. */
 export const DISTRICT_ORDER: { flag: string; area: AreaId; label: string; optional?: boolean }[] = [

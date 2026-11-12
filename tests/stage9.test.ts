@@ -108,7 +108,12 @@ test('locked and unlocked match the game: a new save can’t reach past the Gaff
   assert(lockReason(p, 'city')!.includes('Gaz Mullins'), 'the city’s first lock is the Gaffer too');
   assert(!unlocked(p, 'stadium') && /stadium/i.test(lockReason(p, 'stadium')!), 'stadium needs its key');
   p.save.flags.boss_gaffer = true;
-  assert(unlocked(p, 'alleys') && unlocked(p, 'market'), 'the Gaffer opens the alleys and the market');
+  assert(unlocked(p, 'alleys') && unlocked(p, 'industrial'), 'the Gaffer opens the alleys and the industrial quarter');
+  // One long street: the trading estate and the market come after Sully's yard.
+  assert(!unlocked(p, 'market') && lockReason(p, 'market')!.includes('Sully'), 'the market is past Sully now');
+  p.save.flags.boss_sully = true;
+  assert(unlocked(p, 'ind_estate') && unlocked(p, 'market') && unlocked(p, 'city'), 'Sully opens the street as far as the city');
+  assert(!unlocked(p, 'docks'), 'the docks are past the Ratcatcher');
   const q = fresh();
   allFlags(q);
   for (const id of AREA_IDS) assert(unlocked(q, id), `${id} still locked with everything done`);

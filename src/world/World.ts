@@ -57,7 +57,8 @@ export const CONTAINER_REFILL_TRIPS = 6;
 const MAX_GROUND_ITEMS = 40;
 
 export interface WorldEvents {
-  'area:exit': { to: AreaId; entry: string };
+  /** `seam`: you walked over the line into the next district; there is no door and no fade (see strip.ts). */
+  'area:exit': { to: AreaId; entry: string; seam?: boolean };
   'area:locked': { text: string };
   'encounter:start': { id: string; boss: BossDef | null };
   'encounter:wave': { id: string; wave: number; of: number };
@@ -1633,6 +1634,8 @@ export class World {
     }
     const ex = this.level.exits.find((e) => e.kind === 'edge' && e.side === pushing);
     if (!ex) return;
+    // The next district on the long street: keep walking, there is nothing to push against.
+    if (ex.seam && !exitLocked(ex, this.progress)) return this.requestExit(ex);
     this.edgePush++;
     if (this.edgePush < 12) return;
     if (exitLocked(ex, this.progress)) {
@@ -1648,7 +1651,7 @@ export class World {
   private requestExit(ex: ExitDef): void {
     if (this.exitRequested) return;
     this.exitRequested = true;
-    this.events.emit('area:exit', { to: ex.to, entry: ex.toEntry });
+    this.events.emit('area:exit', { to: ex.to, entry: ex.toEntry, seam: ex.seam === true });
   }
 
   /** Health and stamina to take into the next area (the weapon in your hands is in the save). */

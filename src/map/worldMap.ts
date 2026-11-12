@@ -5,6 +5,7 @@ import { AREA_IDS, type AreaId, type Progress } from '../progress/Progress';
 import { SHOP_STOPS, TAXI_COST, TAXI_STOPS } from '../ui/hub';
 import { DISTRICT_ORDER, LEVELS } from '../world/levels';
 import type { ExitDef, LevelDef } from '../world/LevelTypes';
+import { STRIP, stripLength, stripOffsets } from '../world/strip';
 
 /**
  * The town map's data. Places, doors, links, locks, bosses, shops and people
@@ -20,42 +21,85 @@ export type Pt = { x: number; y: number };
 export const MAP_W = 2600;
 export const MAP_H = 1700;
 
-/** A street drawn as a road: its left end (min x) to its right end (max x), optionally via a bend. */
+/** A street drawn as a road: the points it runs through, west end to east end. */
 interface RoadLayout {
-  /** Fixed ends, or start from a door on another street and head off along a vector. */
-  a?: Pt;
-  b?: Pt;
-  via?: Pt;
-  fromDoor?: { area: AreaId; to: AreaId };
-  dir?: Pt;
+  pts: Pt[];
   /** District shading colour. */
   tint: string;
   /** Kind of road for drawing. */
   road: 'main' | 'side' | 'tunnel' | 'path';
 }
 
-const LAYOUT: Partial<Record<AreaId, RoadLayout>> = {
-  stadium: { a: { x: 230, y: 250 }, b: { x: 330, y: 640 }, tint: '#3d6a3a', road: 'side' },
-  leisure: { a: { x: 330, y: 640 }, b: { x: 620, y: 900 }, tint: '#3f7a46', road: 'main' },
-  residential: { a: { x: 620, y: 900 }, via: { x: 790, y: 1060 }, b: { x: 960, y: 1110 }, tint: '#6b5a48', road: 'main' },
-  estate: { a: { x: 960, y: 1110 }, b: { x: 1290, y: 1110 }, tint: '#7a5a40', road: 'main' },
-  high_street: { a: { x: 1290, y: 1110 }, via: { x: 1500, y: 1060 }, b: { x: 1640, y: 900 }, tint: '#8a4a3a', road: 'main' },
-  alleys: { a: { x: 1640, y: 900 }, b: { x: 1760, y: 640 }, tint: '#5a5048', road: 'side' },
-  industrial: { a: { x: 1760, y: 640 }, b: { x: 2080, y: 540 }, tint: '#5a5f66', road: 'main' },
-  subway: { a: { x: 2080, y: 540 }, b: { x: 2150, y: 900 }, tint: '#4a4f5c', road: 'tunnel' },
-  city: { a: { x: 2150, y: 900 }, via: { x: 2190, y: 1100 }, b: { x: 2150, y: 1300 }, tint: '#8a6a30', road: 'main' },
-  territory: { a: { x: 2150, y: 1300 }, b: { x: 1880, y: 1470 }, tint: '#6a3030', road: 'side' },
-  hq: { a: { x: 1880, y: 1470 }, b: { x: 1500, y: 1560 }, tint: '#4a2a2a', road: 'main' },
-  market: { fromDoor: { area: 'alleys', to: 'market' }, dir: { x: -300, y: -150 }, tint: '#7a6a3a', road: 'side' },
-  docks: { fromDoor: { area: 'industrial', to: 'docks' }, dir: { x: 60, y: -380 }, tint: '#3a5a70', road: 'side' },
-  ind_estate: { a: { x: 2032, y: 194 }, b: { x: 2380, y: 170 }, tint: '#5a6068', road: 'main' },
-  factory: { a: { x: 2380, y: 170 }, b: { x: 2530, y: 340 }, tint: '#4a4a4a', road: 'side' },
-  precinct: { fromDoor: { area: 'city', to: 'precinct' }, dir: { x: 330, y: 20 }, tint: '#6a5a7a', road: 'main' },
-  mall: { a: { x: 2480, y: 940 }, b: { x: 2480, y: 1260 }, tint: '#5a6a8a', road: 'main' },
-  car_park: { a: { x: 2480, y: 1260 }, b: { x: 2360, y: 1440 }, tint: '#555a62', road: 'side' },
-  nightlife: { fromDoor: { area: 'city', to: 'nightlife' }, dir: { x: 300, y: 70 }, tint: '#7a3a6a', road: 'side' },
-  underground: { fromDoor: { area: 'subway', to: 'underground' }, dir: { x: -380, y: 40 }, tint: '#3a3a4a', road: 'tunnel' },
+const TINTS: Partial<Record<AreaId, { tint: string; road: RoadLayout['road'] }>> = {
+  stadium: { tint: '#3d6a3a', road: 'main' },
+  leisure: { tint: '#3f7a46', road: 'main' },
+  residential: { tint: '#6b5a48', road: 'main' },
+  estate: { tint: '#7a5a40', road: 'main' },
+  high_street: { tint: '#8a4a3a', road: 'main' },
+  alleys: { tint: '#5a5048', road: 'side' },
+  industrial: { tint: '#5a5f66', road: 'main' },
+  ind_estate: { tint: '#5a6068', road: 'main' },
+  market: { tint: '#7a6a3a', road: 'side' },
+  subway: { tint: '#4a4f5c', road: 'main' },
+  city: { tint: '#8a6a30', road: 'main' },
+  docks: { tint: '#3a5a70', road: 'side' },
+  precinct: { tint: '#6a5a7a', road: 'main' },
+  mall: { tint: '#5a6a8a', road: 'main' },
+  car_park: { tint: '#555a62', road: 'side' },
+  nightlife: { tint: '#7a3a6a', road: 'main' },
+  factory: { tint: '#4a4a4a', road: 'side' },
+  underground: { tint: '#3a3a4a', road: 'side' },
+  territory: { tint: '#6a3030', road: 'side' },
+  hq: { tint: '#4a2a2a', road: 'main' },
 };
+
+/**
+ * The town is one long street (world/strip.ts), so the map is one long road.
+ * It is drawn folded into rows so it fits the sheet: west to east along the
+ * top, round the bend, back along the middle, and east again along the bottom.
+ */
+const ROW_X0 = 260;
+const ROW_X1 = MAP_W - 260;
+const ROW_Y = [330, 850, 1370];
+const ROW_LEN = ROW_X1 - ROW_X0;
+const BEND_LEN = ROW_Y[1] - ROW_Y[0];
+const SNAKE_LEN = ROW_LEN * ROW_Y.length + BEND_LEN * (ROW_Y.length - 1);
+
+/** The corners of the folded road, in order, with how far along each one is. */
+const SNAKE: { at: number; p: Pt }[] = (() => {
+  const out: { at: number; p: Pt }[] = [];
+  let at = 0;
+  ROW_Y.forEach((y, row) => {
+    const eastward = row % 2 === 0;
+    out.push({ at, p: { x: eastward ? ROW_X0 : ROW_X1, y } });
+    at += ROW_LEN;
+    out.push({ at, p: { x: eastward ? ROW_X1 : ROW_X0, y } });
+    at += BEND_LEN;
+  });
+  return out;
+})();
+
+function snakePoint(d: number): Pt {
+  const t = Math.max(0, Math.min(SNAKE_LEN, d));
+  for (let i = 1; i < SNAKE.length; i++) {
+    if (t <= SNAKE[i].at) return lerp(SNAKE[i - 1].p, SNAKE[i].p, (t - SNAKE[i - 1].at) / Math.max(1e-6, SNAKE[i].at - SNAKE[i - 1].at));
+  }
+  return SNAKE[SNAKE.length - 1].p;
+}
+
+const LAYOUT: Partial<Record<AreaId, RoadLayout>> = (() => {
+  const out: Partial<Record<AreaId, RoadLayout>> = {};
+  const total = stripLength(LEVELS);
+  const offs = stripOffsets(LEVELS);
+  for (const id of STRIP) {
+    const b = LEVELS[id].bounds;
+    const d0 = (offs[id]! / total) * SNAKE_LEN;
+    const d1 = ((offs[id]! + b.maxX - b.minX) / total) * SNAKE_LEN;
+    const pts = [snakePoint(d0), ...SNAKE.filter((c) => c.at > d0 + 1 && c.at < d1 - 1).map((c) => c.p), snakePoint(d1)];
+    out[id] = { pts, ...(TINTS[id] ?? { tint: '#5a5a5a', road: 'main' as const }) };
+  }
+  return out;
+})();
 
 /** One line for the info card. */
 const BLURB: Record<AreaId, string> = {
@@ -198,12 +242,7 @@ export function roadPoints(area: AreaId): Pt[] | null {
   if (hit) return hit;
   const l = LAYOUT[area];
   if (!l) return null;
-  let pts: Pt[];
-  if (l.fromDoor) {
-    const door = LEVELS[l.fromDoor.area].exits.find((e) => e.to === l.fromDoor!.to)!;
-    const a = streetPoint(l.fromDoor.area, door.x)!;
-    pts = [a, { x: a.x + l.dir!.x, y: a.y + l.dir!.y }];
-  } else pts = l.via ? [l.a!, l.via, l.b!] : [l.a!, l.b!];
+  const pts = l.pts;
   roadCache.set(area, pts);
   return pts;
 }

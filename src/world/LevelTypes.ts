@@ -94,6 +94,8 @@ export interface ExitDef {
   /** 'edge' = walk off the end of the area; 'door' = press interact at it. */
   kind: 'edge' | 'door';
   side?: 'left' | 'right';
+  /** An edge that joins the next district on the long street: you walk across it without a stop (see strip.ts). */
+  seam?: boolean;
   x: number;
   z: number;
   to: AreaId;
