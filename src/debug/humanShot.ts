@@ -88,6 +88,8 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
     key.position.set(2.5, 4, 5);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
+    key.shadow.bias = -0.0004;
+    key.shadow.normalBias = 0.02;
     Object.assign(key.shadow.camera, { left: -5, right: 5, top: 3, bottom: -1 });
     scene.add(key);
     const rim = new THREE.DirectionalLight('#9fb8ff', 1.0);

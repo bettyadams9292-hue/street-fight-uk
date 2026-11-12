@@ -2,7 +2,7 @@
  {
   "id": "m_light",
   "gender": "male",
-  "tone": 0.15,
+  "tone": 0.367,
   "age": "young",
   "tags": [],
   "diffuse": "skin_m_light.webp",
@@ -12,7 +12,7 @@
  {
   "id": "m_freckles",
   "gender": "male",
-  "tone": 0.08,
+  "tone": 0.138,
   "age": "young",
   "tags": [],
   "diffuse": "skin_m_freckles.webp",
@@ -22,7 +22,7 @@
  {
   "id": "m_ginger",
   "gender": "male",
-  "tone": 0.05,
+  "tone": 0.162,
   "age": "young",
   "tags": [
    "ginger"
@@ -34,7 +34,7 @@
  {
   "id": "m_aksel",
   "gender": "male",
-  "tone": 0.2,
+  "tone": 0.25,
   "age": "middle",
   "tags": [],
   "diffuse": "skin_m_aksel.webp",
@@ -44,7 +44,7 @@
  {
   "id": "m_african",
   "gender": "male",
-  "tone": 0.9,
+  "tone": 0.898,
   "age": "middle",
   "tags": [],
   "diffuse": "skin_m_african.webp",
@@ -54,7 +54,7 @@
  {
   "id": "m_eurasian_old",
   "gender": "male",
-  "tone": 0.35,
+  "tone": 0.291,
   "age": "old",
   "tags": [],
   "diffuse": "skin_m_eurasian_old.webp",
@@ -64,7 +64,7 @@
  {
   "id": "m_tattooed",
   "gender": "male",
-  "tone": 0.15,
+  "tone": 0.267,
   "age": "middle",
   "tags": [
    "tattoos"
@@ -76,7 +76,7 @@
  {
   "id": "m_viking",
   "gender": "male",
-  "tone": 0.12,
+  "tone": 0.611,
   "age": "middle",
   "tags": [
    "tattoos",
@@ -89,7 +89,7 @@
  {
   "id": "f_light",
   "gender": "female",
-  "tone": 0.12,
+  "tone": 0.338,
   "age": "young",
   "tags": [],
   "diffuse": "skin_f_light.webp",
@@ -99,7 +99,7 @@
  {
   "id": "f_natural",
   "gender": "female",
-  "tone": 0.15,
+  "tone": 0.437,
   "age": "young",
   "tags": [],
   "diffuse": "skin_f_natural.webp",
@@ -109,7 +109,7 @@
  {
   "id": "f_caucasian",
   "gender": "female",
-  "tone": 0.18,
+  "tone": 0.297,
   "age": "young",
   "tags": [],
   "diffuse": "skin_f_caucasian.webp",
@@ -119,7 +119,7 @@
  {
   "id": "f_redhead",
   "gender": "female",
-  "tone": 0.05,
+  "tone": 0.302,
   "age": "young",
   "tags": [
    "ginger"
@@ -131,7 +131,7 @@
  {
   "id": "f_creamy",
   "gender": "female",
-  "tone": 0.25,
+  "tone": 0.666,
   "age": "young",
   "tags": [],
   "diffuse": "skin_f_creamy.webp",
@@ -141,7 +141,7 @@
  {
   "id": "f_midtoned",
   "gender": "female",
-  "tone": 0.55,
+  "tone": 0.697,
   "age": "young",
   "tags": [],
   "diffuse": "skin_f_midtoned.webp",
@@ -151,7 +151,7 @@
  {
   "id": "f_indian",
   "gender": "female",
-  "tone": 0.6,
+  "tone": 0.571,
   "age": "young",
   "tags": [],
   "diffuse": "skin_f_indian.webp",
@@ -161,7 +161,7 @@
  {
   "id": "f_eurasian_young",
   "gender": "female",
-  "tone": 0.35,
+  "tone": 0.256,
   "age": "young",
   "tags": [],
   "diffuse": "skin_f_eurasian_young.webp",
@@ -171,7 +171,7 @@
  {
   "id": "f_eurasian_middle",
   "gender": "female",
-  "tone": 0.35,
+  "tone": 0.203,
   "age": "middle",
   "tags": [],
   "diffuse": "skin_f_eurasian_middle.webp",
@@ -181,7 +181,7 @@
  {
   "id": "f_eurasian_old",
   "gender": "female",
-  "tone": 0.35,
+  "tone": 0.259,
   "age": "old",
   "tags": [],
   "diffuse": "skin_f_eurasian_old.webp",
@@ -191,7 +191,7 @@
  {
   "id": "uniform",
   "gender": "any",
-  "tone": 0.0,
+  "tone": 0.43,
   "age": "any",
   "tags": [
    "tintable"
@@ -199,5 +199,239 @@
   "diffuse": "skin_uniform.webp",
   "normal": null,
   "source": "MakeHuman skin pack (blindsaypatten_uniform_skin_texture), CC0"
+ },
+ {
+  "id": "d_young_african_male",
+  "gender": "male",
+  "tone": 0.935,
+  "age": "young",
+  "tags": [
+   "default",
+   "african"
+  ],
+  "diffuse": "skin_d_young_african_male.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (young_african_male), CC0"
+ },
+ {
+  "id": "d_young_african_female",
+  "gender": "female",
+  "tone": 0.922,
+  "age": "young",
+  "tags": [
+   "default",
+   "african"
+  ],
+  "diffuse": "skin_d_young_african_female.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (young_african_female), CC0"
+ },
+ {
+  "id": "d_young_asian_male",
+  "gender": "male",
+  "tone": 0.295,
+  "age": "young",
+  "tags": [
+   "default",
+   "asian"
+  ],
+  "diffuse": "skin_d_young_asian_male.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (young_asian_male), CC0"
+ },
+ {
+  "id": "d_young_asian_female",
+  "gender": "female",
+  "tone": 0.264,
+  "age": "young",
+  "tags": [
+   "default",
+   "asian"
+  ],
+  "diffuse": "skin_d_young_asian_female.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (young_asian_female), CC0"
+ },
+ {
+  "id": "d_young_caucasian_male",
+  "gender": "male",
+  "tone": 0.138,
+  "age": "young",
+  "tags": [
+   "default",
+   "caucasian"
+  ],
+  "diffuse": "skin_d_young_caucasian_male.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (young_caucasian_male), CC0"
+ },
+ {
+  "id": "d_young_caucasian_female",
+  "gender": "female",
+  "tone": 0.261,
+  "age": "young",
+  "tags": [
+   "default",
+   "caucasian"
+  ],
+  "diffuse": "skin_d_young_caucasian_female.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (young_caucasian_female), CC0"
+ },
+ {
+  "id": "d_middleage_african_male",
+  "gender": "male",
+  "tone": 0.923,
+  "age": "middle",
+  "tags": [
+   "default",
+   "african"
+  ],
+  "diffuse": "skin_d_middleage_african_male.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (middleage_african_male), CC0"
+ },
+ {
+  "id": "d_middleage_african_female",
+  "gender": "female",
+  "tone": 0.926,
+  "age": "middle",
+  "tags": [
+   "default",
+   "african"
+  ],
+  "diffuse": "skin_d_middleage_african_female.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (middleage_african_female), CC0"
+ },
+ {
+  "id": "d_middleage_asian_male",
+  "gender": "male",
+  "tone": 0.215,
+  "age": "middle",
+  "tags": [
+   "default",
+   "asian"
+  ],
+  "diffuse": "skin_d_middleage_asian_male.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (middleage_asian_male), CC0"
+ },
+ {
+  "id": "d_middleage_asian_female",
+  "gender": "female",
+  "tone": 0.173,
+  "age": "middle",
+  "tags": [
+   "default",
+   "asian"
+  ],
+  "diffuse": "skin_d_middleage_asian_female.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (middleage_asian_female), CC0"
+ },
+ {
+  "id": "d_middleage_caucasian_male",
+  "gender": "male",
+  "tone": 0.249,
+  "age": "middle",
+  "tags": [
+   "default",
+   "caucasian"
+  ],
+  "diffuse": "skin_d_middleage_caucasian_male.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (middleage_caucasian_male), CC0"
+ },
+ {
+  "id": "d_middleage_caucasian_female",
+  "gender": "female",
+  "tone": 0.244,
+  "age": "middle",
+  "tags": [
+   "default",
+   "caucasian"
+  ],
+  "diffuse": "skin_d_middleage_caucasian_female.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (middleage_caucasian_female), CC0"
+ },
+ {
+  "id": "d_old_african_male",
+  "gender": "male",
+  "tone": 0.921,
+  "age": "old",
+  "tags": [
+   "default",
+   "african"
+  ],
+  "diffuse": "skin_d_old_african_male.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (old_african_male), CC0"
+ },
+ {
+  "id": "d_old_african_female",
+  "gender": "female",
+  "tone": 0.95,
+  "age": "old",
+  "tags": [
+   "default",
+   "african"
+  ],
+  "diffuse": "skin_d_old_african_female.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (old_african_female), CC0"
+ },
+ {
+  "id": "d_old_asian_male",
+  "gender": "male",
+  "tone": 0.505,
+  "age": "old",
+  "tags": [
+   "default",
+   "asian"
+  ],
+  "diffuse": "skin_d_old_asian_male.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (old_asian_male), CC0"
+ },
+ {
+  "id": "d_old_asian_female",
+  "gender": "female",
+  "tone": 0.379,
+  "age": "old",
+  "tags": [
+   "default",
+   "asian"
+  ],
+  "diffuse": "skin_d_old_asian_female.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (old_asian_female), CC0"
+ },
+ {
+  "id": "d_old_caucasian_male",
+  "gender": "male",
+  "tone": 0.05,
+  "age": "old",
+  "tags": [
+   "default",
+   "caucasian"
+  ],
+  "diffuse": "skin_d_old_caucasian_male.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (old_caucasian_male), CC0"
+ },
+ {
+  "id": "d_old_caucasian_female",
+  "gender": "female",
+  "tone": 0.137,
+  "age": "old",
+  "tags": [
+   "default",
+   "caucasian"
+  ],
+  "diffuse": "skin_d_old_caucasian_female.webp",
+  "normal": null,
+  "source": "MakeHuman skin pack (old_caucasian_female), CC0"
  }
 ]

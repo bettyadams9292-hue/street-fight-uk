@@ -125,6 +125,7 @@ interface Frame {
   waistY: number;
   neckY: number;
   neckZ: number;
+  hipZ: number;
   shoulderX: number;
 }
 
@@ -240,7 +241,7 @@ export function bodyFrame(data: BodyData, pos: Float32Array): Frame {
       around[v] = 0;
     }
   }
-  const f: Frame = { group, t, around, hipY, waistY, neckY, neckZ, shoulderX: Math.abs(sh.L[0]) };
+  const f: Frame = { group, t, around, hipY, hipZ: (hp.L[2] + hp.R[2]) / 2, waistY, neckY, neckZ, shoulderX: Math.abs(sh.L[0]) };
   memo.set(pos, f);
   return f;
 }
@@ -316,6 +317,9 @@ function hang(data: BodyData, pos: Float32Array, f: Frame, st: Style, list: numb
     }
   }
 }
+
+/** Sleeves and tops fall from their widest point (see hang). */
+const HANG = true;
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 const shade = (c: [number, number, number], k: number): [number, number, number] => [c[0] * k, c[1] * k, c[2] * k];
@@ -422,6 +426,8 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
       sp[v * 3 + 1] = pos[v * 3 + 1] + normals[v * 3 + 1] * gp;
       sp[v * 3 + 2] = pos[v * 3 + 2] + normals[v * 3 + 2] * gp;
     }
+  // Fall from the widest point first, then let the smoothing blend the result.
+  if (st.part === 'top' && HANG) hang(data, pos, f, st, list, sp);
   const adj = neighbours(data);
   const tmp = new Float32Array(n * 3);
   // The cut edges stay where they are, so cuffs, hems and necklines don't creep back over the skin.
@@ -453,7 +459,7 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
         continue;
       }
       // Taubin smoothing: shrink, then grow back, so the shell loses detail but not volume.
-      const k = it % 2 === 0 ? 0.5 : -0.53;
+      const k = it % 2 === 0 ? 0.33 : -0.34;
       tmp[v * 3] = sp[v * 3] + (ax / c - sp[v * 3]) * k;
       tmp[v * 3 + 1] = sp[v * 3 + 1] + (ay / c - sp[v * 3 + 1]) * k;
       tmp[v * 3 + 2] = sp[v * 3 + 2] + (az / c - sp[v * 3 + 2]) * k;
@@ -464,7 +470,19 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
       sp[v * 3 + 2] = tmp[v * 3 + 2];
     }
   }
-  hang(data, pos, f, st, list, sp);
+  // Trousers don't show what's under them: the front of the crotch is flattened. The skin there is
+  // hidden (it's covered), so the cloth may sit inside where the body was.
+  if (st.part === 'bottoms') {
+    const front = f.hipZ + 0.075 + st.gap;
+    for (const v of list) {
+      const x = sp[v * 3];
+      const y = sp[v * 3 + 1];
+      if (Math.abs(x) < 0.1 && y < f.hipY + 0.1 && y > f.hipY - 0.16 && sp[v * 3 + 2] > front) {
+        const k = 1 - Math.max(0, (Math.abs(x) - 0.06) / 0.04);
+        sp[v * 3 + 2] = sp[v * 3 + 2] + (front - sp[v * 3 + 2]) * Math.min(1, k);
+      }
+    }
+  }
   const m = render.length;
   const P = new Float32Array(m * 3);
   const N = new Float32Array(m * 3);
@@ -512,7 +530,7 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
     let qy = sp[v * 3 + 1];
     let qz = sp[v * 3 + 2];
     const d = (qx - x) * nx + (qy - y) * ny + (qz - z) * nz;
-    const least = Math.min(gap, 0.005);
+    const least = st.part === 'bottoms' && Math.abs(x) < 0.1 && y < f.hipY + 0.1 && y > f.hipY - 0.16 && z > f.hipZ ? -1 : Math.min(gap, 0.005);
     if (d < least) {
       qx += nx * (least - d);
       qy += ny * (least - d);
@@ -527,6 +545,35 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
     C[l * 3] = c[0];
     C[l * 3 + 1] = c[1];
     C[l * 3 + 2] = c[2];
+  }
+  // Shade the cloth by its own shape, not the body's: normals from the garment's triangles, shared
+  // across UV seams (same body vertex) so there are no creases.
+  const acc = new Float32Array(n * 3);
+  for (let i = 0; i < local.length; i += 3) {
+    const a = local[i] * 3;
+    const b = local[i + 1] * 3;
+    const c = local[i + 2] * 3;
+    const ux = P[b] - P[a], uy = P[b + 1] - P[a + 1], uz = P[b + 2] - P[a + 2];
+    const vx = P[c] - P[a], vy = P[c + 1] - P[a + 1], vz = P[c + 2] - P[a + 2];
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    for (const l of [local[i], local[i + 1], local[i + 2]]) {
+      const v = rb[render[l]];
+      acc[v * 3] += nx;
+      acc[v * 3 + 1] += ny;
+      acc[v * 3 + 2] += nz;
+    }
+  }
+  for (let l = 0; l < m; l++) {
+    const v = rb[render[l]];
+    const x = acc[v * 3], y = acc[v * 3 + 1], z = acc[v * 3 + 2];
+    const len = Math.hypot(x, y, z);
+    if (len > 1e-12) {
+      // Keep it pointing out, like the body's.
+      const sgn = x * normals[v * 3] + y * normals[v * 3 + 1] + z * normals[v * 3 + 2] < 0 ? -1 : 1;
+      N[l * 3] = (sgn * x) / len;
+      N[l * 3 + 1] = (sgn * y) / len;
+      N[l * 3 + 2] = (sgn * z) / len;
+    }
   }
   return { kind, fabric: st.fabric, render: Uint32Array.from(render), position: P, normal: N, colour: C, index: local, covers: inside, part: st.part };
 }

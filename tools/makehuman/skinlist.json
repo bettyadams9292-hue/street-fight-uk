@@ -1,0 +1,363 @@
+[
+ {
+  "id": "m_light",
+  "gender": "male",
+  "tone": 0.15,
+  "age": "young",
+  "dir": "/tmp/mh/skins02/skins/toigo_light_skin_male_bronze",
+  "tags": []
+ },
+ {
+  "id": "m_freckles",
+  "gender": "male",
+  "tone": 0.08,
+  "age": "young",
+  "dir": "/tmp/mh/skins02/skins/toigo_light_skin_male_freckles",
+  "tags": []
+ },
+ {
+  "id": "m_ginger",
+  "gender": "male",
+  "tone": 0.05,
+  "age": "young",
+  "dir": "/tmp/mh/skins02/skins/toigo_light_skin_male_ginger",
+  "tags": [
+   "ginger"
+  ]
+ },
+ {
+  "id": "m_aksel",
+  "gender": "male",
+  "tone": 0.2,
+  "age": "middle",
+  "dir": "/tmp/mh/skins02/skins/mindfront_aksel_skin",
+  "tags": []
+ },
+ {
+  "id": "m_african",
+  "gender": "male",
+  "tone": 0.9,
+  "age": "middle",
+  "dir": "/tmp/mh/skins02/skins/mindfront_skin_male_african_middleage",
+  "tags": []
+ },
+ {
+  "id": "m_eurasian_old",
+  "gender": "male",
+  "tone": 0.35,
+  "age": "old",
+  "dir": "/tmp/mh/skins02/skins/onlytheghosts_old_eurasian_male",
+  "tags": []
+ },
+ {
+  "id": "m_tattooed",
+  "gender": "male",
+  "tone": 0.15,
+  "age": "middle",
+  "dir": "/tmp/mh/skins02/skins/ken1138_caucasian_male_tattooed_skin",
+  "tags": [
+   "tattoos"
+  ]
+ },
+ {
+  "id": "m_viking",
+  "gender": "male",
+  "tone": 0.12,
+  "age": "middle",
+  "dir": "/tmp/mh/skins02/skins/rehmanpolanski_skin_viking_tattoos",
+  "tags": [
+   "tattoos",
+   "boss"
+  ]
+ },
+ {
+  "id": "f_light",
+  "gender": "female",
+  "tone": 0.12,
+  "age": "young",
+  "dir": "/tmp/mh/skins01/skins/toigo_light_skin_female_freckles",
+  "tags": []
+ },
+ {
+  "id": "f_natural",
+  "gender": "female",
+  "tone": 0.15,
+  "age": "young",
+  "dir": "/tmp/mh/skins01/skins/toigo_light_skin_with_natural_makeup",
+  "tags": []
+ },
+ {
+  "id": "f_caucasian",
+  "gender": "female",
+  "tone": 0.18,
+  "age": "young",
+  "dir": "/tmp/mh/skins01/skins/darthfurby_caucasian_female",
+  "tags": []
+ },
+ {
+  "id": "f_redhead",
+  "gender": "female",
+  "tone": 0.05,
+  "age": "young",
+  "dir": "/tmp/mh/skins01/skins/flower-angel_red_head_skin",
+  "tags": [
+   "ginger"
+  ]
+ },
+ {
+  "id": "f_creamy",
+  "gender": "female",
+  "tone": 0.25,
+  "age": "young",
+  "dir": "/tmp/mh/skins01/skins/skalldyrssuppe_creamy_female",
+  "tags": []
+ },
+ {
+  "id": "f_midtoned",
+  "gender": "female",
+  "tone": 0.55,
+  "age": "young",
+  "dir": "/tmp/mh/skins01/skins/callharvey3d_midtoned_female",
+  "tags": []
+ },
+ {
+  "id": "f_indian",
+  "gender": "female",
+  "tone": 0.6,
+  "age": "young",
+  "dir": "/tmp/mh/skins01/skins/cutoff3d_indian_female_skin",
+  "tags": []
+ },
+ {
+  "id": "f_eurasian_young",
+  "gender": "female",
+  "tone": 0.35,
+  "age": "young",
+  "dir": "/tmp/mh/skins01/skins/onlytheghosts_young_eurasian_female",
+  "tags": []
+ },
+ {
+  "id": "f_eurasian_middle",
+  "gender": "female",
+  "tone": 0.35,
+  "age": "middle",
+  "dir": "/tmp/mh/skins01/skins/onlytheghosts_middle_aged_eurasian_female",
+  "tags": []
+ },
+ {
+  "id": "f_eurasian_old",
+  "gender": "female",
+  "tone": 0.35,
+  "age": "old",
+  "dir": "/tmp/mh/skins01/skins/onlytheghosts_old_eurasian_female",
+  "tags": []
+ },
+ {
+  "id": "uniform",
+  "gender": "any",
+  "tone": 0.0,
+  "age": "any",
+  "dir": "/tmp/mh/skins01/skins/blindsaypatten_uniform_skin_texture",
+  "tags": [
+   "tintable"
+  ]
+ },
+ {
+  "id": "d_young_african_male",
+  "dir": "/tmp/mhsys/skins/young_african_male",
+  "gender": "male",
+  "tone": 0.85,
+  "age": "young",
+  "tags": [
+   "default",
+   "african"
+  ]
+ },
+ {
+  "id": "d_young_african_female",
+  "dir": "/tmp/mhsys/skins/young_african_female",
+  "gender": "female",
+  "tone": 0.85,
+  "age": "young",
+  "tags": [
+   "default",
+   "african"
+  ]
+ },
+ {
+  "id": "d_young_asian_male",
+  "dir": "/tmp/mhsys/skins/young_asian_male",
+  "gender": "male",
+  "tone": 0.3,
+  "age": "young",
+  "tags": [
+   "default",
+   "asian"
+  ]
+ },
+ {
+  "id": "d_young_asian_female",
+  "dir": "/tmp/mhsys/skins/young_asian_female",
+  "gender": "female",
+  "tone": 0.3,
+  "age": "young",
+  "tags": [
+   "default",
+   "asian"
+  ]
+ },
+ {
+  "id": "d_young_caucasian_male",
+  "dir": "/tmp/mhsys/skins/young_caucasian_male",
+  "gender": "male",
+  "tone": 0.12,
+  "age": "young",
+  "tags": [
+   "default",
+   "caucasian"
+  ]
+ },
+ {
+  "id": "d_young_caucasian_female",
+  "dir": "/tmp/mhsys/skins/young_caucasian_female",
+  "gender": "female",
+  "tone": 0.12,
+  "age": "young",
+  "tags": [
+   "default",
+   "caucasian"
+  ]
+ },
+ {
+  "id": "d_middleage_african_male",
+  "dir": "/tmp/mhsys/skins/middleage_african_male",
+  "gender": "male",
+  "tone": 0.85,
+  "age": "middle",
+  "tags": [
+   "default",
+   "african"
+  ]
+ },
+ {
+  "id": "d_middleage_african_female",
+  "dir": "/tmp/mhsys/skins/middleage_african_female",
+  "gender": "female",
+  "tone": 0.85,
+  "age": "middle",
+  "tags": [
+   "default",
+   "african"
+  ]
+ },
+ {
+  "id": "d_middleage_asian_male",
+  "dir": "/tmp/mhsys/skins/middleage_asian_male",
+  "gender": "male",
+  "tone": 0.3,
+  "age": "middle",
+  "tags": [
+   "default",
+   "asian"
+  ]
+ },
+ {
+  "id": "d_middleage_asian_female",
+  "dir": "/tmp/mhsys/skins/middleage_asian_female",
+  "gender": "female",
+  "tone": 0.3,
+  "age": "middle",
+  "tags": [
+   "default",
+   "asian"
+  ]
+ },
+ {
+  "id": "d_middleage_caucasian_male",
+  "dir": "/tmp/mhsys/skins/middleage_caucasian_male",
+  "gender": "male",
+  "tone": 0.12,
+  "age": "middle",
+  "tags": [
+   "default",
+   "caucasian"
+  ]
+ },
+ {
+  "id": "d_middleage_caucasian_female",
+  "dir": "/tmp/mhsys/skins/middleage_caucasian_female",
+  "gender": "female",
+  "tone": 0.12,
+  "age": "middle",
+  "tags": [
+   "default",
+   "caucasian"
+  ]
+ },
+ {
+  "id": "d_old_african_male",
+  "dir": "/tmp/mhsys/skins/old_african_male",
+  "gender": "male",
+  "tone": 0.9,
+  "age": "old",
+  "tags": [
+   "default",
+   "african"
+  ]
+ },
+ {
+  "id": "d_old_african_female",
+  "dir": "/tmp/mhsys/skins/old_african_female",
+  "gender": "female",
+  "tone": 0.9,
+  "age": "old",
+  "tags": [
+   "default",
+   "african"
+  ]
+ },
+ {
+  "id": "d_old_asian_male",
+  "dir": "/tmp/mhsys/skins/old_asian_male",
+  "gender": "male",
+  "tone": 0.35,
+  "age": "old",
+  "tags": [
+   "default",
+   "asian"
+  ]
+ },
+ {
+  "id": "d_old_asian_female",
+  "dir": "/tmp/mhsys/skins/old_asian_female",
+  "gender": "female",
+  "tone": 0.35,
+  "age": "old",
+  "tags": [
+   "default",
+   "asian"
+  ]
+ },
+ {
+  "id": "d_old_caucasian_male",
+  "dir": "/tmp/mhsys/skins/old_caucasian_male",
+  "gender": "male",
+  "tone": 0.16999999999999998,
+  "age": "old",
+  "tags": [
+   "default",
+   "caucasian"
+  ]
+ },
+ {
+  "id": "d_old_caucasian_female",
+  "dir": "/tmp/mhsys/skins/old_caucasian_female",
+  "gender": "female",
+  "tone": 0.16999999999999998,
+  "age": "old",
+  "tags": [
+   "default",
+   "caucasian"
+  ]
+ }
+]
