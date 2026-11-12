@@ -174,7 +174,8 @@ export class GameRenderer {
     const street = !!this.levelView?.street;
     const bg = prof.interior ? 0x07080b : prof.roofed && !street ? prof.bg : street || world.level.theme === 'estate' || world.level.theme === 'high_street' ? BG : prof.bg;
     this.scene.background = new THREE.Color(bg);
-    const mist = world.level.weather === 'mist' ? 1.8 : 1;
+    // Mist on a kit street is kept light: the flat colours wash out quickly.
+    const mist = world.level.weather === 'mist' ? (street ? 1.25 : 1.8) : 1;
     this.scene.fog = prof.interior || (!prof.fog && !street) ? null : new THREE.FogExp2(bg, (street ? 0.016 : prof.fog) * mist);
     this.interior = !!prof.interior;
     this.postfx?.setInterior(this.interior);

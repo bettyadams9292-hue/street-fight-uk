@@ -228,7 +228,7 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
   };
   add(solid, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 }), true);
   // Windows and lamp heads glow; their own colour is ignored at night so every pane reads as warm light.
-  add(lit, new THREE.MeshStandardMaterial({ color: '#2a2018', emissive: new THREE.Color('#ffc880'), emissiveIntensity: o.night === false ? 0.5 : 1.5, roughness: 0.5 }), false);
+  add(lit, new THREE.MeshStandardMaterial({ color: '#2a2018', emissive: new THREE.Color('#ffc880'), emissiveIntensity: o.night === false ? 0.35 : 0.7, roughness: 0.5 }), false);
   add(glass, new THREE.MeshStandardMaterial({ color: '#9fc0d0', roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.22, depthWrite: false }), false, 2);
 
   for (const s of plan.signs) {

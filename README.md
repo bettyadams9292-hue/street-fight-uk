@@ -4,6 +4,18 @@ A gritty 2.5D street-fighting action RPG set in modern Britain. Browser game bui
 
 **Current build: Stage 5 (expanded campaign, items and shops)**: 24 areas, 13 bosses, an inventory and stash, a clothes shop with try-on, a pawn shop, robbery with police consequences, and 36 melee and improvised weapons (no firearms). The training ground is still on the main menu.
 
+## World rebuild (branch `world-rebuild`, pull request #1)
+
+Read this first if you are working on the world. It is newer than the stage notes below.
+
+- **The town is one long street.** `src/world/strip.ts` lists the 20 outdoor districts west to east and joins them end to end. Walking off the end of a district carries straight on into the next: no door, no fade. Each district keeps its own id, fights, doors and save data. The story's locks are barriers across the street (`SEAM_LOCKS`).
+- **Order:** Stadium, Leisure, Residential, Estate (home), High Street, Alleys, Industrial, Trading Estate, Old Market, Ring Road, City, Docks, Precinct, Kingsway, Multi-storey, Neon Mile, Factory, Deep Line, Territory, Hale House. The old side doors between streets are gone, except the subway steps short cut.
+- **How a seam works:** `World` emits `area:exit` with `seam: true`; `Game.crossSeam` builds the next district's world with you a step over the line; `GameRenderer` already has the districts either side standing (`near`) and re-bases on the new one (`crossSeam`), so nothing is rebuilt on that frame. Street lamps are lit from one shared pool of six lights so the light count never changes.
+- **The map** (`src/map/worldMap.ts`) is one folded road generated from the strip.
+- **Streets are drawn from the Polyfork low-poly kits** (CC BY 4.0). `tools/polyfork/pack.py` packs them into `public/models/polyfork/kit.bin` (credits in `CREDITS.txt` beside it). `src/city/street.ts` plans a district as pure data: paving behind the kerb and tarmac in front of it, buildings fitted to each frontage, shops you can see into with interiors that match their signs, kit models for props and vehicles, the house at 14 Tanner Road. `src/render/kit/PolyKit.ts` bakes a plan into a few meshes. `tests/strip.test.ts` checks all of it.
+- `?world=classic` keeps the previous look for the streets.
+- **Not done yet:** interiors (the house rooms, shop interiors you walk into) still use the older look; parked cars no longer fade when you walk behind them; fighters are rebuilt when you cross a seam, which may hitch on a slow phone; the visual baselines for street scenes need re-recording once the pictures are approved.
+
 ## Run it
 
 ```bash
