@@ -176,6 +176,8 @@ export function loadKenney(): Promise<void> {
           mesh.castShadow = true;
           mesh.receiveShadow = true;
           mesh.geometry.userData.shared = true;
+          // disposeGroup skips meshes marked shared: these geometries and materials outlive any level.
+          mesh.userData.shared = true;
           if (dir === 'furniture') {
             boxUV(mesh.geometry);
             const name = (mesh.material as THREE.Material).name;

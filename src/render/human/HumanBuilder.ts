@@ -399,8 +399,97 @@ export interface BuiltHuman {
   dispose(): void;
 }
 
-/** Build a character. Call after preloadHuman(spec); anything not loaded is left out. */
+interface Template {
+  placed: ReturnType<typeof placeBones>;
+  parts: { geometry: THREE.BufferGeometry; material: THREE.Material; name: string; order: number; cast: boolean }[];
+  height: number;
+  refs: number;
+  dispose: () => void;
+}
+
+/** Recently built characters, by spec: the same person (NPCs come from a fixed pool) reuses the geometry. */
+const templates = new Map<string, Template>();
+const MAX_TEMPLATES = 48;
+
+function skeletonFrom(placed: ReturnType<typeof placeBones>): { bones: THREE.Bone[]; skeleton: THREE.Skeleton; root: THREE.Group } {
+  const bones = placed.map((p) => {
+    const b = new THREE.Bone();
+    b.name = p.name;
+    return b;
+  });
+  placed.forEach((p, i) => {
+    const b = bones[i];
+    if (p.parent >= 0) {
+      const ph = placed[p.parent].head;
+      b.position.set(p.head[0] - ph[0], p.head[1] - ph[1], p.head[2] - ph[2]);
+      bones[p.parent].add(b);
+    } else b.position.set(p.head[0], p.head[1], p.head[2]);
+  });
+  const root = new THREE.Group();
+  root.name = 'human';
+  root.add(bones[0]);
+  root.updateMatrixWorld(true);
+  return { bones, skeleton: new THREE.Skeleton(bones), root };
+}
+
+/**
+ * Build a character. Call after preloadHuman(spec); anything not loaded is left out. A spec built
+ * before shares its meshes (morphing and cutting clothes take tens of milliseconds).
+ */
 export function buildHuman(spec: HumanSpec): BuiltHuman | null {
+  const key = JSON.stringify(spec);
+  let t = templates.get(key);
+  if (!t) {
+    const fresh = buildHumanFresh(spec);
+    if (!fresh) return null;
+    const parts: Template['parts'] = [];
+    fresh.root.traverse((o: THREE.Object3D) => {
+      const m = o as THREE.SkinnedMesh;
+      if (m.isSkinnedMesh) parts.push({ geometry: m.geometry, material: m.material as THREE.Material, name: m.name, order: m.renderOrder, cast: m.castShadow });
+    });
+    t = { placed: fresh.placed, parts, height: fresh.height, refs: 0, dispose: fresh.dispose };
+    templates.set(key, t);
+    // Forget the least recently used ones no character is wearing.
+    if (templates.size > MAX_TEMPLATES)
+      for (const [k, old] of templates) {
+        if (templates.size <= MAX_TEMPLATES) break;
+        if (old.refs === 0 && old !== t) {
+          old.dispose();
+          templates.delete(k);
+        }
+      }
+  } else {
+    templates.delete(key);
+    templates.set(key, t);
+  }
+  const tpl = t;
+  const { bones, skeleton, root } = skeletonFrom(tpl.placed);
+  for (const p of tpl.parts) {
+    const mesh = new THREE.SkinnedMesh(p.geometry, p.material);
+    mesh.name = p.name;
+    mesh.renderOrder = p.order;
+    mesh.castShadow = p.cast;
+    mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
+    root.add(mesh);
+    mesh.bind(skeleton);
+  }
+  tpl.refs++;
+  let released = false;
+  return {
+    root,
+    skeleton,
+    bones: new Map(bones.map((b) => [b.name, b])),
+    height: tpl.height,
+    dispose: () => {
+      if (released) return;
+      released = true;
+      tpl.refs--;
+    },
+  };
+}
+
+function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<typeof placeBones> }) | null {
   const a = ready;
   if (!a) return null;
   const body = a.body;
@@ -638,6 +727,7 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
   let top = 0;
   for (let i = 1; i < pos.length; i += 3) top = Math.max(top, pos[i]);
   return {
+    placed,
     root,
     skeleton,
     bones: new Map(bones.map((b) => [b.name, b])),
