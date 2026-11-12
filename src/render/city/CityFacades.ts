@@ -101,6 +101,25 @@ function box(group: THREE.Group, w: number, h: number, d: number, x: number, y: 
   return mesh;
 }
 
+/**
+ * A traditional shop fascia: the painted board, a moulded cornice over it, a thin
+ * bead under it and a console bracket at each end. Lettering keeps its proportions.
+ */
+function fascia(group: THREE.Group, x: number, y: number, z: number, width: number, height: number, paint: string, t: THREE.Texture, glow: number): void {
+  const board = new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: glow, roughness: 0.45 });
+  const trim = new THREE.MeshStandardMaterial({ color: new THREE.Color(paint).multiplyScalar(0.55), roughness: 0.5 });
+  box(group, width, height, 0.12, x, y, z, board);
+  // Cornice: a stepped moulding that throws a shadow on the letters.
+  box(group, width + 0.3, 0.07, 0.3, x, y + height / 2 + 0.035, z + 0.04, trim);
+  box(group, width + 0.22, 0.05, 0.22, x, y + height / 2 + 0.095, z + 0.0, trim);
+  box(group, width + 0.1, 0.035, 0.18, x, y - height / 2 - 0.015, z + 0.02, trim);
+  // Console brackets.
+  for (const e of [-1, 1]) {
+    box(group, 0.16, height + 0.18, 0.24, x + e * (width / 2 + 0.08), y + 0.02, z + 0.04, trim);
+    box(group, 0.12, 0.12, 0.28, x + e * (width / 2 + 0.08), y - height / 2 - 0.1, z + 0.02, trim);
+  }
+}
+
 /** The business's own sign over the ground floor, in the style its kind calls for. */
 function addSign(group: THREE.Group, s: SignedFacade, backZ: number): void {
   if (!s.label || !s.buildings.length) return;
@@ -123,8 +142,9 @@ function addSign(group: THREE.Group, s: SignedFacade, backZ: number): void {
     case 'club':
     case 'casino': {
       const neon = s.kind === 'casino' ? '#ffcf4a' : s.label === 'VELVET' ? '#ff4ac0' : '#a070ff';
-      const t = signTexture(s.label, '#060608', neon, { neon: true });
-      box(group, Math.min(w - 2, 9), 1.3, 0.12, cx, 3.9, backZ + 0.45, lit(t, 1.7));
+      const nw = Math.min(w - 2, 9);
+      const t = signTexture(s.label, '#060608', neon, { neon: true, aspect: nw / 1.3, h: 160 });
+      box(group, nw, 1.3, 0.12, cx, 3.9, backZ + 0.45, lit(t, 1.7));
       // A lit canopy over the door.
       const door = b.doors[0] ?? cx;
       box(group, 3.2, 0.15, 1.2, door, 2.75, backZ + 0.7, new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.3, emissive: new THREE.Color(neon), emissiveIntensity: 0.6 }));
@@ -133,13 +153,16 @@ function addSign(group: THREE.Group, s: SignedFacade, backZ: number): void {
     case 'office':
     case 'leisure':
     case 'market': {
-      const t = signTexture(s.label, '#1a1c20', '#e8e4d8', { serif: s.kind === 'market' });
-      box(group, Math.min(w - 2, 10), 0.7, 0.1, cx, 3.35, backZ + 0.4, lit(t, 0.25));
+      // Modern lettering: a slim dark panel with the name in raised cream letters.
+      const bw = Math.min(w - 2, 10);
+      const t = signTexture(s.label, '#1a1c20', '#e8e4d8', { serif: s.kind === 'market', aspect: bw / 0.7, h: 128, maxLetter: 0.58 });
+      box(group, bw, 0.7, 0.1, cx, 3.35, backZ + 0.4, lit(t, 0.25));
       return;
     }
     case 'pub': {
-      const t = signTexture(s.label, paint, '#d9b65a', { serif: true });
-      box(group, w - 0.6, 0.7, 0.14, cx, 2.75, backZ + 0.32, lit(t, 0.3));
+      // Gilt signwriting on the painted fascia.
+      const t = signTexture(s.label, paint, '#d9b65a', { serif: true, gilt: true, aspect: (w - 0.9) / 0.7, h: 128, maxLetter: 0.66 });
+      fascia(group, cx, 2.75, backZ + 0.32, w - 0.9, 0.7, paint, t, 0.22);
       // Hanging sign on a bracket at the first-floor line.
       const hx = x0 + 1.2;
       box(group, 0.06, 0.06, 1.1, hx, 3.6, backZ + 0.75, new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.5, metalness: 0.6 }));
@@ -149,8 +172,12 @@ function addSign(group: THREE.Group, s: SignedFacade, backZ: number): void {
     }
     default: {
       // Shops, showrooms, the gym, precinct units, warehouses: a fascia board.
-      const t = signTexture(s.label, paint, ink);
-      box(group, w - 0.6, 0.65, 0.14, cx, 2.78, backZ + 0.34, lit(t, s.label === 'TO LET' ? 0.03 : 0.35));
+      // Old frontages (shops, the bookies) get serif signwriting, gilt on dark paint; the rest a plain modern face.
+      const traditional = s.kind === 'shop' || s.kind === 'cafe' || s.kind === 'takeaway';
+      const fw = w - 0.9;
+      const dark = new THREE.Color(paint).getHSL({ h: 0, s: 0, l: 0 }).l < 0.35;
+      const t = signTexture(s.label, paint, ink, { serif: traditional, gilt: traditional && dark, aspect: fw / 0.62, h: 128, maxLetter: 0.6 });
+      fascia(group, cx, 2.78, backZ + 0.34, fw, 0.62, paint, t, s.label === 'TO LET' ? 0.03 : 0.3);
     }
   }
 }

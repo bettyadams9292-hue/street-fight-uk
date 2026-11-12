@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { surfaceMaterial, kitGroundTexture as kitTexture, type Surface, type SurfaceOptions } from './street/Flooring';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
 import { KIT_KINDS } from '../city/catalogue';
@@ -28,7 +29,7 @@ import {
   windowGridTexture,
   woodFloorTexture,
 } from './levelTextures';
-import { brickTexture, canvas, pavingTexture, roadTexture, shutterTexture, toTexture } from './textures';
+import { brickTexture, canvas, shutterTexture, toTexture } from './textures';
 import { buildWeaponMesh, disposeGroup } from './weaponMesh';
 import { WEAPONS } from '../combat/Weapons';
 import { RARITY_COLOURS, itemDef } from '../items/items';
@@ -232,6 +233,57 @@ export class LevelView {
     }
   }
 
+  /** Granite kerbstones along the edge of the pavement: separate stones, each a slightly different grey. */
+  private kerb(x0: number, x1: number, z: number, h: number): void {
+    const len = 0.9;
+    const n = Math.ceil((x1 - x0) / len);
+    const geo = new THREE.BoxGeometry(len - 0.012, h, 0.22);
+    // Rounded-off top edge: pull the top front corners in a touch.
+    const p = geo.getAttribute('position') as THREE.BufferAttribute;
+    for (let i = 0; i < p.count; i++) if (p.getY(i) > 0 && p.getZ(i) > 0) p.setZ(i, p.getZ(i) - 0.02);
+    geo.computeVertexNormals();
+    const mat = new THREE.MeshStandardMaterial({ map: kitTexture('T_Concrete_BaseColor', true), normalMap: kitTexture('T_Concrete_Normal', false), color: '#b8b8b6', roughness: 0.75 });
+    const mesh = new THREE.InstancedMesh(geo, mat, n);
+    const m = new THREE.Matrix4();
+    const c = new THREE.Color();
+    for (let i = 0; i < n; i++) {
+      m.makeTranslation(x0 + (i + 0.5) * len, h / 2, z);
+      mesh.setMatrixAt(i, m);
+      const k = 0.75 + this.rnd() * 0.3;
+      mesh.setColorAt(i, c.setRGB(k, k, k * (0.97 + this.rnd() * 0.05)));
+    }
+    mesh.receiveShadow = true;
+    this.group.add(mesh);
+  }
+
+  /** British road markings: double yellow lines by the kerb, a dashed white centre line, and drain grates in the gutter. */
+  private roadMarkings(x0: number, x1: number, z: number): void {
+    const paint = (colour: string) => new THREE.MeshStandardMaterial({ color: colour, roughness: 0.6, transparent: true, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -2 });
+    const yellow = paint('#d8a823');
+    const white = paint('#e4e2dc');
+    const strip = (xa: number, xb: number, zc: number, w: number, m: THREE.Material) => {
+      const g = new THREE.Mesh(new THREE.PlaneGeometry(xb - xa, w), m);
+      g.rotation.x = -Math.PI / 2;
+      g.position.set((xa + xb) / 2, -0.012, zc);
+      this.group.add(g);
+    };
+    strip(x0, x1, z + 0.3, 0.07, yellow);
+    strip(x0, x1, z + 0.45, 0.07, yellow);
+    for (let x = x0 + 1; x < x1; x += 6) strip(x, x + 3, z + 5.2, 0.1, white);
+    // Gully grates in the gutter.
+    const grate = new THREE.MeshStandardMaterial({ color: '#1c1d20', roughness: 0.5, metalness: 0.7 });
+    for (let x = x0 + 4 + this.rnd() * 6; x < x1 - 2; x += 14 + this.rnd() * 8) {
+      const g = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.01, 0.3), grate);
+      g.position.set(x, -0.012, z + 0.2);
+      this.group.add(g);
+      for (let k = -0.18; k <= 0.18; k += 0.06) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.012, 0.26), this.mat('#050506', 1));
+        bar.position.set(x + k, -0.008, z + 0.2);
+        this.group.add(bar);
+      }
+    }
+  }
+
   private buildGround(): void {
     const { minX, maxX, maxZ } = this.level.bounds;
     const X0 = this.X0;
@@ -283,21 +335,29 @@ export class LevelView {
     if (prof.interior) return this.interiorGround(front);
     if (prof.roofed) return this.roofedGround(front);
     const depth = front - this.back;
-    let groundMat: THREE.MeshStandardMaterial;
-    switch (prof.ground) {
-      case 'hard':
-        groundMat = new THREE.MeshStandardMaterial({ map: markingsTexture(theme === 'territory' || theme === 'hq' ? '#3f3a35' : '#55524c', '#c9a227', W / 8), roughness: 0.9 });
-        break;
-      case 'concrete':
-        groundMat = new THREE.MeshStandardMaterial({ map: concreteTexture('#6e6c66', W / 4, depth / 4), roughness: 0.92 });
-        break;
-      case 'cobbles':
-        groundMat = new THREE.MeshStandardMaterial({ map: tileTexture('#6a645a', '#2a2620', W / 0.9, depth / 0.9, 32), roughness: 0.75, color: theme === 'alleys' ? 0xb0aaa0 : 0xffffff });
-        if (theme === 'alleys') groundMat = new THREE.MeshStandardMaterial({ map: pavingTexture(W / 2.4, depth / 2.4), roughness: 0.82, color: 0x8a8478 });
-        break;
-      default:
-        groundMat = new THREE.MeshStandardMaterial({ map: pavingTexture(W / 2.4, depth / 2.4), roughness: 0.82, color: theme === 'precinct' ? 0xc8bfae : theme === 'residential' ? 0xe8e4dc : 0xffffff });
-    }
+    void depth;
+    // Surfaces from the city kit's textures (street/Flooring.ts): each district has its own.
+    const wet = (this.level.weather ?? 'clear') === 'rain' ? 0.75 : 0.25;
+    const seed = hash(this.level.id) % 97;
+    const surf = (kind: Surface, tint?: string, extra: Partial<SurfaceOptions> = {}) =>
+      surfaceMaterial(kind, { tint, wallZ: this.back, kerbZ: prof.road ? front : 1e4, wet, seed, ...extra });
+    const SURFACES: Partial<Record<string, () => THREE.MeshStandardMaterial>> = {
+      city: () => surf('flags'),
+      nightlife: () => surf('flags', '#9a9aa2'),
+      precinct: () => surf('paviours', '#d8c8b8'),
+      leisure: () => surf('paviours', '#c4a090'),
+      residential: () => surf('paving', '#d6d2c8'),
+      market: () => surf('setts'),
+      alleys: () => surf('setts', '#8a8478'),
+      stadium: () => surf('concrete', '#c8c4bc'),
+      docks: () => surf('concrete', '#a8a49c'),
+      industrial: () => surf('yard', undefined, { bays: 2.6 }),
+      ind_estate: () => surf('yard', undefined, { bays: 2.6 }),
+      territory: () => surf('yard', '#9a948c', { bays: 0 }),
+      hq: () => surf('yard', '#8a8680', { bays: 3 }),
+      factory: () => surf('concrete', '#9a968c'),
+    };
+    const groundMat: THREE.MeshStandardMaterial = (SURFACES[theme] ?? (() => surf('paving')))();
     this.ground(X0, X1, this.back, front, groundMat);
     if (!prof.road && theme !== 'alleys') {
       if (theme === 'docks') {
@@ -312,18 +372,19 @@ export class LevelView {
         return;
       }
       // A forecourt or yard: kerb, then more of the same surface fading into the dark.
-      this.box(W, 0.14, 0.2, (X0 + X1) / 2, 0.07, front + 0.1, this.mat('#77787c', 0.9), false);
-      this.ground(X0, X1, front + 0.2, front + 14, new THREE.MeshStandardMaterial({ map: concreteTexture('#3a3a3c', W / 6, 3), roughness: 0.95 }), -0.01);
+      this.kerb(X0, X1, front + 0.1, 0.14);
+      this.ground(X0, X1, front + 0.2, front + 14, surfaceMaterial('concrete', { tint: '#5a5a5c', wet, seed, kerbZ: front + 0.2 }), -0.01);
       return;
     }
     if (theme === 'alleys') {
       // Low back wall of the gardens opposite.
-      this.ground(X0, X1, front, front + 12, new THREE.MeshStandardMaterial({ map: pavingTexture(W / 2.4, 5), color: 0x6a665e, roughness: 0.9 }));
+      this.ground(X0, X1, front, front + 12, surfaceMaterial('dirt', { tint: '#8a8070', wet, seed }));
       this.box(W, 0.6, 0.3, (X0 + X1) / 2, 0.3, front + 0.5, new THREE.MeshStandardMaterial({ map: brickTexture(W / 4, 0.3) }));
       return;
     }
-    this.box(W, 0.12, 0.25, (X0 + X1) / 2, 0.06, front + 0.12, this.mat('#77787c', 0.9), false);
-    this.ground(X0, X1, front + 0.25, front + 14, new THREE.MeshStandardMaterial({ map: roadTexture(W / 8), roughness: 0.55, metalness: 0.05 }), -0.02);
+    this.kerb(X0, X1, front + 0.12, 0.12);
+    this.ground(X0, X1, front + 0.25, front + 14, surfaceMaterial('asphalt', { wet, seed, patches: true, kerbZ: front + 0.3 }), -0.02);
+    this.roadMarkings(X0, X1, front + 0.25);
     // Puddles pick up the lamps.
     const puddle = this.mat('#2a2e36', 0.05, 0.4, { transparent: true, opacity: 0.55 });
     for (let i = 0; i < Math.floor(W / 12); i++) {

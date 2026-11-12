@@ -18,9 +18,15 @@ export function seeded(seed: number): () => number {
 }
 
 /** Shop fascia / pub board lettering. */
-export function signTexture(text: string, bg: string, fg: string, opts: { serif?: boolean; neon?: boolean; w?: number; h?: number } = {}): THREE.CanvasTexture {
-  const w = opts.w ?? 1024;
+export function signTexture(
+  text: string,
+  bg: string,
+  fg: string,
+  opts: { serif?: boolean; neon?: boolean; w?: number; h?: number; aspect?: number; gilt?: boolean; maxLetter?: number } = {},
+): THREE.CanvasTexture {
+  // The canvas takes the board's shape, so letters are never stretched.
   const h = opts.h ?? 160;
+  const w = opts.aspect ? Math.max(h, Math.min(4096, Math.round(h * opts.aspect))) : opts.w ?? 1024;
   const [c, g] = canvas(w, h);
   g.fillStyle = bg;
   g.fillRect(0, 0, w, h);
@@ -29,7 +35,7 @@ export function signTexture(text: string, bg: string, fg: string, opts: { serif?
     g.lineWidth = 8;
     g.strokeRect(4, 4, w - 8, h - 8);
   }
-  let size = h * 0.62;
+  let size = h * (opts.maxLetter ?? 0.62);
   const font = (s: number) => `${opts.serif ? '700' : '800'} ${s}px ${opts.serif ? 'Georgia, "Times New Roman", serif' : '"Arial Black", Arial, sans-serif'}`;
   g.font = font(size);
   while (g.measureText(text).width > w * 0.9 && size > 10) {
@@ -41,6 +47,26 @@ export function signTexture(text: string, bg: string, fg: string, opts: { serif?
   if (opts.neon) {
     g.shadowColor = fg;
     g.shadowBlur = 28;
+  }
+  if (opts.gilt) {
+    // Signwritten gold leaf: a dark drop shadow, then a light-to-deep gold gradient, then a fine outline.
+    g.fillStyle = 'rgba(0,0,0,0.55)';
+    g.fillText(text, w / 2 + h * 0.025, h / 2 + 4 + h * 0.03);
+    const grad = g.createLinearGradient(0, h * 0.2, 0, h * 0.8);
+    grad.addColorStop(0, '#fff2b8');
+    grad.addColorStop(0.45, '#d9b14a');
+    grad.addColorStop(0.55, '#a67a1e');
+    grad.addColorStop(1, '#e8c86a');
+    g.fillStyle = grad;
+    g.fillText(text, w / 2, h / 2 + 4);
+    g.lineWidth = Math.max(1, h * 0.012);
+    g.strokeStyle = 'rgba(60,40,10,0.8)';
+    g.strokeText(text, w / 2, h / 2 + 4);
+    return toTexture(c);
+  }
+  if (!opts.neon) {
+    g.fillStyle = 'rgba(0,0,0,0.35)';
+    g.fillText(text, w / 2 + h * 0.02, h / 2 + 4 + h * 0.025);
   }
   g.fillStyle = fg;
   g.fillText(text, w / 2, h / 2 + 4);

@@ -7,6 +7,7 @@
  * each instance (paint, brick tone, lit or dark windows) without new materials.
  */
 import * as THREE from 'three';
+import { weather } from '../look/weathering';
 
 interface PrimJson {
   mat: string;
@@ -108,6 +109,8 @@ export class CityKit {
       if (orm) pending.push(orm.then((t) => ((mat.roughnessMap = t), (mat.metalnessMap = t), (mat.aoMap = null))));
       if (nrm) pending.push(nrm.then((t) => ((mat.normalMap = t), mat.normalScale.set(1, 1))));
       if (name === 'MI_Trim_MetalConcrete') mat.metalness = 0.6;
+      // Grime, rain streaks and slow colour variation over the kit's textures.
+      weather(mat, { dirt: /Brick|Concrete|Trim/.test(name) ? 0.7 : 0.4, streaks: /Brick|Concrete|Ornament|Trim/.test(name) ? 0.6 : 0.2 });
       materials.set(name, mat);
     }
     const kit = new CityKit(json, bin, materials);

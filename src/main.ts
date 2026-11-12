@@ -5,6 +5,7 @@ import { loadCityKit } from './render/city/CityKit';
 import { loadProps } from './render/props/PropLibrary';
 import { preloadAllHumans } from './render/human/HumanBuilder';
 import { loadAraMocap } from './render/anim/araPose';
+import { loadFlooring } from './render/street/Flooring';
 
 const gameRoot = document.getElementById('game');
 const uiRoot = document.getElementById('ui');
@@ -64,7 +65,7 @@ const begin = async (): Promise<void> => {
   // Load the character models first, but never hold the game up for long: without them fighters use the
   // classic rig. (The visual tests wait for however long it takes, so their pictures don't depend on the network.)
   const humans = query.get('humans') === 'off' ? Promise.resolve(false) : preloadAllHumans();
-  const assets = Promise.all([models, kit, loadProps(), humans, loadAraMocap()]);
+  const assets = Promise.all([models, kit, loadProps(), humans, loadAraMocap(), loadFlooring()]);
   await (shot ? assets : Promise.race([assets, new Promise((r) => setTimeout(r, 6000))]));
   start();
 };
