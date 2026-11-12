@@ -17,7 +17,7 @@ import { EQUIPMENT } from '../business/catalogue';
 import { CARS, FINISHES, FURNITURE } from '../property/catalogue';
 import { themeProfile } from './themes';
 import { kitStreet, planStreet, type StreetPlan } from '../city/street';
-import { buildKitStreet, polyKitReady, type KitStreetView } from './kit/PolyKit';
+import { buildKitStreet, kitFloor, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
 import { exitLocked, type World } from '../world/World';
 import {
   concreteTexture,
@@ -93,11 +93,23 @@ export class LevelView {
   /** Street lamps of a kit street: the renderer lights the nearest few from one shared pool, so walking between districts never changes how many lights the shaders are built for. */
   readonly lampSpecs: { x: number; y: number; z: number; colour: number; intensity: number; range: number }[] = [];
   private seamBlocks: { exit: ExitDef; group: THREE.Object3D }[] = [];
+  /** Rooms and shops drawn to match the low-poly streets (flat colours, kit floor tiles). */
+  private lowPoly = false;
+
+  /** A floor from the kit's tiles in the low-poly look; false (and nothing added) without the kit. */
+  private kitGround(kind: KitFloor, x0: number, x1: number, z0: number, z1: number, colour: string): boolean {
+    if (!this.lowPoly) return false;
+    const m = kitFloor(kind, x0, x1, z0, z1, colour, hash(`${this.level.id}:${Math.round(x0 * 10)}`));
+    if (!m) return false;
+    this.group.add(m);
+    return true;
+  }
 
   constructor(readonly level: LevelDef, private readonly progress: Progress) {
     this.back = backWallZ(level);
     const classic = new URLSearchParams(window.location.search).get('world') === 'classic';
     this.street = !classic && kitStreet(level) && polyKitReady() ? planStreet(level) : null;
+    this.lowPoly = !classic && polyKitReady();
     this.X0 = this.street ? this.street.x0 : level.bounds.minX - LEVEL_EXTENT;
     this.X1 = this.street ? this.street.x1 : level.bounds.maxX + LEVEL_EXTENT;
     this.group.add(this.lightRig);
@@ -201,7 +213,10 @@ export class LevelView {
     if (this.street) {
       // Ground, buildings, shop interiors, street furniture and vehicles all come from the kit plan.
       this.kitView = buildKitStreet(this.street);
-      if (this.kitView) this.group.add(this.kitView.group);
+      if (this.kitView) {
+        this.group.add(this.kitView.group);
+        for (const f of this.kitView.faders) this.foreCars.push({ car: f.group, x: f.x, z: f.z, hx: f.hx, hz: f.hz });
+      }
       this.kitDoors = this.street.doors;
     } else this.buildGround();
     // Carry the end facades on past the edges so the camera never sees a gap.
@@ -254,6 +269,7 @@ export class LevelView {
       this.dressing = new StreetDressing(lvl, this.back, lvl.bounds.maxZ + 0.4, this.X0, this.X1, seeded(hash(`${lvl.id}:dressing`)));
       this.group.add(this.dressing.group);
     }
+    if (this.lowPoly && themeProfile(lvl.theme).interior) flattenTextures(this.group);
   }
 
   /** Put a Kenney furniture model into the prop group, fitted to w × h × d; false if the kit isn't loaded. */
@@ -333,6 +349,13 @@ export class LevelView {
         const mat = fin ? this.floorFinish(fin.id, f.x1 - f.x0, front - this.back) : floors[f.label ?? ''] ?? new THREE.MeshStandardMaterial({ map: woodFloorTexture(4, 2) });
         // Leave a hole in the floor where the stairs go down.
         const well = this.level.props.find((q) => q.kind === 'stairwell' && q.x > f.x0 && q.x < f.x1);
+        const lp: [KitFloor, string] | null = fin
+          ? [fin.pattern === 'boards' ? 'boards' : fin.pattern === 'tiles' ? 'encaustic' : 'carpet', fin.colour]
+          : f.label === 'Gym' ? ['resin', '#2a3a30'] : f.label === 'Garage' ? ['resin', '#7a7874'] : ['boards', '#9a7a5a'];
+        if (!well && this.kitGround(lp[0], f.x0, f.x1, this.back, front, lp[1])) {
+          if (f.x0 > minX) this.box(0.24, 0.015, front - 0.1, f.x0, 0.008, (front + 0.1) / 2 + 0.05, this.mat('#8a7a5a', 0.5, 0.3), false);
+          continue;
+        }
         if (well) {
           const [hx, hz] = propHalf(well);
           const h = { x0: well.x - hx, x1: well.x + hx, z1: well.z + hz };
@@ -466,7 +489,22 @@ export class LevelView {
         : theme === 'pawn'
           ? new THREE.MeshStandardMaterial({ map: tileTexture('#5a1e22', '#4a181c', W / 0.5, depth / 0.5, 32), roughness: 1 })
           : new THREE.MeshStandardMaterial({ map: woodFloorTexture(W / 2, depth / 2), roughness: 0.55, color: 0x9a7a5a });
-    this.ground(minX, maxX, this.back, front, floor);
+    const LP: Partial<Record<string, [KitFloor, string]>> = {
+      grow_shop: ['tiles', '#e8ece4'],
+      gym_store: ['resin', '#2a2c30'],
+      wrestling_club: ['resin', '#2a2c30'],
+      boxing_gym: ['boards', '#a08060'],
+      karate_dojo: ['boards', '#e8d0a0'],
+      furniture_store: ['boards', '#c8a882'],
+      car_showroom: ['tiles', '#d8dadc'],
+      bike_shop: ['resin', '#4a4c50'],
+      casino: ['carpet', '#5a1a2a'],
+      shop: ['tiles', '#c4beb4'],
+      pawn: ['carpet', '#5a1e22'],
+      pub: ['boards', '#6a4a2a'],
+    };
+    const lp = theme === 'basement' ? undefined : LP[theme] ?? ['boards', '#9a7a5a'];
+    if (!lp || !this.kitGround(lp[0], minX, maxX, this.back, front, lp[1])) this.ground(minX, maxX, this.back, front, floor);
     this.box(W, 0.3, 0.2, (minX + maxX) / 2, -0.15, front + 0.1, this.mat('#2a2522'), false);
     this.ground(this.X0, this.X1, front + 0.2, front + 20, this.mat('#07080b', 1), -0.3);
     for (const x of [minX - 0.15, maxX + 0.15]) this.box(0.3, 3.2, depth, x, 1.6, (front + this.back) / 2, this.mat('#3a332c'));
@@ -1734,11 +1772,18 @@ export class LevelView {
     const H = 3;
     const colour = f.colour ?? '#8c7a5e';
     const fin = f.wall ? FINISHES[f.wall] : undefined;
-    const wall = fin
-      ? this.wallFinish(fin.id, w, H)
-      : new THREE.MeshStandardMaterial({ map: f.label === 'Garage' ? brickTexture(w / 4, 1) : f.label === 'Kitchen' ? tileTexture('#e8e2cc', '#9a9480', w / 1.5, 2, 48) : plasterTexture(colour, w / 3, 1), roughness: 0.9 });
-    this.panel(w, H, cx, H / 2, wall, 0);
-    if (fin?.pattern === 'panelling') {
+    if (this.lowPoly) {
+      // Low-poly: a flat-coloured wall with its pattern built from blocks.
+      const pattern = fin?.pattern ?? (f.label === 'Garage' ? 'brick' : f.label === 'Kitchen' ? 'tiles' : 'paint');
+      const c1 = fin?.colour ?? (f.label === 'Garage' ? '#8a5a48' : f.label === 'Kitchen' ? '#e8e2cc' : colour);
+      this.group.add(kitWall(pattern, c1, fin?.colour2, f.x0, f.x1, this.back + 0.02, H));
+    } else {
+      const wall = fin
+        ? this.wallFinish(fin.id, w, H)
+        : new THREE.MeshStandardMaterial({ map: f.label === 'Garage' ? brickTexture(w / 4, 1) : f.label === 'Kitchen' ? tileTexture('#e8e2cc', '#9a9480', w / 1.5, 2, 48) : plasterTexture(colour, w / 3, 1), roughness: 0.9 });
+      this.panel(w, H, cx, H / 2, wall, 0);
+    }
+    if (fin?.pattern === 'panelling' && !this.lowPoly) {
       // Panelling to dado height, with a rail.
       this.box(w, 1.05, 0.04, cx, 0.53, this.back + 0.02, new THREE.MeshStandardMaterial({ map: woodFloorTexture(w / 2, 0.5), color: fin.colour, roughness: 0.5 }), false);
       this.box(w, 0.05, 0.06, cx, 1.07, this.back + 0.05, this.mat('#4a2e1a', 0.5), false);
@@ -3038,7 +3083,9 @@ export class LevelView {
       // The building already has a real doorway here: just sign it.
       const kitDoor = this.kitDoors.find((d) => Math.abs(d - ex.x) <= 1.2);
       if (kitDoor !== undefined) {
-        this.exitSign(ex, kitDoor, 3.25, this.back + 0.35);
+        // Under the shop's own board where there is one, not over it.
+        const board = this.street?.signs.find((s) => s.y > 3 && Math.abs(s.x - kitDoor) < s.w / 2 + 0.6);
+        this.exitSign(ex, kitDoor, board ? board.y - board.h / 2 - 0.3 : 3.25, this.back + 0.35);
         return;
       }
       // A lit doorway on the wall behind the door point.
@@ -3489,6 +3536,60 @@ export class LevelView {
     this.kitView?.dispose();
     disposeGroup(this.group);
   }
+}
+
+/**
+ * Rooms and shops in the low-poly look: every surface with a painted texture (plaster, boards, tiles,
+ * brick, carpet) becomes its texture's average colour, flat-shaded like the street kits. Anything
+ * carrying words or pictures that must be read (signs, glowing displays) keeps its texture, as do the
+ * shared prop models, the characters and anything lit by its own map.
+ */
+const flatColour = new WeakMap<THREE.Texture, THREE.Color | null>();
+function averageColour(t: THREE.Texture): THREE.Color | null {
+  if (flatColour.has(t)) return flatColour.get(t)!;
+  let out: THREE.Color | null = null;
+  const img = t.image as (CanvasImageSource & { width: number; height: number }) | undefined;
+  if (img && img.width && typeof document !== 'undefined') {
+    const c = document.createElement('canvas');
+    c.width = c.height = 8;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    if (g) {
+      g.drawImage(img, 0, 0, 8, 8);
+      const d = g.getImageData(0, 0, 8, 8).data;
+      let r = 0;
+      let gg = 0;
+      let b = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        r += d[i];
+        gg += d[i + 1];
+        b += d[i + 2];
+      }
+      const n = d.length / 4;
+      out = new THREE.Color().setRGB(r / n / 255, gg / n / 255, b / n / 255, THREE.SRGBColorSpace);
+    }
+  }
+  flatColour.set(t, out);
+  return out;
+}
+
+function flattenTextures(root: THREE.Object3D): void {
+  const done = new Set<THREE.Material>();
+  root.traverse((o: THREE.Object3D) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh || o.userData.shared) return;
+    for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+      const sm = m as THREE.MeshStandardMaterial;
+      if (done.has(sm) || !sm.isMeshStandardMaterial || !sm.map || sm.emissiveMap || sm.userData.keepMap || sm.map.userData.text) continue;
+      if (!(sm.map as THREE.CanvasTexture).isCanvasTexture) continue;
+      const avg = averageColour(sm.map);
+      if (!avg) continue;
+      done.add(sm);
+      sm.color.multiply(avg);
+      sm.map.dispose();
+      sm.map = null;
+      sm.needsUpdate = true;
+    }
+  });
 }
 
 /** A lit room seen through a window: warm light, a lampshade glow, curtains each side. */

@@ -18,6 +18,13 @@ export function seeded(seed: number): () => number {
 }
 
 /** Shop fascia / pub board lettering. */
+/** A texture with lettering on it: kept as it is when rooms are drawn flat (see LevelView.flattenTextures). */
+function textTexture(c: HTMLCanvasElement): THREE.CanvasTexture {
+  const t = toTexture(c);
+  t.userData.text = true;
+  return t;
+}
+
 export function signTexture(
   text: string,
   bg: string,
@@ -62,7 +69,7 @@ export function signTexture(
     g.lineWidth = Math.max(1, h * 0.012);
     g.strokeStyle = 'rgba(60,40,10,0.8)';
     g.strokeText(text, w / 2, h / 2 + 4);
-    return toTexture(c);
+    return textTexture(c);
   }
   if (!opts.neon) {
     g.fillStyle = 'rgba(0,0,0,0.35)';
@@ -70,7 +77,7 @@ export function signTexture(
   }
   g.fillStyle = fg;
   g.fillText(text, w / 2, h / 2 + 4);
-  return toTexture(c);
+  return textTexture(c);
 }
 
 const TAG_SYLLABLES = ['KRO', 'ZEP', 'DEK', 'MOX', 'RAZ', 'SKY', 'NUK', 'VEX', 'TOM', 'OKE', 'FLO', 'BIZ', 'JAX', 'REK', 'SNO', 'GRIT', 'KAZ', 'ONE', 'TWO', 'UKO'];

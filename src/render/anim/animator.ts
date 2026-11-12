@@ -161,6 +161,27 @@ export class FighterAnimator {
   private strollW = 0;
   private strollPhase = 0;
 
+  /**
+   * Follow a different Fighter (the same person carried into the next district of the street): the
+   * pose, feet and blends carry on, only the position is shifted by how far the new one moved.
+   */
+  retarget(f: Fighter): void {
+    const dx = f.pos.x - this.f.pos.x;
+    const dz = f.pos.z - this.f.pos.z;
+    this.f = f;
+    this.lastX += dx;
+    this.lastZ += dz;
+    this.hitSeq = f.hitSeq;
+    for (const foot of [this.feet.l, this.feet.r]) {
+      foot.x += dx;
+      foot.z += dz;
+      if (foot.step) {
+        foot.step.fx += dx;
+        foot.step.fz += dz;
+      }
+    }
+  }
+
   constructor(private f: Fighter, private m: Metrics, private traits: Traits, private scale = 1) {
     this.yaw = f.yawOverride ?? (f.facing * Math.PI) / 2;
     this.lastX = f.pos.x;

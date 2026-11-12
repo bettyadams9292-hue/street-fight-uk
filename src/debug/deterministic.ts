@@ -20,6 +20,7 @@ export function makeDeterministic(): void {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
   const fixed = 1_760_000_000_000;
+  (window as unknown as { __realNow: () => number }).__realNow = performance.now.bind(performance);
   Date.now = () => fixed;
   performance.now = () => 0;
 
