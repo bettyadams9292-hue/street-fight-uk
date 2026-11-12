@@ -306,10 +306,15 @@ const FRONT_KICK = mp(
   { ...g({ spine: [0.05, -0.3, 0], head: [0.1, 0.6, 0], lHip: [-1.5, 0, 0.05], lKnee: [1.9, 0, 0], lFoot: [-0.3, 0, 0], lShoulder: [-0.6, -0.4, 0.2], lElbow: [-1.7, 0, 0] }, 0.02, { shift: [-0.05, -0.08] }), feet: ON_REAR() },
   { ...g({ hips: [-0.12, -0.42, 0], spine: [-0.18, -0.3, 0], head: [0.3, 0.6, 0], lHip: [-1.45, 0, 0.05], lKnee: [0.12, 0, 0], lFoot: [-0.45, 0, 0], lShoulder: [-0.3, -0.2, 0.35], lElbow: [-1.3, 0, 0] }, 0.01, { shift: [-0.05, -0.02] }), feet: ON_REAR() },
 );
+/** Rear-leg front kick: the rear hip drives through and the kick goes straight up the middle. */
+const REAR_FRONT_KICK = mp(
+  { ...g({ hips: [0, 0.35, 0], spine: [0.05, 0.1, 0], head: [0.1, -0.3, 0], rHip: [-1.55, 0, -0.05], rKnee: [2.0, 0, 0], rFoot: [-0.3, 0, 0], ...LEAD_GUARD }, 0.02, { shift: [0.05, 0.04] }), feet: ON_LEAD(0.35) },
+  { ...g({ hips: [-0.12, 0.6, 0], spine: [-0.2, 0.15, 0], head: [0.3, -0.6, 0], rHip: [-1.45, 0, -0.05], rKnee: [0.12, 0, 0], rFoot: [-0.45, 0, 0], rShoulder: [-0.2, 0.2, -0.35], rElbow: [-1.2, 0, 0], ...LEAD_GUARD }, 0.01, { shift: [0.06, 0.06] }), feet: ON_LEAD(0.6) },
+);
 const TEEP = FRONT_KICK;
 const ROUNDHOUSE = mp(
   { ...g({ hips: [0, 0.35, 0], spine: [-0.05, 0.1, 0.1], head: [0.1, -0.3, 0], rHip: [-1.0, 0, -0.9], rKnee: [1.9, 0, 0], rFoot: [0.5, 0, 0], rShoulder: [-0.6, 0.5, -0.3], rElbow: [-1.8, 0, 0] }, 0.03, { shift: [0.06, 0.06] }), feet: ON_LEAD(0.5) },
-  { ...g({ hips: [0, 1.25, -0.15], spine: [-0.3, 0.25, 0.3], head: [0.25, -1.2, -0.1], rHip: [-1.5, 0, -1.2], rKnee: [0.15, 0, 0], rFoot: [0.7, 0, 0], rShoulder: [0.3, 0.2, -0.5], rElbow: [-0.6, 0, 0], ...LEAD_GUARD }, 0.02, { shift: [0.08, 0.02] }), feet: ON_LEAD(1.4) },
+  { ...g({ hips: [0, 1.25, -0.45], spine: [-0.35, 0.25, 0.75], head: [0.3, -1.2, -0.45], rHip: [-1.45, 0, -0.95], rKnee: [0.15, 0, 0], rFoot: [0.7, 0, 0], rShoulder: [0.55, 0.1, -0.35], rElbow: [-0.35, 0, 0], ...LEAD_GUARD }, 0.04, { shift: [0.12, 0.0] }), feet: ON_LEAD(1.4) },
 );
 const LEAD_ROUNDHOUSE = mp(
   { ...g({ hips: [0, -0.9, 0], spine: [-0.05, -0.5, -0.1], head: [0.1, 1.3, 0], lHip: [-1.0, 0, 0.9], lKnee: [1.9, 0, 0], lFoot: [0.5, 0, 0] }, 0.03, { shift: [-0.06, -0.08] }), feet: ON_REAR(-1.2) },
@@ -380,6 +385,7 @@ export const ANIM_POSES: Record<string, { chamber: Pose; strike: Pose }> = {
   teep: TEEP,
   roundhouse: ROUNDHOUSE,
   'roundhouse:leadFoot': LEAD_ROUNDHOUSE,
+  'front_kick:rearFoot': REAR_FRONT_KICK,
   spin_kick: ROUNDHOUSE,
   low_kick: LOW_KICK,
   side_kick: SIDE_KICK,

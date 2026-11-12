@@ -41,7 +41,7 @@ export const STREET: BaseStyle = {
       depthTolerance: 0.55, hitstun: 24, blockstun: 15, knockback: 3.5, poiseDamage: 40, reaction: 'stagger', hitstop: 7, lunge: 0.3,
     }),
     move({
-      id: 'street_front_kick', name: 'Front Kick', style: S, button: 'lk', kind: 'light', anim: 'front_kick', limb: 'leadFoot',
+      id: 'street_front_kick', name: 'Front Kick', style: S, button: 'lk', kind: 'light', anim: 'front_kick', limb: 'rearFoot',
       startup: 9, active: 3, recovery: 14, damage: 9, staminaCost: 8, reach: 1.05, hitRadius: 0.2, hitY: 1.0, height: 'mid',
       hitstun: 24, blockstun: 11, knockback: 2.2, poiseDamage: 15, hitstop: 4, lunge: 0.05,
       next: { hk: 'street_roundhouse', lp: 'street_jab' },

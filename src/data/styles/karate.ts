@@ -28,7 +28,7 @@ export const KARATE: BaseStyle = {
       hitstun: 24, knockback: 2.8, poiseDamage: 34, reaction: 'stagger', hitstop: 7, lunge: 0.3,
     }),
     move({
-      id: 'karate_front_kick', name: 'Front Kick', style: S, button: 'lk', kind: 'light', anim: 'front_kick', limb: 'leadFoot',
+      id: 'karate_front_kick', name: 'Front Kick', style: S, button: 'lk', kind: 'light', anim: 'front_kick', limb: 'rearFoot',
       startup: 8, active: 3, recovery: 13, damage: 9, staminaCost: 8, reach: 1.15, hitRadius: 0.2, hitY: 1.05, height: 'mid',
       hitstun: 22, knockback: 2.6, poiseDamage: 16, hitstop: 4,
       next: { hk: 'karate_roundhouse' },

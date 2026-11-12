@@ -45,7 +45,6 @@ CLIPS = {
     'rk_cross_c': (M + 'Combat/Boxing_mixamo.fbx', 13.55, 14.35, {'hit': 0.25, 'aim': ['RightHand', 0.25], 'orthodox': True}),
     # Kicks: a rear (right) front kick and a lead (left) roundhouse; stance is judged before the foot leaves the floor.
     'rk_front_kick': (M + 'Combat/BigFrontKick_mixamo.fbx', 3.40, 4.60, {'hit': 0.53, 'aim': ['RightFoot', 0.53], 'orthodox': True, 'stance_t': 0.0}),
-    'rk_roundhouse_lead': (M + 'Combat/RoundHouseKick_mixamo.fbx', 7.25, 8.45, {'hit': 0.58, 'aim': ['RightFoot', 0.58], 'turn': -30, 'orthodox': True, 'stance_t': 0.0}),
     # Being hit, going down, getting up.
     'rk_hit_head': (L + 'Combat/Taunting_GettingPunched_HUMANIK_WHS_segment.fbx', 1.10, 2.40, {'face': 0.0}),
     'rk_hit_body': (L + 'Combat/Fight_GettingKickedinBalls_HUMANIK_WHS_segment.fbx', 5.35, 6.60, {'face': 0.0}),
