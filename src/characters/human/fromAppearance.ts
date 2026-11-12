@@ -23,6 +23,9 @@ export interface HumanSpecData {
   skin: string;
   /** The exact skin colour asked for (the texture is tinted to it). */
   skinColour: string;
+  browColour: string;
+  browWeight: number;
+  eyeColour: string;
   items: SpecItem[];
   garments: SpecGarment[];
 }
@@ -174,5 +177,10 @@ export function appearanceToHuman(a: CharacterAppearance, skins: readonly SkinCh
   if (a.accessories.includes('cap') || a.accessories.includes('beanie')) items.push({ id: 'flat_cap', colour: a.headColour ?? '#2b2e35' });
   if (a.accessories.includes('sunglasses')) items.push({ id: 'glasses_frames', colour: '#101012' });
   if (a.accessories.includes('snood')) items.push({ id: 'face_mask', colour: a.headColour ?? '#1b1d22' });
-  return { shape, skin: chooseSkin(skins, female, tone, inked >= 3 && !female, older), skinColour: a.skinTone, items, garments };
+  const browColour = mixHex(mixHex(a.hairColour, '#1a120c', 0.35), '#bdb8b0', a.greying * 0.7);
+  const browWeight = Math.max(0, Math.min(1, (female ? 0.3 : 0.65) + a.face.brow * 0.3));
+  // Eye colour: browns for darker skin, otherwise picked steadily from the face (same face, same eyes).
+  const pickEye = Math.abs(Math.sin((a.face.headWidth + 2) * 12.9898 + (a.face.nose + 2) * 78.233 + (a.face.jaw + 2) * 37.719)) % 1;
+  const eyeColour = tone > 0.55 ? (pickEye < 0.7 ? '#3a2416' : '#5a3a22') : ['#3a2416', '#5a3a22', '#6a5a2a', '#3d6a8a', '#5a7da0', '#4a6a4a', '#6a7078'][Math.floor(pickEye * 7)];
+  return { shape, eyeColour, skin: chooseSkin(skins, female, tone, inked >= 3 && !female, older), skinColour: a.skinTone, browColour, browWeight, items, garments };
 }

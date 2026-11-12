@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { BodyData, footY, morph, placeBones, type BodyMeta, type BodyShape } from '../../characters/human/body';
 import { ProxyData, fitProxy, proxySkin, type ProxyMeta } from '../../characters/human/proxy';
+import { cutBrows } from '../../characters/human/brows';
 import { cutGarment, type Fabric, type GarmentKind } from '../../characters/human/garments';
 
 export interface SkinInfo {
@@ -40,6 +41,9 @@ export interface HumanSpec {
   skin: string;
   /** Tints the skin texture (for the plain skin, or to adjust a tone). */
   skinTint?: string;
+  /** Eyebrow colour (default: dark brown); `browWeight` 0 fine .. 1 heavy. */
+  browColour?: string;
+  browWeight?: number;
   /** The skin colour wanted: the texture is tinted so its average comes out this colour. */
   skinColour?: string;
   eyeColour?: string;
@@ -200,6 +204,43 @@ function dyed(mat: THREE.MeshStandardMaterial, colour: THREE.Color, mean: number
   mat.customProgramCacheKey = () => 'dyed';
 }
 
+let brows: THREE.Texture | null = null;
+/** A painted eyebrow: soft-edged, thicker at the nose end, made of fine angled hair strokes. White, tinted by the material. */
+function browTexture(): THREE.Texture | null {
+  if (brows || typeof document === 'undefined') return brows;
+  const W = 256;
+  const H = 64;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  let seed = 9;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  g.lineCap = 'round';
+  for (let i = 0; i < 800; i++) {
+    const u = Math.pow(rnd(), 0.85);
+    // Height of the brow at u: full at the head, tapering to the tail.
+    const h = H * (0.62 - 0.38 * u);
+    const y = H / 2 + (rnd() - 0.5) * h;
+    const x = u * W * 0.94 + W * 0.03;
+    // Hairs point up and outwards at the head, flatten towards the tail.
+    const ang = -Math.PI / 2 + (0.4 + u * 1.0) + (rnd() - 0.5) * 0.3;
+    const len = 6 + rnd() * 9;
+    g.strokeStyle = `rgba(255,255,255,${0.55 + rnd() * 0.45})`;
+    g.lineWidth = 1 + rnd() * 1.2;
+    g.beginPath();
+    g.moveTo(x, y);
+    g.lineTo(x + Math.cos(ang) * len, y - Math.sin(ang) * len * 0.45);
+    g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  brows = t;
+  return t;
+}
+
 const fabrics = new Map<Fabric, THREE.Texture>();
 
 /** A small tiling weave for each fabric (grey; garments are coloured per vertex). */
@@ -255,6 +296,30 @@ function fabricTexture(kind: Fabric): THREE.Texture | null {
 }
 
 const FABRIC_ROUGH: Record<Fabric, number> = { fleece: 0.95, knit: 0.95, nylon: 0.45, denim: 0.9, leather: 0.38, cotton: 0.88, canvas: 0.85 };
+
+/**
+ * The eye texture has a red-brown iris. Recolour it: saturated texels (the iris) keep their light and
+ * shade but take the wanted eye colour; the white and the pupil are left alone.
+ */
+function irisColour(mat: THREE.MeshStandardMaterial, colour: THREE.Color): void {
+  mat.onBeforeCompile = (sh: { uniforms: Record<string, { value: unknown }>; fragmentShader: string }) => {
+    sh.uniforms.irisCol = { value: colour };
+    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform vec3 irisCol;\nvoid main() {').replace(
+      '#include <map_fragment>',
+      `#include <map_fragment>
+  {
+    vec3 c = diffuseColor.rgb;
+    float mx = max(c.r, max(c.g, c.b));
+    float mn = min(c.r, min(c.g, c.b));
+    float sat = mx > 0.001 ? (mx - mn) / mx : 0.0;
+    float iris = smoothstep(0.35, 0.6, sat);
+    float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
+    diffuseColor.rgb = mix(c, irisCol * clamp(lum * 4.0, 0.2, 1.6), iris);
+  }`,
+    );
+  };
+  mat.customProgramCacheKey = () => 'iris';
+}
 
 /** Smooth normals for points indexed by base vertex, so UV seams don't show as creases. */
 function smoothNormals(pos: Float32Array, nBase: number, tris: ArrayLike<number>, toBase: ArrayLike<number>): Float32Array {
@@ -476,6 +541,7 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
       depthWrite: !m.alpha || data.meta.slot === 'hair',
     });
     if (dye && map) dyed(mat, dye, meanLum.get(m.diffuse!) ?? 0.5);
+    if (data.meta.slot === 'eyes') irisColour(mat, new THREE.Color(colour ?? '#5a3a22'));
     disposables.push(mat);
     const mesh = new THREE.SkinnedMesh(pg, mat);
     mesh.name = data.id;
@@ -486,7 +552,51 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
     mesh.receiveShadow = true;
     mesh.frustumCulled = false;
   };
-  if (eyes) addProxy(eyes, spec.eyeColour);
+  if (eyes) {
+    addProxy(eyes, spec.eyeColour);
+    // ---- eyebrows, painted on a shell cut from the brow skin ----
+    const fe = fitProxy(eyes, pos, body.meta.scale);
+    const centre = (sgn: number): [number, number, number] => {
+      let x = 0, y = 0, z = 0, c = 0;
+      for (let i = 0; i < fe.length; i += 3)
+        if (Math.sign(fe[i]) === sgn) {
+          x += fe[i];
+          y += fe[i + 1];
+          z += fe[i + 2];
+          c++;
+        }
+      return c ? [x / c, y / c, z / c] : [0, 0, 0];
+    };
+    const brow = cutBrows(body, pos, nb, [centre(1), centre(-1)], spec.browWeight ?? 0.5);
+    if (brow.index.length) {
+      const m = brow.render.length;
+      const bg = new THREE.BufferGeometry();
+      const si = new Uint16Array(m * 4);
+      const sw = new Float32Array(m * 4);
+      for (let l = 0; l < m; l++) {
+        const v = body.renderBase[brow.render[l]];
+        for (let k = 0; k < 4; k++) {
+          si[l * 4 + k] = body.skinIndex[v * 4 + k];
+          sw[l * 4 + k] = body.skinWeight[v * 4 + k] / 255;
+        }
+      }
+      bg.setAttribute('position', new THREE.BufferAttribute(brow.position, 3));
+      bg.setAttribute('uv', new THREE.BufferAttribute(brow.uv, 2));
+      bg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
+      bg.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
+      bg.setIndex(new THREE.BufferAttribute(brow.index, 1));
+      bg.computeVertexNormals();
+      disposables.push(bg);
+      const bm = new THREE.MeshStandardMaterial({ map: browTexture(), color: new THREE.Color(spec.browColour ?? '#2a1c12'), transparent: true, alphaTest: 0.08, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 });
+      disposables.push(bm);
+      const bmesh = new THREE.SkinnedMesh(bg, bm);
+      bmesh.name = 'eyebrows';
+      bmesh.renderOrder = 2;
+      root.add(bmesh);
+      bmesh.bind(skeleton);
+      bmesh.frustumCulled = false;
+    }
+  }
 
   // ---- clothes cut from the body ----
   for (const { g, mesh } of cut) {

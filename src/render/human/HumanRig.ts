@@ -31,7 +31,7 @@ export function humanSpecFor(a: CharacterAppearance): HumanSpec | null {
   const assets = humanAssets();
   if (!assets) return null;
   const d = appearanceToHuman(a, assets.skins);
-  return { shape: d.shape, skin: d.skin, skinColour: d.skinColour, items: d.items, garments: d.garments };
+  return { shape: d.shape, skin: d.skin, skinColour: d.skinColour, browColour: d.browColour, browWeight: d.browWeight, eyeColour: d.eyeColour, items: d.items, garments: d.garments };
 }
 
 let enabled = true;
