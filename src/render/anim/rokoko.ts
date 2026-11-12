@@ -23,7 +23,6 @@ export const STRIKE_CLIPS: Record<string, string[]> = {
   'overhand:rearHand': ['rk_cross', 'rk_cross_c'],
   'body_shot:rearHand': ['rk_cross_b'],
   'front_kick:rearFoot': ['rk_front_kick'],
-  'roundhouse:leadFoot': ['rk_roundhouse_lead'],
 };
 
 /** Guards: a striker bounces in a captured guard; grapplers keep their low hand-made crouch. */

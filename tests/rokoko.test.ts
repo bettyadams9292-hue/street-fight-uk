@@ -198,5 +198,21 @@ test('captured punches and kicks still land on the opponent at the first active 
   assert(tried >= 5, `only ${tried} captured strikes are starters`);
 });
 
+test('jabs cost stamina: spamming empties the tank and then nothing comes out until a quarter is back', () => {
+  const s = scene('street', 'street', 4);
+  settle(s, 30);
+  const max = s.a.vitals.maxStamina;
+  let gassedAt = -1;
+  let thrownWhileGassed = 0;
+  for (let i = 0; i < 900; i++) {
+    const wasGassed = s.a.vitals.gassed;
+    s.step(i % 2 === 0 ? press('lp') : undefined);
+    if (s.a.vitals.gassed && gassedAt < 0) gassedAt = i;
+    if (wasGassed && s.a.state === 'attack' && s.a.stateFrame === 0) thrownWhileGassed++;
+  }
+  assert(gassedAt > 0 && gassedAt < 600, `spamming jab never ran the tank dry (stamina ${s.a.vitals.stamina.toFixed(0)} of ${max})`);
+  assert(thrownWhileGassed === 0, `${thrownWhileGassed} jabs came out with an empty tank`);
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

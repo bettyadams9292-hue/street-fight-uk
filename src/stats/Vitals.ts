@@ -17,6 +17,8 @@ export class Vitals {
   /** Chip damage taken through a block that can still refill. */
   recoverable = 0;
   fatigue: FatigueState = 'fresh';
+  /** Ran the tank dry: no attacks until stamina is back to a quarter. */
+  gassed = false;
 
   private lastStaminaSpendFrame = -9999;
   private lastCombatFrame = -9999;
@@ -42,6 +44,7 @@ export class Vitals {
   reset(): void {
     this.health = this.maxHealth;
     this.stamina = this.maxStamina;
+    this.gassed = false;
     this.recoverable = 0;
     this.lastCombatFrame = -9999;
     this.lastHitTakenFrame = -9999;
@@ -62,6 +65,7 @@ export class Vitals {
     const cost = Math.max(0, amount * this.stats.staminaCostMultiplier);
     const spent = Math.min(this.stamina, cost);
     this.stamina -= spent;
+    if (this.stamina < 1) this.gassed = true;
     this.lastStaminaSpendFrame = frame;
     this.updateFatigue();
     return spent;
@@ -85,6 +89,7 @@ export class Vitals {
 
   restoreStamina(amount: number): void {
     this.stamina = Math.min(this.maxStamina, this.stamina + amount);
+    if (this.stamina >= this.maxStamina * 0.25) this.gassed = false;
     this.updateFatigue();
   }
 
@@ -101,6 +106,7 @@ export class Vitals {
     if (!attacking && frame - this.lastStaminaSpendFrame >= STAMINA_REGEN_DELAY && this.stamina < this.maxStamina) {
       const rate = this.stats.staminaRegenPerSecond * (blocking ? 0.5 : 1);
       this.stamina = Math.min(this.maxStamina, this.stamina + rate * dt);
+      if (this.gassed && this.stamina >= this.maxStamina * 0.25) this.gassed = false;
     }
 
     // Recoverable chip damage refills if not hit for a while.

@@ -18,7 +18,6 @@ The source FBX files are not in this repository. To rebuild the JSON, unpack the
 | rk_cross_b | Combat/ShadowBoxing | 8.55–9.45 |
 | rk_cross_c | Combat/Boxing | 13.55–14.35 |
 | rk_front_kick | Combat/BigFrontKick | 3.40–4.60 |
-| rk_roundhouse_lead | Combat/RoundHouseKick (mirrored) | 7.25–8.45 |
 | rk_hit_head | Legacy/Combat/Taunting_GettingPunched | 1.10–2.40 |
 | rk_hit_body | Legacy/Combat/Fight_GettingKickedinBalls | 5.35–6.60 |
 | rk_stagger | Combat/KnockOut_Loser | 8.8–10.0 |

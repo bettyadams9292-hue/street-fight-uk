@@ -571,8 +571,14 @@ export class Fighter {
       bus.emit('action:refused', { fighter: this, reason: 'exhausted' });
       return true;
     }
-    const chained = this.state === 'attack';
     const grappleCost = (data.kind === 'grab' || data.kind === 'clinch') && this.perks.has('cheap_grabs') ? 0.8 : 1;
+    // Every attack needs the stamina to throw it, and a fighter who has emptied the tank
+    // has to back off until a quarter of it has come back.
+    if (data.staminaCost > 0 && (this.vitals.gassed || this.vitals.stamina < data.staminaCost * grappleCost * this.stats.staminaCostMultiplier)) {
+      bus.emit('action:refused', { fighter: this, reason: 'exhausted' });
+      return true;
+    }
+    const chained = this.state === 'attack';
     this.vitals.spendStamina(data.staminaCost * grappleCost, frame);
     if (data.id === this.lastMoveId) this.repeatCount++;
     else this.repeatCount = 1;
