@@ -40,6 +40,11 @@ export interface Placement {
   tint?: string;
   /** A vehicle's bodywork colour. */
   paint?: string;
+  /**
+   * Built as a mesh of its own under this name (not baked in with the street), so the renderer can
+   * fade it: parked vehicles in front of the fight go see-through when someone walks behind them.
+   */
+  own?: string;
 }
 
 /** A plain coloured block: painted lines, sign boards' backing, water. */
@@ -469,6 +474,16 @@ export function kitStreet(level: LevelDef): boolean {
   return onStrip(level.id) && !!DISTRICTS[level.id];
 }
 
+/** Where the kerb is on this district's street (z), or null where there's no road. For pedestrians. */
+export function kerbFor(level: LevelDef): number | null {
+  if (!kitStreet(level)) return null;
+  const g = DISTRICTS[level.id]?.ground;
+  return g === 'street' || g === 'suburb' ? KERB_Z : null;
+}
+
+/** Props that are vehicles (parked on the road in front of the fight, they fade when you walk behind). */
+const VEHICLES = new Set<string>(['car', 'homecar', 'van', 'abandoned_car']);
+
 export function planStreet(level: LevelDef): StreetPlan {
   const d = DISTRICTS[level.id];
   if (!d) throw new Error(`street plan: ${level.id} is not on the street`);
@@ -478,7 +493,7 @@ export function planStreet(level: LevelDef): StreetPlan {
   const front = maxZ + 0.4;
   const x0 = near.left ? minX : minX - STREET_EXTENT;
   const x1 = near.right ? maxX : maxX + STREET_EXTENT;
-  const hasRoad = d.ground === 'street' || d.ground === 'suburb';
+  const hasRoad = kerbFor(level) !== null;
   const plan: StreetPlan = {
     area: level.id, back, kerbZ: hasRoad ? KERB_Z : null, front, x0, x1, ground: d.ground,
     placements: [], blocks: [], signs: [], surfaces: [], shopfronts: [], propDone: level.props.map(() => false), doors: [],
@@ -579,7 +594,8 @@ export function planStreet(level: LevelDef): StreetPlan {
     const paint = pm.paints ? pick(prng, pm.paints) : undefined;
     for (let c = 0; c < copies; c++) {
       const cx = copies === 1 ? p.x : p.x - hx + ((c + 0.5) * hx * 2) / copies;
-      put(model, cx, 0, p.z, { ry, sx: k, sy: k, sz: k, paint, tint: pm.tint ?? p.colour });
+      const own = VEHICLES.has(p.kind) && p.z > 0.6 ? `vehicle:${i}:${c}` : undefined;
+      put(model, cx, 0, p.z, { ry, sx: k, sy: k, sz: k, paint, tint: pm.tint ?? p.colour, own });
     }
     plan.propDone[i] = true;
   });

@@ -66,7 +66,16 @@ export class FighterView {
     return this.mount !== null;
   }
 
-  constructor(readonly fighter: Fighter, appearance: CharacterAppearance = fighter.appearance) {
+  /**
+   * Carry this view over to the same person in the next district of the street (a new Fighter object
+   * standing a step over the seam): the model, weapon and animation carry on, nothing is rebuilt.
+   */
+  rebind(f: Fighter): void {
+    this.animator.retarget(f);
+    this.fighter = f;
+  }
+
+  constructor(public fighter: Fighter, appearance: CharacterAppearance = fighter.appearance) {
     this.root = new THREE.Group();
     this.rig = buildCharacterRig(appearance);
     this.root.add(this.rig.root);

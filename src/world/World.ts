@@ -5,6 +5,7 @@ import { BOSSES, type BossDef, type BossPhase } from '../ai/bosses';
 import { DummyBrain } from '../ai/DummyBrain';
 import { FighterAI } from '../ai/FighterAI';
 import { npc } from '../characters/npcs';
+import { kerbFor } from '../city/street';
 import { randomAppearance, sparringPartnerAppearance, type CharacterAppearance, type TopStyle } from '../character/Appearance';
 import { CivilianBrain, CIVILIAN_DENSITY, DESPAWN, SPAWN_MAX, SPAWN_MIN, type Hotspot } from './civilians';
 import { CompanionBrain } from '../companions/brain';
@@ -474,7 +475,22 @@ export class World {
     if (!cap) return;
     this.civCap = cap;
     const b = this.arena.bounds;
-    this.civLanes = [b.minZ + 0.45, b.minZ + 1.0, b.maxZ - 0.4].filter((z) => z < b.maxZ - 0.1);
+    // On streets with a road, people keep to the pavement behind the kerb.
+    const kerb = kerbFor(this.level);
+    this.civMaxZ = kerb === null ? Infinity : kerb - 0.15;
+    const edge = Math.min(b.maxZ, this.civMaxZ);
+    if (kerb === null) {
+      this.civLanes = [b.minZ + 0.45, b.minZ + 1.0, b.maxZ - 0.4].filter((z) => z < b.maxZ - 0.1);
+    } else {
+      // A pavement is narrower than the whole street: lanes spread evenly across it, and a few
+      // fewer people so it doesn't jam.
+      // Clear of the shop doorways and benches where people stand (the back 0.7 m).
+      const z0 = b.minZ + 0.75;
+      const z1 = edge - 0.25;
+      const n = z1 > z0 ? Math.min(3, Math.floor((z1 - z0) / 0.4) + 1) : 1;
+      this.civLanes = n > 1 ? Array.from({ length: n }, (_, i) => z0 + ((z1 - z0) * i) / (n - 1)) : [(z0 + Math.max(z0, z1)) / 2];
+      this.civCap = Math.max(1, Math.round(cap * 0.7));
+    }
     const hs: Hotspot[] = [];
     for (const ex of this.level.exits) if (ex.kind === 'door') hs.push({ kind: 'browse', x: ex.x + 1.3, z: b.minZ + 0.35, facing: -1, slots: 1, taken: 0 });
     for (const f of this.level.facades) {
@@ -487,6 +503,9 @@ export class World {
     // A few people already about when you arrive (just off-screen).
     for (let i = 0; i < Math.ceil(cap / 2); i++) this.spawnCivilian();
   }
+
+  /** Pedestrians' front limit (the kerb on streets with a road). */
+  private civMaxZ = Infinity;
 
   private spawnCivilian(): void {
     const NPC_POOL = 400;
@@ -517,7 +536,7 @@ export class World {
     const f = new Fighter({ id: this.nextId++, name: 'Passer-by', team: 'neutral', attributes: defaultAttributes(4), style: getStyle('street'), x, z, appearance: look });
     f.stats.addModifier({ id: 'stroll', source: 'civilian', stat: 'moveSpeedMult', mul: 0.42 + r.next() * 0.3 });
     this.sim.add(f);
-    const brain = new CivilianBrain(f, this.arena, r, this.civLanes, 'walk', () => this.sim.fighters);
+    const brain = new CivilianBrain(f, this.arena, r, this.civLanes, 'walk', () => this.sim.fighters, this.civMaxZ);
     if (spot) brain.claim(spot, spot.taken, this.sim.frame);
     else brain.dir = x < p.pos.x ? 1 : -1;
     if (this.activeEncounter) brain.react(p.pos.x, this.sim.frame);

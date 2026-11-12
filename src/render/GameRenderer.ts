@@ -230,8 +230,14 @@ export class GameRenderer {
       order.forEach(build);
       return;
     }
-    window.setTimeout(() => build(order[0]), 60);
-    window.setTimeout(() => build(order[1]), 400);
+    // Building a district takes tens of milliseconds: do it when the browser is idle (between frames,
+    // once the crossing has settled), each side separately, rather than on a fixed timer.
+    const idle = (fn: () => void, wait: number): void => {
+      const w = window as unknown as { requestIdleCallback?: (cb: () => void, o: { timeout: number }) => number };
+      window.setTimeout(() => (w.requestIdleCallback ? w.requestIdleCallback(fn, { timeout: 1200 }) : fn()), wait);
+    };
+    idle(() => build(order[0]), 250);
+    idle(() => build(order[1]), 900);
   }
 
   /** The visual tests build both neighbours at once so every picture is the same. */
@@ -253,15 +259,35 @@ export class GameRenderer {
     this.levelView = next;
     this.cameraRig.shift(dx);
     this.house.clear();
+    // The player and their crew walk over with you: keep their models and carry them on to the new
+    // district's fighters (matched by team and name), so nothing is rebuilt on the crossing frame.
+    const keep = new Map<string, FighterView>();
     for (const v of this.views.values()) {
-      this.scene.remove(v.root);
-      v.dispose();
+      const f = v.fighter;
+      if (f.team === 'player' && !keep.has(`${f.team}:${f.name}`)) keep.set(`${f.team}:${f.name}`, v);
+      else {
+        this.scene.remove(v.root);
+        v.dispose();
+      }
     }
     this.views.clear();
     this.sim = world.sim;
     this.world = world;
     this.applyAtmosphere(world);
-    for (const f of world.sim.fighters) this.addFighter(f);
+    for (const f of world.sim.fighters) {
+      const v = keep.get(`${f.team}:${f.name}`);
+      if (v) {
+        keep.delete(`${f.team}:${f.name}`);
+        v.rebind(f);
+        v.telegraphs = false;
+        this.views.set(f.id, v);
+      }
+    }
+    // Everyone else arrives over the next few frames (syncFighters), not on the crossing frame.
+    for (const v of keep.values()) {
+      this.scene.remove(v.root);
+      v.dispose();
+    }
     this.streamNeighbours(world);
   }
 
@@ -382,7 +408,15 @@ export class GameRenderer {
         this.views.delete(id);
       }
     }
-    for (const f of this.sim.fighters) if (!this.views.has(f.id)) this.addFighter(f);
+    // New people are built one at a time, so a crowd arriving (a district crossed into, a gang
+    // stepping out) is spread over a few frames rather than one long one. You and your crew first.
+    let built = 0;
+    for (const f of this.sim.fighters) {
+      if (this.views.has(f.id)) continue;
+      if (f.team !== 'player' && built >= 1) break;
+      this.addFighter(f);
+      if (f.team !== 'player') built++;
+    }
   }
 
   /** Props that come and go during a visit (a parked bike). */

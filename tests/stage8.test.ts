@@ -242,8 +242,15 @@ test('two pedestrians walking into each other pass, and everyone calms down afte
     a.f.pos.x = 20; b.f.pos.x = 21; a.f.pos.z = z; b.f.pos.z = z;
     a.brain.dir = 1; b.brain.dir = -1; a.brain.laneZ = z; b.brain.laneZ = z;
     a.brain.flee(10); b.brain.flee(31);
-    steps(w, 60 * 4);
-    assert(a.f.pos.x > 22 && b.f.pos.x < 19, `they got past each other (${a.f.pos.x.toFixed(1)}, ${b.f.pos.x.toFixed(1)})`);
+    // Judge by how far each got: once past, a walker may stop at a shop window and turn back.
+    let aMax = a.f.pos.x;
+    let bMin = b.f.pos.x;
+    for (let i = 0; i < 60 * 4; i++) {
+      steps(w, 1);
+      aMax = Math.max(aMax, a.f.pos.x);
+      bMin = Math.min(bMin, b.f.pos.x);
+    }
+    assert(aMax > 22 && bMin < 19, `they got past each other (${aMax.toFixed(1)}, ${bMin.toFixed(1)})`);
     assert(a.brain.activity === 'walk' && b.brain.activity === 'walk', 'no fight on: they stop running');
   }
 });

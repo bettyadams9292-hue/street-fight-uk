@@ -90,13 +90,15 @@ export class CivilianBrain {
     start: CivilianActivity,
     /** Everyone else on the street, so it can step round people as well as things. */
     private readonly people: () => readonly Fighter[] = () => [],
+    /** The furthest out they'll walk: the kerb, on streets with a road (pedestrians stay on the pavement). */
+    private readonly walkMaxZ = Infinity,
   ) {
     this.activity = start;
     this.dir = rng.next() < 0.5 ? 1 : -1;
     // Nobody walks an identical line: each has their own offset within the lane.
     const b = arena.bounds;
     const lane = lanes[Math.floor(rng.next() * lanes.length)] + (rng.next() - 0.5) * 0.3;
-    this.laneZ = Math.min(b.maxZ - 0.2, Math.max(b.minZ + 0.25, lane));
+    this.laneZ = Math.min(Math.min(this.zMax, walkMaxZ) - 0.2, Math.max(b.minZ + 0.25, lane));
     const t = rng.next();
     this.temper = t < 0.38 ? 'nervy' : t < 0.68 ? 'nosy' : 'steady';
     this.space = 0.42 + rng.next() * 0.3;
@@ -192,7 +194,23 @@ export class CivilianBrain {
     return this.activity === 'sit' ? 'sit' : this.activity === 'browse' ? 'browse' : 'talk';
   }
 
+  /** Front edge of where they walk: the street's own edge, or the kerb if that's nearer. */
+  private get zMax(): number {
+    return Math.min(this.arena.bounds.maxZ, this.walkMaxZ);
+  }
+
   think(frame: number): CommandFrame {
+    const cmd = this.decide(frame);
+    // Never step off the kerb: anyone over it (pushed, or spawned there) heads back to the pavement.
+    if (this.walkMaxZ < Infinity) {
+      const z = this.self.pos.z;
+      if (z > this.walkMaxZ - 0.05 && cmd.moveZ > 0) cmd.moveZ = 0;
+      if (z > this.walkMaxZ) cmd.moveZ = -1;
+    }
+    return cmd;
+  }
+
+  private decide(frame: number): CommandFrame {
     const cmd = emptyCommand();
     const me = this.self;
 
@@ -269,7 +287,7 @@ export class CivilianBrain {
         // They had no choice but to come onto our line (a wall on their other side): give it to them and take the one they left.
         if (!this.pass.forced && along > 0.4 && Math.abs(o.pos.z - this.pass.z) < 0.35) {
           const alt = o.pos.z - this.pass.side * (this.space + 0.3);
-          if (alt > b.minZ + 0.15 && alt < b.maxZ - 0.15 && !this.arena.blocked(me.pos.x + dir * 0.4, alt, 0.25)) {
+          if (alt > b.minZ + 0.15 && alt < this.zMax - 0.15 && !this.arena.blocked(me.pos.x + dir * 0.4, alt, 0.25)) {
             this.pass.side = (this.pass.side * -1) as 1 | -1;
             this.pass.z = alt;
             this.pass.forced = true;
@@ -309,7 +327,7 @@ export class CivilianBrain {
         const pref: 1 | -1 = sameWay ? ((dir * -1) as 1 | -1) : dir;
         const side = this.freeSide(near, pref);
         if (side) {
-          this.pass = { id: near.id, side, forced: side !== pref, until: frame + 300, z: Math.min(b.maxZ - 0.15, Math.max(b.minZ + 0.15, near.pos.z + side * (this.space + 0.3))) };
+          this.pass = { id: near.id, side, forced: side !== pref, until: frame + 300, z: Math.min(this.zMax - 0.15, Math.max(b.minZ + 0.15, near.pos.z + side * (this.space + 0.3))) };
           this.blockedFrames = 0;
           cmd.moveZ = side;
           if (nearAlong < 0.9) cmd.moveX = dir * 0.3;
@@ -352,7 +370,7 @@ export class CivilianBrain {
     const b = this.arena.bounds;
     for (const side of [pref, (pref * -1) as 1 | -1]) {
       const tz = o.pos.z + side * (this.space + 0.3);
-      if (tz < b.minZ + 0.15 || tz > b.maxZ - 0.15) continue;
+      if (tz < b.minZ + 0.15 || tz > this.zMax - 0.15) continue;
       if (this.arena.blocked(o.pos.x, tz, 0.25) || this.arena.blocked((o.pos.x + me.pos.x) / 2, tz, 0.25)) continue;
       // Somebody else already in that gap?
       const crowded = this.people().some((q) => q !== me && q !== o && !q.isKO && Math.abs(q.pos.x - o.pos.x) < 0.9 && Math.abs(q.pos.z - tz) < 0.4);
@@ -367,7 +385,7 @@ export class CivilianBrain {
     const me = this.self;
     const b = this.arena.bounds;
     let best: number | null = null;
-    for (let z = b.minZ + 0.3; z <= b.maxZ - 0.25; z += 0.3) {
+    for (let z = b.minZ + 0.3; z <= this.zMax - 0.25; z += 0.3) {
       if (Math.abs(z - o.pos.z) < this.space + 0.3) continue;
       let open = true;
       for (const step of [0, 0.6, 1.2, 1.8]) {
@@ -390,7 +408,7 @@ export class CivilianBrain {
       if (!this.sidestep) {
         const b = this.arena.bounds;
         const up = me.pos.z - 0.7 > b.minZ && !this.arena.blocked(me.pos.x + sx * 0.55, me.pos.z - 0.7, 0.25);
-        const down = me.pos.z + 0.7 < b.maxZ && !this.arena.blocked(me.pos.x + sx * 0.55, me.pos.z + 0.7, 0.25);
+        const down = me.pos.z + 0.7 < this.zMax && !this.arena.blocked(me.pos.x + sx * 0.55, me.pos.z + 0.7, 0.25);
         // Prefer the side our lane is on, so we don't wander across the street for a bin.
         const laneSide = this.laneZ < me.pos.z ? -1 : 1;
         this.sidestep = up && down ? laneSide : up ? -1 : down ? 1 : 0;
@@ -431,7 +449,7 @@ export class CivilianBrain {
         const b = this.arena.bounds;
         const o = this.people().find((q) => q.id === this.pass!.id);
         this.pass.side = (this.pass.side * -1) as 1 | -1;
-        if (o) this.pass.z = Math.min(b.maxZ - 0.15, Math.max(b.minZ + 0.15, o.pos.z + this.pass.side * (this.space + 0.3)));
+        if (o) this.pass.z = Math.min(this.zMax - 0.15, Math.max(b.minZ + 0.15, o.pos.z + this.pass.side * (this.space + 0.3)));
       }
       this.sidestep = this.sidestep ? -this.sidestep : 0;
     } else if (this.stuck === 2) {

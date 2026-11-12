@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 /**
  * Fixed scenes for the visual tests. `?shot=<name>` builds one of these, runs
  * it for an exact number of frames on a fixed clock with fixed random numbers,
@@ -138,6 +139,10 @@ export const SHOTS: Record<ShotName, SceneFn> = {
   hq: (game, g) => district(game, g, 'hq'),
   high_street: (game, g) => district(game, g, 'high_street'),
   city: (game, g) => district(game, g, 'city'),
+  // Interiors in the low-poly look.
+  inside_pub: (game, g) => district(game, g, 'pub'),
+  inside_shop: (game, g) => district(game, g, 'clothes_shop'),
+  inside_pawn: (game, g) => district(game, g, 'pawn_shop'),
   industrial: (game, g) => district(game, g, 'industrial'),
   residential: (game, g) => district(game, g, 'residential'),
   precinct: (game, g) => district(game, g, 'precinct'),
@@ -177,7 +182,22 @@ interface ShotState {
   error?: string;
 }
 
+/** For picking things out of a shot from the console: what's drawn at a point on the screen. */
+function exposePicker(game: Game): void {
+  (window as unknown as { __pick: (x: number, y: number) => string[] }).__pick = (x, y) => {
+    const r = (game as unknown as { renderer: { cameraRig: { camera: THREE.Camera }; scene: THREE.Scene } }).renderer;
+    const rc = new THREE.Raycaster();
+    rc.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, 1 - (y / innerHeight) * 2), r.cameraRig.camera);
+    return rc.intersectObjects(r.scene.children, true).filter((h: THREE.Intersection) => h.point.z < 2.2 && h.object.visible && (h.object as THREE.Mesh).isMesh).slice(0, 4).map((h: THREE.Intersection) => {
+      const names: string[] = [];
+      for (let o: THREE.Object3D | null = h.object; o; o = o.parent) if (o.name) names.push(o.name);
+      return `${h.object.type}:${names.join(' < ')} @ ${h.point.x.toFixed(2)},${h.point.y.toFixed(2)},${h.point.z.toFixed(2)}`;
+    });
+  };
+}
+
 export function runShot(game: Game, name: string): void {
+  exposePicker(game);
   const out: ShotState = { ready: false, scene: name };
   (window as unknown as { __shot: ShotState }).__shot = out;
   const scene = (SHOTS as Record<string, SceneFn | undefined>)[name];
