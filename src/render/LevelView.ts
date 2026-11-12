@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { furniture, produceHeap, type FurnitureId, type ProduceId } from './props/KenneyLibrary';
 import { surfaceMaterial, kitGroundTexture as kitTexture, type Surface, type SurfaceOptions } from './street/Flooring';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
@@ -231,6 +232,15 @@ export class LevelView {
       this.dressing = new StreetDressing(lvl, this.back, lvl.bounds.maxZ + 0.4, this.X0, this.X1, seeded(hash(`${lvl.id}:dressing`)));
       this.group.add(this.dressing.group);
     }
+  }
+
+  /** Put a Kenney furniture model into the prop group, fitted to w × h × d; false if the kit isn't loaded. */
+  private fit(g: THREE.Group, id: FurnitureId, w: number, h: number, d: number, o: { x?: number; y?: number; z?: number; upholstery?: string; turn?: number } = {}): boolean {
+    const m = furniture(id, w, h, d, { upholstery: o.upholstery, turn: o.turn });
+    if (!m) return false;
+    m.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
+    g.add(m);
+    return true;
   }
 
   /** Granite kerbstones along the edge of the pavement: separate stones, each a slightly different grey. */
@@ -1982,6 +1992,7 @@ export class LevelView {
       }
       // ---- home ----
       case 'bed': {
+        if (this.fit(g, 'bedDouble', W, 0.75, D)) break;
         B(W, 0.4, D, 0, 0.2, 0, this.mat('#4a3a2a', 0.8));
         B(W - 0.05, 0.2, D - 0.05, 0, 0.5, 0, this.mat('#e8e4d8', 1));
         B(W - 0.06, 0.08, D * 0.65, 0, 0.62, D * 0.15, this.mat('#2a4a7a', 1));
@@ -1990,6 +2001,7 @@ export class LevelView {
         break;
       }
       case 'wardrobe': {
+        if (this.fit(g, 'bookcaseClosedDoors', W, 2.1, D)) break;
         const wood = this.mat('#7a5a3a', 0.7);
         B(W, 2.1, D, 0, 1.05, 0, wood);
         B(0.02, 1.9, 0.01, 0, 1.05, D / 2 + 0.005, this.mat('#2a1a0a'), false);
@@ -1997,6 +2009,11 @@ export class LevelView {
         break;
       }
       case 'desk': {
+        if (this.fit(g, 'desk', W, 0.78, D)) {
+          this.fit(g, 'laptop', 0.4, 0.25, 0.3, { x: -0.1, y: 0.78 });
+          this.fit(g, 'lampRoundTable', 0.2, 0.42, 0.2, { x: W / 2 - 0.2, y: 0.78 });
+          break;
+        }
         const wood = this.mat('#9a7a5a', 0.7);
         B(W, 0.05, D, 0, 0.75, 0, wood);
         for (const dx of [-W / 2 + 0.04, W / 2 - 0.04]) B(0.05, 0.75, D, dx, 0.375, 0, wood);
@@ -2007,6 +2024,7 @@ export class LevelView {
         break;
       }
       case 'sofa': {
+        if (this.fit(g, 'loungeSofa', p.turned ? D : W, 0.85, p.turned ? W : D, { upholstery: c ?? '#4a5a3a', turn: p.turned ? Math.PI / 2 : 0 })) break;
         const fabric = this.mat(c ?? '#4a5a3a', 1);
         B(W, 0.42, D, 0, 0.21, 0, fabric);
         if (p.turned) {
@@ -2021,12 +2039,17 @@ export class LevelView {
         break;
       }
       case 'tv': {
+        if (this.fit(g, 'cabinetTelevision', W, 0.5, D)) {
+          this.fit(g, 'televisionModern', W * 1.05, 0.72, 0.12, { y: 0.5 });
+          break;
+        }
         B(W, 0.45, D, 0, 0.22, 0, this.mat('#2a2a2a', 0.6));
         B(W * 1.1, 0.7, 0.05, 0, 0.85, 0, this.mat('#0a0a0a', 0.2, 0.5));
         B(W * 1.05, 0.64, 0.01, 0, 0.85, 0.03, this.mat('#0a0e18', 0.1, 0, { emissive: 0x3a6aff, emissiveIntensity: 0.6 }), false);
         break;
       }
       case 'table': {
+        if (this.fit(g, 'table', W, 0.76, D)) break;
         const wood = this.mat('#8a6a4a', 0.7);
         B(W, 0.05, D, 0, 0.74, 0, wood);
         for (const dx of [-W / 2 + 0.05, W / 2 - 0.05]) for (const dz of [-D / 2 + 0.05, D / 2 - 0.05]) B(0.05, 0.74, 0.05, dx, 0.37, dz, wood, false);
@@ -2035,15 +2058,21 @@ export class LevelView {
         break;
       }
       case 'fridge': {
+        if (this.fit(g, 'kitchenFridgeLarge', W, 1.8, D)) break;
         B(W, 1.8, D, 0, 0.9, 0, this.mat('#e8e8e4', 0.3, 0.1));
         B(0.03, 0.4, 0.04, W / 2 - 0.08, 1.2, D / 2 + 0.02, this.mat('#888', 0.3, 0.8), false);
         B(W - 0.02, 0.01, 0.01, 0, 1.15, D / 2 + 0.005, this.mat('#aaa'), false);
         break;
       }
       case 'cooker':
+        if (this.fit(g, 'kitchenStove', W, 0.92, D)) break;
         B(W, 0.9, D, 0, 0.45, 0, this.mat('#e8e8e4', 0.3, 0.2));
         break;
       case 'counter': {
+        if (this.fit(g, 'kitchenCabinet', W * 0.4, 0.92, D, { x: -W * 0.3 }) && this.fit(g, 'kitchenSink', W * 0.3, 0.92, D, { x: W * 0.05 }) && this.fit(g, 'kitchenStove', W * 0.3, 0.92, D, { x: W * 0.35 })) {
+          this.fit(g, 'kitchenMicrowave', 0.45, 0.28, 0.32, { x: -W * 0.3, y: 0.92 });
+          break;
+        }
         B(W, 0.88, D, 0, 0.44, 0, this.mat('#e8e4d8', 0.6));
         B(W + 0.04, 0.05, D + 0.04, 0, 0.9, 0, this.mat('#3a3a38', 0.3));
         // Hob, sink, kettle.
@@ -2156,10 +2185,22 @@ export class LevelView {
           const s2 = B(W / 8, 0.04, D + 0.3, -W / 2 + W / 16 + (i * W) / 8, 2.2, 0, this.mat(c && i % 2 === 0 ? c : stripes[i % 2], 0.9), false);
           s2.rotation.x = 0.15;
         }
-        // Produce in crates.
+        // Produce heaped in crates (Kenney's food kit), a different stall mix each time.
+        const mixes: ProduceId[][] = [
+          ['apple', 'orange', 'banana', 'pear', 'lemon', 'grapes'],
+          ['tomato', 'carrot', 'onion', 'paprika', 'broccoli', 'cabbage', 'mushroom', 'leek'],
+          ['bread', 'loaf', 'loaf-round', 'croissant'],
+          ['fish', 'meat-raw', 'cheese'],
+        ];
+        const mix = mixes[Math.floor(this.rnd() * mixes.length)];
         for (let i = 0; i < 4; i++) {
-          B(W / 4.5, 0.15, D * 0.7, -W / 2 + W / 8 + (i * W) / 4, 1.02, 0, this.mat('#a8865a', 0.9), false);
-          B(W / 5, 0.08, D * 0.6, -W / 2 + W / 8 + (i * W) / 4, 1.12, 0, this.mat(['#d84a1a', '#3a8a2a', '#e8c82a', '#7a1a4a'][i], 0.8), false);
+          const x = -W / 2 + W / 8 + (i * W) / 4;
+          B(W / 4.5, 0.15, D * 0.7, x, 1.02, 0, this.mat('#a8865a', 0.9), false);
+          const heap = produceHeap(mix[(i + Math.floor(this.rnd() * 9)) % mix.length], W / 5, D * 0.6, () => this.rnd(), mix === mixes[2] ? 0.16 : 0.09);
+          if (heap) {
+            heap.position.set(x, 1.1, 0);
+            g.add(heap);
+          } else B(W / 5, 0.08, D * 0.6, x, 1.12, 0, this.mat(['#d84a1a', '#3a8a2a', '#e8c82a', '#7a1a4a'][i], 0.8), false);
         }
         break;
       }
@@ -2426,6 +2467,7 @@ export class LevelView {
         break;
       }
       case 'bath': {
+        if (this.fit(g, 'bathtub', W, 0.6, D)) break;
         const white = this.mat('#f4f2ec', 0.25);
         B(W, 0.55, D, 0, 0.28, 0, white);
         B(W - 0.14, 0.04, D - 0.12, 0, 0.53, 0, this.mat('#a8c8d8', 0.05, 0.1, { emissive: 0x2a4a5a, emissiveIntensity: 0.2 }), false);
@@ -2438,6 +2480,7 @@ export class LevelView {
         break;
       }
       case 'toilet': {
+        if (this.fit(g, 'toilet', W, 0.8, D)) break;
         const white = this.mat('#f4f2ec', 0.25);
         B(W * 0.8, 0.4, D * 0.7, 0, 0.2, 0.05, white);
         B(W, 0.06, D * 0.85, 0, 0.42, 0.06, white);
