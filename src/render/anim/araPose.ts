@@ -119,6 +119,7 @@ interface MocapRaw {
   hips: string;
   dir: Record<string, Vec3>;
   bias: Record<string, Q>;
+  hit?: number;
 }
 export interface MocapClip {
   id: string;
@@ -132,6 +133,8 @@ export interface MocapClip {
   hips: Float32Array;
   /** Per bone: rest alignment (ours to the capture's) with the calibration, as a matrix. */
   rest: M3[];
+  /** For a strike: seconds into the clip when the blow lands. */
+  hit: number | null;
 }
 
 const mocap = new Map<string, MocapClip>();
@@ -187,6 +190,7 @@ export function registerMocap(data: Record<string, MocapRaw>): void {
       rot: Float32Array.from(rot, (v) => v / 32767),
       hips: Float32Array.from(hp, (v) => v / 10000),
       rest,
+      hit: typeof r.hit === 'number' ? r.hit : null,
     });
   }
 }

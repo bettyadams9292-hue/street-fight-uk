@@ -1015,6 +1015,17 @@ Ingredients are taken when prep starts. Stopping during prep puts them back. Sto
 
 **Tests.** `tests/stage12.test.ts` has 25 tests covering needs, recipes, saves, every activity, stopping, crew and reachability. The full `npm test` (12 suites, 255 tests) passed.
 
+## Motion capture for combat (branch `rokoko-mocap`)
+
+Fights now use Rokoko motion capture where the free pack has a matching move. The frame data, hit boxes, foot planting and strike aiming are unchanged; only the poses come from the capture.
+
+- **What is captured:** two fight-stance guards (street, boxing, kickboxing, Muay Thai and karate; each fighter gets one and their own phase), jabs, crosses (also used for haymakers, overhands and the rear body shot), the rear front kick, the lead roundhouse, head and body hit reactions, stagger, knockdown, two KO falls and the get-up.
+- **Still made by hand:** hooks, uppercuts, knees, elbows, the rear roundhouse, low kicks, teeps, grapples, falls on the face, the wrestling and BJJ stances, and walking and running (the pack has no ordinary walk or run).
+- **How a strike plays:** the clip is stretched so its impact lands on the move's first active frame and it finishes on the last recovery frame. The IK still puts the fist or foot on the opponent. Every clip is turned so the fighter leads with the left; southpaw takes are mirrored.
+- **Files:** `tools/rokoko/` reads the FBX files and cuts the clips into `public/anim/rokoko_mocap.json` (credits and the clip list are in `public/anim/ROKOKO.md`). `src/render/anim/rokoko.ts` maps moves to clips. `animator.ts` uses them, with the hand-made poses as a fallback if the file fails to load.
+- **Tests:** `tests/rokoko.test.ts` checks that every clip decodes and that the guards are orthodox and loop cleanly. It also checks that each strike reaches out with the right limb at impact, that falls end on the floor, and the timing stretch. In real fights it checks that captured strikes land on the opponent at the first active frame without passing through them.
+- **Not checked yet:** how it looks on the skinned models in a browser.
+
 ## Stage 13 report: animation, movement and combat overhaul
 
 **What the engine is.** Characters are an 11-joint skeleton (now 13 with ankles) posed in code; there are no motion-capture clips. This stage replaced how those poses are produced.

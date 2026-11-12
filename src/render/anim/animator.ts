@@ -1,4 +1,5 @@
 import { araMocapPose, araPose, mocapClip, mocapStride } from './araPose';
+import { REACTIONS, clipDuration, guardPose, reactionPose, strikeClip, strikePose } from './rokoko';
 import type { Fighter, FighterState } from '../../fighter/Fighter';
 import { isActiveFrame, type ActiveMove } from '../../combat/MoveData';
 import { activityPose } from '../activityPoses';
@@ -261,6 +262,7 @@ export class FighterAnimator {
     }
 
     // 1-2. Key pose for the state, blended out of the last one.
+    this.now = time;
     const { key, pose: target, blend } = this.target();
     this.blendTo(key, target, blend);
     const base = this.blended(target, dt);
@@ -328,7 +330,8 @@ export class FighterAnimator {
 
   private stance(): Pose {
     const f = this.f;
-    const style = STANCES[f.style.id] ?? GUARD;
+    // Strikers stand in a captured guard (Rokoko mocap); grapplers and anyone without the clips keep the hand-made one.
+    const style = guardPose(f.style.id, f.id, this.now, this.m) ?? STANCES[f.style.id] ?? GUARD;
     const t = this.traits;
     // How this fighter carries the stance: novices drop their hands and lift their chin; big lads carry their arms wider.
     const loose = (1 - t.skill) * 0.9 + (f.vitals.fatigue === 'exhausted' ? 0.9 : f.vitals.fatigue === 'tired' ? 0.4 : 0);
@@ -382,13 +385,18 @@ export class FighterAnimator {
       }
 
       case 'hitstun': {
-        const full = !hit || hit.height === 'high' ? HIT_HIGH : hit.height === 'mid' ? HIT_MID : HIT_LOW;
+        // Captured reactions: the head snapping back, or folding over a body shot. Played as far as the stun lasts.
+        const clip = !hit || hit.height === 'high' ? REACTIONS.head : REACTIONS.body;
+        const cap = reactionPose(clip, u * Math.min(clipDuration(clip), 0.25 + f.stateDuration / 60), this.m, true);
+        const full = cap ?? (!hit || hit.height === 'high' ? HIT_HIGH : hit.height === 'mid' ? HIT_MID : HIT_LOW);
         // A jab moves you a little, a heavy shot a lot.
         const pose = lerpPose(stance, full, clamp((hit?.power ?? 0.6) * 1.1 - 0.1, 0.35, 1));
         // Rocked, then gathering themselves: guard comes back before they can act.
         return { key: `hit${f.hitSeq}`, pose: u > 0.55 ? lerpPose(pose, stance, easeInOut((u - 0.55) / 0.45)) : pose, blend: 0.075 };
       }
       case 'stagger': {
+        const cap = reactionPose(REACTIONS.stagger, u * clipDuration(REACTIONS.stagger), this.m, true);
+        if (cap) return { key: `stagger${f.hitSeq}`, pose: u > 0.8 ? lerpPose(cap, stance, easeInOut((u - 0.8) / 0.2)) : cap, blend: 0.07 };
         const pose = hit?.height === 'mid' ? STAGGER_MID : STAGGER;
         // Unsteady: swaying over the feet, then pulling it back together.
         const sway = Math.sin(f.stateFrame * 0.13 + f.id);
@@ -405,6 +413,12 @@ export class FighterAnimator {
         // Down: knees go, arms come out to break the fall, hit the floor, settle.
         const front = hit?.dir === -1;
         const t = f.stateFrame / 60;
+        // Going down backwards is captured (Rokoko): knocked flat, or a knockout crumpling. Face-first falls stay hand-made.
+        if (!front) {
+          const clip = state === 'ko' ? REACTIONS.ko[f.id % REACTIONS.ko.length] : REACTIONS.knockdown;
+          const cap = reactionPose(clip, t, this.m, false);
+          if (cap) return { key: `down${f.hitSeq}${state === 'ko' ? '' : 'k'}`, pose: cap, blend: 0.06 };
+        }
         const fallT = state === 'ko' ? 0.5 : 0.42;
         const lying = front ? LYING_FRONT : state === 'ko' ? LYING_KO : LYING;
         const mid = front ? FALL_FRONT : FALL_BACK;
@@ -424,7 +438,9 @@ export class FighterAnimator {
         const from = front ? LYING_FRONT : LYING;
         const mid = front ? PUSH_UP : SIT_UP;
         let pose: Pose;
+        const rise = u >= 0.45 ? reactionPose(REACTIONS.getup, ((u - 0.45) / 0.55) * clipDuration(REACTIONS.getup), this.m, true) : null;
         if (u < 0.33) pose = lerpPose(from, mid, easeInOut(u / 0.33));
+        else if (rise) pose = u < 0.55 ? lerpPose(CROUCH_UP, rise, easeInOut((u - 0.45) / 0.1)) : u > 0.9 ? lerpPose(rise, stance, easeInOut((u - 0.9) / 0.1)) : rise;
         else if (u < 0.78) pose = lerpPose(mid, CROUCH_UP, easeInOut((u - 0.33) / 0.45));
         else pose = lerpPose(CROUCH_UP, stance, easeInOut((u - 0.78) / 0.22));
         return { key: 'getup', pose, blend: 0.08 };
@@ -449,6 +465,8 @@ export class FighterAnimator {
   }
 
   private blockLow = false;
+  /** Seconds, for the captured guard's loop. */
+  private now = 0;
   private first = true;
   private sinceStep = 1;
   /** What the body was doing when it started to fall. */
@@ -457,6 +475,12 @@ export class FighterAnimator {
   /** Where in the move we are: 0 at the start, 1 on the first active frame. */
   private attackPose(m: ActiveMove, stance: Pose): Pose {
     const f = this.f;
+    // A captured take for this strike (Rokoko): stretched so it lands on the move's first active frame.
+    if (!f.grapple) {
+      const clip = strikeClip(m.data.anim, m.data.limb, f.moveSeq);
+      const cap = clip ? strikePose(clip, m.frame, m.startup, m.active, m.recovery, this.m) : null;
+      if (cap) return cap;
+    }
     const anim = animPoses(m.data.anim, m.data.limb);
     if (!anim) return stance;
     const rest = f.grapple ? (f.grapple.phase === 'ground' ? MOUNT : CLINCH_HOLD) : stance;
