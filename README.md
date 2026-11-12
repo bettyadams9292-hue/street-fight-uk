@@ -1015,6 +1015,10 @@ Ingredients are taken when prep starts. Stopping during prep puts them back. Sto
 
 **Tests.** `tests/stage12.test.ts` has 25 tests covering needs, recipes, saves, every activity, stopping, crew and reachability. The full `npm test` (12 suites, 255 tests) passed.
 
+## Gameplay plan
+
+The audit of how fights play, and the staged fixes (enemy defence, skill, crowds, length and difficulty, running, sound, animation), are in `docs/GAMEPLAY_PLAN.md`. Measure any change with `npx tsx tools/fight_audit.ts <area> <level> <decent|casual|masher>` and `npm run balance`.
+
 ## Motion capture for combat (branch `rokoko-mocap`)
 
 Fights now use Rokoko motion capture where the free pack has a matching move. The frame data, hit boxes, foot planting and strike aiming are unchanged; only the poses come from the capture.

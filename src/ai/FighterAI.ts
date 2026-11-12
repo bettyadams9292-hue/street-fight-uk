@@ -1,3 +1,4 @@
+import { BODY_RADIUS } from '../core/constants';
 import type { Arena } from '../world/Arena';
 import type { ActiveMove } from '../combat/MoveData';
 import type { Rng } from '../core/Rng';
@@ -5,6 +6,16 @@ import type { Fighter } from '../fighter/Fighter';
 import { emptyCommand, type AttackButton, type CommandFrame } from '../input/Commands';
 import type { Archetype } from './archetypes';
 import type { AttackTokens } from './AttackTokens';
+
+/** What waiting enemies shout. Kept short so a bubble reads at a glance. */
+const TAUNTS = ['Come on then!', "That all you've got?", 'Go on, swing!', 'Is that it?', 'Bring it, pal.', "You're done, mate.", 'Have it!', "Look at the state of you."];
+/** Shouted as they jump in on you: the warning to turn round. */
+const JUMP_IN = ['Oi!', 'My turn!', 'Have some of this!', 'Oi, over here!'];
+/** When you hit the floor. */
+const GLOAT = ['Stay down!', 'Get up then!', "He's going nowhere."];
+
+/** Frames between an enemy's parry tell and the hit landing: enough to see it. */
+const TELL_FRAMES = 8;
 
 export type AIMode = 'approach' | 'space' | 'engage' | 'defend' | 'recover' | 'wait' | 'grapple' | 'down';
 
@@ -15,6 +26,8 @@ export type AIMode = 'approach' | 'space' | 'engage' | 'defend' | 'recover' | 'w
  */
 export class FighterAI {
   mode: AIMode = 'approach';
+  /** Lets the world show what this fighter shouts (a taunt, or the warning before a jump-in). */
+  onSay?: (text: string, kind: 'taunt' | 'warn') => void;
   /** Bosses go berserk below half health. */
   enraged = false;
 
@@ -22,6 +35,27 @@ export class FighterAI {
   private nextAttackAt = 0;
   private blockUntil = -1;
   private parryAt = -1;
+  private parryPressFrame = -1;
+  private foeMove: ActiveMove | null = null;
+  /** The opponent's attack I just blocked, and the last opening I decided about. */
+  private blockedMove: ActiveMove | null = null;
+  private punishDecided: ActiveMove | null = null;
+  /** Waiting: which side of the target I hold (+1 right, -1 left), and when to think about it again. */
+  private side = 0;
+  private sideUntil = 0;
+  private feintUntil = -1;
+  private nextFeintAt: number;
+  /** Jumping in on a busy target: attack without waiting for a turn until this frame. */
+  private jumpInUntil = -1;
+  private jumpDecided: ActiveMove | null = null;
+  private gloated: Fighter | null = null;
+  /** Clean hits taken in a row (a combo on me), and when the last one landed. */
+  private hitsInRow = 0;
+  private lastHurtFrame = -999;
+  private foeAttackFrame = -999;
+  private chainedMove: ActiveMove | null = null;
+  /** Going in to punish an opening that's a step away: press when in reach, give up at `until`. */
+  private punishing: { move: ActiveMove; button: AttackButton; reach: number; until: number } | null = null;
   private decided: ActiveMove | null = null;
   private knockdownChoice = -1;
   private grappleActAt = 0;
@@ -53,12 +87,37 @@ export class FighterAI {
     this.bob = rng.next() * 6.28;
     this.skill = Math.max(0, Math.min(1, (self.stats.attr('technique') - 2) / 8));
     this.nextSwapAt = 300 + Math.floor(rng.next() * 300);
+    this.nextFeintAt = 90 + Math.floor(rng.next() * 240);
+  }
+
+  private say(lines: readonly string[], kind: 'taunt' | 'warn'): void {
+    this.onSay?.(lines[Math.floor(this.rng.next() * lines.length)], kind);
   }
 
   think(frame: number): CommandFrame {
+    const foe = this.self.target;
     const cmd = this.decide(frame);
     if (this.arena) this.steer(cmd);
+    // An enemy's every block is a plain guard except its one deliberate parry press, so a late
+    // block never turns into a perfect parry by accident. Your side (crew, and the bots that stand
+    // in for a player in tests) keep the player's rule: a block pressed just in time parries.
+    if (cmd.block && frame !== this.parryPressFrame && this.self.team === 'enemy') cmd.guard = true;
+    // Remember when the opponent was last mid-swing, to tell a fresh attack from a combo's next hit:
+    // a new swing that starts straight out of the last one is a chain.
+    if (foe?.state === 'attack' && foe.move) {
+      if (foe.move !== this.foeMove && this.foeAttackFrame >= frame - 2) this.chainedMove = foe.move;
+      this.foeMove = foe.move;
+      this.foeAttackFrame = frame;
+    }
     return cmd;
+  }
+
+  /** A fresh, readable attack worth a parry: slow enough to see coming, and not the next hit of a string. */
+  private parryable(fm: ActiveMove): boolean {
+    const readable = fm.startup >= 10 || fm.data.kind === 'heavy' || fm.data.kind === 'special' || fm.data.kind === 'finisher';
+    // Time to show the tell before it lands.
+    const visible = fm.startup - fm.frame >= TELL_FRAMES;
+    return readable && visible && fm !== this.chainedMove;
   }
 
   /**
@@ -162,7 +221,12 @@ export class FighterAI {
     // ---- how's it going? -------------------------------------------------------------------
     // Taking hits rattles a fighter (more so a novice): they cover up more for a few seconds.
     if (me.hitSeq !== this.myHitSeq) {
-      if (me.lastHit && !me.lastHit.blocked) this.rattled = Math.min(3, this.rattled + 1);
+      if (me.lastHit && !me.lastHit.blocked) {
+        this.rattled = Math.min(3, this.rattled + 1);
+        this.hitsInRow = frame - this.lastHurtFrame < 45 ? this.hitsInRow + 1 : 1;
+        this.lastHurtFrame = frame;
+      }
+      if (me.lastHit?.blocked && foe.state === 'attack') this.blockedMove = foe.move;
       this.myHitSeq = me.hitSeq;
     }
     if (frame % 90 === 0 && this.rattled > 0) this.rattled--;
@@ -196,6 +260,21 @@ export class FighterAI {
     }
     if (!me.isFree) return cmd;
 
+    // ---- cover up: just came out of a beating ----------------------------------------------
+    // Free again after eating a string: get the guard up before the next one lands. A brawler
+    // might just swing back; a trained fighter shells up. Mashing into that guard gets blocked,
+    // and blocked strings get punished.
+    if (this.hitsInRow >= 2 && frame - this.lastHurtFrame < 40) {
+      const covers = this.rng.chance(Math.min(0.85, 0.2 + this.skill * 0.4 + this.hitsInRow * 0.08 + this.rattled * 0.05));
+      this.hitsInRow = 0;
+      if (covers && dist < 2.2) {
+        this.blockUntil = frame + 16 + Math.floor(this.rng.next() * 14);
+        cmd.block = true;
+        this.mode = 'defend';
+        return cmd;
+      }
+    }
+
     // ---- defend: react to what the opponent is throwing ----------------------------------
     if (frame <= this.blockUntil) {
       cmd.block = true;
@@ -205,6 +284,7 @@ export class FighterAI {
     if (this.parryAt >= 0) {
       if (frame >= this.parryAt) {
         cmd.block = true;
+        this.parryPressFrame = frame;
         this.blockUntil = frame + 8;
         this.parryAt = -1;
       }
@@ -218,8 +298,17 @@ export class FighterAI {
       if (threat) {
         const r = this.rng.next();
         const grab = fm.data.kind === 'grab';
-        if (!grab && r < a.parryChance) {
+        if (!grab && r < a.parryChance && this.parryable(fm)) {
           this.parryAt = frame + Math.max(0, fm.startup - fm.frame - 3);
+          // The tell: the guard comes up with a glint, early enough to see.
+          me.pendingTell = 'parry';
+          this.mode = 'defend';
+          return cmd;
+        }
+        // A good defender who can't parry this one just covers up.
+        if (!grab && r < a.parryChance) {
+          this.blockUntil = frame + (fm.startup - fm.frame) + fm.active + 4;
+          cmd.block = true;
           this.mode = 'defend';
           return cmd;
         }
@@ -248,6 +337,50 @@ export class FighterAI {
       }
     }
 
+    // ---- punish: they've swung and are stuck recovering --------------------------------------
+    // A missed swing or a blocked heavy leaves the attacker open. Anyone close enough can make them pay
+    // (no waiting for a turn), and the more trained the fighter, the more surely they do. This is what
+    // makes careful play beat mashing: whatever you throw carelessly comes back at you.
+    const p = this.punishing;
+    if (p) {
+      if (frame > p.until || foe.state !== 'attack' || foe.move !== p.move) this.punishing = null;
+      else {
+        this.mode = 'engage';
+        if (Math.abs(dz) > 0.2) cmd.moveZ = Math.sign(dz);
+        if (dist > p.reach) {
+          cmd.moveX = toward;
+          return cmd;
+        }
+        this.punishing = null;
+        cmd.pressed[p.button] = true;
+        this.plan = this.planCombo(p.button, Math.max(1, a.comboLength - 1));
+        this.nextAttackAt = frame + 30;
+        return cmd;
+      }
+    }
+    const open = this.opening(dist, dz);
+    if (open) {
+      this.punishDecided = open.move;
+      const whiff = !open.move.connected;
+      // Seeing the opening takes quick eyes as well as training: slow reactions miss most of them.
+      const eyes = Math.max(0.15, Math.min(1, 1.5 - a.reactionFrames / 24));
+      // Even the best let some go: a punish is a threat to respect, not a certainty.
+      const chance = Math.min(0.7, (whiff ? 0.25 + this.skill * 0.5 : 0.3 + this.skill * 0.45) * eyes);
+      if (me.vitals.stamina > 12 && this.rng.chance(chance)) {
+        this.mode = 'engage';
+        if (open.steps > 0) {
+          // A step away: close in, then let it go.
+          this.punishing = { move: open.move, button: open.button, reach: open.reach, until: frame + open.steps + 4 };
+          cmd.moveX = toward;
+          return cmd;
+        }
+        cmd.pressed[open.button] = true;
+        this.plan = this.planCombo(open.button, Math.max(1, a.comboLength - 1));
+        this.nextAttackAt = frame + 30;
+        return cmd;
+      }
+    }
+
     // ---- exhausted: back off --------------------------------------------------------------
     const stamina = me.vitals.stamina / me.vitals.maxStamina;
     if (a.retreatsWhenTired && (me.stats.hasTag('state.exhausted') || (this.mode === 'recover' && stamina < 0.45))) {
@@ -265,17 +398,19 @@ export class FighterAI {
       return cmd;
     }
 
-    // ---- only a couple attack at once; the rest hover ---------------------------------------
-    if (!this.tokens.request(me, foe)) {
-      this.mode = 'wait';
-      const want = this.hover;
-      if (dist < want - 0.3) cmd.moveX = -toward;
-      else if (dist > want + 0.5) cmd.moveX = toward * 0.6;
-      // Prowl: drift up and down their lane and shuffle in and out while they wait their turn.
-      const lane = ((me.id % 3) - 1) * 0.9 + 0.35 * Math.sin(frame * 0.021 + this.bob);
-      if (Math.abs(me.pos.z - lane) > 0.2) cmd.moveZ = Math.sign(lane - me.pos.z) * 0.5;
-      if (cmd.moveX === 0 && Math.sin(frame * 0.05 + this.bob * 2) > 0.92) cmd.moveX = toward * 0.4;
-      return cmd;
+    // ---- they're on the floor: a word while they're down ------------------------------------
+    if (foe.state === 'knockdown' && this.gloated !== foe && dist < 4 && this.rng.chance(0.02)) {
+      this.gloated = foe;
+      this.say(GLOAT, 'taunt');
+    }
+    if (foe.state !== 'knockdown' && this.gloated === foe) this.gloated = null;
+
+    // ---- only a couple attack at once; the rest prowl ----------------------------------------
+    if (frame > this.jumpInUntil && !this.tokens.request(me, foe)) {
+      if (!this.tryJumpIn(frame, dist)) {
+        this.prowl(cmd, frame, dist, toward);
+        return cmd;
+      }
     }
 
     // ---- spacing ------------------------------------------------------------------------------
@@ -287,10 +422,6 @@ export class FighterAI {
       else if (this.skill > 0.4) cmd.block = foe.state === 'attack';
       return cmd;
     }
-    // Whiff punish: they've swung and missed and are still recovering. Trained fighters make them pay.
-    const fmNow = foe.state === 'attack' ? foe.move : null;
-    const punish = !!fmNow && !fmNow.connected && fmNow.frame >= fmNow.startup + fmNow.active && dist < a.range + 0.45 && Math.abs(dz) < 0.35;
-    if (punish && frame >= this.nextAttackAt - 40 && this.rng.chance(0.06 + this.skill * 0.3)) this.nextAttackAt = frame;
     // Hurt and not the brave sort: keep a bit more distance.
     const wary = !a.boss && me.vitals.health < me.vitals.maxHealth * 0.3 && aggression < 0.55 ? 0.25 : 0;
     const range = a.range + wary;
@@ -306,14 +437,20 @@ export class FighterAI {
       cmd.moveX = -toward * 0.6;
     } else {
       this.mode = 'engage';
-      // In range and waiting for the moment: small steps in and out, never flat-footed.
-      if (this.skill > 0.25 && a.grabChance < 0.2) cmd.moveX = toward * 0.3 * Math.sin(frame * 0.09 + this.bob);
+      // In range and waiting for the moment: never flat-footed. Trained fighters bounce in and out
+      // on quick small steps; brawlers sway and swagger, slower and wider; grapplers stalk forward.
+      const t = frame * (0.055 + this.skill * 0.05) + this.bob;
+      if (a.grabChance >= 0.2) cmd.moveX = toward * (0.12 + 0.18 * Math.max(0, Math.sin(t)));
+      else cmd.moveX = toward * (0.2 + this.skill * 0.15) * Math.sin(t);
+      // Circle a little too, so they're not stuck on a rail.
+      if (Math.abs(dz) <= 0.22) cmd.moveZ = (0.18 + (1 - this.skill) * 0.12) * Math.sin(frame * 0.027 + this.bob * 1.7);
     }
 
     // ---- attack -------------------------------------------------------------------------------
     if (frame < this.nextAttackAt || Math.abs(dz) > 0.35) return cmd;
-    this.nextAttackAt = frame + Math.round((55 + this.rng.next() * 75) / (aggression + 0.3));
-    if (!this.rng.chance(aggression + 0.1)) {
+    this.nextAttackAt = frame + Math.round((42 + this.rng.next() * 62) / (aggression + 0.3));
+    // Jumping in means it: no second thoughts.
+    if (frame > this.jumpInUntil && !this.rng.chance(aggression + 0.1)) {
       // Thought about it and didn't: a short hesitation, not a whole fresh wait.
       this.nextAttackAt = frame + 65 + Math.floor(this.rng.next() * 45);
       return cmd;
@@ -357,6 +494,112 @@ export class FighterAI {
     cmd.pressed[starter] = true;
     this.plan = this.planCombo(starter, a.comboLength - 1);
     return cmd;
+  }
+
+  /**
+   * The target is busy laying into someone else with their back (or side) to me: shout and jump in,
+   * without waiting for a turn. Rationed per target, and the shout is the warning.
+   */
+  private tryJumpIn(frame: number, dist: number): boolean {
+    const me = this.self;
+    const foe = me.target!;
+    const fm = foe.state === 'attack' ? foe.move : null;
+    if (!fm || fm === this.jumpDecided || dist > 3.2) return false;
+    this.jumpDecided = fm;
+    const busyElsewhere = foe.target !== me && (!foe.isFacing(me) || Math.abs(foe.pos.z - me.pos.z) > 0.6);
+    if (!busyElsewhere || !this.rng.chance(0.3 + this.skill * 0.35)) return false;
+    if (!this.tokens.jumpIn(foe, frame)) return false;
+    this.jumpInUntil = frame + 80;
+    // A beat between the shout and the swing, so there's time to turn round.
+    this.nextAttackAt = frame + 14;
+    this.say(JUMP_IN, 'warn');
+    return true;
+  }
+
+  /**
+   * Waiting for a turn, but never stood like a lamppost: hold a spot around the target (some go round
+   * the back), drift up and down, shuffle in and out, and now and then dart in to make them flinch.
+   */
+  private prowl(cmd: CommandFrame, frame: number, dist: number, toward: number): void {
+    const me = this.self;
+    const foe = me.target!;
+    this.mode = 'wait';
+    const here = Math.sign(me.pos.x - foe.pos.x) || 1;
+    if (!this.side || frame >= this.sideUntil) {
+      // About a third of them work round to the far side, so a crowd surrounds rather than queues.
+      this.side = me.id % 3 === 0 && this.rng.chance(0.7) ? -here : here;
+      this.sideUntil = frame + 300 + Math.floor(this.rng.next() * 240);
+    }
+    const want = this.hover;
+    const tx = foe.pos.x + this.side * want;
+    const crossing = Math.sign(me.pos.x - foe.pos.x) !== this.side && dist < want + 0.4;
+    // Going round: swing wide in depth instead of walking through them.
+    const lane = crossing
+      ? foe.pos.z + (me.pos.z >= foe.pos.z ? 1.3 : -1.3)
+      : ((me.id % 3) - 1) * 0.9 + 0.45 * Math.sin(frame * 0.018 + this.bob);
+    const ex = tx - me.pos.x;
+    const ez = lane - me.pos.z;
+    if (frame <= this.feintUntil) {
+      // The dart in: quick and committed, then back to the spot.
+      cmd.moveX = toward;
+      return;
+    }
+    if (Math.abs(ex) > 0.35) cmd.moveX = Math.sign(ex) * Math.min(1, 0.45 + Math.abs(ex) * 0.4);
+    else cmd.moveX = 0.32 * Math.sin(frame * 0.045 + this.bob * 2);
+    if (Math.abs(ez) > 0.15) cmd.moveZ = Math.sign(ez) * Math.min(0.7, 0.3 + Math.abs(ez) * 0.5);
+    if (frame >= this.nextFeintAt && !crossing && Math.abs(dist - want) < 0.8) {
+      this.nextFeintAt = frame + 150 + Math.floor(this.rng.next() * 210);
+      this.feintUntil = frame + 10 + Math.floor(this.rng.next() * 6);
+      if (this.rng.chance(0.35)) this.say(TAUNTS, 'taunt');
+    }
+  }
+
+  /**
+   * Is the opponent open to a punish right now? Their swing has finished its active frames (it missed,
+   * or I blocked it), they're in reach, and they'll still be recovering when my quickest starter lands.
+   */
+  private opening(dist: number, dz: number): { move: ActiveMove; button: AttackButton; reach: number; steps: number } | null {
+    const foe = this.self.target!;
+    const fm = foe.state === 'attack' ? foe.move : null;
+    if (!fm || fm === this.punishDecided || fm.data.kind === 'grab' || fm.data.kind === 'clinch') return null;
+    if (fm.frame < fm.startup + fm.active) return null;
+    const blockedIt = fm.connected && this.blockedMove === fm;
+    if (fm.connected && !blockedIt) return null;
+    const quick = this.quickestStarter();
+    if (!quick) return null;
+    const left = fm.startup + fm.active + fm.recovery - fm.frame;
+    if (Math.abs(dz) > 0.35) return null;
+    // Out of reach? Walking in costs frames: only go if they'll still be stuck when it lands.
+    const me = this.self;
+    const speed = (2.6 * me.style.walkMult * me.stats.moveSpeedMultiplier) / 60;
+    // Reach is measured from the body's edge: centre to centre, a strike lands from reach plus both bodies.
+    const lands = quick.reach + BODY_RADIUS * 2 - 0.12;
+    const steps = Math.max(0, Math.ceil((dist - lands) / speed));
+    if (steps > 24 || left <= quick.startup + steps + 1) return null;
+    return { move: fm, button: quick.button, reach: lands, steps };
+  }
+
+  /**
+   * What I'd punish with: a quick strike from neutral, in my own style. A kicker uses a kick when one is
+   * nearly as quick as the fastest punch; a boxer never kicks.
+   */
+  private quickestStarter(): { button: AttackButton; startup: number; reach: number } | null {
+    const style = this.self.style;
+    const bias = this.archetype.buttonBias;
+    const options: { button: AttackButton; startup: number; reach: number }[] = [];
+    for (const b of ['lp', 'hp', 'lk', 'hk'] as AttackButton[]) {
+      const d = style.moves[style.starters[b]];
+      if (!d || d.kind === 'grab' || d.kind === 'clinch' || d.damage <= 0) continue;
+      if (bias && bias.kick < 0 && (b === 'lk' || b === 'hk')) continue;
+      options.push({ button: b, startup: d.startup, reach: d.reach });
+    }
+    if (!options.length) return null;
+    const fastest = Math.min(...options.map((o) => o.startup));
+    const quick = options.filter((o) => o.startup <= fastest + 3);
+    const kicks = quick.filter((o) => o.button === 'lk' || o.button === 'hk');
+    const pool = bias && bias.kick > 0 && kicks.length && this.rng.next() < bias.kick ? kicks : quick;
+    pool.sort((x, y) => x.startup - y.startup || y.reach - x.reach);
+    return pool[0];
   }
 
   private pickStarter(): AttackButton {

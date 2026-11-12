@@ -258,12 +258,22 @@ export function resolveHit(
     return;
   }
 
-  target.enterHitReaction(reaction, move.hitstun + (caught ? COUNTER_HIT_STUN : 0));
+  target.enterHitReaction(reaction, comboStun(move.hitstun + (caught ? COUNTER_HIT_STUN : 0), attacker.comboHits));
   info.reaction = reaction;
   attacker.hitstop = move.hitstop + (counter ? 3 : 0);
   target.hitstop = move.hitstop + (counter ? 3 : 0);
   bus.emit('hit:landed', info);
   if (reaction === 'knockdown') bus.emit('fighter:knockdown', { fighter: target });
+}
+
+/**
+ * Hitstun shrinks the longer a combo runs, so nobody can be locked in place
+ * forever: after the third hit each one stuns a little less (down to 60%), and
+ * the one taking the beating gets a gap to cover up or get out.
+ */
+export function comboStun(stun: number, comboHits: number): number {
+  if (comboHits <= 3) return stun;
+  return Math.max(Math.round(stun * 0.6), Math.round(stun * (1 - 0.08 * (comboHits - 3))));
 }
 
 function baseInfo(attacker: Fighter, target: Fighter, move: HitInfo['move'], at: HitSphere, extra: Partial<HitInfo>): HitInfo {

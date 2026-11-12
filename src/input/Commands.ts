@@ -14,6 +14,12 @@ export interface CommandFrame {
   moveZ: number;
   /** Held */
   block: boolean;
+  /**
+   * The block is a plain guard, not a parry attempt: pressing it doesn't open
+   * the parry window. Enemies set this when they mean to block, so a late but
+   * ordinary block never turns into a perfect parry. Players never set it.
+   */
+  guard?: boolean;
   /** Held: turns attack buttons into specials (and Special + HP into a finisher). */
   special: boolean;
   /** Pressed this frame */
