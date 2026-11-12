@@ -34,8 +34,17 @@ export function humanSpecFor(a: CharacterAppearance): HumanSpec | null {
   return { shape: d.shape, skin: d.skin, skinColour: d.skinColour, items: d.items, garments: d.garments };
 }
 
+let enabled = true;
+/**
+ * Low graphics quality keeps the lighter Quaternius models: a MakeHuman character with clothes and
+ * hair is about 36k triangles, too many for a crowd on a weak device.
+ */
+export function setHumansEnabled(on: boolean): void {
+  enabled = on;
+}
+
 export function buildHumanRig(a: CharacterAppearance): Rig | null {
-  if (!humansReady()) return null;
+  if (!enabled || !humansReady()) return null;
   const spec = humanSpecFor(a);
   if (!spec) return null;
   const built = buildHuman(spec);

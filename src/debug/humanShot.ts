@@ -110,6 +110,7 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
       const t = Number(q.get('t') ?? 0.4);
       let seed = 7;
       const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const t0 = performance.now();
       clips.forEach((id, i) => {
         const rig = buildHumanRig(crowd ? npc(crowd, i).appearance : randomAppearance(rnd));
         if (!rig) throw new Error('could not build a rig');
@@ -127,6 +128,7 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
         rig.root.rotation.y = q.get('side') ? Math.PI / 2 : 0;
         scene.add(rig.root);
       });
+      (out as ShotState & { buildMs?: number }).buildMs = (performance.now() - t0) / clips.length;
     } else
       LINEUP.forEach((spec, i) => {
         const hum = buildHuman(spec);

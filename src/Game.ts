@@ -1,3 +1,4 @@
+import { setHumansEnabled } from './render/human/HumanRig';
 import { AudioManager } from './audio/AudioManager';
 import { DT } from './core/constants';
 import { TrainingMode } from './core/TrainingMode';
@@ -124,6 +125,7 @@ export class Game {
     const s = this.settings.get();
     this.audio = new AudioManager(s);
     this.renderer = new GameRenderer(gameRoot, s.quality, s.lighting);
+    setHumansEnabled(s.quality !== 'low');
     this.renderer.onFootstep = () => this.audio.step();
     this.ui = new UIManager(uiRoot);
     this.house = new HouseController({
@@ -1913,6 +1915,7 @@ export class Game {
     }
     this.audio.applySettings(s);
     this.renderer.applyQuality(s.quality);
+    setHumansEnabled(s.quality !== 'low');
     this.renderer.setLighting(s.lighting);
     this.renderer.hitboxes.visible = s.showHitboxes;
     this.hud.setFpsVisible(s.showFps);
