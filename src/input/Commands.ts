@@ -20,6 +20,8 @@ export interface CommandFrame {
    * ordinary block never turns into a perfect parry. Players never set it.
    */
   guard?: boolean;
+  /** Held: sprint in the direction of moveX (double-tap a direction, or push the stick all the way). */
+  run?: boolean;
   /** Held: turns attack buttons into specials (and Special + HP into a finisher). */
   special: boolean;
   /** Pressed this frame */

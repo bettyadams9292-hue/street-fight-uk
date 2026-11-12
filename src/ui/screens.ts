@@ -108,6 +108,7 @@ export function controlsScreen(ui: UIManager): Screen {
   const rows: [string, string, string, string][] = [
     ['Move left / right', 'A / D or \u2190 \u2192', 'Left stick / D-pad', 'Left stick'],
     ['Move into / out of screen', 'W / S or \u2191 \u2193', 'Left stick / D-pad', 'Left stick'],
+    ['Sprint (uses stamina in a fight)', 'Double-tap A / D and hold', 'Stick all the way, or double-tap D-pad', 'Push the stick to the edge'],
     ['Light punch', 'J', 'X', 'LP'],
     ['Heavy punch', 'I', 'Y', 'HP'],
     ['Light kick', 'K', 'A', 'LK'],

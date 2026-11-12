@@ -34,6 +34,8 @@ const hideBoot = (): void => {
 const start = (): void => {
   try {
     const game = new Game(gameRoot, uiRoot);
+    // Recorded sound effects load in the background; until they arrive, sounds are synthesised.
+    if (query.get('assets') !== 'builtin') void import('./audio/recorded').then((m) => m.loadRecordedSounds(game.audio));
     // ?debug exposes the game to the console for testing.
     if (query.has('debug') || shot) (window as unknown as { sfuk: Game }).sfuk = game;
     hideBoot();

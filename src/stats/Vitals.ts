@@ -116,9 +116,9 @@ export class Vitals {
       this.recoverable -= amount;
     }
 
-    // Out-of-combat health regen: 2% per second, up to 50% of max.
+    // Out-of-combat health regen: 2% per second, up to 70% of max (the rest needs food, rest or a doctor).
     if (!this.isInCombat(frame)) {
-      const cap = this.maxHealth * 0.5;
+      const cap = this.maxHealth * 0.7;
       if (this.health < cap) this.health = Math.min(cap, this.health + this.maxHealth * 0.02 * dt);
     }
 

@@ -32,6 +32,10 @@ export const KEY_BINDINGS = {
 const PAD = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, LS: 10, RS: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 const PAD_BUTTONS: Record<GameButton, number> = { lp: PAD.X, hp: PAD.Y, lk: PAD.A, hk: PAD.B, jump: PAD.LS, dodge: PAD.LT, grab: PAD.LB, swap: PAD.BACK };
 const STICK_DEADZONE = 0.25;
+/** Two taps of a direction this close together start a sprint (ms). */
+const DOUBLE_TAP_MS = 280;
+/** A stick pushed all the way for this long starts a sprint (ms). */
+const FULL_PUSH_MS = 280;
 
 /**
  * Merges keyboard, gamepad and touch into one CommandFrame per simulation
@@ -46,12 +50,20 @@ export class InputManager {
   /** Set by the touch controls. */
   touch = { moveX: 0, moveZ: 0, block: false, specialArmed: false };
   lastDevice: InputSource = 'keyboard';
+  /** Sprinting: the direction double-tapped (held since), and how long an analogue stick has been pushed right out. */
+  private runDir = 0;
+  private lastTap = { [-1]: -9999, [1]: -9999 } as Record<number, number>;
+  private fullPushSince = -1;
   /** Lets the touch UI un-highlight SP once it's been used. */
   onSpecialUsed: (() => void) | null = null;
 
   constructor(target: Window = window) {
     target.addEventListener('keydown', (e) => this.onKeyDown(e));
-    target.addEventListener('keyup', (e) => this.held.delete(e.code));
+    target.addEventListener('keyup', (e) => {
+      this.held.delete(e.code);
+      // Let go of the sprint direction: stop running.
+      if (this.runDir && !this.isHeld(this.runDir > 0 ? KEY_BINDINGS.right : KEY_BINDINGS.left)) this.runDir = 0;
+    });
     target.addEventListener('blur', () => this.held.clear());
   }
 
@@ -104,6 +116,8 @@ export class InputManager {
     if (gameKey || code === 'Enter' || code === 'NumpadEnter') e.preventDefault();
     this.lastDevice = 'keyboard';
     if (!e.repeat) {
+      if ((KEY_BINDINGS.left as readonly string[]).includes(code)) this.tapDirection(-1);
+      else if ((KEY_BINDINGS.right as readonly string[]).includes(code)) this.tapDirection(1);
       for (const b of PRESS_BUTTONS) {
         if ((KEY_BINDINGS[b] as readonly string[]).includes(code)) this.pressedQueue.add(b);
       }
@@ -124,6 +138,13 @@ export class InputManager {
     else if (code === 'ArrowRight' || code === 'KeyD') this.emitMenu('right');
     else if ((code === 'Enter' || code === 'NumpadEnter') && !e.repeat) this.emitMenu('confirm');
     this.held.add(code);
+  }
+
+  /** A tap of left or right: the second quick tap the same way starts a sprint. */
+  private tapDirection(dir: number): void {
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (now - this.lastTap[dir] < DOUBLE_TAP_MS) this.runDir = dir;
+    this.lastTap[dir] = now;
   }
 
   private isHeld(codes: readonly string[]): boolean {
@@ -151,6 +172,11 @@ export class InputManager {
     if (edge(PAD.DOWN)) this.emitMenu('down', 'gamepad');
     if (edge(PAD.LEFT)) this.emitMenu('left', 'gamepad');
     if (edge(PAD.RIGHT)) this.emitMenu('right', 'gamepad');
+    // D-pad: double-tap to sprint, like the keyboard.
+    if (edge(PAD.LEFT)) this.tapDirection(-1);
+    if (edge(PAD.RIGHT)) this.tapDirection(1);
+    if (this.runDir < 0 && !pressed(PAD.LEFT) && this.lastDevice === 'gamepad' && !this.isHeld(KEY_BINDINGS.left)) this.runDir = 0;
+    if (this.runDir > 0 && !pressed(PAD.RIGHT) && this.lastDevice === 'gamepad' && !this.isHeld(KEY_BINDINGS.right)) this.runDir = 0;
 
     let ax = pad.axes[0] ?? 0;
     let ay = pad.axes[1] ?? 0;
@@ -183,6 +209,16 @@ export class InputManager {
     cmd.moveZ = clamp1(kz + pad.moveZ + this.touch.moveZ);
     cmd.block = this.isHeld(KEY_BINDINGS.block) || pad.block || this.touch.block;
     cmd.special = this.isHeld(KEY_BINDINGS.special) || pad.special;
+    // Sprint: a double-tapped direction still held, or an analogue stick (pad or touch) pushed right out for a moment.
+    // On a touch stick people push to the edge just to walk, so it takes a fuller, longer push there.
+    const touchy = Math.abs(this.touch.moveX) > Math.abs(pad.moveX);
+    const analogue = touchy ? this.touch.moveX : pad.moveX;
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (Math.abs(analogue) > (touchy ? 0.97 : 0.9)) {
+      if (this.fullPushSince < 0) this.fullPushSince = now;
+    } else this.fullPushSince = -1;
+    const pushedOut = this.fullPushSince >= 0 && now - this.fullPushSince >= (touchy ? FULL_PUSH_MS * 1.6 : FULL_PUSH_MS);
+    cmd.run = (this.runDir !== 0 && Math.sign(cmd.moveX) === this.runDir) || pushedOut;
     for (const b of this.pressedQueue) cmd.pressed[b] = true;
     this.pressedQueue.clear();
     // Touch: SP arms the next attack as a special.

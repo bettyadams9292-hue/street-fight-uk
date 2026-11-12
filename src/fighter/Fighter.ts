@@ -74,6 +74,9 @@ export interface FighterConfig {
 }
 
 const WALK_SPEED = 2.6; // m/s
+/** Sprinting: how much faster than walking, and what it costs per second while a fight is on. */
+const RUN_MULT = 2.1;
+const RUN_STAMINA_PER_SECOND = 9;
 const DEPTH_SPEED = 2.0; // m/s
 const KNOCKBACK_DECEL = 14; // m/s^2
 /** Getting up to walking speed takes about a tenth of a second; stopping a little less. */
@@ -148,6 +151,8 @@ export class Fighter {
   lastHit: { height: 'high' | 'mid' | 'low'; power: number; dir: 1 | -1; side: number; blocked: boolean } | null = null;
   /** Frame block was last pressed (for parries). */
   lastBlockPressFrame = -9999;
+  /** Sprinting this frame (faces the way it's going, not the target). */
+  running = false;
   /** A readable warning to show the other fighter next update (set by the AI). */
   pendingTell: 'parry' | null = null;
   /** Counter hits are possible until this frame (after a parry). */
@@ -369,6 +374,7 @@ export class Fighter {
     let wantVX = 0;
     let wantVZ = 0;
     const walk = WALK_SPEED * this.style.walkMult * this.stats.moveSpeedMultiplier;
+    this.running = false;
 
     switch (this.state) {
       case 'ko':
@@ -461,7 +467,11 @@ export class Fighter {
           if (this.state !== 'block') this.setState('block');
           break;
         }
-        wantVX = cmd.moveX * walk;
+        // Sprint: free when getting about, costs stamina in a fight, and an empty tank stops it.
+        const inFight = this.vitals.isInCombat(frame);
+        this.running = !!cmd.run && Math.abs(cmd.moveX) > 0.5 && this.grounded && !this.vitals.gassed && !(inFight && this.vitals.stamina < 2);
+        if (this.running && inFight) this.vitals.spendStamina(RUN_STAMINA_PER_SECOND * dt, frame);
+        wantVX = cmd.moveX * walk * (this.running ? RUN_MULT : 1);
         wantVZ = cmd.moveZ * DEPTH_SPEED * this.stats.depthSpeedMultiplier * this.style.walkMult;
         const moving = Math.abs(cmd.moveX) > 0.1 || Math.abs(cmd.moveZ) > 0.1;
         const next = moving ? 'walk' : 'idle';
@@ -472,7 +482,9 @@ export class Fighter {
 
     // Facing: turn toward the soft-locked target, or the way you're walking.
     if (this.isFree || (this.state === 'jump' && this.stateFrame === 1)) {
-      if (this.target && !this.target.isKO) {
+      if (this.running) {
+        this.facing = cmd.moveX > 0 ? 1 : -1;
+      } else if (this.target && !this.target.isKO) {
         const dx = this.target.pos.x - this.pos.x;
         if (Math.abs(dx) > 0.05) this.facing = dx > 0 ? 1 : -1;
       } else if (Math.abs(cmd.moveX) > 0.1) {
