@@ -142,8 +142,8 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
       // ?view=<index>:<face|body|back> for close inspection.
       const [i, part] = view.split(':');
       const x = (Number(i) - (count - 1) / 2) * (mode === 'anims' ? 0.95 : gap);
-      const y = part === 'face' ? 1.6 : 0.95;
-      const d = part === 'face' ? 1.2 : 3.6;
+      const y = part === 'face' || part === 'eyes' ? Number(q.get('y') ?? 1.6) : 0.95;
+      const d = part === 'face' ? 0.7 : part === 'eyes' ? 0.35 : 3.6;
       cam.position.set(x, y, part === 'back' ? -d : d);
       cam.lookAt(x, y, 0);
     } else {

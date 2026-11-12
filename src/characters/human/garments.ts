@@ -470,6 +470,19 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
       sp[v * 3 + 2] = tmp[v * 3 + 2];
     }
   }
+  // Straight necklines and hems: the cut follows the mesh's triangles, which leaves teeth; line the
+  // edge vertices up on the cut height instead.
+  if (st.part === 'top') {
+    const neckLine = f.neckY + (st.vest ? 0.01 : st.collar || st.hood ? 0.015 : 0.0);
+    for (const v of list) {
+      if (!pinned[v]) continue;
+      const g = f.group[v];
+      if (g !== 'torso' && g !== 'hip' && g !== 'neck') continue;
+      const y = pos[v * 3 + 1];
+      if (!st.vest && Math.abs(y - neckLine) < 0.035 && !(st.hood && pos[v * 3 + 2] < f.neckZ)) sp[v * 3 + 1] = Math.max(sp[v * 3 + 1], neckLine - 0.004);
+      else if (Math.abs(y - hemY) < 0.035) sp[v * 3 + 1] = Math.min(sp[v * 3 + 1], hemY + 0.004);
+    }
+  }
   // Trousers don't show what's under them: the front of the crotch is flattened. The skin there is
   // hidden (it's covered), so the cloth may sit inside where the body was.
   if (st.part === 'bottoms') {

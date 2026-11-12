@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import { BodyData, footY, morph, placeBones, type BodyMeta, type BodyShape } from '../../characters/human/body';
 import { ProxyData, fitProxy, proxySkin, type ProxyMeta } from '../../characters/human/proxy';
-import { cutBrows } from '../../characters/human/brows';
+import { cutBrows, cutLashes, type BrowMesh } from '../../characters/human/brows';
 import { cutGarment, type Fabric, type GarmentKind } from '../../characters/human/garments';
 
 export interface SkinInfo {
@@ -221,7 +221,7 @@ function browTexture(): THREE.Texture | null {
   for (let i = 0; i < 800; i++) {
     const u = Math.pow(rnd(), 0.85);
     // Height of the brow at u: full at the head, tapering to the tail.
-    const h = H * (0.62 - 0.38 * u);
+    const h = H * (0.5 - 0.3 * u);
     const y = H / 2 + (rnd() - 0.5) * h;
     const x = u * W * 0.94 + W * 0.03;
     // Hairs point up and outwards at the head, flatten towards the tail.
@@ -234,10 +234,65 @@ function browTexture(): THREE.Texture | null {
     g.lineTo(x + Math.cos(ang) * len, y - Math.sin(ang) * len * 0.45);
     g.stroke();
   }
+  // Soft edges: fade out at the top and bottom of the band and towards both ends.
+  g.globalCompositeOperation = 'destination-in';
+  const vg = g.createLinearGradient(0, 0, 0, H);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(0.3, 'rgba(0,0,0,1)');
+  vg.addColorStop(0.7, 'rgba(0,0,0,1)');
+  vg.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = vg;
+  g.fillRect(0, 0, W, H);
+  const hg = g.createLinearGradient(0, 0, W, 0);
+  hg.addColorStop(0, 'rgba(0,0,0,0)');
+  hg.addColorStop(0.08, 'rgba(0,0,0,1)');
+  hg.addColorStop(0.85, 'rgba(0,0,0,1)');
+  hg.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = hg;
+  g.fillRect(0, 0, W, H);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
   brows = t;
+  return t;
+}
+
+let lashes: THREE.Texture | null = null;
+/** The upper lash line: a dark line along the lid's edge (the bottom of the band) with fine lashes curling up from it. */
+function lashTexture(): THREE.Texture | null {
+  if (lashes || typeof document === 'undefined') return lashes;
+  const W = 128;
+  const H = 32;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  let seed = 3;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  // Lid line, thickest at the outer corner.
+  for (let x = 2; x < W - 2; x++) {
+    const k = x / W;
+    const t = 2.5 + 3.5 * k;
+    g.fillStyle = `rgba(255,255,255,${0.75})`;
+    g.fillRect(x, H * 0.62 - t / 2, 1, t);
+  }
+  g.lineCap = 'round';
+  for (let i = 0; i < 70; i++) {
+    const k = 0.05 + rnd() * 0.92;
+    const x = k * W;
+    const len = H * (0.25 + 0.35 * k) * (0.7 + rnd() * 0.3);
+    g.strokeStyle = `rgba(255,255,255,${0.5 + rnd() * 0.4})`;
+    g.lineWidth = 0.8;
+    g.beginPath();
+    g.moveTo(x, H * 0.6);
+    g.quadraticCurveTo(x + 2 + k * 4, H * 0.6 - len * 0.7, x + 4 + k * 6, H * 0.6 - len);
+    g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  lashes = t;
   return t;
 }
 
@@ -656,35 +711,38 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
         }
       return c ? [x / c, y / c, z / c] : [0, 0, 0];
     };
-    const brow = cutBrows(body, pos, nb, [centre(1), centre(-1)], spec.browWeight ?? 0.5);
-    if (brow.index.length) {
-      const m = brow.render.length;
+    const painted = (band: BrowMesh, map: THREE.Texture | null, colour: string, name: string) => {
+      if (!band.index.length) return;
+      const m = band.render.length;
       const bg = new THREE.BufferGeometry();
       const si = new Uint16Array(m * 4);
       const sw = new Float32Array(m * 4);
       for (let l = 0; l < m; l++) {
-        const v = body.renderBase[brow.render[l]];
+        const v = body.renderBase[band.render[l]];
         for (let k = 0; k < 4; k++) {
           si[l * 4 + k] = body.skinIndex[v * 4 + k];
           sw[l * 4 + k] = body.skinWeight[v * 4 + k] / 255;
         }
       }
-      bg.setAttribute('position', new THREE.BufferAttribute(brow.position, 3));
-      bg.setAttribute('uv', new THREE.BufferAttribute(brow.uv, 2));
+      bg.setAttribute('position', new THREE.BufferAttribute(band.position, 3));
+      bg.setAttribute('uv', new THREE.BufferAttribute(band.uv, 2));
       bg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
       bg.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
-      bg.setIndex(new THREE.BufferAttribute(brow.index, 1));
+      bg.setIndex(new THREE.BufferAttribute(band.index, 1));
       bg.computeVertexNormals();
       disposables.push(bg);
-      const bm = new THREE.MeshStandardMaterial({ map: browTexture(), color: new THREE.Color(spec.browColour ?? '#2a1c12'), transparent: true, alphaTest: 0.08, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 });
+      const bm = new THREE.MeshStandardMaterial({ map, color: new THREE.Color(colour), transparent: true, alphaTest: 0.08, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 });
       disposables.push(bm);
       const bmesh = new THREE.SkinnedMesh(bg, bm);
-      bmesh.name = 'eyebrows';
+      bmesh.name = name;
       bmesh.renderOrder = 2;
       root.add(bmesh);
       bmesh.bind(skeleton);
       bmesh.frustumCulled = false;
-    }
+    };
+    const eyesAt: [number, number, number][] = [centre(1), centre(-1)];
+    painted(cutBrows(body, pos, nb, eyesAt, spec.browWeight ?? 0.5), browTexture(), spec.browColour ?? '#2a1c12', 'eyebrows');
+    painted(cutLashes(body, pos, nb, eyesAt), lashTexture(), '#120c08', 'eyelashes');
   }
 
   // ---- clothes cut from the body ----
