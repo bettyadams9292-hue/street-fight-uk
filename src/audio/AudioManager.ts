@@ -112,6 +112,13 @@ export class AudioManager {
     this.thump(this.sfx, t, 160, 0.08, 0.35);
   }
 
+  /** An enemy squaring up to parry: a short, bright scrape you learn to listen for. */
+  tell(): void {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.noise(this.sfx, t, 0.07, 'bandpass', 5200, 0.22, 6);
+  }
+
   guardBreak(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;

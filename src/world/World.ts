@@ -87,6 +87,8 @@ export interface WorldEvents {
   'companion:up': { name: string };
   /** A crew member says something (shown over their head). */
   'crew:say': { fighter: Fighter; name: string; text: string };
+  /** An enemy shouts: a taunt, or the warning before jumping in. */
+  'enemy:say': { fighter: Fighter; text: string; kind: 'taunt' | 'warn' };
   'duel:start': { kind: 'spar' | 'challenge'; name: string };
   'duel:end': { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
 }
@@ -1252,7 +1254,7 @@ export class World {
     this.sim.add(f);
     this.enemies.push(f);
     const brain: Archetype = { ...def.brain, id: 'boss', name: def.name, description: def.title, look: () => ({}), boss: false };
-    this.brains.set(f, new FighterAI(f, brain, this.sim.rng, this.tokens, this.arena));
+    this.brains.set(f, this.enemyBrain(f, brain));
     this.archetypeOf.set(f, 'boss');
     return f;
   }
@@ -1342,7 +1344,7 @@ export class World {
     f.facing = x > this.player.pos.x ? -1 : 1;
     this.sim.add(f);
     this.enemies.push(f);
-    this.brains.set(f, new FighterAI(f, { ...a }, this.sim.rng, this.tokens, this.arena));
+    this.brains.set(f, this.enemyBrain(f, { ...a }));
     this.archetypeOf.set(f, id);
     return f;
   }
@@ -1391,6 +1393,21 @@ export class World {
     brain.mode = 'stand';
     this.brains.set(f, brain);
     this.npcs.set(s, f);
+  }
+
+  private lastEnemySay = -9999;
+
+  /** An enemy's brain, with its shouts going to speech bubbles (rationed so a crowd doesn't chatter). */
+  private enemyBrain(f: Fighter, a: Archetype): FighterAI {
+    const brain = new FighterAI(f, a, this.sim.rng, this.tokens, this.arena);
+    brain.onSay = (text, kind) => {
+      // A jump-in warning always gets through quickly: it's how you know to turn round.
+      const gap = kind === 'warn' ? 45 : 200;
+      if (this.sim.frame - this.lastEnemySay < gap) return;
+      this.lastEnemySay = this.sim.frame;
+      this.events.emit('enemy:say', { fighter: f, text, kind });
+    };
+    return brain;
   }
 
   /** A shopkeeper who's had enough: they fight back. */

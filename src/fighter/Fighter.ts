@@ -148,6 +148,8 @@ export class Fighter {
   lastHit: { height: 'high' | 'mid' | 'low'; power: number; dir: 1 | -1; side: number; blocked: boolean } | null = null;
   /** Frame block was last pressed (for parries). */
   lastBlockPressFrame = -9999;
+  /** A readable warning to show the other fighter next update (set by the AI). */
+  pendingTell: 'parry' | null = null;
   /** Counter hits are possible until this frame (after a parry). */
   counterUntil = -1;
   /** Movement slowed by leg kicks until this frame. */
@@ -345,8 +347,12 @@ export class Fighter {
     }
     if (this.buffered && frame > this.buffered.expires) this.buffered = null;
 
-    // Block presses (not holds) are what parry.
-    if (cmd.block && !this.wasBlockHeld) this.lastBlockPressFrame = frame;
+    // Block presses (not holds) are what parry; a plain guard never does.
+    if (cmd.block && !this.wasBlockHeld && !cmd.guard) this.lastBlockPressFrame = frame;
+    if (this.pendingTell) {
+      bus.emit('fighter:tell', { fighter: this, kind: this.pendingTell });
+      this.pendingTell = null;
+    }
     this.wasBlockHeld = cmd.block;
 
     if (frame > this.slowUntil && this.stats.hasModifier('leg_slow')) this.stats.removeModifier('leg_slow');

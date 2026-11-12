@@ -24,6 +24,20 @@ export class AttackTokens {
     return true;
   }
 
+  private lastJumpIn = new Map<number, number>();
+
+  /**
+   * One waiting enemy may jump in on a busy target now and then, on top of
+   * the usual attackers. At most once every `cooldown` frames per target, so
+   * it punishes tunnel vision without turning into a pile-on.
+   */
+  jumpIn(target: Fighter, frame: number, cooldown = 240): boolean {
+    const last = this.lastJumpIn.get(target.id) ?? -99999;
+    if (frame - last < cooldown) return false;
+    this.lastJumpIn.set(target.id, frame);
+    return true;
+  }
+
   release(f: Fighter): void {
     for (const set of this.holders.values()) set.delete(f);
   }

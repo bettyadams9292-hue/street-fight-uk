@@ -35,10 +35,11 @@ export class HitFX {
   }
 
   /** dir: which way the hit travelled along x (1 or -1). */
-  burst(x: number, y: number, z: number, dir: number, kind: 'hit' | 'heavy' | 'block'): void {
-    const count = kind === 'heavy' ? 46 : kind === 'hit' ? 26 : 18;
-    const color = kind === 'block' ? [0.55, 0.75, 1.0] : kind === 'heavy' ? [1.0, 0.75, 0.4] : [1.0, 0.9, 0.7];
-    const speed = kind === 'heavy' ? 4.2 : 2.8;
+  burst(x: number, y: number, z: number, dir: number, kind: 'hit' | 'heavy' | 'block' | 'glint'): void {
+    const count = kind === 'heavy' ? 46 : kind === 'hit' ? 26 : kind === 'glint' ? 14 : 18;
+    const color = kind === 'block' ? [0.55, 0.75, 1.0] : kind === 'heavy' ? [1.0, 0.75, 0.4] : kind === 'glint' ? [1.0, 1.0, 1.0] : [1.0, 0.9, 0.7];
+    // A glint barely moves: it hangs on the guard for a moment so it reads.
+    const speed = kind === 'heavy' ? 4.2 : kind === 'glint' ? 0.5 : 2.8;
     for (let n = 0; n < count; n++) {
       const i = this.cursor;
       this.cursor = (this.cursor + 1) % CAPACITY;
@@ -48,9 +49,9 @@ export class HitFX {
       const spread = Math.random() * Math.PI * 2;
       const s = speed * (0.4 + Math.random() * 0.8);
       this.vel[i * 3] = dir * s * (0.6 + Math.random() * 0.6) + Math.cos(spread) * s * 0.35;
-      this.vel[i * 3 + 1] = Math.sin(spread) * s * 0.6 + 0.8;
+      this.vel[i * 3 + 1] = Math.sin(spread) * s * 0.6 + (kind === 'glint' ? 0.9 : 0.8);
       this.vel[i * 3 + 2] = (Math.random() - 0.5) * s * 0.8;
-      const l = 0.18 + Math.random() * 0.22;
+      const l = kind === 'glint' ? 0.22 + Math.random() * 0.1 : 0.18 + Math.random() * 0.22;
       this.life[i] = l;
       this.maxLife[i] = l;
       const v = 0.75 + Math.random() * 0.25;

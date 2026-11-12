@@ -710,6 +710,7 @@ export class Game {
       }),
       ev.on('companion:level', ({ name, level }) => this.hud.toast(`${name} is level ${level} now`, 'item')),
       ev.on('crew:say', ({ fighter, name, text }) => this.hud.speech(fighter, name, text)),
+      ev.on('enemy:say', ({ fighter, text }) => this.hud.speech(fighter, '', text)),
       // A real hit while riding knocks you off; the bike's left where you fell.
       w.sim.bus.on('hit:landed', ({ target }) => {
         if (target === w.player && this.progress?.save.property.riding && this.world === w) this.knockOff = true;
@@ -2002,6 +2003,12 @@ export class Game {
       }),
       bus.on('fighter:fatigue', ({ fighter, state }) => {
         if (isPlayer(fighter) && state === 'exhausted') this.hud.notify('EXHAUSTED — BACK OFF', 'warn');
+      }),
+      // An enemy getting ready to parry: a glint on their guard and a bright scrape, in time to see it.
+      bus.on('fighter:tell', ({ fighter }) => {
+        if (isPlayer(fighter)) return;
+        this.audio.tell();
+        this.renderer.fx.burst(fighter.pos.x + fighter.facing * 0.28, fighter.pos.y + 1.45, fighter.pos.z, fighter.facing, 'glint');
       }),
       bus.on('hit:parried', ({ target }) => {
         this.audio.block();

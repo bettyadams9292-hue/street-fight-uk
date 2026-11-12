@@ -32,6 +32,8 @@ export interface GameEvents {
   'fighter:finished': { fighter: Fighter; by: Fighter; move: MoveData };
   'fighter:jump': { fighter: Fighter };
   'fighter:land': { fighter: Fighter };
+  /** A readable warning of what a fighter is about to do (an enemy getting ready to parry). */
+  'fighter:tell': { fighter: Fighter; kind: 'parry' };
   'fighter:dodge': { fighter: Fighter; kind: 'slip' | 'sidestep' | 'backstep' | 'blitz' };
   'fighter:sweep': { fighter: Fighter; target: Fighter };
   'fighter:fatigue': { fighter: Fighter; state: 'fresh' | 'tired' | 'exhausted' };
