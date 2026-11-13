@@ -216,7 +216,7 @@ export function mapScreen(o: MapOptions): Screen {
       ? `<circle class="pin" r="7" fill="#0d0f13" stroke="${open ? col : '#5b5852'}" stroke-width="3"/>`
       : `<circle class="halo" r="19"/><circle class="pin" r="13.5" fill="${open ? col : '#3a3936'}" stroke="#0d0f13" stroke-width="2.5"/>` +
         `<g transform="translate(-8 -8) scale(.667)" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${iconPaths(KIND_ICON[m.kind])}</g>` +
-        (open ? '' : `<g transform="translate(6 -17) scale(.45)"><circle cx="12" cy="12" r="12" fill="#0d0f13"/><g fill="none" stroke="#f2c230" stroke-width="2.6" stroke-linecap="round">${iconPaths('lock')}</g></g>`);
+        (open ? '' : `<g transform="translate(6 -17) scale(.45)"><circle cx="12" cy="12" r="12" fill="#0d0f13"/><g fill="none" stroke="#e8333a" stroke-width="2.6" stroke-linecap="round">${iconPaths('lock')}</g></g>`);
     g.addEventListener('pointerenter', (e) => showTip(m, e as PointerEvent));
     g.addEventListener('pointerleave', () => tip.classList.remove('on'));
     g.setAttribute('data-key', m.key);
@@ -224,7 +224,7 @@ export function mapScreen(o: MapOptions): Screen {
     markerEls.set(m.key, g);
     markerOf.set(m.key, m);
   }
-  youG.innerHTML = `<g class="mp-you"><circle class="ring" r="26"/><circle r="13" fill="#f2c230" stroke="#0d0f13" stroke-width="3"/><g transform="translate(-7 -7) scale(.58)" fill="#0d0f13" stroke="#0d0f13" stroke-width="2" stroke-linejoin="round">${iconPaths('you')}</g><text y="-26" class="mp-you-label">YOU</text></g>`;
+  youG.innerHTML = `<g class="mp-you"><circle class="ring" r="26"/><circle r="13" fill="#e8333a" stroke="#0d0f13" stroke-width="3"/><g transform="translate(-7 -7) scale(.58)" fill="#0d0f13" stroke="#0d0f13" stroke-width="2" stroke-linejoin="round">${iconPaths('you')}</g><text y="-26" class="mp-you-label">YOU</text></g>`;
 
   function showTip(m: MapMarker, e: PointerEvent): void {
     const open = unlocked(p, m.area);

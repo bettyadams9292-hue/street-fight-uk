@@ -1,4 +1,5 @@
 import { h } from './dom';
+import { hasTitle, titleArt } from './titles';
 import { icon, type IconName } from './icons';
 
 /**
@@ -7,14 +8,22 @@ import { icon, type IconName } from './icons';
  * well as mouse and touch.
  */
 
-export function menuButton(label: string, onClick: () => void, sub?: string, extraClass = '', ic?: IconName, key?: string): HTMLButtonElement {
+/**
+ * A menu button. `art` names a title graphic (public/art/titles) to show in place of the label, with
+ * the label as its alt text and as the fallback if there's no such graphic.
+ */
+export function menuButton(label: string, onClick: () => void, sub?: string, extraClass = '', ic?: IconName, key?: string, art?: string): HTMLButtonElement {
+  // Every Back button gets the painted BACK.
+  if (art === undefined && label === 'Back') art = 'back';
+  const painted = hasTitle(art);
   return h(
     'button',
-    { class: `menu-btn ${extraClass}${ic ? ' has-icon' : ''}`, 'data-nav': true, onclick: () => onClick() },
-    ic ? icon(ic, 'btn-icon') : null,
-    h('span', { class: 'label', text: label }),
-    key ? h('kbd', { text: key }) : null,
-    sub ? h('span', { class: 'sub', text: sub }) : null,
+    // A painted button is just its graphic: no plate, icon or subtitle (the subtitle becomes the tooltip).
+    { class: `menu-btn ${extraClass}${ic && !painted ? ' has-icon' : ''}${painted ? ' has-art' : ''}`, 'data-nav': true, onclick: () => onClick(), 'aria-label': painted ? label : undefined, title: painted && sub ? sub : undefined },
+    ic && !painted ? icon(ic, 'btn-icon') : null,
+    painted ? h('span', { class: 'label' }, titleArt(label, art)) : h('span', { class: 'label', text: label }),
+    key && !painted ? h('kbd', { text: key }) : null,
+    sub && !painted ? h('span', { class: 'sub', text: sub }) : null,
   );
 }
 
@@ -23,7 +32,7 @@ export function sliderRow(
   label: string,
   value: number,
   onChange: (v: number) => void,
-  opts: { min?: number; max?: number; step?: number; format?: (v: number) => string } = {},
+  opts: { min?: number; max?: number; step?: number; format?: (v: number) => string; art?: string } = {},
 ): HTMLElement {
   const min = opts.min ?? 0;
   const max = opts.max ?? 1;
@@ -40,14 +49,29 @@ export function sliderRow(
   };
   input.addEventListener('input', () => set(Number(input.value)));
   input.addEventListener('nav-adjust', (e) => set(Number(input.value) + step * (e as CustomEvent<number>).detail));
-  return h('div', { class: 'setting-row' }, h('span', { class: 'name', text: label }), input, out);
+  return h('div', { class: 'setting-row' }, rowName(label, opts.art), input, out);
+}
+
+/** A setting's name: its title graphic if it has one, else the words. */
+function rowName(label: string, art?: string): HTMLElement {
+  return hasTitle(art) ? h('span', { class: 'name has-art' }, titleArt(label, art)) : h('span', { class: 'name', text: label });
 }
 
 /** Cycles through a list of options with left/right or a click. */
-export function cycleRow<T>(label: string, options: { value: T; label: string }[], current: T, onChange: (v: T) => void): HTMLElement {
+export function cycleRow<T>(label: string, options: { value: T; label: string; art?: string; note?: string }[], current: T, onChange: (v: T) => void, art?: string): HTMLElement {
   let i = Math.max(0, options.findIndex((o) => o.value === current));
   const btn = h('button', { class: 'cycle', 'data-nav': true, 'aria-label': label }) as HTMLButtonElement;
-  const render = () => (btn.textContent = `‹  ${options[i].label}  ›`);
+  const render = () => {
+    const o = options[i];
+    // A painted value (Easy, Low...) between the arrows, with any note beneath; else plain words.
+    if (hasTitle(o.art)) {
+      btn.replaceChildren('‹ ', titleArt(o.label, o.art, 'cycle-art'), ' ›', o.note ? h('span', { class: 'cycle-note', text: o.note }) : '');
+      btn.classList.add('has-art');
+    } else {
+      btn.classList.remove('has-art');
+      btn.textContent = `‹  ${o.label}${o.note ? `: ${o.note}` : ''}  ›`;
+    }
+  };
   const step = (d: number) => {
     i = (i + d + options.length) % options.length;
     render();
@@ -61,7 +85,7 @@ export function cycleRow<T>(label: string, options: { value: T; label: string }[
   });
   btn.addEventListener('nav-adjust', (e) => step((e as CustomEvent<number>).detail));
   render();
-  return h('div', { class: 'setting-row' }, h('span', { class: 'name', text: label }), btn);
+  return h('div', { class: 'setting-row' }, rowName(label, art), btn);
 }
 
 /** Row of colour swatches. Left/right moves the selection. */

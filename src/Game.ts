@@ -1,4 +1,5 @@
 import { setHumansEnabled } from './render/human/HumanRig';
+import { slugify } from './ui/titles';
 import { AudioManager } from './audio/AudioManager';
 import { DT } from './core/constants';
 import { TrainingMode } from './core/TrainingMode';
@@ -725,11 +726,11 @@ export class Game {
       }),
       ev.on('encounter:start', ({ boss }) => {
         if (boss) {
-          this.hud.notify(boss.name.toUpperCase(), 'big');
+          this.hud.notify(boss.name.toUpperCase(), 'big', [slugify(boss.name), slugify(boss.title)]);
           this.hud.toast(`“${boss.intro}”`, 'warn');
           if (this.settings.get().screenShake) this.renderer.cameraRig.addShake(0.15);
         } else {
-          this.hud.notify('FIGHT!', 'big');
+          this.hud.notify('FIGHT!', 'big', ['fight']);
         }
         this.audio.guardBreak();
       }),
@@ -767,10 +768,15 @@ export class Game {
             if (boss.flag === 'boss_dunc') lines.push({ text: 'Dunc\u2019s phone has one contact: THE BOSS. Hale House, past the Pit.', big: true });
             if (boss.flag === 'boss_final') lines.push({ text: 'That\u2019s the lot. The whole town is yours.', big: true });
             this.ui.replaceAll(
-              rewardScreen('VICTORY', lines, [
-                { label: 'Head home', sub: 'Bank your cash, train up, save', go: () => this.goHome(false) },
-                { label: 'Stay and explore', go: () => this.resume() },
-              ]),
+              rewardScreen(
+                'VICTORY',
+                lines,
+                [
+                  { label: 'Head home', sub: 'Bank your cash, train up, save', go: () => this.goHome(false) },
+                  { label: 'Stay and explore', go: () => this.resume() },
+                ],
+                ['you-win', 'level-complete'],
+              ),
             );
           },
         };
@@ -857,7 +863,7 @@ export class Game {
             this.touch.release();
             this.updateTouchVisibility();
             this.ui.replaceAll(
-              rewardScreen('BATTERED', [{ text: 'You got done in.', big: true }, { text: lost > 0 ? `Someone went through your pockets: −£${lost}` : 'Nothing on you worth taking, at least.' }, { text: 'Anything you’ve already beaten stays beaten.' }], [{ label: 'Wake up at home', go: () => this.goHome(true) }]),
+              rewardScreen('BATTERED', [{ text: 'You got done in.', big: true }, { text: lost > 0 ? `Someone went through your pockets: −£${lost}` : 'Nothing on you worth taking, at least.' }, { text: 'Anything you’ve already beaten stays beaten.' }], [{ label: 'Wake up at home', go: () => this.goHome(true) }], ['game-over', 'mission-failed']),
             );
           },
         };
@@ -2097,7 +2103,8 @@ export class Game {
   private updatePrompt(): void {
     const p = this.activePlayer!;
     const touch = this.touchWanted();
-    const k = (key: string, pad: string, t: string) => (touch ? t : this.input.lastDevice === 'gamepad' ? pad : key);
+    // Keys are marked ⟦…⟧ so the HUD can set them as key caps.
+    const k = (key: string, pad: string, t: string) => `\u27e6${touch ? t : this.input.lastDevice === 'gamepad' ? pad : key}\u27e7`;
     const link = p.grapple;
     let text = '';
     let sub: number | null = null;
@@ -2128,7 +2135,8 @@ export class Game {
       if (!done) {
         // House labels are "THING|What it does": FRIDGE  [E]  Open fridge.
         const [what, how] = it.label.includes('|') ? it.label.split('|') : [null, it.label];
-        text = what ? `${what}   ${k('E', 'LB', 'GRAB')}   ${how}` : `${k('E', 'LB', 'GRAB')}  ${how}${locked ? ' \u2014 locked' : ''}`;
+        // "THING" on the plate, the key, then what it does; locked doors say so.
+        text = `${what ? `${what}\u0001` : ''}${k('E', 'LB', 'GRAB')} ${how}${locked ? ' (locked)' : ''}`;
         interact = true;
       }
     }

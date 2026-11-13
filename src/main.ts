@@ -1,4 +1,5 @@
 import './ui/styles.css';
+import './ui/theme.css';
 import { Game } from './Game';
 import { loadCharacterModels } from './render/characterModels';
 import { loadCityKit } from './render/city/CityKit';
@@ -43,6 +44,8 @@ const start = (): void => {
     if (query.get('assets') !== 'builtin') void import('./audio/recorded').then((m) => m.loadRecordedSounds(game.audio));
     // ?debug exposes the game to the console for testing.
     if (query.has('debug') || shot) (window as unknown as { sfuk: Game }).sfuk = game;
+    // ?debug also offers the end-of-fight screens, for checking them without playing a fight out.
+    if (query.has('debug')) void import('./ui/hub').then((m) => ((window as unknown as { sfukUi: unknown }).sfukUi = { rewardScreen: m.rewardScreen }));
     hideBoot();
     // Set before the browser draws its first frame, so not one frame runs on the real clock.
     if (shot) game.manualClock = true;
@@ -70,7 +73,7 @@ const begin = async (): Promise<void> => {
   const kit = new URLSearchParams(location.search).get('city') === 'classic' ? Promise.resolve(null) : loadCityKit();
   const models = loadCharacterModels((p) => {
     if (bootBar) bootBar.style.width = `${Math.round(4 + p.fraction * 96)}%`;
-    if (bootText) bootText.textContent = p.done < p.total ? 'LOADING CHARACTERS' : 'READY';
+    if (bootText) bootText.textContent = p.done < p.total ? 'Loading characters' : 'Ready';
   });
   // Load the character models first, but never hold the game up for long: without them fighters use the
   // classic rig. (The visual tests wait for however long it takes, so their pictures don't depend on the network.)

@@ -15,7 +15,9 @@ import { ITEMS } from '../items/items';
 import type { StyleId } from '../styles/StyleData';
 import { LEVELS, DISTRICT_ORDER } from '../world/levels';
 import { cycleRow, menuButton } from './controls';
+import { screenLogo } from './screens';
 import { h } from './dom';
+import { firstTitle, titleArt } from './titles';
 import { icon } from './icons';
 import { COMPANIONS } from '../companions/companions';
 import type { Screen } from './UIManager';
@@ -318,20 +320,21 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
   const el = h(
     'div',
     { class: 'screen pause-menu' },
-    h('h2', { text: 'Paused' }),
+    screenLogo(),
+    h('h2', {}, titleArt('Paused', 'pause')),
     h(
       'nav',
       { class: 'menu-list' },
-      menuButton('Resume', actions.resume, undefined, 'primary', 'play', 'Esc'),
+      menuButton('Resume', actions.resume, undefined, 'primary', 'play', 'Esc', 'resume'),
       menuButton('Map', actions.map, undefined, '', 'map', 'M'),
       menuButton('Inventory', actions.inventory, undefined, '', 'bag', 'I'),
-      menuButton('Character & crew', actions.character, undefined, '', 'contact', 'H'),
-      actions.home ? menuButton('Head home', actions.home, 'Fights here will still be waiting', '', 'home') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
+      menuButton('Character & crew', actions.character, undefined, '', 'contact', 'H', 'character'),
+      actions.home ? menuButton('Head home', actions.home, 'Fights here will still be waiting', '', 'home', undefined, 'home') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
       h('div', { class: 'menu-gap' }),
       menuButton('Save', actions.save, undefined, '', 'save'),
-      menuButton('Settings', actions.settings, undefined, '', 'settings'),
-      menuButton('Controls', actions.controls, undefined, '', 'controls'),
-      menuButton('Save and quit', actions.quit, undefined, '', 'quit'),
+      menuButton('Settings', actions.settings, undefined, '', 'settings', undefined, 'settings'),
+      menuButton('Controls', actions.controls, undefined, '', 'controls', undefined, 'controls'),
+      menuButton('Save and quit', actions.quit, undefined, '', 'quit', undefined, 'exit'),
     ),
   );
   return {
@@ -359,11 +362,13 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
   };
 }
 
-export function rewardScreen(title: string, lines: { text: string; big?: boolean }[], buttons: { label: string; sub?: string; go: () => void }[]): Screen {
+/** `art`: title graphics to show for the heading, the first that exists (e.g. you-win, level-complete). */
+export function rewardScreen(title: string, lines: { text: string; big?: boolean }[], buttons: { label: string; sub?: string; go: () => void }[], art: string[] = []): Screen {
+  const slug = firstTitle(...art);
   const el = h(
     'div',
-    { class: 'screen pause-menu' },
-    h('h2', { text: title }),
+    { class: `screen pause-menu${slug ? ' reward-art' : ''}` },
+    h('h2', {}, slug ? titleArt(title, slug, 'reward-title') : title),
     h('ul', { class: 'reward-list' }, ...lines.map((l) => h('li', { class: l.big ? 'big' : '', text: l.text }))),
     h('nav', { class: 'menu-list' }, ...buttons.map((b) => menuButton(b.label, b.go, b.sub))),
   );
