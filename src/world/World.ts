@@ -1,4 +1,5 @@
 import { BODY_RADIUS } from '../core/constants';
+import { BOSS_DAMAGE_TAKEN, ENEMY_DAMAGE_TAKEN, fightStrength, SECOND_WIND } from './fightTuning';
 import { ARCHETYPES, archetypeAppearance, type Archetype, type ArchetypeId } from '../ai/archetypes';
 import { AttackTokens } from '../ai/AttackTokens';
 import { BOSSES, type BossDef, type BossPhase } from '../ai/bosses';
@@ -63,7 +64,7 @@ export interface WorldEvents {
   'area:locked': { text: string };
   'encounter:start': { id: string; boss: BossDef | null };
   'encounter:wave': { id: string; wave: number; of: number };
-  'encounter:cleared': { id: string; cash: number; xp: number; optional: boolean };
+  'encounter:cleared': { id: string; cash: number; xp: number; optional: boolean; secondWind?: boolean };
   'boss:phase': { boss: BossDef; phase: BossPhase };
   'boss:defeated': { boss: BossDef; first: boolean; cash: number; xp: number; items: string[] };
   cash: { amount: number };
@@ -1146,6 +1147,7 @@ export class World {
       const def = BOSSES[e.def.boss];
       e.bossDef = def;
       e.boss = this.spawnBoss(def, e);
+      this.tune(e.boss, e, true);
       e.enemies.push(e.boss);
     }
     this.spawnWave(e);
@@ -1157,8 +1159,17 @@ export class World {
     if (!wave) return;
     wave.enemies.forEach((spec, i) => {
       const f = this.spawnEnemy(spec.archetype, this.spawnX(e, i), this.spawnZ(i), spec.weapon);
+      this.tune(f, e, false);
       e.enemies.push(f);
     });
+  }
+
+  /** Main fights are tuned per fight (see fightTuning.ts); optional scraps keep their own numbers. */
+  private tune(f: Fighter, e: EncounterState, boss: boolean): void {
+    if (e.def.optional) return;
+    const s = fightStrength(this.level.id, e.def.id);
+    f.stats.addModifier({ id: 'tune_taken', source: 'tuning', stat: 'damageTakenMult', mul: (boss ? BOSS_DAMAGE_TAKEN : ENEMY_DAMAGE_TAKEN) / s });
+    if (s !== 1) f.stats.addModifier({ id: 'tune_dealt', source: 'tuning', stat: 'damageMult', mul: s });
   }
 
   /** Enemies come in from the edges of the fight, alternating sides. */
@@ -1218,7 +1229,14 @@ export class World {
       return;
     }
     this.pay(cash, xp);
-    this.events.emit('encounter:cleared', { id: def.id, cash, xp, optional: def.optional });
+    // Second wind: winning a main fight gets you back up to at least half health for the next one.
+    let secondWind = false;
+    const v = this.player.vitals;
+    if (!def.optional && !this.player.isKO && v.health < v.maxHealth * SECOND_WIND) {
+      v.health = Math.round(v.maxHealth * SECOND_WIND);
+      secondWind = true;
+    }
+    this.events.emit('encounter:cleared', { id: def.id, cash, xp, optional: def.optional, secondWind });
   }
 
   private pay(cash: number, xp: number): void {
@@ -1280,7 +1298,11 @@ export class World {
       }
       if (phase.swap && boss.secondaryStyle) boss.usingSecondary = !boss.usingSecondary;
       if (phase.weapon) boss.equipWeapon(phase.weapon);
-      phase.summon?.forEach((s, i) => e.enemies.push(this.spawnEnemy(s.archetype, this.spawnX(e, i + 1), this.spawnZ(i + 1), s.weapon)));
+      phase.summon?.forEach((s, i) => {
+        const f = this.spawnEnemy(s.archetype, this.spawnX(e, i + 1), this.spawnZ(i + 1), s.weapon);
+        this.tune(f, e, false);
+        e.enemies.push(f);
+      });
       // A short dramatic pause: everyone freezes and the player is pushed back.
       const dir = Math.sign(this.player.pos.x - boss.pos.x) || 1;
       if (!this.player.grapple) this.player.knockVel = dir * 3;

@@ -87,7 +87,7 @@ const MAX_STEPS_PER_FRAME = 5;
 export class Game {
   private settings = new SettingsStore();
   private input = new InputManager();
-  private audio: AudioManager;
+  readonly audio: AudioManager;
   private renderer: GameRenderer;
   private ui: UIManager;
   private hud: Hud;
@@ -516,6 +516,9 @@ export class Game {
     this.house.abort();
     this.audio.stopLoops();
     const leaving = this.world ? { area: this.world.level.id, x: this.world.player.pos.x, z: this.world.player.pos.z } : null;
+    // In or out of a building: the door goes.
+    const indoors = (id: AreaId) => !!LEVELS[id] && !LEVELS[id].exits.some((x) => x.kind === 'edge');
+    if (leaving && leaving.area !== area && (indoors(area) || indoors(leaving.area as AreaId))) this.audio.door();
     // Your companion's health and weapon go with them; anything you took in a fight left half-done still counts.
     this.world?.settleInjuries();
     this.world?.syncCompanion();
@@ -726,8 +729,9 @@ export class Game {
         this.audio.guardBreak();
       }),
       ev.on('encounter:wave', ({ wave, of }) => this.hud.notify(`MORE OF THEM — ${wave}/${of}`, 'warn')),
-      ev.on('encounter:cleared', ({ cash, xp, optional }) => {
+      ev.on('encounter:cleared', ({ cash, xp, optional, secondWind }) => {
         this.hud.notify('SORTED', 'big');
+        if (secondWind) this.hud.toast('Second wind: back on your feet', 'info');
         if (cash || xp) this.hud.toast(`+£${cash}  +${xp} XP${optional ? '' : ''}`, 'cash');
         this.saveGame();
       }),
@@ -767,7 +771,7 @@ export class Game {
         };
       }),
       ev.on('cash', ({ amount }) => {
-        this.audio.uiConfirm();
+        this.audio.coins();
         this.hud.toast(`+\u00a3${amount}`, 'cash');
       }),
       ev.on('item:picked', ({ name, qty, rarity, stolen }) => {
@@ -2009,6 +2013,9 @@ export class Game {
         if (isPlayer(fighter)) return;
         this.audio.tell();
         this.renderer.fx.burst(fighter.pos.x + fighter.facing * 0.28, fighter.pos.y + 1.45, fighter.pos.z, fighter.facing, 'glint');
+      }),
+      bus.on('weapon:broken', ({ name, smashed }) => {
+        if (smashed) this.audio.smash(/bottle|glass|jar/i.test(name));
       }),
       bus.on('hit:parried', ({ target }) => {
         this.audio.block();

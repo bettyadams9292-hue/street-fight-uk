@@ -6,7 +6,7 @@ import { activityPose } from '../activityPoses';
 import {
   BLOCK, BLOCK_LOW, CLINCHED, CLINCH_HOLD, CROUCH_UP, DODGE_BACK, DODGE_SIDE, FALL_BACK, FALL_FRONT, GUARD, GUARD_BREAK, HIT_HIGH, HIT_LOW, HIT_MID,
   JOINTS, JUMP, JUMP_FALL, LAND_BACK, LYING, LYING_FRONT, LYING_KO, MOUNT, PARRIED, PUSH_UP, RELAXED, SIT_UP, SLIP, STAGGER, STAGGER_MID, STANCES,
-  animPoses, easeIn, easeInOut, easeOut, lerpPose, type FootSpec, type JointName, type Pose, type Vec3,
+  animPoses, easeIn, easeInOut, easeOut, lerpPose, lerpPoseChain, type FootSpec, type JointName, type Pose, type Vec3,
 } from '../poses';
 import { add, apply, euler, lerp3, mul, solveBody, solveLimb, sub, toEuler, transpose, type M3, type Metrics, type Side } from './skeleton';
 
@@ -240,10 +240,12 @@ export class FighterAnimator {
     const foe = f.target;
     const near = !!foe && !foe.isKO && Math.hypot(foe.pos.x - f.pos.x, foe.pos.z - f.pos.z) < 7;
     const busy = f.state !== 'idle' && f.state !== 'walk' && f.state !== 'jump';
-    if (near || busy || f.weapon) this.combatHold = 1.2;
+    // Sprinting drops the guard and runs properly, even mid-fight; the stance snaps back when they stop.
+    if (f.running) this.combatHold = 0;
+    else if (near || busy || f.weapon) this.combatHold = 1.2;
     else this.combatHold = Math.max(0, this.combatHold - dt);
     const wantCombat = f.team !== 'neutral' && this.combatHold > 0 ? 1 : 0;
-    this.combat += (wantCombat - this.combat) * (1 - Math.exp(-(wantCombat ? 14 : 5) * dt));
+    this.combat += (wantCombat - this.combat) * (1 - Math.exp(-(wantCombat ? 14 : f.running ? 12 : 5) * dt));
 
     this.turn(dt, speed);
 
@@ -296,7 +298,7 @@ export class FighterAnimator {
    */
   private stroll(dt: number, speed: number): Pose | null {
     const f = this.f;
-    if (this.combat > 0.3 || f.weapon || f.isKO || (f.state !== 'walk' && f.state !== 'idle') || f.activity) {
+    if (this.combat > 0.3 || (f.weapon && !f.running) || f.isKO || (f.state !== 'walk' && f.state !== 'idle') || f.activity) {
       this.strollW = 0;
       return null;
     }
@@ -492,7 +494,8 @@ export class FighterAnimator {
       // Wind up (weight back, hip loaded), then accelerate into the target.
       const split = heavy ? 0.55 : 0.4;
       if (t < split) return lerpPose(rest, anim.chamber, easeInOut(t / split));
-      return lerpPose(anim.chamber, anim.strike, easeIn((t - split) / (1 - split)));
+      // Hips first, then the trunk, and the limb whips out last.
+      return lerpPoseChain(anim.chamber, anim.strike, (t - split) / (1 - split), easeIn, heavy ? 1 : 0.7);
     }
     // Through the target: the hips and shoulders keep turning a little past the strike pose.
     const over = this.followThrough(anim.chamber, anim.strike, heavy ? 0.14 : 0.07);

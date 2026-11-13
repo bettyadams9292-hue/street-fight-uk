@@ -428,6 +428,8 @@ export class FighterAI {
     if (dist > range + 0.3) {
       this.mode = 'approach';
       cmd.moveX = toward;
+      // A long way off: run in rather than stroll over.
+      if (dist > 4.5 && Math.abs(dz) < 1.2) cmd.run = true;
       // Untrained and keyed up: sometimes swings before they're close enough.
       const wild = this.skill < 0.3 && dist < range + 0.75 && frame >= this.nextAttackAt && Math.abs(dz) < 0.35 && this.rng.chance(0.02);
       if (!wild) return cmd;

@@ -1,9 +1,15 @@
 import type { Settings } from '../save/Settings';
 
+/** Recorded sets: `sfx_<set>_<n>` in the asset manifest (see public/audio/CREDITS.md). */
+type SoundSet = 'punch_medium' | 'punch_heavy' | 'body_medium' | 'body_heavy' | 'step' | 'glass' | 'metal' | 'cloth' | 'coins' | 'door_open' | 'door_close';
+
 /**
- * Web Audio sound engine. Stage 1 sounds are synthesised in code
- * (TEMPORARY: replaced by recorded impacts, foley and ambience in Stage 7).
- * Impacts vary with move weight, so every hit sounds slightly different.
+ * Web Audio sound engine. Fights use recorded impacts, body falls, cloth and
+ * footsteps (Kenney, CC0), layered with a little synthesis for weight. Each
+ * play picks a different take than last time, nudges the pitch and level, so
+ * a flurry never sounds like one sample on repeat. Whooshes, the parry tell
+ * and the street's ambience are synthesised, and every recorded sound falls
+ * back to its synthesised version if its file hasn't loaded.
  */
 export class AudioManager {
   private ctx: AudioContext | null = null;
@@ -14,8 +20,55 @@ export class AudioManager {
   private ambienceStarted = false;
   private settings: Settings;
 
+  /** Recorded sounds: raw bytes as they arrive, decoded once audio is unlocked. */
+  private raw = new Map<string, ArrayBuffer>();
+  private decoded = new Map<string, AudioBuffer>();
+  private lastTake = new Map<string, number>();
+
   constructor(settings: Settings) {
     this.settings = settings;
+  }
+
+  /** Hand over a recorded sound's file (id like `sfx_punch_heavy_2`); it's decoded when audio is allowed. */
+  addRecorded(id: string, data: ArrayBuffer): void {
+    this.raw.set(id, data);
+    if (this.ctx) this.decode(id);
+  }
+
+  private decode(id: string): void {
+    const data = this.raw.get(id);
+    if (!data || !this.ctx || this.decoded.has(id)) return;
+    // decodeAudioData takes ownership of the buffer: give it a copy.
+    this.ctx.decodeAudioData(data.slice(0)).then(
+      (b) => this.decoded.set(id, b),
+      () => this.raw.delete(id),
+    );
+  }
+
+  /** A take from a recorded set, never the same one twice running; null while none are ready. */
+  private take(set: SoundSet): AudioBuffer | null {
+    const ready: number[] = [];
+    for (let i = 0; i < 6; i++) if (this.decoded.has(`sfx_${set}_${i}`)) ready.push(i);
+    if (!ready.length) return null;
+    const last = this.lastTake.get(set);
+    const pool = ready.length > 1 ? ready.filter((i) => i !== last) : ready;
+    const i = pool[Math.floor(Math.random() * pool.length)];
+    this.lastTake.set(set, i);
+    return this.decoded.get(`sfx_${set}_${i}`)!;
+  }
+
+  /** Play a take with a little random pitch and level. Returns false if the set isn't loaded (use the synth). */
+  private play(set: SoundSet, gain: number, rate = 1, delay = 0, spread = 0.06): boolean {
+    const buf = this.take(set);
+    if (!buf || !this.ctx) return false;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = rate * (1 + (Math.random() * 2 - 1) * spread);
+    const g = this.ctx.createGain();
+    g.gain.value = gain * (0.9 + Math.random() * 0.2);
+    src.connect(g).connect(this.sfx);
+    src.start(this.ctx.currentTime + delay);
+    return true;
   }
 
   /** Browsers only allow audio after a user gesture; call from the first click/tap/key. */
@@ -35,6 +88,7 @@ export class AudioManager {
     this.master.connect(this.ctx.destination);
     this.noiseBuffer = this.makeNoise(2);
     this.applySettings(this.settings);
+    for (const id of this.raw.keys()) this.decode(id);
   }
 
   applySettings(s: Settings): void {
@@ -85,31 +139,44 @@ export class AudioManager {
     osc.stop(start + dur + 0.02);
   }
 
-  /** Swing whoosh; heavier moves are lower and longer. */
+  /** Swing: a whoosh, with the rustle of clothes behind it; heavier moves are lower and longer. */
   swing(heavy: boolean): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    const f = this.noise(this.sfx, t, heavy ? 0.22 : 0.12, 'bandpass', heavy ? 700 : 1400, heavy ? 0.25 : 0.15, 1.2);
+    const cloth = this.play('cloth', heavy ? 0.32 : 0.2, heavy ? 0.85 : 1.15, 0, 0.1);
+    const f = this.noise(this.sfx, t, heavy ? 0.22 : 0.12, 'bandpass', heavy ? 700 : 1400, (heavy ? 0.25 : 0.15) * (cloth ? 0.75 : 1), 1.2);
     f.frequency.setValueAtTime(heavy ? 400 : 900, t);
     f.frequency.exponentialRampToValueAtTime(heavy ? 1500 : 2600, t + (heavy ? 0.2 : 0.1));
   }
 
-  /** Body impact; weight 0 (jab) .. 1 (heavy). */
+  /**
+   * Body impact; weight 0 (jab) .. 1 (heavy). A recorded punch (lighter takes pitched up for jabs), a
+   * body thud under the heavy ones, and a short synthesised low end so it lands in the chest.
+   */
   impact(weight: number, clean: boolean): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     const pitch = 1 + (Math.random() - 0.5) * 0.15;
+    const heavy = weight >= 0.7;
+    const recorded = heavy ? this.play('punch_heavy', 0.95, 0.95) : this.play('punch_medium', 0.5 + weight * 0.5, 1.12 - weight * 0.15);
+    if (recorded) {
+      if (heavy) this.play('body_heavy', 0.35, 1.05, 0.01);
+      if (clean) this.play('punch_heavy', 0.3, 1.25, 0.012);
+      this.thump(this.sfx, t, (100 - weight * 40) * pitch, 0.08 + weight * 0.12, 0.25 + weight * 0.25);
+      return;
+    }
     this.thump(this.sfx, t, (110 - weight * 45) * pitch, 0.12 + weight * 0.18, 0.7 + weight * 0.3);
     this.noise(this.sfx, t, 0.05 + weight * 0.06, 'lowpass', 2200 - weight * 900, 0.55 + weight * 0.25);
     if (clean) this.noise(this.sfx, t, 0.08, 'highpass', 3500, 0.25);
   }
 
-  /** Blocked hit: a sharper, duller slap on forearms. */
+  /** Blocked hit: a dull, padded thud on the forearms with a slap on top. */
   block(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    this.noise(this.sfx, t, 0.06, 'bandpass', 1800, 0.45, 2);
-    this.thump(this.sfx, t, 160, 0.08, 0.35);
+    const recorded = this.play('body_medium', 0.6, 1.15);
+    this.noise(this.sfx, t, 0.06, 'bandpass', 1800, recorded ? 0.22 : 0.45, 2);
+    if (!recorded) this.thump(this.sfx, t, 160, 0.08, 0.35);
   }
 
   /** An enemy squaring up to parry: a short, bright scrape you learn to listen for. */
@@ -122,27 +189,61 @@ export class AudioManager {
   guardBreak(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    this.noise(this.sfx, t, 0.25, 'bandpass', 900, 0.6, 0.8);
-    this.thump(this.sfx, t, 90, 0.3, 0.8);
+    const recorded = this.play('punch_heavy', 1, 0.82);
+    if (recorded) this.play('body_heavy', 0.6, 0.9, 0.02);
+    this.noise(this.sfx, t, 0.25, 'bandpass', 900, recorded ? 0.3 : 0.6, 0.8);
+    this.thump(this.sfx, t, 90, 0.3, recorded ? 0.5 : 0.8);
   }
 
+  /** Hitting the floor: the body lands a beat after the blow. */
   knockdown(): void {
     if (!this.ctx) return;
+    if (this.play('body_heavy', 1, 0.88, 0.25)) {
+      this.play('step', 0.35, 0.8, 0.32);
+      this.thump(this.sfx, this.ctx.currentTime + 0.25, 65, 0.25, 0.45);
+      return;
+    }
     const t = this.ctx.currentTime + 0.25;
     this.thump(this.sfx, t, 70, 0.35, 0.9);
     this.noise(this.sfx, t, 0.3, 'lowpass', 600, 0.5);
   }
 
+  /** Out cold: the big shot, then the body going down. */
   ko(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
+    if (this.play('punch_heavy', 1, 0.82)) {
+      this.play('body_heavy', 1, 0.8, 0.38);
+      this.thump(this.sfx, t, 55, 0.6, 0.6);
+      return;
+    }
     this.thump(this.sfx, t, 55, 0.9, 1);
     this.noise(this.sfx, t, 0.7, 'lowpass', 400, 0.4);
   }
 
   step(): void {
     if (!this.ctx) return;
+    if (this.play('step', 0.16, 1, 0, 0.08)) return;
     this.noise(this.sfx, this.ctx.currentTime, 0.05, 'bandpass', 500 + Math.random() * 200, 0.08, 1.5);
+  }
+
+  /** A bottle smashing (or another weapon breaking). */
+  smash(glass: boolean): void {
+    if (!this.ctx) return;
+    if (glass ? this.play('glass', 0.8) : this.play('metal', 0.5, 0.8)) return;
+    this.noise(this.sfx, this.ctx.currentTime, 0.25, 'highpass', glass ? 4000 : 1500, 0.35);
+  }
+
+  /** Picking up cash. */
+  coins(): void {
+    if (!this.ctx) return;
+    if (!this.play('coins', 0.55)) this.uiConfirm();
+  }
+
+  /** Going in or out of a building. */
+  door(): void {
+    if (!this.ctx) return;
+    if (this.play('door_open', 0.5)) this.play('door_close', 0.45, 1, 0.55);
   }
 
   uiMove(): void {

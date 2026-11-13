@@ -249,11 +249,11 @@ test('jump leaves the ground and lands back in idle', () => {
   assert(a.pos.y === 0 && a.state === 'idle', `landed ${a.pos.y} ${a.state}`);
 });
 
-test('out-of-combat health regenerates to 50% only', () => {
+test('out-of-combat health regenerates to 70% only (the rest needs food, rest or a doctor)', () => {
   const { sim, a } = setup(5);
   a.vitals.health = 10;
   run(sim, 60 * SIM_HZ);
-  assert(near(a.vitals.health, a.vitals.maxHealth * 0.5, 0.01), `health ${a.vitals.health}`);
+  assert(near(a.vitals.health, a.vitals.maxHealth * 0.7, 0.01), `health ${a.vitals.health}`);
 });
 
 

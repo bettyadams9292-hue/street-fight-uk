@@ -7,6 +7,8 @@
  * `?assets=builtin`, the game uses that built-in version instead, so a bad
  * asset can never stop the game from running.
  */
+import { AUDIO_ASSETS } from './audioManifest';
+
 export type AssetKind = 'model' | 'texture' | 'audio';
 
 export interface AssetEntry {
@@ -42,6 +44,7 @@ export const ASSETS: AssetEntry[] = [
     fallback: 'Procedural capsule rig (CharacterRig.ts, buildClassicRig)',
     source: 'Quaternius Universal Base Characters, CC0; converted in Blender (assets/quaternius-ubc/README.md)',
   },
+  ...AUDIO_ASSETS,
 ];
 
 export const ASSET_BY_ID: Record<string, AssetEntry> = Object.fromEntries(ASSETS.map((a) => [a.id, a]));

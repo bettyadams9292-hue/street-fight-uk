@@ -55,26 +55,61 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - Two enemies attack at once only 2–4% of the time, so it doesn't become a pile-on.
 - Fights average 82 seconds instead of 95.
 
-## Stage 4: fight length and difficulty curve
+## Stage 4: fight length and difficulty curve ✅ done
 **Problem:**
 - Fights take 65–160 seconds; 20–45 seconds feels best for a brawler.
 - Win rates jump around: industrial yard sits at 25–42% straight after areas at 80% or more.
 - Health only regenerates back to 50% between fights, so damage carries over from one fight into the next.
 
 **Fix:** tune enemy health and damage per area so the curve rises smoothly. Add something to heal with between fights, such as food or a rest spot.
+**What changed:**
+- Enemies in main fights take more damage: about 30% less effective health for ordinary enemies, 17% less for bosses.
+- Every main fight has its own strength dial (`src/world/fightTuning.ts`). `tools/tune_fights.ts` sets the dials by playing each fight with the bots and searching for the strength that puts the win rate on the curve. The curve starts at 95% and eases down to 75% by the last area, with each boss 12 points below its area. Re-run the tool after any change to combat or enemies.
+- Second wind: winning a main fight brings you back up to at least half health.
+- Resting out of a fight now regenerates you up to 70% of your health, up from 50%.
 
-## Stage 5: running
+**Result:**
+- Win rates sit 5 points off the curve on average, down from 16. The worst miss is 15 points, down from 58.
+- Normal fights average 71 s, down from 88 s; the longest is 120 s, down from 153 s.
+- Bosses average 79 s, down from 89 s.
+- Main fights are two waves, so they are still longer than a single brawl. Raise `ENEMY_DAMAGE_TAKEN` and re-run the tuner to shorten them further.
+
+## Stage 5: running ✅ done
 **Problem:** Walk speed is 2.6 m/s, and about 40% of every fight is spent walking. Crossing the long street is slow.
 **Fix:** add a sprint, mainly for getting about outside fights, plus a short dash in fights.
+**What changed:**
+- There's a sprint at 2.1× walking pace. To start it:
+  - keyboard: double-tap a direction and hold it;
+  - D-pad: double-tap;
+  - analogue stick: push it right to the edge for a moment. A touch stick needs a fuller, longer push, so walking doesn't turn into sprinting by accident.
+- Sprinting is free when getting about. In a fight it costs stamina, and an empty tank stops it.
+- The fighter turns to face the way they're running, drops the fight stance and uses the captured run cycle.
+- Enemies sprint in from a distance.
+- The short dash in fights already existed: dodge plus forward.
 
-## Stage 6: sound
+## Stage 6: sound ✅ done
 **Problem:** Hit sounds are generated on the fly, and the code marks them as temporary.
 **Fix:** use recorded impacts, whooshes, grunts, crowd noise and street ambience.
+**What changed:**
+- 39 recorded sounds from Kenney's public-domain (CC0) packs (`public/audio/`, credits in `public/audio/CREDITS.md`): punches at two weights, body hits and falls, concrete footsteps, clothing rustle on swings, glass and metal smashes, coins and doors.
+- They're converted to MP3 so they play on iPhones and iPads, with leading silence trimmed and levels evened out.
+- Each play picks a different take from last time and nudges the pitch and level. Heavy hits layer a body thud and a little synthesised low end.
+- Everything falls back to the synthesised sound if a file hasn't loaded.
 
-## Stage 7: animations that match
+**Still synthesised:** whooshes, the parry tell and street ambience. There are no grunts or crowd noise yet, because there's no good public-domain set of voices. Better none than bad ones.
+
+## Stage 7: animations that match ✅ done (for now)
 **Problem:** Jabs, crosses and front kicks are motion capture. Hooks, uppercuts, knees, elbows and roundhouses are hand-made and look stiffer.
 **Fix:** find more mocap for those moves, or rework the hand-made ones to the same standard.
+**What was checked:** every fight take in the Rokoko pack was scanned for hooks, uppercuts, elbows and knees, by elbow angle, hand path and knee height. The candidates were drawn on pose sheets. They turned out to be jabs, flailing or gorilla chest-beats, so none were good enough to use.
+**What changed:**
+- Hand-made strikes now move as a kinetic chain (`lerpPoseChain`): the hips turn first, the trunk and shoulders follow, and the elbow or knee whips out last, all arriving on the impact frame.
+- The roundhouse now chambers the knee before the leg snaps out.
+- `tools/move_sheet.ts` draws any move by id in a real exchange, for checking animation work.
+
+**Next:** proper captures of hooks, uppercuts, knees, elbows and round kicks would close the gap for good. Drop them in as FBX files and cut them with `tools/rokoko/convert.py`.
 
 ## Log
 - 12 Nov 2026: audit done; stages 1–3 started on branch `gameplay-feel`.
 - 12 Nov 2026 (later): stages 1–3 done, with tests in `tests/gameplay.test.ts`. Across the whole game, the careful bot's average win rate went from 70% to 78% and the sloppy bot's from 64% to 75%. Enemies no longer get free parries, while players still can, so the game got a little easier overall. Stage 4 should retune the curve from these numbers.
+- 12 Nov 2026 (night): stages 4–7 done on branch `gameplay-stages-4-7`. Final balance: careful bot 82%, sloppy 75%, all fights within 15 points of the curve.

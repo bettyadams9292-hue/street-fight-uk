@@ -14,7 +14,7 @@ import type { StyleId } from '../src/styles/StyleData';
 import { LEVELS } from '../src/world/levels';
 import { World } from '../src/world/World';
 
-interface Checkpoint {
+export interface Checkpoint {
   area: AreaId;
   level: number;
   upgrades: Partial<Record<UpgradeId, number>>;
@@ -25,7 +25,7 @@ interface Checkpoint {
 }
 
 /** Roughly where a player is when they reach each district's fights. */
-const CHECKPOINTS: Checkpoint[] = [
+export const CHECKPOINTS: Checkpoint[] = [
   { area: 'estate', level: 1, upgrades: {}, style: 'street', gear: 'wraps', moves: [], flags: [] },
   { area: 'high_street', level: 3, upgrades: { health: 1 }, style: 'street', gear: 'wraps', moves: ['specials'], flags: [] },
   { area: 'alleys', level: 4, upgrades: { health: 1, power: 1 }, style: 'boxing', gear: 'wraps', moves: ['specials'], flags: ['boss_gaffer'] },
@@ -75,13 +75,13 @@ function progressFor(cp: Checkpoint): Progress {
   return p;
 }
 
-interface Result {
+export interface Result {
   won: boolean;
   seconds: number;
   hpLeft: number;
 }
 
-function playEncounter(cp: Checkpoint, encId: string, who: keyof typeof PLAYERS, seed: number): Result {
+export function playEncounter(cp: Checkpoint, encId: string, who: keyof typeof PLAYERS, seed: number): Result {
   const p = progressFor(cp);
   const lvl = LEVELS[cp.area];
   const w = new World(lvl, p, { entry: lvl.entries[0].id, seed, difficulty: (process.env.DIFF as 'easy' | 'normal' | 'hard') ?? 'normal' });
@@ -127,6 +127,9 @@ process.on('exit', () => {
 });
 const RUNS = Number(process.env.RUNS ?? 12);
 const only = process.argv[2];
+if (process.argv[1]?.endsWith('balance.ts')) report();
+
+function report(): void {
 console.log(`${'area/fight'.padEnd(28)} ${'who'.padEnd(7)} win%   avg s  hp left`);
 for (const cp of CHECKPOINTS) {
   for (const enc of LEVELS[cp.area].encounters) {
@@ -142,4 +145,5 @@ for (const cp of CHECKPOINTS) {
       );
     }
   }
+}
 }

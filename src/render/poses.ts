@@ -459,6 +459,31 @@ export function lerpPose(a: Pose, b: Pose, t: number): Pose {
   };
 }
 
+/**
+ * The kinetic chain: how far behind the hips each joint moves, as a share of the move. Into a strike,
+ * the hips turn first, the trunk and shoulders follow, and the elbow or knee snaps out last, like a
+ * whip. Every joint still arrives at t = 1, so the impact frame doesn't move. (`reverse` runs it the
+ * other way, limb first; it isn't used for recovery because the hips then catch up too fast.)
+ */
+const CHAIN_DELAY: Record<JointName, number> = {
+  // Feet stay with the leg: the knee carries the snap.
+  hips: 0, lHip: 0.04, rHip: 0.04, spine: 0.08, head: 0.1, lShoulder: 0.14, rShoulder: 0.14, lKnee: 0.18, rKnee: 0.18, lElbow: 0.24, rElbow: 0.24, lFoot: 0, rFoot: 0,
+};
+
+/** lerpPose, but each joint follows the kinetic chain (`reverse` for recovering: limbs first). */
+export function lerpPoseChain(a: Pose, b: Pose, t: number, ease: (x: number) => number, amount = 1, reverse = false): Pose {
+  const base = lerpPose(a, b, ease(t));
+  const joints = { ...base.joints };
+  for (const j of JOINTS) {
+    const d = (reverse ? 0.24 - CHAIN_DELAY[j] : CHAIN_DELAY[j]) * amount;
+    const k = ease(Math.max(0, Math.min(1, (t - d) / (1 - d))));
+    const va = a.joints[j] ?? ZERO;
+    const vb = b.joints[j] ?? ZERO;
+    joints[j] = [va[0] + (vb[0] - va[0]) * k, va[1] + (vb[1] - va[1]) * k, va[2] + (vb[2] - va[2]) * k];
+  }
+  return { ...base, joints };
+}
+
 export function easeOut(t: number): number {
   return 1 - (1 - t) * (1 - t);
 }
