@@ -699,8 +699,8 @@ function securityEquipment(g: THREE.Group, id: string, D: number, y0: number, on
  * (security, air handling, cooling and climate units keep their own models).
  */
 function hydroEquipment(g: THREE.Group, id: string, W: number, D: number, on: boolean, fill: number): boolean {
-  const put = (m: HydroModelId, w: number, h: number, d: number, x = 0, y = 0, z = 0, keepAspect = false): boolean => {
-    const p = hydroPiece(m, w, h, d, { keepAspect, dim: !on });
+  const put = (m: HydroModelId, w: number, h: number, d: number, x = 0, y = 0, z = 0, keepAspect = false, turn = 0): boolean => {
+    const p = hydroPiece(m, w, h, d, { keepAspect, dim: !on, turn });
     if (!p) return false;
     p.position.set(x, y, z);
     g.add(p);
@@ -708,16 +708,22 @@ function hydroEquipment(g: THREE.Group, id: string, W: number, D: number, on: bo
   };
   if (!hydroReady()) return false;
   const steel = mat('#8a8e94', 0.4, 0.7);
+  // The crop: a potted plant, each one turned a little differently.
+  const plant = (x: number, z: number, h: number, i: number) => put('cannabis_plant', h * 0.6, h, h * 0.6, x, 0, z, true, i * 2.1);
   switch (id) {
     case 'tent_s':
-      return put('grow_tent', W, 1.95, D);
+      put('grow_tent', W, 1.95, D);
+      plant(0, 0, 1.15, 0);
+      return true;
     case 'tent_d':
       put('grow_tent', W / 2 - 0.02, 1.95, D, -W / 4);
       put('grow_tent', W / 2 - 0.02, 1.95, D, W / 4);
+      plant(-W / 4, 0, 1.15, 0);
+      plant(W / 4, 0, 1.15, 1);
       return true;
     case 'module': {
-      // A walk-in rack system: three tiers of channels under lights, fed from a reservoir and pump.
-      put('pipe_rack', W - 1.0, 1.85, Math.min(D, 0.7), -0.45, 0, -D / 2 + 0.35);
+      // A walk-in grow room: a row of plants under the lights, fed from a reservoir and pump.
+      for (let i = 0; i < 4; i++) plant(-0.45 + (i - 1.5) * 0.45, -D / 2 + 0.35, 1.2, i);
       for (const dx of [-W / 4 - 0.2, W / 4 - 0.55]) put('grow_light', (W - 1.2) / 2, 0.3, 0.2, dx, 1.95, -D / 2 + 0.35, true);
       for (const dx of [-W / 2 + 0.05, W / 2 - 1.05]) C(g, 0.02, 0.02, 2.3, dx, 1.15, -D / 2 + 0.35, steel, 6);
       B(g, W - 1.0, 0.03, 0.03, -0.45, 2.3, -D / 2 + 0.35, steel, false);
@@ -760,8 +766,7 @@ function hydroEquipment(g: THREE.Group, id: string, W: number, D: number, on: bo
       const n = id === 'led_rig' ? 1 : id === 'led_array' ? 2 : 3;
       const lw = (W - 0.12) / n;
       for (let i = 0; i < n; i++) put('grow_light', lw - 0.04, 0.5, 0.2, -W / 2 + 0.06 + lw * (i + 0.5), H - 0.44 * (lw - 0.04), 0, true);
-      if (id === 'led_rig') put('seedling_tray', W - 0.2, 0.18, D - 0.1, 0, 0, 0, true);
-      else for (let i = 0; i < n; i++) put('grow_tray', lw - 0.06, 0.28, D - 0.1, -W / 2 + 0.06 + lw * (i + 0.5), 0, 0, true);
+      for (let i = 0; i < n; i++) plant(-W / 2 + 0.06 + lw * (i + 0.5), 0, Math.min(1.15, (lw - 0.04) / 0.52), i);
       return true;
     }
     case 'fan':

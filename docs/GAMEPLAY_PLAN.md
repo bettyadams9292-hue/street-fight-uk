@@ -181,6 +181,15 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - Inside: a dome camera in every shop, pub, gym and showroom, and a row of them in the casino.
 - CCTV posts on the trading estate and in the warehouse yard.
 
+## Stage 14: the crop ✅ done
+**Source:** "Cannabis Plant 0nE" by -X-ScornGames (CC BY 4.0, supplied by you). The original is a million triangles and 45 MB; `tools/models/decimate_plant.py` cuts it to about 3,500 triangles (396 KB) with its texture baked into flat colours, so a full grow room stays smooth.
+**Where:**
+- One plant in each grow tent.
+- A row of four under the lights in the commercial module, which replaces the lettuce rack.
+- One to three plants under the light stands.
+- On Green Fingers' shelves and on display on the floor.
+- The lettuce, basil, tomato, channel-rack and tray models are no longer used and have been removed.
+
 ## Log
 - 12 Nov 2026: audit done; stages 1–3 started on branch `gameplay-feel`.
 - 12 Nov 2026 (later): stages 1–3 done, with tests in `tests/gameplay.test.ts`. Across the whole game, the careful bot's average win rate went from 70% to 78% and the sloppy bot's from 64% to 75%. Enemies no longer get free parries, while players still can, so the game got a little easier overall. Stage 4 should retune the curve from these numbers.
@@ -191,3 +200,4 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - 13 Nov 2026: stage 11 (shop furniture) done.
 - 13 Nov 2026: stage 12 (hydroponics kit) done.
 - 13 Nov 2026: stage 13 (security kit) done.
+- 13 Nov 2026: stage 14 (the crop) done.
