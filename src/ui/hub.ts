@@ -17,7 +17,7 @@ import { LEVELS, DISTRICT_ORDER } from '../world/levels';
 import { cycleRow, menuButton } from './controls';
 import { screenLogo } from './screens';
 import { h } from './dom';
-import { firstTitle, titleArt } from './titles';
+import { firstTitle, titleArt, slugify } from './titles';
 import { icon } from './icons';
 import { COMPANIONS } from '../companions/companions';
 import type { Screen } from './UIManager';
@@ -326,12 +326,12 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
       'nav',
       { class: 'menu-list' },
       menuButton('Resume', actions.resume, undefined, 'primary', 'play', 'Esc', 'resume'),
-      menuButton('Map', actions.map, undefined, '', 'map', 'M'),
-      menuButton('Inventory', actions.inventory, undefined, '', 'bag', 'I'),
-      menuButton('Character & crew', actions.character, undefined, '', 'contact', 'H', 'character'),
-      actions.home ? menuButton('Head home', actions.home, 'Fights here will still be waiting', '', 'home', undefined, 'home') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
+      menuButton('Map', actions.map, undefined, '', 'map', 'M', 'map'),
+      menuButton('Inventory', actions.inventory, undefined, '', 'bag', 'I', 'inventory'),
+      menuButton('Character & crew', actions.character, undefined, '', 'contact', 'H', 'character-and-crew'),
+      actions.home ? menuButton('Head home', actions.home, 'Fights here will still be waiting', '', 'home', undefined, 'head-home') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
       h('div', { class: 'menu-gap' }),
-      menuButton('Save', actions.save, undefined, '', 'save'),
+      menuButton('Save', actions.save, undefined, '', 'save', undefined, 'save'),
       menuButton('Settings', actions.settings, undefined, '', 'settings', undefined, 'settings'),
       menuButton('Controls', actions.controls, undefined, '', 'controls', undefined, 'controls'),
       menuButton('Save and quit', actions.quit, undefined, '', 'quit', undefined, 'exit'),
@@ -370,7 +370,7 @@ export function rewardScreen(title: string, lines: { text: string; big?: boolean
     { class: `screen pause-menu${slug ? ' reward-art' : ''}` },
     h('h2', {}, slug ? titleArt(title, slug, 'reward-title') : title),
     h('ul', { class: 'reward-list' }, ...lines.map((l) => h('li', { class: l.big ? 'big' : '', text: l.text }))),
-    h('nav', { class: 'menu-list' }, ...buttons.map((b) => menuButton(b.label, b.go, b.sub))),
+    h('nav', { class: 'menu-list' }, ...buttons.map((b) => menuButton(b.label, b.go, b.sub, '', undefined, undefined, slugify(b.label)))),
   );
   // Back picks the first (main) choice: never strands you on this screen.
   return { el, onBack: buttons[0].go };
