@@ -920,6 +920,8 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
   .jw-price b { font-size: 20px; }
   .rt-thumb { width: 56px; height: 34px; }
   .jw-groups, .prop-list { max-height: 58vh; }
+}
+
 /* ----------------------------------------------------------------------------
    Phones held upright: a tidy deck at the bottom, status at the top.
    Bottom row: six plate buttons. Above it: the stick on the left, punches and
