@@ -3,6 +3,7 @@ import { BIKES, CARS, FURNITURE, type BikeDef, type CarDef, type FurnitureDef } 
 import { signTexture } from './levelTextures';
 import { EQUIPMENT } from '../business/catalogue';
 import { GYM_KIT } from '../training/gym';
+import { homeFurnitureModel } from './props/homeFurniture';
 
 /**
  * Furniture, cars and off-road bikes, built from primitives so they share
@@ -67,6 +68,9 @@ const darker = (hex: string, k: number) => {
 
 /** A furniture piece. Wall pieces hang at their own height with their back on z = -depth/2. */
 export function buildFurnitureModel(id: string, colour?: string): THREE.Group {
+  // Kenney's furniture kit when it's loaded and the piece is mapped; the built-in model otherwise.
+  const kit = homeFurnitureModel(id, colour);
+  if (kit) return kit;
   const def = FURNITURE[id];
   const g = new THREE.Group();
   if (!def) {

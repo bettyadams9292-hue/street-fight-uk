@@ -17,7 +17,7 @@ import { EQUIPMENT } from '../business/catalogue';
 import { CARS, FINISHES, FURNITURE } from '../property/catalogue';
 import { themeProfile } from './themes';
 import { kitStreet, planStreet, type StreetPlan } from '../city/street';
-import { buildKitStreet, kitFloor, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
+import { buildKitStreet, hasKitPiece, kitFloor, kitPiece, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
 import { exitLocked, type World } from '../world/World';
 import {
   concreteTexture,
@@ -275,6 +275,15 @@ export class LevelView {
   /** Put a Kenney furniture model into the prop group, fitted to w × h × d; false if the kit isn't loaded. */
   private fit(g: THREE.Group, id: FurnitureId, w: number, h: number, d: number, o: { x?: number; y?: number; z?: number; upholstery?: string; turn?: number } = {}): boolean {
     const m = furniture(id, w, h, d, { upholstery: o.upholstery, turn: o.turn });
+    if (!m) return false;
+    m.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
+    g.add(m);
+    return true;
+  }
+
+  /** Put a Polyfork kit piece (e.g. 'cafe/bistro-chair') into the group, fitted to w × h × d; false until the kit has loaded. */
+  private piece(g: THREE.Group, id: string, w: number, h: number, d: number, o: { x?: number; y?: number; z?: number; keepAspect?: boolean; turn?: number; paint?: string } = {}): boolean {
+    const m = kitPiece(id, w, h, d, o);
     if (!m) return false;
     m.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
     g.add(m);
@@ -2179,6 +2188,10 @@ export class LevelView {
         break;
       }
       case 'shelves': {
+        if (this.piece(g, 'cafe/wire-shelving-rack', W, 1.9, D)) {
+          for (let i = 0; i < 6; i++) B(0.3, 0.25, 0.3, -W / 2 + 0.25 + (i % 3) * 0.5, 0.55 + Math.floor(i / 3) * 0.5 + 0.125, 0, this.mat(['#a87a4a', '#3a5a8a', '#8a2a2a'][i % 3], 0.9), false);
+          break;
+        }
         const m = this.mat('#5a5e64', 0.6, 0.6);
         for (let i = 0; i < 4; i++) B(W, 0.03, D, 0, 0.3 + i * 0.5, 0, m);
         for (const dx of [-W / 2, W / 2]) B(0.04, 1.9, D, dx, 0.95, 0, m);
@@ -2404,6 +2417,7 @@ export class LevelView {
         break;
       }
       case 'vending': {
+        if (this.piece(g, 'cafe/drinks-fridge', W, 1.9, D)) break;
         B(W, 1.9, D, 0, 0.95, 0, this.mat(c ?? '#b3121b', 0.4, 0.3));
         B(W * 0.65, 1.3, 0.02, -W * 0.12, 1.15, D / 2 + 0.01, this.mat('#101418', 0.05, 0.6, { emissive: 0xfff8e8, emissiveIntensity: 0.8 }), false);
         for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) B(0.08, 0.16, 0.05, -W * 0.4 + k * 0.13, 0.65 + r * 0.32, D / 2 - 0.04, this.mat(['#d82a2a', '#2a8ad8', '#e8c82a', '#2a8a3a'][(r + k) % 4], 0.4), false);
@@ -2438,6 +2452,16 @@ export class LevelView {
       case 'display_cabinet':
       case 'glass_counter': {
         const tall = p.kind === 'display_cabinet';
+        // A glass counter is the street's display case (Polyfork), with watches and rings glinting inside.
+        if (!tall && hasKitPiece('cafe/pastry-display-case')) {
+          const n = Math.max(1, Math.round(W / 1.4));
+          for (let i = 0; i < n; i++) this.piece(g, 'cafe/pastry-display-case', W / n, 1.1, D, { x: -W / 2 + (W / n) * (i + 0.5) });
+          for (let i = 0; i < 8; i++) {
+            const gold = this.rnd() < 0.5;
+            B(0.08, 0.03, 0.06, -W / 2 + 0.2 + this.rnd() * (W - 0.4), 0.82, (this.rnd() - 0.5) * (D - 0.3), this.mat(gold ? '#d4af37' : '#c8ccd0', 0.15, 0.95, { emissive: gold ? 0x6a5010 : 0x404448, emissiveIntensity: 0.6 }), false);
+          }
+          break;
+        }
         const h = tall ? 1.8 : 1.0;
         B(W, 0.3, D, 0, 0.15, 0, this.mat('#2a1a10', 0.5));
         B(W, h - 0.3, D, 0, 0.15 + h / 2, 0, this.mat('#c8e0f0', 0.02, 0.2, { transparent: true, opacity: 0.25, depthWrite: false }), false);
@@ -2451,6 +2475,13 @@ export class LevelView {
         break;
       }
       case 'shop_counter': {
+        // The street's own shop counter (Polyfork) in modules, with a till on the end.
+        if (hasKitPiece('cafe/service-counter-module')) {
+          const n = Math.max(1, Math.round(W / 1.6));
+          for (let i = 0; i < n; i++) this.piece(g, 'cafe/service-counter-module', W / n, 1.0, D, { x: -W / 2 + (W / n) * (i + 0.5) });
+          this.piece(g, 'cafe/pos-terminal', 0.5, 0.45, 0.4, { x: W / 2 - 0.4, y: 1.0, keepAspect: true });
+          break;
+        }
         B(W, 1.0, D, 0, 0.5, 0, this.mat(c ?? '#e8e4dc', 0.4));
         B(W + 0.06, 0.05, D + 0.06, 0, 1.02, 0, this.mat('#1a1a1a', 0.3, 0.2));
         B(0.35, 0.25, 0.3, W / 2 - 0.4, 1.17, 0, this.mat('#1a1a1a', 0.4, 0.4));
@@ -2458,6 +2489,19 @@ export class LevelView {
         break;
       }
       case 'shop_shelf': {
+        // Wire shelving (Polyfork) stocked with packets and tins.
+        if (hasKitPiece('cafe/wire-shelving-rack')) {
+          const n = Math.max(1, Math.round(W / 1.2));
+          for (let i = 0; i < n; i++) this.piece(g, 'cafe/wire-shelving-rack', W / n, 1.9, D, { x: -W / 2 + (W / n) * (i + 0.5) });
+          for (let lv = 0; lv < 4; lv++) {
+            for (let x = -W / 2 + 0.14; x < W / 2 - 0.1; x += 0.22) {
+              if (this.rnd() < 0.18) continue;
+              const tall = 0.12 + this.rnd() * 0.12;
+              B(0.16, tall, D * 0.55, x, 0.42 + lv * 0.4 + tall / 2, 0, this.mat(['#1a1a1a', '#e8e4dc', '#7a1414', '#1f2a44', '#c97a1a', '#3a5a3a', '#d8b82a'][Math.floor(this.rnd() * 7)], 0.8), false);
+            }
+          }
+          break;
+        }
         const m = this.mat(c ?? '#e8e4dc', 0.6);
         B(W, 1.9, 0.05, 0, 0.95, -D / 2 + 0.03, m);
         for (let i = 0; i < 4; i++) {
@@ -2477,7 +2521,11 @@ export class LevelView {
       }
       case 'bar': {
         const wood = new THREE.MeshStandardMaterial({ map: woodFloorTexture(W / 1.5, 0.6), color: 0x6a3a1a, roughness: 0.4 });
-        B(W, 1.05, D, 0, 0.52, 0, wood);
+        // The bar front is the street's counter (Polyfork), under a dark polished top.
+        if (hasKitPiece('cafe/service-counter-module')) {
+          const n = Math.max(1, Math.round(W / 1.6));
+          for (let i = 0; i < n; i++) this.piece(g, 'cafe/service-counter-module', W / n, 1.03, D, { x: -W / 2 + (W / n) * (i + 0.5) });
+        } else B(W, 1.05, D, 0, 0.52, 0, wood);
         B(W + 0.1, 0.06, D + 0.15, 0, 1.08, 0.05, this.mat('#3a1a0a', 0.25, 0.1));
         B(W, 0.04, 0.04, 0, 0.22, D / 2 + 0.12, this.mat('#c9a227', 0.2, 0.9), false);
         // Beer pumps.
@@ -2503,20 +2551,36 @@ export class LevelView {
         break;
       }
       case 'pub_table': {
+        if (this.piece(g, 'cafe/bistro-table', W * 2, 0.76, W * 2)) {
+          C(0.035, 0.03, 0.15, 0.1, 0.84, 0.05, this.mat('#d8a040', 0.1, 0.1, { transparent: true, opacity: 0.8 }), 10);
+          break;
+        }
         C(W, W, 0.05, 0, 0.74, 0, this.mat('#3a2010', 0.35), 20);
         C(0.04, 0.05, 0.7, 0, 0.37, 0, this.mat('#1a1a1a', 0.4, 0.6), 8);
         C(0.25, 0.25, 0.03, 0, 0.02, 0, this.mat('#1a1a1a', 0.4, 0.6), 16);
         C(0.035, 0.03, 0.15, 0.1, 0.84, 0.05, this.mat('#d8a040', 0.1, 0.1, { transparent: true, opacity: 0.8 }), 10);
         break;
       }
-      case 'fruit_machine': {
-        B(W, 1.8, D, 0, 0.9, 0, this.mat('#1a1a2a', 0.4));
-        B(W * 0.8, 0.45, 0.02, 0, 1.3, D / 2 + 0.01, this.mat('#111', 0.3, 0, { emissive: 0xff8a2a, emissiveIntensity: 0.8 }), false);
-        B(W * 0.8, 0.3, 0.02, 0, 1.65, D / 2 + 0.01, this.mat('#111', 0.3, 0, { emissive: 0xff2aa0, emissiveIntensity: 1 }), false);
-        for (let i = 0; i < 4; i++) B(0.06, 0.03, 0.03, -0.15 + i * 0.1, 0.95, D / 2 + 0.02, this.mat('#111', 0.3, 0, { emissive: [0xff2020, 0xffd020, 0x20ff60, 0x2080ff][i], emissiveIntensity: 1 }), false);
+      case 'fruit_machine':
+      case 'slot_machine': {
+        // One cabinet design for the pub's fruit machine and the casino's slots (the pub's runs brighter).
+        const cab = this.mat(c ?? (p.kind === 'fruit_machine' ? '#1a1a2a' : '#2a1030'), 0.3, 0.4);
+        B(W, 1.15, D, 0, 0.58, 0, cab);
+        B(W, 0.55, D * 0.75, 0, 1.42, -D * 0.12, cab);
+        B(W - 0.1, 0.38, 0.02, 0, 1.45, D * 0.27, this.mat('#111', 0.2, 0, { emissive: p.kind === 'fruit_machine' ? 0xff8a2a : 0xffc040, emissiveIntensity: 0.9 }), false);
+        for (let i = 0; i < 3; i++) B(0.15, 0.24, 0.02, -0.2 + i * 0.2, 1.12, D / 2 + 0.01, this.mat('#f8f4e8', 0.3, 0, { emissive: 0xfff0d0, emissiveIntensity: 0.5 }), false);
+        B(W, 0.05, D, 0, 1.73, -D * 0.12, this.mat('#c9a227', 0.2, 0.9, { emissive: 0x7a5a10, emissiveIntensity: 0.4 }), false);
+        if (p.kind === 'fruit_machine') for (let i = 0; i < 4; i++) B(0.06, 0.03, 0.03, -0.15 + i * 0.1, 0.95, D / 2 + 0.02, this.mat('#111', 0.3, 0, { emissive: [0xff2020, 0xffd020, 0x20ff60, 0x2080ff][i], emissiveIntensity: 1 }), false);
+        const arm = C(0.02, 0.02, 0.5, W / 2 + 0.03, 1.15, 0, this.mat('#d8d8d8', 0.2, 1), 8);
+        arm.rotation.z = -0.15;
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), this.mat('#c81010', 0.3));
+        knob.position.set(W / 2 + 0.07, 1.42, 0);
+        g.add(knob);
+        B(W * 0.7, 0.05, 0.12, 0, 0.82, D / 2 + 0.05, this.mat('#1a1a1a', 0.4), false);
         break;
       }
       case 'jukebox': {
+        if (this.piece(g, 'cars/jukebox', W, 1.6, D, { keepAspect: true })) break;
         B(W, 1.3, D, 0, 0.65, 0, this.mat('#5a2a14', 0.3));
         const top = C(W / 2, W / 2, D * 2, 0, 1.3, 0, this.mat('#d84a1a', 0.2, 0, { emissive: 0xff8a2a, emissiveIntensity: 0.9 }), 20);
         top.rotation.x = Math.PI / 2;
@@ -2731,21 +2795,6 @@ export class LevelView {
       case 'bike_stand': {
         B(W, 0.12, D, 0, 0.06, 0, this.mat('#1a1a1c', 0.4, 0.5));
         B(W - 0.08, 0.02, D - 0.08, 0, 0.13, 0, this.mat('#e86a10', 0.5, 0, { emissive: 0xe86a10, emissiveIntensity: 0.25 }), false);
-        break;
-      }
-      case 'slot_machine': {
-        const cab = this.mat(c ?? '#2a1030', 0.3, 0.4);
-        B(W, 1.15, D, 0, 0.58, 0, cab);
-        B(W, 0.55, D * 0.75, 0, 1.42, -D * 0.12, cab);
-        B(W - 0.1, 0.38, 0.02, 0, 1.45, D * 0.27, this.mat('#111', 0.2, 0, { emissive: 0xffc040, emissiveIntensity: 0.9 }), false);
-        for (let i = 0; i < 3; i++) B(0.15, 0.24, 0.02, -0.2 + i * 0.2, 1.12, D / 2 + 0.01, this.mat('#f8f4e8', 0.3, 0, { emissive: 0xfff0d0, emissiveIntensity: 0.5 }), false);
-        B(W, 0.05, D, 0, 1.73, -D * 0.12, this.mat('#c9a227', 0.2, 0.9, { emissive: 0x7a5a10, emissiveIntensity: 0.4 }), false);
-        const arm = C(0.02, 0.02, 0.5, W / 2 + 0.03, 1.15, 0, this.mat('#d8d8d8', 0.2, 1), 8);
-        arm.rotation.z = -0.15;
-        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), this.mat('#c81010', 0.3));
-        knob.position.set(W / 2 + 0.07, 1.42, 0);
-        g.add(knob);
-        B(W * 0.7, 0.05, 0.12, 0, 0.82, D / 2 + 0.05, this.mat('#1a1a1a', 0.4), false);
         break;
       }
       case 'roulette_table': {

@@ -126,8 +126,25 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 
 `tests/gameplay.test.ts` holds this gap.
 
+## Stage 9: low-poly furniture ✅ done
+**Problem:** the walk-in shops, pubs and cafés and the furniture you buy for your place were built from boxes in code, while the street outside uses proper low-poly kits.
+**Sources checked:** the full Kenney Furniture Kit (140 pieces), Kenney's mini-market, mini-arcade and survival packs, Quaternius's house interior pack and the Polyfork kits the city already uses. They were compared on rendered contact sheets (`tools/glbsheet.py`, which draws .glb files and the packed Polyfork kit flat-shaded, no browser needed).
+- The mini packs are chunky and toy-like; they'd clash with the city.
+- Quaternius's set is darker and more realistic; it would clash with the Kenney furniture already in the flat.
+**What changed:**
+- **Furniture you buy:** 32 of the 45 catalogue pieces are now Kenney Furniture Kit models (`src/render/props/homeFurniture.ts`), matching the flat's existing furniture. That covers sofas, armchairs, beds, wardrobes, drawers, bedsides, desks, dining sets, the whole kitchen, the washer, bathroom storage, rugs, lamps and plants. 16 more kit models were added (CC0).
+  - Each is fitted inside its catalogue footprint, keeping its proportions.
+  - Your colour shows on the fabric, or as a wood or paint finish: wood tones keep the grain, while whites and blacks become satin paint.
+  - Worktops and wall cupboards are built from units side by side.
+  - Wall pieces hang at their mounting height.
+- **Shops, pubs and cafés:** counters, the till, shelving (stocked), glass counters (watches and rings inside), the bar front, pub tables, the jukebox and drinks fridges now use the Polyfork pieces the street's shop windows use, so inside matches outside. The pub's fruit machine now uses the casino's slot-machine cabinet.
+- Every piece falls back to its built-in model until the kits load. `tests/furniture.test.ts` checks every model the game asks for exists.
+
+**Left as they are:** wall art, mirrors, the neon sign, the laundry basket and the floor vase (no good kit model). Gym kit (no low-poly gym pack exists; the built-in kit is already properly modelled). Basement grow kit, roulette and blackjack tables, the casino cage, mannequins and clothes rails (no matching models).
+
 ## Log
 - 12 Nov 2026: audit done; stages 1–3 started on branch `gameplay-feel`.
 - 12 Nov 2026 (later): stages 1–3 done, with tests in `tests/gameplay.test.ts`. Across the whole game, the careful bot's average win rate went from 70% to 78% and the sloppy bot's from 64% to 75%. Enemies no longer get free parries, while players still can, so the game got a little easier overall. Stage 4 should retune the curve from these numbers.
 - 12 Nov 2026 (night): stages 4–7 done on branch `gameplay-stages-4-7`. Final balance: careful bot 82%, sloppy 75%, all fights within 15 points of the curve.
 - 13 Nov 2026: stage 8 (game feel) done on branch `game-feel`.
+- 13 Nov 2026: stage 9 (low-poly furniture) done on branch `low-poly-furniture`.

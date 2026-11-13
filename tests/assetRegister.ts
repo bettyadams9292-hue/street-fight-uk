@@ -2,7 +2,7 @@
  * Writes docs/ASSET_REGISTER.md from the game's own data, so "where it appears"
  * and collision sizes always match the levels. Run: npx tsx tests/assetRegister.ts
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { WEAPON_IDS, WEAPONS } from '../src/combat/Weapons';
 import { ARCHETYPES } from '../src/ai/archetypes';
 import { BOSSES } from '../src/ai/bosses';
@@ -16,6 +16,11 @@ import { PROP_SIZE, type FacadeKind, type PropKind } from '../src/world/LevelTyp
 import { LEVELS } from '../src/world/levels';
 import { BIKE_LIST, CAR_LIST, FINISH_LIST, FURNITURE_LIST } from '../src/property/catalogue';
 import { EQUIPMENT_LIST } from '../src/business/catalogue';
+
+/** Bought furniture drawn with Kenney's kit (read from the source: that module needs three.js). */
+const HOME_KIT: Record<string, string> = Object.fromEntries(
+  [...readFileSync('src/render/props/homeFurniture.ts', 'utf8').matchAll(/^\s+([a-z0-9_]+): \{ k: '([A-Za-z0-9]+)'/gm)].map((m) => [m[1], m[2]]),
+);
 
 type Row = { name: string; file: string; appears: string; status: string; needs: string; replacement: string; material: string; animation: string; collision: string; checked: string };
 
@@ -111,7 +116,10 @@ rows.push({
   section: 'House, showrooms and vehicles (Stage 6)',
   intro: 'Built from primitives in src/render/propModels.ts with shared geometry and cached materials. Furniture and vehicles were screenshot-checked in the casino, car showroom, house and estate; not every colour of every piece has been looked at.',
   rows: [
-    ...FURNITURE_LIST.map((f) => ({ name: `Furniture: ${f.name}`, file: 'src/render/propModels.ts buildFurnitureModel', appears: 'home (placed by the player), Home & Hearth showroom, shop preview', status: 'New (Stage 6)', needs: 'Fabric/wood normal maps', replacement: `Procedural ${f.mount} piece, ${f.colours.length} colours`, material: 'PBR, colour per piece', animation: 'none', collision: f.mount === 'floor' ? `${(f.size[0] * 2).toFixed(2)} × ${(f.size[1] * 2).toFixed(2)} m, swaps on quarter turns` : f.mount === 'rug' ? 'none (walk over)' : 'none (on the wall)', checked: 'Integrated' })),
+    ...FURNITURE_LIST.map((f) => {
+      const kit = HOME_KIT[f.id];
+      return { name: `Furniture: ${f.name}`, file: kit ? `public/models/kenney/furniture/${kit}.glb (src/render/props/homeFurniture.ts)` : 'src/render/propModels.ts buildFurnitureModel', appears: 'home (placed by the player), Home & Hearth showroom, shop preview', status: kit ? 'Kenney Furniture Kit (CC0)' : 'New (Stage 6)', needs: kit ? 'none' : 'A kit model', replacement: kit ? `Built-in ${f.mount} piece until the kit loads; ${f.colours.length} colours` : `Procedural ${f.mount} piece, ${f.colours.length} colours`, material: kit ? 'Kit surfaces; your colour on the fabric or the wood/paint finish' : 'PBR, colour per piece', animation: 'none', collision: f.mount === 'floor' ? `${(f.size[0] * 2).toFixed(2)} × ${(f.size[1] * 2).toFixed(2)} m, swaps on quarter turns` : f.mount === 'rug' ? 'none (walk over)' : 'none (on the wall)', checked: 'Integrated' };
+    }),
     ...CAR_LIST.map((c) => ({ name: `Car: ${c.name}`, file: 'src/render/propModels.ts buildCarModel', appears: 'drive outside 14 Tanner Road, Brackley Motors, casino podium, previews', status: 'New (Stage 6)', needs: 'Curved bodywork, interiors', replacement: `${c.cls} body: cabin, glass, pillars, wheels with rims, lights, plates, class extras`, material: 'Paint 0.22 roughness / 0.75 metal, glass, chrome', animation: 'Turns on the casino podium', collision: `${(c.size[0] * 2).toFixed(1)} × ${(c.size[1] * 2).toFixed(1)} m`, checked: 'Integrated; showroom screenshot-checked' })),
     ...BIKE_LIST.map((b) => ({ name: `Bike: ${b.name}`, file: 'src/render/propModels.ts buildBikeModel', appears: 'garage bays, parked outside, under the rider, Mudlark Moto, podium, previews', status: 'New (Stage 6)', needs: 'Chain, cables, decals', replacement: 'Knobbly tyres, spokes, forks, frame, engine, tank, seat, plates, exhaust', material: 'PBR plastics and alloys', animation: 'Rider sits on it (riding pose)', collision: 'none when parked; ridden by the player', checked: 'Integrated; riding screenshot-checked' })),
     ...FINISH_LIST.map((f) => ({ name: `${f.kind === 'floor' ? 'Floor' : 'Wall'}: ${f.name}`, file: 'src/render/LevelView.ts floorFinish / wallFinish', appears: 'home rooms (chosen per room)', status: 'New (Stage 6)', needs: 'Normal maps', replacement: `${f.pattern} canvas texture`, material: 'Canvas texture', animation: 'none', collision: 'n/a', checked: 'Integrated' })),
