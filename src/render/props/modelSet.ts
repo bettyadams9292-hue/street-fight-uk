@@ -29,6 +29,8 @@ export interface PieceOptions {
   /** Use it at its modelled size and height (for pieces modelled at their real size or mounting height). */
   native?: boolean;
   turn?: number;
+  /** Lights off: anything that glows is dimmed (its own copy of the material). */
+  dim?: boolean;
 }
 
 export interface ModelSet<Id extends string> {
@@ -84,6 +86,16 @@ export function modelSet<Id extends string>(name: string, base: string, ids: rea
       if (!src) return null;
       const inner = src.clone(true);
       inner.rotation.y = o.turn ?? 0;
+      if (o.dim) {
+        inner.traverse((n: THREE.Object3D) => {
+          const mesh = n as THREE.Mesh;
+          const m = mesh.isMesh ? (mesh.material as THREE.MeshStandardMaterial) : null;
+          if (!m || !m.emissive || m.emissive.getHex() === 0) return;
+          const off = m.clone();
+          off.emissiveIntensity = 0.05;
+          mesh.material = off; // not shared: disposed with the level
+        });
+      }
       const out = new THREE.Group();
       if (o.native) {
         out.add(inner);

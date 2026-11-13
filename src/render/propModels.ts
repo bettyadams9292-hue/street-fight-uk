@@ -4,6 +4,7 @@ import { signTexture } from './levelTextures';
 import { EQUIPMENT } from '../business/catalogue';
 import { GYM_KIT } from '../training/gym';
 import { gymKitPiece } from './props/GymLibrary';
+import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { homeFurnitureModel } from './props/homeFurniture';
 
 /**
@@ -666,6 +667,84 @@ export function buildVehicleModel(id: string, colour?: string): THREE.Group {
 // ---- basement business equipment -------------------------------------------------------------------
 
 /**
+ * Grow kit from the hydroponics pack (HydroLibrary). Lights glow only while the business runs;
+ * storage fills with harvest crates. False until the pack loads, or for kit it has nothing for
+ * (security, air handling, cooling and climate units keep their own models).
+ */
+function hydroEquipment(g: THREE.Group, id: string, W: number, D: number, on: boolean, fill: number): boolean {
+  const put = (m: HydroModelId, w: number, h: number, d: number, x = 0, y = 0, z = 0, keepAspect = false): boolean => {
+    const p = hydroPiece(m, w, h, d, { keepAspect, dim: !on });
+    if (!p) return false;
+    p.position.set(x, y, z);
+    g.add(p);
+    return true;
+  };
+  if (!hydroReady()) return false;
+  const steel = mat('#8a8e94', 0.4, 0.7);
+  switch (id) {
+    case 'tent_s':
+      return put('grow_tent', W, 1.95, D);
+    case 'tent_d':
+      put('grow_tent', W / 2 - 0.02, 1.95, D, -W / 4);
+      put('grow_tent', W / 2 - 0.02, 1.95, D, W / 4);
+      return true;
+    case 'module': {
+      // A walk-in rack system: three tiers of channels under lights, fed from a reservoir and pump.
+      put('pipe_rack', W - 1.0, 1.85, Math.min(D, 0.7), -0.45, 0, -D / 2 + 0.35);
+      for (const dx of [-W / 4 - 0.2, W / 4 - 0.55]) put('grow_light', (W - 1.2) / 2, 0.3, 0.2, dx, 1.95, -D / 2 + 0.35, true);
+      for (const dx of [-W / 2 + 0.05, W / 2 - 1.05]) C(g, 0.02, 0.02, 2.3, dx, 1.15, -D / 2 + 0.35, steel, 6);
+      B(g, W - 1.0, 0.03, 0.03, -0.45, 2.3, -D / 2 + 0.35, steel, false);
+      put('reservoir', 0.8, 0.85, 0.55, W / 2 - 0.45, 0, -D / 2 + 0.3, true);
+      put('water_pump', 0.45, 0.4, 0.2, W / 2 - 0.45, 0, 0.3, true);
+      put('ph_meter', 0.05, 0.3, 0.04, W / 2 - 0.2, 0.75, -D / 2 + 0.3, true);
+      return true;
+    }
+    case 'shelving':
+    case 'pallet_rack': {
+      // The racking stays; what fills it as stock builds is crates of harvest.
+      const H = id === 'pallet_rack' ? 2.2 : 1.8;
+      const frame = id === 'pallet_rack' ? mat('#1f4fa8', 0.5, 0.4) : steel;
+      for (const dx of [-W / 2 + 0.03, W / 2 - 0.03]) for (const dz of [-D / 2 + 0.02, D / 2 - 0.02]) B(g, 0.05, H, 0.04, dx, H / 2, dz, frame);
+      const levels = id === 'pallet_rack' ? 3 : 4;
+      const per = id === 'pallet_rack' ? 4 : 3;
+      let shown = Math.round(fill * levels * per);
+      for (let l = 0; l < levels; l++) {
+        const y = 0.1 + (l * (H - 0.15)) / levels;
+        B(g, W, 0.03, D, 0, y, 0, id === 'pallet_rack' ? mat('#e86a10', 0.5, 0.3) : steel, false);
+        for (let k = 0; k < per && shown > 0; k++, shown--) put('harvest_crate', W / per - 0.06, 0.3, D - 0.06, -W / 2 + (W / per) * (k + 0.5), y + 0.015, 0, true);
+      }
+      return true;
+    }
+    case 'workbench2':
+      put('potting_bench', W, 1.2, D);
+      put('seedling_tray', 0.5, 0.15, 0.34, -W / 4, 0.86, 0.05, true);
+      put('nutrient_bottles', 0.3, 0.2, 0.1, W / 4, 0.86, -0.05, true);
+      return true;
+    case 'led_rig':
+    case 'led_array':
+    case 'light_bars': {
+      // Floor stand with grow lights hanging from the top bar, plants growing under them.
+      const H = 1.75;
+      for (const dx of [-W / 2 + 0.03, W / 2 - 0.03]) {
+        C(g, 0.02, 0.02, H, dx, H / 2, 0, steel, 6);
+        B(g, 0.06, 0.03, D, dx, 0.015, 0, steel, false);
+      }
+      B(g, W, 0.03, 0.03, 0, H, 0, steel, false);
+      const n = id === 'led_rig' ? 1 : id === 'led_array' ? 2 : 3;
+      const lw = (W - 0.12) / n;
+      for (let i = 0; i < n; i++) put('grow_light', lw - 0.04, 0.5, 0.2, -W / 2 + 0.06 + lw * (i + 0.5), H - 0.44 * (lw - 0.04), 0, true);
+      if (id === 'led_rig') put('seedling_tray', W - 0.2, 0.18, D - 0.1, 0, 0, 0, true);
+      else for (let i = 0; i < n; i++) put('grow_tray', lw - 0.06, 0.28, D - 0.1, -W / 2 + 0.06 + lw * (i + 0.5), 0, 0, true);
+      return true;
+    }
+    case 'fan':
+      return put('fan', W, 0.9, D, 0, 0, 0, true);
+    default:
+      return false;
+  }
+}
+
+/**
  * Grow shop and basement equipment. `state` is 'ok|fill|on': faulty kit has
  * no glow and a hazard tag; storage fills with boxes as stock builds; lights
  * glow when the business is running.
@@ -695,6 +774,10 @@ export function buildEquipmentModel(id: string, state = 'ok|0|on'): THREE.Group 
     }
     C(g, r * 0.6, r * 0.5, 0.22, x, 0.11, z, mat('#2a2a2a', 0.8), 10);
   };
+  if (hydroEquipment(g, id, W, D, on, fill)) {
+    if (faulty) B(g, Math.min(W, 0.5), 0.06, 0.01, 0, 0.6, D / 2 + 0.03, mat('#e8c020', 0.6, 0, { emissive: 0x7a5a00, emissiveIntensity: 0.4 }), false);
+    return g;
+  }
   switch (id) {
     case 'tent_s':
     case 'tent_d': {
