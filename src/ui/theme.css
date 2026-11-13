@@ -814,3 +814,60 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
   .notice.has-art img.notice-art.sub { height: 30px; }
   .reward-art h2 img.reward-title { height: 72px; }
 }
+
+/* ----------------------------------------------------------------------------
+   Phones held upright: a tidy deck at the bottom, status at the top.
+   Bottom row: six plate buttons. Above it: the stick on the left, punches and
+   kicks on the right, never overlapping. Top: your bars on the left, the menu
+   buttons on the right, the objective full width underneath, and the "press to
+   use" prompt just above the deck where your thumbs are.
+   ---------------------------------------------------------------------------- */
+@media (orientation: portrait) and (max-width: 700px) {
+  :root { --deck-row: 46px; --deck-pad: 158px; --deck-h: calc(10px + var(--deck-row) + 12px + var(--deck-pad) + var(--safe-b)); }
+
+  /* Bottom row: block, dodge, jump, grab, special, swap. */
+  .touch-ui .side-pad, .touch-ui .extra-pad { bottom: calc(10px + var(--safe-b)); display: grid; gap: 6px; }
+  .touch-ui .side-pad { left: calc(10px + var(--safe-l)); right: calc((100% - 20px) / 3 + 13px + var(--safe-r)); grid-template-columns: repeat(4, 1fr); }
+  .touch-ui .extra-pad { left: auto; right: calc(10px + var(--safe-r)); width: calc((100% - 20px) / 3 - 3px); grid-template-columns: repeat(2, 1fr); }
+  .touch-ui .side-pad .touch-btn, .touch-ui .side-pad .block, .touch-ui .side-pad .dodge { width: auto; height: var(--deck-row); font-size: 15px; letter-spacing: 0.02em; }
+  .touch-ui .side-pad .block { box-shadow: inset 0 0 0 2px rgba(61, 134, 255, 0.75), inset 0 -3px 0 rgba(0, 0, 0, 0.45); }
+  .touch-ui .extra-pad .touch-btn { width: auto; height: var(--deck-row); font-size: 15px; }
+
+  /* Punches and kicks: a diamond in the bottom right. */
+  .touch-ui .attack-pad { right: calc(12px + var(--safe-r)); bottom: calc(10px + var(--deck-row) + 12px + var(--safe-b)); width: var(--deck-pad); height: var(--deck-pad); }
+  .touch-ui .attack-pad .touch-btn { width: 58px; height: 58px; font-size: 20px; }
+  .touch-ui .attack-pad .hp { left: 50px; top: 0; }
+  .touch-ui .attack-pad .lp { left: 0; top: 50px; }
+  .touch-ui .attack-pad .hk { right: 0; left: auto; top: 50px; }
+  .touch-ui .attack-pad .lk { left: 50px; top: auto; bottom: 0; }
+
+  /* The stick: the left half above the bottom row, clear of every button. */
+  .touch-ui .stick-zone { left: 0; bottom: calc(10px + var(--deck-row) + 6px + var(--safe-b)); width: calc(100% - var(--deck-pad) - 30px); height: calc(var(--deck-pad) + 70px); }
+  .touch-ui .stick-base { left: calc(76px + var(--safe-l)); top: 58%; width: 108px; height: 108px; margin: -54px 0 0 -54px; }
+  .touch-ui .stick-knob { width: 48px; height: 48px; }
+
+  /* The menu buttons already have the bag. */
+  .touch-ui .touch-controls .bag { display: none; }
+
+  /* Top: bars left, menu buttons right, objective underneath. */
+  .touch-ui .hud-buttons { top: calc(10px + var(--safe-t)); right: calc(10px + var(--safe-r)); gap: 5px; }
+  .touch-ui .hud-btn { width: 40px; height: 40px; }
+  .touch-ui .hud-btn .k { display: none; }
+  .touch-ui .hud-top { top: calc(8px + var(--safe-t)); left: calc(10px + var(--safe-l)); right: calc(190px + var(--safe-r)); flex-direction: column; flex-wrap: nowrap; gap: 4px; }
+  .touch-ui .hud-top > * { width: 100%; max-width: none; }
+  .touch-ui .fighter-panel.right { margin-left: 0; text-align: left; }
+  .touch-ui .fighter-panel.right .name-row { flex-direction: row; }
+  .touch-ui .hud.story .story-info { top: calc(96px + var(--safe-t)); left: calc(10px + var(--safe-l)); right: calc(10px + var(--safe-r)); max-width: none; }
+  .touch-ui .objective { white-space: normal; }
+  /* Mid-fight both sets of bars need the room: the objective steps aside. */
+  .touch-ui .hud.story.fighting .story-info { display: none; }
+
+  /* "Press to use" sits just above the deck, centred. */
+  .touch-ui .prompt-wrap { top: auto; bottom: calc(var(--deck-h) + 34px); left: 10px; right: 10px; width: auto; transform: none; }
+  .touch-ui .prompt, .touch-ui .prompt.interact { font-size: 14px; max-width: 100%; }
+  body.in-fight .rotate-hint { bottom: calc(var(--deck-h) + 8px); left: 50%; right: auto; transform: translateX(-50%); font-size: 13px; padding: 3px 10px; background: rgba(12, 16, 28, 0.78); color: var(--concrete-2); white-space: nowrap; }
+
+  /* Toasts and the status strip stay out of the deck. */
+  .touch-ui .hud.story .toasts { bottom: calc(var(--deck-h) + 64px); top: auto; left: calc(10px + var(--safe-l)); right: calc(10px + var(--safe-r)); }
+  .touch-ui .hud .status-strip { bottom: calc(var(--deck-h) + 8px); }
+}
