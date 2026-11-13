@@ -3,6 +3,7 @@ import { furniture, produceHeap, type FurnitureId, type ProduceId } from './prop
 import { gymPiece, type GymModelId } from './props/GymLibrary';
 import { shopPiece, type ShopModelId } from './props/ShopLibrary';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
+import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { surfaceMaterial, kitGroundTexture as kitTexture, type Surface, type SurfaceOptions } from './street/Flooring';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
@@ -292,6 +293,15 @@ export class LevelView {
     if (!m) return false;
     m.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
     g.add(m);
+    return true;
+  }
+
+  /** A security-set piece (SecurityLibrary) on the back wall: x along the street, y its height, `out` in front of the wall. */
+  private secure(id: SecurityModelId, x: number, y: number, out = 0, scale = 1, turn = 0): boolean {
+    const m = securityPiece(id, scale, { turn });
+    if (!m) return false;
+    m.position.set(x, y, this.back + out);
+    this.group.add(m);
     return true;
   }
 
@@ -1005,6 +1015,9 @@ export class LevelView {
     const cx = (f.x0 + f.x1) / 2;
     const theme = this.level.theme;
     const H = 3.2;
+    // Dome cameras up by the ceiling: one in the corner of every shop, a row of them in the casino.
+    if (theme === 'casino') for (let x = f.x0 + 3; x < f.x1 - 1; x += 6) this.secure('wall_dome', x, H - 0.25, 0.02, 1.4);
+    else this.secure('wall_dome', f.x1 - 1.0, H - 0.25, 0.02, 1.4);
     const colour = f.colour ?? '#8c7a5e';
     if (theme === 'gym_store' || theme === 'boxing_gym' || theme === 'karate_dojo' || theme === 'wrestling_club') {
       this.gymInterior(f, theme);
@@ -1317,9 +1330,17 @@ export class LevelView {
     for (let x = f.x0 + 2.5; x < f.x1 - 0.5; x += 5) this.box(0.6, 0.02, 0.1, x, 2.75, this.back + 0.1, this.mat('#2a2a2a', 0.8), false);
     // Fuse board and meter by the terminal; a better board once rewired.
     const rewired = has('electrics') || has('three_phase');
-    this.box(0.5, 0.65, 0.12, 4.4, 1.7, this.back + 0.06, this.mat(rewired ? '#f0eee8' : '#3a3428', 0.5), false);
-    this.box(0.42, 0.2, 0.02, 4.4, 1.75, this.back + 0.13, this.mat(rewired ? '#2a2a2e' : '#1a1a1a', 0.4), false);
-    if (has('three_phase')) this.box(0.5, 0.4, 0.15, 4.4, 2.3, this.back + 0.08, this.mat('#e8c020', 0.5), false);
+    // The junction box (security set): battered and hanging open until you rewire, then a tidy closed board.
+    if (!this.secure(rewired ? 'electric_box' : tier === 0 ? 'electric_box_broken' : 'electric_box_open', 4.4, 1.85, 0.03, 2.2)) {
+      this.box(0.5, 0.65, 0.12, 4.4, 1.7, this.back + 0.06, this.mat(rewired ? '#f0eee8' : '#3a3428', 0.5), false);
+      this.box(0.42, 0.2, 0.02, 4.4, 1.75, this.back + 0.13, this.mat(rewired ? '#2a2a2e' : '#1a1a1a', 0.4), false);
+    }
+    if (has('three_phase') && !this.secure('electric_box', 5.1, 1.85, 0.03, 2.2)) this.box(0.5, 0.4, 0.15, 4.4, 2.3, this.back + 0.08, this.mat('#e8c020', 0.5), false);
+    // The steel door comes with an entry keypad and a motion sensor on the stairs.
+    if (has('security_door')) {
+      this.secure('keypad', 1.45, 2.75, 0.03, 1.6); // beside the door at the top of the stairs
+      this.secure('motion_sensor', 2.1, 3.3, 0.03, 1.8);
+    }
     // Ducting along the ceiling.
     if (has('ducting')) {
       const duct = this.mat('#c8c8c0', 0.35, 0.7);
@@ -1612,6 +1633,8 @@ export class LevelView {
     } else {
       this.box(w - 0.4, 0.75, 0.15, cx, 3.5, this.back + 0.15, this.mat(colour, 0.6), false);
     }
+    // Burglar alarm bell box over the fascia, as on every high-street shop.
+    this.secure('alarm_box', f.x0 + 0.55, 4.3, 0.02, 2.2);
     // Striped awning on some.
     if (lit && this.rnd() < 0.4) {
       const aw = this.box(w - 1, 0.06, 1.0, cx - 0.4, 2.9, this.back + 0.6, this.mat(colour, 0.9), false);
@@ -1641,6 +1664,7 @@ export class LevelView {
     // Hanging sign on a bracket.
     this.box(0.06, 0.06, 1.0, f.x0 + 1.0, 4.6, this.back + 0.5, this.mat('#111', 0.4, 0.7), false);
     this.box(0.08, 0.9, 0.7, f.x0 + 1.0, 4.1, this.back + 0.75, this.mat(colour, 0.5));
+    this.secure('alarm_box', f.x1 - 0.8, 4.5, 0.02, 2.2);
     // Hanging baskets.
     for (const x of [f.x0 + 3, f.x1 - 3]) {
       const b = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), this.mat('#3a6a2a', 0.9));
@@ -1665,11 +1689,16 @@ export class LevelView {
     this.box(1.6, 2.2, 0.06, cx, 1.1, this.back + 0.22, this.mat('#0c0e12', 0.1, 0.6, { emissive: 0xc8e0ff, emissiveIntensity: 0.25 }), false);
     const sign = signTexture(f.label ?? 'TANNER HOUSE 1-48', '#1d3a6a', '#ffffff', { w: 512, h: 96 });
     this.box(2.4, 0.4, 0.06, cx, 2.85, this.back + 0.22, new THREE.MeshStandardMaterial({ map: sign }), false);
+    // Door entry keypad, a lamp over the door and a camera watching it.
+    this.secure('keypad', cx + 1.45, 1.35, 0.02, 1.6);
+    this.secure('wall_lamp', cx - 1.55, 2.75, 0.02, 1.4);
+    this.secure('wall_camera', cx + 1.7, 3.3, 0.02, 1.5, -0.4);
   }
 
   private garages(f: FacadeDef): void {
     const w = f.x1 - f.x0;
     const cx = (f.x0 + f.x1) / 2;
+    this.secure('wall_lamp', cx, 2.5, 0.06, 1.5);
     // Tower behind, set back.
     const conc = new THREE.MeshStandardMaterial({ map: concreteTexture('#5a5850', w / 3, 4), roughness: 1, color: 0x9a9890 });
     const back = new THREE.Mesh(new THREE.PlaneGeometry(w, 12), conc);
@@ -1698,8 +1727,10 @@ export class LevelView {
     this.box(rw, 4, 0.08, cx - w * 0.15, 2, this.back + 0.15, sh, false);
     this.box(rw + 0.3, 0.3, 0.3, cx - w * 0.15, 4.1, this.back + 0.2, this.mat('#2a2a2a', 0.5, 0.6), false);
     this.windowAt(cx + w * 0.3, 2.2, 1.6, 1.0, this.windowMat(0.6));
-    // Security lamp.
-    this.box(0.4, 0.2, 0.3, cx + w * 0.3, 4.2, this.back + 0.2, this.mat('#ffffff', 0.4, 0, { emissive: 0xe8ffe8, emissiveIntensity: 1.3 }), false);
+    // Security lamp, a camera over the roller door and the alarm box.
+    if (!this.secure('wall_lamp', cx + w * 0.3, 4.3, 0.02, 2.2)) this.box(0.4, 0.2, 0.3, cx + w * 0.3, 4.2, this.back + 0.2, this.mat('#ffffff', 0.4, 0, { emissive: 0xe8ffe8, emissiveIntensity: 1.3 }), false);
+    this.secure('wall_camera', cx - w * 0.15 + rw / 2 + 0.5, 4.6, 0.02, 1.8, -0.5);
+    this.secure('alarm_box', f.x1 - 1.0, 5.2, 0.02, 2.4);
     if (f.label) {
       const tex = signTexture(f.label, theme === 'territory' ? '#2a0e0a' : '#e8e4d8', theme === 'territory' ? '#ff4a2a' : '#1a1a1a', { neon: theme === 'territory' });
       this.box(Math.min(w - 1, 9), 1.0, 0.1, cx, 6.6, this.back + 0.08, new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: theme === 'territory' ? 1.2 : 0.15 }), false);
@@ -2713,6 +2744,12 @@ export class LevelView {
         // A warm light down the well.
         const glow = this.mat('#fff4d8', 0.3, 0, { emissive: 0xffd8a0, emissiveIntensity: 1.2 });
         B(0.3, 0.06, 0.1, 0, -1.0, -D / 2 + 0.06, glow, false);
+        break;
+      }
+      case 'security_post': {
+        // A CCTV post (security set) at its real height: cameras, lamp and junction boxes up the pole.
+        const m = securityPiece((p.item ?? 'post_high') as SecurityModelId, 1, { turn: -(p.rot ?? 0) * (Math.PI / 2) });
+        if (m) g.add(m);
         break;
       }
       case 'hydro_prop': {

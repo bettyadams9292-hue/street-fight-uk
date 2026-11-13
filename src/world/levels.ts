@@ -325,6 +325,7 @@ const industrial: LevelDef = {
     { kind: 'drum', x: 14, z: 1.3 },
     { kind: 'drum', x: 14.7, z: 1.5 },
     { kind: 'scrap', x: 26, z: -1.1 },
+    { kind: 'security_post', item: 'post_short', x: 23.2, z: -1.9 },
     { kind: 'van', x: 40, z: 1.0, colour: '#d8d8d0' },
     { kind: 'crates', x: 50, z: -1.4 },
     { kind: 'crates', x: 51, z: -1.4 },

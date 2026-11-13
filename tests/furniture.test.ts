@@ -103,5 +103,19 @@ test('every hydroponics model is on disk, used, and licensed', () => {
   for (const m of rooms.matchAll(/kind: 'hydro_prop', item: '([a-z_]+)'/g)) assert(ids.includes(m[1]), `${m[1]} isn't a hydro model`);
 });
 
+test('every security model is on disk, used, and credited', () => {
+  const lib = readFileSync('src/render/props/SecurityLibrary.ts', 'utf8');
+  const list = lib.slice(lib.indexOf('export const SECURITY_MODELS'), lib.indexOf('] as const;'));
+  const ids = [...list.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+  assert(ids.length >= 12, `only ${ids.length} security models listed`);
+  const users = ['src/render/propModels.ts', 'src/render/LevelView.ts', 'src/world/districts.ts', 'src/world/levels.ts'].map((f) => readFileSync(f, 'utf8')).join('\n');
+  for (const id of ids) {
+    assert(existsSync(`public/models/security/${id}.glb`), `${id}.glb is missing`);
+    assert(users.includes(`'${id}'`), `${id} is never used`);
+  }
+  const c = readFileSync('public/models/security/CREDITS.md', 'utf8');
+  assert(/MesXwi/.test(c) && /CC BY 4\.0/.test(c), 'security credits missing the author or licence');
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

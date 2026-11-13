@@ -171,6 +171,16 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - Green Fingers' shelves are stocked with the pack's kit; a tower, a tomato plant and a deep-water bucket are on display.
 - Security kit, air handlers, cooling and climate units aren't in the pack and keep their models.
 
+## Stage 13: security kit ✅ done
+**Source:** "Security Set CCTV Low Poly" by MesXwi (CC BY 4.0, supplied by you), split into 12 pieces by `tools/models/split_security_pack.py`; 85 MB down to 1.3 MB (512 px colour maps; detail maps dropped). Credited in `public/models/security/CREDITS.md`.
+**Where it's used** (`src/render/props/SecurityLibrary.ts`):
+- Basement: the CCTV camera and alarm (bell box plus keypad) you buy, the electrical control panel, and the fuse board. The fuse board is battered and open in a bare basement, open once it's done up, and closed and tidy once it's rewired. The steel door adds an entry keypad and a motion sensor.
+- High street: an alarm bell box over every shop and pub.
+- Tower blocks: an entry keypad, a lamp over the door and a camera.
+- Warehouses: a security lamp, a camera over the roller door and an alarm box. Garages get a lamp.
+- Inside: a dome camera in every shop, pub, gym and showroom, and a row of them in the casino.
+- CCTV posts on the trading estate and in the warehouse yard.
+
 ## Log
 - 12 Nov 2026: audit done; stages 1–3 started on branch `gameplay-feel`.
 - 12 Nov 2026 (later): stages 1–3 done, with tests in `tests/gameplay.test.ts`. Across the whole game, the careful bot's average win rate went from 70% to 78% and the sloppy bot's from 64% to 75%. Enemies no longer get free parries, while players still can, so the game got a little easier overall. Stage 4 should retune the curve from these numbers.
@@ -180,3 +190,4 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - 13 Nov 2026: stage 10 (gym furniture) done; shop furniture next.
 - 13 Nov 2026: stage 11 (shop furniture) done.
 - 13 Nov 2026: stage 12 (hydroponics kit) done.
+- 13 Nov 2026: stage 13 (security kit) done.
