@@ -98,9 +98,18 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - settings names on their own line in portrait;
   - the "turn sideways" hint hidden over menus;
   - weapon, bag and heat chips moved to the top under the objective.
+- #20 (the friend's): jewellery and property.
+  - **Jewellery:** the Halden & Crane jeweller in the Riverside Centre sells 52 pieces (rings, watches, chains and grills, each in several metals). A jewellery box keeps what you own, separate from the inventory. Worn pieces sit on the 3D character, fitted to its bones (`render/jewellery.ts`).
+  - **Property:** 20 properties to buy, live in, let or sell, sold through the Keys & Co estate agents (`realty/`). There's a new gated road, Ashcombe Park, with mansions, and interiors are generated for each property. Rent and finance tracking is in `progress/finance.ts`.
+  - All of it is built in code: no new asset files.
 
 ## Open questions and next steps
 
-- PR #20 (`property-jewellery`, the friend's): jewellery store, jewellery shown on the character, and a property empire. It was open on 13 Nov. Once it's merged, log it above and tick the jewellery rows in the asset Sheet that it covers.
+- PR #20's own "not done" list:
+  - section 11 onwards of the jewellery and property brief;
+  - one-of-a-kind interiors for each property;
+  - real upstairs floors;
+  - the hoodie's jagged collar.
+- The asset list predates #20. Chains, watches and rings now show on the character as code-built pieces, so those rows in `docs/ASSETS_NEEDED.*` now need a better model, not a missing one. Jewellery, the property interiors and Ashcombe Park are all code-built, so they need assets too.
 - The owner tests on an iPhone in portrait. Check every UI change at 390×700 as well as in landscape.
 - The London place names and `arch-*` archetype graphics in `public/art/titles` aren't used yet.
