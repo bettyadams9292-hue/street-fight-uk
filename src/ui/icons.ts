@@ -1,7 +1,7 @@
 /**
  * One small icon set for the whole UI: map markers, menu buttons, the HUD
- * and inventory tabs. 24 × 24, drawn with a 2px round stroke so they all
- * read the same at any size. Drawn for this game (no icon font or library).
+ * and inventory tabs. 24 × 24, drawn with a square-ended 2.2px stroke, like
+ * stencilled signage, so they all read the same at any size. Drawn for this game (no icon font or library).
  */
 
 export type IconName =
@@ -66,7 +66,7 @@ const P: Record<IconName, string> = {
 
 /** SVG markup for an icon (stroke uses currentColor). */
 export function iconSvg(name: IconName, size = 24): string {
-  return `<svg class="ico" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name]}</svg>`;
+  return `<svg class="ico" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">${P[name]}</svg>`;
 }
 
 /** Inner paths only, for embedding in a bigger SVG (the map). */

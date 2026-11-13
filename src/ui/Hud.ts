@@ -65,6 +65,7 @@ export class Hud {
   private modeButtons = new Map<TrainingOpponent, HTMLButtonElement>();
   private opponentButton: HTMLButtonElement;
   private prompt: HTMLElement;
+  private promptKey = '';
   private subBar: HTMLElement;
   private subFill: HTMLElement;
   // Story mode.
@@ -187,9 +188,25 @@ export class Hud {
 
   /** Context prompt above the training bar (grapple options, finisher, escapes). */
   setPrompt(text: string, submission: number | null, interact = false): void {
-    if (this.prompt.textContent !== text) this.prompt.textContent = text;
+    if (this.promptKey !== text) {
+      this.promptKey = text;
+      // "THING\u0001" leads an interaction; keys arrive marked ⟦…⟧ and are set as key caps.
+      const parts: (Node | string)[] = [];
+      let rest = text;
+      const cut = rest.indexOf('\u0001');
+      if (cut >= 0) {
+        parts.push(h('span', { class: 'what', text: rest.slice(0, cut) }));
+        rest = rest.slice(cut + 1);
+      }
+      for (const [i, piece] of rest.split(/\u27e6|\u27e7/).entries()) {
+        if (!piece) continue;
+        parts.push(i % 2 ? h('kbd', { text: piece }) : h('span', { text: piece }));
+      }
+      this.prompt.replaceChildren(...parts);
+      this.prompt.classList.toggle('locked', text.endsWith('(locked)'));
+    }
     this.prompt.classList.toggle('interact', interact);
-    this.prompt.style.display = text ? 'block' : 'none';
+    this.prompt.style.display = text ? (interact ? 'flex' : 'block') : 'none';
     this.subBar.style.display = submission === null ? 'none' : 'block';
     if (submission !== null) this.subFill.style.width = `${submission}%`;
   }
@@ -284,7 +301,7 @@ export class Hud {
 
   /** District name card when you arrive somewhere. */
   showBanner(district: string, place: string): void {
-    this.banner.replaceChildren(h('div', { class: 'district', text: district.toUpperCase() }), h('div', { class: 'place', text: place }));
+    this.banner.replaceChildren(h('div', { class: 'district', text: district }), h('div', { class: 'place', text: place }));
     this.banner.classList.remove('show');
     void this.banner.offsetWidth;
     this.banner.classList.add('show');

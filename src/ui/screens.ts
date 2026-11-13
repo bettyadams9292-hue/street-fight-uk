@@ -28,13 +28,13 @@ export function mainMenu(
       'nav',
       { class: 'menu-list' },
       continueText ? menuButton('Continue', actions.continue, continueText, 'primary', 'play') : null,
-      menuButton('New Game', actions.newGame, 'Create a new fighter and start the story', continueText ? '' : 'primary', 'side'),
-      hasCharacter ? menuButton('Training Ground', actions.training, 'Spar, drill combos, try every style', '', 'gym') : null,
+      menuButton('New game', actions.newGame, 'Create a new fighter and start the story', continueText ? '' : 'primary', 'side'),
+      hasCharacter ? menuButton('Training ground', actions.training, 'Spar, drill combos, try every style', '', 'gym') : null,
       hasCharacter ? menuButton('Character', actions.character, 'Stats and look', '', 'contact') : null,
       menuButton('Settings', actions.settings, undefined, '', 'settings'),
       menuButton('Controls', actions.controls, undefined, '', 'controls'),
     ),
-    h('div', { class: 'footer', text: `Stage 9 build \u00b7 v${VERSION} \u00b7 temporary art and sound` }),
+    h('div', { class: 'footer', text: `v${VERSION}, early build: some art and sound are placeholders` }),
   );
   // The main menu has nowhere to go back to.
   return { el, onBack: () => undefined };
@@ -181,7 +181,7 @@ export function pauseMenu(actions: { resume: () => void; settings: () => void; c
       menuButton('Practice styles', actions.practice, 'Try any fighting style'),
       menuButton('Settings', actions.settings),
       menuButton('Controls', actions.controls),
-      menuButton('Quit to main menu', actions.quit),
+      menuButton('Quit to main menu', actions.quit, undefined, 'danger'),
     ),
   );
   return {

@@ -1,4 +1,5 @@
 import './ui/styles.css';
+import './ui/theme.css';
 import { Game } from './Game';
 import { loadCharacterModels } from './render/characterModels';
 import { loadCityKit } from './render/city/CityKit';
@@ -70,7 +71,7 @@ const begin = async (): Promise<void> => {
   const kit = new URLSearchParams(location.search).get('city') === 'classic' ? Promise.resolve(null) : loadCityKit();
   const models = loadCharacterModels((p) => {
     if (bootBar) bootBar.style.width = `${Math.round(4 + p.fraction * 96)}%`;
-    if (bootText) bootText.textContent = p.done < p.total ? 'LOADING CHARACTERS' : 'READY';
+    if (bootText) bootText.textContent = p.done < p.total ? 'Loading characters' : 'Ready';
   });
   // Load the character models first, but never hold the game up for long: without them fighters use the
   // classic rig. (The visual tests wait for however long it takes, so their pictures don't depend on the network.)

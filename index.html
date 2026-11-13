@@ -6,21 +6,25 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#0a0c12" />
+    <meta name="theme-color" content="#121310" />
     <meta name="description" content="STREET FIGHT UK - a gritty 2.5D street-fighting action RPG set in modern Britain." />
     <title>STREET FIGHT UK</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="preload" href="/fonts/BigShouldersStencil.woff" as="font" type="font/woff" crossorigin />
+    <link rel="preload" href="/fonts/BigShoulders.woff" as="font" type="font/woff" crossorigin />
+    <link rel="preload" href="/fonts/Overpass.woff" as="font" type="font/woff" crossorigin />
+    <style>
+      @font-face { font-family: 'Big Shoulders Stencil'; src: url('/fonts/BigShouldersStencil.woff') format('woff'); font-weight: 600 900; font-display: swap; }
+      @font-face { font-family: 'Big Shoulders'; src: url('/fonts/BigShoulders.woff') format('woff'); font-weight: 500 900; font-display: swap; }
+    </style>
   </head>
   <body>
     <div id="game"></div>
     <div id="ui"></div>
-    <div id="boot" role="status" aria-live="polite" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0a0c12;color:#e8e6df;font-family:'Barlow Condensed',system-ui,sans-serif;z-index:50;transition:opacity .25s ease">
-      <div style="font-family:Anton,Impact,sans-serif;font-size:34px;letter-spacing:.04em;color:#f2c230">STREET FIGHT UK</div>
-      <div style="width:min(260px,60vw);height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden"><div id="boot-bar" style="height:100%;width:4%;background:#f2c230;transition:width .2s linear"></div></div>
-      <div id="boot-text" style="font-size:14px;letter-spacing:.08em;opacity:.65">LOADING</div>
+    <div id="boot" role="status" aria-live="polite" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#121310;color:#ece9df;font-family:'Big Shoulders',Arial Narrow,sans-serif;z-index:50;transition:opacity .25s ease">
+      <div style="font-family:'Big Shoulders Stencil',Impact,sans-serif;font-weight:900;font-size:48px;line-height:.85;letter-spacing:-.01em;text-align:center"><span style="color:#f2f0e8">STREET</span> <span style="color:#f0c419">FIGHT</span> <span style="display:inline-block;background:#c1272d;color:#fff;font-family:'Big Shoulders',sans-serif;font-size:30px;padding:2px 10px 0;vertical-align:6px;box-shadow:inset 0 0 0 2px #c1272d,inset 0 0 0 3.5px #fff">UK</span></div>
+      <div style="width:min(280px,62vw);height:10px;background:#161714;box-shadow:inset 0 2px 0 rgba(0,0,0,.6),0 0 0 2px #262824"><div id="boot-bar" style="height:100%;width:4%;background:repeating-linear-gradient(-45deg,#f0c419 0 8px,#161612 8px 16px);transition:width .2s linear"></div></div>
+      <div id="boot-text" style="font-size:16px;font-weight:700;letter-spacing:.02em;color:#a39f93">Loading</div>
     </div>
     <div class="rotate-hint">Turn your phone sideways to fight</div>
     <script type="module" src="/src/main.ts"></script>

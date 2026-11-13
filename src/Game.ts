@@ -2097,7 +2097,8 @@ export class Game {
   private updatePrompt(): void {
     const p = this.activePlayer!;
     const touch = this.touchWanted();
-    const k = (key: string, pad: string, t: string) => (touch ? t : this.input.lastDevice === 'gamepad' ? pad : key);
+    // Keys are marked ⟦…⟧ so the HUD can set them as key caps.
+    const k = (key: string, pad: string, t: string) => `\u27e6${touch ? t : this.input.lastDevice === 'gamepad' ? pad : key}\u27e7`;
     const link = p.grapple;
     let text = '';
     let sub: number | null = null;
@@ -2128,7 +2129,8 @@ export class Game {
       if (!done) {
         // House labels are "THING|What it does": FRIDGE  [E]  Open fridge.
         const [what, how] = it.label.includes('|') ? it.label.split('|') : [null, it.label];
-        text = what ? `${what}   ${k('E', 'LB', 'GRAB')}   ${how}` : `${k('E', 'LB', 'GRAB')}  ${how}${locked ? ' \u2014 locked' : ''}`;
+        // "THING" on the plate, the key, then what it does; locked doors say so.
+        text = `${what ? `${what}\u0001` : ''}${k('E', 'LB', 'GRAB')} ${how}${locked ? ' (locked)' : ''}`;
         interact = true;
       }
     }

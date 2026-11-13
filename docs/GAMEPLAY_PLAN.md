@@ -202,6 +202,33 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - **Pedestrians:** passers-by who bump slide sideways past each other instead of locking up, and give up waiting sooner. Stalling is down from 0.98 to 0.57 s per pedestrian-minute, with no overlaps.
 - **Road:** 14 bins, crates, trolleys, bollards, bags and a sign post that stood in the road (and had pavement built out round them) are now on the pavement. A test keeps it that way.
 
+## Stage 16: interface overhaul, "Council Estate Grime" (first pass) ✅ done
+The whole interface now speaks British street signage instead of a generic dark game UI (`src/ui/theme.css`, loaded after `styles.css`, which keeps each screen's layout).
+- **Type:** self-hosted, OFL-licensed fonts (`public/fonts`, 94 KB), no more Google Fonts call.
+  - Big Shoulders Stencil for stencilled titles.
+  - Big Shoulders for headings, buttons and numbers.
+  - Overpass, a road-sign face, for reading.
+  - Sentence case everywhere, as on real signs.
+- **Palette:** asphalt plates, concrete labels, primary-route green, double-yellow, no-entry red and motorway blue for routes.
+- **Parts:**
+  - Riveted, chamfered steel plates.
+  - Sign-plate buttons whose focus is a pair of yellow lines.
+  - Tabs that turn into white street signs when picked.
+  - Painted meter slots.
+  - Key caps for every key shown.
+  - Hazard tape kept for danger and locks.
+- **HUD:**
+  - Stencilled fighter names over notched health slots.
+  - A level badge, money in yellow and the objective on a printed label.
+  - Routes shown as motorway-blue plates.
+  - Areas announced on a green route sign.
+  - Pick-ups and warnings shown as stuck-on labels.
+  - Interactions on a London street-name plate with a red key cap.
+  - A hazard-taped boss bar.
+  - Bolt-head touch buttons.
+- **Every screen** picks this up: the main menu (sprayed stencil title), pause, settings, controls, creator, inventory, shops, stash, biscuit tin, kitchen, home computer, training plan (painted rank pips), business terminal, phone, map (A-to-Z at night) and character and crew.
+- Checked by building the game locally and screenshotting every screen on a phone-sized and a desktop-sized window.
+
 ## Log
 - 12 Nov 2026: audit done; stages 1–3 started on branch `gameplay-feel`.
 - 12 Nov 2026 (later): stages 1–3 done, with tests in `tests/gameplay.test.ts`. Across the whole game, the careful bot's average win rate went from 70% to 78% and the sloppy bot's from 64% to 75%. Enemies no longer get free parries, while players still can, so the game got a little easier overall. Stage 4 should retune the curve from these numbers.
@@ -214,3 +241,4 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - 13 Nov 2026: stage 13 (security kit) done.
 - 13 Nov 2026: stage 14 (the crop) done.
 - 13 Nov 2026: stage 15 (doors and fixes from play) done.
+- 13 Nov 2026: stage 16 (interface overhaul, first pass) done.
