@@ -92,13 +92,14 @@ test('every hydroponics model is on disk, used, and licensed', () => {
   const lib = readFileSync('src/render/props/HydroLibrary.ts', 'utf8');
   const list = lib.slice(lib.indexOf('export const HYDRO_MODELS'), lib.indexOf('] as const;'));
   const ids = [...list.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
-  assert(ids.length >= 19, `only ${ids.length} hydro models listed`);
+  assert(ids.length >= 15, `only ${ids.length} hydro models listed`);
   const users = ['src/render/propModels.ts', 'src/render/LevelView.ts', 'src/world/interiors.ts'].map((f) => readFileSync(f, 'utf8')).join('\n');
   for (const id of ids) {
     assert(existsSync(`public/models/hydro/${id}.glb`), `${id}.glb is missing`);
     assert(users.includes(`'${id}'`), `${id} is never used`);
   }
   assert(/reodesuxz/.test(readFileSync('public/models/hydro/LICENSE.txt', 'utf8')), 'hydro licence missing');
+  assert(/ScornGames/.test(readFileSync('public/models/hydro/CREDITS.md', 'utf8')), 'plant credit missing');
   const rooms = readFileSync('src/world/interiors.ts', 'utf8');
   for (const m of rooms.matchAll(/kind: 'hydro_prop', item: '([a-z_]+)'/g)) assert(ids.includes(m[1]), `${m[1]} isn't a hydro model`);
 });

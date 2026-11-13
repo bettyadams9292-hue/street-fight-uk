@@ -2754,7 +2754,7 @@ export class LevelView {
       }
       case 'hydro_prop': {
         // Hydroponics dressing (HydroLibrary), at its real size; nothing until the pack loads.
-        const m = hydroPiece((p.item ?? 'tomato_plant') as HydroModelId, 0, 0, 0, { native: true, turn: -(p.rot ?? 0) * (Math.PI / 2) });
+        const m = hydroPiece((p.item ?? 'cannabis_plant') as HydroModelId, 0, 0, 0, { native: true, turn: -(p.rot ?? 0) * (Math.PI / 2) });
         if (m) g.add(m);
         break;
       }
@@ -2859,7 +2859,7 @@ export class LevelView {
         if (hydroReady() && this.fitting(g, 'grow_shelf', W, 2.0, D)) {
           const stock: HydroModelId[][] = p.label === 'environment'
             ? [['water_pump', 'water_pump', 'fan', 'fan'], ['nutrient_bottles', 'nutrient_bottles', 'nutrient_bottles', 'ph_meter', 'ph_meter'], ['grow_light', 'grow_light'], ['nutrient_bottles', 'watering_can', 'nutrient_bottles']]
-            : [['dwc_bucket', 'dwc_bucket', 'reservoir'], ['seedling_tray', 'seedling_tray', 'grow_tray'], ['basil_pot', 'lettuce_head', 'basil_pot', 'lettuce_head'], ['harvest_crate', 'watering_can', 'strawberry_planter']];
+            : [['dwc_bucket', 'dwc_bucket', 'reservoir'], ['seedling_tray', 'seedling_tray', 'seedling_tray'], ['cannabis_plant', 'cannabis_plant', 'cannabis_plant', 'cannabis_plant'], ['harvest_crate', 'watering_can', 'strawberry_planter']];
           stock.forEach((row, l) => {
             const y = 0.12 + l * 0.48 + 0.0125;
             const slot = (W - 0.12) / row.length;
