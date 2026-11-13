@@ -22,12 +22,14 @@ interface Spec {
   h?: number;
   /** Stands on a low media cabinet this tall (metres): the model itself is only the telly. */
   stand?: number;
+  /** Seats: stretched to the whole footprint and to this height, so the cushions are where the sitting pose puts you (0.45 m). */
+  fitH?: number;
 }
 
 export const HOME_MODELS: Record<string, Spec> = {
-  sofa_3: { k: 'loungeDesignSofa', colour: 'fabric' },
-  sofa_2: { k: 'loungeSofa', colour: 'fabric' },
-  armchair: { k: 'loungeChair', colour: 'fabric' },
+  sofa_3: { k: 'loungeDesignSofa', colour: 'fabric', fitH: 0.78 },
+  sofa_2: { k: 'loungeSofa', colour: 'fabric', fitH: 0.9 },
+  armchair: { k: 'loungeChair', colour: 'fabric', fitH: 0.9 },
   coffee_table: { k: 'tableCoffee', colour: 'wood' },
   tv_unit: { k: 'cabinetTelevisionDoors', colour: 'wood' },
   tv_43: { k: 'televisionModern', colour: 'none', stand: 0.48 },
@@ -77,6 +79,10 @@ export function homeFurnitureModel(id: string, colour?: string): THREE.Group | n
       m.position.x = -W / 2 + (W / n) * (i + 0.5);
       g.add(m);
     }
+  } else if (spec.fitH) {
+    const m = furniture(spec.k, W, spec.fitH, D, look);
+    if (!m) return null;
+    g.add(m);
   } else if (spec.stand) {
     const unit = furniture('cabinetTelevision', W, spec.stand, D, { wood: c });
     const tv = furniture(spec.k, W * 0.98, 10, Math.min(D, 0.2), { keepAspect: true });

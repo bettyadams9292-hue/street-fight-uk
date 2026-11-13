@@ -100,9 +100,10 @@ export const LOOKS: readonly Look[] = [
       ],
       intensity: 0.5,
     },
-    bloom: { strength: 0.55, radius: 0.7, threshold: 0.82 },
+    // Only real light sources bloom (lamps, neon, lit windows); white paint under a room light doesn't.
+    bloom: { strength: 0.4, radius: 0.6, threshold: 0.97 },
     grade: {
-      exposure: 1.3,
+      exposure: 1.15,
       contrast: 1.06,
       saturation: 1.1,
       shadowTint: [0.4, 0.52, 0.58],

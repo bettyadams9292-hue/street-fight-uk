@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { FacadePlan, PlannedBuilding } from '../../city/compose';
 import { signTexture } from '../levelTextures';
 import type { CityKit, KitPrim, TintSlot } from './CityKit';
+import { doorPiece, doorsReady, type DoorStyle } from '../props/DoorLibrary';
 
 export interface SignedFacade {
   kind: string;
@@ -55,9 +56,31 @@ export function buildCityFacades(kit: CityKit, plans: FacadePlan[], backZ: numbe
   }
   const batches = new Map<string, Batch>();
   const colour = new THREE.Color();
+  const doorBox = new Map<string, THREE.Box3>();
   for (const plan of plans) {
     for (const p of plan.placements) {
       const b = plan.buildings[p.building];
+      // The kit's flat door leaves become real doors (DoorLibrary), picked per doorway; its frames stay round them.
+      if (p.piece.startsWith('Door_') && doorsReady()) {
+        let box = doorBox.get(p.piece);
+        if (!box) {
+          box = new THREE.Box3();
+          for (const prim of kit.piece(p.piece)) {
+            if (!prim.geometry.boundingBox) prim.geometry.computeBoundingBox();
+            box.union(prim.geometry.boundingBox!);
+          }
+          doorBox.set(p.piece, box);
+        }
+        const g = b.design.ground;
+        const style: DoorStyle = g === 'house' || g === 'stucco' ? 'house' : g === 'shop_trim' || g === 'pub' || g === 'lobby' || g === 'shop_glass' ? 'shop' : 'service';
+        const w = (box.max.x - box.min.x) * p.sx;
+        const door = doorPiece(style, Math.round(p.x * 100) + p.building * 7919, w * 1.08, box.max.y - box.min.y + 0.04);
+        if (door) {
+          door.position.set(p.x + ((box.min.x + box.max.x) / 2) * p.sx, p.y + box.min.y, backZ + p.z + box.max.z - 0.15);
+          group.add(door);
+          continue;
+        }
+      }
       pos.set(p.x, p.y, backZ + p.z);
       scl.set(p.sx, 1, 1);
       tmp.compose(pos, quat, scl);

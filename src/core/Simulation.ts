@@ -88,6 +88,14 @@ export class Simulation {
         const dir = dx === 0 ? (a.facing === 1 ? 1 : -1) : Math.sign(dx);
         a.pos.x -= (dir * overlap) / 2;
         b.pos.x += (dir * overlap) / 2;
+        // Two passers-by bumping: they also slide sideways off each other, so they get past instead of locking up.
+        if (a.team === 'neutral' && b.team === 'neutral') {
+          const dz = b.pos.z - a.pos.z;
+          const side = dz === 0 ? (a.id < b.id ? 1 : -1) : Math.sign(dz);
+          const slide = Math.min(0.03, overlap * 0.5);
+          a.pos.z -= side * slide;
+          b.pos.z += side * slide;
+        }
       }
     }
   }

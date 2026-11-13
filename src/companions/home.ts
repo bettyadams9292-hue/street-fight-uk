@@ -49,9 +49,10 @@ export interface Spot {
 
 /** Seat points per piece of furniture, in its own space (x across, z forwards; +z is the way you face sat on it). */
 const SEAT_POINTS: Record<string, { x: number; z: number }[]> = {
-  sofa_3: [{ x: -0.7, z: -0.06 }, { x: 0, z: -0.06 }, { x: 0.7, z: -0.06 }],
-  sofa_2: [{ x: -0.38, z: -0.05 }, { x: 0.38, z: -0.05 }],
-  armchair: [{ x: 0, z: -0.05 }],
+  // On the cushions (forward of the backrest) and clear of the arms, for the kit sofas (homeFurniture.ts).
+  sofa_3: [{ x: -0.6, z: 0.22 }, { x: 0, z: 0.22 }, { x: 0.6, z: 0.22 }],
+  sofa_2: [{ x: -0.33, z: 0.2 }, { x: 0.33, z: 0.2 }],
+  armchair: [{ x: 0, z: 0.2 }],
   dining_chair: [{ x: 0, z: 0 }],
 };
 /** Breakfast-bar stools: sat facing the island from its front. */
