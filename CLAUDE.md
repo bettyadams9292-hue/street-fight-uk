@@ -49,7 +49,7 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 
 ## Assets still needed
 
-The full list of every texture, model, icon, animation and sound still made in code is in the repo (508 rows, made 13 Nov 2026):
+The full list of every texture, model, icon, animation and sound still made in code is in the repo (595 rows: 508 made on 13 Nov 2026, plus 87 added for PR #20's jewellery and property):
 
 - `docs/ASSETS_NEEDED.xlsx`: open it in Excel or Google Sheets. Its columns are Area, Name, Game id, Asset needed, How it is made now, and Got it.
 - `docs/ASSETS_NEEDED.csv`: the same list as plain text, for Claude to read, search and update.
@@ -62,7 +62,9 @@ The main gaps:
 - Item icons: all 190 are painted by code (`src/ui/itemIcons.ts`).
 - Weapons: 31 of 36 have no model.
 - Owned vehicles: all 12 cars and 10 bikes are built in code.
-- Accessories with no worn model: chains, watches, earrings, rings, belt, gumshield and headguard.
+- Accessories with no worn model: earrings, belt, gumshield and headguard. Chains, watches and rings show as code-built pieces since #20, but still need proper models.
+- Jewellery (#20): 52 pieces with no model or icon, plus metal and gem materials.
+- Property (#20): four mansion styles, 20 listing photos, a staircase, the estate agent boards, and rooms with no proper fittings (swimming pool, cinema, conservatory, roof terrace, dressing room).
 - Caps and beanies show a flat cap as a stand-in.
 - Hairstyles that borrow another style's model: afro, cornrows, mohawk, quiff, buzz, curly and ponytail.
 - Fight moves: 22 are keyed in code (hook, uppercut and so on).
@@ -110,6 +112,5 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - one-of-a-kind interiors for each property;
   - real upstairs floors;
   - the hoodie's jagged collar.
-- The asset list predates #20. Chains, watches and rings now show on the character as code-built pieces, so those rows in `docs/ASSETS_NEEDED.*` now need a better model, not a missing one. Jewellery, the property interiors and Ashcombe Park are all code-built, so they need assets too.
 - The owner tests on an iPhone in portrait. Check every UI change at 390×700 as well as in landscape.
 - The London place names and `arch-*` archetype graphics in `public/art/titles` aren't used yet.

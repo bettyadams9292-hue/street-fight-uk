@@ -73,12 +73,12 @@ Items: Accessories,Red cap,cap_red,Inventory icon + 3D worn model (rigged),Icon 
 Items: Accessories,Beanie,beanie,Inventory icon + 3D worn model (rigged),Icon painted by code; No matching model: shows a flat cap instead,FALSE
 Items: Accessories,Sunglasses,sunglasses,Inventory icon,Icon painted by code; Worn model: yours,FALSE
 Items: Accessories,Face covering,snood,Inventory icon,Icon painted by code; Worn model: yours,FALSE
-Items: Accessories,Lucky gold chain,lucky_chain,Inventory icon + 3D worn model (rigged),Icon painted by code; Not shown on the character at all,FALSE
-Items: Accessories,Silver chain,chain_silver,Inventory icon + 3D worn model (rigged),Icon painted by code; Not shown on the character at all,FALSE
-Items: Accessories,Gold chain,chain_gold,Inventory icon + 3D worn model (rigged),Icon painted by code; Not shown on the character at all,FALSE
-Items: Accessories,Digital watch,watch_basic,Inventory icon + 3D worn model (rigged),Icon painted by code; Not shown on the character at all,FALSE
+Items: Accessories,Lucky gold chain,lucky_chain,Inventory icon + better 3D worn model,Icon painted by code; Shown on the character as a code-built piece since #20 (render/jewellery.ts): needs a proper model,FALSE
+Items: Accessories,Silver chain,chain_silver,Inventory icon + better 3D worn model,Icon painted by code; Shown on the character as a code-built piece since #20 (render/jewellery.ts): needs a proper model,FALSE
+Items: Accessories,Gold chain,chain_gold,Inventory icon + better 3D worn model,Icon painted by code; Shown on the character as a code-built piece since #20 (render/jewellery.ts): needs a proper model,FALSE
+Items: Accessories,Digital watch,watch_basic,Inventory icon + better 3D worn model,Icon painted by code; Shown on the character as a code-built piece since #20 (render/jewellery.ts): needs a proper model,FALSE
 Items: Accessories,Silver earring,earring_silver,Inventory icon + 3D worn model (rigged),Icon painted by code; Not shown on the character at all,FALSE
-Items: Accessories,Signet ring,ring_signet,Inventory icon + 3D worn model (rigged),Icon painted by code; Not shown on the character at all,FALSE
+Items: Accessories,Signet ring,ring_signet,Inventory icon + better 3D worn model,Icon painted by code; Shown on the character as a code-built piece since #20 (render/jewellery.ts): needs a proper model,FALSE
 Items: Accessories,Leather belt,belt_leather,Inventory icon + 3D worn model (rigged),Icon painted by code; Not shown on the character at all,FALSE
 Items: Food & first aid,Chips,chips,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
 Items: Food & first aid,Kebab,kebab,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
@@ -507,3 +507,90 @@ Effects,Block spark,burst_block,Particle texture / VFX,Drawn in code,FALSE
 Effects,Weapon glint,burst_glint,Particle texture / VFX,Drawn in code,FALSE
 Effects,Danger flash,burst_danger,Particle texture / VFX,Drawn in code,FALSE
 Effects,Rain,rain,Particle texture / VFX,Drawn in code,FALSE
+Jewellery: Rings,Ashworth Court Band,r_court_silver,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Kingsley Flat Band,r_flat_gold,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Oval Signet,r_signet_oval,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Halden Onyx Signet,r_signet_onyx,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Full Sovereign Ring,r_sovereign,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Velloni Solitaire,r_solitaire,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Marchetti Halo,r_halo,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Eternity Band,r_eternity,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Crane Ruby Cluster,r_ruby_cluster,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Crane Sapphire Cluster,r_sapphire_cluster,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Ostrander Statement Ring,r_statement,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Montague Link Ring,r_designer,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Rings,Champion’s Ring,r_champion,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Kasio Digital,w_digital,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Halden Sport Diver,w_sport,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Ashworth Chronograph,w_chrono,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Kingsley Dress Watch,w_dress_leather,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Montague Tank,w_square,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Velloni Presidente,w_gold_president,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Crane Oyster-style,w_silver_bracelet,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Marchetti Diamond Bezel,w_diamond_bezel,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Fully Iced Ostrander,w_iced,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Ostrander Tonneau Skeleton,w_tonneau,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Field Watch,w_nato,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Watches,Smart Square,w_square_digital,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Silver Curb Chain,n_curb_silver,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Gold Curb Chain,n_curb_gold,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Cuban Link 8 mm,n_cuban_8,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Cuban Link 14 mm,n_cuban_14,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Iced Cuban,n_cuban_iced,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Fine Rope Chain,n_rope_3,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Chunky Rope Chain,n_rope_6,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Figaro Chain,n_figaro,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Box Chain,n_box,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Tennis Necklace,n_tennis,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Cross Pendant,n_cross,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Crucifix on Rope,n_crucifix,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Sovereign Medallion,n_medallion,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Heart Locket,n_heart,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Solitaire Pendant,n_diamond_pendant,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Dog Tag,n_dogtag,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Gold Boxing Glove,n_glove,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Necklaces,Initial Pendant,n_initial,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Grills,Single Cap,g_single,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Grills,Fang Caps,g_fangs,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Grills,Top Six,g_top6,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Grills,Open-Face Top Six,g_top6_outline,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Grills,Iced Top Eight,g_top8_diamond,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Grills,Full Set,g_full,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Grills,Two-Tone Full Set,g_full_twotone,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Grills,Cut-Out Stars,g_cutout,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Grills,Fully Iced Set,g_full_iced,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: materials,"Metals (9ct and 18ct gold, white and rose gold, silver, platinum, black, steel, titanium, two-tone)",FINISHES,Metal material / matcap textures,Flat colour and roughness in code,FALSE
+Jewellery: materials,"Gemstones (diamond, ruby, sapphire, emerald, onyx, amethyst)",STONES,Gem material / textures,Flat colour in code,FALSE
+Jeweller (Halden & Crane),Necklace display bust,jewel_bust,3D model,Built from boxes in code,FALSE
+Estate agent (Keys & Co),"Estate agent boards (FOR SALE, TO LET, SOLD, LET BY)",agent_board,3D board-on-post model + board artwork,"Built in code, words drawn on a canvas",FALSE
+Estate agent (Keys & Co),Window display of listings,agent_window,3D window display model,Built in code,FALSE
+Ashcombe Park: mansions,"Georgian mansion (with lawn, railings, gate piers and lamps)",mansion:georgian,"3D mansion model, plus gates and railings",Built from boxes in code,FALSE
+Ashcombe Park: mansions,"Stone mansion (with lawn, railings, gate piers and lamps)",mansion:stone,"3D mansion model, plus gates and railings",Built from boxes in code,FALSE
+Ashcombe Park: mansions,"Brick mansion (with lawn, railings, gate piers and lamps)",mansion:brick,"3D mansion model, plus gates and railings",Built from boxes in code,FALSE
+Ashcombe Park: mansions,"Modern mansion (with lawn, railings, gate piers and lamps)",mansion:modern,"3D mansion model, plus gates and railings",Built from boxes in code,FALSE
+Property interiors,Staircase with banister,staircase,3D model,Built from boxes in code,FALSE
+Property interiors,Swimming pool,room:pool,"3D pool model (water, tiles, steps, loungers)","Pool room has no pool: just plants, a fountain and a bench",FALSE
+Property interiors,"Home cinema (screen, projector, cinema seats)",room:cinema,3D models,"Made from sofas, a 65"" TV and a neon sign",FALSE
+Property interiors,Conservatory (glass walls and roof),room:conservatory,3D model,An ordinary room with plants and armchairs,FALSE
+Property interiors,"Roof terrace (outdoor furniture, glass balustrade)",room:terrace,3D models,"An ordinary room with plants, a bench and a lamp",FALSE
+Property interiors,"Dressing room (wardrobe wall, island)",room:dressing,3D models,"Made from a wardrobe, mirror, drawers and trophy cabinet",FALSE
+Property listing photos,9 Tanner Road,h_tanner_9,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,27 Hollins Road,h_hollins_27,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,6 Parkside Avenue,h_parkside_6,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"The Beeches, 4 Ashcombe Rise",h_ashcombe_beeches,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Linden House, 11 Ashcombe Rise",h_ashcombe_linden,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Flat 3, Lowry House",f_lowry_3,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Flat 41, Hollins House",f_hollins_41,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Flat 12, Fairclough Court",f_fairclough_12,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Flat B, 58 Kirkgate Street",f_kirkgate_58b,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Flat 7, Kingsway Point",f_kingsway_7,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Apartment 4, Bonded Wharf",a_bonded_4,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Apartment 9, Shaw’s Wharf",a_shaws_9,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Apartment 1806, Ashcombe Tower",a_ashcombe_tower,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"Apartment 2, Belgrave Mansions",a_belgrave_2,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,"The Penthouse, The Pinnacle",a_pinnacle_ph,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,Wyvern Hall,m_wyvern_hall,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,Ashcombe Manor,m_ashcombe_manor,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,The Glasshouse,m_glasshouse,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,Heathfield House,m_heathfield,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Property listing photos,Kensington Lodge,m_kensington_lodge,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
