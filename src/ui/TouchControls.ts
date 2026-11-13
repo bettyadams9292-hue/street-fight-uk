@@ -65,6 +65,10 @@ export class TouchControls {
 
     this.el = h('div', { class: 'touch-controls' }, zone, side, pad, extras, bag);
 
+    // iOS still runs its own tap handling after a touch ends: double-tap zoom on a quick second tap, the text
+    // magnifier, and a synthetic mouse click. The pad works on pointer events, so cancelling touchend here changes
+    // nothing for it and stops all three (touch-action: none in the CSS covers the browsers that honour it).
+    this.el.addEventListener('touchend', (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false });
     zone.addEventListener('pointerdown', (e) => this.stickStart(e, zone));
     zone.addEventListener('pointermove', (e) => this.stickMove(e));
     zone.addEventListener('pointerup', (e) => this.stickEnd(e));
