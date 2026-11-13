@@ -54,6 +54,9 @@ export class Hud {
   private enemy = bars('right');
   private notices: HTMLElement;
   private combo: HTMLElement;
+  /** Red at the screen's edges when you take a hit; it lingers while you're on low health. */
+  private hurtEdge: HTMLElement;
+  private hurtFlash = 0;
   private comboTimer = 0;
   private floaters: HTMLElement;
   private fps: HTMLElement;
@@ -102,6 +105,7 @@ export class Hud {
     this.opponentButton = h('button', { class: 'chip opponent', title: 'Key N: next opponent type', onclick: () => actions.nextOpponent() }) as HTMLButtonElement;
     this.notices = h('div', { class: 'notices' });
     this.combo = h('div', { class: 'combo' });
+    this.hurtEdge = h('div', { class: 'hurt-edge' });
     this.floaters = h('div', { class: 'floaters' });
     this.fps = h('div', { class: 'fps' });
     this.prompt = h('div', { class: 'prompt' });
@@ -168,6 +172,7 @@ export class Hud {
       ),
       h('div', { class: 'prompt-wrap' }, this.prompt, this.subBar),
       this.notices,
+      this.hurtEdge,
       this.combo,
       this.floaters,
       this.fps,
@@ -306,6 +311,11 @@ export class Hud {
     setTimeout(() => n.remove(), kind === 'big' ? 1600 : 1100);
   }
 
+  /** You've been hit: flash the edges red, harder for bigger hits (0..1). */
+  hurt(amount: number): void {
+    this.hurtFlash = Math.min(1, Math.max(this.hurtFlash, 0.35 + amount * 0.65));
+  }
+
   showCombo(hits: number): void {
     if (hits < 2) return;
     this.combo.textContent = `${hits} HIT COMBO`;
@@ -368,6 +378,11 @@ export class Hud {
 
   update(dt: number, player: Fighter, enemy: Fighter | null): void {
     this.clock += dt;
+    // The red edge: a flash on each hit, fading in about half a second, and a slow pulse when nearly out.
+    this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.2);
+    const v = player.vitals;
+    const low = !player.isKO && v.health < v.maxHealth * 0.25 ? 0.22 + 0.12 * Math.sin(this.clock * 4) : 0;
+    this.hurtEdge.style.opacity = Math.max(this.hurtFlash, low).toFixed(3);
     this.updateBars(this.player, player, dt);
     this.enemy.root.style.visibility = enemy ? 'visible' : 'hidden';
     this.vs.style.visibility = enemy ? 'visible' : 'hidden';

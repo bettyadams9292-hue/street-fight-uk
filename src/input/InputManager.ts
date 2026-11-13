@@ -230,6 +230,17 @@ export class InputManager {
     return cmd;
   }
 
+  /**
+   * Rumble the gamepad, if it has a motor and you're playing on it: `strong` is the low, heavy motor,
+   * `weak` the high buzz (0..1 each). Phones and keyboards do nothing.
+   */
+  rumble(strong: number, weak: number, ms: number): void {
+    if (this.lastDevice !== 'gamepad' || typeof navigator === 'undefined' || !navigator.getGamepads) return;
+    const pad = Array.from(navigator.getGamepads()).find((p): p is Gamepad => !!p && p.connected);
+    const act = (pad as (Gamepad & { vibrationActuator?: { playEffect?: (t: string, p: object) => Promise<unknown> } }) | undefined)?.vibrationActuator;
+    act?.playEffect?.('dual-rumble', { duration: ms, strongMagnitude: Math.min(1, strong), weakMagnitude: Math.min(1, weak) }).catch(() => undefined);
+  }
+
   /** Drop anything queued (e.g. when pausing). */
   flush(): void {
     this.pressedQueue.clear();

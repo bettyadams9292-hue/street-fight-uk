@@ -186,6 +186,15 @@ export class AudioManager {
     this.noise(this.sfx, t, 0.07, 'bandpass', 5200, 0.22, 6);
   }
 
+  /** A big shot being loaded up at you: a low swell you learn to block or move on. */
+  danger(): void {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const f = this.noise(this.sfx, t, 0.18, 'bandpass', 300, 0.2, 2);
+    f.frequency.setValueAtTime(220, t);
+    f.frequency.exponentialRampToValueAtTime(520, t + 0.16);
+  }
+
   guardBreak(): void {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;

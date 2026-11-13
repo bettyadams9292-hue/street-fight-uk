@@ -157,12 +157,19 @@ test('combo stun shrinks after the third hit, down to 60%', () => {
   assert(comboStun(20, 30) === 12, `floor is 60% (${comboStun(20, 30)})`);
 });
 
-test('against trained enemies, careful play clearly beats mashing', () => {
-  // Early thugs can be mashed (that's fine for an opening area); by the City they make you pay for it.
-  const careful = audit('city', 6, 'decent', 8);
-  const masher = audit('city', 6, 'masher', 8);
-  assert(careful.won >= masher.won + 2, `careful won ${careful.won} of 8, masher ${masher.won}`);
-  assert(careful.hpLeft > masher.hpLeft, `careful kept ${(careful.hpLeft * 100).toFixed(0)}% health, masher ${(masher.hpLeft * 100).toFixed(0)}%`);
+test('careful play clearly beats button-mashing across the game', () => {
+  // Pooled over early, middle and late areas: any one fight is noisy. The masher hammers an attack every
+  // few frames whenever anyone is in reach, the way a mashing player does.
+  let careful = { won: 0, hp: 0 };
+  let masher = { won: 0, hp: 0 };
+  for (const [area, level] of [['alleys', 4], ['docks', 6], ['stadium', 8], ['hq', 11]] as const) {
+    const c = audit(area, level, 'decent', 6);
+    const m = audit(area, level, 'masher', 6);
+    careful = { won: careful.won + c.won, hp: careful.hp + c.hpLeft };
+    masher = { won: masher.won + m.won, hp: masher.hp + m.hpLeft };
+  }
+  assert(careful.won >= masher.won + 3, `careful won ${careful.won} of 24, masher ${masher.won}`);
+  assert(careful.hp > masher.hp, `careful kept more health (${careful.hp.toFixed(2)} vs ${masher.hp.toFixed(2)})`);
 });
 
 console.log('Stage 3: crowds that feel alive');
@@ -317,6 +324,38 @@ test('hand-made strikes whip: hips lead, the elbow or knee arrives last, and eve
   };
   assert(share(0.4, 'hips') > share(0.4, 'lElbow') + 0.1, `hips ${share(0.4, 'hips').toFixed(2)}, elbow ${share(0.4, 'lElbow').toFixed(2)} at 40%`);
   for (const j of ['hips', 'lElbow'] as const) assert(Math.abs(share(1, j) - 1) < 1e-9, `${j} doesn't arrive at the impact`);
+});
+
+console.log('Stage 8: game feel');
+
+test('every landed hit freezes at least 4 frames, so even a jab has weight', () => {
+  const s = scene('street', 'street', 0.9);
+  for (let i = 0; i < 30; i++) s.step();
+  let stop = -1;
+  s.sim.bus.on('hit:landed', (h) => h.attacker === s.a && (stop = s.a.hitstop));
+  s.step(press('lp'));
+  for (let i = 0; i < 20 && stop < 0; i++) s.step();
+  assert(stop >= 4, `jab hit freeze ${stop} frames`);
+});
+
+test('the slow-motion final blow is only the last enemy standing in the last wave, or the boss', () => {
+  const lvl = LEVELS.estate;
+  const enc = lvl.encounters.find((e) => !e.optional)!;
+  const p = new Progress(newSave(createCharacter({ name: 'T', appearance: defaultAppearance(), background: 'estate_scrapper', allocated: emptyAllocation() })));
+  const w = startFight(lvl, enc.id, p);
+  const state = () => w.encounters.find((e) => e.def.id === enc.id)!;
+  const first = state().enemies.filter((f) => !f.isKO);
+  assert(first.length >= 2, 'a wave of at least two');
+  assert(!w.isFinalBlow(first[0]), 'the first of a wave is not the final blow');
+  // Clear every wave but leave one standing in the last.
+  for (let i = 0; i < 900 && !(state().wave >= enc.waves.length - 1 && state().enemies.filter((f) => !f.isKO).length === 1); i++) {
+    const up = state().enemies.filter((f) => !f.isKO);
+    if (!(state().wave >= enc.waves.length - 1 && up.length === 1)) up[0]?.knockOut();
+    w.step(emptyCommand());
+  }
+  const last = state().enemies.filter((f) => !f.isKO);
+  assert(last.length === 1 && state().wave >= enc.waves.length - 1, 'got down to the last one');
+  assert(w.isFinalBlow(last[0]), 'the last one is the final blow');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -118,6 +118,11 @@ export class Game {
   private state: GameState = 'menu';
   private unsubscribe: (() => void)[] = [];
   private accumulator = 0;
+  /** Slow motion: how fast game time runs (1 = normal), and how many real seconds of slowness are left. */
+  private timeScale = 1;
+  private slowLeft = 0;
+  private slowScale = 1;
+  private lastCleanNotice = -99;
   private last = 0;
   private time = 0;
 
@@ -1969,7 +1974,17 @@ export class Game {
     };
 
     this.unsubscribe.push(
-      bus.on('move:started', ({ move }) => this.audio.swing(move.kind === 'heavy')),
+      bus.on('move:started', ({ fighter, move }) => {
+        this.audio.swing(move.kind === 'heavy');
+        // An enemy loading up a big, slow shot at you: a red flash on the fist or foot, early enough to block,
+        // dodge or step out. Quick shots get none; reading those is down to you.
+        const big = move.kind === 'heavy' || move.kind === 'special' || move.kind === 'finisher';
+        if (big && move.startup >= 11 && !isPlayer(fighter) && fighter.team === 'enemy' && fighter.target && isPlayer(fighter.target)) {
+          const foot = move.limb.endsWith('Foot') || move.limb === 'knee';
+          this.renderer.fx.burst(fighter.pos.x + fighter.facing * (foot ? 0.25 : 0.32), fighter.pos.y + (foot ? 0.75 : 1.35), fighter.pos.z, fighter.facing, 'danger');
+          this.audio.danger();
+        }
+      }),
       bus.on('hit:landed', (hit) => {
         const heavy = hit.move.kind === 'heavy';
         this.audio.impact(heavy ? 1 : hit.move.damage > 6 ? 0.45 : 0.15, hit.clean);
@@ -1977,10 +1992,23 @@ export class Game {
         this.renderer.viewOf(hit.target)?.flash();
         if (this.settings.get().screenShake) cam.addShake(0.03 + hit.damage * 0.007);
         floatAt(hit.x, hit.y + 0.25, hit.z, `${Math.round(hit.damage)}`, hit.clean ? 'clean' : 'dmg');
+        // Big hits push the camera in for a moment: counters, and heavy shots that land clean.
+        const big = hit.counter ? 0.9 : heavy && hit.clean ? 0.7 : heavy ? 0.35 : 0;
+        if (big && this.settings.get().screenShake) cam.addPunch(big, hit.x);
         if (isPlayer(hit.attacker)) {
           this.hud.showCombo(hit.comboHits);
+          this.input.rumble(heavy ? 0.5 : 0.15, heavy ? 0.3 : 0.25, heavy ? 90 : 45);
           if (hit.counter) this.hud.notify('COUNTER', 'warn');
-          else if (hit.clean) this.hud.notify('CLEAN HIT', 'info');
+          // A clean hit is worth calling out, but not every time: once in a while reads, every hit is noise.
+          else if (hit.clean && this.time - this.lastCleanNotice > 3) {
+            this.lastCleanNotice = this.time;
+            this.hud.notify('CLEAN HIT', 'info');
+          }
+        }
+        if (isPlayer(hit.target)) {
+          const share = hit.damage / Math.max(1, hit.target.vitals.maxHealth);
+          this.hud.hurt(Math.min(1, share * 6));
+          this.input.rumble(0.35 + share * 4, 0.4, heavy ? 160 : 90);
         }
       }),
       bus.on('hit:blocked', (hit) => {
@@ -2001,6 +2029,12 @@ export class Game {
         this.audio.ko();
         this.hud.notify(isPlayer(fighter) ? 'YOU’RE DOWN' : 'K.O.', 'big');
         if (this.settings.get().screenShake) cam.addShake(0.25);
+        // The blow that wins the fight (or loses it) plays in slow motion, with the camera pushing in.
+        const final = this.world?.isFinalBlow(fighter) ?? false;
+        if (final || isPlayer(fighter)) {
+          this.slowMo(final ? 0.75 : 0.6, final ? 0.22 : 0.35);
+          cam.setCinematic(final ? 1 : 0.6, { x: fighter.pos.x, y: 1.1, z: fighter.pos.z });
+        }
       }),
       bus.on('action:refused', ({ fighter }) => {
         if (isPlayer(fighter)) this.hud.notify('TOO TIRED', 'warn');
@@ -2024,7 +2058,10 @@ export class Game {
         else this.hud.notify('PARRIED', 'info');
       }),
       bus.on('fighter:finished', ({ by }) => {
-        if (this.settings.get().screenShake) cam.addShake(0.35);
+        if (this.settings.get().screenShake) {
+          cam.addShake(0.35);
+          cam.addPunch(1, by.pos.x);
+        }
         this.hud.notify(isPlayer(by) ? 'FINISHED!' : 'FINISHED', 'big');
       }),
       bus.on('grapple:start', ({ holder, phase }) => {
@@ -2121,13 +2158,29 @@ export class Game {
 
   private manualTime = 1000;
 
+  /** Slow time to `scale` for `seconds` of real time (the visual tests keep normal speed). */
+  private slowMo(seconds: number, scale: number): void {
+    if (this.manualClock) return;
+    // Already slowed: keep whichever is slower.
+    this.slowScale = this.slowLeft > 0 ? Math.min(this.slowScale, scale) : scale;
+    this.slowLeft = Math.max(this.slowLeft, seconds);
+  }
+
   private frame(t: number, forced = false): void {
     if (this.manualClock && !forced) {
       requestAnimationFrame((n) => this.frame(n));
       return;
     }
-    const dt = this.last === 0 ? 1 / 60 : Math.max(0, Math.min(0.1, (t - this.last) / 1000));
+    const realDt = this.last === 0 ? 1 / 60 : Math.max(0, Math.min(0.1, (t - this.last) / 1000));
     this.last = t;
+    // Slow motion: hold the slow speed, then ease back to normal over about a third of a second.
+    if (this.slowLeft > 0) {
+      this.slowLeft -= realDt;
+      this.timeScale = this.slowScale;
+      if (this.slowLeft <= 0) this.renderer.cameraRig.setCinematic(0);
+    } else this.timeScale = Math.min(1, this.timeScale + realDt * 2.5);
+    // The fight and everything drawn run on game time; the HUD keeps real time.
+    const dt = this.state === 'playing' ? realDt * this.timeScale : realDt;
     this.time += dt;
 
     const pad = this.input.pollGamepad();
@@ -2179,7 +2232,7 @@ export class Game {
     if (inFight && player) {
       const enemy = this.world ? this.world.focusEnemy : this.mode!.focusEnemy;
       // In story mode the boss has its own bar along the bottom.
-      this.hud.update(dt, player, this.world?.activeBoss && enemy === this.world.activeBoss ? null : enemy);
+      this.hud.update(realDt, player, this.world?.activeBoss && enemy === this.world.activeBoss ? null : enemy);
       this.hud.updateBubbles((x, y, z) => this.renderer.screenOf(x, y, z));
       if (this.world && this.progress) this.updateStoryHud(dt);
       this.updatePrompt();

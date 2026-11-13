@@ -47,16 +47,20 @@ export interface AuditResult {
   doubled: number;
   /** Enemy parry tells shown. */
   tells: number;
+  /** Share of the fight the player spent gassed (couldn't attack), and enemies left reeling after a player parry. */
+  gassed: number;
+  parriesPunished: number;
 }
 
 export function audit(area: AreaId, level: number, who: keyof typeof PLAYERS, seeds = 8): AuditResult {
-  const r: AuditResult = { fights: 0, won: 0, seconds: 0, hpLeft: 0, swings: 0, landed: 0, enemyBlocked: 0, enemyParried: 0, enemySwings: 0, enemyLanded: 0, playerBlocked: 0, playerParried: 0, enemyIdle: 0, enemyGuard: 0, pressure: 0, doubled: 0, tells: 0 };
+  const r: AuditResult = { fights: 0, won: 0, seconds: 0, hpLeft: 0, swings: 0, landed: 0, enemyBlocked: 0, enemyParried: 0, enemySwings: 0, enemyLanded: 0, playerBlocked: 0, playerParried: 0, enemyIdle: 0, enemyGuard: 0, pressure: 0, doubled: 0, tells: 0, gassed: 0, parriesPunished: 0 };
   let enemyFrames = 0;
   let idle = 0;
   let guard = 0;
   let frames = 0;
   let pressure = 0;
   let doubled = 0;
+  let gassedFrames = 0;
   const lvl = LEVELS[area];
   for (let seed = 1; seed <= seeds; seed++) {
     const alloc = emptyAllocation();
@@ -82,10 +86,24 @@ export function audit(area: AreaId, level: number, who: keyof typeof PLAYERS, se
     bus.on('hit:blocked', (h) => (h.attacker === me ? r.enemyBlocked++ : h.target === me && r.playerBlocked++));
     bus.on('hit:parried', (h) => (h.attacker === me ? r.enemyParried++ : h.target === me && r.playerParried++));
     bus.on('fighter:tell', (t) => t.fighter !== me && r.tells++);
+    // After you parry someone, did your next hit land on them while they were still open?
+    const parried = new Set<Fighter>();
+    bus.on('hit:parried', (h) => h.target === me && parried.add(h.attacker));
+    bus.on('hit:landed', (h) => {
+      if (h.attacker === me && parried.has(h.target)) {
+        if (h.target.state === 'parried' || h.target.state === 'hitstun' || h.target.state === 'stagger') r.parriesPunished++;
+        parried.delete(h.target);
+      }
+    });
     let f = 0;
     let won = false;
     while (f < 60 * 240) {
-      const cmd = f < 20 ? { ...brain.think(w.sim.frame), moveX: 1 } : brain.think(w.sim.frame);
+      let cmd = f < 20 ? { ...brain.think(w.sim.frame), moveX: 1 } : brain.think(w.sim.frame);
+      // A real button-masher: hammers an attack every few frames whenever anyone's in reach, whatever's going on.
+      if (who === 'masher' && me.target && Math.abs(me.target.pos.x - me.pos.x) < 1.6 && f % 5 === 0) {
+        const b = (['lp', 'lp', 'hp', 'lk', 'lp', 'hk'] as const)[(f / 5) % 6];
+        cmd = { ...cmd, block: false, pressed: { ...cmd.pressed, [b]: true } };
+      }
       w.step(cmd);
       f++;
       const foes = w.sim.fighters.filter((x: Fighter) => x !== me && x.team !== me.team && !x.isKO);
@@ -98,6 +116,7 @@ export function audit(area: AreaId, level: number, who: keyof typeof PLAYERS, se
       }
       if (foes.length) {
         frames++;
+        if (me.vitals.gassed) gassedFrames++;
         if (attacking) pressure++;
         if (attacking >= 2) doubled++;
       }
@@ -113,11 +132,12 @@ export function audit(area: AreaId, level: number, who: keyof typeof PLAYERS, se
     r.hpLeft += won ? me.vitals.health / me.vitals.maxHealth : 0;
   }
   const n = Math.max(1, r.fights);
-  for (const k of ['seconds', 'hpLeft', 'swings', 'landed', 'enemyBlocked', 'enemyParried', 'enemySwings', 'enemyLanded', 'playerBlocked', 'playerParried', 'tells'] as const) r[k] /= n;
+  for (const k of ['seconds', 'hpLeft', 'swings', 'landed', 'enemyBlocked', 'enemyParried', 'enemySwings', 'enemyLanded', 'playerBlocked', 'playerParried', 'tells', 'parriesPunished'] as const) r[k] /= n;
   r.enemyIdle = idle / Math.max(1, enemyFrames);
   r.enemyGuard = guard / Math.max(1, enemyFrames);
   r.pressure = pressure / Math.max(1, frames);
   r.doubled = doubled / Math.max(1, frames);
+  r.gassed = gassedFrames / Math.max(1, frames);
   return r;
 }
 
@@ -127,7 +147,8 @@ export function describe(area: string, who: string, r: AuditResult): string {
   return [
     `${area} (${who}): won ${r.won}/${r.fights}, ${r.seconds.toFixed(0)} s a fight, ${pc(r.hpLeft)} health left`,
     `  your attacks: ${r.swings.toFixed(0)} thrown, ${per(r.landed)} landed, ${per(r.enemyBlocked)} blocked, ${per(r.enemyParried)} parried (${r.tells.toFixed(1)} parry tells shown)`,
-    `  their attacks: ${r.enemySwings.toFixed(0)} thrown, ${r.enemyLanded.toFixed(0)} landed, you blocked ${r.playerBlocked.toFixed(0)}, parried ${r.playerParried.toFixed(0)}`,
+    `  their attacks: ${r.enemySwings.toFixed(0)} thrown, ${r.enemyLanded.toFixed(0)} landed, you blocked ${r.playerBlocked.toFixed(0)}, parried ${r.playerParried.toFixed(0)} (punished ${r.parriesPunished.toFixed(1)})`,
+    `  you were gassed ${pc(r.gassed)} of the fight`,
     `  enemies idle ${pc(r.enemyIdle)} of the time, guard up ${pc(r.enemyGuard)}; someone attacking you ${pc(r.pressure)} of the fight, two at once ${pc(r.doubled)}`,
   ].join('\n');
 }
