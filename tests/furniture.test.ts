@@ -55,5 +55,26 @@ test('the Kenney furniture files are all CC0 and credited', () => {
   for (const m of kenneyList.matchAll(/'([A-Za-z0-9]+)'/g)) assert(existsSync(`public/models/kenney/furniture/${m[1]}.glb`), `${m[1]}.glb is listed but missing`);
 });
 
+const gymLib = readFileSync('src/render/props/GymLibrary.ts', 'utf8');
+const gymList = gymLib.slice(gymLib.indexOf('export const GYM_MODELS'), gymLib.indexOf('] as const;', gymLib.indexOf('export const GYM_MODELS')));
+const gymIds = [...gymList.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+
+test('every gym model is on disk', () => {
+  assert(gymIds.length >= 14, `only ${gymIds.length} gym models listed`);
+  for (const id of gymIds) assert(existsSync(`public/models/gym/${id}.glb`), `${id}.glb is missing`);
+});
+
+test('every gym prop placed in a room names a real gym model', () => {
+  const rooms = readFileSync('src/world/interiors.ts', 'utf8');
+  const used = [...rooms.matchAll(/GYM\('([a-z_]+)'/g)].map((m) => m[1]);
+  assert(used.length >= 5, `only ${used.length} gym props placed`);
+  for (const id of used) assert(gymIds.includes(id), `${id} isn't a gym model`);
+});
+
+test('the gym pack is credited (CC BY 4.0)', () => {
+  const c = readFileSync('public/models/gym/CREDITS.md', 'utf8');
+  assert(/Matrixxy/.test(c) && /CC BY 4\.0/.test(c), 'gym credits missing the author or licence');
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

@@ -188,7 +188,7 @@ def draw(path, size, yaw=-35, pitch=22):
     order = np.argsort(V[:, :, 2].mean(1))
     for i in order:
         pts = [(S / 2 + (p[0] - cx) * scale, S / 2 - (p[1] - cyy) * scale) for p in V[i]]
-        c = np.clip(C[i] * shade[i], 0, 1) ** (1 / 1.8)
+        c = np.clip(C[i] * shade[i], 0, 1) ** (1 / 2.2)
         col = tuple(int(255 * x) for x in c)
         d.polygon(pts, fill=col)
     return img.resize((size, size), Image.LANCZOS)

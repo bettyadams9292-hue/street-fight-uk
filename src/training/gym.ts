@@ -36,7 +36,7 @@ export interface GymKitDef {
 export type TrainingActivity = 'bag' | 'curl' | 'press' | 'run' | 'cycle' | 'speedball' | 'skip';
 
 export const GYM_KIT_LIST: GymKitDef[] = [
-  { id: 'dumbbells', name: 'Dumbbell rack', price: 120, trains: 'power', attribute: 'Strength', perRep: 6, fatigue: 16, slot: { x: 3.45, z: -1.85 }, size: [0.45, 0.3], solid: true, activity: 'curl', use: { dx: 0, dz: 1.0, facing: 1 }, blurb: 'Curls and rows. Steady strength work.' },
+  { id: 'dumbbells', name: 'Dumbbell rack', price: 120, trains: 'power', attribute: 'Strength', perRep: 6, fatigue: 16, slot: { x: 3.45, z: -1.85 }, size: [0.65, 0.3], solid: true, activity: 'curl', use: { dx: 0, dz: 1.0, facing: 1 }, blurb: 'Curls and rows. Steady strength work.' },
   { id: 'barbell', name: 'Barbell & squat rack', price: 450, trains: 'power', attribute: 'Strength', perRep: 10, fatigue: 24, slot: { x: 5.0, z: -1.75 }, size: [0.75, 0.4], solid: true, activity: 'press', use: { dx: 0, dz: 0.85, facing: 1 }, blurb: 'Heavy compound lifts. The fastest way to get strong, and the most tiring.' },
   { id: 'treadmill', name: 'Treadmill', price: 900, trains: 'stamina', attribute: 'Stamina', perRep: 9, fatigue: 22, slot: { x: 6.9, z: -1.7 }, size: [0.9, 0.4], solid: true, activity: 'run', use: { dx: -0.1, dz: 0, facing: 1, y: 0.18 }, blurb: 'Roadwork without the rain. Builds stamina.' },
   { id: 'exercise_bike', name: 'Exercise bike', price: 600, trains: 'health', attribute: 'Conditioning', perRep: 9, fatigue: 20, slot: { x: 8.65, z: -1.8 }, size: [0.6, 0.3], solid: true, activity: 'cycle', use: { dx: -0.05, dz: 0, facing: 1, y: 0.12 }, blurb: 'Intervals on the bike. Builds endurance and health.' },

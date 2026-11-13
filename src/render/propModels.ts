@@ -3,6 +3,7 @@ import { BIKES, CARS, FURNITURE, type BikeDef, type CarDef, type FurnitureDef } 
 import { signTexture } from './levelTextures';
 import { EQUIPMENT } from '../business/catalogue';
 import { GYM_KIT } from '../training/gym';
+import { gymKitPiece } from './props/GymLibrary';
 import { homeFurnitureModel } from './props/homeFurniture';
 
 /**
@@ -883,6 +884,10 @@ export function buildAnyModel(id: string, colour?: string, state?: string): THRE
 
 /** Gym kit, facing the camera, standing on y = 0 (the speed ball hangs on the wall). */
 export function buildGymKitModel(id: string): THREE.Group {
+  // The low-poly gym models when they've loaded (GymLibrary.ts); the built-in kit until then.
+  const size = GYM_KIT[id]?.size;
+  const kit = size ? gymKitPiece(id, size) : null;
+  if (kit) return kit;
   const g = new THREE.Group();
   const black = mat('#141416', 0.5, 0.3);
   const steel = mat('#b8bcc2', 0.3, 0.85);

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { furniture, produceHeap, type FurnitureId, type ProduceId } from './props/KenneyLibrary';
+import { gymPiece, type GymModelId } from './props/GymLibrary';
 import { surfaceMaterial, kitGroundTexture as kitTexture, type Surface, type SurfaceOptions } from './street/Flooring';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
@@ -275,6 +276,15 @@ export class LevelView {
   /** Put a Kenney furniture model into the prop group, fitted to w × h × d; false if the kit isn't loaded. */
   private fit(g: THREE.Group, id: FurnitureId, w: number, h: number, d: number, o: { x?: number; y?: number; z?: number; upholstery?: string; turn?: number } = {}): boolean {
     const m = furniture(id, w, h, d, { upholstery: o.upholstery, turn: o.turn });
+    if (!m) return false;
+    m.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
+    g.add(m);
+    return true;
+  }
+
+  /** Put a gym model (GymLibrary) into the group, fitted to w × h × d; false until they've loaded. */
+  private gym(g: THREE.Group, id: GymModelId, w: number, h: number, d: number, o: { x?: number; y?: number; z?: number; keepAspect?: boolean; turn?: number } = {}): boolean {
+    const m = gymPiece(id, w, h, d, o);
     if (!m) return false;
     m.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
     g.add(m);
@@ -2170,6 +2180,8 @@ export class LevelView {
         break;
       }
       case 'bag': {
+        // The standing punch bag (LowPoly Gym Assets).
+        if (this.gym(g, 'punch_bag', hx * 2, 1.9, hx * 2, { keepAspect: true })) break;
         C(hx, hx, 1.1, 0, 1.1, 0, this.mat('#7a1a1a', 0.7));
         C(0.01, 0.01, 0.9, 0, 2.1, 0, this.mat('#888', 0.3, 0.9), 6);
         break;
@@ -2675,6 +2687,11 @@ export class LevelView {
         B(0.3, 0.06, 0.1, 0, -1.0, -D / 2 + 0.06, glow, false);
         break;
       }
+      case 'gym_prop': {
+        // Benches, plate stacks and loose dumbbells dressing the gyms; nothing until the models load.
+        this.gym(g, (p.item ?? 'flat_bench') as GymModelId, W, 1.2, D, { keepAspect: true });
+        break;
+      }
       case 'boxing_ring': {
         B(W, 0.35, D * 2, 0, 0.175, 0, this.mat('#1f3a6a', 0.7));
         B(W - 0.1, 0.03, D * 2 - 0.1, 0, 0.36, 0, this.mat('#e8e4dc', 0.9), false);
@@ -2701,6 +2718,8 @@ export class LevelView {
         break;
       }
       case 'gym_rack': {
+        // Gloves, pads and skipping ropes on a wall rack.
+        if (this.gym(g, 'glove_rack', W, 1.6, D, { keepAspect: true, z: -D / 2 + 0.12 })) break;
         const black = this.mat('#141416', 0.5, 0.3);
         for (const dx of [-W / 2 + 0.04, W / 2 - 0.04]) B(0.05, 1.6, D, dx, 0.8, 0, black);
         for (const y of [0.5, 1.0, 1.5]) B(W, 0.03, D, 0, y, 0, black, false);
