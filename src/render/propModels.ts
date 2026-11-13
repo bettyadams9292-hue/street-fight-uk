@@ -5,6 +5,7 @@ import { EQUIPMENT } from '../business/catalogue';
 import { GYM_KIT } from '../training/gym';
 import { gymKitPiece } from './props/GymLibrary';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
+import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { homeFurnitureModel } from './props/homeFurniture';
 
 /**
@@ -667,6 +668,32 @@ export function buildVehicleModel(id: string, colour?: string): THREE.Group {
 // ---- basement business equipment -------------------------------------------------------------------
 
 /**
+ * Wall kit from the security set (SecurityLibrary): the CCTV camera, the alarm (bell box with its
+ * keypad below) and the electrical control panel. False until the set loads.
+ */
+function securityEquipment(g: THREE.Group, id: string, D: number, y0: number, on: boolean): boolean {
+  const put = (m: SecurityModelId, scale: number, x: number, y: number): boolean => {
+    const p = securityPiece(m, scale, { dim: !on });
+    if (!p) return false;
+    p.position.set(x, y, -D / 2);
+    g.add(p);
+    return true;
+  };
+  switch (id) {
+    case 'cctv':
+      return put('wall_camera', 1.3, 0, y0 - 0.1);
+    case 'alarm':
+      if (!put('alarm_box', 1.8, 0, y0 + 0.15)) return false;
+      put('keypad', 1.4, 0.35, y0 - 0.6);
+      return true;
+    case 'control':
+      return put('electric_box_open', 2.0, 0, y0);
+    default:
+      return false;
+  }
+}
+
+/**
  * Grow kit from the hydroponics pack (HydroLibrary). Lights glow only while the business runs;
  * storage fills with harvest crates. False until the pack loads, or for kit it has nothing for
  * (security, air handling, cooling and climate units keep their own models).
@@ -774,8 +801,8 @@ export function buildEquipmentModel(id: string, state = 'ok|0|on'): THREE.Group 
     }
     C(g, r * 0.6, r * 0.5, 0.22, x, 0.11, z, mat('#2a2a2a', 0.8), 10);
   };
-  if (hydroEquipment(g, id, W, D, on, fill)) {
-    if (faulty) B(g, Math.min(W, 0.5), 0.06, 0.01, 0, 0.6, D / 2 + 0.03, mat('#e8c020', 0.6, 0, { emissive: 0x7a5a00, emissiveIntensity: 0.4 }), false);
+  if (hydroEquipment(g, id, W, D, on, fill) || securityEquipment(g, id, D, y0, on)) {
+    if (faulty) B(g, Math.min(W, 0.5), 0.06, 0.01, 0, def.mount === 'wall' ? y0 - 0.3 : 0.6, def.mount === 'wall' ? -D / 2 + 0.06 : D / 2 + 0.03, mat('#e8c020', 0.6, 0, { emissive: 0x7a5a00, emissiveIntensity: 0.4 }), false);
     return g;
   }
   switch (id) {
