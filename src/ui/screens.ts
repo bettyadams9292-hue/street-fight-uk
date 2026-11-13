@@ -1,4 +1,5 @@
 import type { SettingsStore, Settings, Quality, TouchMode, Difficulty } from '../save/Settings';
+import { titleArt } from './titles';
 import { DIFFICULTY } from '../progress/catalogue';
 import { h } from './dom';
 import { cycleRow, menuButton, sliderRow } from './controls';
@@ -26,12 +27,12 @@ export function mainMenu(
     h(
       'nav',
       { class: 'menu-list' },
-      continueText ? menuButton('Continue', actions.continue, continueText, 'primary', 'play') : null,
-      menuButton('New game', actions.newGame, 'Create a new fighter and start the story', continueText ? '' : 'primary', 'side'),
-      hasCharacter ? menuButton('Training ground', actions.training, 'Spar, drill combos, try every style', '', 'gym') : null,
-      hasCharacter ? menuButton('Character', actions.character, 'Stats and look', '', 'contact') : null,
-      menuButton('Settings', actions.settings, undefined, '', 'settings'),
-      menuButton('Controls', actions.controls, undefined, '', 'controls'),
+      continueText ? menuButton('Continue', actions.continue, continueText, 'primary', 'play', undefined, 'menu-continue') : null,
+      menuButton('New game', actions.newGame, 'Create a new fighter and start the story', continueText ? '' : 'primary', 'side', undefined, 'menu-new-game'),
+      hasCharacter ? menuButton('Training ground', actions.training, 'Spar, drill combos, try every style', '', 'gym', undefined, 'menu-training-ground') : null,
+      hasCharacter ? menuButton('Character', actions.character, 'Stats and look', '', 'contact', undefined, 'menu-character') : null,
+      menuButton('Settings', actions.settings, undefined, '', 'settings', undefined, 'menu-settings'),
+      menuButton('Controls', actions.controls, undefined, '', 'controls', undefined, 'menu-controls'),
     ),
     h('div', { class: 'footer', text: `v${VERSION}, early build: some art and sound are placeholders` }),
   );
@@ -46,54 +47,62 @@ export function settingsScreen(store: SettingsStore, ui: UIManager): Screen {
   const build = () => {
     const s: Settings = store.get();
     el.replaceChildren(
-      h('h2', { text: 'Settings' }),
+      h('h2', {}, titleArt('Settings', 'settings')),
       h(
         'div',
         { class: 'panel' },
-        h('h3', { text: 'Game' }),
-        cycleRow<Difficulty>('Difficulty (story)', (['easy', 'normal', 'hard'] as const).map((d) => ({ value: d, label: `${DIFFICULTY[d].name}: ${DIFFICULTY[d].text}` })), s.difficulty, (v) => store.update({ difficulty: v })),
-        h('h3', { text: 'Audio' }),
-        sliderRow('Master volume', s.masterVolume, (v) => store.update({ masterVolume: v })),
-        sliderRow('Effects volume', s.effectsVolume, (v) => store.update({ effectsVolume: v })),
-        sliderRow('Ambience volume', s.ambienceVolume, (v) => store.update({ ambienceVolume: v })),
-        h('h3', { text: 'Display' }),
+        h('h3', {}, titleArt('Game', 'game')),
+        cycleRow<Difficulty>('Difficulty (story)', (['easy', 'normal', 'hard'] as const).map((d) => ({ value: d, label: DIFFICULTY[d].name, note: DIFFICULTY[d].text, art: d })), s.difficulty, (v) => store.update({ difficulty: v }), 'difficulty'),
+        h('h3', {}, titleArt('Audio', 'audio')),
+        sliderRow('Master volume', s.masterVolume, (v) => store.update({ masterVolume: v }), { art: 'master-volume' }),
+        sliderRow('Effects volume', s.effectsVolume, (v) => store.update({ effectsVolume: v }), { art: 'effects-volume' }),
+        sliderRow('Ambience volume', s.ambienceVolume, (v) => store.update({ ambienceVolume: v }), { art: 'ambience-volume' }),
+        h('h3', {}, titleArt('Display', 'display')),
         cycleRow<Quality>('Graphics quality', [
-          { value: 'low', label: 'Low' },
-          { value: 'medium', label: 'Medium' },
-          { value: 'high', label: 'High' },
-        ], s.quality, (v) => store.update({ quality: v })),
+          { value: 'low', label: 'Low', art: 'low' },
+          { value: 'medium', label: 'Medium', art: 'medium' },
+          { value: 'high', label: 'High', art: 'high' },
+        ], s.quality, (v) => store.update({ quality: v }), 'graphics-quality'),
         cycleRow<boolean>('Lighting and glow', [
           { value: true, label: s.quality === 'low' ? 'On (needs Medium or High)' : 'On' },
           { value: false, label: 'Off' },
-        ], s.lighting, (v) => store.update({ lighting: v })),
+        ], s.lighting, (v) => store.update({ lighting: v }), 'lighting-and-glow'),
         cycleRow<boolean>('Screen shake', [
           { value: true, label: 'On' },
           { value: false, label: 'Off' },
-        ], s.screenShake, (v) => store.update({ screenShake: v })),
+        ], s.screenShake, (v) => store.update({ screenShake: v }), 'screen-shake'),
         cycleRow<boolean>('Frame rate counter', [
           { value: false, label: 'Off' },
           { value: true, label: 'On' },
-        ], s.showFps, (v) => store.update({ showFps: v })),
-        h('h3', { text: 'Controls' }),
+        ], s.showFps, (v) => store.update({ showFps: v }), 'frame-rate-counter'),
+        h('h3', {}, titleArt('Controls', 'controls')),
         cycleRow<TouchMode>('Touch controls', [
           { value: 'auto', label: 'Automatic' },
           { value: 'on', label: 'Always on' },
           { value: 'off', label: 'Off' },
-        ], s.touchControls, (v) => store.update({ touchControls: v })),
-        h('h3', { text: 'Training' }),
+        ], s.touchControls, (v) => store.update({ touchControls: v }), 'touch-controls'),
+        h('h3', {}, titleArt('Training', 'training')),
         cycleRow<boolean>('Show hitboxes (F1)', [
           { value: false, label: 'Off' },
           { value: true, label: 'On' },
-        ], s.showHitboxes, (v) => store.update({ showHitboxes: v })),
+        ], s.showHitboxes, (v) => store.update({ showHitboxes: v }), 'show-hitboxes'),
       ),
       h(
         'div',
         { class: 'panel-actions' },
-        menuButton('Reset to defaults', () => {
-          store.reset();
-          build();
-        }),
-        menuButton('Back', () => ui.pop()),
+        menuButton(
+          'Reset to defaults',
+          () => {
+            store.reset();
+            build();
+          },
+          undefined,
+          '',
+          undefined,
+          undefined,
+          'reset-to-defaults',
+        ),
+        menuButton('Back', () => ui.pop(), undefined, '', undefined, undefined, 'back'),
       ),
     );
   };
@@ -173,15 +182,15 @@ export function pauseMenu(actions: { resume: () => void; settings: () => void; c
     'div',
     { class: 'screen pause-menu' },
     screenLogo(),
-    h('h2', { text: 'Paused' }),
+    h('h2', {}, titleArt('Paused', 'pause')),
     h(
       'nav',
       { class: 'menu-list' },
-      menuButton('Resume', actions.resume),
+      menuButton('Resume', actions.resume, undefined, '', undefined, undefined, 'resume'),
       menuButton('Practice styles', actions.practice, 'Try any fighting style'),
-      menuButton('Settings', actions.settings),
-      menuButton('Controls', actions.controls),
-      menuButton('Quit to main menu', actions.quit, undefined, 'danger'),
+      menuButton('Settings', actions.settings, undefined, '', undefined, undefined, 'settings'),
+      menuButton('Controls', actions.controls, undefined, '', undefined, undefined, 'controls'),
+      menuButton('Quit to main menu', actions.quit, undefined, 'danger', undefined, undefined, 'exit'),
     ),
   );
   return {

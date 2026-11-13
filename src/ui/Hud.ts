@@ -1,6 +1,7 @@
 import { ARCHETYPES, type ArchetypeId } from '../ai/archetypes';
 import { TRAINING_MODE_LABELS, type TrainingOpponent } from '../core/TrainingMode';
 import type { Fighter } from '../fighter/Fighter';
+import { hasTitle, titleArt, titleFor } from './titles';
 import { h } from './dom';
 import { icon, type IconName } from './icons';
 
@@ -301,7 +302,12 @@ export class Hud {
 
   /** District name card when you arrive somewhere. */
   showBanner(district: string, place: string): void {
-    this.banner.replaceChildren(h('div', { class: 'district', text: district }), h('div', { class: 'place', text: place }));
+    // The painted place name where there is one (e.g. tanner-road-estate.webp), else the words.
+    const line = (text: string, cls: string) => {
+      const slug = titleFor(text);
+      return slug ? h('div', { class: `${cls} has-art` }, titleArt(text, slug)) : h('div', { class: cls, text });
+    };
+    this.banner.replaceChildren(line(district, 'district'), line(place, 'place'));
     this.banner.classList.remove('show');
     void this.banner.offsetWidth;
     this.banner.classList.add('show');
@@ -321,8 +327,12 @@ export class Hud {
   }
 
   /** Big centre-screen call-out. */
-  notify(text: string, kind: 'big' | 'warn' | 'info' = 'info'): void {
-    const n = h('div', { class: `notice ${kind}`, text });
+  notify(text: string, kind: 'big' | 'warn' | 'info' = 'info', art: string[] = []): void {
+    // Painted call-outs (FIGHT!, a boss's name and title) where there are graphics for them.
+    const painted = art.filter((a) => hasTitle(a));
+    const n = painted.length
+      ? h('div', { class: `notice ${kind} has-art`, role: 'status', 'aria-label': text }, ...painted.map((a, i) => titleArt(i === 0 ? text : a.replace(/-/g, ' '), a, i === 0 ? 'notice-art' : 'notice-art sub')))
+      : h('div', { class: `notice ${kind}`, text });
     this.notices.append(n);
     while (this.notices.children.length > 3) this.notices.firstElementChild?.remove();
     setTimeout(() => n.remove(), kind === 'big' ? 1600 : 1100);

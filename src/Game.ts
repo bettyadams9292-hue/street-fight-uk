@@ -1,4 +1,5 @@
 import { setHumansEnabled } from './render/human/HumanRig';
+import { slugify } from './ui/titles';
 import { AudioManager } from './audio/AudioManager';
 import { DT } from './core/constants';
 import { TrainingMode } from './core/TrainingMode';
@@ -725,11 +726,11 @@ export class Game {
       }),
       ev.on('encounter:start', ({ boss }) => {
         if (boss) {
-          this.hud.notify(boss.name.toUpperCase(), 'big');
+          this.hud.notify(boss.name.toUpperCase(), 'big', [slugify(boss.name), slugify(boss.title)]);
           this.hud.toast(`“${boss.intro}”`, 'warn');
           if (this.settings.get().screenShake) this.renderer.cameraRig.addShake(0.15);
         } else {
-          this.hud.notify('FIGHT!', 'big');
+          this.hud.notify('FIGHT!', 'big', ['fight']);
         }
         this.audio.guardBreak();
       }),
@@ -767,10 +768,15 @@ export class Game {
             if (boss.flag === 'boss_dunc') lines.push({ text: 'Dunc\u2019s phone has one contact: THE BOSS. Hale House, past the Pit.', big: true });
             if (boss.flag === 'boss_final') lines.push({ text: 'That\u2019s the lot. The whole town is yours.', big: true });
             this.ui.replaceAll(
-              rewardScreen('VICTORY', lines, [
-                { label: 'Head home', sub: 'Bank your cash, train up, save', go: () => this.goHome(false) },
-                { label: 'Stay and explore', go: () => this.resume() },
-              ]),
+              rewardScreen(
+                'VICTORY',
+                lines,
+                [
+                  { label: 'Head home', sub: 'Bank your cash, train up, save', go: () => this.goHome(false) },
+                  { label: 'Stay and explore', go: () => this.resume() },
+                ],
+                ['you-win', 'level-complete'],
+              ),
             );
           },
         };
@@ -857,7 +863,7 @@ export class Game {
             this.touch.release();
             this.updateTouchVisibility();
             this.ui.replaceAll(
-              rewardScreen('BATTERED', [{ text: 'You got done in.', big: true }, { text: lost > 0 ? `Someone went through your pockets: −£${lost}` : 'Nothing on you worth taking, at least.' }, { text: 'Anything you’ve already beaten stays beaten.' }], [{ label: 'Wake up at home', go: () => this.goHome(true) }]),
+              rewardScreen('BATTERED', [{ text: 'You got done in.', big: true }, { text: lost > 0 ? `Someone went through your pockets: −£${lost}` : 'Nothing on you worth taking, at least.' }, { text: 'Anything you’ve already beaten stays beaten.' }], [{ label: 'Wake up at home', go: () => this.goHome(true) }], ['game-over', 'mission-failed']),
             );
           },
         };

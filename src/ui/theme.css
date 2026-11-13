@@ -744,3 +744,73 @@ kbd, .key {
   .pf-tab { font-size: 21px; }
   .mp-card h3 { font-size: 22px; }
 }
+
+/* ----------------------------------------------------------------------------
+   Painted title graphics (src/ui/titles.ts). Each is sized by height so the
+   words sit at the size the text they replace would have; where a graphic is
+   missing the text is shown in its own styling instead.
+   ---------------------------------------------------------------------------- */
+img.title-art { display: block; width: auto; max-width: 100%; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45)); }
+/* Buttons: the painting is the label. */
+/* Painted buttons: the graphic is the button. No plate, border or icon; focus lifts and lights it. */
+.menu-btn.has-art, .main-menu.keyart .menu-btn.has-art, .menu-btn.has-art.primary, .menu-btn.has-art.quiet, .menu-btn.has-art.danger,
+.menu-btn.has-art:hover, .menu-btn.has-art.focused, .menu-btn.has-art:focus-visible,
+.main-menu.keyart .menu-btn.has-art:hover, .main-menu.keyart .menu-btn.has-art.focused,
+.main-menu.keyart .menu-btn.has-art.primary, .main-menu.keyart .menu-btn.has-art.primary:hover, .main-menu.keyart .menu-btn.has-art.primary.focused {
+  background: none; border: 0; box-shadow: none; clip-path: none; backdrop-filter: none; padding: 0; justify-content: center; align-self: center; width: auto;
+}
+.menu-btn.has-art .label { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.menu-btn.has-art .label img.title-art { max-width: min(92vw, 520px); height: 56px; width: auto; object-fit: contain; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55)); transition: transform 0.12s var(--ease), filter 0.12s; }
+.menu-btn.has-art:hover .label img.title-art, .menu-btn.has-art.focused .label img.title-art, .menu-btn.has-art:focus-visible .label img.title-art {
+  transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(255, 210, 63, 0.85)) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+}
+.main-menu.keyart .menu-btn.has-art .label img.title-art { height: 72px; }
+.panel-actions .menu-btn.has-art .label img.title-art { height: 46px; }
+/* In a menu of painted buttons, the ones without a graphic drop their plate too and sit as lettering. */
+.menu-list:has(.has-art) .menu-btn:not(.has-art), .menu-list:has(.has-art) .menu-btn:not(.has-art):hover, .menu-list:has(.has-art) .menu-btn:not(.has-art).focused, .menu-list:has(.has-art) .menu-btn:not(.has-art):focus-visible {
+  background: none; border: 0; box-shadow: none; clip-path: none; backdrop-filter: none; padding: 2px 0; justify-content: center; align-self: center; width: auto;
+  font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 38px; letter-spacing: 0.02em; color: var(--sign-white); text-shadow: 0 3px 0 rgba(0, 0, 0, 0.7), 0 6px 16px rgba(0, 0, 0, 0.6);
+}
+.menu-list:has(.has-art) .menu-btn:not(.has-art) .btn-icon, .menu-list:has(.has-art) .menu-btn:not(.has-art) kbd, .menu-list:has(.has-art) .menu-btn:not(.has-art) .sub { display: none; }
+.menu-list:has(.has-art) .menu-btn:not(.has-art):hover, .menu-list:has(.has-art) .menu-btn:not(.has-art).focused, .menu-list:has(.has-art) .menu-btn:not(.has-art):focus-visible { color: var(--accent); transform: scale(1.06); }
+.menu-list:has(.has-art) { align-items: center; }
+/* Headings. */
+.panel-screen h2 img.title-art, .pause-menu h2 img.title-art { height: 64px; }
+.panel h3 img.title-art { height: 34px; margin-left: -6px; }
+/* Settings: names on the left, values in the cycle. */
+.setting-row .name.has-art { display: flex; align-items: center; }
+.setting-row .name.has-art img.title-art { height: 30px; }
+.cycle.has-art { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 8px; padding-top: 3px; padding-bottom: 3px; }
+.cycle.has-art img.cycle-art { height: 30px; }
+.cycle .cycle-note { flex-basis: 100%; text-align: center; font-size: 13px; color: var(--muted, #b9bfd0); line-height: 1.2; }
+/* Entering an area: the painted name replaces the sign plate. */
+.area-banner .district.has-art, .area-banner .place.has-art { background: none; box-shadow: none; padding: 0; border-radius: 0; }
+.area-banner .district.has-art img.title-art { height: clamp(70px, 11vw, 132px); }
+.area-banner .place.has-art img.title-art { height: clamp(34px, 4.6vw, 56px); margin-top: -6px; }
+/* Call-outs: FIGHT!, a boss's name with their title under it. */
+.notice.has-art { display: flex; flex-direction: column; align-items: center; text-shadow: none; }
+.notice.has-art img.notice-art { height: clamp(80px, 13vw, 150px); }
+.notice.has-art img.notice-art.sub { height: clamp(34px, 5vw, 58px); margin-top: -10px; }
+/* Victory and defeat. */
+.reward-art h2 { border: 0; display: flex; justify-content: center; }
+.reward-art h2 img.reward-title { height: clamp(90px, 16vh, 150px); }
+
+@media (max-height: 520px) {
+  .menu-btn.has-art .label img.title-art { height: 38px; }
+  .main-menu.keyart .menu-btn.has-art .label img.title-art { height: 44px; }
+  .panel-actions .menu-btn.has-art .label img.title-art { height: 34px; }
+  .menu-list:has(.has-art) .menu-btn:not(.has-art) { font-size: 24px; padding: 0; }
+  .pause-menu .menu-list:has(.has-art) { gap: 1px; }
+  .pause-menu .menu-btn.has-art .label img.title-art { height: 32px; }
+  .main-menu.keyart .menu-list:has(.has-art) { width: min(440px, 60vw); justify-items: center; }
+  .panel-screen h2 img.title-art, .pause-menu h2 img.title-art { height: 42px; }
+  .panel h3 img.title-art { height: 26px; }
+  .setting-row .name.has-art img.title-art { height: 22px; }
+  .cycle.has-art img.cycle-art { height: 22px; }
+  .cycle .cycle-note { font-size: 11px; }
+  .area-banner .district.has-art img.title-art { height: 64px; }
+  .area-banner .place.has-art img.title-art { height: 30px; }
+  .notice.has-art img.notice-art { height: 70px; }
+  .notice.has-art img.notice-art.sub { height: 30px; }
+  .reward-art h2 img.reward-title { height: 72px; }
+}
