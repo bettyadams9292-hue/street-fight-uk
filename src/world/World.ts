@@ -1,3 +1,4 @@
+import { doorX } from '../city/doorSpots';
 import { BODY_RADIUS } from '../core/constants';
 import { BOSS_DAMAGE_TAKEN, ENEMY_DAMAGE_TAKEN, fightStrength, SECOND_WIND } from './fightTuning';
 import { ARCHETYPES, archetypeAppearance, type Archetype, type ArchetypeId } from '../ai/archetypes';
@@ -1501,7 +1502,8 @@ export class World {
     const options: Interactable[] = [];
     for (const ex of this.level.exits) {
       if (ex.kind !== 'door') continue;
-      options.push({ kind: 'exit', x: ex.x, z: ex.z, label: ex.label, exit: ex, locked: exitLocked(ex, this.progress) });
+      // On the door you can see: the kit may draw it a little along from the exit's own spot.
+      options.push({ kind: 'exit', x: doorX(this.level, ex.x), z: ex.z, label: ex.label, exit: ex, locked: exitLocked(ex, this.progress) });
     }
     for (const l of this.level.levers ?? []) options.push({ kind: 'lever', x: l.x, z: l.z, label: l.label, lever: l, done: this.progress.has(l.sets) });
     for (const s of this.stations) {
@@ -1521,11 +1523,14 @@ export class World {
     for (const o of options) {
       // Things on the floor need you to be closer than things on walls.
       const range = o.kind === 'item' ? 0.95 : INTERACT_RANGE;
-      let d = Math.hypot(o.x - p.pos.x, (o.z - p.pos.z) * 1.2);
+      // A door is drawn on the wall behind its exit spot: anywhere in front of it, from the wall out to the spot, counts.
+      const ox = o.kind === 'exit' ? Math.max(o.x - 0.55, Math.min(o.x + 0.55, p.pos.x)) : o.x;
+      const oz = o.kind === 'exit' ? Math.max(this.arena.bounds.minZ, Math.min(o.z, p.pos.z)) : o.z;
+      let d = Math.hypot(ox - p.pos.x, (oz - p.pos.z) * 1.2);
       if (o.kind === 'container' && o.empty) d += 0.4; // prefer something useful
       if (d > range || d >= bestD) continue;
       // No using things through walls.
-      if (this.arena.lineBlocked(p.pos.x, p.pos.z, o.x, o.z)) continue;
+      if (d > 0.05 && this.arena.lineBlocked(p.pos.x, p.pos.z, ox, oz)) continue;
       best = o;
       bestD = d;
     }
