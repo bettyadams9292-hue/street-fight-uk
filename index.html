@@ -6,10 +6,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#121310" />
+    <meta name="theme-color" content="#0b0f1c" />
     <meta name="description" content="STREET FIGHT UK - a gritty 2.5D street-fighting action RPG set in modern Britain." />
     <title>STREET FIGHT UK</title>
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/favicon-64.png" type="image/png" sizes="64x64" />
+    <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preload" href="/art/logo-small.webp" as="image" />
     <link rel="preload" href="/fonts/BigShouldersStencil.woff" as="font" type="font/woff" crossorigin />
     <link rel="preload" href="/fonts/BigShoulders.woff" as="font" type="font/woff" crossorigin />
     <link rel="preload" href="/fonts/Overpass.woff" as="font" type="font/woff" crossorigin />
@@ -21,10 +25,10 @@
   <body>
     <div id="game"></div>
     <div id="ui"></div>
-    <div id="boot" role="status" aria-live="polite" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#121310;color:#ece9df;font-family:'Big Shoulders',Arial Narrow,sans-serif;z-index:50;transition:opacity .25s ease">
-      <div style="font-family:'Big Shoulders Stencil',Impact,sans-serif;font-weight:900;font-size:48px;line-height:.85;letter-spacing:-.01em;text-align:center"><span style="color:#f2f0e8">STREET</span> <span style="color:#f0c419">FIGHT</span> <span style="display:inline-block;background:#c1272d;color:#fff;font-family:'Big Shoulders',sans-serif;font-size:30px;padding:2px 10px 0;vertical-align:6px;box-shadow:inset 0 0 0 2px #c1272d,inset 0 0 0 3.5px #fff">UK</span></div>
-      <div style="width:min(280px,62vw);height:10px;background:#161714;box-shadow:inset 0 2px 0 rgba(0,0,0,.6),0 0 0 2px #262824"><div id="boot-bar" style="height:100%;width:4%;background:repeating-linear-gradient(-45deg,#f0c419 0 8px,#161612 8px 16px);transition:width .2s linear"></div></div>
-      <div id="boot-text" style="font-size:16px;font-weight:700;letter-spacing:.02em;color:#a39f93">Loading</div>
+    <div id="boot" role="status" aria-live="polite" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at 50% 40%,#18213a,#0b0f1c 70%);color:#eef0f6;font-family:'Big Shoulders',Arial Narrow,sans-serif;z-index:50;transition:opacity .25s ease">
+      <img src="/art/logo-small.webp" alt="Street Fight UK" style="width:min(420px,70vw);height:auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5))" />
+      <div style="width:min(280px,62vw);height:10px;background:#0c101c;box-shadow:inset 0 2px 0 rgba(0,0,0,.6),0 0 0 2px #1b2133"><div id="boot-bar" style="height:100%;width:4%;background:repeating-linear-gradient(-45deg,#e8333a 0 8px,#f5f6fa 8px 16px);transition:width .2s linear"></div></div>
+      <div id="boot-text" style="font-size:16px;font-weight:700;letter-spacing:.02em;color:#9aa1b4">Loading</div>
     </div>
     <div class="rotate-hint">Turn your phone sideways to fight</div>
     <script type="module" src="/src/main.ts"></script>

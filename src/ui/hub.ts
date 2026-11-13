@@ -15,6 +15,7 @@ import { ITEMS } from '../items/items';
 import type { StyleId } from '../styles/StyleData';
 import { LEVELS, DISTRICT_ORDER } from '../world/levels';
 import { cycleRow, menuButton } from './controls';
+import { screenLogo } from './screens';
 import { h } from './dom';
 import { icon } from './icons';
 import { COMPANIONS } from '../companions/companions';
@@ -318,6 +319,7 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
   const el = h(
     'div',
     { class: 'screen pause-menu' },
+    screenLogo(),
     h('h2', { text: 'Paused' }),
     h(
       'nav',

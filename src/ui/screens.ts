@@ -6,6 +6,11 @@ import type { Screen, UIManager } from './UIManager';
 
 export const VERSION = '0.4.0';
 
+/** The Street Fight UK logo, for screens that should carry the brand (pause, loading). */
+export function screenLogo(): HTMLImageElement {
+  return h('img', { class: 'screen-logo', src: '/art/logo-small.webp', alt: 'Street Fight UK', draggable: 'false' });
+}
+
 // ---------------------------------------------------------------- main menu --
 
 export function mainMenu(
@@ -15,15 +20,9 @@ export function mainMenu(
 ): Screen {
   const el = h(
     'div',
-    { class: 'screen main-menu' },
-    h(
-      'div',
-      { class: 'title-block' },
-      h('div', { class: 'title-street', text: 'STREET' }),
-      h('div', { class: 'title-fight', text: 'FIGHT' }),
-      h('div', { class: 'title-uk', text: 'UK' }),
-      h('div', { class: 'hazard' }),
-    ),
+    { class: 'screen main-menu keyart' },
+    // The key art carries the logo; the name is still there for screen readers.
+    h('h1', { class: 'sr-only', text: 'Street Fight UK' }),
     h(
       'nav',
       { class: 'menu-list' },
@@ -173,6 +172,7 @@ export function pauseMenu(actions: { resume: () => void; settings: () => void; c
   const el = h(
     'div',
     { class: 'screen pause-menu' },
+    screenLogo(),
     h('h2', { text: 'Paused' }),
     h(
       'nav',
