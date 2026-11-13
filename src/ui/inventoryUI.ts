@@ -19,6 +19,7 @@ import { h } from './dom';
 import { icon, type IconName } from './icons';
 import { itemIconUrl } from './itemIcons';
 import type { Screen, UIManager } from './UIManager';
+import { jewelleryBoxPanel } from './jewelleryUI';
 
 /**
  * Inventory, stash, pawn shop and clothes shop screens. They all share one
@@ -38,7 +39,7 @@ export interface InventoryActions {
 }
 
 /** The inventory's tabs. Item data keeps its own categories; these group them the way players think. */
-type Filter = 'all' | 'weapons' | 'clothing' | 'equipment' | 'consumables' | 'materials' | 'valuables' | 'other';
+type Filter = 'all' | 'weapons' | 'clothing' | 'equipment' | 'consumables' | 'materials' | 'valuables' | 'other' | 'jewellery';
 const GROUPS: { id: Filter; label: string; icon: IconName }[] = [
   { id: 'all', label: 'All', icon: 'all' },
   { id: 'weapons', label: 'Weapons', icon: 'weapon' },
@@ -48,10 +49,12 @@ const GROUPS: { id: Filter; label: string; icon: IconName }[] = [
   { id: 'materials', label: 'Materials', icon: 'material' },
   { id: 'valuables', label: 'Valuables', icon: 'valuable' },
   { id: 'other', label: 'Other', icon: 'misc' },
+  // Not in your pockets at all: the jewellery box (always there, so it's easy to find).
+  { id: 'jewellery', label: 'Jewellery', icon: 'gem' },
 ];
 const MATERIALS = new Set<string>(MATERIAL_IDS);
 
-export function groupOf(d: ItemDef): Exclude<Filter, 'all'> {
+export function groupOf(d: ItemDef): Exclude<Filter, 'all' | 'jewellery'> {
   if (d.weapon || d.category === 'weapon') return 'weapons';
   if (d.id.startsWith('bag_')) return 'equipment';
   if (d.category === 'clothing' || d.category === 'accessory' || d.wear) return 'clothing';
@@ -182,7 +185,7 @@ function tabsRow(current: Filter, counts: Partial<Record<Filter, number>>, onPic
   return h(
     'div',
     { class: 'inv-tabs' },
-    ...GROUPS.filter((g) => g.id === 'all' || counts[g.id] || g.id === current).map((g) =>
+    ...GROUPS.filter((g) => g.id === 'all' || (g.id === 'jewellery' ? counts.jewellery !== undefined : counts[g.id] || g.id === current)).map((g) =>
       h(
         'button',
         { class: `inv-tab${g.id === current ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => onPick(g.id) },
@@ -251,6 +254,7 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
   let message = '';
   let bad = false;
   let confirmDrop: string | null = null;
+  const jewels = { sel: null as string | null };
 
   const say = (t: string, b = false) => {
     message = t;
@@ -338,11 +342,13 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
         h('span', { class: `cap${used >= cap ? ' full' : ''}` }, h('i', { class: 'cap-bar' }, h('i', { style: `width:${Math.min(100, (used / cap) * 100)}%` })), `${used}/${cap} pockets`),
         h('button', { class: 'icon-btn', 'aria-label': 'Close', title: 'Close (Esc / I)', onclick: close }, icon('close')),
       ),
-      tabsRow(filter, countBy(all.map((e) => e.st)), (f) => { filter = f; selected = null; build(); }),
-      h('div', { class: 'inv-body' },
-        h('div', { class: 'inv-left' }, h('div', { class: 'item-list' }, ...cards)),
-        h('div', { class: 'inv-right' }, detail, h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message })),
-      ),
+      tabsRow(filter, { ...countBy(all.map((e) => e.st)), jewellery: s.jewellery.owned.length }, (f) => { filter = f; selected = null; build(); }),
+      filter === 'jewellery'
+        ? h('div', { class: 'inv-body jw-inv' }, jewelleryBoxPanel(progress, actions.changed, actions.changed, say, () => build(), jewels), h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message }))
+        : h('div', { class: 'inv-body' },
+            h('div', { class: 'inv-left' }, h('div', { class: 'item-list' }, ...cards)),
+            h('div', { class: 'inv-right' }, detail, h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message })),
+          ),
       h('div', { class: 'panel-actions slim' },
         h('span', { class: 'hint', text: 'Double-click an item to use, hold or wear it' }),
         menuButton(`Sort: ${SORTS.find((x) => x.id === sort)!.label}`, () => { sort = SORTS[(SORTS.findIndex((x) => x.id === sort) + 1) % SORTS.length].id; build(); }, undefined, 'quiet'),

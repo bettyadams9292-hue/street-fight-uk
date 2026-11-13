@@ -61,7 +61,7 @@ const start = (): void => {
 
 const begin = async (): Promise<void> => {
   // The character line-up draws on its own stage, without the game.
-  if (shot === 'humans' || shot === 'anims') {
+  if (shot === 'humans' || shot === 'anims' || shot === 'jewels') {
     hideBoot();
     await (await import('./debug/deterministic')).makeDeterministic();
     void import('./debug/humanShot').then((m) => m.runHumanShot(gameRoot, shot));

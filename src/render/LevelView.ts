@@ -557,6 +557,8 @@ export class LevelView {
       shop: ['tiles', '#c4beb4'],
       pawn: ['carpet', '#5a1e22'],
       pub: ['boards', '#6a4a2a'],
+      jeweller: ['tiles', '#2a2a30'],
+      estate_agent: ['boards', '#8a6a4a'],
     };
     const lp = theme === 'basement' ? undefined : LP[theme] ?? ['boards', '#9a7a5a'];
     if (!lp || !this.kitGround(lp[0], minX, maxX, this.back, front, lp[1])) this.ground(minX, maxX, this.back, front, floor);
@@ -746,6 +748,8 @@ export class LevelView {
         return this.fortress(f);
       case 'interior':
         return this.interior(f);
+      case 'mansion':
+        return this.mansion(f);
       default:
         // Never leave a hole: plain brick for anything without a builder yet.
         return this.brickWall(f.x0, f.x1, 6);
@@ -1755,6 +1759,130 @@ export class LevelView {
     }
   }
 
+  /**
+   * A big house set back behind railings and gate piers, with a lawn in front. Its style comes from
+   * `flags` (georgian, stone, brick or modern), so no two mansions on the road look the same.
+   */
+  private mansion(f: FacadeDef): void {
+    const w = f.x1 - f.x0;
+    const cx = (f.x0 + f.x1) / 2;
+    const style = f.flags?.[0] ?? (['georgian', 'stone', 'brick', 'modern'] as const)[hashString(f.label ?? `${f.x0}`) % 4];
+    const set = 4.2;
+    const z = this.back - set;
+    const wallMat =
+      style === 'brick'
+        ? new THREE.MeshStandardMaterial({ map: brickTexture(w / 4, 3), color: 0xb08070, roughness: 0.9 })
+        : style === 'modern'
+          ? new THREE.MeshStandardMaterial({ map: plasterTexture('#eeece6', w / 4, 3), roughness: 0.6 })
+          : new THREE.MeshStandardMaterial({ map: plasterTexture(style === 'stone' ? '#c8bc9e' : '#e6dcc4', w / 4, 3), roughness: 0.85 });
+    const trim = this.mat(style === 'modern' ? '#2a2c30' : '#f2eee4', 0.6);
+    const mainW = w * (style === 'modern' ? 0.62 : 0.5);
+    const wingW = (w - mainW) / 2 - 0.4;
+    const H = style === 'modern' ? 7.4 : 9.2;
+    // Lawn from the railings back to the house.
+    this.ground(f.x0, f.x1, z, this.back, new THREE.MeshStandardMaterial({ color: 0x3f6a34, roughness: 1 }), 0.012);
+    this.box(1.6, 0.02, set, cx, 0.02, this.back - set / 2, this.mat('#bdb5a4', 0.95), false);
+    // The house: a main block and two lower wings set back a little.
+    this.box(mainW, H, 0.6, cx, H / 2, z - 0.3, wallMat);
+    for (const sx of [-1, 1]) this.box(wingW, H * 0.72, 0.6, cx + sx * (mainW / 2 + wingW / 2 + 0.2), (H * 0.72) / 2, z - 1.2, wallMat);
+    const glass = (x: number, y: number, ww: number, hh: number, zz: number) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, hh), this.windowMat(this.rnd() < 0.55 ? 0.6 : 0));
+      m.position.set(x, y, zz);
+      this.group.add(m);
+    };
+    if (style === 'modern') {
+      // Floor-to-ceiling glass bands and a cantilevered upper floor.
+      glass(cx, 1.6, mainW - 1.2, 2.6, z + 0.02);
+      glass(cx + 0.6, 5.1, mainW - 2.4, 2.4, z + 0.62);
+      this.box(mainW + 1.2, 0.35, 1.6, cx + 0.6, 3.6, z + 0.2, this.mat('#f4f2ee', 0.4));
+      this.box(mainW + 1.4, 0.3, 1.0, cx, H + 0.15, z, this.mat('#2a2c30', 0.5));
+      for (const sx of [-1, 1]) glass(cx + sx * (mainW / 2 + wingW / 2 + 0.2), 2.2, wingW - 0.8, 2.2, z - 0.88);
+    } else {
+      // Rows of sash windows with surrounds, and a hipped roof.
+      const cols = Math.max(3, Math.round(mainW / 2.2));
+      for (let r = 0; r < 2; r++)
+        for (let c = 0; c < cols; c++) {
+          const x = cx - mainW / 2 + (mainW / cols) * (c + 0.5);
+          if (r === 0 && Math.abs(x - cx) < 1.2) continue;
+          const y = 2 + r * 3.4;
+          glass(x, y, 1.0, 1.7, z + 0.02);
+          this.box(1.3, 0.12, 0.1, x, y - 0.95, z + 0.05, trim, false);
+          this.box(1.3, 0.12, 0.1, x, y + 0.95, z + 0.05, trim, false);
+        }
+      for (const sx of [-1, 1]) {
+        const wx = cx + sx * (mainW / 2 + wingW / 2 + 0.2);
+        for (let c = 0; c < Math.max(1, Math.round(wingW / 2.4)); c++) glass(wx - wingW / 2 + (wingW / Math.max(1, Math.round(wingW / 2.4))) * (c + 0.5), 2.2, 0.95, 1.6, z - 0.88);
+      }
+      const roof = this.mat(style === 'brick' ? '#4a3a32' : '#3a3e46', 0.8);
+      const ridge = new THREE.Shape();
+      ridge.moveTo(-mainW / 2 - 0.3, 0);
+      ridge.lineTo(mainW / 2 + 0.3, 0);
+      ridge.lineTo(mainW / 2 - 1.2, 2.2);
+      ridge.lineTo(-mainW / 2 + 1.2, 2.2);
+      ridge.lineTo(-mainW / 2 - 0.3, 0);
+      const rg = new THREE.Mesh(new THREE.ExtrudeGeometry(ridge, { depth: 1.2, bevelEnabled: false }), roof);
+      rg.position.set(cx, H, z - 1.1);
+      this.group.add(rg);
+      this.box(mainW + 0.4, 0.3, 0.3, cx, H, z + 0.05, trim, false);
+      // Portico: columns and a pediment over the front door.
+      if (style !== 'brick') {
+        for (const dx of [-1.6, -0.55, 0.55, 1.6]) this.cyl(0.16, 0.18, 3.4, cx + dx, 1.7, z + 1.0, trim, 12);
+        this.box(4.0, 0.4, 1.3, cx, 3.6, z + 0.7, trim, false);
+        const ped = new THREE.Shape();
+        ped.moveTo(-2.1, 0);
+        ped.lineTo(2.1, 0);
+        ped.lineTo(0, 1.0);
+        ped.lineTo(-2.1, 0);
+        const pm = new THREE.Mesh(new THREE.ExtrudeGeometry(ped, { depth: 0.3, bevelEnabled: false }), trim);
+        pm.position.set(cx, 3.8, z + 1.1);
+        this.group.add(pm);
+      }
+      // The front door.
+      this.box(1.5, 2.8, 0.1, cx, 1.4, z + 0.03, this.mat(style === 'brick' ? '#1d2a1d' : '#1a1a1e', 0.4), false);
+    }
+    // Railings along the front with gate piers at the drive, lamps on top, and a name plate.
+    const iron = this.mat('#18191c', 0.4, 0.6);
+    const pierMat = this.mat(style === 'brick' ? '#8a5a48' : '#d8d0c0', 0.8);
+    const gateX = this.level.exits.find((e) => e.kind === 'door' && e.x >= f.x0 && e.x <= f.x1)?.x ?? cx;
+    const rz = this.back + 0.08;
+    this.box(w, 0.5, 0.25, cx, 0.25, rz, pierMat);
+    const n = Math.floor(w / 0.16);
+    const geo = new THREE.CylinderGeometry(0.018, 0.018, 1.5, 6);
+    const inst = new THREE.InstancedMesh(geo, iron, n);
+    const mx = new THREE.Matrix4();
+    let k = 0;
+    for (let i = 0; i < n; i++) {
+      const x = f.x0 + i * 0.16 + 0.08;
+      if (Math.abs(x - gateX) < 1.7) continue;
+      inst.setMatrixAt(k++, mx.makeTranslation(x, 1.25, rz));
+    }
+    inst.count = k;
+    this.group.add(inst);
+    this.box(w, 0.05, 0.05, cx, 1.95, rz, iron, false);
+    for (const sx of [-1, 1]) {
+      const px = gateX + sx * 1.8;
+      this.box(0.5, 2.4, 0.5, px, 1.2, rz, pierMat);
+      this.box(0.62, 0.12, 0.62, px, 2.45, rz, pierMat, false);
+      this.cyl(0.14, 0.14, 0.3, px, 2.66, rz, this.mat('#fff2d0', 0.3, 0, { emissive: 0xffd890, emissiveIntensity: 1.4 }), 10);
+    }
+    // Gates, open.
+    for (const sx of [-1, 1]) {
+      const gate = new THREE.Group();
+      for (let i = 0; i < 9; i++) this.box(0.025, 1.8, 0.025, sx * (0.08 + i * 0.17), 1.0, 0, iron, false, gate);
+      this.box(1.55, 0.06, 0.04, sx * 0.78, 1.85, 0, iron, false, gate);
+      this.box(1.55, 0.06, 0.04, sx * 0.78, 0.2, 0, iron, false, gate);
+      gate.position.set(gateX + sx * 1.55, 0, rz);
+      gate.rotation.y = sx * -1.1;
+      this.group.add(gate);
+    }
+    if (f.label) {
+      const t = signTexture(f.label, '#1a1a1e', '#e8d6a0', { w: 512, h: 96 });
+      const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.28), new THREE.MeshStandardMaterial({ map: t, roughness: 0.4, metalness: 0.3 }));
+      plate.position.set(gateX - 1.8, 1.7, rz + 0.26);
+      this.group.add(plate);
+    }
+  }
+
   private fence(f: FacadeDef): void {
     const w = f.x1 - f.x0;
     const cx = (f.x0 + f.x1) / 2;
@@ -2737,6 +2865,59 @@ export class LevelView {
         B(0.94, 0.64, 0.02, 0, 1.5, -0.01, this.mat('#8a8e94', 0.3, 0.7), false);
         const t = signTexture('TRAINING PLAN', '#f4f4f0', '#1f4fa8', { w: 256, h: 64 });
         this.panel(0.8, 0.2, p.x, 1.66, new THREE.MeshStandardMaterial({ map: t }), p.z - this.back + 0.03);
+        break;
+      }
+      case 'staircase': {
+        // A flight of stairs up to the landing against the back wall, with a banister along the open side.
+        const tread = this.mat(c ?? '#8a6040', 0.55);
+        const riser = this.mat('#f0ece2', 0.7);
+        const steps = 12;
+        for (let i = 0; i < steps; i++) {
+          const x = -W / 2 + (W / steps) * (i + 0.5);
+          B(W / steps + 0.01, 0.04, D, x, 0.21 * (i + 1), 0, tread, false);
+          B(0.02, 0.21, D, x - W / steps / 2, 0.21 * (i + 0.5), 0, riser, false);
+        }
+        // Stringer and the wall it's against.
+        const string = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(W, 2.52), 0.22, 0.05), riser);
+        string.rotation.z = Math.atan2(2.52, W);
+        string.position.set(0, 1.2, D / 2);
+        g.add(string);
+        const rail = this.mat('#3a2416', 0.4);
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(W, 2.52), 0.06, 0.06), rail);
+        bar.rotation.z = Math.atan2(2.52, W);
+        bar.position.set(0, 2.15, D / 2);
+        g.add(bar);
+        for (let i = 0; i <= steps; i += 2) B(0.03, 0.9, 0.03, -W / 2 + (W / steps) * i, 0.21 * i + 0.45, D / 2, riser, false);
+        B(0.12, 1.2, 0.12, -W / 2, 0.6, D / 2, rail);
+        break;
+      }
+      case 'agent_board': {
+        // An estate agent's board on a post: FOR SALE, TO LET, SOLD, LET BY.
+        const text = p.label ?? 'FOR SALE';
+        const sold = /SOLD|LET BY|^LET/.test(text);
+        const t = signTexture(text, sold ? '#b3121b' : '#16365a', '#ffffff', { w: 384, h: 256 });
+        B(0.08, 2.0, 0.08, 0, 1.0, 0, this.mat('#e8e4dc', 0.6));
+        const board = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.5, 0.03), [this.mat('#e8e4dc', 0.6), this.mat('#e8e4dc', 0.6), this.mat('#e8e4dc', 0.6), this.mat('#e8e4dc', 0.6), new THREE.MeshStandardMaterial({ map: t, roughness: 0.6 }), this.mat('#e8e4dc', 0.6)]);
+        board.position.set(0, 1.9, 0.06);
+        board.castShadow = true;
+        g.add(board);
+        break;
+      }
+      case 'jewel_bust': {
+        // A velvet display bust with a chain on it, on a small plinth.
+        const velvet = this.mat(c ?? '#1a1a22', 0.95);
+        B(W, 0.9, D, 0, 0.45, 0, this.mat('#e8e4dc', 0.3));
+        C(0.05, 0.07, 0.25, 0, 1.03, 0, velvet, 12);
+        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), velvet);
+        chest.scale.set(1.2, 1, 0.6);
+        chest.rotation.x = Math.PI;
+        chest.position.y = 1.22;
+        g.add(chest);
+        const gold = this.mat('#d8b04a', 0.18, 0.95, { emissive: 0x6a5010, emissiveIntensity: 0.6 });
+        const ch = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 6, 24, Math.PI), gold);
+        ch.rotation.z = Math.PI;
+        ch.position.set(0, 1.2, 0.07);
+        g.add(ch);
         break;
       }
       case 'stairwell': {

@@ -58,6 +58,10 @@ import { coachBoardScreen, DrillGame, gymStoreScreen, RepGame, styleCoachScreen 
 import { workshopScreen } from './ui/workshopUI';
 import { recruitScreen } from './ui/companionUI';
 import { computerScreen } from './ui/propertyUI';
+import { jewellerScreen } from './ui/jewelleryUI';
+import { estateAgentScreen, propertyBrochureScreen, realtyBody, type RealtyActions } from './ui/realtyUI';
+import { PROPERTIES } from './realty/catalogue';
+import { access, settle as settlePortfolio } from './realty/portfolio';
 import { COMPANIONS, COMPANION_WAITS_OUTSIDE, companionAvailable, companionRecover, crewState, followMe, relaxAtHome, winChallenge } from './companions/companions';
 import { healOverTime, injuryName, treatInjury } from './condition/condition';
 import { applyCrewModifiers } from './companions/crewFighter';
@@ -529,6 +533,18 @@ export class Game {
     this.world?.settleInjuries();
     this.world?.syncCompanion();
     this.bikeArrivals(area, leaving);
+    // Which property you're walking into (its door's entry is the property's id); tenants' homes stay shut.
+    if (area === 'property') {
+      const id = PROPERTIES[entry] ? entry : p.save.portfolio.inside;
+      const ok = id ? access(p.save, id) : null;
+      if (!id || !ok?.ok) {
+        if (ok && !ok.ok) this.hud.toast(ok.reason, 'warn');
+        const def = id ? PROPERTIES[id] : null;
+        return this.enterArea(def ? def.area : 'home', def ? `prop_${def.id}` : 'door', opts);
+      }
+      p.save.portfolio.inside = id;
+      if (entry === 'start' || !PROPERTIES[entry]) entry = id;
+    } else p.save.portfolio.inside = null;
     const level = resolveLevel(area, p.save);
     this.unwire();
     this.leaveWorld();
@@ -877,6 +893,26 @@ export class Game {
   }
 
   /** Hub rooms: freeze the world and open the room's panel. */
+  /** What the property screens can do: save, and take you to a property (a viewing, or your own place). */
+  private realtyActions(): RealtyActions {
+    return {
+      saved: () => this.saveGame(),
+      visit: (id) => {
+        const def = PROPERTIES[id];
+        if (!def) return;
+        const ok = access(this.progress!.save, id);
+        if (!ok.ok) {
+          this.hud.toast(ok.reason, 'warn');
+          return;
+        }
+        this.ui.replaceAll(null);
+        this.state = 'playing';
+        this.hud.toast(`${def.name}: have a look round. The brochure’s in the hall.`, 'item');
+        this.changeArea('property', id, null);
+      },
+    };
+  }
+
   private openStation(id: StationId, from?: StationDef): void {
     const w = this.world;
     const p = this.progress;
@@ -920,7 +956,8 @@ export class Game {
         screen = coachBoardScreen(p, close, changed);
         break;
       case 'computer':
-        screen = computerScreen(p, close, saved, (uid, room) => this.startPlacing(uid, room));
+        // The property portfolio is on the home computer too.
+        screen = computerScreen(p, close, saved, (uid, room) => this.startPlacing(uid, room), [{ id: 'property', name: 'Property', body: realtyBody(p, this.realtyActions(), p.save.portfolio.holdings.length ? 'mine' : 'market') }]);
         break;
       case 'gym_counter':
         screen = gymStoreScreen(p, close, saved, station?.tab);
@@ -1049,6 +1086,31 @@ export class Game {
       case 'casino_cashier':
         screen = cashierScreen(p, close, saved, () => this.hud.toast('Prize won: it’s waiting at home', 'cash'));
         break;
+      case 'jeweller_case':
+      case 'jeweller_counter':
+        screen = jewellerScreen(p, close, saved, changed, id === 'jeweller_counter' ? 'box' : station?.tab ?? 'ring', p.shop('jeweller').priceMult);
+        break;
+      case 'agent_desk':
+      case 'agent_window':
+        screen = estateAgentScreen(p, close, this.realtyActions(), station?.tab === 'rentals' ? 'rentals' : id === 'agent_desk' && p.save.portfolio.holdings.length ? 'mine' : 'market');
+        break;
+      case 'prop_info': {
+        const inside = p.save.portfolio.inside;
+        if (!inside) return this.resume();
+        // Buying or selling changes the door and the rooms: rebuild the place on close.
+        screen = propertyBrochureScreen(p, inside, () => {
+          this.ui.replaceAll(null);
+          this.enterArea(w.level.id, inside, { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+        }, this.realtyActions());
+        break;
+      }
+      case 'prop_rest':
+        // Your own bed in your own place: the same rest as the sofa at home.
+        recover(p.save.gym, p.save.playTime, 25);
+        this.hud.toast(this.restAtHome(), 'item');
+        this.saveGame();
+        this.resume();
+        return;
       default:
         this.resume();
         return;
@@ -1530,6 +1592,8 @@ export class Game {
     const step = this.bizTimer;
     this.bizTimer = 0;
     this.conditionClock(step);
+    // Rent day, tenants moving in and out.
+    for (const n of settlePortfolio(p.save, p.save.playTime)) this.hud.toast(`Property: ${n.text}`, n.kind === 'out' ? 'warn' : 'cash');
     const b = p.save.basement;
     if (!b.business.active) {
       b.business.lastTick = p.save.playTime;

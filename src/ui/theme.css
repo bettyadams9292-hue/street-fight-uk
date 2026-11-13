@@ -814,3 +814,110 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
   .notice.has-art img.notice-art.sub { height: 30px; }
   .reward-art h2 img.reward-title { height: 72px; }
 }
+
+/* ---- Jewellery: Halden & Crane and the jewellery box ------------------------------------------------- */
+.jw-preview { cursor: grab; }
+.jw-preview:active { cursor: grabbing; }
+.jw-drag { margin: 2px 0 0; font-size: 11px; color: var(--faint); text-align: center; max-width: 380px; }
+.jw-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+.jw-chip { --chip: #999; display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px 2px 7px; border-radius: 999px; font-size: 12px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--edge); }
+.jw-chip::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--chip); box-shadow: 0 0 6px var(--chip); }
+.jw-finishes { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.jw-finish { display: grid; grid-template-columns: 16px auto; grid-template-rows: auto auto; column-gap: 7px; align-items: center; text-align: left; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--edge); background: rgba(255, 255, 255, 0.04); color: inherit; font: inherit; cursor: pointer; min-height: 44px; }
+.jw-finish i { grid-row: span 2; width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.25); }
+.jw-finish span { font-size: 13px; font-weight: 700; }
+.jw-finish em { font-style: normal; font-size: 12px; color: var(--muted); }
+.jw-finish.on, .jw-finish:hover, .jw-finish:focus-visible { border-color: var(--yellow, #ffd23d); background: rgba(232, 51, 58, 0.1); outline: none; }
+.rt-rent .jw-finish { grid-template-columns: auto; }
+.jw-price { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 4px 0 6px; }
+.jw-price b { font-size: 26px; color: var(--sign-white); }
+.jw-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; font-style: normal; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); background: var(--concrete); vertical-align: middle; }
+.jw-tag.on { background: #6ad04a; }
+.jw-tag.new { background: #ffd23d; }
+.jw-tag.bad { background: var(--no-entry); color: #fff; }
+.jw-list .prop-item { border-left: 3px solid var(--rarity, var(--edge)); }
+.jw-worn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 6px 0 4px; }
+.jw-slot { position: relative; padding: 6px 30px 6px 10px; border-radius: 8px; border: 1px dashed var(--edge); background: rgba(0, 0, 0, 0.2); min-width: 0; }
+.jw-slot.on { border-style: solid; border-color: rgba(255, 210, 61, 0.45); background: rgba(255, 210, 61, 0.06); }
+.jw-slot small { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.jw-slot b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jw-slot span { font-size: 11px; color: var(--muted); }
+.jw-off { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); width: 26px; height: 26px; border-radius: 6px; border: 0; background: rgba(255, 255, 255, 0.08); color: var(--text); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.jw-off svg { width: 14px; height: 14px; }
+.jw-off:hover, .jw-off:focus-visible { background: var(--accent); outline: none; }
+.jw-groups { display: flex; flex-direction: column; gap: 8px; max-height: 52vh; overflow-y: auto; }
+.jw-group h4 { margin: 2px 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.jw-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 5px; }
+.jw-box { grid-template-columns: minmax(240px, 1.2fr) minmax(240px, 1fr); }
+.jw-card { position: relative; text-align: left; padding: 6px 8px 6px 26px; border-radius: 7px; border: 1px solid var(--edge); border-left: 3px solid var(--rarity, var(--edge)); background: rgba(255, 255, 255, 0.04); color: inherit; font: inherit; cursor: pointer; min-height: 44px; }
+.jw-card .jw-dot { position: absolute; left: 8px; top: 10px; width: 11px; height: 11px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25); }
+.jw-card b { display: block; font-size: 13px; }
+.jw-card span { font-size: 11px; color: var(--muted); }
+.jw-card em { display: inline-block; margin: 3px 0 0; }
+.prop-item .jw-tag, .prop-item b .jw-tag { color: var(--ink); font-size: 10px; display: inline-block; }
+.jw-card.on, .jw-card:hover, .jw-card:focus-visible { border-color: var(--yellow, #ffd23d); outline: none; background: rgba(232, 51, 58, 0.08); }
+.jw-card.worn { background: rgba(106, 208, 74, 0.08); }
+.inv-body.jw-inv { display: block; overflow-y: auto; }
+
+/* ---- Property: Keys & Co and the portfolio --------------------------------------------------------------- */
+.prop-tabs .prop-tab { display: inline-flex; align-items: center; gap: 6px; }
+.prop-tabs .prop-tab svg { width: 16px; height: 16px; }
+.prop-tabs.sub .prop-tab { font-size: 13px; padding-top: 4px; padding-bottom: 4px; }
+.rt-photo { width: 100%; max-width: 420px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; border: 1px solid var(--edge); display: block; background: #15171c; }
+.rt-thumb { width: 72px; height: 44px; object-fit: cover; border-radius: 5px; flex: 0 0 auto; background: #15171c; }
+.rt-item { display: flex; gap: 10px; align-items: center; }
+.rt-item > div { min-width: 0; }
+.rt-item span { display: block; }
+.rt-item.owned { border-left: 3px solid #6ad04a; }
+.rt-price { color: var(--sign-white) !important; font-weight: 700; font-size: 14px !important; }
+.rt-type { margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+.rt-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; margin: 6px 0; }
+.rt-facts.wide { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.rt-fact { padding: 6px 9px; border-radius: 7px; background: rgba(0, 0, 0, 0.22); border: 1px solid var(--edge); }
+.rt-fact small { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.rt-fact b { font-size: 15px; }
+.rt-fact.big b { font-size: 20px; color: var(--sign-white); }
+.rt-fact.good b { color: #6ad04a; }
+.rt-fact.bad b { color: #ff6a6a; }
+.rt-status { font-size: 12px !important; font-weight: 700; }
+.rt-status.let { color: #6ad04a !important; }
+.rt-status.vacant { color: #ffd23d !important; }
+.rt-status.notice { color: #ff9a4a !important; }
+.rt-tenant { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
+.rt-tenant svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.rt-h { margin: 10px 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.rt-line { display: grid; grid-template-columns: 72px 1fr auto; gap: 8px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid var(--edge); font-size: 13px; }
+.rt-line small { color: var(--faint); font-size: 11px; }
+.rt-line b { font-variant-numeric: tabular-nums; }
+.rt-line.in b { color: #6ad04a; }
+.rt-line.out b { color: #ff8a8a; }
+.rt-ledger { max-height: 40vh; overflow-y: auto; }
+.rt-let { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--edge); }
+.rt-let .what b { display: block; }
+.rt-let .what span { display: block; color: var(--muted); font-size: 13px; }
+.rt-let .menu-btn { min-width: 0; margin: 0; }
+.rt-sell { margin-top: 8px; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(200, 16, 46, 0.5); background: rgba(200, 16, 46, 0.08); font-size: 13px; }
+.rt-news { margin: 4px 0; padding: 6px 10px; border-radius: 6px; font-size: 13px; background: rgba(106, 208, 74, 0.12); }
+.rt-news.out { background: rgba(255, 154, 74, 0.12); }
+.rt-detail .row-actions, .jw-detail .row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.rt-detail .row-actions .menu-btn, .jw-detail .row-actions .menu-btn { flex: 1 1 160px; margin: 0; }
+
+@media (max-width: 720px) {
+  .jw-worn { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rt-photo, .jw-preview { max-height: 38vh; width: auto; max-width: 100%; margin: 0 auto; }
+  .rt-line { grid-template-columns: 56px 1fr auto; }
+}
+/* Phone landscape: keep list and detail side by side, but smaller pictures and tighter facts. */
+@media (max-height: 520px) {
+  .jw-intro { display: none; }
+  .jw-worn { gap: 4px; }
+  .jw-slot { padding: 4px 28px 4px 8px; }
+  .rt-photo, .jw-preview { max-height: 34vh; width: auto; max-width: 100%; }
+  .rt-facts { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 4px; }
+  .rt-fact { padding: 4px 7px; }
+  .rt-fact b { font-size: 13px; }
+  .rt-fact.big b { font-size: 16px; }
+  .jw-price b { font-size: 20px; }
+  .rt-thumb { width: 56px; height: 34px; }
+  .jw-groups, .prop-list { max-height: 58vh; }
+}

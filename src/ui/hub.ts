@@ -263,6 +263,9 @@ export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: st
   { area: 'wrestling_club', entry: 'door', where: 'Wrestling and BJJ. Kingsway Precinct' },
   { area: 'grow_shop', entry: 'door', where: 'Basement equipment. Brackley Trading Estate' },
   { area: 'casino', entry: 'door', where: 'Slots, roulette, blackjack, prize motors. Market Square' },
+  { area: 'jeweller', entry: 'door', where: 'Rings, watches, chains and grills. Riverside Centre', shop: 'jeweller' },
+  { area: 'estate_agent', entry: 'door', where: 'Buy, sell and let property. Meridian House, City Centre' },
+  { area: 'ashcombe', entry: 'gate', where: 'Mansions and penthouses for sale. Off Leisure Park' },
 ];
 
 export function contactsScreen(progress: Progress, close: () => void, openMap: () => void, crew?: () => void): Screen {

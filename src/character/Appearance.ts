@@ -3,6 +3,7 @@
  * model from it, the save system stores it as-is, and (from Stage 4) shops
  * and equipment change it. Height and build are cosmetic only.
  */
+import type { JewelCat, JewelLook } from '../items/jewellery';
 
 export type BodyType = 'male' | 'female';
 
@@ -85,6 +86,8 @@ export interface CharacterAppearance {
   headColour?: string;
   /** Fine shaping from the creator's detail sliders (-1..1 each, see DETAIL_SLIDERS). Absent = average. */
   detail?: Partial<Record<DetailKey, number>>;
+  /** Jewellery on (rings, watch, chain, grill), from the jewellery box. Never stored with the character's own look. */
+  jewellery?: Partial<Record<JewelCat, JewelLook>>;
 }
 
 /** The creator's detail sliders: MakeHuman shape targets, by the creator section they appear in. */
