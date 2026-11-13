@@ -86,6 +86,8 @@ export class LevelView {
   private dressing: StreetDressing | null = null;
   /** Cars between the camera and the play area: they fade when the player walks behind one. */
   private foreCars: { car: THREE.Object3D; x: number; z: number; hx: number; hz: number }[] = [];
+  /** The flat's room dividers: they fade right out when you're beside one, so it never hides you. */
+  private fadeWalls: { mat: THREE.MeshStandardMaterial; x: number }[] = [];
 
   /** The long street, built from the low-poly kits (city/street.ts). Null for interiors, or with `?world=classic`. */
   readonly street: StreetPlan | null;
@@ -1903,8 +1905,10 @@ export class LevelView {
     const home = this.level.theme === 'home';
     const h = home ? 3 : 1.1;
     // Room dividers are see-through enough that you never lose yourself behind one.
-    const m = home ? this.mat('#d8d0c0', 0.9, 0, { transparent: true, opacity: 0.45, depthWrite: false }) : this.mat('#3a3d42', 0.5, 0.6);
-    this.box(w.maxX - w.minX, h, w.maxZ - w.minZ, (w.minX + w.maxX) / 2, h / 2, (w.minZ + w.maxZ) / 2, m);
+    const m = home ? new THREE.MeshStandardMaterial({ color: '#d8d0c0', roughness: 0.9, transparent: true, opacity: 0.45, depthWrite: false }) : this.mat('#3a3d42', 0.5, 0.6);
+    // A see-through divider casts no shadow: it would darken the rooms either side.
+    this.box(w.maxX - w.minX, h, w.maxZ - w.minZ, (w.minX + w.maxX) / 2, h / 2, (w.minZ + w.maxZ) / 2, m, !home);
+    if (home) this.fadeWalls.push({ mat: m, x: (w.minX + w.maxX) / 2 });
     if (home) {
       // Door frame on the open end.
       this.box(w.maxX - w.minX + 0.12, 0.1, 0.12, (w.minX + w.maxX) / 2, 2.2, w.maxZ, this.mat('#f0ece0', 0.6), false);
@@ -2766,10 +2770,10 @@ export class LevelView {
         }
         for (const dx of [-W / 2 + 0.03, W / 2 - 0.03]) {
           const stringer = B(0.05, 0.3, Math.hypot(D, n * rise), dx, (n * rise) / 2 + 0.05, 0, this.mat('#5a4028', 0.8));
-          stringer.rotation.x = -Math.atan2(n * rise, D);
+          stringer.rotation.x = Math.atan2(n * rise, D); // low at the front, up to the door at the back
         }
         const rail = B(0.05, 0.05, Math.hypot(D, n * rise), W / 2 + 0.05, (n * rise) / 2 + 0.95, 0, this.mat('#2a2a2e', 0.4, 0.6), false);
-        rail.rotation.x = -Math.atan2(n * rise, D);
+        rail.rotation.x = Math.atan2(n * rise, D);
         const steelDoor = this.level.facades[0]?.flags?.includes('security_door');
         this.box(0.95, 2.05, 0.08, p.x, n * rise + 1.1, this.back + 0.06, steelDoor ? this.mat('#4a5058', 0.35, 0.8) : this.mat('#6a5038', 0.7), false);
         if (steelDoor) for (const y of [0.5, 1.0, 1.5]) this.box(0.9, 0.04, 0.03, p.x, n * rise + 0.1 + y, this.back + 0.11, this.mat('#2a2e34', 0.4, 0.8), false);
@@ -3335,6 +3339,13 @@ export class LevelView {
     if (this.foreCars.length) {
       const pl = world.player.pos;
       for (const c of this.foreCars) fadeCar(c.car, pl.z < c.z - c.hz + 0.2 && Math.abs(pl.x - c.x) < c.hx + 0.6 ? 0.22 : 1, dt);
+    }
+    if (this.fadeWalls.length) {
+      const px = world.player.pos.x;
+      for (const w of this.fadeWalls) {
+        const target = Math.abs(px - w.x) < 1.8 ? 0.08 : 0.45;
+        w.mat.opacity += (target - w.mat.opacity) * Math.min(1, dt * 6);
+      }
     }
     // Shadows follow the action.
     this.sun.position.set(camX - 4, 12, 8);

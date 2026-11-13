@@ -99,9 +99,10 @@ const brushTex = () =>
     (g, s) => {
       g.fillStyle = '#c8c8c8';
       g.fillRect(0, 0, s, s);
+      // Vertical in the texture, so with boxUV the brushing runs across fronts and sides, not up them.
       for (let i = 0; i < 300; i++) {
-        g.fillStyle = `rgba(${rnd() < 0.5 ? '255,255,255' : '60,60,60'},${rnd() * 0.15})`;
-        g.fillRect(0, rnd() * s, s, 1);
+        g.fillStyle = `rgba(${rnd() < 0.5 ? '255,255,255' : '60,60,60'},${rnd() * 0.1})`;
+        g.fillRect(rnd() * s, 0, 1, s);
       }
     },
     2,
@@ -139,9 +140,30 @@ function surfacesFor(): Record<string, THREE.MeshStandardMaterial> {
     plant: m({ color: '#3a6a2a', roughness: 0.8 }),
     fur: m({ map: weave, color: '#8a6a4a', roughness: 1 }),
     _defaultMat: m({ color: '#f2f0ea', roughness: 0.3 }),
+    // Not in the kit's names: what some of its parts really are (see PART_SURFACE).
+    ceramic: m({ color: '#f4f2ee', roughness: 0.18 }),
+    enamel: m({ color: '#e2e2e0', roughness: 0.3, metalness: 0.05 }),
+    enamelGrey: m({ color: '#b8bcc0', roughness: 0.32, metalness: 0.1 }),
+    screen: m({ color: '#0c0d10', roughness: 0.12, metalness: 0.2 }),
+    plastic: m({ color: '#1c1d20', roughness: 0.45 }),
   });
   return surfaces;
 }
+
+/**
+ * Kenney names its materials after its own palette, not what they are: the bath's enamel is
+ * "carpetWhite", a TV screen is "metalDark". Per model, the surface each part really gets.
+ */
+const PART_SURFACE: Record<string, Record<string, string>> = {
+  bathtub: { carpetWhite: 'ceramic', metalLight: 'enamel' },
+  toilet: { carpetWhite: 'ceramic', metalLight: 'enamel' },
+  bathroomSink: { carpetWhite: 'ceramic', metalLight: 'enamel' },
+  kitchenStove: { carpetWhite: 'ceramic' },
+  kitchenMicrowave: { carpetWhite: 'ceramic', metalMedium: 'enamelGrey' },
+  kitchenFridgeLarge: { metalLight: 'enamel', metalMedium: 'enamelGrey' },
+  washer: { metalLight: 'enamel', metalMedium: 'enamelGrey' },
+  televisionModern: { metalDark: 'screen', metal: 'plastic' },
+};
 
 /** The furniture has no texture coordinates: project them from the sides of a box, so grain and weave show. */
 function boxUV(geo: THREE.BufferGeometry): void {
@@ -183,7 +205,8 @@ export function loadKenney(): Promise<void> {
           if (dir === 'furniture') {
             boxUV(mesh.geometry);
             const name = (mesh.material as THREE.Material).name;
-            mesh.material = surfacesFor()[name] ?? surfacesFor()._defaultMat;
+            const real = PART_SURFACE[id]?.[name] ?? name;
+            mesh.material = surfacesFor()[real] ?? surfacesFor()._defaultMat;
           } else (mesh.material as THREE.Material).userData.shared = true;
         });
         models.set(`${dir}/${id}`, root);
