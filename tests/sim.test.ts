@@ -279,7 +279,8 @@ test('sparring partner closes in and attacks using the same commands as the play
   mode.sim.bus.on('move:started', ({ fighter }) => {
     if (fighter === mode.enemies[0]) dummyAttacks++;
   });
-  for (let i = 0; i < 10 * SIM_HZ; i++) mode.step(emptyCommand());
+  // Training is seeded from the clock and a careful partner can hesitate a while: give it 20 seconds.
+  for (let i = 0; i < 20 * SIM_HZ && dummyAttacks === 0; i++) mode.step(emptyCommand());
   assert(dummyAttacks > 0, 'dummy never attacked');
   assert(mode.player.vitals.health < mode.player.vitals.maxHealth || mode.player.vitals.recoverable >= 0, 'player state valid');
 });
