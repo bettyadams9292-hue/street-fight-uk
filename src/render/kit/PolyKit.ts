@@ -467,3 +467,91 @@ export function kitWall(pattern: string | undefined, colour: string, colour2: st
   mesh.name = 'kit-wall';
   return mesh;
 }
+
+// ---- single pieces, for rooms ------------------------------------------------------------------
+
+const pieceGeo = new Map<string, Partial<Record<PartName, THREE.BufferGeometry>>>();
+let pieceMats: Record<PartName, THREE.MeshStandardMaterial> | null = null;
+
+function pieceMaterials(): Record<PartName, THREE.MeshStandardMaterial> {
+  if (pieceMats) return pieceMats;
+  const lit = new THREE.MeshStandardMaterial({ color: '#2a2018', emissive: new THREE.Color('#ffc880'), emissiveIntensity: 0.6, roughness: 0.5 });
+  pieceMats = {
+    solid: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0 }),
+    paint: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.1 }),
+    glass: new THREE.MeshStandardMaterial({ color: '#9fc0d0', roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.25, depthWrite: false }),
+    lit,
+  };
+  for (const m of Object.values(pieceMats)) m.userData.shared = true;
+  return pieceMats;
+}
+
+/** Painted parts are stored white: one shared material per colour (they outlive levels, like the rest). */
+const paints = new Map<string, THREE.MeshStandardMaterial>();
+function paintMat(colour: string): THREE.MeshStandardMaterial {
+  let m = paints.get(colour);
+  if (!m) {
+    m = pieceMaterials().paint.clone();
+    m.color.set(colour);
+    m.userData.shared = true;
+    paints.set(colour, m);
+  }
+  return m;
+}
+
+/** Does the kit have this model (and has it loaded)? */
+export function hasKitPiece(id: string): boolean {
+  return polyKitReady() && !!index![id];
+}
+
+/**
+ * One kit model (e.g. 'cafe/service-counter-module') as its own group, fitted into w × h × d metres,
+ * standing on y = 0, centred on x and z, front facing +z (`turn` rotates it first). `keepAspect` keeps
+ * its proportions inside the box. `paint` recolours its painted parts. Null until the kit has loaded.
+ */
+export function kitPiece(id: string, w: number, h: number, d: number, o: { keepAspect?: boolean; turn?: number; paint?: string } = {}): THREE.Group | null {
+  const m = polyKitReady() ? model(id) : null;
+  if (!m) return null;
+  let geos = pieceGeo.get(id);
+  if (!geos) {
+    geos = {};
+    for (const [name, part] of Object.entries(m) as [PartName, Part][]) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(part.pos, 3));
+      g.setAttribute('normal', new THREE.BufferAttribute(part.nrm, 3));
+      g.setAttribute('color', new THREE.BufferAttribute(part.col, 3));
+      g.setIndex(new THREE.BufferAttribute(part.idx, 1));
+      g.userData.shared = true;
+      geos[name] = g;
+    }
+    pieceGeo.set(id, geos);
+  }
+  const mats = pieceMaterials();
+  const inner = new THREE.Group();
+  for (const [name, g] of Object.entries(geos) as [PartName, THREE.BufferGeometry][]) {
+    let mat = mats[name];
+    if (name === 'paint' && (o.paint ?? index![id].paint)) mat = paintMat(o.paint ?? index![id].paint!);
+    const mesh = new THREE.Mesh(g, mat);
+    mesh.castShadow = name === 'solid' || name === 'paint';
+    mesh.receiveShadow = name !== 'glass';
+    mesh.userData.shared = true;
+    if (name === 'glass') mesh.renderOrder = 2;
+    inner.add(mesh);
+  }
+  inner.rotation.y = o.turn ?? 0;
+  inner.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(inner);
+  const size = box.getSize(new THREE.Vector3());
+  let sx = w / Math.max(1e-3, size.x);
+  let sy = h / Math.max(1e-3, size.y);
+  let sz = d / Math.max(1e-3, size.z);
+  if (o.keepAspect) sx = sy = sz = Math.min(sx, sy, sz);
+  const c = box.getCenter(new THREE.Vector3());
+  inner.position.set(-c.x, -box.min.y, -c.z);
+  const holder = new THREE.Group();
+  holder.add(inner);
+  holder.scale.set(sx, sy, sz);
+  const out = new THREE.Group();
+  out.add(holder);
+  return out;
+}

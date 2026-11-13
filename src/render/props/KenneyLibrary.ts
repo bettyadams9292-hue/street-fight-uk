@@ -17,6 +17,8 @@ export const FURNITURE = [
   'kitchenCabinet', 'kitchenSink', 'kitchenCabinetUpper', 'kitchenMicrowave', 'bathtub', 'toilet', 'bathroomSink',
   'lampRoundTable', 'lampSquareFloor', 'rugRectangle', 'pottedPlant', 'plantSmall1', 'books', 'laptop', 'sideTable',
   'washer', 'trashcan', 'radio', 'speaker',
+  // For the furniture you buy for your place (homeFurniture.ts).
+  'loungeDesignSofa', 'cabinetTelevisionDoors', 'bookcaseClosedWide', 'bookcaseOpenLow', 'rugRound', 'cabinetBedDrawerTable', 'cabinetBedDrawer', 'chairCushion', 'kitchenCabinetDrawer', 'kitchenBar', 'kitchenCabinetUpperDouble', 'bathroomMirror', 'rugDoormat', 'plantSmall2', 'lampRoundFloor', 'lampWall',
 ] as const;
 export type FurnitureId = (typeof FURNITURE)[number];
 
@@ -202,10 +204,46 @@ export function kenneyReady(): boolean {
  * A piece of furniture fitted into a box w × h × d (metres), standing on y = 0, centred on x and z,
  * front facing +z. `upholstery` recolours the fabric. Returns null until the kit has loaded.
  */
-export function furniture(id: FurnitureId, w: number, h: number, d: number, opts: { upholstery?: string; turn?: number; keepAspect?: boolean } = {}): THREE.Group | null {
+/**
+ * A wood finish: wood tones keep the grain and shift its colour (the grain texture is about #8a5a32);
+ * painted colours (whites, greys, near-black) lose the grain and become plain satin paint.
+ */
+const finishes = new Map<string, THREE.MeshStandardMaterial>();
+function finish(colour: string): THREE.MeshStandardMaterial {
+  let m = finishes.get(colour);
+  if (m) return m;
+  const c = new THREE.Color(colour);
+  const hsl = { h: 0, s: 0, l: 0 };
+  c.getHSL(hsl);
+  const painted = hsl.s < 0.18 || hsl.l > 0.82;
+  m = surfacesFor().wood.clone();
+  m.name = 'wood';
+  if (painted) {
+    m.map = null;
+    m.color.copy(c);
+    m.roughness = 0.45;
+  } else {
+    const ref = new THREE.Color('#8a5a32');
+    m.color.setRGB(c.r / ref.r, c.g / ref.g, c.b / ref.b);
+  }
+  m.userData.shared = true;
+  finishes.set(colour, m);
+  return m;
+}
+
+export function furniture(id: FurnitureId, w: number, h: number, d: number, opts: { upholstery?: string; turn?: number; keepAspect?: boolean; wood?: string } = {}): THREE.Group | null {
   const src = models.get(`furniture/${id}`);
   if (!src) return null;
   const inner = src.clone(true);
+  if (opts.wood) {
+    const m = finish(opts.wood);
+    inner.traverse((o: THREE.Object3D) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const name = (mesh.material as THREE.Material).name;
+      if (name === 'wood' || name === 'woodDark') mesh.material = m;
+    });
+  }
   if (opts.upholstery) {
     const up = surfacesFor().carpet.clone();
     up.color.set(opts.upholstery);
