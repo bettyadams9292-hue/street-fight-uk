@@ -190,6 +190,18 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - On Green Fingers' shelves and on display on the floor.
 - The lettuce, basil, tomato, channel-rack and tray models are no longer used and have been removed.
 
+## Stage 15: doors and fixes from play ✅ done
+- **Doors:** "Low-Poly PSX Style Essential Doors Pack" by vanillao03 (CC BY 4.0) is split into six doors (`tools/models/split_doors_pack.py`, `src/render/props/DoorLibrary.ts`). They replace:
+  - the kit streets' flat door leaves;
+  - the doors on semis, terraces, yard gates, shops, the pub, gyms and your house;
+  - the glowing doorways at exits and the basement door.
+  
+  Each doorway gets a door seeded from its spot, picked for the building (painted panel doors on houses, glazed fronts on shops, worn doors on industrial units), with some in British door paints. Doors baked into whole kit building models (the family houses on the long street) are part of those models and stay as they are.
+- **Glare:** the default look's bloom only starts at 97% brightness (was 82%), exposure is down to 1.15, and room lamps run softer. Lamps, neon and lit windows still glow; white paint no longer burns out.
+- **Watching telly:** sofas and armchairs are fitted so the cushions are at the sitting pose's height. The seat points are on the cushions and clear of the arms, so you no longer perch on the arm or the backrest.
+- **Pedestrians:** passers-by who bump slide sideways past each other instead of locking up, and give up waiting sooner. Stalling is down from 0.98 to 0.57 s per pedestrian-minute, with no overlaps.
+- **Road:** 14 bins, crates, trolleys, bollards, bags and a sign post that stood in the road (and had pavement built out round them) are now on the pavement. A test keeps it that way.
+
 ## Log
 - 12 Nov 2026: audit done; stages 1–3 started on branch `gameplay-feel`.
 - 12 Nov 2026 (later): stages 1–3 done, with tests in `tests/gameplay.test.ts`. Across the whole game, the careful bot's average win rate went from 70% to 78% and the sloppy bot's from 64% to 75%. Enemies no longer get free parries, while players still can, so the game got a little easier overall. Stage 4 should retune the curve from these numbers.
@@ -201,3 +213,4 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - 13 Nov 2026: stage 12 (hydroponics kit) done.
 - 13 Nov 2026: stage 13 (security kit) done.
 - 13 Nov 2026: stage 14 (the crop) done.
+- 13 Nov 2026: stage 15 (doors and fixes from play) done.

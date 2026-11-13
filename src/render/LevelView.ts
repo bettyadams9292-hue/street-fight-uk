@@ -4,6 +4,7 @@ import { gymPiece, type GymModelId } from './props/GymLibrary';
 import { shopPiece, type ShopModelId } from './props/ShopLibrary';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
+import { doorPiece, type DoorStyle } from './props/DoorLibrary';
 import { surfaceMaterial, kitGroundTexture as kitTexture, type Surface, type SurfaceOptions } from './street/Flooring';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
@@ -293,6 +294,18 @@ export class LevelView {
     if (!m) return false;
     m.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
     g.add(m);
+    return true;
+  }
+
+  /**
+   * A real door (DoorLibrary) in a doorway on the back wall: x its centre, w × h the opening, `out` in front of
+   * the wall. Picked per level and spot, so a street keeps its doors. False until the doors load.
+   */
+  private door(style: DoorStyle, x: number, w: number, h: number, out = 0.02, y = 0): boolean {
+    const m = doorPiece(style, hashString(`${this.level.id}:${Math.round(x * 10)}`), w, h);
+    if (!m) return false;
+    m.position.set(x, y, this.back + out);
+    this.group.add(m);
     return true;
   }
 
@@ -752,7 +765,8 @@ export class LevelView {
         this.box(1.9, 1.3, 0.05, x + dx, 1.6, this.back + 0.52, this.windowMat(this.rnd() < 0.5 ? 0.5 : 0), false);
         this.box(1.9, 1.2, 0.05, x + dx, 4.0, this.back + 0.52, this.windowMat(this.rnd() < 0.35 ? 0.4 : 0), false);
         for (const y of [1.6, 4.0]) this.box(2.0, 0.07, 0.07, x + dx, y, this.back + 0.55, this.mat('#f4f4f0', 0.4), false);
-        this.box(1.0, 2.1, 0.08, x + door, 1.05, this.back + 0.04, this.mat(doorCols[Math.floor(this.rnd() * doorCols.length)], 0.4));
+        const col = doorCols[Math.floor(this.rnd() * doorCols.length)];
+        if (!this.door('house', x + door, 1.1, 2.15)) this.box(1.0, 2.1, 0.08, x + door, 1.05, this.back + 0.04, this.mat(col, 0.4));
         this.box(1.3, 0.1, 0.6, x + door, 2.3, this.back + 0.3, this.mat('#e8e4d8', 0.7), false);
       }
       // Hipped roof and chimney.
@@ -1099,13 +1113,15 @@ export class LevelView {
     const dx = door ? door.x : cx;
     // Front door: panelled, with glass, handle, letterbox and number.
     const frame = this.mat('#f0eee6', 0.5);
-    this.box(1.3, 2.35, 0.08, dx, 1.17, this.back + 0.04, frame, false);
-    this.box(1.05, 2.15, 0.08, dx, 1.08, this.back + 0.08, this.mat('#1d3a2a', 0.35, 0.1), false);
-    for (const dy of [0.45, 1.05]) this.box(0.75, 0.42, 0.02, dx, dy, this.back + 0.13, this.mat('#173022', 0.4), false);
-    this.box(0.75, 0.42, 0.02, dx, 1.7, this.back + 0.13, this.mat('#c8d8e8', 0.1, 0.3, { emissive: 0xffd8a0, emissiveIntensity: 0.35 }), false);
-    this.box(0.28, 0.06, 0.03, dx, 1.3, this.back + 0.14, this.mat('#c9a227', 0.25, 0.9), false);
-    this.cyl(0.035, 0.035, 0.08, dx + 0.38, 1.05, this.back + 0.16, this.mat('#c9a227', 0.25, 0.9), 10).rotation.x = Math.PI / 2;
-    this.box(0.2, 0.12, 0.04, dx, 2.0, this.back + 0.14, this.mat('#c9a227', 0.25, 0.9), false);
+    if (!this.door('house', dx, 1.25, 2.35, 0.02, 0.12)) {
+      this.box(1.3, 2.35, 0.08, dx, 1.17, this.back + 0.04, frame, false);
+      this.box(1.05, 2.15, 0.08, dx, 1.08, this.back + 0.08, this.mat('#1d3a2a', 0.35, 0.1), false);
+      for (const dy of [0.45, 1.05]) this.box(0.75, 0.42, 0.02, dx, dy, this.back + 0.13, this.mat('#173022', 0.4), false);
+      this.box(0.75, 0.42, 0.02, dx, 1.7, this.back + 0.13, this.mat('#c8d8e8', 0.1, 0.3, { emissive: 0xffd8a0, emissiveIntensity: 0.35 }), false);
+      this.box(0.28, 0.06, 0.03, dx, 1.3, this.back + 0.14, this.mat('#c9a227', 0.25, 0.9), false);
+      this.cyl(0.035, 0.035, 0.08, dx + 0.38, 1.05, this.back + 0.16, this.mat('#c9a227', 0.25, 0.9), 10).rotation.x = Math.PI / 2;
+      this.box(0.2, 0.12, 0.04, dx, 2.0, this.back + 0.14, this.mat('#c9a227', 0.25, 0.9), false);
+    }
     const plate = new THREE.MeshStandardMaterial({ map: signTexture(f.label, '#e8e4d8', '#111', { w: 128, h: 128, serif: true }) });
     this.panel(0.26, 0.26, dx + 0.85, 1.8, plate, 0.05);
     // Step and porch canopy with a light.
@@ -1438,7 +1454,7 @@ export class LevelView {
     }
     const door = this.level.exits.find((e) => e.kind === 'door' && e.x >= f.x0 && e.x <= f.x1);
     if (door) {
-      this.box(1.3, 2.3, 0.06, door.x, 1.15, this.back + 0.06, this.mat('#2a2e34', 0.4, 0.7), false);
+      if (!this.door('service', door.x, 1.3, 2.3, 0.04)) this.box(1.3, 2.3, 0.06, door.x, 1.15, this.back + 0.06, this.mat('#2a2e34', 0.4, 0.7), false);
       this.box(1.6, 0.1, 0.5, door.x, 2.45, this.back + 0.25, this.mat(colour, 0.5), false);
       this.box(0.1, 0.18, 0.1, door.x + 0.75, 2.2, this.back + 0.08, this.mat('#fff4d8', 0.3, 0, { emissive: 0xffd8a0, emissiveIntensity: 1.2 }), false);
     }
@@ -1541,12 +1557,14 @@ export class LevelView {
       if (backs) {
         // Back yards: a wall and a gate rather than front doors.
         this.box(4.9, 1.9, 0.12, x + 2.3, 0.95, this.back + 0.06, new THREE.MeshStandardMaterial({ map: brickTexture(1.2, 0.5) }));
-        this.box(0.9, 1.6, 0.04, x + 1.0, 0.8, this.back + 0.14, this.mat('#4a3a2a', 0.9));
+        if (!this.door('service', x + 1.0, 0.95, 1.75, 0.12)) this.box(0.9, 1.6, 0.04, x + 1.0, 0.8, this.back + 0.14, this.mat('#4a3a2a', 0.9));
       } else {
         const col = doorCols[Math.floor(this.rnd() * doorCols.length)];
-        this.box(0.95, 2.1, 0.08, x + 1.0, 1.05, this.back + 0.04, this.mat(col, 0.5));
-        this.box(1.15, 0.12, 0.25, x + 1.0, 2.2, this.back + 0.1, this.mat('#d8d4c8', 0.7));
-        this.box(0.05, 0.05, 0.05, x + 1.3, 1.0, this.back + 0.1, this.mat('#c9a227', 0.3, 0.8), false);
+        if (!this.door('house', x + 1.0, 1.05, 2.15)) {
+          this.box(0.95, 2.1, 0.08, x + 1.0, 1.05, this.back + 0.04, this.mat(col, 0.5));
+          this.box(0.05, 0.05, 0.05, x + 1.3, 1.0, this.back + 0.1, this.mat('#c9a227', 0.3, 0.8), false);
+        }
+        this.box(1.15, 0.12, 0.25, x + 1.0, 2.25, this.back + 0.12, this.mat('#d8d4c8', 0.7));
       }
       // Chimney stacks on the roofline.
       this.box(0.9, 1.0, 0.6, x + 4.8, H + 0.5, this.back - 0.2, new THREE.MeshStandardMaterial({ map: brickTexture(0.3, 0.3) }));
@@ -1626,7 +1644,7 @@ export class LevelView {
       const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
       this.box(w - 1.0, lit ? 0.9 : 2.2, 0.05, cx - 0.4, lit ? 1.95 : 1.3, this.back + 0.16, sh, false);
     }
-    this.box(0.9, 2.2, 0.06, f.x1 - 0.65, 1.1, this.back + 0.12, this.mat('#222', 0.5));
+    if (!this.door('shop', f.x1 - 0.65, 0.95, 2.2, 0.1)) this.box(0.9, 2.2, 0.06, f.x1 - 0.65, 1.1, this.back + 0.12, this.mat('#222', 0.5));
     if (f.label) {
       const sign = new THREE.MeshStandardMaterial({ map: signTexture(f.label, colour, '#ffffff'), emissive: 0xffffff, emissiveMap: signTexture(f.label, colour, '#ffffff'), emissiveIntensity: lit ? 0.35 : 0.05 });
       this.box(w - 0.4, 0.75, 0.15, cx, 3.5, this.back + 0.15, sign, false);
@@ -1656,7 +1674,7 @@ export class LevelView {
       this.box(0.05, 1.6, 0.08, x, 1.5, this.back + 0.16, this.mat(colour, 0.4), false);
       this.box(1.8, 0.05, 0.08, x, 1.9, this.back + 0.16, this.mat(colour, 0.4), false);
     }
-    this.box(1.1, 2.3, 0.06, f.x1 - 1.2, 1.15, this.back + 0.14, this.mat('#2a1a0e', 0.4));
+    if (!this.door('shop', f.x1 - 1.2, 1.15, 2.3, 0.12)) this.box(1.1, 2.3, 0.06, f.x1 - 1.2, 1.15, this.back + 0.14, this.mat('#2a1a0e', 0.4));
     if (f.label) {
       const tex = signTexture(f.label, colour, '#d9b65a', { serif: true });
       this.box(w - 0.4, 0.7, 0.16, cx, 3.65, this.back + 0.16, new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.25 }), false);
@@ -2819,8 +2837,15 @@ export class LevelView {
         const rail = B(0.05, 0.05, Math.hypot(D, n * rise), W / 2 + 0.05, (n * rise) / 2 + 0.95, 0, this.mat('#2a2a2e', 0.4, 0.6), false);
         rail.rotation.x = Math.atan2(n * rise, D);
         const steelDoor = this.level.facades[0]?.flags?.includes('security_door');
-        this.box(0.95, 2.05, 0.08, p.x, n * rise + 1.1, this.back + 0.06, steelDoor ? this.mat('#4a5058', 0.35, 0.8) : this.mat('#6a5038', 0.7), false);
-        if (steelDoor) for (const y of [0.5, 1.0, 1.5]) this.box(0.9, 0.04, 0.03, p.x, n * rise + 0.1 + y, this.back + 0.11, this.mat('#2a2e34', 0.4, 0.8), false);
+        // The door at the top: a worn timber door, or the steel one once it's fitted.
+        const top = steelDoor ? null : doorPiece('stairs', 4242, 1.0, 2.1);
+        if (top) {
+          top.position.set(p.x, n * rise + 0.05, this.back + 0.02);
+          this.group.add(top);
+        } else {
+          this.box(0.95, 2.05, 0.08, p.x, n * rise + 1.1, this.back + 0.06, steelDoor ? this.mat('#4a5058', 0.35, 0.8) : this.mat('#6a5038', 0.7), false);
+          if (steelDoor) for (const y of [0.5, 1.0, 1.5]) this.box(0.9, 0.04, 0.03, p.x, n * rise + 0.1 + y, this.back + 0.11, this.mat('#2a2e34', 0.4, 0.8), false);
+        }
         break;
       }
       case 'terminal_desk': {
@@ -3248,8 +3273,13 @@ export class LevelView {
         this.exitSign(ex, kitDoor, board ? board.y - board.h / 2 - 0.3 : 3.25, this.back + 0.35);
         return;
       }
-      // A lit doorway on the wall behind the door point.
+      // A real door on the wall behind the door point (DoorLibrary); the old lit doorway until the doors load.
       const isStairs = ex.id.includes('stairs') || ex.id.includes('steps');
+      const indoors = themeProfile(this.level.theme).interior;
+      if (this.door(isStairs ? 'stairs' : indoors ? 'interior' : 'service', ex.x, 1.15, 2.25, 0.03)) {
+        this.exitSign(ex, ex.x, 2.75, z + 0.12);
+        return;
+      }
       const frame = this.mat('#e8e4d8', 0.6);
       this.box(1.4, 0.12, 0.14, ex.x, 2.35, z + 0.05, frame, false);
       this.box(0.12, 2.35, 0.14, ex.x - 0.7, 1.17, z + 0.05, frame, false);
@@ -3362,14 +3392,16 @@ export class LevelView {
       return;
     }
     for (const l of this.level.lights) {
-      const light = new THREE.PointLight(l.colour, l.intensity, l.range ?? 12, 1.6);
+      // Rooms are small and pale: their lamps run softer, so walls and paintwork don't burn out white.
+      const power = l.intensity * (prof.interior ? 0.72 : 1);
+      const light = new THREE.PointLight(l.colour, power, l.range ?? 12, 1.6);
       light.position.set(l.x, l.y, l.z);
       g.add(light);
-      this.flicker.push({ light, base: l.intensity });
+      this.flicker.push({ light, base: power });
       if (prof.interior) {
         // Ceiling lampshade.
         this.cyl(0.01, 0.01, 0.4, l.x, 2.8, l.z, this.mat('#222'), 6);
-        this.cyl(0.12, 0.25, 0.22, l.x, 2.5, l.z, this.mat('#f0e0c0', 0.8, 0, { emissive: l.colour, emissiveIntensity: 0.8 }), 16);
+        this.cyl(0.12, 0.25, 0.22, l.x, 2.5, l.z, this.mat('#f0e0c0', 0.8, 0, { emissive: l.colour, emissiveIntensity: 0.45 }), 16);
       } else if (prof.roofed) {
         // Strip light hanging from the ceiling.
         this.box(1.4, 0.06, 0.2, l.x, Math.min(l.y + 0.6, 3.25), l.z, this.mat('#ffffff', 0.4, 0, { emissive: l.colour, emissiveIntensity: 1.1 }), false);

@@ -5,6 +5,9 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { FURNITURE } from '../src/property/catalogue';
+import { LEVELS } from '../src/world/levels';
+import { kerbFor, KERB_Z } from '../src/city/street';
+import { propHalf } from '../src/world/LevelTypes';
 
 let passed = 0;
 let failed = 0;
@@ -116,6 +119,31 @@ test('every security model is on disk, used, and credited', () => {
   }
   const c = readFileSync('public/models/security/CREDITS.md', 'utf8');
   assert(/MesXwi/.test(c) && /CC BY 4\.0/.test(c), 'security credits missing the author or licence');
+});
+
+test('no street furniture stands out in the road (bins, crates, trolleys, bollards and signs stay on the pavement)', () => {
+  const pavement = new Set(['bin', 'bench', 'bollard', 'bollard_row', 'trolley', 'crates', 'cardboard', 'rubbish_bags', 'sign_post', 'pallets', 'drum', 'planter', 'postbox', 'phonebox', 'bike_rack']);
+  for (const [id, l] of Object.entries(LEVELS)) {
+    if (kerbFor(l) === null) continue;
+    for (const p of l.props) {
+      if (!pavement.has(p.kind)) continue;
+      const [, hz] = propHalf(p);
+      assert(p.z + hz <= KERB_Z, `${id}: ${p.kind} at x ${p.x} stands in the road (z ${p.z})`);
+    }
+  }
+});
+
+test('every door model is on disk, used, and credited', () => {
+  const lib = readFileSync('src/render/props/DoorLibrary.ts', 'utf8');
+  const list = lib.slice(lib.indexOf('export const DOOR_MODELS'), lib.indexOf('] as const;'));
+  const ids = [...list.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+  assert(ids.length === 6, `expected 6 doors, got ${ids.length}`);
+  for (const id of ids) {
+    assert(existsSync(`public/models/doors/${id}.glb`), `${id}.glb is missing`);
+    assert(lib.slice(lib.indexOf('const CHOICES')).includes(`'${id}'`), `${id} is never picked`);
+  }
+  const c = readFileSync('public/models/doors/CREDITS.md', 'utf8');
+  assert(/vanillao03/.test(c) && /CC BY 4\.0/.test(c), 'door credits missing the author or licence');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

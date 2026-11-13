@@ -31,6 +31,8 @@ export interface PieceOptions {
   turn?: number;
   /** Lights off: anything that glows is dimmed (its own copy of the material). */
   dim?: boolean;
+  /** Paint: the textured (non-glass) parts are multiplied by this colour (materials shared per colour). */
+  tint?: string;
 }
 
 export interface ModelSet<Id extends string> {
@@ -43,6 +45,7 @@ export interface ModelSet<Id extends string> {
 
 export function modelSet<Id extends string>(name: string, base: string, ids: readonly Id[]): ModelSet<Id> {
   const models = new Map<string, THREE.Object3D>();
+  const tinted = new Map<string, THREE.MeshStandardMaterial>();
   let loading: Promise<void> | null = null;
   return {
     load() {
@@ -86,6 +89,22 @@ export function modelSet<Id extends string>(name: string, base: string, ids: rea
       if (!src) return null;
       const inner = src.clone(true);
       inner.rotation.y = o.turn ?? 0;
+      if (o.tint) {
+        inner.traverse((n: THREE.Object3D) => {
+          const mesh = n as THREE.Mesh;
+          const m = mesh.isMesh ? (mesh.material as THREE.MeshStandardMaterial) : null;
+          if (!m || m.transparent) return;
+          const key = `${m.uuid}|${o.tint}`;
+          let t = tinted.get(key);
+          if (!t) {
+            t = m.clone();
+            t.color.set(o.tint!);
+            t.userData.shared = true;
+            tinted.set(key, t);
+          }
+          mesh.material = t;
+        });
+      }
       if (o.dim) {
         inner.traverse((n: THREE.Object3D) => {
           const mesh = n as THREE.Mesh;

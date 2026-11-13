@@ -102,7 +102,7 @@ export class CivilianBrain {
     const t = rng.next();
     this.temper = t < 0.38 ? 'nervy' : t < 0.68 ? 'nosy' : 'steady';
     this.space = 0.42 + rng.next() * 0.3;
-    this.patience = Math.round(150 + rng.next() * 210);
+    this.patience = Math.round(50 + rng.next() * 70);
     this.lastX = self.pos.x;
     this.lastZ = self.pos.z;
   }
@@ -347,7 +347,9 @@ export class CivilianBrain {
             return;
           }
           // Truly boxed in: stand and wait for a gap, and only turn back when patience runs out.
+          // (Waiting counts as wanting to move, so the stuck check notices if nothing changes.)
           cmd.moveX = 0;
+          this.wanted = true;
           this.blockedFrames++;
           if (this.blockedFrames > this.patience) {
             this.blockedFrames = 0;
