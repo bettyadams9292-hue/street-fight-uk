@@ -20,6 +20,8 @@ interface Spec {
   unit?: number;
   /** Height for unit runs (metres). */
   h?: number;
+  /** Stands on a low media cabinet this tall (metres): the model itself is only the telly. */
+  stand?: number;
 }
 
 export const HOME_MODELS: Record<string, Spec> = {
@@ -28,7 +30,7 @@ export const HOME_MODELS: Record<string, Spec> = {
   armchair: { k: 'loungeChair', colour: 'fabric' },
   coffee_table: { k: 'tableCoffee', colour: 'wood' },
   tv_unit: { k: 'cabinetTelevisionDoors', colour: 'wood' },
-  tv_43: { k: 'televisionModern', colour: 'none' },
+  tv_43: { k: 'televisionModern', colour: 'none', stand: 0.48 },
   bookcase: { k: 'bookcaseClosedWide', colour: 'wood' },
   shelf_low: { k: 'bookcaseOpenLow', colour: 'wood' },
   rug_round: { k: 'rugRound', colour: 'fabric' },
@@ -75,6 +77,12 @@ export function homeFurnitureModel(id: string, colour?: string): THREE.Group | n
       m.position.x = -W / 2 + (W / n) * (i + 0.5);
       g.add(m);
     }
+  } else if (spec.stand) {
+    const unit = furniture('cabinetTelevision', W, spec.stand, D, { wood: c });
+    const tv = furniture(spec.k, W * 0.98, 10, Math.min(D, 0.2), { keepAspect: true });
+    if (!unit || !tv) return null;
+    tv.position.y = spec.stand;
+    g.add(unit, tv);
   } else {
     // Fitted inside the footprint with the model's own proportions; height follows.
     const m = furniture(spec.k, W, 10, D, { ...look, keepAspect: true });
