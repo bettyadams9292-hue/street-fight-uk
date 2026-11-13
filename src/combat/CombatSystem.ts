@@ -260,8 +260,11 @@ export function resolveHit(
 
   target.enterHitReaction(reaction, comboStun(move.hitstun + (caught ? COUNTER_HIT_STUN : 0), attacker.comboHits));
   info.reaction = reaction;
-  attacker.hitstop = move.hitstop + (counter ? 3 : 0);
-  target.hitstop = move.hitstop + (counter ? 3 : 0);
+  // Every landed hit freezes at least 4 frames so even a jab has weight (both freeze together, so
+  // frame advantage is unchanged).
+  const stop = Math.max(MIN_HITSTOP, move.hitstop) + (counter ? 3 : 0);
+  attacker.hitstop = stop;
+  target.hitstop = stop;
   bus.emit('hit:landed', info);
   if (reaction === 'knockdown') bus.emit('fighter:knockdown', { fighter: target });
 }
@@ -271,6 +274,8 @@ export function resolveHit(
  * forever: after the third hit each one stuns a little less (down to 60%), and
  * the one taking the beating gets a gap to cover up or get out.
  */
+const MIN_HITSTOP = 4;
+
 export function comboStun(stun: number, comboHits: number): number {
   if (comboHits <= 3) return stun;
   return Math.max(Math.round(stun * 0.6), Math.round(stun * (1 - 0.08 * (comboHits - 3))));

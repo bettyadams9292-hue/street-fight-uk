@@ -31,6 +31,41 @@ export class CameraRig {
     this.shake = Math.min(0.35, this.shake + amount);
   }
 
+  /** A quick push in toward a big hit (0..1), springing straight back out. */
+  private punch = 0;
+  private punchX = 0;
+  addPunch(amount: number, atX: number): void {
+    if (amount > this.punch) this.punchX = atX;
+    this.punch = Math.min(1, Math.max(this.punch, amount));
+  }
+
+  /** The final blow: drift in on where it landed and hold there while time is slowed (0 lets go). */
+  private cine = 0;
+  private cineWant = 0;
+  private cineAt = new THREE.Vector3();
+  setCinematic(amount: number, at?: { x: number; y: number; z: number }): void {
+    this.cineWant = amount;
+    if (at) this.cineAt.set(at.x, at.y, at.z);
+  }
+
+  /** Where the camera sits and looks, with the shake, the punch-in and any cinematic push applied. */
+  private place(dt: number): void {
+    this.shakeSeed += dt * 60;
+    const sx = this.shake * (Math.sin(this.shakeSeed * 1.7) + Math.sin(this.shakeSeed * 3.1) * 0.5);
+    const sy = this.shake * (Math.cos(this.shakeSeed * 2.3) * 0.7);
+    this.shake = Math.max(0, this.shake - dt * 1.6);
+    // The punch snaps in and eases back out over about a quarter of a second.
+    this.punch = Math.max(0, this.punch - dt * 4.5);
+    this.cine += (this.cineWant - this.cine) * (1 - Math.exp(-(this.cineWant > this.cine ? 6 : 3) * dt));
+    const p = this.punch * this.punch;
+    const pull = 1 - 0.1 * p - 0.38 * this.cine;
+    const fx = this.focus.x + (this.punchX - this.focus.x) * 0.25 * p + (this.cineAt.x - this.focus.x) * 0.6 * this.cine;
+    const fy = this.focus.y + (this.cineAt.y - 0.2 - this.focus.y) * 0.5 * this.cine;
+    const dist = this.distance * pull;
+    this.camera.position.set(fx + sx, 2.35 + dist * 0.06 - 0.35 * this.cine + sy, this.focus.z + dist);
+    this.camera.lookAt(fx + sx * 0.5, fy + 0.15, this.focus.z - 0.4);
+  }
+
   update(dt: number, player: Fighter | null, target: Fighter | null, bounds: ArenaBounds): void {
     let cx = 0;
     let spread = 0;
@@ -54,13 +89,7 @@ export class CameraRig {
     this.focus.z += ((player?.pos.z ?? 0) * 0.3 - this.focus.z) * k;
     this.distance += (wantDist - this.distance) * (1 - Math.exp(-3 * dt));
 
-    this.shakeSeed += dt * 60;
-    const sx = this.shake * (Math.sin(this.shakeSeed * 1.7) + Math.sin(this.shakeSeed * 3.1) * 0.5);
-    const sy = this.shake * (Math.cos(this.shakeSeed * 2.3) * 0.7);
-    this.shake = Math.max(0, this.shake - dt * 1.6);
-
-    this.camera.position.set(this.focus.x + sx, 2.35 + this.distance * 0.06 + sy, this.focus.z + this.distance);
-    this.camera.lookAt(this.focus.x + sx * 0.5, this.focus.y + 0.15, this.focus.z - 0.4);
+    this.place(dt);
   }
 
   private deadX = 0;
@@ -121,12 +150,7 @@ export class CameraRig {
     this.focus.z += (player.pos.z * 0.3 - this.focus.z) * k;
     this.distance += (wantDist - this.distance) * (1 - Math.exp(-3 * dt));
 
-    this.shakeSeed += dt * 60;
-    const sx = this.shake * (Math.sin(this.shakeSeed * 1.7) + Math.sin(this.shakeSeed * 3.1) * 0.5);
-    const sy = this.shake * (Math.cos(this.shakeSeed * 2.3) * 0.7);
-    this.shake = Math.max(0, this.shake - dt * 1.6);
-    this.camera.position.set(this.focus.x + sx, 2.35 + this.distance * 0.06 + sy, this.focus.z + this.distance);
-    this.camera.lookAt(this.focus.x + sx * 0.5, this.focus.y + 0.15, this.focus.z - 0.4);
+    this.place(dt);
   }
 
   get focusX(): number {

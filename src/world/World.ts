@@ -844,6 +844,14 @@ export class World {
     return this.enemies.find(near) ?? null;
   }
 
+  /** Is knocking out `f` the blow that wins the current fight? (The last one standing in the last wave, or the boss.) */
+  isFinalBlow(f: Fighter): boolean {
+    const e = this.activeEncounter;
+    if (!e || !e.enemies.includes(f)) return false;
+    if (e.boss) return f === e.boss;
+    return e.wave >= e.def.waves.length - 1 && e.enemies.every((x) => x === f || x.isKO);
+  }
+
   get activeEncounter(): EncounterState | null {
     return this.encounters.find((e) => e.status === 'active') ?? null;
   }

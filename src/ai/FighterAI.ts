@@ -181,7 +181,11 @@ export class FighterAI {
         if (me.style.defence === 'guard_pull' && close && r < 0.5) cmd.pressed.grab = true;
         else if (r < 0.35) cmd.pressed.jump = true;
         else if (r < 0.6) cmd.moveZ = me.pos.z > 0 ? -1 : 1;
-        else if (r < 0.8 && close) cmd.pressed.lk = true;
+        // A get-up kick, unless they're a boxer who never kicks: they roll up instead.
+        else if (r < 0.8 && close) {
+          if (a.buttonBias && a.buttonBias.kick < 0) cmd.pressed.jump = true;
+          else cmd.pressed.lk = true;
+        }
         // otherwise stay down and get up when the timer runs out
       }
       return cmd;

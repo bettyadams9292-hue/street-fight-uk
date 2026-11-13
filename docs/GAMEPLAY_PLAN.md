@@ -109,7 +109,25 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 
 **Next:** proper captures of hooks, uppercuts, knees, elbows and round kicks would close the gap for good. Drop them in as FBX files and cut them with `tools/rokoko/convert.py`.
 
+## Stage 8: game feel ✅ done
+**Problem:** the basics were there (hit freeze, sparks, camera shake, damage numbers, a combo counter), but the big moments didn't land, getting hit didn't feel like anything, enemies' big shots were hard to read in time, and "CLEAN HIT" filled the screen.
+**What changed:**
+- **Slow motion on the final blow.** The hit that wins a fight plays at about a fifth of normal speed for three-quarters of a second, while the camera pushes in on it. Losing gets a shorter, gentler version. Fights and animation slow down; the HUD keeps real time.
+- **Camera punch-in** on counters, heavy clean hits and finishers. It snaps in and springs straight back out, and follows the screen-shake setting.
+- **Feeling your hits taken.** The screen's edges flash red, harder for bigger hits. They pulse slowly when you're below a quarter of your health. Gamepads rumble, both when you're hit and lightly when you land hits.
+- **Danger flash.** When an enemy loads up a big, slow attack at you (startup of 11 frames or more), a red flash appears on the fist or foot with a low swell, in time to block, dodge or step out. Quick shots get none; reading those is down to you.
+- **Weightier light hits.** Every landed hit freezes at least 4 frames. Both fighters freeze together, so frame advantage doesn't change.
+- **Quieter screen.** "CLEAN HIT" shows at most once every 3 seconds.
+- Boxers roll up off the floor instead of doing a get-up kick, so they really never kick.
+
+**Measuring skill properly:** the old "masher" test bot was capped by the AI's attack timer at about one attack a second. It now hammers an attack every few frames whenever an enemy is in reach, like a person mashing. Pooled over seven areas:
+- **Careful:** 70% of fights won, 40% health left.
+- **Masher:** 52% won, 30% health left. It's out of stamina 13% of the time.
+
+`tests/gameplay.test.ts` holds this gap.
+
 ## Log
 - 12 Nov 2026: audit done; stages 1–3 started on branch `gameplay-feel`.
 - 12 Nov 2026 (later): stages 1–3 done, with tests in `tests/gameplay.test.ts`. Across the whole game, the careful bot's average win rate went from 70% to 78% and the sloppy bot's from 64% to 75%. Enemies no longer get free parries, while players still can, so the game got a little easier overall. Stage 4 should retune the curve from these numbers.
 - 12 Nov 2026 (night): stages 4–7 done on branch `gameplay-stages-4-7`. Final balance: careful bot 82%, sloppy 75%, all fights within 15 points of the curve.
+- 13 Nov 2026: stage 8 (game feel) done on branch `game-feel`.
