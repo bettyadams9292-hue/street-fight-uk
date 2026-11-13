@@ -8,6 +8,7 @@ import { defaultProperty } from '../property/state';
 import { defaultGym } from '../training/gym';
 import { extendStrip, joinStrip } from './strip';
 import { GENERATED_TOWNS, townGate } from './towns';
+import { ASHCOMBE, ESTATE_AGENT, JEWELLER, addPropertyDoors, propertyPlaceholder } from '../realty/world';
 
 /**
  * The neighbourhood. Areas join end to end (walk off an edge) or through
@@ -591,7 +592,19 @@ export const CORE_LEVELS = {
 };
 
 
-export const LEVELS: Record<AreaId, LevelDef> = { ...CORE_LEVELS, ...DISTRICTS, ...INTERIORS, basement: buildBasementLevel(defaultBasement()) };
+export const LEVELS: Record<AreaId, LevelDef> = {
+  ...CORE_LEVELS,
+  ...DISTRICTS,
+  ...INTERIORS,
+  basement: buildBasementLevel(defaultBasement()),
+  // The jeweller, the estate agent, Ashcombe Park, and the inside of whichever property you walk into.
+  jeweller: JEWELLER,
+  estate_agent: ESTATE_AGENT,
+  ashcombe: ASHCOMBE,
+  property: propertyPlaceholder(),
+} as Record<AreaId, LevelDef>;
+// Every property's front door on its street, and the doors into the new places.
+addPropertyDoors(LEVELS);
 // East of Hale House the street carries on through the generated towns, each shut until the boss before it is beaten.
 for (const town of GENERATED_TOWNS) {
   for (const d of town.districts) LEVELS[d.id] = d;

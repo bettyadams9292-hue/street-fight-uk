@@ -45,7 +45,8 @@ test('the estate still plays the same: its solid props, exits and fights are unt
   const e = LEVELS.estate;
   const solid = e.props.map((p) => propBox(p)).filter(Boolean).length;
   assert(e.props.length === 10 && solid >= 6, `props changed: ${e.props.length} props, ${solid} solid`);
-  assert(e.exits.length === 5, `exits changed: ${e.exits.length}`);
+  // Five of its own, plus two front doors of properties for sale (9 Tanner Road, Flat 3 Lowry House).
+  assert(e.exits.length === 7 && e.exits.filter((x) => x.to === 'property').length === 2, `exits changed: ${e.exits.length}`);
   assert((e.encounters ?? []).some((x) => x.id === 'lads'), 'the first fight is missing');
   assert(e.bounds.minX === -12 && e.bounds.maxX === 56, 'the street changed length');
 });

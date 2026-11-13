@@ -527,14 +527,15 @@ test('a Stage 4 (v2) save migrates: money, flags, gear, weapons and cosmetics al
 console.log('Stage 5: the campaign');
 
 test('every area (24 + Stage 6 and 7 buildings), every exit resolves, every new district has a boss or is an interior', () => {
-  // 34 hand-built areas, then the generated towns east of Hale House.
-  assert(AREA_IDS.length === 34 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
+  // 34 hand-built areas, plus the jeweller, the estate agent, Ashcombe Park and the inside of a property.
+  assert(AREA_IDS.length === 38 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const l = LEVELS[id];
     assert(l, `no level ${id}`);
     for (const ex of l.exits) assert(LEVELS[ex.to]?.entries.some((e) => e.id === ex.toEntry), `${id} → ${ex.to}:${ex.toEntry} missing`);
   }
-  const interiors = ['home', 'clothes_shop', 'pawn_shop', 'pub', 'furniture_shop', 'car_dealer', 'bike_shop', 'casino', 'basement', 'grow_shop', 'gym_store', 'boxing_gym', 'karate_dojo', 'wrestling_club'];
+  // Plus the jeweller, the estate agent, the inside of a property, and Ashcombe Park (a gated private road: no fights).
+  const interiors = ['home', 'clothes_shop', 'pawn_shop', 'pub', 'furniture_shop', 'car_dealer', 'bike_shop', 'casino', 'basement', 'grow_shop', 'gym_store', 'boxing_gym', 'karate_dojo', 'wrestling_club', 'jeweller', 'estate_agent', 'property', 'ashcombe'];
   for (const id of AREA_IDS) {
     if (interiors.includes(id)) continue;
     assert(LEVELS[id].encounters.length > 0, `${id} has no fights`);

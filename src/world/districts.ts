@@ -574,7 +574,7 @@ const mall: LevelDef = {
   facades: [
     { kind: 'mall', x0: 0, x1: 14, label: 'SPORTS WORLD' },
     { kind: 'mall', x0: 14, x1: 28, label: 'TECH ZONE', colour: '#1f6fd8' },
-    { kind: 'mall', x0: 28, x1: 40, label: 'JEWELLERS', colour: '#c9a227' },
+    { kind: 'mall', x0: 28, x1: 40, label: 'HALDEN & CRANE', colour: '#c9a227' },
     { kind: 'mall', x0: 40, x1: 56, label: 'FOOD COURT', colour: '#d84a1a' },
     { kind: 'mall', x0: 56, x1: 70, label: 'FASHION', colour: '#101012' },
     { kind: 'mall', x0: 70, x1: 92, label: 'DEPARTMENT STORE', colour: '#2a3f7a' },

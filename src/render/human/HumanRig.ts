@@ -13,6 +13,7 @@ import { JOINTS, type JointName } from '../poses';
 import { MODEL_METRICS, type Metrics } from '../anim/skeleton';
 import type { Rig } from '../CharacterRig';
 import { buildHuman, humanAssets, humansReady, type HumanSpec } from './HumanBuilder';
+import { fitJewellery } from '../jewellery';
 
 const DOWN = new THREE.Vector3(0, -1, 0);
 const I = new THREE.Quaternion();
@@ -58,6 +59,14 @@ export function buildHumanRig(a: CharacterAppearance): Rig | null {
   // The game's left (lead) side is +x. MakeHuman's .L is the character's left: check rather than assume.
   const leftIsL = restPos('upperarm01.L').x > 0;
   const side = (s: 'l' | 'r') => ((s === 'l') === leftIsL ? 'L' : 'R');
+  // Rings, watch, chain and grill: measured and fitted now, while everything's still in the rest pose.
+  let jewels: ReturnType<typeof fitJewellery> | null = null;
+  try {
+    jewels = fitJewellery(a, built.root, built.skeleton, bones, side('l'));
+  } catch (e) {
+    console.warn('[human] jewellery did not fit', e);
+  }
+  const held = jewels?.hold ?? new Map<string, THREE.Quaternion>();
 
   // ---- the game joints ----
   const make = (name: string) => {
@@ -178,7 +187,9 @@ export function buildHumanRig(a: CharacterAppearance): Rig | null {
       const pw = parentIdx[i] >= 0 ? world[parentIdx[i]] : I;
       const f = byBone.get(b.name);
       if (!f) {
-        if (!fixed.has(b.name)) b.quaternion.identity();
+        const h = held.get(b.name);
+        if (h) b.quaternion.copy(h);
+        else if (!fixed.has(b.name)) b.quaternion.identity();
         world[i].copy(pw).multiply(b.quaternion);
         continue;
       }
@@ -231,6 +242,9 @@ export function buildHumanRig(a: CharacterAppearance): Rig | null {
     hipsRest: J.hips.position.clone(),
     flashMaterials,
     sync,
-    dispose: () => built.dispose(),
+    dispose: () => {
+      jewels?.dispose();
+      built.dispose();
+    },
   };
 }

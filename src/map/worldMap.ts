@@ -7,6 +7,8 @@ import { DISTRICT_ORDER, LEVELS } from '../world/levels';
 import type { ExitDef, LevelDef } from '../world/LevelTypes';
 import { STRIP, stripLength, stripOffsets } from '../world/strip';
 import { GENERATED_TOWNS } from '../world/towns';
+import { PROPERTIES } from '../realty/catalogue';
+import { statusOf } from '../realty/portfolio';
 
 /**
  * The town map's data. Places, doors, links, locks, bosses, shops and people
@@ -150,6 +152,10 @@ const BLURB: Record<AreaId, string> = {
   boxing_gym: 'Coach Del teaches boxing and kickboxing. Drills and ranks.',
   karate_dojo: 'Mrs Okafor teaches karate and Muay Thai.',
   wrestling_club: 'Big Kev teaches wrestling and BJJ.',
+  jeweller: 'Halden & Crane, fine jewellers: rings, watches, chains and grills. Marcus will sell you anything.',
+  estate_agent: 'Keys & Co in Meridian House: buy, sell and let property. Fiona and Raj run your portfolio.',
+  ashcombe: 'Ashcombe Park: a gated road of mansions, villas and penthouses off Leisure Park. Everything’s for sale.',
+  property: 'Inside a property: on a viewing, or one of your own.',
 };
 
 export type MarkerKind =
@@ -178,6 +184,7 @@ export const MARKER_LABELS: Record<MarkerKind, string> = {
 const INTERIOR_KIND: Partial<Record<AreaId, MarkerKind>> = {
   home: 'home', basement: 'property', clothes_shop: 'clothes', pawn_shop: 'pawn', pub: 'pub', furniture_shop: 'shop', car_dealer: 'cars',
   bike_shop: 'bikes', casino: 'casino', grow_shop: 'shop', gym_store: 'shop', boxing_gym: 'gym', karate_dojo: 'gym', wrestling_club: 'gym',
+  jeweller: 'shop', estate_agent: 'property', ashcombe: 'property', property: 'property',
 };
 
 const STATION_ACTIVITY: Record<string, string> = {
@@ -189,6 +196,8 @@ const STATION_ACTIVITY: Record<string, string> = {
   furniture_counter: 'Buy furniture, floors and walls', car_counter: 'Buy and sell cars', bike_counter: 'Buy and sell bikes',
   casino_cashier: 'Chips and prizes', casino_slots: 'Slots', casino_roulette: 'Roulette', casino_blackjack: 'Blackjack',
   grow_counter: 'Buy basement equipment', grow_display: 'Look at the kit', mirror: 'Mirror', bike_rack: 'Bikes and cars',
+  jeweller_counter: 'Buy and sell back jewellery', jeweller_case: 'Rings, watches, chains and grills', agent_desk: 'Buy, sell and let property',
+  agent_window: 'Property for sale', prop_info: 'Property details', prop_rest: 'Rest',
 };
 
 export interface MapPlace {
@@ -527,7 +536,15 @@ export function markers(p: Progress): MapMarker[] {
   const out: MapMarker[] = [];
   for (const pl of places()) {
     if (pl.street) out.push({ key: `street:${pl.id}`, kind: 'street', area: pl.id, at: pl.at, label: pl.name });
-    else if (pl.id !== 'basement') out.push({ key: `place:${pl.id}`, kind: pl.kind, area: pl.id, at: pl.at, label: pl.name });
+    else if (pl.id !== 'basement' && pl.id !== 'property') out.push({ key: `place:${pl.id}`, kind: pl.kind, area: pl.id, at: pl.at, label: pl.name });
+  }
+  // Every property you own, at its front door.
+  for (const hd of p.save.portfolio?.holdings ?? []) {
+    const d = PROPERTIES[hd.id];
+    const at = d ? (LAYOUT[d.area] ? streetPoint(d.area, d.x) : placePoint(d.area)) : null;
+    if (!d || !at) continue;
+    const st = statusOf(hd);
+    out.push({ key: `own:${d.id}`, kind: 'property', area: d.area, at: { x: at.x, y: at.y - 24 }, label: `Yours: ${d.name} (${st === 'personal' ? 'lived in' : st === 'vacant' ? 'empty, to let' : `let to ${hd.tenant?.name ?? 'tenants'}`})` });
   }
   // The Snug's fighters for hire, next to the pub.
   const pub = placePoint('pub');
