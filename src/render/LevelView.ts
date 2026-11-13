@@ -3275,8 +3275,14 @@ export class LevelView {
       }
       // A real door on the wall behind the door point (DoorLibrary); the old lit doorway until the doors load.
       const isStairs = ex.id.includes('stairs') || ex.id.includes('steps');
+      // Stairs drawn as a model (the stairwell in the garage floor, the basement stairs with their own door at the top): just sign them.
+      if (isStairs && this.level.props.some((p) => (p.kind === 'stairwell' || p.kind === 'basement_stairs') && Math.abs(p.x - ex.x) < 1.6)) {
+        this.exitSign(ex, ex.x, 2.75, z + 0.12);
+        return;
+      }
       const indoors = themeProfile(this.level.theme).interior;
-      if (this.door(isStairs ? 'stairs' : indoors ? 'interior' : 'service', ex.x, 1.15, 2.25, 0.03)) {
+      // Stairways are an open way through, never a door.
+      if (!isStairs && this.door(indoors ? 'interior' : 'service', ex.x, 1.15, 2.25, 0.03)) {
         this.exitSign(ex, ex.x, 2.75, z + 0.12);
         return;
       }
