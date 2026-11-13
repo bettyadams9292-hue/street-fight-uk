@@ -107,6 +107,8 @@ def triangles(path):
                 if 'material' in prim:
                     m = js['materials'][prim['material']]
                     pbr = m.get('pbrMetallicRoughness', {})
+                    if m.get('alphaMode') == 'BLEND' and pbr.get('baseColorFactor', [1, 1, 1, 1])[3] < 0.5:
+                        continue  # see-through glass: leave it out so you can see what's behind
                     base = np.array(pbr.get('baseColorFactor', [0.8, 0.8, 0.8, 1])[:3])
                     if 'baseColorTexture' in pbr and pbr['baseColorTexture']['index'] in texs and 'TEXCOORD_0' in prim['attributes']:
                         tex = texs[pbr['baseColorTexture']['index']]
@@ -188,7 +190,7 @@ def draw(path, size, yaw=-35, pitch=22):
     order = np.argsort(V[:, :, 2].mean(1))
     for i in order:
         pts = [(S / 2 + (p[0] - cx) * scale, S / 2 - (p[1] - cyy) * scale) for p in V[i]]
-        c = np.clip(C[i] * shade[i], 0, 1) ** (1 / 1.8)
+        c = np.clip(C[i] * shade[i], 0, 1) ** (1 / 2.2)
         col = tuple(int(255 * x) for x in c)
         d.polygon(pts, fill=col)
     return img.resize((size, size), Image.LANCZOS)

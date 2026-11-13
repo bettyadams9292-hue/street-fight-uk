@@ -393,6 +393,8 @@ const growShop: LevelDef = {
 };
 
 // ---- Iron Temple: gym equipment store (Leisure Park) ------------------------------------------------
+/** Gym dressing (GymLibrary models): `size` is the half footprint; small pieces don't block the way. */
+const GYM = (item: string, x: number, z: number, size: [number, number]): PropDef => ({ kind: 'gym_prop', item, x, z, size, solid: size[0] > 0.3 });
 const KIT = (item: string, x: number, z: number): PropDef => ({ kind: 'gym_kit', item, x, z, size: GYM_KIT[item].size, solid: GYM_KIT[item].solid, plinth: true });
 
 const gymStore: LevelDef = {
@@ -416,6 +418,11 @@ const gymStore: LevelDef = {
     KIT('mat', 14.6, -1.3),
     KIT('speed_ball', 16.3, -2.0),
     { kind: 'shop_counter', x: 19.2, z: -0.6 },
+    // Dressing between the displays: plates, a pair of dumbbells, an incline bench by the till.
+    GYM('plate_stack', 4.0, -2.15, [0.2, 0.2]),
+    GYM('plate_stack_b', 6.45, -2.15, [0.2, 0.2]),
+    GYM('dumbbell_medium', 13.3, -2.2, [0.16, 0.16]),
+    GYM('incline_bench', 17.55, -1.9, [0.45, 0.22]),
   ],
   stations: [
     { id: 'gym_counter', x: 3.0, z: -1.0, label: 'Dumbbell rack: strength', tab: 'dumbbells' },
@@ -470,7 +477,9 @@ function fightGym(
       { kind: 'bag', x: 13.4, z: -1.55 },
       { kind: 'bag', x: 15.0, z: -1.55 },
       { kind: 'gym_rack', x: 17.6, z: -1.85 },
-      { kind: 'bench', x: 3.4, z: -1.5 },
+      GYM('flat_bench', 3.4, -1.5, [0.6, 0.2]),
+      GYM('plate_stack', 19.0, -2.1, [0.2, 0.2]),
+      GYM('dumbbell_large', 12.3, -2.15, [0.17, 0.17]),
     ],
     stations: [
       {

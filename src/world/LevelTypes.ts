@@ -36,7 +36,9 @@ export type PropKind =
   // Stage 7: basement business and the grow shop
   | 'equipment' | 'basement_stairs' | 'terminal_desk' | 'junk' | 'grow_shelf'
   // Stage 8: house computer, gym kit, garage stairwell, fighting gyms
-  | 'computer_desk' | 'coach_board' | 'stairwell' | 'gym_kit' | 'boxing_ring' | 'dojo_mat' | 'wrestling_mat' | 'gym_rack';
+  | 'computer_desk' | 'coach_board' | 'stairwell' | 'gym_kit' | 'boxing_ring' | 'dojo_mat' | 'wrestling_mat' | 'gym_rack'
+  // Gym dressing: benches, plates and loose dumbbells (`item` is a GymLibrary model, `size` its footprint)
+  | 'gym_prop';
 
 export interface PropDef {
   kind: PropKind;
@@ -289,7 +291,7 @@ export const PROP_SIZE: Record<PropKind, [number, number]> = {
   furniture: [0.5, 0.5], vehicle: [1.0, 0.5], bath: [0.85, 0.4], toilet: [0.22, 0.3], basin: [0.3, 0.22],
   slot_machine: [0.38, 0.32], roulette_table: [1.2, 0.6], blackjack_table: [1.1, 0.55], casino_cage: [1.4, 0.4], prize_podium: [2.6, 1.15], tyre_stack: [0.4, 0.4], bike_stand: [1.0, 0.35],
   equipment: [0.5, 0.5], basement_stairs: [0.75, 0.75], terminal_desk: [0.7, 0.32], junk: [0.6, 0.5], grow_shelf: [1.0, 0.25],
-  computer_desk: [0.6, 0.32], coach_board: [0.4, 0.06], stairwell: [0.85, 0.9], gym_kit: [0.5, 0.5], boxing_ring: [2.2, 1.0], dojo_mat: [2.4, 1.1], wrestling_mat: [2.4, 1.1], gym_rack: [0.9, 0.3],
+  computer_desk: [0.6, 0.32], coach_board: [0.4, 0.06], stairwell: [0.85, 0.9], gym_kit: [0.5, 0.5], boxing_ring: [2.2, 1.0], dojo_mat: [2.4, 1.1], wrestling_mat: [2.4, 1.1], gym_rack: [0.9, 0.3], gym_prop: [0.4, 0.3],
 };
 
 /** Half extents after rotation. */
