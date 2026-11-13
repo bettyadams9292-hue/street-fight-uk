@@ -140,7 +140,7 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - **Shops, pubs and cafés:** counters, the till, shelving (stocked), glass counters (watches and rings inside), the bar front, pub tables, the jukebox and drinks fridges now use the Polyfork pieces the street's shop windows use, so inside matches outside. The pub's fruit machine now uses the casino's slot-machine cabinet.
 - Every piece falls back to its built-in model until the kits load. `tests/furniture.test.ts` checks every model the game asks for exists.
 
-**Left as they are:** wall art, mirrors, the neon sign, the laundry basket and the floor vase (no good kit model). Basement grow kit, roulette and blackjack tables, the casino cage, mannequins and clothes rails (no matching models).
+**Left as they are:** wall art, mirrors, the neon sign, the laundry basket and the floor vase (no good kit model). (Grow kit, casino tables, cage, mannequins and rails: done in stage 11.)
 
 ## Stage 10: gym furniture ✅ done
 **Source:** the LowPoly Gym Assets pack by Matrixxy (CC BY 4.0, supplied by you), split into separate models by `tools/models/split_gym_pack.py`: dumbbell rack, flat and incline benches, barbell, plate stacks, three dumbbells, punch bag and mat.
@@ -151,6 +151,17 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - New dressing: plate stacks, loose dumbbells and an incline bench. Small pieces don't block the way.
 - Credits in `public/models/gym/CREDITS.md`; `tests/furniture.test.ts` checks every model and placement.
 
+## Stage 11: shop furniture ✅ done
+**Problem:** the clothes shop, pawn shop, casino, garage and grow shop still used built-in box fittings; no kit has matching pieces.
+**What changed:** 13 fittings modelled to match the city kit (`tools/models/shop.py`, loaded by `src/render/props/ShopLibrary.ts`):
+- Clothes shop: clothes rail with hung shirts and jackets, three dressed mannequins, changing booth with a mirror and a drawn curtain.
+- Pawn shop: tall glass display cabinet (watches, rings, phones) and the cash machine (also used on the street).
+- Garage: workbench with a vice, toolbox and tools on a pegboard.
+- Grow shop: two stocked shelf units.
+- Casino: roulette table (the numbered wheel and layout are still drawn on it), kidney blackjack table with stools, and the cashier's cage.
+- The gym and shop loaders now share one model-set loader (`src/render/props/modelSet.ts`), which also handles see-through glass.
+- Every fitting falls back to its built-in model until it loads.
+
 ## Log
 - 12 Nov 2026: audit done; stages 1–3 started on branch `gameplay-feel`.
 - 12 Nov 2026 (later): stages 1–3 done, with tests in `tests/gameplay.test.ts`. Across the whole game, the careful bot's average win rate went from 70% to 78% and the sloppy bot's from 64% to 75%. Enemies no longer get free parries, while players still can, so the game got a little easier overall. Stage 4 should retune the curve from these numbers.
@@ -158,3 +169,4 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - 13 Nov 2026: stage 8 (game feel) done on branch `game-feel`.
 - 13 Nov 2026: stage 9 (low-poly furniture) done on branch `low-poly-furniture`.
 - 13 Nov 2026: stage 10 (gym furniture) done; shop furniture next.
+- 13 Nov 2026: stage 11 (shop furniture) done.

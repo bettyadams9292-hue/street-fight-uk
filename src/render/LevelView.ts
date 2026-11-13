@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { furniture, produceHeap, type FurnitureId, type ProduceId } from './props/KenneyLibrary';
 import { gymPiece, type GymModelId } from './props/GymLibrary';
+import { shopPiece, type ShopModelId } from './props/ShopLibrary';
 import { surfaceMaterial, kitGroundTexture as kitTexture, type Surface, type SurfaceOptions } from './street/Flooring';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
@@ -285,6 +286,15 @@ export class LevelView {
   /** Put a gym model (GymLibrary) into the group, fitted to w × h × d; false until they've loaded. */
   private gym(g: THREE.Group, id: GymModelId, w: number, h: number, d: number, o: { x?: number; y?: number; z?: number; keepAspect?: boolean; turn?: number } = {}): boolean {
     const m = gymPiece(id, w, h, d, o);
+    if (!m) return false;
+    m.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
+    g.add(m);
+    return true;
+  }
+
+  /** Put a shop or casino fitting (ShopLibrary) into the group; false until they've loaded. */
+  private fitting(g: THREE.Group, id: ShopModelId, w: number, h: number, d: number, o: { x?: number; y?: number; z?: number; keepAspect?: boolean; native?: boolean } = {}): boolean {
+    const m = shopPiece(id, w, h, d, o);
     if (!m) return false;
     m.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
     g.add(m);
@@ -2192,6 +2202,7 @@ export class LevelView {
         break;
       }
       case 'workbench': {
+        if (this.fitting(g, 'workbench', W, 2.0, D)) break;
         const wood = this.mat('#8a6a3a', 0.85);
         B(W, 0.08, D, 0, 0.9, 0, wood);
         for (const dx of [-W / 2 + 0.06, W / 2 - 0.06]) B(0.08, 0.9, D - 0.1, dx, 0.45, 0, wood);
@@ -2421,6 +2432,14 @@ export class LevelView {
         break;
       }
       case 'atm': {
+        // Modelled at its real size; the CASH sign goes on its green header.
+        if (this.fitting(g, 'atm', 0, 0, 0, { native: true })) {
+          const t = signTexture('CASH', '#1f6a3a', '#ffffff', { w: 256, h: 96 });
+          const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.16), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5 }));
+          sign.position.set(0, 1.58, 0.262);
+          g.add(sign);
+          break;
+        }
         B(W, 1.6, D, 0, 0.8, 0, this.mat('#4a4d55', 0.4, 0.6));
         B(W * 0.7, 0.3, 0.02, 0, 1.25, D / 2 + 0.01, this.mat('#0a1a2a', 0.1, 0.4, { emissive: 0x2a8ad8, emissiveIntensity: 0.9 }), false);
         B(W * 0.5, 0.15, 0.06, 0, 0.95, D / 2 + 0.03, this.mat('#2a2a2a', 0.4, 0.6), false);
@@ -2436,6 +2455,7 @@ export class LevelView {
         break;
       }
       case 'shop_rail': {
+        if (this.fitting(g, 'clothes_rail', W, 1.57, D)) break;
         const chrome = this.mat('#c8ccd0', 0.15, 0.95);
         for (const dx of [-W / 2 + 0.05, W / 2 - 0.05]) C(0.02, 0.02, 1.5, dx, 0.75, 0, chrome, 8);
         C(0.015, 0.015, W, 0, 1.48, 0, chrome, 8).rotation.z = Math.PI / 2;
@@ -2447,6 +2467,7 @@ export class LevelView {
         break;
       }
       case 'mannequin': {
+        if (this.fitting(g, (['mannequin', 'mannequin_red', 'mannequin_navy'] as const)[Math.floor(this.rnd() * 3)], 0, 0, 0, { native: true })) break;
         const skin = this.mat('#e8e4dc', 0.35);
         C(0.15, 0.15, 0.02, 0, 0.01, 0, this.mat('#1a1a1a', 0.3, 0.6), 16);
         C(0.015, 0.015, 0.7, 0, 0.36, 0, this.mat('#c8ccd0', 0.15, 0.9), 6);
@@ -2474,6 +2495,7 @@ export class LevelView {
           }
           break;
         }
+        if (tall && this.fitting(g, 'display_cabinet', W, 1.8, D)) break;
         const h = tall ? 1.8 : 1.0;
         B(W, 0.3, D, 0, 0.15, 0, this.mat('#2a1a10', 0.5));
         B(W, h - 0.3, D, 0, 0.15 + h / 2, 0, this.mat('#c8e0f0', 0.02, 0.2, { transparent: true, opacity: 0.25, depthWrite: false }), false);
@@ -2523,6 +2545,7 @@ export class LevelView {
         break;
       }
       case 'changing_booth': {
+        if (this.fitting(g, 'changing_booth', W, 2.2, D)) break;
         const m = this.mat('#e8e4dc', 0.6);
         B(0.04, 2.2, D, -W / 2, 1.1, 0, m);
         B(0.04, 2.2, D, W / 2, 1.1, 0, m);
@@ -2784,6 +2807,7 @@ export class LevelView {
         break;
       }
       case 'grow_shelf': {
+        if (this.fitting(g, p.label === 'environment' ? 'grow_shelf_kit' : 'grow_shelf', W, 2.0, D)) break;
         const H = 2.0;
         for (const dx of [-W / 2 + 0.03, W / 2 - 0.03]) B(0.04, H, D, dx, H / 2, 0, this.mat('#e8ece8', 0.4, 0.3));
         B(W, H, 0.02, 0, H / 2, -D / 2 + 0.01, this.mat('#2a8a3a', 0.8), false);
@@ -2817,12 +2841,13 @@ export class LevelView {
         break;
       }
       case 'roulette_table': {
-        B(W, 0.08, D, 0, 0.82, 0, this.mat('#4a2a14', 0.5));
-        B(W - 0.1, 0.02, D - 0.1, 0, 0.87, 0, this.mat('#1a5a2a', 1));
-        for (const dx of [-W / 2 + 0.12, W / 2 - 0.12]) for (const dz of [-D / 2 + 0.12, D / 2 - 0.12]) C(0.05, 0.05, 0.8, dx, 0.4, dz, this.mat('#2a1a10', 0.5), 8);
-        // The wheel at one end, the layout along the rest.
-        const bowl = C(0.36, 0.3, 0.12, -W / 2 + 0.48, 0.94, 0, this.mat('#3a1a0a', 0.3, 0.2), 32);
-        bowl.castShadow = false;
+        // The table and the wheel's bowl are a model; the numbered wheel and the layout are drawn on it.
+        if (!this.fitting(g, 'roulette_table', W, 1.01, D)) {
+          B(W, 0.08, D, 0, 0.82, 0, this.mat('#4a2a14', 0.5));
+          B(W - 0.1, 0.02, D - 0.1, 0, 0.87, 0, this.mat('#1a5a2a', 1));
+          for (const dx of [-W / 2 + 0.12, W / 2 - 0.12]) for (const dz of [-D / 2 + 0.12, D / 2 - 0.12]) C(0.05, 0.05, 0.8, dx, 0.4, dz, this.mat('#2a1a10', 0.5), 8);
+          C(0.36, 0.3, 0.12, -W / 2 + 0.48, 0.94, 0, this.mat('#3a1a0a', 0.3, 0.2), 32).castShadow = false;
+        }
         const wheel = C(0.3, 0.3, 0.03, -W / 2 + 0.48, 1.0, 0, this.rouletteMat(), 37);
         wheel.castShadow = false;
         C(0.03, 0.03, 0.12, -W / 2 + 0.48, 1.07, 0, this.mat('#c9a227', 0.2, 1), 8);
@@ -2834,6 +2859,7 @@ export class LevelView {
         break;
       }
       case 'blackjack_table': {
+        if (this.fitting(g, 'blackjack_table', 0, 0, 0, { native: true })) break;
         const top = C(W / 2, W / 2, 0.08, 0, 0.82, 0, this.mat('#4a2a14', 0.5), 40);
         top.scale.z = D / W;
         const felt = C(W / 2 - 0.06, W / 2 - 0.06, 0.02, 0, 0.87, 0, this.mat('#1a5a2a', 1), 40);
@@ -2855,13 +2881,15 @@ export class LevelView {
         break;
       }
       case 'casino_cage': {
-        B(W, 1.0, D, 0, 0.5, 0, this.mat('#2a1a10', 0.4));
-        B(W, 0.05, D + 0.05, 0, 1.02, 0, this.mat('#c9a227', 0.2, 0.9));
-        for (let x = -W / 2 + 0.1; x <= W / 2 - 0.05; x += 0.12) B(0.015, 1.2, 0.015, x, 1.62, D / 2 - 0.05, this.mat('#c9a227', 0.2, 0.9), false);
-        B(W, 0.08, D, 0, 2.25, 0, this.mat('#2a1a10', 0.4), false);
+        if (!this.fitting(g, 'casino_cage', 0, 0, 0, { native: true })) {
+          B(W, 1.0, D, 0, 0.5, 0, this.mat('#2a1a10', 0.4));
+          B(W, 0.05, D + 0.05, 0, 1.02, 0, this.mat('#c9a227', 0.2, 0.9));
+          for (let x = -W / 2 + 0.1; x <= W / 2 - 0.05; x += 0.12) B(0.015, 1.2, 0.015, x, 1.62, D / 2 - 0.05, this.mat('#c9a227', 0.2, 0.9), false);
+          B(W, 0.08, D, 0, 2.25, 0, this.mat('#2a1a10', 0.4), false);
+        }
         const t = signTexture('CASHIER', '#1a0a04', '#ffd23d', { w: 512, h: 96 });
         const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.26), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.7 }));
-        sign.position.set(0, 2.45, D / 2);
+        sign.position.set(0, 2.42, D / 2 + 0.012);
         g.add(sign);
         break;
       }

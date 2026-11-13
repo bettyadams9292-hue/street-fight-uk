@@ -9,7 +9,7 @@
  * Until the files load, or if they can't, everything keeps its built-in model.
  */
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { modelSet, type PieceOptions } from './modelSet';
 
 const BASE = '/models/gym/';
 
@@ -19,59 +19,15 @@ export const GYM_MODELS = [
 ] as const;
 export type GymModelId = (typeof GYM_MODELS)[number];
 
-const models = new Map<string, THREE.Object3D>();
-let loading: Promise<void> | null = null;
-
-/** Screens and lights glow in their own colour (the file's emissive is plain white). */
-function glowFromVertexColours(mesh: THREE.Mesh): void {
-  const col = mesh.geometry.getAttribute('color');
-  const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
-  if (col) {
-    let r = 0, g = 0, b = 0;
-    for (let i = 0; i < col.count; i++) {
-      r += col.getX(i);
-      g += col.getY(i);
-      b += col.getZ(i);
-    }
-    mat.emissive.setRGB(r / col.count, g / col.count, b / col.count);
-  }
-  mat.emissiveIntensity = 0.9;
-  mat.userData.shared = true;
-  mesh.material = mat;
-}
+const gym = modelSet('gym', BASE, GYM_MODELS);
 
 /** Load every piece once. Never rejects. */
 export function loadGym(): Promise<void> {
-  loading ??= (async () => {
-    const loader = new GLTFLoader();
-    await Promise.all(
-      GYM_MODELS.map(async (id) => {
-        try {
-          const g = await loader.loadAsync(`${BASE}${id}.glb`);
-          g.scene.traverse((o: THREE.Object3D) => {
-            const mesh = o as THREE.Mesh;
-            if (!mesh.isMesh) return;
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            // Shared: these outlive any level (disposeGroup skips them).
-            mesh.userData.shared = true;
-            mesh.geometry.userData.shared = true;
-            const m = mesh.material as THREE.MeshStandardMaterial;
-            m.userData.shared = true;
-            if (m.name === 'glow') glowFromVertexColours(mesh);
-          });
-          models.set(id, g.scene);
-        } catch (e) {
-          console.warn(`[gym] ${id} failed`, e);
-        }
-      }),
-    );
-  })();
-  return loading;
+  return gym.load();
 }
 
 export function gymReady(): boolean {
-  return models.size > 0;
+  return gym.ready();
 }
 
 /**
@@ -79,30 +35,8 @@ export function gymReady(): boolean {
  * `keepAspect` keeps its proportions inside the box; `native` uses it at its modelled size and height
  * (for wall pieces modelled at their mounting height). Null until loaded.
  */
-export function gymPiece(id: GymModelId, w: number, h: number, d: number, o: { keepAspect?: boolean; native?: boolean; turn?: number } = {}): THREE.Group | null {
-  const src = models.get(id);
-  if (!src) return null;
-  const inner = src.clone(true);
-  inner.rotation.y = o.turn ?? 0;
-  const out = new THREE.Group();
-  if (o.native) {
-    out.add(inner);
-    return out;
-  }
-  inner.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(inner);
-  const size = box.getSize(new THREE.Vector3());
-  let sx = w / Math.max(1e-3, size.x);
-  let sy = h / Math.max(1e-3, size.y);
-  let sz = d / Math.max(1e-3, size.z);
-  if (o.keepAspect) sx = sy = sz = Math.min(sx, sy, sz);
-  const c = box.getCenter(new THREE.Vector3());
-  inner.position.set(-c.x, -box.min.y, -c.z);
-  const holder = new THREE.Group();
-  holder.add(inner);
-  holder.scale.set(sx, sy, sz);
-  out.add(holder);
-  return out;
+export function gymPiece(id: GymModelId, w: number, h: number, d: number, o: PieceOptions = {}): THREE.Group | null {
+  return gym.piece(id, w, h, d, o);
 }
 
 /**

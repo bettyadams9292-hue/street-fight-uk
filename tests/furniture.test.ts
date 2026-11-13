@@ -76,5 +76,17 @@ test('the gym pack is credited (CC BY 4.0)', () => {
   assert(/Matrixxy/.test(c) && /CC BY 4\.0/.test(c), 'gym credits missing the author or licence');
 });
 
+test('every shop fitting model is on disk and used by the room builder', () => {
+  const lib = readFileSync('src/render/props/ShopLibrary.ts', 'utf8');
+  const list = lib.slice(lib.indexOf('export const SHOP_MODELS'), lib.indexOf('] as const;'));
+  const ids = [...list.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+  assert(ids.length >= 13, `only ${ids.length} shop models listed`);
+  const view = readFileSync('src/render/LevelView.ts', 'utf8');
+  for (const id of ids) {
+    assert(existsSync(`public/models/shop/${id}.glb`), `${id}.glb is missing`);
+    assert(view.includes(`'${id}'`), `${id} is never placed`);
+  }
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

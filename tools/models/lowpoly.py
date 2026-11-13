@@ -4,8 +4,8 @@ flat-shaded with a colour per part, written out as .glb. Used to model the
 pieces no CC0 kit has (gym equipment) in the same look as the city kit:
 faceted, vertex-coloured, a few hundred triangles each.
 
-Parts go into three materials: 'solid' (matte), 'metal' (shiny) and 'glow'
-(emissive screens and lights). Units are metres; y is up; the front faces +z.
+Parts go into four materials: 'solid' (matte), 'metal' (shiny), 'glow'
+(emissive screens and lights) and 'glass' (see-through). Units are metres; y is up; the front faces +z.
 """
 import json, math, struct
 import numpy as np
@@ -34,7 +34,7 @@ def rot_z(a):
 
 
 class Model:
-    MATS = ('solid', 'metal', 'glow')
+    MATS = ('solid', 'metal', 'glow', 'glass')
 
     def __init__(self):
         self.tris = {m: [] for m in self.MATS}  # (3x3 positions, rgb)
@@ -175,6 +175,7 @@ class Model:
             'solid': {'pbrMetallicRoughness': {'baseColorFactor': [1, 1, 1, 1], 'metallicFactor': 0.0, 'roughnessFactor': 0.85}},
             'metal': {'pbrMetallicRoughness': {'baseColorFactor': [1, 1, 1, 1], 'metallicFactor': 0.75, 'roughnessFactor': 0.35}},
             'glow': {'pbrMetallicRoughness': {'baseColorFactor': [1, 1, 1, 1], 'metallicFactor': 0.0, 'roughnessFactor': 0.4}, 'emissiveFactor': [1, 1, 1]},
+            'glass': {'pbrMetallicRoughness': {'baseColorFactor': [1, 1, 1, 0.28], 'metallicFactor': 0.1, 'roughnessFactor': 0.08}, 'alphaMode': 'BLEND'},
         }
 
         def add_view(arr, target):

@@ -107,6 +107,8 @@ def triangles(path):
                 if 'material' in prim:
                     m = js['materials'][prim['material']]
                     pbr = m.get('pbrMetallicRoughness', {})
+                    if m.get('alphaMode') == 'BLEND' and pbr.get('baseColorFactor', [1, 1, 1, 1])[3] < 0.5:
+                        continue  # see-through glass: leave it out so you can see what's behind
                     base = np.array(pbr.get('baseColorFactor', [0.8, 0.8, 0.8, 1])[:3])
                     if 'baseColorTexture' in pbr and pbr['baseColorTexture']['index'] in texs and 'TEXCOORD_0' in prim['attributes']:
                         tex = texs[pbr['baseColorTexture']['index']]
