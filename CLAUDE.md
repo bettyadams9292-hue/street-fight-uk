@@ -94,5 +94,6 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 
 ## Open questions and next steps
 
+- PR #20 (`property-jewellery`, the friend's): jewellery store, jewellery shown on the character, and a property empire. It was open on 13 Nov. Once it's merged, log it above and tick the jewellery rows in the asset Sheet that it covers.
 - The owner tests on an iPhone in portrait. Check every UI change at 390×700 as well as in landscape.
 - The London place names and `arch-*` archetype graphics in `public/art/titles` aren't used yet.
