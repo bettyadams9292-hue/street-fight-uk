@@ -9,10 +9,19 @@ import { buildHuman, loadHumanAssets, preloadHuman, preloadAllHumans, type Human
 import { buildHumanRig } from '../render/human/HumanRig';
 import { araPose, loadAraMocap } from '../render/anim/araPose';
 import { JOINTS } from '../render/poses';
-import { randomAppearance } from '../character/Appearance';
+import { defaultAppearance, randomAppearance, type CharacterAppearance } from '../character/Appearance';
+import type { JewelCat, JewelLook } from '../items/jewellery';
 import { npc } from '../characters/npcs';
 
 const shape = (s: Partial<BodyShape>): BodyShape => ({ ...DEFAULT_SHAPE, ...s, sliders: { ...(s.sliders ?? {}) } });
+
+/** Jewellery sets for `?shot=jewels`. */
+export const JEWEL_SETS: { body: 'male' | 'female'; look: Partial<CharacterAppearance>; jewels: Partial<Record<JewelCat, JewelLook>> }[] = [
+  { body: 'male', look: { top: 'tshirt', topColour: '#e8e6e1' }, jewels: { ring: { id: 'r_signet_onyx', finish: 'gold18' }, watch: { id: 'w_gold_president', finish: 'gold18' }, necklace: { id: 'n_cuban_14', finish: 'gold9' }, grill: { id: 'g_top6', finish: 'gold9' } } },
+  { body: 'male', look: { top: 'hoodie', topColour: '#1f2a44', skinTone: '#5e3b24' }, jewels: { ring: { id: 'r_halo', finish: 'white' }, watch: { id: 'w_iced', finish: 'white' }, necklace: { id: 'n_crucifix', finish: 'gold18' }, grill: { id: 'g_full_iced', finish: 'white' } } },
+  { body: 'female', look: { top: 'vest', topColour: '#7d1a1a' }, jewels: { ring: { id: 'r_solitaire', finish: 'rose' }, watch: { id: 'w_square', finish: 'rose' }, necklace: { id: 'n_heart', finish: 'rose' } } },
+  { body: 'male', look: { top: 'none' }, jewels: { ring: { id: 'r_statement', finish: 'gold18' }, watch: { id: 'w_sport', finish: 'steel' }, necklace: { id: 'n_rope_6', finish: 'silver' }, grill: { id: 'g_full_twotone', finish: 'gold9' } } },
+];
 
 export const LINEUP: HumanSpec[] = [
   {
@@ -103,8 +112,43 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
     const q = new URLSearchParams(location.search);
     const crowd = q.get('npcs');
     const clips = crowd ? Array.from({ length: 10 }, (_, i) => (i % 3 === 0 ? 'walk' : 'idle')) : q.get('clips')?.split(',') ?? ANIM_CLIPS;
-    const count = mode === 'anims' ? clips.length : LINEUP.length;
-    if (mode === 'anims') {
+    const count = mode === 'anims' ? clips.length : mode === 'jewels' ? JEWEL_SETS.length : LINEUP.length;
+    if (mode === 'jewels') {
+      // Jewellery fit: each character wears a different set, in the fighting stance (&t= and &clip= to change).
+      await Promise.all([preloadAllHumans(), loadAraMocap()]);
+      const t = Number(q.get('t') ?? 0.4);
+      const clip = q.get('clip') ?? 'fight_idle';
+      const rigs: { bones: Record<string, [number, number, number]> }[] = [];
+      JEWEL_SETS.forEach((set, i) => {
+        const a: CharacterAppearance = { ...defaultAppearance(set.body), ...set.look, jewellery: set.jewels };
+        const rig = buildHumanRig(a);
+        if (!rig) throw new Error('could not build a rig');
+        if (clip !== 'rest') {
+          const pose = araPose(clip, t, rig.metrics);
+          if (pose) {
+            for (const j of JOINTS) {
+              const v = pose.joints[j] ?? [0, 0, 0];
+              rig.joints[j].rotation.set(v[0], v[1], v[2]);
+            }
+            const r = rig.hipsRest;
+            rig.joints.hips.position.set(r.x + (pose.shift?.[0] ?? 0), r.y - (pose.drop ?? 0), r.z + (pose.shift?.[1] ?? 0));
+          }
+        }
+        rig.sync?.();
+        rig.root.position.x = (i - (count - 1) / 2) * 0.95;
+        scene.add(rig.root);
+        rig.root.updateMatrixWorld(true);
+        const bones: Record<string, [number, number, number]> = {};
+        rig.root.traverse((o: THREE.Object3D) => {
+          if ((o as THREE.Bone).isBone) {
+            const v = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld);
+            bones[o.name] = [v.x, v.y, v.z];
+          }
+        });
+        rigs.push({ bones });
+      });
+      (window as unknown as { __jewels: unknown }).__jewels = rigs;
+    } else if (mode === 'anims') {
       // Each character plays one Ara clip, frozen at the same moment.
       await Promise.all([preloadAllHumans(), loadAraMocap()]);
       const t = Number(q.get('t') ?? 0.4);

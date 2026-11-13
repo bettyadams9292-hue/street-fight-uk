@@ -14,7 +14,8 @@ export type Theme =
   | 'nightlife' | 'underground' | 'hq' | 'shop' | 'pawn' | 'pub'
   | 'furniture_store' | 'car_showroom' | 'bike_shop' | 'casino'
   | 'basement' | 'grow_shop'
-  | 'gym_store' | 'boxing_gym' | 'karate_dojo' | 'wrestling_club';
+  | 'gym_store' | 'boxing_gym' | 'karate_dojo' | 'wrestling_club'
+  | 'jeweller' | 'estate_agent' | 'ashcombe';
 
 /** Solid things on the ground. Size comes from the kind unless given. */
 export type PropKind =
@@ -42,7 +43,9 @@ export type PropKind =
   // Hydroponics dressing at real size (`item` is a HydroLibrary model, `rot` quarter turns)
   | 'hydro_prop'
   // A CCTV post at real size (`item` is post_high, post_medium or post_short from SecurityLibrary)
-  | 'security_post';
+  | 'security_post'
+  // Property and jewellery: stairs up to a landing, an agent's board on a post (`label` is what it says), a necklace bust
+  | 'staircase' | 'agent_board' | 'jewel_bust';
 
 export interface PropDef {
   kind: PropKind;
@@ -71,7 +74,9 @@ export interface PropDef {
 export type FacadeKind =
   | 'terrace' | 'shop' | 'pub' | 'tower' | 'garages' | 'warehouse' | 'fence' | 'hoarding' | 'subway' | 'office' | 'club' | 'house_front' | 'room'
   | 'semi' | 'precinct' | 'mall' | 'stand' | 'leisure' | 'dock' | 'containers' | 'market' | 'car_park' | 'ruin' | 'platform' | 'fortress'
-  | 'interior' | 'showroom' | 'casino' | 'basement' | 'gym_front';
+  | 'interior' | 'showroom' | 'casino' | 'basement' | 'gym_front'
+  // A big house set back behind gates and railings (Ashcombe Park); `label` is its name, `flags` its style
+  | 'mansion';
 
 export interface FacadeDef {
   kind: FacadeKind;
@@ -211,7 +216,9 @@ export type StationId =
   | 'casino_slots' | 'casino_roulette' | 'casino_blackjack' | 'casino_cashier'
   | 'terminal' | 'grow_counter' | 'grow_display'
   | 'computer' | 'train' | 'style_coach' | 'style_drill' | 'recruit' | 'gym_counter'
-  | 'fridge' | 'cupboard' | 'cooker' | 'sink' | 'dining' | 'tv' | 'shower' | 'toilet' | 'basin' | 'bed' | 'bath_cabinet';
+  | 'fridge' | 'cupboard' | 'cooker' | 'sink' | 'dining' | 'tv' | 'shower' | 'toilet' | 'basin' | 'bed' | 'bath_cabinet'
+  // Jewellery and property
+  | 'jeweller_counter' | 'jeweller_case' | 'agent_desk' | 'agent_window' | 'prop_info' | 'prop_rest';
 
 /** A non-hostile character standing at a station (shopkeepers, barmen). */
 export interface NpcDef {
@@ -296,6 +303,7 @@ export const PROP_SIZE: Record<PropKind, [number, number]> = {
   slot_machine: [0.38, 0.32], roulette_table: [1.2, 0.6], blackjack_table: [1.1, 0.55], casino_cage: [1.4, 0.4], prize_podium: [2.6, 1.15], tyre_stack: [0.4, 0.4], bike_stand: [1.0, 0.35],
   equipment: [0.5, 0.5], basement_stairs: [0.75, 0.75], terminal_desk: [0.7, 0.32], junk: [0.6, 0.5], grow_shelf: [1.0, 0.25],
   computer_desk: [0.6, 0.32], coach_board: [0.4, 0.06], stairwell: [0.85, 0.9], gym_kit: [0.5, 0.5], boxing_ring: [2.2, 1.0], dojo_mat: [2.4, 1.1], wrestling_mat: [2.4, 1.1], gym_rack: [0.9, 0.3], gym_prop: [0.4, 0.3], hydro_prop: [0.3, 0.3], security_post: [0.12, 0.12],
+  staircase: [1.1, 0.5], agent_board: [0.35, 0.08], jewel_bust: [0.22, 0.2],
 };
 
 /** Half extents after rotation. */

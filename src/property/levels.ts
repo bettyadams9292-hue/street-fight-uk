@@ -6,6 +6,9 @@ import { compPrize } from './casino';
 import { buildHomeLevel } from './home';
 import { DRIVEWAY } from './state';
 import { buildBasementLevel } from '../business/basement';
+import { PROPERTIES, PROPERTY_LIST, formatPounds, valueNow } from '../realty/catalogue';
+import { holding } from '../realty/portfolio';
+import { buildPropertyInterior, dressStreet, type DoorState } from '../realty/world';
 
 /**
  * Areas as they are for this save: the house with your furniture, your car
@@ -14,7 +17,10 @@ import { buildBasementLevel } from '../business/basement';
  */
 export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
   const prop = save.property;
-  let level: LevelDef = area === 'home' ? buildHomeLevel(HOME_BASE, prop, save.gym) : area === 'basement' ? buildBasementLevel(save.basement) : LEVELS[area];
+  let level: LevelDef =
+    area === 'home' ? buildHomeLevel(HOME_BASE, prop, save.gym) : area === 'basement' ? buildBasementLevel(save.basement) : area === 'property' ? propertyLevel(save) : LEVELS[area];
+  // Property doors: who owns it, who lives there, what the board outside says.
+  if (PROPERTY_LIST.some((p) => p.area === area)) level = dressStreet(level, (id) => doorState(save, id));
   const props: PropDef[] = [];
   const stations: StationDef[] = [];
 
@@ -48,4 +54,22 @@ export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
 
   if (props.length || stations.length) level = { ...level, props: [...level.props, ...props], stations: [...(level.stations ?? []), ...stations] };
   return level;
+}
+
+/** The inside of the property you're going into (or standing in), as it is for this save. */
+function propertyLevel(save: GameSave): LevelDef {
+  const id = save.portfolio.inside ?? PROPERTY_LIST[0].id;
+  const def = PROPERTIES[id] ?? PROPERTY_LIST[0];
+  const h = holding(save, def.id);
+  return buildPropertyInterior(def, h ? 'owner' : 'viewing', !!h && h.use === 'personal', formatPounds(valueNow(def, save.playTime)));
+}
+
+/** What a property's front door says and whether it opens, for this save. */
+export function doorState(save: GameSave, id: string): DoorState {
+  const def = PROPERTIES[id];
+  const h = holding(save, id);
+  if (!h) return { label: `View ${def.name}: ${def.type.toLowerCase()}, ${formatPounds(valueNow(def, save.playTime))}`, board: 'FOR SALE' };
+  if (h.use === 'personal') return { label: `${def.name}: go in (yours)` };
+  if (h.tenant) return { label: `${def.name} (let to ${h.tenant.name})`, locked: `${h.tenant.name} live${h.tenant.name.startsWith('The ') ? '' : 's'} here. Manage the let from the estate agent or your computer.`, board: 'LET BY KEYS & CO' };
+  return { label: `${def.name}: go in (yours, to let)`, board: 'TO LET' };
 }

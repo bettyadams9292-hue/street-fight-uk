@@ -9,9 +9,11 @@ export type IconName =
   | 'property' | 'contact' | 'street' | 'parked' | 'lock' | 'map' | 'bag' | 'close' | 'play' | 'save' | 'settings'
   | 'controls' | 'quit' | 'phone' | 'pin' | 'you' | 'plus' | 'minus' | 'target' | 'route' | 'cab' | 'walk' | 'weapon'
   | 'consumable' | 'material' | 'valuable' | 'misc' | 'equipment' | 'all' | 'check' | 'coin' | 'back' | 'info'
-  | 'food' | 'sleep' | 'shower' | 'tooth' | 'toilet';
+  | 'food' | 'sleep' | 'shower' | 'tooth' | 'toilet' | 'gem' | 'key';
 
 const P: Record<IconName, string> = {
+  gem: '<path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18"/><path d="M9 4 7.5 9 12 20 16.5 9 15 4"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9"/><path d="m16 7 3 3"/><path d="m14 9 2 2"/>',
   home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/>',
   mission: '<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>',
   boss: '<path d="M4 18 3 7l5 4 4-6 4 6 5-4-1 11z"/><path d="M4 21h16"/>',

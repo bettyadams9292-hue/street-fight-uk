@@ -326,10 +326,11 @@ test('save and reload: basement, equipment and positions, business, upgrades, le
   assert(fixed.business.lastTick === 50 && fixed.business.stock === 0, 'clock from the future reset, negative stock fixed');
 });
 
-test('every area still builds, and all 34 areas are reachable data', () => {
+test('every area still builds, and all 38 areas are reachable data', () => {
   const p = fresh();
   // 34 hand-built areas, then the generated towns east of Hale House.
-  assert(CORE_AREA_IDS.length === 34 && AREA_IDS.length === 34 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
+  // Plus the jeweller, the estate agent, Ashcombe Park and the inside of a property.
+  assert(CORE_AREA_IDS.length === 38 && AREA_IDS.length === 38 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const lvl = resolveLevel(id, p.save);
     const w = new World(lvl, p, { entry: lvl.entries[0].id, seed: 4 });

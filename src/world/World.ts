@@ -496,7 +496,10 @@ export class World {
       this.civCap = Math.max(1, Math.round(cap * 0.7));
     }
     const hs: Hotspot[] = [];
-    for (const ex of this.level.exits) if (ex.kind === 'door') hs.push({ kind: 'browse', x: ex.x + 1.3, z: b.minZ + 0.35, facing: -1, slots: 1, taken: 0 });
+    // Shop doors on the street are somewhere to stop and look. Not someone's front door, and not inside the
+    // shopping centre, where the whole glass frontage is the window and shoppers already mill about the units.
+    if (this.level.theme !== 'mall')
+      for (const ex of this.level.exits) if (ex.kind === 'door' && ex.to !== 'property') hs.push({ kind: 'browse', x: ex.x + 1.3, z: b.minZ + 0.35, facing: -1, slots: 1, taken: 0 });
     for (const f of this.level.facades) {
       if (f.kind === 'pub' || f.kind === 'club' || f.kind === 'casino') hs.push({ kind: 'group', x: (f.x0 + f.x1) / 2 + 2, z: b.minZ + 0.7, slots: 3, taken: 0 });
     }

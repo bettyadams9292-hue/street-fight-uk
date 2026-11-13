@@ -17,6 +17,9 @@ import { defaultNeeds, eat, needsModifiers, sanitiseNeeds, type NeedsSave } from
 import { putInto, sanitisePantry, STARTER_GROCERIES, type PantrySave } from '../home/recipes';
 import { conditionModifiers, defaultCondition, sanitiseCondition, treatInjury, type ConditionSave } from '../condition/condition';
 import { currentFatigue } from '../training/gym';
+import { applyJewellery, clearJewelForSlot, defaultJewellery, sanitiseJewellery, type JewellerySave } from '../items/jewelleryBox';
+import { defaultFinance, sanitiseFinance, type FinanceSave } from './finance';
+import { defaultPortfolio, sanitisePortfolio, type PortfolioSave } from '../realty/portfolio';
 import {
   GEAR_IDS,
   LEVEL_CAP,
@@ -43,6 +46,8 @@ export const CORE_AREA_IDS = [
   'furniture_shop', 'car_dealer', 'bike_shop', 'casino',
   // Stage 7: the basement and the grow shop
   'basement', 'grow_shop',
+  // Jewellery and property: the jeweller, the estate agent, the inside of whichever property you're in, Ashcombe Park
+  'jeweller', 'estate_agent', 'property', 'ashcombe',
   // Stage 8: gym equipment store and the fighting gyms
   'gym_store', 'boxing_gym', 'karate_dojo', 'wrestling_club',
   // Stage 5: districts
@@ -125,6 +130,12 @@ export interface GameSave {
   needs: NeedsSave;
   /** The fridge and the kitchen cupboards. */
   pantry: PantrySave;
+  /** Rings, watches, chains and grills you own, and what's on. Never in the inventory, never lost. */
+  jewellery: JewellerySave;
+  /** Houses, flats, apartments and mansions you own, and their tenants. */
+  portfolio: PortfolioSave;
+  /** The record of big money in and out (jewellery, property, rent). */
+  finance: FinanceSave;
   savedAt: string;
 }
 
@@ -170,6 +181,9 @@ export function newSave(character: PlayerCharacter): GameSave {
     condition: defaultCondition(),
     needs: defaultNeeds(),
     pantry: { fridge: [], cupboard: [] },
+    jewellery: defaultJewellery(),
+    portfolio: defaultPortfolio(),
+    finance: defaultFinance(),
     savedAt: new Date().toISOString(),
   };
   // Starter kit: your hand wraps on, a couple of sandwiches in your pocket, food in the kitchen.
@@ -245,6 +259,9 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     condition: sanitiseCondition(r.condition),
     needs: sanitiseNeeds(r.needs),
     pantry: { fridge: [], cupboard: [] },
+    jewellery: sanitiseJewellery(r.jewellery),
+    portfolio: sanitisePortfolio(r.portfolio, typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0),
+    finance: sanitiseFinance(r.finance),
     savedAt: typeof r.savedAt === 'string' ? r.savedAt : base.savedAt,
   };
   let pantry: PantrySave | null = null;
@@ -543,6 +560,8 @@ export class Progress {
     if (!st || !wear) return { ok: false, reason: 'You can\u2019t wear that' };
     // Only ever one comes off the stack: the removed part is what gets worn (no copies).
     const one = takeStack(src, uid, 1, () => this.newUid())!;
+    // A chain from Threads takes the place of a chain from the jeweller, and so on.
+    clearJewelForSlot(s, wear.slot);
     const prev = s.worn[wear.slot];
     s.worn[wear.slot] = one;
     // Whatever you had on goes where the new item came from (always room: a slot was just freed).
@@ -717,6 +736,7 @@ export class Progress {
         if ((slot === 'head' || slot === 'face') && colour) a.headColour = colour;
       }
     }
+    applyJewellery(a, s);
     return a;
   }
 
