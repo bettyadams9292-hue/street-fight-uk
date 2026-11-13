@@ -208,6 +208,27 @@ function startFight(lvl: (typeof LEVELS)[keyof typeof LEVELS], id: string, p: Pr
   return w;
 }
 
+test('you use a door standing at it, not out in the room in front of it', () => {
+  let checked = 0;
+  for (const [area, lvl] of Object.entries(LEVELS)) {
+    for (const ex of lvl.exits) {
+      if (ex.kind !== 'door' || ex.id.includes('stairs') || ex.id.includes('steps')) continue;
+      const w = new World(lvl, new Progress(newSave(createCharacter({ name: 'T', appearance: defaultAppearance(), background: 'estate_scrapper', allocated: emptyAllocation() }))), { entry: lvl.entries[0].id, seed: 1, civilians: false });
+      for (const e of w.encounters) e.status = 'cleared';
+      // Right up against the wall the door is drawn on.
+      w.player.pos.x = ex.x;
+      w.player.pos.z = lvl.bounds.minZ + 0.05;
+      w.step(emptyCommand());
+      const it = w.interactable;
+      if (it?.kind === 'station' || it?.kind === 'container' || it?.kind === 'item' || it?.kind === 'lever') continue; // something else closer on that spot
+      assert(it?.kind === 'exit' && it.exit === ex, `${area}: can't use "${ex.label}" standing at the door`);
+      checked++;
+      if (checked > 40) return;
+    }
+  }
+  assert(checked > 10, `only ${checked} doors checked`);
+});
+
 test('every main fight has a tuning dial, within sensible bounds', () => {
   let n = 0;
   for (const [area, lvl] of Object.entries(LEVELS)) {
