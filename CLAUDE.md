@@ -49,7 +49,14 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 
 ## Assets still needed
 
-The owner keeps a Sheet listing every texture, model, icon, animation and sound still made in code (508 rows, made 13 Nov 2026): https://claude.ai/artifact/AgbRW48tzHxub9PpgqpuGB
+The full list of every texture, model, icon, animation and sound still made in code is in the repo (508 rows, made 13 Nov 2026):
+
+- `docs/ASSETS_NEEDED.xlsx`: open it in Excel or Google Sheets. Its columns are Area, Name, Game id, Asset needed, How it is made now, and Got it.
+- `docs/ASSETS_NEEDED.csv`: the same list as plain text, for Claude to read, search and update.
+
+The owner also has it as a Sheet on claude.ai: https://claude.ai/artifact/AgbRW48tzHxub9PpgqpuGB
+
+When someone asks for "the asset sheet", point them to `docs/ASSETS_NEEDED.xlsx`. When an asset is added and wired in, set its row's Got it to TRUE in both files, and say so in the PR.
 
 The main gaps:
 - Item icons: all 190 are painted by code (`src/ui/itemIcons.ts`).
