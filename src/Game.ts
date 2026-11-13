@@ -862,7 +862,7 @@ export class Game {
                   { text: seized ? `They took ${seized} stolen item${seized === 1 ? '' : 's'} off you.` : 'Nothing stolen on you, at least.' },
                   { text: `Fined \u00a3${fine}. A night in the cells and they let you go.` },
                   { text: 'Your heat is back to nothing. Everything you\u2019ve beaten stays beaten.' },
-                ], [{ label: 'Walk home', go: () => this.goHome(true) }]),
+                ], [{ label: 'Walk home', go: () => this.goHome(true) }], ['nicked']),
               );
             },
           };
@@ -2026,7 +2026,7 @@ export class Game {
   }
 
   private updateTouchVisibility(): void {
-    document.body.classList.toggle('in-fight', this.state === 'playing' || this.state === 'paused' || this.state === 'transition');
+    document.body.classList.toggle('in-fight', this.state === 'playing' || this.state === 'transition');
     this.touch.visible = this.state === 'playing' && this.touchWanted();
     this.uiRoot.classList.toggle('touch-ui', this.touchWanted());
   }

@@ -176,7 +176,7 @@ const NEW_DOORS: { area: AreaId; exit: ExitDef; entry: EntryDef }[] = [
   },
   {
     area: 'leisure',
-    exit: { id: 'ashcombe_gate', kind: 'door', x: 4, z: -1.6, to: 'ashcombe', toEntry: 'gate', label: 'Ashcombe Road (private estate)' },
+    exit: { id: 'ashcombe_gate', kind: 'door', x: 4, z: -1.6, to: 'ashcombe', toEntry: 'gate', label: 'Through the gates to Ashcombe Park (private road)' },
     entry: { id: 'ashcombe', x: 4, z: -1.0, facing: 1 },
   },
 ];

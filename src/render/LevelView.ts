@@ -3495,6 +3495,9 @@ export class LevelView {
   }
 
   private exitSign(ex: ExitDef, x: number, y: number, z: number): void {
+    // Boards only for places worth finding (shops, gyms, the pub, story routes); ordinary doors,
+    // stairs and the way back out go unlabelled. The prompt still says where a door goes.
+    if (ex.kind === 'door' && !isPoiExit(ex)) return;
     const arrow = ex.kind === 'edge' ? (ex.side === 'left' ? '← ' : '') : '';
     const after = ex.kind === 'edge' && ex.side === 'right' ? ' →' : '';
     const t = signTexture(`${arrow}${ex.label}${after}`, '#16365a', '#ffffff', { w: 768, h: 128 });
@@ -4001,4 +4004,12 @@ function hash(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
   return h >>> 0;
+}
+
+/** A door that leads somewhere worth a sign: a business, a club, or a route the story opens. */
+export function isPoiExit(ex: ExitDef): boolean {
+  // Someone's front door: the agent's board outside says whether it's for sale or let.
+  if (ex.to === 'property') return false;
+  if (ex.shop || ex.requires || ex.requiresAll?.length) return true;
+  return /^(Into |Upstairs: |Through |Walkway |Down to )/.test(ex.label);
 }

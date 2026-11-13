@@ -32,11 +32,27 @@ html, body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
-  touch-action: none;
+  /* manipulation, not none: pans and pinches still work (so a zoomed page can always be pinched back out) but
+     double-tap-to-zoom is off. The game surface and the touch pad below opt into none. */
+  touch-action: manipulation;
   overscroll-behavior: none;
+  /* iOS enlarges text on rotate to landscape unless told not to. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 #game, #ui { position: fixed; inset: 0; }
+#game, #game canvas { touch-action: none; }
+
+/* iOS Safari/Chrome: touch-action isn't inherited past a scroll container (every .screen and the scrolling lists in
+   them), so without this a quick double tap on a menu button, a HUD icon or a list item zooms the page. manipulation
+   keeps taps, scrolling and pinch working and drops only double-tap zoom and the tap delay. */
+button, a, input, select, label, [data-nav], [role='button'],
+.screen, .hud, .item-grid, .prop-list, .item-list, .map-panel, .pf-col, .creator-content, .item-card {
+  touch-action: manipulation;
+}
+/* Focusing a text field under 16px makes iOS zoom in. */
+input[type='text'], input:not([type]), select, textarea { font-size: max(16px, 1em); }
 #game canvas { display: block; width: 100%; height: 100%; }
 #ui { pointer-events: none; }
 #ui > * { pointer-events: auto; }
@@ -256,7 +272,8 @@ input[type='range'].focused, input[type='range']:focus { filter: drop-shadow(0 0
 
 /* ------------------------------------------------------------ touch ----- */
 
-#ui .touch-controls { position: absolute; inset: 0; display: none; pointer-events: none; }
+#ui .touch-controls { position: absolute; inset: 0; display: none; pointer-events: none; touch-action: none; }
+.touch-controls * { touch-action: none; }
 .touch-controls > * { pointer-events: auto; }
 .stick-zone { position: absolute; left: 0; bottom: 0; width: 45%; height: 62%; touch-action: none; }
 .stick-base {

@@ -187,10 +187,10 @@ export function pauseMenu(actions: { resume: () => void; settings: () => void; c
       'nav',
       { class: 'menu-list' },
       menuButton('Resume', actions.resume, undefined, '', undefined, undefined, 'resume'),
-      menuButton('Practice styles', actions.practice, 'Try any fighting style'),
+      menuButton('Practice styles', actions.practice, 'Try any fighting style', '', undefined, undefined, 'practice-styles'),
       menuButton('Settings', actions.settings, undefined, '', undefined, undefined, 'settings'),
       menuButton('Controls', actions.controls, undefined, '', undefined, undefined, 'controls'),
-      menuButton('Quit to main menu', actions.quit, undefined, 'danger', undefined, undefined, 'exit'),
+      menuButton('Quit to main menu', actions.quit, undefined, 'danger', undefined, undefined, 'quit-to-main-menu'),
     ),
   );
   return {
