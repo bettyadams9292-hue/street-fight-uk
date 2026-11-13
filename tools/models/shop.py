@@ -203,39 +203,21 @@ def workbench():
     return m
 
 
-def grow_shelf(cols, seed):
+def grow_shelf():
+    """Grow-shop shelving: white steel with a green back and price strips. The stock on it is the
+    hydroponics pack's own kit, placed by the game (src/render/LevelView.ts)."""
     m = Model()
-    rnd = random.Random(seed)
     W, H, D = 2.0, 2.0, 0.5
     FRAME = '#e8ece8'
     for x in (-W / 2 + 0.02, W / 2 - 0.02):
         for z in (-D / 2 + 0.02, D / 2 - 0.02):
             m.box((0.035, H, 0.035), (x, H / 2, z), FRAME, 'metal')
-    m.box((W, H - 0.1, 0.01), (0, H / 2, -D / 2 + 0.01), '#2a8a3a')  # green back panel
+    m.box((W, H - 0.1, 0.01), (0, H / 2, -D / 2 + 0.01), '#2a8a3a')
     for lv in range(4):
         y = 0.12 + lv * 0.48
         m.box((W, 0.025, D), (0, y, 0), FRAME, 'metal')
-        m.box((W, 0.035, 0.008), (0, y - 0.01, D / 2 + 0.005), '#ffd23d', 'glow')  # price strip
-        x = -W / 2 + 0.08
-        while True:
-            kind = rnd.random()
-            c = rnd.choice(cols)
-            w, h = 0.24 + rnd.random() * 0.14, 0.18 + rnd.random() * 0.14
-            if kind >= 0.45:
-                w = 0.3 if kind < 0.75 else 0.22
-            if x + w > W / 2 - 0.05:
-                break
-            if kind < 0.45:  # boxed kit
-                m.box((w, h, D - 0.12), (x + w / 2, y + 0.0125 + h / 2, 0), c, bevel=0.01)
-                m.box((w * 0.6, h * 0.3, 0.005), (x + w / 2, y + h * 0.6, (D - 0.12) / 2 + 0.003), '#f0f0f0')
-            elif kind < 0.75:  # bottles of nutrients
-                for k in range(3):
-                    m.cyl(0.04, 0.2, (x + 0.05 + k * 0.1, y + 0.11, 0.05), c, sides=8)
-                    m.cyl(0.018, 0.04, (x + 0.05 + k * 0.1, y + 0.23, 0.05), DARK, sides=6)
-            else:  # pots stacked
-                for k in range(3):
-                    m.cyl(0.1, 0.08, (x + 0.11, y + 0.05 + k * 0.05, 0), c, sides=10, r2=0.12)
-            x += w + 0.05
+        m.box((W, 0.035, 0.008), (0, y - 0.01, D / 2 + 0.005), '#ffd23d', 'glow')
+    m.box((W, 0.05, D), (0, H - 0.02, 0), FRAME, 'metal')
     return m
 
 
@@ -347,8 +329,7 @@ def main():
         ('display_cabinet', display_cabinet),
         ('atm', atm),
         ('workbench', workbench),
-        ('grow_shelf', lambda: grow_shelf(['#1a1a1c', '#2a8a3a', '#e8e4dc', '#c8a870'], 11)),
-        ('grow_shelf_kit', lambda: grow_shelf(['#1a1a1c', '#c8ccd0', '#2a2a2e', '#e8e4dc'], 12)),
+        ('grow_shelf', grow_shelf),
         ('roulette_table', roulette_table),
         ('blackjack_table', blackjack_table),
         ('casino_cage', casino_cage),

@@ -162,6 +162,15 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - The gym and shop loaders now share one model-set loader (`src/render/props/modelSet.ts`), which also handles see-through glass.
 - Every fitting falls back to its built-in model until it loads.
 
+## Stage 12: hydroponics kit ✅ done
+**Source:** "Low Poly Hydroponics Pack" by reodesuxz (supplied by you; free for games, files not to be redistributed on their own).
+**What changed:** everything you grow with, in Green Fingers and your basement, uses the pack (`src/render/props/HydroLibrary.ts`):
+- Grow tents (single and double), the commercial module (a three-tier rack system under grow lights, with reservoir, pump and pH meter), light stands with grow lights over trays and seedlings, the inline fan and the workbench (now a potting bench).
+- Storage shelving and pallet racks fill with harvest crates as stock builds.
+- Grow lights go dark when the business isn't running; faulty kit still gets its hazard tag.
+- Green Fingers' shelves are stocked with the pack's kit; a tower, a tomato plant and a deep-water bucket are on display.
+- Security kit, air handlers, cooling and climate units aren't in the pack and keep their models.
+
 ## Log
 - 12 Nov 2026: audit done; stages 1–3 started on branch `gameplay-feel`.
 - 12 Nov 2026 (later): stages 1–3 done, with tests in `tests/gameplay.test.ts`. Across the whole game, the careful bot's average win rate went from 70% to 78% and the sloppy bot's from 64% to 75%. Enemies no longer get free parries, while players still can, so the game got a little easier overall. Stage 4 should retune the curve from these numbers.
@@ -170,3 +179,4 @@ Each stage lists the problem, the fix, and the measurement that shows whether it
 - 13 Nov 2026: stage 9 (low-poly furniture) done on branch `low-poly-furniture`.
 - 13 Nov 2026: stage 10 (gym furniture) done; shop furniture next.
 - 13 Nov 2026: stage 11 (shop furniture) done.
+- 13 Nov 2026: stage 12 (hydroponics kit) done.

@@ -369,6 +369,10 @@ const growShop: LevelDef = {
     EQ('cctv', 14.9, -2.0, { plinth: false }),
     EQ('control', 10.0, -2.0, { plinth: false }),
     { kind: 'shop_counter', x: 17.6, z: -0.6 },
+    // Display pieces between the stands (hydroponics pack, real size).
+    { kind: 'hydro_prop', item: 'vertical_tower', x: 7.15, z: -1.8, size: [0.4, 0.4] },
+    { kind: 'hydro_prop', item: 'tomato_plant', x: 10.1, z: -1.9, size: [0.3, 0.3] },
+    { kind: 'hydro_prop', item: 'dwc_bucket', x: 15.9, z: -2.0, size: [0.25, 0.25] },
   ],
   stations: [
     { id: 'grow_display', x: 3.0, z: -1.1, label: 'Browse room equipment', tab: 'room' },

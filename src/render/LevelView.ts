@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { furniture, produceHeap, type FurnitureId, type ProduceId } from './props/KenneyLibrary';
 import { gymPiece, type GymModelId } from './props/GymLibrary';
 import { shopPiece, type ShopModelId } from './props/ShopLibrary';
+import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { surfaceMaterial, kitGroundTexture as kitTexture, type Surface, type SurfaceOptions } from './street/Flooring';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
@@ -2710,6 +2711,12 @@ export class LevelView {
         B(0.3, 0.06, 0.1, 0, -1.0, -D / 2 + 0.06, glow, false);
         break;
       }
+      case 'hydro_prop': {
+        // Hydroponics dressing (HydroLibrary), at its real size; nothing until the pack loads.
+        const m = hydroPiece((p.item ?? 'tomato_plant') as HydroModelId, 0, 0, 0, { native: true, turn: -(p.rot ?? 0) * (Math.PI / 2) });
+        if (m) g.add(m);
+        break;
+      }
       case 'gym_prop': {
         // Benches, plate stacks and loose dumbbells dressing the gyms; nothing until the models load.
         this.gym(g, (p.item ?? 'flat_bench') as GymModelId, W, 1.2, D, { keepAspect: true });
@@ -2807,7 +2814,23 @@ export class LevelView {
         break;
       }
       case 'grow_shelf': {
-        if (this.fitting(g, p.label === 'environment' ? 'grow_shelf_kit' : 'grow_shelf', W, 2.0, D)) break;
+        // Green Fingers' shelving, stocked with the hydroponics pack's kit (room kit or lighting, air and nutrients).
+        if (hydroReady() && this.fitting(g, 'grow_shelf', W, 2.0, D)) {
+          const stock: HydroModelId[][] = p.label === 'environment'
+            ? [['water_pump', 'water_pump', 'fan', 'fan'], ['nutrient_bottles', 'nutrient_bottles', 'nutrient_bottles', 'ph_meter', 'ph_meter'], ['grow_light', 'grow_light'], ['nutrient_bottles', 'watering_can', 'nutrient_bottles']]
+            : [['dwc_bucket', 'dwc_bucket', 'reservoir'], ['seedling_tray', 'seedling_tray', 'grow_tray'], ['basil_pot', 'lettuce_head', 'basil_pot', 'lettuce_head'], ['harvest_crate', 'watering_can', 'strawberry_planter']];
+          stock.forEach((row, l) => {
+            const y = 0.12 + l * 0.48 + 0.0125;
+            const slot = (W - 0.12) / row.length;
+            row.forEach((id, k) => {
+              const m = hydroPiece(id, slot - 0.06, 0.42, D - 0.08, { keepAspect: true });
+              if (!m) return;
+              m.position.set(-W / 2 + 0.06 + slot * (k + 0.5), y, 0.02);
+              g.add(m);
+            });
+          });
+          break;
+        }
         const H = 2.0;
         for (const dx of [-W / 2 + 0.03, W / 2 - 0.03]) B(0.04, H, D, dx, H / 2, 0, this.mat('#e8ece8', 0.4, 0.3));
         B(W, H, 0.02, 0, H / 2, -D / 2 + 0.01, this.mat('#2a8a3a', 0.8), false);
