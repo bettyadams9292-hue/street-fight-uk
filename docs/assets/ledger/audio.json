@@ -1,0 +1,371 @@
+[
+ {
+  "id": "danger",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/danger_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "tell",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/tell_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "swing",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/swing_0.mp3",
+   "public/audio/swing_1.mp3",
+   "public/audio/swing_2.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "uiMove",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/ui_move_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "uiConfirm",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/ui_confirm_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "ambience",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/amb_night_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Seamless loop: periodic noise shaped in the frequency domain, played between 0.1 s pads (AudioManager.recordedLoop). Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "oven",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/loop_oven_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Seamless loop: periodic noise shaped in the frequency domain, played between 0.1 s pads (AudioManager.recordedLoop). Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "shower",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/loop_shower_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Seamless loop: periodic noise shaped in the frequency domain, played between 0.1 s pads (AudioManager.recordedLoop). Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "sizzle",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/loop_sizzle_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Seamless loop: periodic noise shaped in the frequency domain, played between 0.1 s pads (AudioManager.recordedLoop). Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "tap",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/loop_tap_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Seamless loop: periodic noise shaped in the frequency domain, played between 0.1 s pads (AudioManager.recordedLoop). Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "fridge_open",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/house_fridge_open_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "fridge_close",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/house_fridge_close_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "cupboard",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/house_cupboard_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "chop",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/house_chop_0.mp3",
+   "public/audio/house_chop_1.mp3",
+   "public/audio/house_chop_2.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "clink",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/house_clink_0.mp3",
+   "public/audio/house_clink_1.mp3",
+   "public/audio/house_clink_2.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "eat",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/house_eat_0.mp3",
+   "public/audio/house_eat_1.mp3",
+   "public/audio/house_eat_2.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "flush",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/house_flush_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "tap_on",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/house_tap_on_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ },
+ {
+  "id": "switch",
+  "area": "Sound",
+  "status": "done",
+  "parts": {
+   "sound": "done"
+  },
+  "files": [
+   "public/audio/house_switch_0.mp3"
+  ],
+  "format": "MP3 (mono)",
+  "source": "original (tools/audio/make_sounds.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Peak -1 dBFS, no clipping. Wired in AudioManager with the old synthesis as fallback. Tested in headless Chrome: decodes and plays; unit tests pass."
+ }
+]

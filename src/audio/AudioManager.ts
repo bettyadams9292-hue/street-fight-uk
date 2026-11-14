@@ -1,15 +1,24 @@
 import type { Settings } from '../save/Settings';
 
-/** Recorded sets: `sfx_<set>_<n>` in the asset manifest (see public/audio/CREDITS.md). */
-type SoundSet = 'punch_medium' | 'punch_heavy' | 'body_medium' | 'body_heavy' | 'step' | 'glass' | 'metal' | 'cloth' | 'coins' | 'door_open' | 'door_close';
+/**
+ * Recorded sets: `sfx_<set>_<n>` in the asset manifest (see public/audio/CREDITS.md). Everything from
+ * `swing` on is original, rendered offline by tools/audio/make_sounds.py.
+ */
+type SoundSet = 'punch_medium' | 'punch_heavy' | 'body_medium' | 'body_heavy' | 'step' | 'glass' | 'metal' | 'cloth' | 'coins' | 'door_open' | 'door_close'
+  | 'swing' | 'tell' | 'danger' | 'ui_move' | 'ui_confirm'
+  | 'house_fridge_open' | 'house_fridge_close' | 'house_cupboard' | 'house_chop' | 'house_clink' | 'house_eat' | 'house_flush' | 'house_tap_on' | 'house_switch';
+
+/** Loops kept for seamless playback: the file is the loop plus this margin either side (MP3 priming). */
+const LOOP_PAD = 0.1;
 
 /**
  * Web Audio sound engine. Fights use recorded impacts, body falls, cloth and
  * footsteps (Kenney, CC0), layered with a little synthesis for weight. Each
  * play picks a different take than last time, nudges the pitch and level, so
- * a flurry never sounds like one sample on repeat. Whooshes, the parry tell
- * and the street's ambience are synthesised, and every recorded sound falls
- * back to its synthesised version if its file hasn't loaded.
+ * a flurry never sounds like one sample on repeat. Whooshes, the parry tell,
+ * menu sounds, the house and the street's ambience are original recordings
+ * made by tools/audio/make_sounds.py. Every recorded sound falls back to its
+ * synthesised version if its file hasn't loaded.
  */
 export class AudioManager {
   private ctx: AudioContext | null = null;
@@ -40,7 +49,10 @@ export class AudioManager {
     if (!data || !this.ctx || this.decoded.has(id)) return;
     // decodeAudioData takes ownership of the buffer: give it a copy.
     this.ctx.decodeAudioData(data.slice(0)).then(
-      (b) => this.decoded.set(id, b),
+      (b) => {
+        this.decoded.set(id, b);
+        if (id === 'sfx_amb_night_0') this.upgradeAmbience();
+      },
       () => this.raw.delete(id),
     );
   }
@@ -144,6 +156,7 @@ export class AudioManager {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     const cloth = this.play('cloth', heavy ? 0.32 : 0.2, heavy ? 0.85 : 1.15, 0, 0.1);
+    if (this.play('swing', heavy ? 0.42 : 0.26, heavy ? 0.78 : 1.2, 0, 0.08)) return;
     const f = this.noise(this.sfx, t, heavy ? 0.22 : 0.12, 'bandpass', heavy ? 700 : 1400, (heavy ? 0.25 : 0.15) * (cloth ? 0.75 : 1), 1.2);
     f.frequency.setValueAtTime(heavy ? 400 : 900, t);
     f.frequency.exponentialRampToValueAtTime(heavy ? 1500 : 2600, t + (heavy ? 0.2 : 0.1));
@@ -182,6 +195,7 @@ export class AudioManager {
   /** An enemy squaring up to parry: a short, bright scrape you learn to listen for. */
   tell(): void {
     if (!this.ctx) return;
+    if (this.play('tell', 0.4, 1, 0, 0.04)) return;
     const t = this.ctx.currentTime;
     this.noise(this.sfx, t, 0.07, 'bandpass', 5200, 0.22, 6);
   }
@@ -189,6 +203,7 @@ export class AudioManager {
   /** A big shot being loaded up at you: a low swell you learn to block or move on. */
   danger(): void {
     if (!this.ctx) return;
+    if (this.play('danger', 0.45, 1, 0, 0.03)) return;
     const t = this.ctx.currentTime;
     const f = this.noise(this.sfx, t, 0.18, 'bandpass', 300, 0.2, 2);
     f.frequency.setValueAtTime(220, t);
@@ -257,11 +272,13 @@ export class AudioManager {
 
   uiMove(): void {
     if (!this.ctx) return;
+    if (this.play('ui_move', 0.14, 1, 0, 0.05)) return;
     this.noise(this.sfx, this.ctx.currentTime, 0.03, 'highpass', 4000, 0.08);
   }
 
   uiConfirm(): void {
     if (!this.ctx) return;
+    if (this.play('ui_confirm', 0.32, 1, 0, 0.02)) return;
     this.thump(this.sfx, this.ctx.currentTime, 220, 0.12, 0.3);
   }
 
@@ -279,6 +296,11 @@ export class AudioManager {
     }
     if (!this.ctx || cur) return;
     const ctx = this.ctx;
+    const rec = this.decoded.get(`sfx_loop_${id}_0`);
+    if (rec) {
+      this.loops.set(id, this.recordedLoop(rec, this.sfx, { shower: 0.3, tap: 0.22, sizzle: 0.22, oven: 0.2 }[id], 0.3));
+      return;
+    }
     const src = ctx.createBufferSource();
     src.buffer = this.noiseBuffer;
     src.loop = true;
@@ -316,6 +338,31 @@ export class AudioManager {
     });
   }
 
+  /** Play a recorded loop between its pads, fading in; returns how to fade it out and stop. */
+  private recordedLoop(buf: AudioBuffer, dest: AudioNode, vol: number, fadeIn: number): { stop: () => void } {
+    const ctx = this.ctx!;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    src.loopStart = LOOP_PAD;
+    src.loopEnd = buf.duration - LOOP_PAD;
+    const g = ctx.createGain();
+    const t = ctx.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + fadeIn);
+    src.connect(g).connect(dest);
+    src.start(t, LOOP_PAD);
+    return {
+      stop: () => {
+        const now = ctx.currentTime;
+        g.gain.cancelScheduledValues(now);
+        g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), now);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+        src.stop(now + 0.4);
+      },
+    };
+  }
+
   stopLoops(): void {
     for (const id of [...this.loops.keys()]) this.loop(id as 'shower', false);
   }
@@ -323,6 +370,9 @@ export class AudioManager {
   /** One-off household sounds. */
   house(kind: 'fridge_open' | 'fridge_close' | 'cupboard' | 'chop' | 'clink' | 'eat' | 'flush' | 'tap_on' | 'switch' | 'bed' | 'brush'): void {
     if (!this.ctx) return;
+    const gain: Partial<Record<typeof kind, number>> = { fridge_open: 0.5, fridge_close: 0.55, cupboard: 0.5, chop: 0.45, clink: 0.3, eat: 0.4, flush: 0.5, tap_on: 0.35, switch: 0.4 };
+    const g = gain[kind];
+    if (g !== undefined && this.play(`house_${kind}` as SoundSet, g, 1, 0, kind === 'chop' || kind === 'clink' || kind === 'eat' ? 0.06 : 0.03)) return;
     const t = this.ctx.currentTime;
     switch (kind) {
       case 'fridge_open':
@@ -371,10 +421,14 @@ export class AudioManager {
     }
   }
 
-  /** Night-time city bed: distant traffic rumble and wind. */
+  private ambienceStop: (() => void) | null = null;
+  private ambienceRecorded = false;
+
+  /** Night-time city bed: the recorded estate at night, or synthesised traffic rumble and wind until it loads. */
   startAmbience(): void {
     if (!this.ctx || this.ambienceStarted) return;
     this.ambienceStarted = true;
+    if (this.upgradeAmbience()) return;
     const ctx = this.ctx;
     const src = ctx.createBufferSource();
     src.buffer = this.makeNoise(4);
@@ -393,5 +447,26 @@ export class AudioManager {
     src.connect(low).connect(g).connect(this.ambience);
     src.start();
     lfo.start();
+    this.ambienceStop = () => {
+      const now = ctx.currentTime;
+      g.gain.cancelScheduledValues(now);
+      lfoGain.gain.setValueAtTime(0, now);
+      g.gain.setValueAtTime(g.gain.value, now);
+      g.gain.linearRampToValueAtTime(0, now + 1.5);
+      src.stop(now + 1.6);
+      lfo.stop(now + 1.6);
+    };
+  }
+
+  /** Swap the synthesised bed for the recorded one once it's decoded (crossfading). True if it's playing. */
+  private upgradeAmbience(): boolean {
+    if (!this.ctx || !this.ambienceStarted || this.ambienceRecorded) return this.ambienceRecorded;
+    const buf = this.decoded.get('sfx_amb_night_0');
+    if (!buf) return false;
+    this.ambienceRecorded = true;
+    this.ambienceStop?.();
+    this.ambienceStop = null;
+    this.recordedLoop(buf, this.ambience, 0.55, 1.5);
+    return true;
   }
 }
