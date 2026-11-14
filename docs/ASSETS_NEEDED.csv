@@ -561,36 +561,36 @@ Jewellery: Grills,Cut-Out Stars,g_cutout,"3D model (worn on the body, in each me
 Jewellery: Grills,Fully Iced Set,g_full_iced,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
 Jewellery: materials,"Metals (9ct and 18ct gold, white and rose gold, silver, platinum, black, steel, titanium, two-tone)",FINISHES,Metal material / matcap textures,Flat colour and roughness in code,FALSE
 Jewellery: materials,"Gemstones (diamond, ruby, sapphire, emerald, onyx, amethyst)",STONES,Gem material / textures,Flat colour in code,FALSE
-Jeweller (Halden & Crane),Necklace display bust,jewel_bust,3D model,Built from boxes in code,FALSE
-Estate agent (Keys & Co),"Estate agent boards (FOR SALE, TO LET, SOLD, LET BY)",agent_board,3D board-on-post model + board artwork,"Built in code, words drawn on a canvas",FALSE
-Estate agent (Keys & Co),Window display of listings,agent_window,3D window display model,Built in code,FALSE
-Ashcombe Park: mansions,"Georgian mansion (with lawn, railings, gate piers and lamps)",mansion:georgian,"3D mansion model, plus gates and railings",Built from boxes in code,FALSE
-Ashcombe Park: mansions,"Stone mansion (with lawn, railings, gate piers and lamps)",mansion:stone,"3D mansion model, plus gates and railings",Built from boxes in code,FALSE
-Ashcombe Park: mansions,"Brick mansion (with lawn, railings, gate piers and lamps)",mansion:brick,"3D mansion model, plus gates and railings",Built from boxes in code,FALSE
-Ashcombe Park: mansions,"Modern mansion (with lawn, railings, gate piers and lamps)",mansion:modern,"3D mansion model, plus gates and railings",Built from boxes in code,FALSE
-Property interiors,Staircase with banister,staircase,3D model,Built from boxes in code,FALSE
-Property interiors,Swimming pool,room:pool,"3D pool model (water, tiles, steps, loungers)","Pool room has no pool: just plants, a fountain and a bench",FALSE
-Property interiors,"Home cinema (screen, projector, cinema seats)",room:cinema,3D models,"Made from sofas, a 65"" TV and a neon sign",FALSE
-Property interiors,Conservatory (glass walls and roof),room:conservatory,3D model,An ordinary room with plants and armchairs,FALSE
-Property interiors,"Roof terrace (outdoor furniture, glass balustrade)",room:terrace,3D models,"An ordinary room with plants, a bench and a lamp",FALSE
-Property interiors,"Dressing room (wardrobe wall, island)",room:dressing,3D models,"Made from a wardrobe, mirror, drawers and trophy cabinet",FALSE
-Property listing photos,9 Tanner Road,h_tanner_9,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,27 Hollins Road,h_hollins_27,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,6 Parkside Avenue,h_parkside_6,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"The Beeches, 4 Ashcombe Rise",h_ashcombe_beeches,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Linden House, 11 Ashcombe Rise",h_ashcombe_linden,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Flat 3, Lowry House",f_lowry_3,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Flat 41, Hollins House",f_hollins_41,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Flat 12, Fairclough Court",f_fairclough_12,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Flat B, 58 Kirkgate Street",f_kirkgate_58b,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Flat 7, Kingsway Point",f_kingsway_7,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Apartment 4, Bonded Wharf",a_bonded_4,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Apartment 9, Shaw’s Wharf",a_shaws_9,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Apartment 1806, Ashcombe Tower",a_ashcombe_tower,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"Apartment 2, Belgrave Mansions",a_belgrave_2,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,"The Penthouse, The Pinnacle",a_pinnacle_ph,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,Wyvern Hall,m_wyvern_hall,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,Ashcombe Manor,m_ashcombe_manor,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,The Glasshouse,m_glasshouse,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,Heathfield House,m_heathfield,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
-Property listing photos,Kensington Lodge,m_kensington_lodge,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),FALSE
+Jeweller (Halden & Crane),Necklace display bust,jewel_bust,3D model,Built from boxes in code,TRUE
+Estate agent (Keys & Co),"Estate agent boards (FOR SALE, TO LET, SOLD, LET BY)",agent_board,3D board-on-post model + board artwork,"Built in code, words drawn on a canvas",TRUE
+Estate agent (Keys & Co),Window display of listings,agent_window,3D window display model,Built in code,TRUE
+Ashcombe Park: mansions,"Georgian mansion (with lawn, railings, gate piers and lamps)",mansion:georgian,"3D mansion model, plus gates and railings",Built from boxes in code,TRUE
+Ashcombe Park: mansions,"Stone mansion (with lawn, railings, gate piers and lamps)",mansion:stone,"3D mansion model, plus gates and railings",Built from boxes in code,TRUE
+Ashcombe Park: mansions,"Brick mansion (with lawn, railings, gate piers and lamps)",mansion:brick,"3D mansion model, plus gates and railings",Built from boxes in code,TRUE
+Ashcombe Park: mansions,"Modern mansion (with lawn, railings, gate piers and lamps)",mansion:modern,"3D mansion model, plus gates and railings",Built from boxes in code,TRUE
+Property interiors,Staircase with banister,staircase,3D model,Built from boxes in code,TRUE
+Property interiors,Swimming pool,room:pool,"3D pool model (water, tiles, steps, loungers)","Pool room has no pool: just plants, a fountain and a bench",TRUE
+Property interiors,"Home cinema (screen, projector, cinema seats)",room:cinema,3D models,"Made from sofas, a 65"" TV and a neon sign",TRUE
+Property interiors,Conservatory (glass walls and roof),room:conservatory,3D model,An ordinary room with plants and armchairs,TRUE
+Property interiors,"Roof terrace (outdoor furniture, glass balustrade)",room:terrace,3D models,"An ordinary room with plants, a bench and a lamp",TRUE
+Property interiors,"Dressing room (wardrobe wall, island)",room:dressing,3D models,"Made from a wardrobe, mirror, drawers and trophy cabinet",TRUE
+Property listing photos,9 Tanner Road,h_tanner_9,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,27 Hollins Road,h_hollins_27,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,6 Parkside Avenue,h_parkside_6,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"The Beeches, 4 Ashcombe Rise",h_ashcombe_beeches,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Linden House, 11 Ashcombe Rise",h_ashcombe_linden,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Flat 3, Lowry House",f_lowry_3,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Flat 41, Hollins House",f_hollins_41,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Flat 12, Fairclough Court",f_fairclough_12,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Flat B, 58 Kirkgate Street",f_kirkgate_58b,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Flat 7, Kingsway Point",f_kingsway_7,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Apartment 4, Bonded Wharf",a_bonded_4,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Apartment 9, Shaw’s Wharf",a_shaws_9,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Apartment 1806, Ashcombe Tower",a_ashcombe_tower,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"Apartment 2, Belgrave Mansions",a_belgrave_2,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,"The Penthouse, The Pinnacle",a_pinnacle_ph,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,Wyvern Hall,m_wyvern_hall,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,Ashcombe Manor,m_ashcombe_manor,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,The Glasshouse,m_glasshouse,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,Heathfield House,m_heathfield,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Property listing photos,Kensington Lodge,m_kensington_lodge,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
