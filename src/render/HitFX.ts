@@ -72,7 +72,7 @@ export class HitFX {
     t.colorSpace = THREE.SRGBColorSpace;
     t.needsUpdate = true;
     this.material.map = t;
-    this.material.size = 0.16;
+    this.material.size = 0.3;
     this.material.needsUpdate = true;
     this.textured = true;
   }
@@ -106,9 +106,9 @@ export class HitFX {
       const lead = n === 0;
       const [c, sz] =
         kind === 'heavy' ? (lead ? ['heavy', 4] : n % 5 === 0 ? ['drop', 0.6] : ['hit', 0.9 + Math.random() * 0.5])
-        : kind === 'hit' ? (lead ? ['hit', 2.2] : n % 4 === 0 ? ['drop', 0.5] : ['hit', 0.6 + Math.random() * 0.5])
+        : kind === 'hit' ? (lead ? ['hit', 3] : n % 4 === 0 ? ['drop', 0.5] : ['hit', 0.6 + Math.random() * 0.5])
         : kind === 'block' ? (lead ? ['block', 2] : ['block', 0.5 + Math.random() * 0.4])
-        : kind === 'glint' ? (lead ? ['glint', 3] : ['glint', 0.6 + Math.random() * 0.6])
+        : kind === 'glint' ? (lead ? ['glint', 5] : ['glint', 0.6 + Math.random() * 0.6])
         : lead ? ['danger', 3.2] : ['dot', 0.6 + Math.random() * 0.4];
       this.cell[i] = cellOf(c as (typeof FX_CELLS)[number]);
       this.size[i] = this.textured ? (sz as number) : 1;

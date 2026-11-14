@@ -8,7 +8,7 @@
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { attachNormal, fileTexture, type TextureName } from '../textureFiles';
+import { attachNormal, fileTexture, loadTextureFiles, type TextureName } from '../textureFiles';
 
 const BASE = '/models/kenney/';
 
@@ -198,6 +198,8 @@ function boxUV(geo: THREE.BufferGeometry): void {
 /** Load both kits once. Never rejects. */
 export function loadKenney(): Promise<void> {
   loading ??= (async () => {
+    // The surfaces use the texture files when they're in (never rejects; canvases without them).
+    await loadTextureFiles();
     const loader = new GLTFLoader();
     const one = async (dir: string, id: string) => {
       try {

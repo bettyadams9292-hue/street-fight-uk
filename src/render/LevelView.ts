@@ -648,7 +648,7 @@ export class LevelView {
     if (sprite) {
       // Drops as point sprites (a tapered streak from public/textures/fx/rain.webp), one per drop.
       geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
-      const drops = new THREE.Points(geo, new THREE.PointsMaterial({ map: sprite, color: 0xb4c4e0, size: 0.42, sizeAttenuation: true, transparent: true, opacity: 0.55, depthWrite: false }));
+      const drops = new THREE.Points(geo, new THREE.PointsMaterial({ map: sprite, color: 0xb4c4e0, size: 0.6, sizeAttenuation: true, transparent: true, opacity: 0.5, depthWrite: false }));
       drops.frustumCulled = false;
       this.group.add(drops);
       this.rain = drops;

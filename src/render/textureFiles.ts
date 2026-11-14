@@ -15,27 +15,9 @@ import * as THREE from 'three';
 
 const BASE = '/textures/';
 
-/** Every file the game reads (colour maps; those in WITH_NORMAL also have a `_n` normal map). */
-export const TEXTURE_NAMES = [
-  'street/brick', 'street/paving', 'street/road', 'street/markings', 'street/concrete', 'street/plaster', 'street/corrugated',
-  'street/tiles', 'street/shutter', 'street/wood_floor', 'street/sign_board', 'street/windows', 'street/graffiti', 'street/posters',
-  'furniture/wood_light', 'furniture/wood_dark', 'furniture/weave', 'furniture/brushed_metal',
-  'character/brow', 'character/lash',
-  'character/fabric_fleece', 'character/fabric_knit', 'character/fabric_nylon', 'character/fabric_denim', 'character/fabric_leather', 'character/fabric_cotton', 'character/fabric_canvas',
-  'home/f_oak', 'home/f_walnut', 'home/f_grey_carpet', 'home/f_cream_carpet', 'home/f_plum_carpet', 'home/f_red_carpet', 'home/f_check_tiles', 'home/f_stone_tiles', 'home/f_slate_tiles',
-  'home/w_magnolia', 'home/w_white', 'home/w_sage', 'home/w_navy', 'home/w_charcoal', 'home/w_blush', 'home/w_slate_blue', 'home/w_stone', 'home/w_stripes', 'home/w_brick', 'home/w_panelling', 'home/w_tiles',
-  'fx/particles', 'fx/rain',
-] as const;
-export type TextureName = (typeof TEXTURE_NAMES)[number];
+import { FX_CELLS, TEXTURE_NAMES, WINDOW_CELLS, hasNormal, type TextureName, type WindowCell } from './textureList';
 
-/** Effects have no normal map. */
-export const hasNormal = (name: string): boolean => !name.startsWith('fx/');
-
-/** Cells of the window atlas (4 × 2, each 128 × 256), in order. */
-export const WINDOW_CELLS = ['unlit', 'unlit_blinds', 'lit_warm', 'lit_warm2_curtains', 'lit_cool', 'lit_cream_blinds', 'lit_amber_curtains', 'lit_tv'] as const;
-export type WindowCell = (typeof WINDOW_CELLS)[number];
-/** Cells of the particle atlas (4 × 2, each 128 px), in order. */
-export const FX_CELLS = ['hit', 'heavy', 'block', 'glint', 'danger', 'dot', 'smoke', 'drop'] as const;
+export { FX_CELLS, TEXTURE_NAMES, WINDOW_CELLS, hasNormal, type TextureName, type WindowCell };
 
 const images = new Map<string, HTMLImageElement>();
 let loading: Promise<void> | null = null;

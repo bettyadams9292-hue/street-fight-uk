@@ -364,7 +364,7 @@ function fabricTexture(kind: Fabric): THREE.Texture | null {
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(kind === 'denim' || kind === 'canvas' ? 60 : 40, kind === 'denim' || kind === 'canvas' ? 60 : 40);
   t.colorSpace = THREE.SRGBColorSpace;
-  fabrics.set(kind, t);
+  // Not cached: once the texture file has loaded, later garments use it.
   return t;
 }
 

@@ -758,8 +758,8 @@ def fx_cell(kind, S=128, seed=0):
         for a in rg.uniform(0, 2 * math.pi, 7):
             dth = np.abs(np.angle(np.exp(1j * (th - a))))
             ln = rg.uniform(0.55, 0.95)
-            spikes = np.maximum(spikes, np.clip(1 - dth / (0.08 * (1 - r / ln + 0.2)), 0, 1) * np.clip(1 - r / ln, 0, 1))
-        core = np.clip(1 - r / 0.32, 0, 1) ** 1.5
+            spikes = np.maximum(spikes, np.clip(1 - dth / (0.16 * (1 - r / ln + 0.25)), 0, 1) * np.clip(1 - r / ln, 0, 1) ** 0.6)
+        core = np.clip(1 - r / 0.45, 0, 1) ** 0.8
         a = np.clip(core + spikes, 0, 1)
     elif kind == 'heavy':
         # A bigger star burst with a shock ring.
@@ -779,9 +779,9 @@ def fx_cell(kind, S=128, seed=0):
         a = np.maximum(a, np.clip(1 - np.abs(hexd - 0.62) / 0.04, 0, 1))
     elif kind == 'glint':
         # A four-point star with a small cross flare.
-        star = np.clip(1 - np.abs(dx) / (0.05 * (1 - np.abs(dy)) + 1e-3), 0, 1) * np.clip(1 - np.abs(dy), 0, 1) ** 2
-        star = np.maximum(star, np.clip(1 - np.abs(dy) / (0.05 * (1 - np.abs(dx)) + 1e-3), 0, 1) * np.clip(1 - np.abs(dx), 0, 1) ** 2)
-        core = np.clip(1 - r / 0.18, 0, 1)
+        star = np.clip(1 - np.abs(dx) / (0.12 * (1 - np.abs(dy)) + 1e-3), 0, 1) * np.clip(1 - np.abs(dy), 0, 1) ** 0.8
+        star = np.maximum(star, np.clip(1 - np.abs(dy) / (0.12 * (1 - np.abs(dx)) + 1e-3), 0, 1) * np.clip(1 - np.abs(dx), 0, 1) ** 0.8)
+        core = np.clip(1 - r / 0.3, 0, 1) ** 0.7
         a = np.clip(star + core, 0, 1)
     elif kind == 'danger':
         # A warning ring with a bright edge and a soft fill.
@@ -808,11 +808,11 @@ def effects():
         a = fx_cell(k, S, i)
         A[(i // 4) * S:(i // 4 + 1) * S, (i % 4) * S:(i % 4 + 1) * S] = a
     save('fx/particles', np.dstack([A, A, A]), None, alpha=A, q=90)
-    # Rain: a thin tapered streak in a 32 x 128 strip, drawn on a square point sprite.
+    # Rain: a tapered streak down the middle of a 64 px square (the game draws drops as point sprites).
     W, H = 64, 64
     x, y = grid_coords(H, W)
     v = y / H
-    wd = 0.6 + 1.2 * v
+    wd = 2.5 + 3.5 * v
     a = np.clip(1 - np.abs(x - W / 2 + 0.5) / wd, 0, 1) * np.clip(v * 1.3, 0, 1) * np.clip((1 - v) * 8, 0, 1)
     save('fx/rain', np.ones((H, W, 3)) * np.array([0.85, 0.9, 1.0]), None, alpha=a * 0.9, q=90)
 
