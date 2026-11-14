@@ -4,9 +4,9 @@ Packed for the game by `tools/props/pack.py` (textures reduced to 512 px JPEG; g
 
 | File | Used for | Source and licence |
 |---|---|---|
-| claw-hammer.glb, crowbar.glb, wrench.glb | Weapons: hammer, crowbar, wrench | Free CC0 site, per the developer (11 Nov 2026) |
 | dumpster.glb | Street prop: dumpster | Free CC0 site, per the developer |
 | keyring.glb, smartphone.glb, sunglasses.glb, wristwatch.glb | Loot on the ground: keys, phones, sunglasses, watches | Free CC0 site, per the developer |
-| baseball-bat.glb, rusty-pipe.glb | Weapons: baseball bat, pipe | "Melee Weapons - FREE", free pack from itch.io, per the developer. Exact page and licence to be recorded. |
 
 The files carry no embedded author or licence information. Record the exact source page for each before release.
+
+The photo-scanned weapons that used to be here (claw-hammer, crowbar, wrench, baseball-bat, rusty-pipe) were removed on 13 Nov 2026: they were far over the weapon budget, and two had no confirmed licence. Every weapon now has an original low-poly model in `public/models/weapons` (see its SOURCES.md).

@@ -3790,6 +3790,11 @@ export class LevelView {
       w.rotation.y = 0.4;
       w.position.set(WEAPONS[wid].length / 2, 0.05, 0);
       g.add(w);
+      // Centre it on the ring and rest it on the floor, whatever its shape.
+      g.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(w);
+      w.position.x -= (b.min.x + b.max.x) / 2;
+      w.position.y += 0.01 - b.min.y;
       return g;
     }
     const spin = new THREE.Group();

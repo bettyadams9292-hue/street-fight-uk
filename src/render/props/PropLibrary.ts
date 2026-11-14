@@ -10,11 +10,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export const PROP_FILES = {
-  claw_hammer: 'claw-hammer.glb',
-  crowbar: 'crowbar.glb',
-  wrench: 'wrench.glb',
-  baseball_bat: 'baseball-bat.glb',
-  rusty_pipe: 'rusty-pipe.glb',
   dumpster: 'dumpster.glb',
   keyring: 'keyring.glb',
   smartphone: 'smartphone.glb',
@@ -23,13 +18,55 @@ export const PROP_FILES = {
 } as const;
 export type PropId = keyof typeof PROP_FILES;
 
-/** Weapons drawn from a model instead of primitives. */
-export const WEAPON_MODELS: Readonly<Partial<Record<string, PropId>>> = {
-  hammer: 'claw_hammer',
-  crowbar: 'crowbar',
-  wrench: 'wrench',
-  baseball_bat: 'baseball_bat',
-  pipe: 'rusty_pipe',
+/**
+ * Weapons drawn from a model in PROP_FILES (any orientation; stood up by weaponFit).
+ * Empty since the low-poly weapon set below replaced the photo-scans.
+ */
+export const WEAPON_MODELS: Readonly<Partial<Record<string, PropId>>> = {};
+
+/**
+ * Low-poly weapons in public/models/weapons (original work, made by
+ * tools/weapons/build_weapons.py). Authored the game's way: grip at the origin, the
+ * weapon up +y at real size, so they are used as they are, with no fitting. The
+ * scene's extras.length is the weapon length the model was made for.
+ */
+export const WEAPON_FILES: Readonly<Record<string, string>> = {
+  bottle: 'bottle.glb',
+  broken_bottle: 'broken-bottle.glb',
+  bat: 'bat.glb',
+  baseball_bat: 'baseball-bat.glb',
+  pipe: 'pipe.glb',
+  metal_bar: 'metal-bar.glb',
+  crowbar: 'crowbar.glb',
+  hammer: 'hammer.glb',
+  machete: 'machete.glb',
+  knife: 'knife.glb',
+  chain: 'chain.glb',
+  wrench: 'wrench.glb',
+  club: 'club.glb',
+  pool_cue: 'pool-cue.glb',
+  pole: 'pole.glb',
+  torch: 'torch.glb',
+  mop: 'mop.glb',
+  broom: 'broom.glb',
+  road_sign: 'road-sign.glb',
+  cone: 'cone.glb',
+  plank: 'plank.glb',
+  chair_leg: 'chair-leg.glb',
+  table_leg: 'table-leg.glb',
+  chair: 'chair.glb',
+  tv: 'tv.glb',
+  monitor: 'monitor.glb',
+  skateboard: 'skateboard.glb',
+  umbrella: 'umbrella.glb',
+  shelf_bar: 'shelf-bar.glb',
+  shovel: 'shovel.glb',
+  garden_fork: 'garden-fork.glb',
+  rake: 'rake.glb',
+  brick: 'brick.glb',
+  frying_pan: 'frying-pan.glb',
+  golf_club: 'golf-club.glb',
+  dustbin_lid: 'dustbin-lid.glb',
 };
 
 /** Item kinds shown as a model when they lie on the ground. */
@@ -42,6 +79,7 @@ export const ITEM_MODELS: Readonly<Partial<Record<string, PropId>>> = {
 };
 
 const loaded = new Map<PropId, THREE.Object3D>();
+const weapons = new Map<string, { model: THREE.Object3D; length: number }>();
 let loading: Promise<void> | null = null;
 
 function share(o: THREE.Object3D): THREE.Object3D {
@@ -56,11 +94,11 @@ function share(o: THREE.Object3D): THREE.Object3D {
 }
 
 /** Load every prop (once). Never rejects; a prop that fails just isn't available. */
-export function loadProps(base = '/models/props/'): Promise<void> {
+export function loadProps(base = '/models/props/', weaponBase = '/models/weapons/'): Promise<void> {
   loading ??= (async () => {
     const loader = new GLTFLoader();
-    await Promise.all(
-      (Object.entries(PROP_FILES) as [PropId, string][]).map(async ([id, file]) => {
+    await Promise.all([
+      ...(Object.entries(PROP_FILES) as [PropId, string][]).map(async ([id, file]) => {
         try {
           const gltf = await loader.loadAsync(base + file);
           loaded.set(id, share(gltf.scene));
@@ -68,13 +106,28 @@ export function loadProps(base = '/models/props/'): Promise<void> {
           console.warn(`[props] ${file} failed to load; using the built-in version`, e);
         }
       }),
-    );
+      ...Object.entries(WEAPON_FILES).map(async ([id, file]) => {
+        try {
+          const gltf = await loader.loadAsync(weaponBase + file);
+          const len = Number(gltf.scene.userData?.length);
+          const length = len > 0 ? len : new THREE.Box3().setFromObject(gltf.scene).max.y;
+          weapons.set(id, { model: share(gltf.scene), length });
+        } catch (e) {
+          console.warn(`[props] weapon ${file} failed to load; using the built-in version`, e);
+        }
+      }),
+    ]);
   })();
   return loading;
 }
 
 export function hasProp(id: PropId): boolean {
   return loaded.has(id);
+}
+
+/** Whether a weapon has a loaded low-poly model (public/models/weapons). */
+export function hasWeaponModel(weaponId: string): boolean {
+  return weapons.has(weaponId);
 }
 
 /** A clone of the model as authored (shared geometry and materials), or null. */
@@ -141,6 +194,13 @@ function weaponFit(id: PropId, src: THREE.Object3D): THREE.Matrix4 {
 
 /** The model for a weapon, grip at the origin, extending `length` metres up +y. Null if there is no model. */
 export function weaponModel(weaponId: string, length: number): THREE.Group | null {
+  const authored = weapons.get(weaponId);
+  if (authored) {
+    const outer = new THREE.Group();
+    outer.add(share(authored.model.clone(true)));
+    outer.scale.setScalar(length / authored.length);
+    return outer;
+  }
   const id = WEAPON_MODELS[weaponId];
   if (!id) return null;
   const src = loaded.get(id);
