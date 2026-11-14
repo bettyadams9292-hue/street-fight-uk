@@ -38,6 +38,7 @@ import {
   woodFloorTexture,
 } from './levelTextures';
 import { brickTexture, canvas, shutterTexture, toTexture } from './textures';
+import { attachNormals, finishMaterial, flatNormalCanvas, textureImage, windowCell, type WindowCell } from './textureFiles';
 import { buildWeaponMesh, disposeGroup } from './weaponMesh';
 import { WEAPONS } from '../combat/Weapons';
 import { RARITY_COLOURS, itemDef } from '../items/items';
@@ -82,7 +83,7 @@ export class LevelView {
   private flicker: { light: THREE.PointLight; base: number }[] = [];
   private sun: THREE.DirectionalLight;
   private water: THREE.Mesh | null = null;
-  private rain: THREE.LineSegments | null = null;
+  private rain: THREE.LineSegments | THREE.Points | null = null;
   private rainBase: Float32Array | null = null;
   /** Phase 3 street pass (`?street=classic` turns it off). */
   private readonly streetPass = streetPassEnabled(window.location.search);
@@ -179,6 +180,8 @@ export class LevelView {
 
   /** Floor finishes at home: boards, carpet or tiles in the finish's colours. */
   private floorFinish(id: string, w: number, d: number): THREE.MeshStandardMaterial {
+    const file = finishMaterial(id, w, d);
+    if (file) return file;
     const f = FINISHES[id];
     switch (f.pattern) {
       case 'boards':
@@ -192,6 +195,8 @@ export class LevelView {
 
   /** Wall finishes at home: paint, paper, brick slips, panelling or tiles. */
   private wallFinish(id: string, w: number, h: number): THREE.MeshStandardMaterial {
+    const file = finishMaterial(id, w, h);
+    if (file) return file;
     const f = FINISHES[id];
     switch (f.pattern) {
       case 'tiles':
@@ -276,6 +281,8 @@ export class LevelView {
       this.dressing = new StreetDressing(lvl, this.back, lvl.bounds.maxZ + 0.4, this.X0, this.X1, seeded(hash(`${lvl.id}:dressing`)));
       this.group.add(this.dressing.group);
     }
+    // Normal maps for every texture that came from a file (public/textures).
+    attachNormals(this.group);
     if (this.lowPoly && themeProfile(lvl.theme).interior) flattenTextures(this.group);
   }
 
@@ -407,7 +414,8 @@ export class LevelView {
         const lp: [KitFloor, string] | null = fin
           ? [fin.pattern === 'boards' ? 'boards' : fin.pattern === 'tiles' ? 'encaustic' : 'carpet', fin.colour]
           : f.label === 'Gym' ? ['resin', '#2a3a30'] : f.label === 'Garage' ? ['resin', '#7a7874'] : ['boards', '#9a7a5a'];
-        if (!well && this.kitGround(lp[0], f.x0, f.x1, this.back, front, lp[1])) {
+        // A finish from its texture file is laid as it is; otherwise the kit's floor tiles in its colour.
+        if (!well && !mat.userData.finishFile && this.kitGround(lp[0], f.x0, f.x1, this.back, front, lp[1])) {
           if (f.x0 > minX) this.box(0.24, 0.015, front - 0.1, f.x0, 0.008, (front + 0.1) / 2 + 0.05, this.mat('#8a7a5a', 0.5, 0.3), false);
           continue;
         }
@@ -636,6 +644,17 @@ export class LevelView {
       base[i * 3 + 2] = this.back + this.rnd() * 12;
     }
     const geo = new THREE.BufferGeometry();
+    const sprite = rainSprite();
+    if (sprite) {
+      // Drops as point sprites (a tapered streak from public/textures/fx/rain.webp), one per drop.
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
+      const drops = new THREE.Points(geo, new THREE.PointsMaterial({ map: sprite, color: 0xb4c4e0, size: 0.42, sizeAttenuation: true, transparent: true, opacity: 0.55, depthWrite: false }));
+      drops.frustumCulled = false;
+      this.group.add(drops);
+      this.rain = drops;
+      this.rainBase = base;
+      return;
+    }
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x9ab0d0, transparent: true, opacity: 0.32, depthWrite: false }));
     lines.frustumCulled = false;
@@ -651,10 +670,17 @@ export class LevelView {
     const a = attr.array as Float32Array;
     const b = this.rainBase;
     const n = b.length / 3;
+    const points = (this.rain as THREE.Points).isPoints;
     for (let i = 0; i < n; i++) {
       const x = camX + ((((b[i * 3] + 18) % 36) + 36) % 36) - 18;
       const y = 9 - ((((9 - b[i * 3 + 1]) + time * 14) % 9) + 9) % 9;
       const z = b[i * 3 + 2];
+      if (points) {
+        a[i * 3] = x;
+        a[i * 3 + 1] = y;
+        a[i * 3 + 2] = z;
+        continue;
+      }
       a[i * 6] = x;
       a[i * 6 + 1] = y;
       a[i * 6 + 2] = z;
@@ -1985,7 +2011,10 @@ export class LevelView {
       // Low-poly: a flat-coloured wall with its pattern built from blocks.
       const pattern = fin?.pattern ?? (f.label === 'Garage' ? 'brick' : f.label === 'Kitchen' ? 'tiles' : 'paint');
       const c1 = fin?.colour ?? (f.label === 'Garage' ? '#8a5a48' : f.label === 'Kitchen' ? '#e8e2cc' : colour);
-      this.group.add(kitWall(pattern, c1, fin?.colour2, f.x0, f.x1, this.back + 0.02, H));
+      // A finish from its texture file (public/textures/home); otherwise its pattern built from blocks.
+      const file = fin ? finishMaterial(fin.id, w, H) : null;
+      if (file) this.panel(w, H, cx, H / 2, file, 0.02);
+      else this.group.add(kitWall(pattern, c1, fin?.colour2, f.x0, f.x1, this.back + 0.02, H));
     } else {
       const wall = fin
         ? this.wallFinish(fin.id, w, H)
@@ -3981,8 +4010,41 @@ function flattenTextures(root: THREE.Object3D): void {
   });
 }
 
+/** The rain streak sprite (shared), or null without the file. */
+let rainTex: THREE.Texture | null = null;
+function rainSprite(): THREE.Texture | null {
+  if (rainTex) return rainTex;
+  const img = textureImage('fx/rain');
+  if (!img) return null;
+  rainTex = new THREE.Texture(img);
+  rainTex.colorSpace = THREE.SRGBColorSpace;
+  rainTex.needsUpdate = true;
+  rainTex.userData.shared = true;
+  return rainTex;
+}
+
 /** A lit room seen through a window: warm light, a lampshade glow, curtains each side. */
 function litWindowTexture(rnd: () => number): THREE.CanvasTexture {
+  const atlas = textureImage('street/windows');
+  if (atlas) {
+    // A lit room from the window atlas (its middle square); four draws, as the canvas version makes.
+    const lit: WindowCell[] = ['lit_warm', 'lit_warm2_curtains', 'lit_cream_blinds', 'lit_amber_curtains'];
+    const kind = lit[Math.floor(rnd() * 4)];
+    rnd();
+    rnd();
+    rnd();
+    const [sx, sy, sw] = windowCell(kind);
+    const [c, g] = canvas(128, 128);
+    g.drawImage(atlas, sx, sy + 40, sw, 128, 0, 0, 128, 128);
+    const t = toTexture(c);
+    const nAtlas = textureImage('street/windows_n');
+    const nc = nAtlas ? flatNormalCanvas(128, 128) : null;
+    if (nc && nAtlas) {
+      nc.getContext('2d')!.drawImage(nAtlas, sx, sy + 40, sw, 128, 0, 0, 128, 128);
+      t.userData.normalImage = nc;
+    }
+    return t;
+  }
   const [c, g] = canvas(128, 128);
   const warm = ['#ffb24a', '#ffcf7a', '#f6e2b0', '#9ab8ff'][Math.floor(rnd() * 4)];
   const grad = g.createRadialGradient(40 + rnd() * 48, 50, 4, 64, 64, 90);
