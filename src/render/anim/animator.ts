@@ -3,6 +3,7 @@ import { REACTIONS, clipDuration, guardPose, reactionPose, strikeClip, strikePos
 import type { Fighter, FighterState } from '../../fighter/Fighter';
 import { isActiveFrame, type ActiveMove } from '../../combat/MoveData';
 import { activityPose } from '../activityPoses';
+import { STATE_CLIPS, activityClipPose, ualDuration, ualPose, ualStrikeClip } from './ual';
 import {
   BLOCK, BLOCK_LOW, CLINCHED, CLINCH_HOLD, CROUCH_UP, DODGE_BACK, DODGE_SIDE, FALL_BACK, FALL_FRONT, GUARD, GUARD_BREAK, HIT_HIGH, HIT_LOW, HIT_MID,
   JOINTS, JUMP, JUMP_FALL, LAND_BACK, LYING, LYING_FRONT, LYING_KO, MOUNT, PARRIED, PUSH_UP, RELAXED, SIT_UP, SLIP, STAGGER, STAGGER_MID, STANCES,
@@ -289,7 +290,8 @@ export class FighterAnimator {
       if (p) return p;
     }
     const p = activityPose(act, time + (f.id % 7) * 0.37);
-    return { ...p, ik: 0 };
+    // Captured (UAL) where there's a clip for it; the keyed pose otherwise.
+    return activityClipPose(act, time + (f.id % 7) * 0.37, this.m, p) ?? { ...p, ik: 0 };
   }
 
   /**
@@ -353,7 +355,10 @@ export class FighterAnimator {
       },
       drop: (style.drop ?? 0) * (0.85 + t.seed * 0.3) + (f.vitals.fatigue === 'exhausted' ? 0.03 : 0),
     };
-    return this.combat > 0.995 ? pose : lerpPose(RELAXED, pose, easeInOut(this.combat));
+    if (this.combat > 0.995) return pose;
+    // Stood about: a captured idle (UAL), each person on their own phase.
+    const relaxed = ualPose(STATE_CLIPS.RELAXED, this.now + (f.id % 7) * 0.37, this.m, 1) ?? RELAXED;
+    return lerpPose(relaxed, pose, easeInOut(this.combat));
   }
 
   private target(): { key: string; pose: Pose; blend: number } {
@@ -378,7 +383,7 @@ export class FighterAnimator {
         return { key: this.blockLow ? 'block_low' : 'block', pose: this.blockLow ? BLOCK_LOW : BLOCK, blend: 0.05 };
 
       case 'jump':
-        return { key: 'jump', pose: lerpPose(JUMP, JUMP_FALL, clamp01(0.5 - f.vel.y / 6)), blend: 0.08 };
+        return { key: 'jump', pose: lerpPose(JUMP, ualPose(STATE_CLIPS.JUMP_FALL, this.now, this.m) ?? JUMP_FALL, clamp01(0.5 - f.vel.y / 6)), blend: 0.08 };
 
       case 'dodge': {
         const pose = f.style.defence === 'slip' ? SLIP : Math.abs(f.vel.z) > 0.01 || Math.abs(this.vz) > Math.abs(this.vx) ? DODGE_SIDE : DODGE_BACK;
@@ -405,10 +410,15 @@ export class FighterAnimator {
         const p: Pose = { ...pose, joints: { ...pose.joints, spine: add(J3(pose.joints.spine), [0.05 * sway, 0, 0.07 * sway]), head: add(J3(pose.joints.head), [0.04 * sway, 0, -0.06 * sway]) }, shift: [(pose.shift?.[0] ?? 0) + 0.035 * sway, pose.shift?.[1] ?? 0] };
         return { key: `stagger${f.hitSeq}`, pose: u > 0.7 ? lerpPose(p, stance, easeInOut((u - 0.7) / 0.3)) : p, blend: 0.07 };
       }
-      case 'guardbreak':
-        return { key: 'guardbreak', pose: u > 0.6 ? lerpPose(GUARD_BREAK, stance, easeInOut((u - 0.6) / 0.4)) : GUARD_BREAK, blend: 0.06 };
-      case 'parried':
-        return { key: 'parried', pose: u > 0.5 ? lerpPose(PARRIED, stance, easeInOut((u - 0.5) / 0.5)) : PARRIED, blend: 0.05 };
+      case 'guardbreak': {
+        // Captured (UAL): knocked back with the arms flung open, played across the state.
+        const gb = ualPose(STATE_CLIPS.GUARD_BREAK, u * ualDuration(STATE_CLIPS.GUARD_BREAK) * 0.7, this.m, 1) ?? GUARD_BREAK;
+        return { key: 'guardbreak', pose: u > 0.6 ? lerpPose(gb, stance, easeInOut((u - 0.6) / 0.4)) : gb, blend: 0.06 };
+      }
+      case 'parried': {
+        const pr = ualPose(STATE_CLIPS.PARRIED, u * ualDuration(STATE_CLIPS.PARRIED) * 0.6, this.m, 1) ?? PARRIED;
+        return { key: 'parried', pose: u > 0.5 ? lerpPose(pr, stance, easeInOut((u - 0.5) / 0.5)) : pr, blend: 0.05 };
+      }
 
       case 'knockdown':
       case 'ko': {
@@ -418,7 +428,9 @@ export class FighterAnimator {
         // Going down backwards is captured (Rokoko): knocked flat, or a knockout crumpling. Face-first falls stay hand-made.
         if (!front) {
           const clip = state === 'ko' ? REACTIONS.ko[f.id % REACTIONS.ko.length] : REACTIONS.knockdown;
-          const cap = reactionPose(clip, t, this.m, false);
+          // Knocked flat: the Rokoko take or UAL's knockback, turn about; either stands in for the other.
+          const ual = state === 'ko' ? null : ualPose(STATE_CLIPS.FALL_BACK, t, this.m);
+          const cap = (ual && (f.id + f.hitSeq) % 2 === 1 ? ual : null) ?? reactionPose(clip, t, this.m, false) ?? ual;
           if (cap) return { key: `down${f.hitSeq}${state === 'ko' ? '' : 'k'}`, pose: cap, blend: 0.06 };
         }
         const fallT = state === 'ko' ? 0.5 : 0.42;
@@ -440,6 +452,9 @@ export class FighterAnimator {
         const from = front ? LYING_FRONT : LYING;
         const mid = front ? PUSH_UP : SIT_UP;
         let pose: Pose;
+        // Up off the back: UAL's captured lie-to-stand, stretched over the get-up, settling into the stance.
+        const lay = front ? null : ualPose(STATE_CLIPS.GETUP_BACK, Math.min(u / 0.9, 1) * ualDuration(STATE_CLIPS.GETUP_BACK), this.m);
+        if (lay) return { key: 'getup', pose: u > 0.9 ? lerpPose(lay, stance, easeInOut((u - 0.9) / 0.1)) : lay, blend: 0.08 };
         const rise = u >= 0.45 ? reactionPose(REACTIONS.getup, ((u - 0.45) / 0.55) * clipDuration(REACTIONS.getup), this.m, true) : null;
         if (u < 0.33) pose = lerpPose(from, mid, easeInOut(u / 0.33));
         else if (rise) pose = u < 0.55 ? lerpPose(CROUCH_UP, rise, easeInOut((u - 0.45) / 0.1)) : u > 0.9 ? lerpPose(rise, stance, easeInOut((u - 0.9) / 0.1)) : rise;
@@ -455,7 +470,7 @@ export class FighterAnimator {
       case 'ground_top':
         return { key: 'mount', pose: MOUNT, blend: 0.15 };
       case 'ground_bottom':
-        return { key: 'bottom', pose: LYING, blend: 0.15 };
+        return { key: 'bottom', pose: ualPose(STATE_CLIPS.FALL_BACK, 99, this.m) ?? LYING, blend: 0.15 };
 
       case 'attack': {
         const m = f.move;
@@ -479,7 +494,7 @@ export class FighterAnimator {
     const f = this.f;
     // A captured take for this strike (Rokoko): stretched so it lands on the move's first active frame.
     if (!f.grapple) {
-      const clip = strikeClip(m.data.anim, m.data.limb, f.moveSeq);
+      const clip = strikeClip(m.data.anim, m.data.limb, f.moveSeq) ?? ualStrikeClip(m.data.anim, m.data.limb);
       const cap = clip ? strikePose(clip, m.frame, m.startup, m.active, m.recovery, this.m) : null;
       if (cap) return cap;
     }

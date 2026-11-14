@@ -80,7 +80,7 @@ const begin = async (): Promise<void> => {
   const humans = query.get('humans') === 'off' ? Promise.resolve(false) : preloadAllHumans();
   // The low-poly street kits (about 2 MB over the wire): without them the streets keep their older look.
   const polyKit = query.get('world') === 'classic' ? Promise.resolve(false) : loadPolyKit();
-  const assets = Promise.all([models, kit, loadProps(), humans, loadAraMocap(), loadRokoko(), loadFlooring(), loadKenney(), loadGym(), loadShop(), loadHydro(), loadSecurity(), loadDoors(), polyKit]);
+  const assets = Promise.all([models, kit, loadProps(), humans, loadAraMocap(), loadRokoko(), import('./render/anim/ual').then((u) => u.loadUal()), loadFlooring(), loadKenney(), loadGym(), loadShop(), loadHydro(), loadSecurity(), loadDoors(), polyKit]);
   await (shot ? assets : Promise.race([assets, new Promise((r) => setTimeout(r, 6000))]));
   start();
 };
