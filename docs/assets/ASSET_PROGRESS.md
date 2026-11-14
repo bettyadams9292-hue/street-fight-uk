@@ -8,19 +8,19 @@ The source of truth is `docs/ASSETS_NEEDED.xlsx`; its CSV twin is `docs/ASSETS_N
 - Spreadsheet rows: **595**
 - Ticked (Got it = TRUE): **75**
 - Done this production (integrated and tested): **75** (9 from downloaded packs, 66 made originally)
-- Partly done: **52**, blocked: **0**
-- Still to start: **468**
+- Partly done: **132**, blocked: **0**
+- Still to start: **388**
 
 | Area | Rows | Done | Partial |
 |---|---|---|---|
 | Items: Weapons | 36 | 0 | 36 |
 | Items: Clothing | 30 | 0 | 0 |
 | Items: Accessories | 15 | 0 | 0 |
-| Items: Food & first aid | 31 | 0 | 0 |
-| Items: Groceries & materials | 36 | 0 | 0 |
+| Items: Food & first aid | 31 | 0 | 31 |
+| Items: Groceries & materials | 36 | 0 | 36 |
 | Items: Valuables | 29 | 0 | 0 |
-| Items: Collectibles | 8 | 0 | 0 |
-| Items: Quest items | 5 | 0 | 0 |
+| Items: Collectibles | 8 | 0 | 8 |
+| Items: Quest items | 5 | 0 | 5 |
 | Character: hair | 7 | 0 | 0 |
 | Character: facial hair | 3 | 0 | 0 |
 | Character: tattoos | 6 | 0 | 0 |
