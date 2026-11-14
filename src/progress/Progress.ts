@@ -136,7 +136,17 @@ export interface GameSave {
   portfolio: PortfolioSave;
   /** The record of big money in and out (jewellery, property, rent). */
   finance: FinanceSave;
+  /** Boss rewards that didn't fit in your pockets: they wait on the ground where they fell until you take them. */
+  bossLoot: KeptLoot[];
   savedAt: string;
+}
+
+/** Something left on the ground that the save remembers (see GameSave.bossLoot). */
+export interface KeptLoot {
+  area: AreaId;
+  x: number;
+  z: number;
+  stack: ItemStack;
 }
 
 export const BASE_INVENTORY_SLOTS = 12;
@@ -184,6 +194,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     jewellery: defaultJewellery(),
     portfolio: defaultPortfolio(),
     finance: defaultFinance(),
+    bossLoot: [],
     savedAt: new Date().toISOString(),
   };
   // Starter kit: your hand wraps on, a couple of sandwiches in your pocket, food in the kitchen.
@@ -262,6 +273,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     jewellery: sanitiseJewellery(r.jewellery),
     portfolio: sanitisePortfolio(r.portfolio, typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0),
     finance: sanitiseFinance(r.finance),
+    bossLoot: [],
     savedAt: typeof r.savedAt === 'string' ? r.savedAt : base.savedAt,
   };
   let pantry: PantrySave | null = null;
@@ -284,6 +296,14 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     out.inventory = stacks(r.inventory, 99);
     pantry = sanitisePantry(r.pantry, (x) => sanitiseStack(x, seen));
     if (pantry) out.pantry = pantry;
+    // Boss rewards still on the ground. Read last, so a stack already in your pockets can never also be on the floor.
+    if (Array.isArray(r.bossLoot)) {
+      for (const k of r.bossLoot as Partial<KeptLoot>[]) {
+        if (!k || !(AREA_IDS as readonly string[]).includes(k.area as string) || typeof k.x !== 'number' || typeof k.z !== 'number' || !Number.isFinite(k.x) || !Number.isFinite(k.z)) continue;
+        const stack = sanitiseStack(k.stack, seen);
+        if (stack) out.bossLoot.push({ area: k.area as AreaId, x: k.x, z: k.z, stack });
+      }
+    }
     // If the pockets hold more than fit (a bag was removed by hand), overflow goes to the stash.
     while (out.inventory.length > p.inventoryCap) {
       out.storage.push(out.inventory.pop()!);

@@ -37,6 +37,8 @@ import { ITEMS, RARITY_COLOURS } from './items/items';
 import { clothesShopScreen, inventoryScreen, pawnScreen, storageScreen } from './ui/inventoryUI';
 import { arrest, ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
 import { World } from './world/World';
+import { gateNeeds, type GateNeed } from './world/gates';
+import type { BossDef } from './ai/bosses';
 import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
 import { mapScreen } from './ui/mapUI';
@@ -763,10 +765,14 @@ export class Game {
         if (this.settings.get().screenShake) this.renderer.cameraRig.addShake(0.2);
         this.audio.guardBreak();
       }),
-      ev.on('boss:defeated', ({ boss, first, cash, xp, items }) => {
-        this.saveGame();
+      ev.on('boss:defeated', ({ boss, first, cash, xp, items, left }) => {
         this.hud.notify(`${boss.name.toUpperCase()} IS DONE`, 'big');
         const next = first ? this.unlockedBy(boss.flag) : null;
+        // Gates that need several things (Hale House): opened by this, or exactly what is still to do.
+        const gate = first ? this.gateAfter(boss, w) : null;
+        // Still shut: point the map's route at the next thing, unless you've set one yourself.
+        if (gate?.needs.length && gate.needs[0].area && !this.progress!.save.destination) this.progress!.save.destination = gate.needs[0].area as AreaId;
+        this.saveGame();
         this.pending = {
           at: this.time + 2.6,
           show: () => {
@@ -780,8 +786,14 @@ export class Game {
               { text: `+${xp} XP · level ${this.progress!.save.level}` },
             ];
             if (items.length) lines.push({ text: `Took: ${items.join(', ')}` });
+            if (left.length) lines.push({ text: `Pockets full. On the ground by ${boss.name}: ${left.join(', ')}. It stays there until you pick it up.` });
             if (next) lines.push({ text: `Unlocked: ${next}`, big: true });
-            if (boss.flag === 'boss_dunc') lines.push({ text: 'Dunc\u2019s phone has one contact: THE BOSS. Hale House, past the Pit.', big: true });
+            if (boss.flag === 'boss_dunc') lines.push({ text: 'Dunc\u2019s phone has one contact: THE BOSS. He\u2019s at Hale House, past the Pit.' });
+            if (gate && !gate.needs.length) lines.push({ text: `Unlocked: ${gate.name}`, big: true });
+            else if (gate) {
+              lines.push({ text: `${gate.name} is still locked. To open it:`, big: true });
+              for (const n of gate.needs) lines.push({ text: `\u2022 ${n.label}${n.where ? ` (${n.where})` : ''}` });
+            }
             if (boss.flag === 'boss_final') lines.push({ text: 'That\u2019s the lot. The whole town is yours.', big: true });
             this.ui.replaceAll(
               rewardScreen(
@@ -885,6 +897,24 @@ export class Game {
         };
       }),
     );
+  }
+
+  /**
+   * A gate that needs several things, one of which this boss (or what he dropped) provides. Says whether
+   * it is now open, or what is left. Early bosses don't mention a far-off gate: only the fight in the
+   * gate's own district, or the one that finally opens it, does.
+   */
+  private gateAfter(boss: BossDef, w: World): { name: string; needs: GateNeed[] } | null {
+    const gave = new Set([boss.flag, ...(boss.drops ?? []).map((id) => ITEMS[id]?.questFlag).filter((f): f is string => !!f)]);
+    for (const l of Object.values(LEVELS)) {
+      for (const ex of l.exits) {
+        if (ex.kind !== 'edge' || !ex.requiresAll?.some((f) => gave.has(f))) continue;
+        const needs = gateNeeds(ex, this.progress!, w.level.id);
+        if (needs.length && l.id !== w.level.id) continue;
+        return { name: ex.label ?? LEVELS[ex.to].name, needs };
+      }
+    }
+    return null;
   }
 
   private unlockedBy(flag: string): string | null {
