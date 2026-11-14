@@ -11,7 +11,7 @@
  */
 import type { JointName, Pose, Vec3 } from '../poses';
 import { araMocapPose, mocapClip, registerMocap } from './araPose';
-import type { Metrics } from './skeleton';
+import { solveBody, type Metrics } from './skeleton';
 
 interface ActClip {
   /** The clip for the whole body. */
@@ -102,11 +102,38 @@ export function ualDuration(id: string): number {
   return mocapClip(id)?.duration ?? 0;
 }
 
-/** A clip as a pose at t seconds (loops wrap, one-shots hold their last frame), or null. */
+/**
+ * How far each part of the body reaches below its joint (metres): the flesh between the joint
+ * and the floor when that part is lying on it. Calibrated on the skinned models in the game
+ * (lying flat, the lowest vertex then rests at the floor, y ≈ 0).
+ */
+const REACH = { ankle: 0.09, knee: 0.05, hips: 0.08, chest: 0.08, head: 0.07, elbow: 0.03, hand: 0.03, shoulder: 0.04 };
+
+/** Height of the lowest point of the body above the floor (0 = touching it). */
+export function lowestPoint(p: Pose, m: Metrics): number {
+  const b = solveBody(p, m);
+  let lo = Math.min(b.hips[1] - REACH.hips, b.chest[1] - REACH.chest, b.head[1] - REACH.head);
+  for (const s of ['l', 'r'] as const) {
+    lo = Math.min(lo, b.ankle[s][1] - REACH.ankle, b.knee[s][1] - REACH.knee, b.elbow[s][1] - REACH.elbow, b.hand[s][1] - REACH.hand, b.shoulder[s][1] - REACH.shoulder);
+  }
+  return lo;
+}
+
+/**
+ * A clip as a pose at t seconds (loops wrap, one-shots hold their last frame), or null.
+ * araMocapPose stands the lowest ankle on the floor, which sinks a body that is lying down (its
+ * back is lower than its feet), so the whole body is lifted until nothing is below the floor.
+ */
 export function ualPose(id: string, t: number, m: Metrics, ik = 0): Pose | null {
   if (!has(id)) return null;
   const p = araMocapPose(id, t, m);
-  return p ? { ...p, ik } : null;
+  return p ? { ...onFloor(p, m), ik } : null;
+}
+
+/** Lift a captured pose so no part of the body is below the floor (used for Rokoko's falls too). */
+export function onFloor(p: Pose, m: Metrics): Pose {
+  const lo = lowestPoint(p, m);
+  return lo < 0 ? { ...p, drop: (p.drop ?? 0) + lo } : p;
 }
 
 /** An everyday activity from capture, or null (no clip for it, or not loaded). `keyed` is its hand-made pose. */

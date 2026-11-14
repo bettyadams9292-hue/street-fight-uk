@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { activityPose } from '../src/render/activityPoses';
 import { mocapClip, registerMocap } from '../src/render/anim/araPose';
 import { MODEL_METRICS, solveBody } from '../src/render/anim/skeleton';
-import { ACTIVITY_CLIPS, STATE_CLIPS, STRIKE_CLIPS, activityClipPose, markUalReady, ualPose, ualStrikeClip } from '../src/render/anim/ual';
+import { ACTIVITY_CLIPS, STATE_CLIPS, STRIKE_CLIPS, activityClipPose, lowestPoint, markUalReady, ualDuration, ualPose, ualStrikeClip } from '../src/render/anim/ual';
 import { JOINTS } from '../src/render/poses';
 
 let passed = 0;
@@ -103,6 +103,23 @@ test('the finisher has a take, and the cross lands at its hit time', () => {
   const b = solveBody(ualPose('ual_cross', c.hit!, m)!, m);
   const b0 = solveBody(ualPose('ual_cross', 0, m)!, m);
   assert(b.hand.r[2] - b0.hand.r[2] > 0.25, `right hand only ${(b.hand.r[2] - b0.hand.r[2]).toFixed(2)} m forward at impact`);
+});
+
+test('falls, lying and the get-up rest on the floor: never below it, and lying flat touches it', () => {
+  for (const id of [STATE_CLIPS.FALL_BACK, STATE_CLIPS.GETUP_BACK, STATE_CLIPS.GUARD_BREAK, STATE_CLIPS.PARRIED]) {
+    const d = ualDuration(id);
+    let lo = Infinity;
+    for (let k = 0; k <= 60; k++) lo = Math.min(lo, lowestPoint(ualPose(id, (d * k) / 60, m)!, m));
+    assert(lo > -0.001, `${id}: lowest point ${lo.toFixed(3)} m below the floor`);
+  }
+  // LYING (ground_bottom) is the knockback's last frame: the back on the floor, hips low.
+  const lying = ualPose(STATE_CLIPS.FALL_BACK, 99, m)!;
+  const lo = lowestPoint(lying, m);
+  assert(Math.abs(lo) < 0.005, `lying: lowest point at ${lo.toFixed(3)} m, should touch the floor`);
+  const hips = m.hipsY - (lying.drop ?? 0);
+  assert(hips > 0.05 && hips < 0.2, `lying: hips at ${hips.toFixed(3)} m`);
+  // The start of the get-up lies the same way.
+  assert(Math.abs(lowestPoint(ualPose(STATE_CLIPS.GETUP_BACK, 0, m)!, m)) < 0.005, 'get-up starts off the floor');
 });
 
 console.log(`ual: ${passed} passed, ${failed} failed`);

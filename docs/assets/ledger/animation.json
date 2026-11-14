@@ -1174,7 +1174,7 @@
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Every other back knockdown plays it instead of the Rokoko take; it also replaces the keyed fallback."
+  "notes": "Every other back knockdown plays it instead of the Rokoko take; it also replaces the keyed fallback. Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
  },
  {
   "id": "LAND_BACK",
@@ -1197,7 +1197,7 @@
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Same clip as FALL_BACK (the landing is part of it)."
+  "notes": "Same clip as FALL_BACK (the landing is part of it). Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
  },
  {
   "id": "LYING",
@@ -1220,7 +1220,7 @@
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Used when pinned on the ground (ground_bottom)."
+  "notes": "Used when pinned on the ground (ground_bottom). Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
  },
  {
   "id": "SIT_UP",
@@ -1243,7 +1243,7 @@
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Getting up off the back plays the whole captured lie-to-stand."
+  "notes": "Getting up off the back plays the whole captured lie-to-stand. Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
  },
  {
   "id": "CROUCH_UP",
@@ -1267,7 +1267,7 @@
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Back get-ups use LayToIdle; face-down get-ups (PUSH_UP -> CROUCH_UP) still use the keyed crouch, as UAL has no face-down get-up."
+  "notes": "Back get-ups use LayToIdle; face-down get-ups (PUSH_UP -> CROUCH_UP) still use the keyed crouch, as UAL has no face-down get-up. Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
  },
  {
   "id": "GUARD (per style stance)",
