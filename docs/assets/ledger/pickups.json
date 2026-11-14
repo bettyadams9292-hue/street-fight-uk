@@ -2,1681 +2,1841 @@
  {
   "id": "chips",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/chips.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/chips.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "kebab",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/kebab.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/kebab.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "pasty",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/pasty.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/pasty.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "sausage_roll",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/sausage-roll.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/sausage_roll.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "meal_deal",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/meal-deal.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/meal_deal.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "bacon_butty",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/bacon-butty.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/bacon_butty.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (bacon), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "curry",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/curry.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/curry.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "fry_up",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/fry-up.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/fry_up.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (egg-cooked + bacon), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "protein_bar",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/protein-bar.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/protein_bar.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "energy_drink",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/energy-drink.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/energy_drink.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "can_of_pop",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/can-of-pop.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/can_of_pop.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (soda-can), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "water",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/water.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/water.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "flask_tea",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/flask-tea.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/flask_tea.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_bread",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-bread.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_bread.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (loaf), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_butter",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-butter.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_butter.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_cheese",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-cheese.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_cheese.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_ham",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-ham.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_ham.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_eggs",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-eggs.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_eggs.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_milk",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-milk.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_milk.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_cereal",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-cereal.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_cereal.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_beans",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-beans.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_beans.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_bacon",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-bacon.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_bacon.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (bacon-raw), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_sausages",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-sausages.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_sausages.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_potatoes",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-potatoes.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_potatoes.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_chicken",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-chicken.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_chicken.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_steak",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-steak.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_steak.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (meat-raw), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_pasta",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-pasta.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_pasta.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_sauce",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-sauce.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_sauce.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_mince",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-mince.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_mince.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_buns",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-buns.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_buns.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_curry_sauce",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-curry-sauce.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_curry_sauce.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_rice",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-rice.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_rice.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_onions",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-onions.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_onions.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (onion), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_mushrooms",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-mushrooms.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_mushrooms.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (mushroom), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_tomatoes",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-tomatoes.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_tomatoes.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (tomato), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_peas",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-peas.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_peas.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "g_oven_chips",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/g-oven-chips.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/g_oven_chips.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "s_crisps",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/s-crisps.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/s_crisps.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "s_chocolate",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/s-chocolate.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/s_chocolate.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (chocolate-wrapper), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "s_fruit",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/s-fruit.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/s_fruit.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (apple), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "s_biscuits",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/s-biscuits.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/s_biscuits.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_sandwich",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-sandwich.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_sandwich.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (sandwich), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_toast",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-toast.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_toast.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_cereal",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-cereal.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_cereal.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (bowl-cereal), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_beans_toast",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-beans-toast.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_beans_toast.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_scrambled",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-scrambled.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_scrambled.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_full_english",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-full-english.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_full_english.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (egg-cooked + bacon), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_sausage_mash",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-sausage-mash.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_sausage_mash.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_chicken_chips",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-chicken-chips.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_chicken_chips.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_steak",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-steak.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_steak.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (meat-cooked), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_pasta",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-pasta.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_pasta.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_burger",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-burger.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_burger.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "Kenney Food Kit 2.0 (burger-cheese), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
   "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
   "origin": "downloaded",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "m_curry",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/m-curry.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/m_curry.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "plasters",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/plasters.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/plasters.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "first_aid",
   "area": "Items: Food & first aid",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/first-aid.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/first_aid.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "signed_shirt",
   "area": "Items: Collectibles",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/signed-shirt.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/signed_shirt.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "programme_1966",
   "area": "Items: Collectibles",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/programme-1966.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/programme_1966.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "vintage_football",
   "area": "Items: Collectibles",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/vintage-football.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/vintage_football.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "pocket_watch",
   "area": "Items: Collectibles",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/pocket-watch.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/pocket_watch.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "toby_jug",
   "area": "Items: Collectibles",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/toby-jug.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/toby_jug.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "candlestick",
   "area": "Items: Collectibles",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/candlestick.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/candlestick.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "vinyl_rare",
   "area": "Items: Collectibles",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/vinyl-rare.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/vinyl_rare.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "match_ticket",
   "area": "Items: Collectibles",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/match-ticket.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/match_ticket.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "gaffer_ledger",
   "area": "Items: Quest items",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/gaffer-ledger.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/gaffer_ledger.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "lockup_key",
   "area": "Items: Quest items",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/lockup-key.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/lockup_key.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Row asks only for the inventory icon (todo, item-icons package). A low-poly pickup model of its own was also made and wired in by Game id, replacing the generic photo-scanned keyring/smartphone it used before."
+  "notes": "Row asks only for the inventory icon (todo, item-icons package). A low-poly pickup model of its own was also made and wired in by Game id, replacing the generic photo-scanned keyring/smartphone it used before. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "vip_pass",
   "area": "Items: Quest items",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/vip-pass.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/vip_pass.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "dunc_phone",
   "area": "Items: Quest items",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/dunc-phone.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/dunc_phone.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Row asks only for the inventory icon (todo, item-icons package). A low-poly pickup model of its own was also made and wired in by Game id, replacing the generic photo-scanned keyring/smartphone it used before."
+  "notes": "Row asks only for the inventory icon (todo, item-icons package). A low-poly pickup model of its own was also made and wired in by Game id, replacing the generic photo-scanned keyring/smartphone it used before. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "stadium_key",
   "area": "Items: Quest items",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/stadium-key.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/stadium_key.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Row asks only for the inventory icon (todo, item-icons package). A low-poly pickup model of its own was also made and wired in by Game id, replacing the generic photo-scanned keyring/smartphone it used before."
+  "notes": "Row asks only for the inventory icon (todo, item-icons package). A low-poly pickup model of its own was also made and wired in by Game id, replacing the generic photo-scanned keyring/smartphone it used before. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "scrap_metal",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/scrap-metal.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/scrap_metal.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "duct_tape",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/duct-tape.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/duct_tape.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "bolts",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/bolts.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/bolts.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "leather_strip",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/leather-strip.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/leather_strip.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "steel_bar",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/steel-bar.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/steel_bar.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "spring_steel",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/spring-steel.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/spring_steel.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "carbon_fibre",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/carbon-fibre.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/carbon_fibre.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "lighter",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/lighter.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/lighter.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "bus_pass",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/bus-pass.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/bus_pass.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "bag_bumbag",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/bag-bumbag.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/bag_bumbag.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "bag_rucksack",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/bag-rucksack.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/bag_rucksack.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  },
  {
   "id": "bag_holdall",
   "area": "Items: Groceries & materials",
-  "status": "partial",
+  "status": "done",
   "parts": {
    "model": "done",
-   "icon": "todo"
+   "icon": "done"
   },
   "files": [
    "public/models/pickups/bag-holdall.glb",
-   "src/render/props/pickups.ts"
+   "src/render/props/pickups.ts",
+   "public/icons/items/bag_holdall.webp",
+   "tools/icons/render_items.mjs"
   ],
-  "format": "GLB",
+  "format": "GLB + WebP",
   "source": "original (tools/pickups/models.mjs)",
   "licence": "Original work for Street Fight UK",
   "origin": "original",
   "optimised": true,
   "integrated": true,
   "tested": true,
-  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
  }
 ]

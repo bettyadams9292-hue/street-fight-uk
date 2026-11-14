@@ -2,757 +2,829 @@
   {
     "id": "w_bottle",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/bottle.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_bottle.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (240 tris, 16 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (240 tris, 16 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_broken_bottle",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/broken-bottle.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_broken_bottle.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (140 tris, 8 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (140 tris, 8 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_bat",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/bat.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_bat.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (160 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (160 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_baseball_bat",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/baseball-bat.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_baseball_bat.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (240 tris, 15 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget and came from 'Melee Weapons - FREE' (licence unknown)."
+    "notes": "Original low-poly model (240 tris, 15 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget and came from 'Melee Weapons - FREE' (licence unknown). Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_pipe",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/pipe.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_pipe.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (184 tris, 11 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget and came from 'Melee Weapons - FREE' (licence unknown)."
+    "notes": "Original low-poly model (184 tris, 11 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget and came from 'Melee Weapons - FREE' (licence unknown). Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_metal_bar",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/metal-bar.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_metal_bar.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (720 tris, 40 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (720 tris, 40 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_crowbar",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/crowbar.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_crowbar.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (156 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget."
+    "notes": "Original low-poly model (156 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_hammer",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/hammer.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_hammer.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (216 tris, 14 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget."
+    "notes": "Original low-poly model (216 tris, 14 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_machete",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/machete.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_machete.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (124 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (124 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_knife",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/knife.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_knife.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (132 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (132 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_chain",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/chain.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_chain.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (676 tris, 38 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (676 tris, 38 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_wrench",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/wrench.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_wrench.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (132 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget."
+    "notes": "Original low-poly model (132 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. This row only asks for the icon (the model was 'yours'); the old photo-scan model was replaced anyway because it was far over budget. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_club",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/club.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_club.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (196 tris, 14 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (196 tris, 14 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_pool_cue",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/pool-cue.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_pool_cue.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (224 tris, 19 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (224 tris, 19 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_pole",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/pole.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_pole.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (152 tris, 11 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (152 tris, 11 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_torch",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/torch.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_torch.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (412 tris, 24 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (412 tris, 24 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_mop",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/mop.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_mop.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (332 tris, 23 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (332 tris, 23 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_broom",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/broom.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_broom.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (96 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (96 tris, 9 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_road_sign",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/road-sign.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_road_sign.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (260 tris, 20 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (260 tris, 20 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_cone",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/cone.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_cone.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (288 tris, 20 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (288 tris, 20 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_plank",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/plank.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_plank.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (76 tris, 6 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (76 tris, 6 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_chair_leg",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/chair-leg.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_chair_leg.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (192 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (192 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_table_leg",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/table-leg.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_table_leg.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (200 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (200 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_chair",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/chair.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_chair.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (184 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (184 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_tv",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/tv.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_tv.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (136 tris, 13 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (136 tris, 13 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_monitor",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/monitor.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_monitor.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (140 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (140 tris, 12 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_skateboard",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/skateboard.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_skateboard.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (356 tris, 23 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (356 tris, 23 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_umbrella",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/umbrella.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_umbrella.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (308 tris, 20 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (308 tris, 20 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_shelf_bar",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/shelf-bar.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_shelf_bar.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (424 tris, 24 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (424 tris, 24 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_shovel",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/shovel.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_shovel.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (224 tris, 15 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (224 tris, 15 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_garden_fork",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/garden-fork.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_garden_fork.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (264 tris, 18 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (264 tris, 18 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_rake",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/rake.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_rake.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (276 tris, 20 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (276 tris, 20 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_brick",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/brick.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_brick.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (60 tris, 4 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (60 tris, 4 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_frying_pan",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/frying-pan.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_frying_pan.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (172 tris, 11 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (172 tris, 11 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_golf_club",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/golf-club.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_golf_club.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (156 tris, 11 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (156 tris, 11 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   },
   {
     "id": "w_dustbin_lid",
     "area": "Items: Weapons",
-    "status": "partial",
+    "status": "done",
     "parts": {
       "model": "done",
-      "icon": "todo"
+      "icon": "done"
     },
     "files": [
       "public/models/weapons/dustbin-lid.glb",
-      "tools/weapons/build_weapons.py"
+      "tools/weapons/build_weapons.py",
+      "public/icons/items/w_dustbin_lid.webp",
+      "tools/icons/render_items.mjs"
     ],
-    "format": "GLB",
+    "format": "GLB + WebP",
     "source": "original",
     "licence": "Original work for Street Fight UK",
     "origin": "original",
     "optimised": true,
     "integrated": true,
     "tested": true,
-    "notes": "Original low-poly model (324 tris, 21 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon left for the item-icons package."
+    "notes": "Original low-poly model (324 tris, 21 KB, flat colours, no textures), grip at origin, +y, real size. Loaded via WEAPON_FILES in src/render/props/PropLibrary.ts; code-built fallback in weaponMesh.ts kept. Seen held and dropped in the running game. Inventory icon (item-icons package): 128 px transparent WebP rendered from this row's own GLB by tools/icons/render_items.mjs (three.js in headless Chrome; same three-quarter camera, key/fill/rim lights, auto-fit margin and dark outline with a faint light edge for every icon, long weapons on a diagonal). Original work. itemIconUrl returns /icons/items/<id>.webp (painted canvas kept as fallback, and for recoloured stacks); verified loaded at 128 px through itemIconUrl in the running game (all 116 rendered ids in one inventory), and seen in inventory/shop screenshots."
   }
 ]
