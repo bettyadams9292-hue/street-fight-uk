@@ -22,7 +22,7 @@ interface ActClip {
   keyed?: JointName[];
   /** Playback rate. */
   speed?: number;
-  /** Use the keyed pose's hip height (lying on a bed rather than the floor). */
+  /** Use the keyed pose's hip height, so the body sits on the game's seats and lies on its beds. */
   keyedDrop?: boolean;
 }
 
@@ -42,12 +42,12 @@ export const ACTIVITY_CLIPS: Record<string, ActClip> = {
   reach_low: { clip: 'ual_reach_low', speed: 0.45 },
   plate: { clip: 'ual_idle', upper: 'ual_carry' },
   bag: { clip: 'ual_bag', speed: 1.1 },
-  sit_edge: { clip: 'ual_sit' },
-  sit_talk: { clip: 'ual_sit_talk' },
-  sit_arms: { clip: 'ual_sit', upper: 'ual_fold_arms' },
-  sit_phone: { clip: 'ual_sit', upper: 'ual_phone' },
-  sit_drink: { clip: 'ual_sit', upper: 'ual_drink', speed: 0.7 },
-  eat: { clip: 'ual_sit', upper: 'ual_drink', speed: 1.1 },
+  sit_edge: { clip: 'ual_sit', keyedDrop: true },
+  sit_talk: { clip: 'ual_sit_talk', keyedDrop: true },
+  sit_arms: { clip: 'ual_sit', upper: 'ual_fold_arms', keyedDrop: true },
+  sit_phone: { clip: 'ual_sit', upper: 'ual_phone', keyedDrop: true },
+  sit_drink: { clip: 'ual_sit', upper: 'ual_drink', speed: 0.7, keyedDrop: true },
+  eat: { clip: 'ual_sit', upper: 'ual_drink', speed: 1.1, keyedDrop: true },
   // Exercise bike: the captured seated reach to the handlebars; the pedalling legs stay keyed.
   cycle: { clip: 'ual_drive', keyed: ['hips', 'lHip', 'lKnee', 'rHip', 'rKnee', 'lFoot', 'rFoot'], keyedDrop: true },
   lie: { clip: 'ual_fall_back', keyedDrop: true },
