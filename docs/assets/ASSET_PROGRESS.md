@@ -8,12 +8,12 @@ The source of truth is `docs/ASSETS_NEEDED.xlsx`; its CSV twin is `docs/ASSETS_N
 - Spreadsheet rows: **595**
 - Ticked (Got it = TRUE): **19**
 - Done this production (integrated and tested): **19** (0 from downloaded packs, 19 made originally)
-- Partly done: **0**, blocked: **0**
-- Still to start: **576**
+- Partly done: **36**, blocked: **0**
+- Still to start: **540**
 
 | Area | Rows | Done | Partial |
 |---|---|---|---|
-| Items: Weapons | 36 | 0 | 0 |
+| Items: Weapons | 36 | 0 | 36 |
 | Items: Clothing | 30 | 0 | 0 |
 | Items: Accessories | 15 | 0 | 0 |
 | Items: Food & first aid | 31 | 0 | 0 |
