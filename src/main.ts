@@ -91,6 +91,7 @@ const begin = async (): Promise<void> => {
     humans,
     loadAraMocap(),
     loadRokoko(),
+    import('./render/anim/ual').then((u) => u.loadUal()),
     loadFlooring(),
     loadKenney(),
     loadGym(),
