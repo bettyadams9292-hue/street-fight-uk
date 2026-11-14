@@ -5,6 +5,7 @@ import { shopPiece, type ShopModelId } from './props/ShopLibrary';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { doorPiece, type DoorStyle } from './props/DoorLibrary';
+import { MANSION_WIDTH, PROPERTY_PROP_KINDS, propertyPiece, propertyProp } from './props/PropertyLibrary';
 import { surfaceMaterial, kitGroundTexture as kitTexture, type Surface, type SurfaceOptions } from './street/Flooring';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
@@ -1808,6 +1809,7 @@ export class LevelView {
     // Lawn from the railings back to the house.
     this.ground(f.x0, f.x1, z, this.back, new THREE.MeshStandardMaterial({ color: 0x3f6a34, roughness: 1 }), 0.012);
     this.box(1.6, 0.02, set, cx, 0.02, this.back - set / 2, this.mat('#bdb5a4', 0.95), false);
+    if (this.mansionKit(f, style as 'georgian' | 'stone' | 'brick' | 'modern', cx, z, w)) return;
     // The house: a main block and two lower wings set back a little.
     this.box(mainW, H, 0.6, cx, H / 2, z - 0.3, wallMat);
     for (const sx of [-1, 1]) this.box(wingW, H * 0.72, 0.6, cx + sx * (mainW / 2 + wingW / 2 + 0.2), (H * 0.72) / 2, z - 1.2, wallMat);
@@ -1907,6 +1909,39 @@ export class LevelView {
       plate.position.set(gateX - 1.8, 1.7, rz + 0.26);
       this.group.add(plate);
     }
+  }
+
+  /** The mansion, its railings and its gates from the property kit; false (nothing added) until it's loaded. */
+  private mansionKit(f: FacadeDef, style: 'georgian' | 'stone' | 'brick' | 'modern', cx: number, z: number, w: number): boolean {
+    const house = propertyPiece(`mansion_${style}`);
+    const gates = propertyPiece(style === 'brick' ? 'gates_brick' : 'gates_stone');
+    if (!house || !gates) return false;
+    house.position.set(cx, 0, z);
+    house.scale.x = (w - 0.4) / MANSION_WIDTH[style];
+    this.group.add(house);
+    const gateX = this.level.exits.find((e) => e.kind === 'door' && e.x >= f.x0 && e.x <= f.x1)?.x ?? cx;
+    const rz = this.back + 0.08;
+    gates.position.set(gateX, 0, rz);
+    this.group.add(gates);
+    // Railings either side of the gate piers, in 4 m runs stretched to fill.
+    for (const [a, b] of [[f.x0, gateX - 2.08], [gateX + 2.08, f.x1]]) {
+      const n = Math.max(1, Math.ceil((b - a) / 4 - 0.01));
+      const step = (b - a) / n;
+      for (let i = 0; i < n && step > 0.3; i++) {
+        const r = propertyPiece(style === 'brick' ? 'railing_brick' : 'railing_stone');
+        if (!r) break;
+        r.position.set(a + step * (i + 0.5), 0, rz);
+        r.scale.x = step / 4;
+        this.group.add(r);
+      }
+    }
+    if (f.label) {
+      const t = signTexture(f.label, '#1a1a1e', '#e8d6a0', { w: 512, h: 96 });
+      const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.28), new THREE.MeshStandardMaterial({ map: t, roughness: 0.4, metalness: 0.3 }));
+      plate.position.set(gateX - 1.8, 1.7, rz + 0.29);
+      this.group.add(plate);
+    }
+    return true;
   }
 
   private fence(f: FacadeDef): void {
@@ -2135,6 +2170,12 @@ export class LevelView {
     const c = p.colour;
     const B = (w: number, h: number, d: number, x: number, y: number, z: number, m: THREE.Material, cast = true) => this.box(w, h, d, x, y, z, m, cast, g);
     const C = (r0: number, r1: number, h: number, x: number, y: number, z: number, m: THREE.Material, seg = 16) => this.cyl(r0, r1, h, x, y, z, m, seg, g);
+    // Property kit models (PropertyLibrary); the built-in versions below until they load.
+    const kitProp = PROPERTY_PROP_KINDS.has(p.kind) ? propertyProp(p.kind, W, D, { colour: c, label: p.label }) : null;
+    if (kitProp) {
+      g.add(kitProp);
+      return;
+    }
     switch (p.kind) {
       case 'bin': {
         const m = this.mat(c ?? '#1b1d22', 0.55);
@@ -2949,6 +2990,57 @@ export class LevelView {
         g.add(ch);
         break;
       }
+      // The big rooms' fittings, plain, for when the property kit hasn't loaded.
+      case 'agent_window': {
+        const alu = this.mat('#c8ccd2', 0.35, 0.8);
+        for (const sx of [-1, 1]) B(0.05, 2.2, 0.05, sx * W / 2, 1.1, 0, alu);
+        B(W - 0.1, 0.3, 0.02, 0, 1.95, 0, this.mat('#16365a', 0.5), false);
+        for (let i = 0; i < 6; i++) B(0.58, 0.62, 0.012, -0.68 + (i % 3) * 0.68, i < 3 ? 1.36 : 0.62, 0, this.mat('#f8f6f0', 0.6), false);
+        break;
+      }
+      case 'pool_basin': {
+        B(W, 0.4, D, 0, 0.2, 0, this.mat('#dfe8ea', 0.4));
+        B(W - 0.4, 0.02, D - 0.4, 0, 0.4, 0, this.mat('#2a9ac8', 0.05, 0.1, { emissive: 0x0a3a5a }), false);
+        break;
+      }
+      case 'pool_lounger':
+        B(W, 0.32, D, 0, 0.16, 0, this.mat('#e8e4dc', 0.5));
+        B(W - 0.5, 0.07, D - 0.06, 0.2, 0.35, 0, this.mat('#3a6a8a', 0.9), false);
+        break;
+      case 'cinema_screen':
+        B(3.2, 1.8, 0.06, 0, 1.8, 0, this.mat('#9ab8e8', 0.5, 0, { emissive: 0x7a98d8, emissiveIntensity: 0.8 }), false);
+        break;
+      case 'projector':
+        B(0.36, 0.12, 0.3, 0, 2.6, 0, this.mat('#e8e4dc', 0.4), false);
+        break;
+      case 'cinema_seats':
+        B(W, 0.45, D, 0, 0.22, 0, this.mat('#2a2a2e', 0.5));
+        B(W, 0.55, 0.2, 0, 0.72, -D / 2 + 0.1, this.mat('#2a2a2e', 0.5));
+        break;
+      case 'conservatory_glazing':
+      case 'terrace_balustrade': {
+        const glass = new THREE.MeshStandardMaterial({ color: 0xbcd4e8, transparent: true, opacity: 0.25, roughness: 0.05 });
+        B(W, p.kind === 'conservatory_glazing' ? 0.6 : 0.12, 0.25, 0, p.kind === 'conservatory_glazing' ? 0.3 : 0.06, 0, this.mat(p.kind === 'conservatory_glazing' ? '#8a4a36' : '#cfc8b8', 0.9));
+        B(W, p.kind === 'conservatory_glazing' ? 2.0 : 1.0, 0.03, 0, p.kind === 'conservatory_glazing' ? 1.6 : 0.62, 0.1, glass, false);
+        break;
+      }
+      case 'terrace_deck':
+        B(W, 0.03, D, 0, 0.015, 0, this.mat('#8a5a32', 0.8), false);
+        break;
+      case 'terrace_sofa':
+        B(W, 0.4, D, 0, 0.2, 0, this.mat('#5a4a3a', 0.9));
+        B(W - 0.2, 0.12, D - 0.2, 0, 0.46, 0.05, this.mat('#e8e0cc', 0.95), false);
+        break;
+      case 'terrace_table':
+        C(0.45, 0.45, 0.03, 0, 0.72, 0, this.mat('#e8e4dc', 0.3));
+        C(0.03, 0.03, 0.72, 0, 0.36, 0, this.mat('#2a2a2e', 0.4, 0.6), 6);
+        break;
+      case 'wardrobe_wall':
+        B(W, 2.6, D, 0, 1.3, 0, this.mat('#2a2a2e', 0.5));
+        break;
+      case 'dressing_island':
+        B(W, 0.9, D, 0, 0.45, 0, this.mat('#4a2e1a', 0.5));
+        break;
       case 'stairwell': {
         // A hole in the garage floor with a steel balustrade, and stairs dropping away to the back.
         const concrete = this.mat('#8a8884', 0.9);

@@ -13,6 +13,7 @@ import { loadShop } from './render/props/ShopLibrary';
 import { loadHydro } from './render/props/HydroLibrary';
 import { loadSecurity } from './render/props/SecurityLibrary';
 import { loadVehicles } from './render/props/VehicleLibrary';
+import { loadProperty } from './render/props/PropertyLibrary';
 import { loadDoors } from './render/props/DoorLibrary';
 import { loadFlooring } from './render/street/Flooring';
 import { loadKenney } from './render/props/KenneyLibrary';
@@ -100,6 +101,7 @@ const begin = async (): Promise<void> => {
     loadSecurity(),
     loadVehicles(),
     loadDoors(),
+    loadProperty(),
     polyKit,
     loadPickups(),
     loadTextureFiles(),
