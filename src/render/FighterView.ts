@@ -123,8 +123,8 @@ export class FighterView {
     const rest = rig.hipsRest;
     rig.joints.hips.position.set(rest.x + out.hips[0], rest.y + (out.hips[1] - rig.metrics.hipsY), rest.z + out.hips[2]);
     rig.pitch.rotation.x = out.pitch;
-    // Lift slightly when lying down so limbs don't sink into the ground.
-    rig.pitch.position.y = Math.abs(out.pitch) > 0.3 ? 0.12 * Math.min(1, Math.abs(out.pitch) / (Math.PI / 2)) : 0;
+    // A body tipped over rests on whatever part of it is lowest (toes, then knees, hands and chest).
+    rig.pitch.position.y = out.lift;
     rig.sync?.();
 
     // Hit flash.

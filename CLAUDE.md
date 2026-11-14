@@ -113,6 +113,9 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - **Property:** 20 properties to buy, live in, let or sell, sold through the Keys & Co estate agents (`realty/`). There's a new gated road, Ashcombe Park, with mansions, and interiors are generated for each property. Rent and finance tracking is in `progress/finance.ts`.
   - All of it is built in code: no new asset files.
 
+**14 Nov 2026**
+- #23: Big Dunc progression. Boss rewards that don't fit wait on the ground and are saved (`save.bossLoot`); Hale House's gate, the objective and the victory screen say exactly what's left (`src/world/gates.ts`); result screens keep every button on screen.
+
 ## Open questions and next steps
 
 - PR #20's own "not done" list:

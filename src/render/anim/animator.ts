@@ -1,3 +1,4 @@
+import { groundLift } from './ground';
 import { araMocapPose, araPose, mocapClip, mocapStride } from './araPose';
 import { REACTIONS, clipDuration, guardPose, reactionPose, strikeClip, strikePose } from './rokoko';
 import type { Fighter, FighterState } from '../../fighter/Fighter';
@@ -44,6 +45,8 @@ export interface AnimOutput {
   hips: Vec3;
   /** Whole-body pitch about the feet. */
   pitch: number;
+  /** How far the pitched body is raised so it rests on the floor instead of in it (see ground.ts). */
+  lift: number;
   /** Which way the fighter is turned (radians about y). */
   yaw: number;
 }
@@ -1000,7 +1003,8 @@ export class FighterAnimator {
   private finish(pose: Pose, pelvis: Vec3, joints: Record<JointName, Vec3>): AnimOutput {
     const out = {} as Record<JointName, Vec3>;
     for (const n of JOINTS) out[n] = J3(joints[n]);
-    return { joints: out, hips: pelvis, pitch: pose.pitch ?? 0, yaw: this.yaw };
+    const pitch = pose.pitch ?? 0;
+    return { joints: out, hips: pelvis, pitch, lift: groundLift(out, pelvis, pitch, this.m), yaw: this.yaw };
   }
 
   /** The pose before foot planting (tests). */
