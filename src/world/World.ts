@@ -35,6 +35,7 @@ import { lootTableFor, rollLoot } from '../items/loot';
 import type { AreaId, Progress } from '../progress/Progress';
 import { defaultAttributes } from '../stats/Stats';
 import { Arena, type Obstacle } from './Arena';
+import { gateNeeds, lockedMessage } from './gates';
 import {
   propBox,
   type BreakableDef,
@@ -67,7 +68,7 @@ export interface WorldEvents {
   'encounter:wave': { id: string; wave: number; of: number };
   'encounter:cleared': { id: string; cash: number; xp: number; optional: boolean; secondWind?: boolean };
   'boss:phase': { boss: BossDef; phase: BossPhase };
-  'boss:defeated': { boss: BossDef; first: boolean; cash: number; xp: number; items: string[] };
+  'boss:defeated': { boss: BossDef; first: boolean; cash: number; xp: number; items: string[]; left: string[] };
   cash: { amount: number };
   'item:picked': { name: string; qty: number; rarity: string; stolen: boolean };
   'item:full': { name: string };
@@ -116,6 +117,8 @@ export interface GroundItem {
   once?: boolean;
   /** Lands with a little bounce. */
   bornAt: number;
+  /** A boss reward the save remembers (save.bossLoot): it is still here when you come back. */
+  kept?: boolean;
 }
 
 export interface CashPickup {
@@ -432,7 +435,7 @@ export class World {
       m.downAt = -1;
       // Weapons specialist: picks up whatever they walk onto.
       if (m.brain.style.weaponClasses && !f.weapon && f.isFree) {
-        const i = this.items.findIndex((it) => ITEMS[it.stack.id]?.weapon && Math.abs(it.x - f.pos.x) < 0.5 && Math.abs(it.z - f.pos.z) < 0.4);
+        const i = this.items.findIndex((it) => !it.kept && ITEMS[it.stack.id]?.weapon && Math.abs(it.x - f.pos.x) < 0.5 && Math.abs(it.z - f.pos.z) < 0.4);
         if (i >= 0) {
           const it = this.items[i];
           this.items.splice(i, 1);
@@ -729,6 +732,10 @@ export class World {
         (!def.optional && (progress.has(this.clearedKey(def)) || (def.boss ? progress.has(BOSSES[def.boss].flag) : false)));
       this.encounters.push({ def, status: cleared ? 'cleared' : 'waiting', wave: 0, enemies: [], boss: null, bossDef: null, phasesDone: 0 });
     }
+    // Boss rewards you had no room for are still where they fell.
+    for (const k of progress.save.bossLoot) {
+      if (k.area === level.id) this.items.push({ key: `g${this.itemSeq++}`, stack: k.stack, x: k.x, z: k.z, bornAt: -999, kept: true });
+    }
     for (const p of level.pickups) {
       const oneTime = p.kind === 'cash' || p.kind === 'secret' || p.once;
       if (oneTime && progress.has(this.pickupKey(p))) continue;
@@ -883,7 +890,16 @@ export class World {
       return a.def.lock ? 'Clear the area' : 'Deal with them';
     }
     const next = this.encounters.find((e) => e.status === 'waiting' && !e.def.optional && e.def.objective);
-    return next?.def.objective ?? this.level.objective;
+    if (next) return next.def.objective!;
+    // Every fight here is won. If the way on needs more than that, say what, instead of the old "beat the boss" line.
+    if (this.encounters.every((e) => e.def.optional || e.status === 'cleared')) {
+      const shut = this.level.exits.find((e) => e.kind === 'edge' && e.requiresAll && exitLocked(e, this.progress));
+      const need = shut ? gateNeeds(shut, this.progress, this.level.id)[0] : null;
+      if (shut && need) return `${shut.label ?? 'The way on'} is locked: ${need.label}`;
+      const on = this.level.exits.find((e) => e.kind === 'edge' && e.requiresAll && !exitLocked(e, this.progress));
+      if (on) return `${on.label ?? 'The way on'} is open: head ${on.side === 'left' ? 'west' : 'east'}`;
+    }
+    return this.level.objective;
   }
 
   // ---- per-frame update -------------------------------------------------------
@@ -1059,10 +1075,26 @@ export class World {
     this.items.push(g);
     // Keep the area tidy: clear the cheapest old junk, never valuables or quest items.
     if (this.items.length > MAX_GROUND_ITEMS) {
-      const junk = this.items.findIndex((it) => it !== g && ITEMS[it.stack.id].value <= 2 && !ITEMS[it.stack.id].questFlag && !it.pickupId);
+      const junk = this.items.findIndex((it) => it !== g && ITEMS[it.stack.id].value <= 2 && !ITEMS[it.stack.id].questFlag && !it.pickupId && !it.kept);
       if (junk >= 0) this.items.splice(junk, 1);
     }
     return g;
+  }
+
+  /** Leave a boss reward on the ground and remember it in the save until it is picked up. */
+  private keepOnGround(stack: ItemStack, x: number, z: number): void {
+    const g = this.dropOnGround(stack, x, z);
+    g.kept = true;
+    this.progress.save.bossLoot.push({ area: this.level.id, x: g.x, z: g.z, stack });
+  }
+
+  /** A kept reward was taken (all of it, or all but `rest`): bring the save's record in line. */
+  private keptTaken(uid: string, rest: ItemStack | null): void {
+    const list = this.progress.save.bossLoot;
+    const i = list.findIndex((k) => k.stack.uid === uid);
+    if (i < 0) return;
+    if (rest) list[i] = { ...list[i], stack: rest };
+    else list.splice(i, 1);
   }
 
   private spillLoot(tableId: string, x: number, z: number): string[] {
@@ -1223,21 +1255,25 @@ export class World {
     if (e.bossDef) {
       const first = this.progress.claim(`boss:${e.bossDef.id}`);
       const items: string[] = [];
+      const left: string[] = [];
       if (first) {
         this.progress.set(e.bossDef.flag);
         this.progress.save.stats.bosses++;
         cash += e.bossDef.reward.cash;
         xp += e.bossDef.reward.xp;
-        // Unique drops: straight into your pockets, or at your feet if they're full.
-        for (const id of e.bossDef.drops ?? []) {
-          if (!ITEMS[id]) continue;
-          const left = this.progress.giveItem(id);
-          if (left) this.dropOnGround(left, e.boss!.pos.x, e.boss!.pos.z);
-          items.push(ITEMS[id].name);
-        }
+        // Unique drops: straight into your pockets. If they're full, the reward lands by the boss
+        // and the save remembers it, so it is never lost by leaving, going home or closing the game.
+        (e.bossDef.drops ?? []).forEach((id, i) => {
+          if (!ITEMS[id]) return;
+          const over = this.progress.giveItem(id);
+          if (over) {
+            this.keepOnGround(over, e.boss!.pos.x + (i - 0.5) * 0.7, e.boss!.pos.z + 0.35);
+            left.push(ITEMS[id].name);
+          } else items.push(ITEMS[id].name);
+        });
       }
       this.pay(cash, xp);
-      this.events.emit('boss:defeated', { boss: e.bossDef, first, cash, xp, items });
+      this.events.emit('boss:defeated', { boss: e.bossDef, first, cash, xp, items, left });
       return;
     }
     this.pay(cash, xp);
@@ -1607,6 +1643,7 @@ export class World {
       }
       p.equipWeapon(d.weapon, stack.hits, stack.mods);
       this.progress.save.held = stack;
+      if (g.kept) this.keptTaken(stack.uid, null);
       this.markPickupTaken(g);
       this.events.emit('item:held', { name: d.name });
       return true;
@@ -1617,8 +1654,10 @@ export class World {
     }
     this.items.splice(idx, 1);
     const qty = stack.qty;
+    const uid = stack.uid;
     const left = this.progress.pocket(stack);
     if (left) this.items.splice(idx, 0, { ...g, stack: left });
+    if (g.kept) this.keptTaken(uid, left);
     this.markPickupTaken(g);
     this.events.emit('item:picked', { name: d.name, qty: qty - (left?.qty ?? 0), rarity: d.rarity, stolen: !!stack.stolen });
     if (left) this.events.emit('item:full', { name: d.name });
@@ -1735,7 +1774,7 @@ export class World {
     if (exitLocked(ex, this.progress)) {
       if (this.sim.frame - this.lockedMsgAt > 2 * SIM_HZ) {
         this.lockedMsgAt = this.sim.frame;
-        this.events.emit('area:locked', { text: ex.lockedText ?? 'Can’t go that way yet' });
+        this.events.emit('area:locked', { text: lockedMessage(ex, this.progress, this.level.id) });
       }
       return;
     }
