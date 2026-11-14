@@ -69,7 +69,7 @@ The source of truth is `docs/ASSETS_NEEDED.xlsx`; its CSV twin is `docs/ASSETS_N
 | `jewellery` | Rings (13), Watches (12), Necklaces (18), Grills (9), Materials (2) | GLB per piece; metal and gem materials | wave 2 |
 | `character` | Clothing (30), Accessories (15), Hair (7), Facial hair (3), Tattoos (6), Scars (4) | MakeHuman CC0 assets from the user's folder; decals | wave 2 |
 | `world` | World props (28), Breakables (7), Buildings (15), Furniture (13), Grow equipment (8), Valuables (29) | Downtown City MegaKit, Kenney kits, originals | wave 2 |
-| `audio` | Sound (19), plus music | CC0 packs fetched through the user's browser | lead, in parallel |
+| `audio` | Sound (19) | original recordings rendered by `tools/audio/make_sounds.py` (the browser-to-container route for Kenney packs proved impractical) | **done**: 19/19 ticked |
 
 ## Problems and decisions
 
