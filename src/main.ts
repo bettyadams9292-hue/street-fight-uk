@@ -4,6 +4,7 @@ import { Game } from './Game';
 import { loadCharacterModels } from './render/characterModels';
 import { loadCityKit } from './render/city/CityKit';
 import { loadProps } from './render/props/PropLibrary';
+import { loadPickups } from './render/props/pickups';
 import { preloadAllHumans } from './render/human/HumanBuilder';
 import { loadAraMocap } from './render/anim/araPose';
 import { loadRokoko } from './render/anim/rokoko';
@@ -80,7 +81,7 @@ const begin = async (): Promise<void> => {
   const humans = query.get('humans') === 'off' ? Promise.resolve(false) : preloadAllHumans();
   // The low-poly street kits (about 2 MB over the wire): without them the streets keep their older look.
   const polyKit = query.get('world') === 'classic' ? Promise.resolve(false) : loadPolyKit();
-  const assets = Promise.all([models, kit, loadProps(), humans, loadAraMocap(), loadRokoko(), loadFlooring(), loadKenney(), loadGym(), loadShop(), loadHydro(), loadSecurity(), loadDoors(), polyKit]);
+  const assets = Promise.all([models, kit, loadProps(), humans, loadAraMocap(), loadRokoko(), loadFlooring(), loadKenney(), loadGym(), loadShop(), loadHydro(), loadSecurity(), loadDoors(), polyKit, loadPickups()]);
   await (shot ? assets : Promise.race([assets, new Promise((r) => setTimeout(r, 6000))]));
   start();
 };
