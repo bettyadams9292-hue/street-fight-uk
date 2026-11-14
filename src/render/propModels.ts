@@ -7,6 +7,7 @@ import { gymKitPiece } from './props/GymLibrary';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { homeFurnitureModel } from './props/homeFurniture';
+import { bikePiece, carPiece } from './props/VehicleLibrary';
 
 /**
  * Furniture, cars and off-road bikes, built from primitives so they share
@@ -480,8 +481,29 @@ export function buildCarModel(id: string, colour?: string): THREE.Group {
   const def = CARS[id];
   const g = new THREE.Group();
   if (!def) return g;
+  // The model from VehicleLibrary when it has loaded; the code-built car otherwise.
+  const model = carPiece(id, colour ?? def.colours[0], def.size[0] * 2, def.size[1] * 2);
+  if (model) {
+    g.add(model);
+    if (id === 'warden') wardenKit(g, model);
+    return g;
+  }
   car(g, def, colour ?? def.colours[0]);
   return g;
+}
+
+/** The Warden's roof rack, snorkel and spare wheel, on top of the shared SUV model. */
+function wardenKit(g: THREE.Group, model: THREE.Object3D): void {
+  const box = new THREE.Box3().setFromObject(model);
+  const L = box.max.x - box.min.x;
+  const Wd = box.max.z - box.min.z;
+  const top = box.max.y;
+  const trim = mat('#141416', 0.5, 0.3);
+  B(g, L * 0.42, 0.05, Wd * 0.8, -L * 0.08, top + 0.06, 0, trim, false);
+  for (const dx of [-L * 0.27, -L * 0.08, L * 0.11]) for (const dz of [-Wd * 0.38, Wd * 0.38]) B(g, 0.04, 0.07, 0.04, dx, top + 0.02, dz, trim, false);
+  B(g, 0.08, top * 0.45, 0.08, L * 0.18, top * 0.62, Wd / 2 + 0.03, trim, false);
+  const spare = C(g, 0.36, 0.36, 0.2, box.min.x - 0.1, top * 0.5, 0, mat('#0b0b0b', 0.9), 16);
+  spare.rotation.z = Math.PI / 2;
 }
 
 function car(g: THREE.Group, def: CarDef, colour: string): void {
@@ -560,11 +582,28 @@ export function buildBikeModel(id: string, colour?: string): THREE.Group {
   const def = BIKES[id];
   const g = new THREE.Group();
   if (!def) return g;
+  // The model from VehicleLibrary when it has loaded (numbered like the built one); the code-built bike otherwise.
+  const model = bikePiece(id, colour ?? def.colours[0], bikePlate(def));
+  if (model) {
+    g.add(model);
+    return g;
+  }
   bike(g, def, colour ?? def.colours[0]);
   return g;
 }
 
 const plateMats = new Map<string, THREE.MeshStandardMaterial>();
+
+/** The white number board with this bike's racing number. */
+function bikePlate(def: BikeDef): THREE.MeshStandardMaterial {
+  const num = String(10 + (def.id.length * 7) % 89);
+  let plateMat = plateMats.get(num);
+  if (!plateMat) {
+    plateMat = new THREE.MeshStandardMaterial({ map: signTexture(num, '#f0eee8', '#111', { w: 128, h: 128 }), roughness: 0.6 });
+    plateMats.set(num, plateMat);
+  }
+  return plateMat;
+}
 
 function bike(g: THREE.Group, def: BikeDef, colour: string): void {
   const R = def.wheel;
@@ -638,12 +677,7 @@ function bike(g: THREE.Group, def: BikeDef, colour: string): void {
   const rear = B(g, 0.6 * s, 0.05, 0.2, -0.68 * s, R + 0.72 * v, 0, plastic);
   rear.rotation.z = 0.18;
   // Side plates with a number.
-  const num = String(10 + (def.id.length * 7) % 89);
-  let plateMat = plateMats.get(num);
-  if (!plateMat) {
-    plateMat = new THREE.MeshStandardMaterial({ map: signTexture(num, '#f0eee8', '#111', { w: 128, h: 128 }), roughness: 0.6 });
-    plateMats.set(num, plateMat);
-  }
+  const plateMat = bikePlate(def);
   for (const dz of [-0.13, 0.13]) {
     const p = B(g, 0.26 * s, 0.2 * s, 0.01, -0.42 * s, R + 0.56 * v, dz, plateMat, false);
     p.rotation.z = 0.15;
