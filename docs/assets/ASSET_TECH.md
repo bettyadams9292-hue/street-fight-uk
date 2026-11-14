@@ -28,10 +28,10 @@ Read this alongside `CLAUDE.md` and `ASSET_STYLE_GUIDE.md`. Everyone working on 
 ## Tools in this environment
 
 - **No `node_modules` in the repo.** three.js and friends are in `/tmp/nm/node_modules`.
-- **Build and serve:** `/opt/sfuk/build.sh <repo> <port>`. Each worker uses its own port, then `http://127.0.0.1:<port>/`. Add `?debug=1&shot=estate` for a quick deterministic start; `window.sfuk` is the game.
-- **Type check:** `/opt/sfuk/typecheck.sh <repo>`. This is a stand-in for `npm run typecheck`, with three.js stubbed. Errors in `modelSet.ts`, `KenneyLibrary.ts` and `PolyKit.ts` were already there and are filtered out.
-- **Tests:** `/opt/sfuk/test.sh <repo> [files]`. All test files must pass.
-- **Model stats:** `python3 /opt/sfuk/glbstat.py file.glb` gives triangles, materials, textures and size in metres.
+- **Build and serve:** `npm run dev` (or `npm run build && npm run preview`; give each parallel worker its own port with `--port`).  Add `?debug=1&shot=estate` for a quick deterministic start; `window.sfuk` is the game.
+- **Type check:** `npm run typecheck`. 
+- **Tests:** `npm test`. All test files must pass.
+- **Model stats:** `python3 tools/assets/glbstat.py file.glb` gives triangles, materials, textures and size in metres.
 - **Screenshots:** Playwright, with `import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs'` and `chromium.launch({ channel: 'chrome' })`.
 - **Making GLBs:** three.js `GLTFExporter` runs in headless Chrome. Build the mesh in a page, export it with `binary: true`, and save the bytes. Python has `numpy`, `PIL` and `scipy`. There's no Blender in this container.
 - **Network.** The shell reaches GitHub and npm only. Kenney, Poly Haven, ambientCG and the rest are not reachable from here. Packs already downloaded are in `/mnt/user-data/uploads/StreetFightUK-assets/`, and the lead fetches more with the user's browser.

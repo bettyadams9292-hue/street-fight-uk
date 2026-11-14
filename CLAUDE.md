@@ -72,6 +72,14 @@ The main gaps:
 
 When the owner adds an asset that covers a row, wire it in and tick the row.
 
+**Asset production (branch `assets-production`, 14 Nov 2026).** 302 of the 595 rows are done and ticked. The tracking lives in `docs/assets/`:
+- `ASSET_RESUME.md`: where things stand and how to carry on. Read it first.
+- `ASSET_STYLE_GUIDE.md`: the look and the triangle budgets.
+- `ASSET_TECH.md`: formats and registries.
+- `BRIEF_COMMON.md`: the rules for any asset work.
+- `packages/`: ready briefs for the four unfinished packages (jewellery, household, character, world).
+- `docs/assets/ledger/*.json`: one entry per row worked on. Run `python3 tools/assets/ledger.py` to rebuild `ASSET_MANIFEST.md` and `ASSET_PROGRESS.md` and to tick the sheet. Never tick it by hand.
+
 ## Work log
 
 **12 Nov 2026**
