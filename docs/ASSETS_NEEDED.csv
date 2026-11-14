@@ -260,28 +260,28 @@ Grow business: unit upgrades,Reinforced steel door,security_door,Textures / 3D m
 Grow business: unit upgrades,Electrical upgrade,electrics,Textures / 3D model for the upgrade,Drawn in code,FALSE
 Grow business: unit upgrades,Three-phase supply,three_phase,Textures / 3D model for the upgrade,Drawn in code,FALSE
 Grow business: unit upgrades,Office lounge,lounge,Textures / 3D model for the upgrade,Drawn in code,FALSE
-Vehicles: cars,Vauxford Corvo 1.2,corvo,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Mintie Pixie Cooper,pixie,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Fordley Monarch,monarch,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Bavaria Regent 520,regent,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Lotte Vixen S,vixen,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Kestrel GT Roadster,kestrel,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Kiyo Tundra,tundra,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Range Sovereign,sovereign,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Landmark Warden 110,warden,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Ironhill Brute Pickup,brute,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Hornet RS Evo,hornet,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: cars,Velocita Phantom V12,phantom,3D car model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Kawa Pup 85,pup85,3D bike model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Hondo Trail 125,trail125,3D bike model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Yamo YZ 250F,mx250,3D bike model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Kato SX 350,mx350,3D bike model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Kawa KX 450R,mx450r,3D bike model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Hondo CRF 450 Works,mx450f,3D bike model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Husk TE 300,enduro300,3D bike model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Beta RR 500,enduro500,3D bike model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Kato Factory Edition 450,factory450,3D bike model (+ colour variants),Built from boxes in code,FALSE
-Vehicles: off-road bikes,Suzu RM-Z GP Replica,gp500,3D bike model (+ colour variants),Built from boxes in code,FALSE
+Vehicles: cars,Vauxford Corvo 1.2,corvo,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Mintie Pixie Cooper,pixie,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Fordley Monarch,monarch,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Bavaria Regent 520,regent,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Lotte Vixen S,vixen,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Kestrel GT Roadster,kestrel,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Kiyo Tundra,tundra,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Range Sovereign,sovereign,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Landmark Warden 110,warden,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Ironhill Brute Pickup,brute,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Hornet RS Evo,hornet,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: cars,Velocita Phantom V12,phantom,3D car model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Kawa Pup 85,pup85,3D bike model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Hondo Trail 125,trail125,3D bike model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Yamo YZ 250F,mx250,3D bike model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Kato SX 350,mx350,3D bike model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Kawa KX 450R,mx450r,3D bike model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Hondo CRF 450 Works,mx450f,3D bike model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Husk TE 300,enduro300,3D bike model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Beta RR 500,enduro500,3D bike model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Kato Factory Edition 450,factory450,3D bike model (+ colour variants),Built from boxes in code,TRUE
+Vehicles: off-road bikes,Suzu RM-Z GP Replica,gp500,3D bike model (+ colour variants),Built from boxes in code,TRUE
 World props,Pallet stack,pallets,3D model,Built from boxes in code,FALSE
 World props,Post box,postbox,3D model,Built from boxes in code,FALSE
 World props,Scrap heap,scrap,3D model,Built from boxes in code,FALSE
