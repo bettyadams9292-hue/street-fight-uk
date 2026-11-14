@@ -784,10 +784,17 @@ function assemble(id) {
 
 export const IDS = Object.keys(M);
 
+/**
+ * Flat things (cards, tickets, books, records, the shirt) are stood on edge, face to +Z: the game shows
+ * pickups turning in the air from a side-on camera, and a card lying flat reads as a sliver.
+ */
+const STAND_UP = new Set(['match_ticket', 'bus_pass', 'programme_1966', 'gaffer_ledger', 'signed_shirt', 'carbon_fibre']);
+
 export async function build(id) {
   parts = [];
   seed = 1;
   await M[id]();
+  if (STAND_UP.has(id)) for (const p of parts) p.geo.rotateX(Math.PI / 2);
   return assemble(id);
 }
 

@@ -32,7 +32,7 @@ const SMALL: readonly PickupId[] = ['protein_bar', 'plasters', 's_chocolate', 's
 const LARGE: readonly PickupId[] = ['bag_rucksack', 'bag_holdall', 'signed_shirt', 'first_aid'];
 export function pickupSize(id: string): number | undefined {
   if (!(id in PICKUP_FILES)) return undefined;
-  if (SMALL.includes(id as PickupId)) return 0.26;
+  if (SMALL.includes(id as PickupId)) return 0.3;
   if (LARGE.includes(id as PickupId)) return 0.42;
   return 0.34;
 }
