@@ -1,6 +1,7 @@
 """Keys & Co board artwork and the window display's header (original work, painted with PIL)."""
 from PIL import Image, ImageDraw, ImageFont
-ROOT = '/home/claude/wt-property'
+import os
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 OUT = ROOT + '/public/art/agent'
 NAVY, RED, WHITE, INK = '#16365a', '#b3121b', '#f2efe6', '#101014'
 

@@ -1,5 +1,5 @@
 import sys, math, random
-sys.path.insert(0, '/tmp/property')
+sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
 from glb import Model, rot_y, rot_x, rot_z
 OUT = '/tmp/property/out'
 
