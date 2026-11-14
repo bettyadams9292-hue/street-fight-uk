@@ -1,40 +1,40 @@
 Area,Name,Game id,Asset needed,How it is made now,Got it
-Items: Weapons,Glass bottle,w_bottle,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Broken bottle,w_broken_bottle,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Cricket bat,w_bat,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Baseball bat,w_baseball_bat,Inventory icon,Icon painted by code; 3D model: yours,FALSE
-Items: Weapons,Lead pipe,w_pipe,Inventory icon,Icon painted by code; 3D model: yours,FALSE
-Items: Weapons,Metal bar,w_metal_bar,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Crowbar,w_crowbar,Inventory icon,Icon painted by code; 3D model: yours,FALSE
-Items: Weapons,Claw hammer,w_hammer,Inventory icon,Icon painted by code; 3D model: yours,FALSE
-Items: Weapons,Machete,w_machete,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Kitchen knife,w_knife,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Bike chain,w_chain,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Pipe wrench,w_wrench,Inventory icon,Icon painted by code; 3D model: yours,FALSE
-Items: Weapons,Wooden club,w_club,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Pool cue,w_pool_cue,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Scaffold pole,w_pole,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Heavy torch,w_torch,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Mop,w_mop,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Broom,w_broom,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Road sign,w_road_sign,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Traffic cone,w_cone,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Wooden plank,w_plank,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Chair leg,w_chair_leg,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Table leg,w_table_leg,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Pub chair,w_chair,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Old telly,w_tv,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Computer monitor,w_monitor,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Skateboard,w_skateboard,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Golf umbrella,w_umbrella,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Shelving upright,w_shelf_bar,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Shovel,w_shovel,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Garden fork,w_garden_fork,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Garden rake,w_rake,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Half brick,w_brick,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Frying pan,w_frying_pan,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Golf club,w_golf_club,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
-Items: Weapons,Bin lid,w_dustbin_lid,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,FALSE
+Items: Weapons,Glass bottle,w_bottle,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Broken bottle,w_broken_bottle,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Cricket bat,w_bat,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Baseball bat,w_baseball_bat,Inventory icon,Icon painted by code; 3D model: yours,TRUE
+Items: Weapons,Lead pipe,w_pipe,Inventory icon,Icon painted by code; 3D model: yours,TRUE
+Items: Weapons,Metal bar,w_metal_bar,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Crowbar,w_crowbar,Inventory icon,Icon painted by code; 3D model: yours,TRUE
+Items: Weapons,Claw hammer,w_hammer,Inventory icon,Icon painted by code; 3D model: yours,TRUE
+Items: Weapons,Machete,w_machete,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Kitchen knife,w_knife,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Bike chain,w_chain,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Pipe wrench,w_wrench,Inventory icon,Icon painted by code; 3D model: yours,TRUE
+Items: Weapons,Wooden club,w_club,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Pool cue,w_pool_cue,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Scaffold pole,w_pole,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Heavy torch,w_torch,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Mop,w_mop,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Broom,w_broom,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Road sign,w_road_sign,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Traffic cone,w_cone,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Wooden plank,w_plank,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Chair leg,w_chair_leg,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Table leg,w_table_leg,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Pub chair,w_chair,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Old telly,w_tv,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Computer monitor,w_monitor,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Skateboard,w_skateboard,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Golf umbrella,w_umbrella,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Shelving upright,w_shelf_bar,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Shovel,w_shovel,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Garden fork,w_garden_fork,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Garden rake,w_rake,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Half brick,w_brick,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Frying pan,w_frying_pan,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Golf club,w_golf_club,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
+Items: Weapons,Bin lid,w_dustbin_lid,Inventory icon + 3D weapon model (held and dropped),Icon painted by code; 3D model built from boxes and cylinders in code,TRUE
 Items: Clothing,Grey hoodie,hoodie_grey,Inventory icon + 3D clothing model (rigged to the body),Icon painted by code; Garment made in code from the body mesh,FALSE
 Items: Clothing,Black hoodie,hoodie_black,Inventory icon + 3D clothing model (rigged to the body),Icon painted by code; Garment made in code from the body mesh,FALSE
 Items: Clothing,Designer hoodie,designer_hoodie,Inventory icon + 3D clothing model (rigged to the body),Icon painted by code; Garment made in code from the body mesh,FALSE
@@ -80,61 +80,61 @@ Items: Accessories,Digital watch,watch_basic,Inventory icon + better 3D worn mod
 Items: Accessories,Silver earring,earring_silver,Inventory icon + 3D worn model (rigged),Icon painted by code; Not shown on the character at all,FALSE
 Items: Accessories,Signet ring,ring_signet,Inventory icon + better 3D worn model,Icon painted by code; Shown on the character as a code-built piece since #20 (render/jewellery.ts): needs a proper model,FALSE
 Items: Accessories,Leather belt,belt_leather,Inventory icon + 3D worn model (rigged),Icon painted by code; Not shown on the character at all,FALSE
-Items: Food & first aid,Chips,chips,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Kebab,kebab,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Pasty,pasty,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Sausage roll,sausage_roll,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Meal deal,meal_deal,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Bacon butty,bacon_butty,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Curry,curry,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Full English,fry_up,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Protein bar,protein_bar,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Energy drink,energy_drink,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Can of pop,can_of_pop,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Bottle of water,water,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Flask of tea,flask_tea,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Loaf of bread,g_bread,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Butter,g_butter,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Cheddar,g_cheese,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Sliced ham,g_ham,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Eggs,g_eggs,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Milk,g_milk,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Cereal,g_cereal,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Baked beans,g_beans,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Bacon,g_bacon,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Sausages,g_sausages,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Potatoes,g_potatoes,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Chicken breasts,g_chicken,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Sirloin steak,g_steak,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Pasta,g_pasta,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Pasta sauce,g_sauce,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Beef mince,g_mince,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Burger buns,g_buns,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Curry sauce,g_curry_sauce,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Rice,g_rice,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Onions,g_onions,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Mushrooms,g_mushrooms,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Tomatoes,g_tomatoes,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Frozen peas,g_peas,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Oven chips,g_oven_chips,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Crisps,s_crisps,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Chocolate bar,s_chocolate,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Apple,s_fruit,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Biscuits,s_biscuits,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Ham and cheese sandwich,m_sandwich,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Buttered toast,m_toast,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Bowl of cereal,m_cereal,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Beans on toast,m_beans_toast,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Scrambled eggs on toast,m_scrambled,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Home-cooked full English,m_full_english,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Sausage and mash,m_sausage_mash,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Chicken and chips,m_chicken_chips,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Steak and potatoes,m_steak,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Pasta bake,m_pasta,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Homemade cheeseburger,m_burger,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Chicken curry and rice,m_curry,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,Plasters,plasters,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Food & first aid,First aid kit,first_aid,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
+Items: Food & first aid,Chips,chips,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Kebab,kebab,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Pasty,pasty,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Sausage roll,sausage_roll,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Meal deal,meal_deal,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Bacon butty,bacon_butty,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Curry,curry,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Full English,fry_up,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Protein bar,protein_bar,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Energy drink,energy_drink,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Can of pop,can_of_pop,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Bottle of water,water,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Flask of tea,flask_tea,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Loaf of bread,g_bread,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Butter,g_butter,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Cheddar,g_cheese,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Sliced ham,g_ham,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Eggs,g_eggs,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Milk,g_milk,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Cereal,g_cereal,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Baked beans,g_beans,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Bacon,g_bacon,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Sausages,g_sausages,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Potatoes,g_potatoes,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Chicken breasts,g_chicken,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Sirloin steak,g_steak,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Pasta,g_pasta,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Pasta sauce,g_sauce,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Beef mince,g_mince,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Burger buns,g_buns,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Curry sauce,g_curry_sauce,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Rice,g_rice,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Onions,g_onions,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Mushrooms,g_mushrooms,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Tomatoes,g_tomatoes,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Frozen peas,g_peas,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Oven chips,g_oven_chips,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Crisps,s_crisps,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Chocolate bar,s_chocolate,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Apple,s_fruit,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Biscuits,s_biscuits,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Ham and cheese sandwich,m_sandwich,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Buttered toast,m_toast,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Bowl of cereal,m_cereal,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Beans on toast,m_beans_toast,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Scrambled eggs on toast,m_scrambled,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Home-cooked full English,m_full_english,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Sausage and mash,m_sausage_mash,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Chicken and chips,m_chicken_chips,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Steak and potatoes,m_steak,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Pasta bake,m_pasta,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Homemade cheeseburger,m_burger,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Chicken curry and rice,m_curry,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,Plasters,plasters,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Food & first aid,First aid kit,first_aid,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
 Items: Valuables,Prestige diver watch,watch_diver,Inventory icon,Icon painted by code; Pickup model: yours,FALSE
 Items: Valuables,Gold dress watch,watch_gold,Inventory icon,Icon painted by code; Pickup model: yours,FALSE
 Items: Valuables,Silver watch,watch_silver,Inventory icon,Icon painted by code; Pickup model: yours,FALSE
@@ -164,31 +164,31 @@ Items: Valuables,Hardware crypto wallet,crypto_wallet,Inventory icon + 3D pickup
 Items: Valuables,Designer sunglasses,sunglasses_designer,Inventory icon,Icon painted by code; Pickup model: yours,FALSE
 Items: Valuables,Designer handbag,handbag_designer,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
 Items: Valuables,Rare trainers (boxed),trainers_boxed,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Collectibles,Signed football shirt,signed_shirt,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Collectibles,1966 final programme,programme_1966,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Collectibles,Vintage match ball,vintage_football,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Collectibles,Antique pocket watch,pocket_watch,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Collectibles,Toby jug,toby_jug,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Collectibles,Silver candlestick,candlestick,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Collectibles,Rare vinyl record,vinyl_rare,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Collectibles,Old match ticket,match_ticket,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Quest items,The Gaffer’s ledger,gaffer_ledger,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Quest items,Lock-up key,lockup_key,Inventory icon,Icon painted by code; Pickup model: yours,FALSE
-Items: Quest items,VIP pass,vip_pass,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Quest items,Dunc’s burner phone,dunc_phone,Inventory icon,Icon painted by code; Pickup model: yours,FALSE
-Items: Quest items,Stadium service key,stadium_key,Inventory icon,Icon painted by code; Pickup model: yours,FALSE
-Items: Groceries & materials,Scrap metal,scrap_metal,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Duct tape,duct_tape,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Nuts and bolts,bolts,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Leather strip,leather_strip,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Steel bar stock,steel_bar,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Spring steel,spring_steel,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Carbon fibre sheet,carbon_fibre,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Zippo lighter,lighter,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Bus pass,bus_pass,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Bum bag,bag_bumbag,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Rucksack,bag_rucksack,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
-Items: Groceries & materials,Gym holdall,bag_holdall,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,FALSE
+Items: Collectibles,Signed football shirt,signed_shirt,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Collectibles,1966 final programme,programme_1966,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Collectibles,Vintage match ball,vintage_football,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Collectibles,Antique pocket watch,pocket_watch,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Collectibles,Toby jug,toby_jug,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Collectibles,Silver candlestick,candlestick,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Collectibles,Rare vinyl record,vinyl_rare,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Collectibles,Old match ticket,match_ticket,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Quest items,The Gaffer’s ledger,gaffer_ledger,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Quest items,Lock-up key,lockup_key,Inventory icon,Icon painted by code; Pickup model: yours,TRUE
+Items: Quest items,VIP pass,vip_pass,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Quest items,Dunc’s burner phone,dunc_phone,Inventory icon,Icon painted by code; Pickup model: yours,TRUE
+Items: Quest items,Stadium service key,stadium_key,Inventory icon,Icon painted by code; Pickup model: yours,TRUE
+Items: Groceries & materials,Scrap metal,scrap_metal,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Duct tape,duct_tape,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Nuts and bolts,bolts,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Leather strip,leather_strip,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Steel bar stock,steel_bar,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Spring steel,spring_steel,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Carbon fibre sheet,carbon_fibre,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Zippo lighter,lighter,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Bus pass,bus_pass,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Bum bag,bag_bumbag,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Rucksack,bag_rucksack,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
+Items: Groceries & materials,Gym holdall,bag_holdall,Inventory icon + 3D pickup model (lying on the ground),Icon painted by code; No model of its own when dropped,TRUE
 Character: hair,Buzz cut,buzz,3D hair model,No model of its own: uses the crop model,FALSE
 Character: hair,Quiff,quiff,3D hair model,No model of its own: uses the swept model,FALSE
 Character: hair,Curly,curly,3D hair model,No model of its own: uses short messy / shaggy,FALSE
@@ -377,59 +377,59 @@ Animations: fighting moves,Shoot,shoot,Mocap / keyframed animation clip,Keyframe
 Animations: fighting moves,Submission,submission,Mocap / keyframed animation clip,Keyframed by hand in code,FALSE
 Animations: fighting moves,Ground punch,ground_punch,Mocap / keyframed animation clip,Keyframed by hand in code,FALSE
 Animations: fighting moves,Getup kick,getup_kick,Mocap / keyframed animation clip,Keyframed by hand in code,FALSE
-Animations: fighting moves,Finisher,finisher,Mocap / keyframed animation clip,Keyframed by hand in code,FALSE
+Animations: fighting moves,Finisher,finisher,Mocap / keyframed animation clip,Keyframed by hand in code,TRUE
 Animations: reactions & stances,Guard (per style stance),GUARD (per style stance),Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
-Animations: reactions & stances,Relaxed,RELAXED,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
+Animations: reactions & stances,Relaxed,RELAXED,Mocap / keyframed animation clip,Pose keyed by hand in code,TRUE
 Animations: reactions & stances,Block,BLOCK,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
 Animations: reactions & stances,Block low,BLOCK_LOW,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
-Animations: reactions & stances,Guard break,GUARD_BREAK,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
-Animations: reactions & stances,Parried,PARRIED,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
+Animations: reactions & stances,Guard break,GUARD_BREAK,Mocap / keyframed animation clip,Pose keyed by hand in code,TRUE
+Animations: reactions & stances,Parried,PARRIED,Mocap / keyframed animation clip,Pose keyed by hand in code,TRUE
 Animations: reactions & stances,Dodge back,DODGE_BACK,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
 Animations: reactions & stances,Dodge side,DODGE_SIDE,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
 Animations: reactions & stances,Slip,SLIP,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
-Animations: reactions & stances,Fall back,FALL_BACK,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
+Animations: reactions & stances,Fall back,FALL_BACK,Mocap / keyframed animation clip,Pose keyed by hand in code,TRUE
 Animations: reactions & stances,Fall front,FALL_FRONT,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
-Animations: reactions & stances,Land back,LAND_BACK,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
-Animations: reactions & stances,Lying,LYING,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
+Animations: reactions & stances,Land back,LAND_BACK,Mocap / keyframed animation clip,Pose keyed by hand in code,TRUE
+Animations: reactions & stances,Lying,LYING,Mocap / keyframed animation clip,Pose keyed by hand in code,TRUE
 Animations: reactions & stances,Lying front,LYING_FRONT,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
-Animations: reactions & stances,Sit up,SIT_UP,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
+Animations: reactions & stances,Sit up,SIT_UP,Mocap / keyframed animation clip,Pose keyed by hand in code,TRUE
 Animations: reactions & stances,Crouch up,CROUCH_UP,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
 Animations: reactions & stances,Push up,PUSH_UP,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
-Animations: reactions & stances,Jump fall,JUMP_FALL,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
+Animations: reactions & stances,Jump fall,JUMP_FALL,Mocap / keyframed animation clip,Pose keyed by hand in code,TRUE
 Animations: reactions & stances,Clinch hold,CLINCH_HOLD,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
 Animations: reactions & stances,Clinched,CLINCHED,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
 Animations: reactions & stances,Mount,MOUNT,Mocap / keyframed animation clip,Pose keyed by hand in code,FALSE
-Animations: everyday,Arms,arms,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Bag,bag,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Browse,browse,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
+Animations: everyday,Arms,arms,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Bag,bag,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Browse,browse,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
 Animations: everyday,Brush,brush,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Animations: everyday,Chop,chop,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Animations: everyday,Curl,curl,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Animations: everyday,Cycle,cycle,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Drink,drink,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Eat,eat,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
+Animations: everyday,Drink,drink,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Eat,eat,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
 Animations: everyday,Laugh,laugh,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Lean,lean,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Lie,lie,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Look,look,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Phone,phone,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Plate,plate,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
+Animations: everyday,Lean,lean,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Lie,lie,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Look,look,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Phone,phone,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Plate,plate,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
 Animations: everyday,Press,press,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Reach,reach,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Reach low,reach_low,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
+Animations: everyday,Reach,reach,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Reach low,reach_low,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
 Animations: everyday,Shower,shower,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Sit arms,sit_arms,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
+Animations: everyday,Sit arms,sit_arms,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
 Animations: everyday,Sit back,sit_back,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Sit drink,sit_drink,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Sit edge,sit_edge,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Sit phone,sit_phone,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Sit talk,sit_talk,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
+Animations: everyday,Sit drink,sit_drink,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Sit edge,sit_edge,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Sit phone,sit_phone,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Sit talk,sit_talk,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
 Animations: everyday,Skip,skip,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Animations: everyday,Speedball,speedball,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Animations: everyday,Stir,stir,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Animations: everyday,Stretch,stretch,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Talk,talk,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Animations: everyday,Wait,wait,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
+Animations: everyday,Talk,talk,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
+Animations: everyday,Wait,wait,Mocap / keyframed animation clip,Moved by sine waves in code,TRUE
 Animations: everyday,Wash face,wash_face,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Animations: everyday,Wash hands,wash_hands,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Sound,Big shot charging (warning swell),danger,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
