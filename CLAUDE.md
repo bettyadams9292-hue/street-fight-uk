@@ -72,6 +72,14 @@ The main gaps:
 
 When the owner adds an asset that covers a row, wire it in and tick the row.
 
+**Asset production (branch `assets-production`, 14 Nov 2026).** 302 of the 595 rows are done and ticked. The tracking lives in `docs/assets/`:
+- `ASSET_RESUME.md`: where things stand and how to carry on. Read it first.
+- `ASSET_STYLE_GUIDE.md`: the look and the triangle budgets.
+- `ASSET_TECH.md`: formats and registries.
+- `BRIEF_COMMON.md`: the rules for any asset work.
+- `packages/`: ready briefs for the four unfinished packages (jewellery, household, character, world).
+- `docs/assets/ledger/*.json`: one entry per row worked on. Run `python3 tools/assets/ledger.py` to rebuild `ASSET_MANIFEST.md` and `ASSET_PROGRESS.md` and to tick the sheet. Never tick it by hand.
+
 ## Work log
 
 **12 Nov 2026**
@@ -104,6 +112,9 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - **Jewellery:** the Halden & Crane jeweller in the Riverside Centre sells 52 pieces (rings, watches, chains and grills, each in several metals). A jewellery box keeps what you own, separate from the inventory. Worn pieces sit on the 3D character, fitted to its bones (`render/jewellery.ts`).
   - **Property:** 20 properties to buy, live in, let or sell, sold through the Keys & Co estate agents (`realty/`). There's a new gated road, Ashcombe Park, with mansions, and interiors are generated for each property. Rent and finance tracking is in `progress/finance.ts`.
   - All of it is built in code: no new asset files.
+
+**14 Nov 2026**
+- #23: Big Dunc progression. Boss rewards that don't fit wait on the ground and are saved (`save.bossLoot`); Hale House's gate, the objective and the victory screen say exactly what's left (`src/world/gates.ts`); result screens keep every button on screen.
 
 ## Open questions and next steps
 

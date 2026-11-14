@@ -12,6 +12,7 @@
  */
 import type { StyleId } from '../../styles/StyleData';
 import { araMocapPose, mocapClip, registerMocap } from './araPose';
+import { onFloor } from './ual';
 import type { Metrics } from './skeleton';
 import type { Pose } from '../poses';
 
@@ -112,7 +113,8 @@ export function guardPose(style: StyleId, fighterId: number, time: number, m: Me
 export function reactionPose(id: string, t: number, m: Metrics, planted: boolean): Pose | null {
   if (!ready) return null;
   const p = araMocapPose(id, t, m);
-  return p ? { ...p, ik: planted ? 1 : 0 } : null;
+  // Standing the lowest ankle on the floor sinks a body lying on its back: lift it onto the floor.
+  return p ? { ...onFloor(p, m), ik: planted ? 1 : 0 } : null;
 }
 
 export function clipDuration(id: string): number {

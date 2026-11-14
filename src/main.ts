@@ -4,6 +4,7 @@ import { Game } from './Game';
 import { loadCharacterModels } from './render/characterModels';
 import { loadCityKit } from './render/city/CityKit';
 import { loadProps } from './render/props/PropLibrary';
+import { loadPickups } from './render/props/pickups';
 import { preloadAllHumans } from './render/human/HumanBuilder';
 import { loadAraMocap } from './render/anim/araPose';
 import { loadRokoko } from './render/anim/rokoko';
@@ -11,10 +12,13 @@ import { loadGym } from './render/props/GymLibrary';
 import { loadShop } from './render/props/ShopLibrary';
 import { loadHydro } from './render/props/HydroLibrary';
 import { loadSecurity } from './render/props/SecurityLibrary';
+import { loadVehicles } from './render/props/VehicleLibrary';
+import { loadProperty } from './render/props/PropertyLibrary';
 import { loadDoors } from './render/props/DoorLibrary';
 import { loadFlooring } from './render/street/Flooring';
 import { loadKenney } from './render/props/KenneyLibrary';
 import { loadPolyKit } from './render/kit/PolyKit';
+import { loadTextureFiles } from './render/textureFiles';
 
 const gameRoot = document.getElementById('game');
 const uiRoot = document.getElementById('ui');
@@ -80,7 +84,28 @@ const begin = async (): Promise<void> => {
   const humans = query.get('humans') === 'off' ? Promise.resolve(false) : preloadAllHumans();
   // The low-poly street kits (about 2 MB over the wire): without them the streets keep their older look.
   const polyKit = query.get('world') === 'classic' ? Promise.resolve(false) : loadPolyKit();
-  const assets = Promise.all([models, kit, loadProps(), humans, loadAraMocap(), loadRokoko(), loadFlooring(), loadKenney(), loadGym(), loadShop(), loadHydro(), loadSecurity(), loadDoors(), polyKit]);
+  // One loader per line, so packages adding a loader don't conflict.
+  const assets = Promise.all([
+    models,
+    kit,
+    loadProps(),
+    humans,
+    loadAraMocap(),
+    loadRokoko(),
+    import('./render/anim/ual').then((u) => u.loadUal()),
+    loadFlooring(),
+    loadKenney(),
+    loadGym(),
+    loadShop(),
+    loadHydro(),
+    loadSecurity(),
+    loadVehicles(),
+    loadDoors(),
+    loadProperty(),
+    polyKit,
+    loadPickups(),
+    loadTextureFiles(),
+  ]);
   await (shot ? assets : Promise.race([assets, new Promise((r) => setTimeout(r, 6000))]));
   start();
 };

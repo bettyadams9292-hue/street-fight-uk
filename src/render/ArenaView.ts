@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Arena } from '../world/Arena';
 import { brickTexture, pavingTexture, roadTexture, shutterTexture, windowsTexture } from './textures';
+import { attachNormals } from './textureFiles';
 
 /**
  * Stage 1 test arena: a back alley behind a British high street at night.
@@ -15,6 +16,7 @@ export class ArenaView {
 
   constructor(private readonly arena: Arena) {
     this.build();
+    attachNormals(this.group);
   }
 
   private build(): void {

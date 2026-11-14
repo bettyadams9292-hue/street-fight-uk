@@ -12,12 +12,16 @@ src = {
   'coins': 'Kenney RPG Audio (handle_coins*), CC0',
   'door': 'Kenney RPG Audio (door_*), CC0',
 }
+ORIGINAL = 'Original sound for Street Fight UK, rendered by tools/audio/make_sounds.py'
+for k in ('swing', 'tell', 'danger', 'ui', 'house', 'loop', 'amb'):
+  src[k] = ORIGINAL
 lines = []
 for f in files:
   sid = f[:-4]
   size = os.path.getsize(os.path.join(root, 'public/audio', f))
   kind = sid.split('_')[0]
-  lines.append(f"  {{ id: 'sfx_{sid}', kind: 'audio', url: '/audio/{f}', bytes: {size}, group: 'audio', fallback: 'synthesised in AudioManager', source: '{src[kind]}; trimmed and levelled by tools/audio/build_sounds.sh' }},")
+  note = src[kind] if src[kind] == ORIGINAL else src[kind] + '; trimmed and levelled by tools/audio/build_sounds.sh'
+  lines.append(f"  {{ id: 'sfx_{sid}', kind: 'audio', url: '/audio/{f}', bytes: {size}, group: 'audio', fallback: 'synthesised in AudioManager', source: '{note}' }},")
 out = """/**
  * Recorded sound effects (written by tools/audio/write_manifest.py; credits in public/audio/CREDITS.md).
  * Each has a synthesised fallback in AudioManager, so a missing file only means a plainer sound.

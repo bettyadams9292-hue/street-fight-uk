@@ -11,6 +11,7 @@ import { BodyData, footY, morph, placeBones, type BodyMeta, type BodyShape } fro
 import { ProxyData, fitProxy, proxySkin, type ProxyMeta } from '../../characters/human/proxy';
 import { cutBrows, cutLashes, type BrowMesh } from '../../characters/human/brows';
 import { cutGarment, type Fabric, type GarmentKind } from '../../characters/human/garments';
+import { attachNormal, fileTexture } from '../textureFiles';
 
 export interface SkinInfo {
   id: string;
@@ -208,6 +209,11 @@ let brows: THREE.Texture | null = null;
 /** A painted eyebrow: soft-edged, thicker at the nose end, made of fine angled hair strokes. White, tinted by the material. */
 function browTexture(): THREE.Texture | null {
   if (brows || typeof document === 'undefined') return brows;
+  const file = fileTexture('character/brow');
+  if (file) {
+    file.wrapS = file.wrapT = THREE.ClampToEdgeWrapping;
+    return (brows = file);
+  }
   const W = 256;
   const H = 64;
   const c = document.createElement('canvas');
@@ -261,6 +267,11 @@ let lashes: THREE.Texture | null = null;
 /** The upper lash line: a dark line along the lid's edge (the bottom of the band) with fine lashes curling up from it. */
 function lashTexture(): THREE.Texture | null {
   if (lashes || typeof document === 'undefined') return lashes;
+  const file = fileTexture('character/lash');
+  if (file) {
+    file.wrapS = file.wrapT = THREE.ClampToEdgeWrapping;
+    return (lashes = file);
+  }
   const W = 128;
   const H = 32;
   const c = document.createElement('canvas');
@@ -303,6 +314,13 @@ function fabricTexture(kind: Fabric): THREE.Texture | null {
   const hit = fabrics.get(kind);
   if (hit) return hit;
   if (typeof document === 'undefined') return null;
+  // The weave from its file (128 px, so half the repeats of the 64 px canvas below).
+  const dense = kind === 'denim' || kind === 'canvas' ? 30 : 20;
+  const file = fileTexture(`character/fabric_${kind}`, dense, dense);
+  if (file) {
+    fabrics.set(kind, file);
+    return file;
+  }
   const S = 64;
   const c = document.createElement('canvas');
   c.width = c.height = S;
@@ -346,7 +364,7 @@ function fabricTexture(kind: Fabric): THREE.Texture | null {
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(kind === 'denim' || kind === 'canvas' ? 60 : 40, kind === 'denim' || kind === 'canvas' ? 60 : 40);
   t.colorSpace = THREE.SRGBColorSpace;
-  fabrics.set(kind, t);
+  // Not cached: once the texture file has loaded, later garments use it.
   return t;
 }
 
@@ -732,6 +750,8 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
       bg.computeVertexNormals();
       disposables.push(bg);
       const bm = new THREE.MeshStandardMaterial({ map, color: new THREE.Color(colour), transparent: true, alphaTest: 0.08, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 });
+      attachNormal(bm);
+      if (bm.normalMap) disposables.push(bm.normalMap);
       disposables.push(bm);
       const bmesh = new THREE.SkinnedMesh(bg, bm);
       bmesh.name = name;
@@ -771,6 +791,8 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
     gg.setIndex(new THREE.BufferAttribute(mesh.index, 1));
     disposables.push(gg);
     const mat = new THREE.MeshStandardMaterial({ map: fabricTexture(mesh.fabric), vertexColors: true, roughness: FABRIC_ROUGH[mesh.fabric], side: THREE.DoubleSide });
+    attachNormal(mat);
+    if (mat.normalMap) disposables.push(mat.normalMap);
     disposables.push(mat);
     const gm = new THREE.SkinnedMesh(gg, mat);
     gm.name = g.kind;

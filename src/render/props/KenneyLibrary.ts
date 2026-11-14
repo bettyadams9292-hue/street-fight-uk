@@ -8,6 +8,7 @@
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { attachNormal, fileTexture, loadTextureFiles, type TextureName } from '../textureFiles';
 
 const BASE = '/models/kenney/';
 
@@ -34,7 +35,10 @@ let loading: Promise<void> | null = null;
 
 // ---- surfaces ----
 
-function canvasTex(size: number, paint: (g: CanvasRenderingContext2D, s: number) => void, repeat: number): THREE.Texture | null {
+function canvasTex(size: number, paint: (g: CanvasRenderingContext2D, s: number) => void, repeat: number, file?: TextureName, fileRepeat = repeat): THREE.Texture | null {
+  // The texture file (public/textures/furniture), with its normal map; the canvas below without it.
+  const fromFile = file ? fileTexture(file, fileRepeat, fileRepeat) : null;
+  if (fromFile) return fromFile;
   if (typeof document === 'undefined') return null;
   const c = document.createElement('canvas');
   c.width = c.height = size;
@@ -74,6 +78,7 @@ const woodTex = (light: boolean) =>
       }
     },
     3,
+    light ? 'furniture/wood_light' : 'furniture/wood_dark',
   );
 
 const weaveTex = () =>
@@ -91,6 +96,8 @@ const weaveTex = () =>
       g.putImageData(img, 0, 0);
     },
     6,
+    'furniture/weave',
+    3,
   );
 
 const brushTex = () =>
@@ -106,6 +113,7 @@ const brushTex = () =>
       }
     },
     2,
+    'furniture/brushed_metal',
   );
 
 let surfaces: Record<string, THREE.MeshStandardMaterial> | null = null;
@@ -147,6 +155,7 @@ function surfacesFor(): Record<string, THREE.MeshStandardMaterial> {
     screen: m({ color: '#0c0d10', roughness: 0.12, metalness: 0.2 }),
     plastic: m({ color: '#1c1d20', roughness: 0.45 }),
   });
+  for (const v of Object.values(surfaces)) attachNormal(v);
   return surfaces;
 }
 
@@ -189,6 +198,8 @@ function boxUV(geo: THREE.BufferGeometry): void {
 /** Load both kits once. Never rejects. */
 export function loadKenney(): Promise<void> {
   loading ??= (async () => {
+    // The surfaces use the texture files when they're in (never rejects; canvases without them).
+    await loadTextureFiles();
     const loader = new GLTFLoader();
     const one = async (dir: string, id: string) => {
       try {

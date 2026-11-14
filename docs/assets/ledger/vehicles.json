@@ -1,0 +1,464 @@
+[
+  {
+    "id": "corvo",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/hatchback-sports.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars0c/cars0a.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback.",
+    "source": "Kenney Car Kit 3.1 (kenney_car-kit.zip, www.kenney.nl), model hatchback-sports, re-exported with tools/models/vehicles/kenney_cars.py",
+    "licence": "CC0 1.0",
+    "origin": "downloaded"
+  },
+  {
+    "id": "pixie",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/hatchback-sports.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars1a/cars1c.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback. Shares the hatchback with the Corvo (shorter); the white roof from the blurb is not modelled.",
+    "source": "Kenney Car Kit 3.1 (kenney_car-kit.zip, www.kenney.nl), model hatchback-sports, re-exported with tools/models/vehicles/kenney_cars.py",
+    "licence": "CC0 1.0",
+    "origin": "downloaded"
+  },
+  {
+    "id": "monarch",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/sedan.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars1a.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback. Shares sedan.glb with the other saloon (different size and colours).",
+    "source": "Kenney Car Kit 3.1 (kenney_car-kit.zip, www.kenney.nl), model sedan, re-exported with tools/models/vehicles/kenney_cars.py",
+    "licence": "CC0 1.0",
+    "origin": "downloaded"
+  },
+  {
+    "id": "regent",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/sedan.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars0a/cars0c.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback. Shares sedan.glb with the other saloon (different size and colours).",
+    "source": "Kenney Car Kit 3.1 (kenney_car-kit.zip, www.kenney.nl), model sedan, re-exported with tools/models/vehicles/kenney_cars.py",
+    "licence": "CC0 1.0",
+    "origin": "downloaded"
+  },
+  {
+    "id": "vixen",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/car-vixen.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars1c/cars1d.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback.",
+    "source": "original (tools/models/vehicles/orig_cars.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "kestrel",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/car-kestrel.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars1d.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback. Also checked on the estate driveway as the active owned car (scene query found its painted mesh at the drive; the shot-mode camera did not follow there).",
+    "source": "original (tools/models/vehicles/orig_cars.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "tundra",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/suv-luxury.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars2a.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback.",
+    "source": "Kenney Car Kit 3.1 (kenney_car-kit.zip, www.kenney.nl), model suv-luxury, re-exported with tools/models/vehicles/kenney_cars.py",
+    "licence": "CC0 1.0",
+    "origin": "downloaded"
+  },
+  {
+    "id": "sovereign",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/suv.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars2a.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback.",
+    "source": "Kenney Car Kit 3.1 (kenney_car-kit.zip, www.kenney.nl), model suv, re-exported with tools/models/vehicles/kenney_cars.py",
+    "licence": "CC0 1.0",
+    "origin": "downloaded"
+  },
+  {
+    "id": "warden",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/suv.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars0d.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback. Shares suv.glb with the Sovereign; roof rack, snorkel and spare wheel are added in code on top. Also checked on the estate driveway as the active owned car (scene query found its painted mesh at the drive; the shot-mode camera did not follow there).",
+    "source": "Kenney Car Kit 3.1 (kenney_car-kit.zip, www.kenney.nl), model suv, re-exported with tools/models/vehicles/kenney_cars.py",
+    "licence": "CC0 1.0",
+    "origin": "downloaded"
+  },
+  {
+    "id": "brute",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/truck.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars2b.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback.",
+    "source": "Kenney Car Kit 3.1 (kenney_car-kit.zip, www.kenney.nl), model truck, re-exported with tools/models/vehicles/kenney_cars.py",
+    "licence": "CC0 1.0",
+    "origin": "downloaded"
+  },
+  {
+    "id": "hornet",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/sedan-sports.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars2b.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback.",
+    "source": "Kenney Car Kit 3.1 (kenney_car-kit.zip, www.kenney.nl), model sedan-sports, re-exported with tools/models/vehicles/kenney_cars.py",
+    "licence": "CC0 1.0",
+    "origin": "downloaded"
+  },
+  {
+    "id": "phantom",
+    "area": "Vehicles: cars",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/car-phantom.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen in the Brackley Motors showroom on a plinth (/tmp/vehicles/cars0c/cars0d.png). Paint colour applied from the owned/showroom colour; body stretched to the catalogue size with round wheels. Wheels did not turn before and do not now. Code-built car kept as fallback. Also checked on the estate driveway as the active owned car (scene query found its painted mesh at the drive; the shot-mode camera did not follow there).",
+    "source": "original (tools/models/vehicles/orig_cars.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "pup85",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-pup85.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "trail125",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-trail125.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "mx250",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-mx250.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "mx350",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-mx350.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could). Also seen owned in the home garage (/tmp/vehicles/owned_bikes_garage.png).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "mx450r",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-mx450r.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "mx450f",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-mx450f.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "enduro300",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-enduro300.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could). Also seen owned in the home garage (/tmp/vehicles/owned_bikes_garage.png).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "enduro500",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-enduro500.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "factory450",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-factory450.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  },
+  {
+    "id": "gp500",
+    "area": "Vehicles: off-road bikes",
+    "status": "done",
+    "parts": {
+      "model": "done",
+      "colour variants": "done"
+    },
+    "files": [
+      "public/models/vehicles/bike-gp500.glb",
+      "public/models/vehicles/Textures/colormap.png"
+    ],
+    "format": "GLB",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "Loaded in the running game (port 5103, clean console, all 19 GLBs fetched); seen on the Mudlark Moto stands (/tmp/vehicles/bikes0a,b and bikes1a,b.png). Plastics take the bike colour; side and front boards keep the numbered plate. Code-built bike kept as fallback. Wheels did not turn before and do not now (wheels are separate nodes, so they could). Also seen owned in the home garage (/tmp/vehicles/owned_bikes_garage.png). Ridden on the estate (/tmp/vehicles/owned_bike_riding.png).",
+    "source": "original (tools/models/vehicles/bikes.py)",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original"
+  }
+]

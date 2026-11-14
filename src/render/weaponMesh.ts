@@ -277,6 +277,7 @@ export function disposeGroup(g: THREE.Object3D): void {
       for (const m of mats) {
         (m as THREE.MeshStandardMaterial).map?.dispose();
         (m as THREE.MeshStandardMaterial).emissiveMap?.dispose();
+        (m as THREE.MeshStandardMaterial).normalMap?.dispose();
         m.dispose();
       }
     }

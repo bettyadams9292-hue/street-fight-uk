@@ -1,0 +1,1476 @@
+[
+ {
+  "id": "arms",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_FoldArms_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": ""
+ },
+ {
+  "id": "wait",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_FoldArms_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Head glance kept from the keyed pose."
+ },
+ {
+  "id": "talk",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_Talking_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": ""
+ },
+ {
+  "id": "phone",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_TalkingPhone_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Phone held to the ear (the keyed pose looked down at it)."
+ },
+ {
+  "id": "lean",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_Rail_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Leaning forward on a rail/counter."
+ },
+ {
+  "id": "look",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Captured idle body; the head and spine look-around stay keyed on top."
+ },
+ {
+  "id": "browse",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Captured idle body; the head looking at the window stays keyed on top."
+ },
+ {
+  "id": "drink",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Consume (mirrored to the right hand)",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": ""
+ },
+ {
+  "id": "reach",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Interact (mirrored)",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": ""
+ },
+ {
+  "id": "reach_low",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Chest_Open 0.3-0.95 s (mirrored), at 0.45x",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": ""
+ },
+ {
+  "id": "plate",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Walk_Carry_Loop (top half) over Idle_Loop (legs)",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Two captures layered."
+ },
+ {
+  "id": "bag",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Punch_Jab + Punch_Cross joined into a one-two loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": ""
+ },
+ {
+  "id": "sit_edge",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Sitting_Idle_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Hip height kept at the keyed seat height so the body sits on the game's seats."
+ },
+ {
+  "id": "sit_talk",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Sitting_Talking_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Keyed seat height."
+ },
+ {
+  "id": "sit_arms",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_FoldArms_Loop (top) over Sitting_Idle_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Two captures layered; keyed seat height."
+ },
+ {
+  "id": "sit_phone",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_TalkingPhone_Loop (top) over Sitting_Idle_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Two captures layered; keyed seat height."
+ },
+ {
+  "id": "sit_drink",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Consume mirrored (top) over Sitting_Idle_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Two captures layered; keyed seat height."
+ },
+ {
+  "id": "eat",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Consume mirrored (top) over Sitting_Idle_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Hand-to-mouth capture used for the fork; keyed seat height."
+ },
+ {
+  "id": "lie",
+  "area": "Animations: everyday",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Hit_Knockback, last (lying on the back) frame held",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "A held captured pose at the keyed bed height; the keyed version only had a breathing sine."
+ },
+ {
+  "id": "cycle",
+  "area": "Animations: everyday",
+  "status": "partial",
+  "parts": {
+   "upper_body": "done",
+   "pedalling_legs": "todo"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Driving_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Exercise bike: captured seated reach to the handlebars (Driving_Loop); UAL has no pedalling, so the legs stay keyed."
+ },
+ {
+  "id": "brush",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'brush'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "chop",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'chop'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "curl",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'curl'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "laugh",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'laugh'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "press",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'press'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "shower",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'shower'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "skip",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'skip'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "speedball",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'speedball'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "stir",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'stir'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "stretch",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'stretch'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "wash_face",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'wash_face'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "wash_hands",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'wash_hands'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "sit_back",
+  "area": "Animations: everyday",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 (86 clips checked on pose sheets): nothing for 'sit_back'. The keyed pose stays. Needs another CC0 source or a hand-keyed clip."
+ },
+ {
+  "id": "finisher",
+  "area": "Animations: fighting moves",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Punch_Cross (hit at 0.36 s)",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Time-scaled by rokoko.strikeTime so the blow lands on the move's first active frame; damage, timing and hitboxes unchanged. Seen in game."
+ },
+ {
+  "id": "haymaker",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "Already plays Rokoko cross takes for the rear hand (rokoko.ts STRIKE_CLIPS, from PR #3), so the keyed pose is only a fallback. UAL has no haymaker; its OverhandThrow dives to the floor and doesn't read as a punch."
+ },
+ {
+  "id": "overhand",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "Already plays Rokoko cross takes for the rear hand (rokoko.ts STRIKE_CLIPS, from PR #3), so the keyed pose is only a fallback. UAL has no haymaker; its OverhandThrow dives to the floor and doesn't read as a punch."
+ },
+ {
+  "id": "hook",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "uppercut",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "body_shot",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "elbow",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "knee",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "low_kick",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "roundhouse",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "side_kick",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "axe_kick",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "teep",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "spin_backfist",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "headbutt",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "shove",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "grab",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "takedown",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "shoot",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "submission",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "ground_punch",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "getup_kick",
+  "area": "Animations: fighting moves",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "UAL 1 and 2 have only a jab and a cross for unarmed strikes (no hooks, uppercuts, elbows, knees, kicks, headbutts, clinch or ground work; Melee_Hook is a lunging grapple, Push_Loop/Interact don't read as a shove or grab). The keyed chamber/strike poses stay."
+ },
+ {
+  "id": "RELAXED",
+  "area": "Animations: reactions & stances",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Plays when not fighting (lerped into the guard as before)."
+ },
+ {
+  "id": "GUARD_BREAK",
+  "area": "Animations: reactions & stances",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_Shield_Break",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Arms flung open and knocked back, played over the state then blended into the stance."
+ },
+ {
+  "id": "PARRIED",
+  "area": "Animations: reactions & stances",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Idle_Shield_Break (mirrored)",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "The rear arm is thrown wide."
+ },
+ {
+  "id": "JUMP_FALL",
+  "area": "Animations: reactions & stances",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Jump_Loop",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": ""
+ },
+ {
+  "id": "FALL_BACK",
+  "area": "Animations: reactions & stances",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Hit_Knockback",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Every other back knockdown plays it instead of the Rokoko take; it also replaces the keyed fallback. Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
+ },
+ {
+  "id": "LAND_BACK",
+  "area": "Animations: reactions & stances",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Hit_Knockback",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Same clip as FALL_BACK (the landing is part of it). Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
+ },
+ {
+  "id": "LYING",
+  "area": "Animations: reactions & stances",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: Hit_Knockback, last frame",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Used when pinned on the ground (ground_bottom). Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
+ },
+ {
+  "id": "SIT_UP",
+  "area": "Animations: reactions & stances",
+  "status": "done",
+  "parts": {
+   "clip": "done"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: LayToIdle",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Getting up off the back plays the whole captured lie-to-stand. Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
+ },
+ {
+  "id": "CROUCH_UP",
+  "area": "Animations: reactions & stances",
+  "status": "partial",
+  "parts": {
+   "getting_up_off_the_back": "done",
+   "getting_up_face_down": "todo"
+  },
+  "files": [
+   "public/anim/ual_mocap.json",
+   "src/render/anim/ual.ts",
+   "src/render/anim/animator.ts",
+   "tools/ual/convert.py",
+   "tools/ual/gltfanim.py"
+  ],
+  "format": "JSON clip",
+  "source": "Quaternius Universal Animation Library 1 + 2 [Standard] (CC0), pack on disk: LayToIdle",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Back get-ups use LayToIdle; face-down get-ups (PUSH_UP -> CROUCH_UP) still use the keyed crouch, as UAL has no face-down get-up. Floor contact fixed after review: the body is lifted so no part is below the floor (ual.ts onFloor); in game the lying body's lowest vertex is at -0.005 m (was -0.22 m)."
+ },
+ {
+  "id": "GUARD (per style stance)",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "Not new work: the five striking styles already use Rokoko captured guards (PR #3). UAL has no fighting stance for wrestling/BJJ (Sword_Idle holds a sword), so those keep the keyed stance."
+ },
+ {
+  "id": "BLOCK",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for BLOCK (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "BLOCK_LOW",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for BLOCK_LOW (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "DODGE_BACK",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for DODGE_BACK (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "DODGE_SIDE",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for DODGE_SIDE (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "SLIP",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for SLIP (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "FALL_FRONT",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for FALL_FRONT (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "LYING_FRONT",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for LYING_FRONT (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "PUSH_UP",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for PUSH_UP (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "CLINCH_HOLD",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for CLINCH_HOLD (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "CLINCHED",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for CLINCHED (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ },
+ {
+  "id": "MOUNT",
+  "area": "Animations: reactions & stances",
+  "status": "blocked",
+  "parts": {
+   "clip": "todo"
+  },
+  "files": [],
+  "format": "JSON clip",
+  "source": "",
+  "licence": "",
+  "origin": "",
+  "optimised": false,
+  "integrated": false,
+  "tested": false,
+  "notes": "No suitable clip in UAL 1 or 2 for MOUNT (no boxing blocks, slips or dodges, no face-down falls, no clinch or mount). The keyed pose stays."
+ }
+]

@@ -5,6 +5,7 @@ import { shopPiece, type ShopModelId } from './props/ShopLibrary';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { doorPiece, type DoorStyle } from './props/DoorLibrary';
+import { MANSION_WIDTH, PROPERTY_PROP_KINDS, propertyPiece, propertyProp } from './props/PropertyLibrary';
 import { surfaceMaterial, kitGroundTexture as kitTexture, type Surface, type SurfaceOptions } from './street/Flooring';
 import { StreetDressing } from './street/StreetDressing';
 import { SLICE_LEVELS, streetPassEnabled } from './street/slice';
@@ -38,6 +39,7 @@ import {
   woodFloorTexture,
 } from './levelTextures';
 import { brickTexture, canvas, shutterTexture, toTexture } from './textures';
+import { attachNormals, finishMaterial, flatNormalCanvas, textureImage, windowCell, type WindowCell } from './textureFiles';
 import { buildWeaponMesh, disposeGroup } from './weaponMesh';
 import { WEAPONS } from '../combat/Weapons';
 import { RARITY_COLOURS, itemDef } from '../items/items';
@@ -82,7 +84,7 @@ export class LevelView {
   private flicker: { light: THREE.PointLight; base: number }[] = [];
   private sun: THREE.DirectionalLight;
   private water: THREE.Mesh | null = null;
-  private rain: THREE.LineSegments | null = null;
+  private rain: THREE.LineSegments | THREE.Points | null = null;
   private rainBase: Float32Array | null = null;
   /** Phase 3 street pass (`?street=classic` turns it off). */
   private readonly streetPass = streetPassEnabled(window.location.search);
@@ -179,6 +181,8 @@ export class LevelView {
 
   /** Floor finishes at home: boards, carpet or tiles in the finish's colours. */
   private floorFinish(id: string, w: number, d: number): THREE.MeshStandardMaterial {
+    const file = finishMaterial(id, w, d);
+    if (file) return file;
     const f = FINISHES[id];
     switch (f.pattern) {
       case 'boards':
@@ -192,6 +196,8 @@ export class LevelView {
 
   /** Wall finishes at home: paint, paper, brick slips, panelling or tiles. */
   private wallFinish(id: string, w: number, h: number): THREE.MeshStandardMaterial {
+    const file = finishMaterial(id, w, h);
+    if (file) return file;
     const f = FINISHES[id];
     switch (f.pattern) {
       case 'tiles':
@@ -276,6 +282,8 @@ export class LevelView {
       this.dressing = new StreetDressing(lvl, this.back, lvl.bounds.maxZ + 0.4, this.X0, this.X1, seeded(hash(`${lvl.id}:dressing`)));
       this.group.add(this.dressing.group);
     }
+    // Normal maps for every texture that came from a file (public/textures).
+    attachNormals(this.group);
     if (this.lowPoly && themeProfile(lvl.theme).interior) flattenTextures(this.group);
   }
 
@@ -407,7 +415,8 @@ export class LevelView {
         const lp: [KitFloor, string] | null = fin
           ? [fin.pattern === 'boards' ? 'boards' : fin.pattern === 'tiles' ? 'encaustic' : 'carpet', fin.colour]
           : f.label === 'Gym' ? ['resin', '#2a3a30'] : f.label === 'Garage' ? ['resin', '#7a7874'] : ['boards', '#9a7a5a'];
-        if (!well && this.kitGround(lp[0], f.x0, f.x1, this.back, front, lp[1])) {
+        // A finish from its texture file is laid as it is; otherwise the kit's floor tiles in its colour.
+        if (!well && !mat.userData.finishFile && this.kitGround(lp[0], f.x0, f.x1, this.back, front, lp[1])) {
           if (f.x0 > minX) this.box(0.24, 0.015, front - 0.1, f.x0, 0.008, (front + 0.1) / 2 + 0.05, this.mat('#8a7a5a', 0.5, 0.3), false);
           continue;
         }
@@ -636,6 +645,17 @@ export class LevelView {
       base[i * 3 + 2] = this.back + this.rnd() * 12;
     }
     const geo = new THREE.BufferGeometry();
+    const sprite = rainSprite();
+    if (sprite) {
+      // Drops as point sprites (a tapered streak from public/textures/fx/rain.webp), one per drop.
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
+      const drops = new THREE.Points(geo, new THREE.PointsMaterial({ map: sprite, color: 0xb4c4e0, size: 0.6, sizeAttenuation: true, transparent: true, opacity: 0.5, depthWrite: false }));
+      drops.frustumCulled = false;
+      this.group.add(drops);
+      this.rain = drops;
+      this.rainBase = base;
+      return;
+    }
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x9ab0d0, transparent: true, opacity: 0.32, depthWrite: false }));
     lines.frustumCulled = false;
@@ -651,10 +671,17 @@ export class LevelView {
     const a = attr.array as Float32Array;
     const b = this.rainBase;
     const n = b.length / 3;
+    const points = (this.rain as THREE.Points).isPoints;
     for (let i = 0; i < n; i++) {
       const x = camX + ((((b[i * 3] + 18) % 36) + 36) % 36) - 18;
       const y = 9 - ((((9 - b[i * 3 + 1]) + time * 14) % 9) + 9) % 9;
       const z = b[i * 3 + 2];
+      if (points) {
+        a[i * 3] = x;
+        a[i * 3 + 1] = y;
+        a[i * 3 + 2] = z;
+        continue;
+      }
       a[i * 6] = x;
       a[i * 6 + 1] = y;
       a[i * 6 + 2] = z;
@@ -1782,6 +1809,7 @@ export class LevelView {
     // Lawn from the railings back to the house.
     this.ground(f.x0, f.x1, z, this.back, new THREE.MeshStandardMaterial({ color: 0x3f6a34, roughness: 1 }), 0.012);
     this.box(1.6, 0.02, set, cx, 0.02, this.back - set / 2, this.mat('#bdb5a4', 0.95), false);
+    if (this.mansionKit(f, style as 'georgian' | 'stone' | 'brick' | 'modern', cx, z, w)) return;
     // The house: a main block and two lower wings set back a little.
     this.box(mainW, H, 0.6, cx, H / 2, z - 0.3, wallMat);
     for (const sx of [-1, 1]) this.box(wingW, H * 0.72, 0.6, cx + sx * (mainW / 2 + wingW / 2 + 0.2), (H * 0.72) / 2, z - 1.2, wallMat);
@@ -1881,6 +1909,39 @@ export class LevelView {
       plate.position.set(gateX - 1.8, 1.7, rz + 0.26);
       this.group.add(plate);
     }
+  }
+
+  /** The mansion, its railings and its gates from the property kit; false (nothing added) until it's loaded. */
+  private mansionKit(f: FacadeDef, style: 'georgian' | 'stone' | 'brick' | 'modern', cx: number, z: number, w: number): boolean {
+    const house = propertyPiece(`mansion_${style}`);
+    const gates = propertyPiece(style === 'brick' ? 'gates_brick' : 'gates_stone');
+    if (!house || !gates) return false;
+    house.position.set(cx, 0, z);
+    house.scale.x = (w - 0.4) / MANSION_WIDTH[style];
+    this.group.add(house);
+    const gateX = this.level.exits.find((e) => e.kind === 'door' && e.x >= f.x0 && e.x <= f.x1)?.x ?? cx;
+    const rz = this.back + 0.08;
+    gates.position.set(gateX, 0, rz);
+    this.group.add(gates);
+    // Railings either side of the gate piers, in 4 m runs stretched to fill.
+    for (const [a, b] of [[f.x0, gateX - 2.08], [gateX + 2.08, f.x1]]) {
+      const n = Math.max(1, Math.ceil((b - a) / 4 - 0.01));
+      const step = (b - a) / n;
+      for (let i = 0; i < n && step > 0.3; i++) {
+        const r = propertyPiece(style === 'brick' ? 'railing_brick' : 'railing_stone');
+        if (!r) break;
+        r.position.set(a + step * (i + 0.5), 0, rz);
+        r.scale.x = step / 4;
+        this.group.add(r);
+      }
+    }
+    if (f.label) {
+      const t = signTexture(f.label, '#1a1a1e', '#e8d6a0', { w: 512, h: 96 });
+      const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.28), new THREE.MeshStandardMaterial({ map: t, roughness: 0.4, metalness: 0.3 }));
+      plate.position.set(gateX - 1.8, 1.7, rz + 0.29);
+      this.group.add(plate);
+    }
+    return true;
   }
 
   private fence(f: FacadeDef): void {
@@ -1985,7 +2046,10 @@ export class LevelView {
       // Low-poly: a flat-coloured wall with its pattern built from blocks.
       const pattern = fin?.pattern ?? (f.label === 'Garage' ? 'brick' : f.label === 'Kitchen' ? 'tiles' : 'paint');
       const c1 = fin?.colour ?? (f.label === 'Garage' ? '#8a5a48' : f.label === 'Kitchen' ? '#e8e2cc' : colour);
-      this.group.add(kitWall(pattern, c1, fin?.colour2, f.x0, f.x1, this.back + 0.02, H));
+      // A finish from its texture file (public/textures/home); otherwise its pattern built from blocks.
+      const file = fin ? finishMaterial(fin.id, w, H) : null;
+      if (file) this.panel(w, H, cx, H / 2, file, 0.02);
+      else this.group.add(kitWall(pattern, c1, fin?.colour2, f.x0, f.x1, this.back + 0.02, H));
     } else {
       const wall = fin
         ? this.wallFinish(fin.id, w, H)
@@ -2106,6 +2170,12 @@ export class LevelView {
     const c = p.colour;
     const B = (w: number, h: number, d: number, x: number, y: number, z: number, m: THREE.Material, cast = true) => this.box(w, h, d, x, y, z, m, cast, g);
     const C = (r0: number, r1: number, h: number, x: number, y: number, z: number, m: THREE.Material, seg = 16) => this.cyl(r0, r1, h, x, y, z, m, seg, g);
+    // Property kit models (PropertyLibrary); the built-in versions below until they load.
+    const kitProp = PROPERTY_PROP_KINDS.has(p.kind) ? propertyProp(p.kind, W, D, { colour: c, label: p.label }) : null;
+    if (kitProp) {
+      g.add(kitProp);
+      return;
+    }
     switch (p.kind) {
       case 'bin': {
         const m = this.mat(c ?? '#1b1d22', 0.55);
@@ -2920,6 +2990,57 @@ export class LevelView {
         g.add(ch);
         break;
       }
+      // The big rooms' fittings, plain, for when the property kit hasn't loaded.
+      case 'agent_window': {
+        const alu = this.mat('#c8ccd2', 0.35, 0.8);
+        for (const sx of [-1, 1]) B(0.05, 2.2, 0.05, sx * W / 2, 1.1, 0, alu);
+        B(W - 0.1, 0.3, 0.02, 0, 1.95, 0, this.mat('#16365a', 0.5), false);
+        for (let i = 0; i < 6; i++) B(0.58, 0.62, 0.012, -0.68 + (i % 3) * 0.68, i < 3 ? 1.36 : 0.62, 0, this.mat('#f8f6f0', 0.6), false);
+        break;
+      }
+      case 'pool_basin': {
+        B(W, 0.4, D, 0, 0.2, 0, this.mat('#dfe8ea', 0.4));
+        B(W - 0.4, 0.02, D - 0.4, 0, 0.4, 0, this.mat('#2a9ac8', 0.05, 0.1, { emissive: 0x0a3a5a }), false);
+        break;
+      }
+      case 'pool_lounger':
+        B(W, 0.32, D, 0, 0.16, 0, this.mat('#e8e4dc', 0.5));
+        B(W - 0.5, 0.07, D - 0.06, 0.2, 0.35, 0, this.mat('#3a6a8a', 0.9), false);
+        break;
+      case 'cinema_screen':
+        B(3.2, 1.8, 0.06, 0, 1.8, 0, this.mat('#9ab8e8', 0.5, 0, { emissive: 0x7a98d8, emissiveIntensity: 0.8 }), false);
+        break;
+      case 'projector':
+        B(0.36, 0.12, 0.3, 0, 2.6, 0, this.mat('#e8e4dc', 0.4), false);
+        break;
+      case 'cinema_seats':
+        B(W, 0.45, D, 0, 0.22, 0, this.mat('#2a2a2e', 0.5));
+        B(W, 0.55, 0.2, 0, 0.72, -D / 2 + 0.1, this.mat('#2a2a2e', 0.5));
+        break;
+      case 'conservatory_glazing':
+      case 'terrace_balustrade': {
+        const glass = new THREE.MeshStandardMaterial({ color: 0xbcd4e8, transparent: true, opacity: 0.25, roughness: 0.05 });
+        B(W, p.kind === 'conservatory_glazing' ? 0.6 : 0.12, 0.25, 0, p.kind === 'conservatory_glazing' ? 0.3 : 0.06, 0, this.mat(p.kind === 'conservatory_glazing' ? '#8a4a36' : '#cfc8b8', 0.9));
+        B(W, p.kind === 'conservatory_glazing' ? 2.0 : 1.0, 0.03, 0, p.kind === 'conservatory_glazing' ? 1.6 : 0.62, 0.1, glass, false);
+        break;
+      }
+      case 'terrace_deck':
+        B(W, 0.03, D, 0, 0.015, 0, this.mat('#8a5a32', 0.8), false);
+        break;
+      case 'terrace_sofa':
+        B(W, 0.4, D, 0, 0.2, 0, this.mat('#5a4a3a', 0.9));
+        B(W - 0.2, 0.12, D - 0.2, 0, 0.46, 0.05, this.mat('#e8e0cc', 0.95), false);
+        break;
+      case 'terrace_table':
+        C(0.45, 0.45, 0.03, 0, 0.72, 0, this.mat('#e8e4dc', 0.3));
+        C(0.03, 0.03, 0.72, 0, 0.36, 0, this.mat('#2a2a2e', 0.4, 0.6), 6);
+        break;
+      case 'wardrobe_wall':
+        B(W, 2.6, D, 0, 1.3, 0, this.mat('#2a2a2e', 0.5));
+        break;
+      case 'dressing_island':
+        B(W, 0.9, D, 0, 0.45, 0, this.mat('#4a2e1a', 0.5));
+        break;
       case 'stairwell': {
         // A hole in the garage floor with a steel balustrade, and stairs dropping away to the back.
         const concrete = this.mat('#8a8884', 0.9);
@@ -3790,11 +3911,17 @@ export class LevelView {
       w.rotation.y = 0.4;
       w.position.set(WEAPONS[wid].length / 2, 0.05, 0);
       g.add(w);
+      // Centre it on the ring and rest it on the floor, whatever its shape.
+      g.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(w);
+      w.position.x -= (b.min.x + b.max.x) / 2;
+      w.position.y += 0.01 - b.min.y;
       return g;
     }
     const spin = new THREE.Group();
-    // Watches, phones, keys and sunglasses are modelled: show the real thing turning over.
-    const model = def ? lootModel(def.icon) : null;
+    // Watches, phones, keys and sunglasses are modelled, and so are food, groceries, materials,
+    // collectibles and quest items (by Game id): show the real thing turning over.
+    const model = def ? (lootModel(id) ?? lootModel(def.icon)) : null;
     if (model) {
       model.rotation.x = 0.5;
       spin.add(model);
@@ -3981,8 +4108,41 @@ function flattenTextures(root: THREE.Object3D): void {
   });
 }
 
+/** The rain streak sprite (shared), or null without the file. */
+let rainTex: THREE.Texture | null = null;
+function rainSprite(): THREE.Texture | null {
+  if (rainTex) return rainTex;
+  const img = textureImage('fx/rain');
+  if (!img) return null;
+  rainTex = new THREE.Texture(img);
+  rainTex.colorSpace = THREE.SRGBColorSpace;
+  rainTex.needsUpdate = true;
+  rainTex.userData.shared = true;
+  return rainTex;
+}
+
 /** A lit room seen through a window: warm light, a lampshade glow, curtains each side. */
 function litWindowTexture(rnd: () => number): THREE.CanvasTexture {
+  const atlas = textureImage('street/windows');
+  if (atlas) {
+    // A lit room from the window atlas (its middle square); four draws, as the canvas version makes.
+    const lit: WindowCell[] = ['lit_warm', 'lit_warm2_curtains', 'lit_cream_blinds', 'lit_amber_curtains'];
+    const kind = lit[Math.floor(rnd() * 4)];
+    rnd();
+    rnd();
+    rnd();
+    const [sx, sy, sw] = windowCell(kind);
+    const [c, g] = canvas(128, 128);
+    g.drawImage(atlas, sx, sy + 40, sw, 128, 0, 0, 128, 128);
+    const t = toTexture(c);
+    const nAtlas = textureImage('street/windows_n');
+    const nc = nAtlas ? flatNormalCanvas(128, 128) : null;
+    if (nc && nAtlas) {
+      nc.getContext('2d')!.drawImage(nAtlas, sx, sy + 40, sw, 128, 0, 0, 128, 128);
+      t.userData.normalImage = nc;
+    }
+    return t;
+  }
   const [c, g] = canvas(128, 128);
   const warm = ['#ffb24a', '#ffcf7a', '#f6e2b0', '#9ab8ff'][Math.floor(rnd() * 4)];
   const grad = g.createRadialGradient(40 + rnd() * 48, 50, 4, 64, 64, 90);

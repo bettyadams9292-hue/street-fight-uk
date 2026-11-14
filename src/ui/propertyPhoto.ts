@@ -195,7 +195,27 @@ function paint(d: PropertyDef): string {
   return c.toDataURL('image/png');
 }
 
-/** The listing photo for a property, as an <img>. */
+/** The painted picture, made once per property; null if the canvas isn't available. */
+function painted(d: PropertyDef): string | null {
+  let url = cache.get(d.id);
+  if (!url) {
+    try {
+      url = paint(d);
+      cache.set(d.id, url);
+    } catch {
+      return null;
+    }
+  }
+  return url;
+}
+
+/** Photos that failed to load: these go straight to the painted picture next time. */
+const missing = new Set<string>();
+
+/**
+ * The listing photo for a property, as an <img>: the render of the real house in public/art/property,
+ * or the painted picture if that can't be loaded.
+ */
 export function propertyPhoto(id: string, cls = 'rt-photo'): HTMLImageElement {
   const d = PROPERTIES[id];
   const img = document.createElement('img');
@@ -203,15 +223,19 @@ export function propertyPhoto(id: string, cls = 'rt-photo'): HTMLImageElement {
   img.alt = d ? `Outside ${d.name}` : '';
   img.draggable = false;
   if (!d || typeof document === 'undefined') return img;
-  let url = cache.get(id);
-  if (!url) {
-    try {
-      url = paint(d);
-      cache.set(id, url);
-    } catch {
-      return img;
-    }
+  const fallback = () => {
+    const url = painted(d);
+    if (url) img.src = url;
+  };
+  if (missing.has(id)) {
+    fallback();
+    return img;
   }
-  img.src = url;
+  img.onerror = () => {
+    img.onerror = null;
+    missing.add(id);
+    fallback();
+  };
+  img.src = `/art/property/${id}.webp`;
   return img;
 }

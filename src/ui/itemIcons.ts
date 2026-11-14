@@ -1,5 +1,6 @@
 import { WEAPONS } from '../combat/Weapons';
 import { ITEMS, RARITY_COLOURS, type ItemDef } from '../items/items';
+import { RENDERED_ICON_IDS } from './itemIconList';
 
 /**
  * Item artwork, painted once per item on a canvas and cached as an image.
@@ -10,7 +11,18 @@ import { ITEMS, RARITY_COLOURS, type ItemDef } from '../items/items';
 const cache = new Map<string, string>();
 const SIZE = 128;
 
+/** Items with an icon rendered from their own model (public/icons/items, tools/icons/render_items.mjs). */
+const RENDERED = new Set(RENDERED_ICON_IDS);
+
+/** The rendered icon file for an item, or null if it only has the painted one. */
+export function renderedIconUrl(id: string): string | null {
+  return RENDERED.has(id) ? `/icons/items/${id}.webp` : null;
+}
+
 export function itemIconUrl(id: string, colourOverride?: string): string {
+  // A rendered icon shows the model's own colours, so a recoloured item keeps the painted one.
+  const file = renderedIconUrl(id);
+  if (file && (!colourOverride || colourOverride.toLowerCase() === ITEMS[id]?.colour?.toLowerCase())) return file;
   const key = `${id}|${colourOverride ?? ''}`;
   const hit = cache.get(key);
   if (hit) return hit;

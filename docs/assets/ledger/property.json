@@ -1,0 +1,649 @@
+[
+ {
+  "id": "jewel_bust",
+  "area": "Jeweller (Halden & Crane)",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/jewel_bust.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Velvet bust on plinth with gold chain; velvet takes the prop colour. Built-in version kept as fallback."
+ },
+ {
+  "id": "agent_board",
+  "area": "Estate agent (Keys & Co)",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/agent_board.glb",
+   "public/art/agent/board_for_sale.webp",
+   "public/art/agent/board_to_let.webp",
+   "public/art/agent/board_sold.webp",
+   "public/art/agent/board_let_by.webp"
+  ],
+  "format": "GLB + WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Board face takes the artwork for FOR SALE / TO LET / SOLD / LET BY KEYS & CO (PropertyLibrary.propertyProp); any other label keeps the canvas board. Seen on Ashcombe Park and in Keys & Co. Built-in version kept as fallback."
+ },
+ {
+  "id": "agent_window",
+  "area": "Estate agent (Keys & Co)",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/agent_window.glb",
+   "public/art/agent/window_header.webp"
+  ],
+  "format": "GLB + WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Freestanding display in Keys & Co (realty/world.ts) showing six listing photos and the header. Built-in version kept as fallback."
+ },
+ {
+  "id": "mansion:georgian",
+  "area": "Ashcombe Park: mansions",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/mansion_georgian.glb",
+   "public/models/property/gates_stone.glb",
+   "public/models/property/railing_stone.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "House, gate piers with lamps, open gates and railings from the kit (LevelView.mansionKit); lawn and path stay flat ground planes in code. Box-built version kept as fallback."
+ },
+ {
+  "id": "mansion:stone",
+  "area": "Ashcombe Park: mansions",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/mansion_stone.glb",
+   "public/models/property/gates_stone.glb",
+   "public/models/property/railing_stone.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "House, gate piers with lamps, open gates and railings from the kit (LevelView.mansionKit); lawn and path stay flat ground planes in code. Box-built version kept as fallback."
+ },
+ {
+  "id": "mansion:brick",
+  "area": "Ashcombe Park: mansions",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/mansion_brick.glb",
+   "public/models/property/gates_brick.glb",
+   "public/models/property/railing_brick.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "House, gate piers with lamps, open gates and railings from the kit (LevelView.mansionKit); lawn and path stay flat ground planes in code. Box-built version kept as fallback."
+ },
+ {
+  "id": "mansion:modern",
+  "area": "Ashcombe Park: mansions",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/mansion_modern.glb",
+   "public/models/property/gates_stone.glb",
+   "public/models/property/railing_stone.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "House, gate piers with lamps, open gates and railings from the kit (LevelView.mansionKit); lawn and path stay flat ground planes in code. Box-built version kept as fallback."
+ },
+ {
+  "id": "staircase",
+  "area": "Property interiors",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/staircase.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Replaces the box stairs in every property hallway with stairs; treads take the fit-out wood colour. Built-in version kept as fallback."
+ },
+ {
+  "id": "room:pool",
+  "area": "Property interiors",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/pool_basin.glb",
+   "public/models/property/pool_lounger.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Raised tiled pool with water, steps, ladder, underwater lights; two loungers (The Glasshouse). Built-in version kept as fallback."
+ },
+ {
+  "id": "room:cinema",
+  "area": "Property interiors",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/cinema_screen.glb",
+   "public/models/property/projector.glb",
+   "public/models/property/cinema_seats.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Screen with curtains, ceiling projector, two rows of recliners facing the screen. Built-in version kept as fallback."
+ },
+ {
+  "id": "room:conservatory",
+  "area": "Property interiors",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/conservatory_glazing.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Glazed back wall and lean-to roof with the night garden beyond; furniture moved forward to clear it. Built-in version kept as fallback."
+ },
+ {
+  "id": "room:terrace",
+  "area": "Property interiors",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/terrace_balustrade.glb",
+   "public/models/property/terrace_deck.glb",
+   "public/models/property/terrace_sofa.glb",
+   "public/models/property/terrace_table.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Decking, glass balustrade with the town skyline at night, rattan sofa, table with parasol and chairs. Built-in version kept as fallback."
+ },
+ {
+  "id": "room:dressing",
+  "area": "Property interiors",
+  "status": "done",
+  "parts": {
+   "model": "done"
+  },
+  "files": [
+   "public/models/property/wardrobe_wall.glb",
+   "public/models/property/dressing_island.glb"
+  ],
+  "format": "GLB",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Fitted wardrobe wall (hanging bays, shoes, drawers) spanning the room, and a glass-topped island. Built-in version kept as fallback."
+ },
+ {
+  "id": "h_tanner_9",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/h_tanner_9.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "h_hollins_27",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/h_hollins_27.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "h_parkside_6",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/h_parkside_6.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "h_ashcombe_beeches",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/h_ashcombe_beeches.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "h_ashcombe_linden",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/h_ashcombe_linden.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "f_lowry_3",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/f_lowry_3.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "f_hollins_41",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/f_hollins_41.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "f_fairclough_12",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/f_fairclough_12.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "f_kirkgate_58b",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/f_kirkgate_58b.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "f_kingsway_7",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/f_kingsway_7.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "a_bonded_4",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/a_bonded_4.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "a_shaws_9",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/a_shaws_9.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "a_ashcombe_tower",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/a_ashcombe_tower.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "a_belgrave_2",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/a_belgrave_2.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "a_pinnacle_ph",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/a_pinnacle_ph.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "m_wyvern_hall",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/m_wyvern_hall.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "m_ashcombe_manor",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/m_ashcombe_manor.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "m_glasshouse",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/m_glasshouse.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "m_heathfield",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/m_heathfield.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ },
+ {
+  "id": "m_kensington_lodge",
+  "area": "Property listing photos",
+  "status": "done",
+  "parts": {
+   "photo": "done"
+  },
+  "files": [
+   "public/art/property/m_kensington_lodge.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/models/property/)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "640x400 render of the real exterior in the running game (dusk, fixed camera); propertyPhoto.ts falls back to the painted picture if it fails to load."
+ }
+]

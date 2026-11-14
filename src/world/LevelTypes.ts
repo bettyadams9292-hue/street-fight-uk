@@ -45,7 +45,10 @@ export type PropKind =
   // A CCTV post at real size (`item` is post_high, post_medium or post_short from SecurityLibrary)
   | 'security_post'
   // Property and jewellery: stairs up to a landing, an agent's board on a post (`label` is what it says), a necklace bust
-  | 'staircase' | 'agent_board' | 'jewel_bust';
+  | 'staircase' | 'agent_board' | 'jewel_bust'
+  // Keys & Co's window display; the big rooms' fittings (pool, cinema, conservatory, roof terrace, dressing room)
+  | 'agent_window' | 'pool_basin' | 'pool_lounger' | 'cinema_screen' | 'projector' | 'cinema_seats'
+  | 'conservatory_glazing' | 'terrace_balustrade' | 'terrace_deck' | 'terrace_sofa' | 'terrace_table' | 'wardrobe_wall' | 'dressing_island';
 
 export interface PropDef {
   kind: PropKind;
@@ -304,6 +307,8 @@ export const PROP_SIZE: Record<PropKind, [number, number]> = {
   equipment: [0.5, 0.5], basement_stairs: [0.75, 0.75], terminal_desk: [0.7, 0.32], junk: [0.6, 0.5], grow_shelf: [1.0, 0.25],
   computer_desk: [0.6, 0.32], coach_board: [0.4, 0.06], stairwell: [0.85, 0.9], gym_kit: [0.5, 0.5], boxing_ring: [2.2, 1.0], dojo_mat: [2.4, 1.1], wrestling_mat: [2.4, 1.1], gym_rack: [0.9, 0.3], gym_prop: [0.4, 0.3], hydro_prop: [0.3, 0.3], security_post: [0.12, 0.12],
   staircase: [1.1, 0.5], agent_board: [0.35, 0.08], jewel_bust: [0.22, 0.2],
+  agent_window: [1.05, 0.2], pool_basin: [2.8, 0.8], pool_lounger: [0.95, 0.33], cinema_screen: [2.3, 0.12], projector: [0.18, 0.15], cinema_seats: [1.15, 0.45],
+  conservatory_glazing: [3.0, 0.24], terrace_balustrade: [3.0, 0.24], terrace_deck: [3.0, 1.9], terrace_sofa: [1.0, 0.43], terrace_table: [0.75, 0.5], wardrobe_wall: [1.7, 0.31], dressing_island: [0.8, 0.35],
 };
 
 /** Half extents after rotation. */

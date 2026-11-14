@@ -189,9 +189,13 @@ export const FALL_FRONT: Pose = fk(
   0.2,
   { pitch: 0.7 },
 );
-/** Face down. */
+/**
+ * Face down: chest and thighs on the floor, cheek down, one arm bent up by the head and the other reaching
+ * out, both lying flat. The arms and head are keyed to the height of the chest, so nothing props the body
+ * up off the floor and nothing is pushed through it (ground.ts rests the lowest point on the floor).
+ */
 export const LYING_FRONT: Pose = fk(
-  { hips: [0, 0, 0], spine: [-0.08, 0, 0], head: [-0.25, 0.75, 0], lShoulder: [-2.5, 0, 0.5], lElbow: [-1.5, 0, 0], rShoulder: [-2.3, 0, -0.6], rElbow: [-1.7, 0, 0], lHip: [0.05, 0, 0.15], lKnee: [0.15, 0, 0], rHip: [0.05, 0, -0.2], rKnee: [0.35, 0, 0] },
+  { hips: [0, 0, 0], spine: [-0.08, 0, 0], head: [0.25, 1.0, 0], lShoulder: [-1.6, 0, 1.2], lElbow: [-1.4, 0, 0], rShoulder: [-2.4, 0, -1.0], rElbow: [-0.4, 0, 0], lHip: [0.05, 0, 0.15], lKnee: [0.15, 0, 0], rHip: [0.05, 0, -0.2], rKnee: [0.35, 0, 0] },
   0,
   { pitch: Math.PI / 2 },
 );

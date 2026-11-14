@@ -74,9 +74,10 @@ export const ESTATE_AGENT: LevelDef = {
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'city', toEntry: 'agent', label: 'Back out to Market Square' }],
   facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'KEYS & CO — SALES · LETTINGS · MANAGEMENT', colour: '#e8e4dc' }],
   props: [
-    { kind: 'agent_board', x: 2.6, z: -1.9, label: 'FOR SALE', solid: false },
-    { kind: 'agent_board', x: 3.6, z: -1.9, label: 'TO LET', solid: false },
-    F('canvas_art', 5.4, -2.0, { colour: '#2a6aa8' }),
+    { kind: 'agent_window', x: 3.1, z: -1.85 },
+    { kind: 'agent_board', x: 5.25, z: -1.95, label: 'FOR SALE', solid: false },
+    { kind: 'agent_board', x: 6.05, z: -1.95, label: 'SOLD', solid: false },
+    F('canvas_art', 11.8, -2.0, { colour: '#2a6aa8' }),
     { kind: 'computer_desk', x: 7.0, z: -0.5, size: [0.7, 0.35] },
     { kind: 'computer_desk', x: 10.4, z: -0.5, size: [0.7, 0.35] },
     F('armchair', 5.0, -1.7, { colour: '#3a4a6a' }),
@@ -269,7 +270,7 @@ function furnishing(kind: RoomKind, q: number): (string | PropDef['kind'])[] {
     case 'study':
       return ['bookcase', 'desk2', 'armchair', 'bookcase', 'wall_clock'];
     case 'cinema':
-      return ['sofa_3', 'tv_65', 'sofa_3', 'neon_sign'];
+      return ['cinema_seats', 'cinema_seats', 'neon_sign'];
     case 'games':
       return ['pool_table', 'jukebox', 'fruit_machine', 'neon_sign'];
     case 'gym':
@@ -277,17 +278,29 @@ function furnishing(kind: RoomKind, q: number): (string | PropDef['kind'])[] {
     case 'bar':
       return ['bar', 'wall_shelf', 'neon_sign', 'pub_table'];
     case 'pool':
-      return ['plant_tall', 'fountain', 'bench', 'plant_tall'];
+      return ['pool_lounger', 'pool_basin', 'pool_lounger', 'plant_tall'];
     case 'dressing':
-      return ['wardrobe2', 'mirror_stand', 'drawers', 'trophy_cab'];
+      return [];
     case 'conservatory':
       return ['plant_tall', 'armchair', 'coffee_table', 'armchair', 'plant_tall'];
     case 'terrace':
-      return ['plant_tall', 'bench', 'arc_lamp', 'plant_tall'];
+      return ['terrace_sofa', 'terrace_table', 'plant_tall'];
   }
 }
 
 const BACK_Z = -2.3;
+
+/**
+ * Fittings built into a room: pieces along the back wall (`span` stretches them to the room's width), the
+ * floor, things hung from the ceiling or standing in the middle. `back` is how far the furniture along the
+ * back wall moves forward to clear them.
+ */
+const ROOM_FIT: Partial<Record<RoomKind, { back: number; pieces: { kind: PropDef['kind']; depth: number; span?: boolean; z?: number; solid?: boolean }[] }>> = {
+  cinema: { back: 0.3, pieces: [{ kind: 'cinema_screen', depth: 0.24, solid: false }, { kind: 'projector', depth: 0.3, z: -0.2, solid: false }] },
+  conservatory: { back: 0.48, pieces: [{ kind: 'conservatory_glazing', depth: 0.48, span: true }] },
+  terrace: { back: 0.48, pieces: [{ kind: 'terrace_deck', depth: 3.8, span: true, z: -0.4, solid: false }, { kind: 'terrace_balustrade', depth: 0.48, span: true }] },
+  dressing: { back: 0.62, pieces: [{ kind: 'wardrobe_wall', depth: 0.62, span: true }, { kind: 'dressing_island', depth: 0.7, z: -0.75 }] },
+};
 
 /**
  * The inside of a property: its rooms side by side along the walkway, each with its own floor, walls and
@@ -322,6 +335,12 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
       cursor = x0 + 1.9;
     }
     const limit = kind === 'hall' && p.stairs ? x1 - 2.5 : x1 - 0.3;
+    const fit = ROOM_FIT[kind];
+    for (const f of fit?.pieces ?? []) {
+      const half: [number, number] = [f.span ? (w - 0.3) / 2 : PROP_SIZE[f.kind][0], f.depth / 2];
+      props.push({ kind: f.kind, x: (x0 + x1) / 2, z: f.z ?? BACK_Z + f.depth / 2, size: half, ...(f.solid === false ? { solid: false } : {}) });
+    }
+    const backZ = BACK_Z + (fit?.back ?? 0);
     for (const item of furnishing(kind, p.quality)) {
       const fdef = FURNITURE[item];
       if (fdef) {
@@ -333,7 +352,7 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
         }
         if (cursor + hx * 2 > limit) continue;
         const colour = fdef.cat === 'living' || fdef.cat === 'bedroom' ? (fdef.colours.includes(FABRIC_BY_Q[p.quality]) ? FABRIC_BY_Q[p.quality] : fdef.colours[0]) : fdef.colours.includes(WOOD_BY_Q[p.quality]) ? WOOD_BY_Q[p.quality] : fdef.colours[0];
-        const mount = fdef.mount === 'rug' ? { z: -0.9 } : { z: BACK_Z + hz };
+        const mount = fdef.mount === 'rug' ? { z: -0.9 } : { z: backZ + hz };
         props.push(F(item, cursor + hx, mount.z, { colour }));
         if ((item === 'bed_double' || item === 'bed_single') && bedX === null) bedX = cursor + hx;
         if (fdef.mount !== 'rug') cursor += hx * 2 + 0.2;
@@ -341,7 +360,7 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
         const k = item as PropDef['kind'];
         const [hx, hz] = PROP_SIZE[k];
         if (cursor + hx * 2 > limit) continue;
-        props.push({ kind: k, x: cursor + hx, z: Math.max(-1.95, BACK_Z + hz), ...(k === 'fountain' ? { size: [0.9, 0.5] as [number, number] } : {}) });
+        props.push({ kind: k, x: cursor + hx, z: Math.max(-1.95, backZ + hz), ...(k === 'fountain' ? { size: [0.9, 0.5] as [number, number] } : {}) });
         cursor += hx * 2 + 0.25;
       }
     }

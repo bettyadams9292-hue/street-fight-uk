@@ -1,0 +1,1152 @@
+[
+  {
+    "id": "home",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/home.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "mission",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/mission.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "boss",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/boss.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: No call site in the current UI (map boss markers use the check icon), so it cannot appear in game yet."
+  },
+  {
+    "id": "side",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/side.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "shop",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/shop.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "clothes",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/clothes.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "pawn",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/pawn.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "gym",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/gym.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "pub",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/pub.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "casino",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/casino.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "cars",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/cars.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Map marker exists but was outside the regions captured in the screenshots."
+  },
+  {
+    "id": "bikes",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/bikes.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Map marker exists but was outside the regions captured in the screenshots."
+  },
+  {
+    "id": "property",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/property.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "contact",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/contact.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "street",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/street.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "parked",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/parked.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Map marker only shows once you own and park a vehicle; not set up in the check."
+  },
+  {
+    "id": "lock",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/lock.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "map",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/map.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "bag",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/bag.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "close",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/close.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "play",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/play.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Only used by menuButton, where the painted title graphic replaces the icon, so it is not drawn in game."
+  },
+  {
+    "id": "save",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/save.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Only used by menuButton, where the painted title graphic replaces the icon, so it is not drawn in game."
+  },
+  {
+    "id": "settings",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/settings.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Only used by menuButton, where the painted title graphic replaces the icon, so it is not drawn in game."
+  },
+  {
+    "id": "controls",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/controls.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Only used by menuButton (painted title replaces the icon) and not drawn in game."
+  },
+  {
+    "id": "quit",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/quit.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Menu use is replaced by the painted title; the crew \"Let them go\" button needs a companion, not set up in the check."
+  },
+  {
+    "id": "phone",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/phone.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: No call site in the current UI, so it cannot appear in game yet."
+  },
+  {
+    "id": "pin",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/pin.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "you",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/you.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "plus",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/plus.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "minus",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/minus.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "target",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/target.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "route",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/route.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "cab",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/cab.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "walk",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/walk.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Crew \"Follow me\" button only (needs a companion), not set up in the check."
+  },
+  {
+    "id": "weapon",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/weapon.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "consumable",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/consumable.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "material",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/material.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "valuable",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/valuable.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "misc",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/misc.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "equipment",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/equipment.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "all",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/all.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "check",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/check.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "coin",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/coin.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: No call site in the current UI, so it cannot appear in game yet."
+  },
+  {
+    "id": "back",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/back.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Crew \"Cancel\" button only (needs a companion); the settings Back uses a painted title."
+  },
+  {
+    "id": "info",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/info.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: Fallback icon for an unknown need chip; never reached in normal play."
+  },
+  {
+    "id": "food",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/food.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: HUD need chip: forcing hunger low in the debug start did not bring the chip up, so not seen in game."
+  },
+  {
+    "id": "sleep",
+    "area": "UI icons",
+    "status": "partial",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "todo"
+    },
+    "files": [
+      "public/icons/ui/sleep.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": false,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png). Not seen in the running game: HUD need chip: forcing energy low in the debug start did not bring the chip up, so not seen in game."
+  },
+  {
+    "id": "shower",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/shower.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "tooth",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/tooth.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  },
+  {
+    "id": "toilet",
+    "area": "UI icons",
+    "status": "done",
+    "parts": {
+      "svg": "done",
+      "wired": "done",
+      "seen_in_game": "done"
+    },
+    "files": [
+      "public/icons/ui/toilet.svg",
+      "src/ui/iconArt.ts",
+      "src/ui/icons.ts"
+    ],
+    "format": "SVG",
+    "source": "original",
+    "licence": "Original work for Street Fight UK",
+    "origin": "original",
+    "optimised": true,
+    "integrated": true,
+    "tested": true,
+    "notes": "24x24, stroke 2, square caps, mitred corners, currentColor. Checked at 24/32/48 px in headless Chrome (/tmp/ui-icons/icon-sheet-24-32-48.png)."
+  }
+]
