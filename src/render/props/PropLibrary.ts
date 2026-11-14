@@ -8,6 +8,7 @@
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { pickupSize, pickupSource } from './pickups';
 
 export const PROP_FILES = {
   dumpster: 'dumpster.glb',
@@ -215,11 +216,14 @@ export function weaponModel(weaponId: string, length: number): THREE.Group | nul
   return outer;
 }
 
-/** A small item (watch, phone, keys, sunglasses) sized for picking up off the ground, centred, lying flat. */
-export function lootModel(kind: string, size = 0.34): THREE.Group | null {
+/**
+ * A small item sized for picking up off the ground, centred, lying flat. `kind` is a Game id with
+ * its own pickup model (food, groceries, materials, collectibles, quest items: pickups.ts) or an
+ * icon kind in ITEM_MODELS (watch, phone, keys, sunglasses).
+ */
+export function lootModel(kind: string, size = pickupSize(kind) ?? 0.34): THREE.Group | null {
   const id = ITEM_MODELS[kind];
-  if (!id) return null;
-  const src = loaded.get(id);
+  const src = pickupSource(kind) ?? (id ? loaded.get(id) : undefined);
   if (!src) return null;
   const inner = share(src.clone(true));
   const box = new THREE.Box3().setFromObject(src);

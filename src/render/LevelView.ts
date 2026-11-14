@@ -3798,8 +3798,9 @@ export class LevelView {
       return g;
     }
     const spin = new THREE.Group();
-    // Watches, phones, keys and sunglasses are modelled: show the real thing turning over.
-    const model = def ? lootModel(def.icon) : null;
+    // Watches, phones, keys and sunglasses are modelled, and so are food, groceries, materials,
+    // collectibles and quest items (by Game id): show the real thing turning over.
+    const model = def ? (lootModel(id) ?? lootModel(def.icon)) : null;
     if (model) {
       model.rotation.x = 0.5;
       spin.add(model);

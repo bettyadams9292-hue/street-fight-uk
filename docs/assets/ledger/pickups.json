@@ -1,0 +1,1682 @@
+[
+ {
+  "id": "chips",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/chips.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "kebab",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/kebab.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "pasty",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/pasty.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "sausage_roll",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/sausage-roll.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "meal_deal",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/meal-deal.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "bacon_butty",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/bacon-butty.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (bacon), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "curry",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/curry.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "fry_up",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/fry-up.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (egg-cooked + bacon), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "protein_bar",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/protein-bar.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "energy_drink",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/energy-drink.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "can_of_pop",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/can-of-pop.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (soda-can), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "water",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/water.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "flask_tea",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/flask-tea.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_bread",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-bread.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (loaf), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_butter",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-butter.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_cheese",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-cheese.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_ham",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-ham.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_eggs",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-eggs.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_milk",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-milk.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_cereal",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-cereal.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_beans",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-beans.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_bacon",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-bacon.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (bacon-raw), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_sausages",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-sausages.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_potatoes",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-potatoes.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_chicken",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-chicken.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_steak",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-steak.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (meat-raw), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_pasta",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-pasta.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_sauce",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-sauce.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_mince",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-mince.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_buns",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-buns.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_curry_sauce",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-curry-sauce.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_rice",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-rice.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_onions",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-onions.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (onion), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_mushrooms",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-mushrooms.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (mushroom), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_tomatoes",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-tomatoes.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (tomato), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_peas",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-peas.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "g_oven_chips",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/g-oven-chips.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "s_crisps",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/s-crisps.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "s_chocolate",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/s-chocolate.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (chocolate-wrapper), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "s_fruit",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/s-fruit.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (apple), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "s_biscuits",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/s-biscuits.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_sandwich",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-sandwich.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (sandwich), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_toast",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-toast.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_cereal",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-cereal.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (bowl-cereal), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_beans_toast",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-beans-toast.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_scrambled",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-scrambled.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_full_english",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-full-english.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (egg-cooked + bacon), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_sausage_mash",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-sausage-mash.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_chicken_chips",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-chicken-chips.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_steak",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-steak.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (meat-cooked), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_pasta",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-pasta.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_burger",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-burger.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "Kenney Food Kit 2.0 (burger-cheese), https://kenney.nl/assets/food-kit, texture flattened to plain colours; rest original (tools/pickups/models.mjs)",
+  "licence": "CC0 1.0 (Kenney parts) + Original work for Street Fight UK",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "m_curry",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/m-curry.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "plasters",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/plasters.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "first_aid",
+  "area": "Items: Food & first aid",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/first-aid.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "signed_shirt",
+  "area": "Items: Collectibles",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/signed-shirt.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "programme_1966",
+  "area": "Items: Collectibles",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/programme-1966.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "vintage_football",
+  "area": "Items: Collectibles",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/vintage-football.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "pocket_watch",
+  "area": "Items: Collectibles",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/pocket-watch.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "toby_jug",
+  "area": "Items: Collectibles",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/toby-jug.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "candlestick",
+  "area": "Items: Collectibles",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/candlestick.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "vinyl_rare",
+  "area": "Items: Collectibles",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/vinyl-rare.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "match_ticket",
+  "area": "Items: Collectibles",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/match-ticket.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "gaffer_ledger",
+  "area": "Items: Quest items",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/gaffer-ledger.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "lockup_key",
+  "area": "Items: Quest items",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/lockup-key.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Row asks only for the inventory icon (todo, item-icons package). A low-poly pickup model of its own was also made and wired in by Game id, replacing the generic photo-scanned keyring/smartphone it used before."
+ },
+ {
+  "id": "vip_pass",
+  "area": "Items: Quest items",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/vip-pass.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "dunc_phone",
+  "area": "Items: Quest items",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/dunc-phone.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Row asks only for the inventory icon (todo, item-icons package). A low-poly pickup model of its own was also made and wired in by Game id, replacing the generic photo-scanned keyring/smartphone it used before."
+ },
+ {
+  "id": "stadium_key",
+  "area": "Items: Quest items",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/stadium-key.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Row asks only for the inventory icon (todo, item-icons package). A low-poly pickup model of its own was also made and wired in by Game id, replacing the generic photo-scanned keyring/smartphone it used before."
+ },
+ {
+  "id": "scrap_metal",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/scrap-metal.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "duct_tape",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/duct-tape.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "bolts",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/bolts.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "leather_strip",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/leather-strip.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "steel_bar",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/steel-bar.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "spring_steel",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/spring-steel.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "carbon_fibre",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/carbon-fibre.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "lighter",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/lighter.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "bus_pass",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/bus-pass.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "bag_bumbag",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/bag-bumbag.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "bag_rucksack",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/bag-rucksack.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ },
+ {
+  "id": "bag_holdall",
+  "area": "Items: Groceries & materials",
+  "status": "partial",
+  "parts": {
+   "model": "done",
+   "icon": "todo"
+  },
+  "files": [
+   "public/models/pickups/bag-holdall.glb",
+   "src/render/props/pickups.ts"
+  ],
+  "format": "GLB",
+  "source": "original (tools/pickups/models.mjs)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "Ground pickup model wired by Game id through PropLibrary ITEM_MODELS (pickups.ts); falls back to the icon card if it fails to load. The game shows no held food/items, so no held model. Inventory icon left for the item-icons package."
+ }
+]
