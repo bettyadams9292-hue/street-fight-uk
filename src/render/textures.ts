@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { fileTexture, flatNormalCanvas, textureImage, windowCell, type WindowCell } from './textureFiles';
 
 /**
  * Procedural canvas textures for the Stage 1 alley (TEMPORARY: replaced by
@@ -29,6 +30,8 @@ function jitter(base: [number, number, number], amount: number): string {
 
 /** Victorian red brick, stretcher bond, sooty. */
 export function brickTexture(repeatX: number, repeatY: number): THREE.CanvasTexture {
+  const file = fileTexture('street/brick', repeatX, repeatY);
+  if (file) return file;
   const [c, g] = canvas(512, 512);
   g.fillStyle = '#3a3330';
   g.fillRect(0, 0, 512, 512);
@@ -60,6 +63,8 @@ export function brickTexture(repeatX: number, repeatY: number): THREE.CanvasText
 
 /** Concrete paving slabs, the standard 600 mm UK pavement grid. */
 export function pavingTexture(repeatX: number, repeatY: number): THREE.CanvasTexture {
+  const file = fileTexture('street/paving', repeatX, repeatY);
+  if (file) return file;
   const [c, g] = canvas(512, 512);
   const n = 4;
   const s = 512 / n;
@@ -97,6 +102,8 @@ export function pavingTexture(repeatX: number, repeatY: number): THREE.CanvasTex
 
 /** Tarmac with double yellow lines along one edge (no parking at any time). */
 export function roadTexture(repeatX: number): THREE.CanvasTexture {
+  const file = fileTexture('street/road', repeatX, 1);
+  if (file) return file;
   const [c, g] = canvas(512, 256);
   g.fillStyle = '#26272b';
   g.fillRect(0, 0, 512, 256);
@@ -115,6 +122,24 @@ export function windowsTexture(): THREE.CanvasTexture {
   const [c, g] = canvas(1024, 256);
   g.fillStyle = '#000';
   g.fillRect(0, 0, 1024, 256);
+  const atlas = textureImage('street/windows');
+  if (atlas) {
+    // Windows from the atlas file: about half lit, some with curtains or blinds.
+    const nAtlas = textureImage('street/windows_n');
+    const nc = nAtlas ? flatNormalCanvas(1024, 256) : null;
+    const lit: WindowCell[] = ['lit_warm', 'lit_warm2_curtains', 'lit_cool', 'lit_cream_blinds', 'lit_amber_curtains', 'lit_tv'];
+    for (let i = 0; i < 8; i++) {
+      const on = Math.random() < 0.45;
+      const kind = on ? lit[Math.floor(Math.random() * lit.length)] : Math.random() < 0.5 ? 'unlit' : 'unlit_blinds';
+      const [sx, sy, sw, sh] = windowCell(kind);
+      g.drawImage(atlas, sx, sy, sw, sh, 36 + i * 125, 54, 78, 122);
+      if (nc && nAtlas) nc.getContext('2d')!.drawImage(nAtlas, sx, sy, sw, sh, 36 + i * 125, 54, 78, 122);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    if (nc) t.userData.normalImage = nc;
+    return t;
+  }
   for (let i = 0; i < 8; i++) {
     const x = 40 + i * 125;
     const lit = Math.random() < 0.45;
@@ -137,6 +162,8 @@ export function windowsTexture(): THREE.CanvasTexture {
 
 /** Shop-shutter graffiti-free roller door. */
 export function shutterTexture(): THREE.CanvasTexture {
+  const file = fileTexture('street/shutter');
+  if (file) return file;
   const [c, g] = canvas(256, 256);
   for (let y = 0; y < 256; y += 8) {
     g.fillStyle = y % 16 === 0 ? '#5d6066' : '#4c4f55';

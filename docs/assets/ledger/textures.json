@@ -1,0 +1,1074 @@
+[
+ {
+  "id": "f_oak",
+  "area": "Home finishes (floor)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/f_oak.webp",
+   "public/textures/home/f_oak_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "f_walnut",
+  "area": "Home finishes (floor)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/f_walnut.webp",
+   "public/textures/home/f_walnut_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "f_grey_carpet",
+  "area": "Home finishes (floor)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/f_grey_carpet.webp",
+   "public/textures/home/f_grey_carpet_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "f_cream_carpet",
+  "area": "Home finishes (floor)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/f_cream_carpet.webp",
+   "public/textures/home/f_cream_carpet_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "f_plum_carpet",
+  "area": "Home finishes (floor)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/f_plum_carpet.webp",
+   "public/textures/home/f_plum_carpet_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "f_red_carpet",
+  "area": "Home finishes (floor)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/f_red_carpet.webp",
+   "public/textures/home/f_red_carpet_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "f_check_tiles",
+  "area": "Home finishes (floor)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/f_check_tiles.webp",
+   "public/textures/home/f_check_tiles_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "f_stone_tiles",
+  "area": "Home finishes (floor)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/f_stone_tiles.webp",
+   "public/textures/home/f_stone_tiles_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "f_slate_tiles",
+  "area": "Home finishes (floor)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/f_slate_tiles.webp",
+   "public/textures/home/f_slate_tiles_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_magnolia",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_magnolia.webp",
+   "public/textures/home/w_magnolia_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_white",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_white.webp",
+   "public/textures/home/w_white_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_sage",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_sage.webp",
+   "public/textures/home/w_sage_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_navy",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_navy.webp",
+   "public/textures/home/w_navy_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_charcoal",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_charcoal.webp",
+   "public/textures/home/w_charcoal_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_blush",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_blush.webp",
+   "public/textures/home/w_blush_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_slate_blue",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_slate_blue.webp",
+   "public/textures/home/w_slate_blue_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_stone",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_stone.webp",
+   "public/textures/home/w_stone_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_stripes",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_stripes.webp",
+   "public/textures/home/w_stripes_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_brick",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_brick.webp",
+   "public/textures/home/w_brick_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_panelling",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_panelling.webp",
+   "public/textures/home/w_panelling_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "w_tiles",
+  "area": "Home finishes (wall)",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/home/w_tiles.webp",
+   "public/textures/home/w_tiles_n.webp"
+  ],
+  "format": "WebP 512 px",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textureFiles.ts finishMaterial(): used by LevelView in both the low-poly path (replaces kitFloor/kitWall for that room) and the classic path (floorFinish/wallFinish); kit blocks/canvas stay as the fallback. Seen at home, /tmp/textures/home_*.png."
+ },
+ {
+  "id": "brickTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/brick.webp",
+   "public/textures/street/brick_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "src/render/textures.ts brickTexture; seen in the arena (training) and classic alleys/industrial. Canvas version kept as fallback."
+ },
+ {
+  "id": "concreteTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/concrete.webp",
+   "public/textures/street/concrete_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "two-tone file painted in the caller's colour; seen in classic car park, estate, subway. Canvas version kept as fallback."
+ },
+ {
+  "id": "corrugatedTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/corrugated.webp",
+   "public/textures/street/corrugated_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "two-tone (green channel = rust streaks); seen on the kit street (city) and classic estate. Canvas version kept as fallback."
+ },
+ {
+  "id": "graffitiTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/graffiti.webp",
+   "public/textures/street/graffiti_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "atlas of 8 original made-up tags, one cut per call (same random draws as the canvas, so layouts don't change); normal via atlas crop; seen in classic industrial, city, car park. Canvas version kept as fallback."
+ },
+ {
+  "id": "markingsTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/markings.webp",
+   "public/textures/street/markings_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "two-tone (green channel = painted line); seen in classic car park. Canvas version kept as fallback."
+ },
+ {
+  "id": "pavingTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/paving.webp",
+   "public/textures/street/paving_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "seen in the arena. Canvas version kept as fallback."
+ },
+ {
+  "id": "plasterTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/plaster.webp",
+   "public/textures/street/plaster_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "two-tone single colour; seen in classic pub. In the default low-poly interiors LevelView.flattenTextures still turns it into a flat colour (the normal map stays). Canvas version kept as fallback."
+ },
+ {
+  "id": "posterTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/posters.webp",
+   "public/textures/street/posters_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "atlas of 8 original posters; seen in classic subway, alleys, pub. Canvas version kept as fallback."
+ },
+ {
+  "id": "roadTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/road.webp",
+   "public/textures/street/road_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "seen in the arena (/tmp/textures/arena_road.png). Canvas version kept as fallback."
+ },
+ {
+  "id": "shutterTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/shutter.webp",
+   "public/textures/street/shutter_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "seen in the arena. Canvas version kept as fallback."
+ },
+ {
+  "id": "tileTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/tiles.webp",
+   "public/textures/street/tiles_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "two-tone (green = grout); repeat scaled so tile size matches the old size parameter; seen in classic subway. Canvas version kept as fallback."
+ },
+ {
+  "id": "windowsTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/windows.webp",
+   "public/textures/street/windows_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "composed from the window atlas (8 cells: dark, blinds, lit warm/cool/amber/TV, curtains) with a matching composed normal map; seen in the arena (/tmp/textures/arena_wide.png). Canvas version kept as fallback."
+ },
+ {
+  "id": "windowGridTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/windows.webp",
+   "public/textures/street/windows_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "composed from the window atlas, lit windows multiplied by the lit colour; composed normal map; seen in classic estate/industrial/city. Canvas version kept as fallback."
+ },
+ {
+  "id": "litWindowTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/windows.webp",
+   "public/textures/street/windows_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "LevelView.litWindowTexture: a lit cell from the window atlas, with its normal; seen in classic areas (scene count). Canvas version kept as fallback."
+ },
+ {
+  "id": "woodFloorTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/wood_floor.webp",
+   "public/textures/street/wood_floor_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "8 boards per tile as before; seen in classic pub. Canvas version kept as fallback."
+ },
+ {
+  "id": "woodTex",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/furniture/wood_light.webp",
+   "public/textures/furniture/wood_light_n.webp",
+   "public/textures/furniture/wood_dark.webp",
+   "public/textures/furniture/wood_dark_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "KenneyLibrary surfaces (wood, woodDark), normal maps attached; loadKenney now awaits the texture files first; seen on home furniture. Canvas version kept as fallback."
+ },
+ {
+  "id": "weaveTex",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/furniture/weave.webp",
+   "public/textures/furniture/weave_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "KenneyLibrary carpet/upholstery surfaces; seen at home. Canvas version kept as fallback."
+ },
+ {
+  "id": "brushTex",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/furniture/brushed_metal.webp",
+   "public/textures/furniture/brushed_metal_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "KenneyLibrary metal surfaces; seen at home. Canvas version kept as fallback."
+ },
+ {
+  "id": "fabricTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/character/fabric_fleece.webp",
+   "public/textures/character/fabric_fleece_n.webp",
+   "public/textures/character/fabric_knit.webp",
+   "public/textures/character/fabric_knit_n.webp",
+   "public/textures/character/fabric_nylon.webp",
+   "public/textures/character/fabric_nylon_n.webp",
+   "public/textures/character/fabric_denim.webp",
+   "public/textures/character/fabric_denim_n.webp",
+   "public/textures/character/fabric_leather.webp",
+   "public/textures/character/fabric_leather_n.webp",
+   "public/textures/character/fabric_cotton.webp",
+   "public/textures/character/fabric_cotton_n.webp",
+   "public/textures/character/fabric_canvas.webp",
+   "public/textures/character/fabric_canvas_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "HumanBuilder garments: 7 weaves at 128 px (half the old repeats), normal maps attached; fleece, nylon, denim, canvas, cotton, leather confirmed loaded on characters in the running game (knit not worn by anyone in the areas checked). Canvas version kept as fallback."
+ },
+ {
+  "id": "dripTexture",
+  "area": "Textures",
+  "status": "partial",
+  "parts": {
+   "mask": "done (city kit file T_Noise_Drips.webp)",
+   "normal": "not made (it is a greyscale streak mask for the weathering shader; a normal map has no use)"
+  },
+  "files": [
+   "public/models/city/tex/T_Noise_Drips.webp"
+  ],
+  "format": "WebP",
+  "source": "Quaternius Downtown City MegaKit (already in repo)",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "NO CHANGE MADE. look/weathering.ts dripTexture already loads a kit file, not a canvas."
+ },
+ {
+  "id": "signTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/street/sign_board.webp",
+   "public/textures/street/sign_board_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "the board behind shop/street sign lettering is the file, tinted to the board colour (lettering is still drawn in code, it is dynamic text); neon signs stay flat; normal map attached; seen on kit and classic streets. Canvas version kept as fallback."
+ },
+ {
+  "id": "kitGroundTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done (city kit file)",
+   "normal": "done (city kit file)"
+  },
+  "files": [
+   "public/models/city/tex/T_*_BaseColor.webp",
+   "public/models/city/tex/T_*_Normal.webp"
+  ],
+  "format": "WebP",
+  "source": "Quaternius Downtown City MegaKit (already in public/models/city/tex)",
+  "licence": "CC0 1.0",
+  "origin": "downloaded",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "NO CHANGE MADE. Flooring.kitGroundTexture already loads the city kit's texture files (colour + normal); the sheet's \"drawn on a canvas\" is wrong for this row. Lead to decide whether to tick."
+ },
+ {
+  "id": "browTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/character/brow.webp",
+   "public/textures/character/brow_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "HumanBuilder eyebrows, white strokes in alpha tinted by the material; confirmed loaded on every character (scene count); too small to judge by eye at game distance. Canvas version kept as fallback."
+ },
+ {
+  "id": "lashTexture",
+  "area": "Textures",
+  "status": "done",
+  "parts": {
+   "colour": "done",
+   "normal": "done"
+  },
+  "files": [
+   "public/textures/character/lash.webp",
+   "public/textures/character/lash_n.webp"
+  ],
+  "format": "WebP",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "HumanBuilder eyelashes; confirmed loaded on every character (scene count). Canvas version kept as fallback."
+ },
+ {
+  "id": "burst_hit",
+  "area": "Effects",
+  "status": "done",
+  "parts": {
+   "sprite": "done"
+  },
+  "files": [
+   "public/textures/fx/particles.webp"
+  ],
+  "format": "WebP atlas 512x256 (8 cells)",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "HitFX: each burst now has a centrepiece sprite (cell \"hit\") plus sparks/droplets from the same atlas, per-particle size and cell; square dots remain the fallback. Seen firing in training, /tmp/textures/fx_hit.png."
+ },
+ {
+  "id": "burst_heavy",
+  "area": "Effects",
+  "status": "done",
+  "parts": {
+   "sprite": "done"
+  },
+  "files": [
+   "public/textures/fx/particles.webp"
+  ],
+  "format": "WebP atlas 512x256 (8 cells)",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "HitFX: each burst now has a centrepiece sprite (cell \"heavy\") plus sparks/droplets from the same atlas, per-particle size and cell; square dots remain the fallback. Seen firing in training, /tmp/textures/fx_heavy.png."
+ },
+ {
+  "id": "burst_block",
+  "area": "Effects",
+  "status": "done",
+  "parts": {
+   "sprite": "done"
+  },
+  "files": [
+   "public/textures/fx/particles.webp"
+  ],
+  "format": "WebP atlas 512x256 (8 cells)",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "HitFX: each burst now has a centrepiece sprite (cell \"block\") plus sparks/droplets from the same atlas, per-particle size and cell; square dots remain the fallback. Seen firing in training, /tmp/textures/fx_block.png."
+ },
+ {
+  "id": "burst_glint",
+  "area": "Effects",
+  "status": "done",
+  "parts": {
+   "sprite": "done"
+  },
+  "files": [
+   "public/textures/fx/particles.webp"
+  ],
+  "format": "WebP atlas 512x256 (8 cells)",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "HitFX: each burst now has a centrepiece sprite (cell \"glint\") plus sparks/droplets from the same atlas, per-particle size and cell; square dots remain the fallback. Seen firing in training, /tmp/textures/fx_glint.png."
+ },
+ {
+  "id": "burst_danger",
+  "area": "Effects",
+  "status": "done",
+  "parts": {
+   "sprite": "done"
+  },
+  "files": [
+   "public/textures/fx/particles.webp"
+  ],
+  "format": "WebP atlas 512x256 (8 cells)",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "HitFX: each burst now has a centrepiece sprite (cell \"danger\") plus sparks/droplets from the same atlas, per-particle size and cell; square dots remain the fallback. Seen firing in training, /tmp/textures/fx_danger.png."
+ },
+ {
+  "id": "rain",
+  "area": "Effects",
+  "status": "done",
+  "parts": {
+   "sprite": "done"
+  },
+  "files": [
+   "public/textures/fx/rain.webp"
+  ],
+  "format": "WebP 64 px sprite",
+  "source": "original (tools/textures/gen_textures.py)",
+  "licence": "Original work for Street Fight UK",
+  "origin": "original",
+  "optimised": true,
+  "integrated": true,
+  "tested": true,
+  "notes": "LevelView.buildWeather: drops are point sprites with this streak; the old line segments are the fallback. Seen on the estate street, /tmp/textures/rain_street.png."
+ }
+]
