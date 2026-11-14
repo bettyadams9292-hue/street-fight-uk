@@ -556,6 +556,9 @@ kbd, .key {
 .item-card.equipped { background: linear-gradient(90deg, var(--rarity, #777) 0 4px, transparent 4px), linear-gradient(90deg, rgba(11, 106, 79, 0.28), transparent 70%), linear-gradient(180deg, var(--asphalt-2), var(--asphalt)); }
 .card-pic { border-radius: 0; background: var(--pit); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.5); }
 .card-pic .qty { border-radius: 0; background: var(--sign-white); color: var(--ink); border: 0; font-family: var(--head); font-weight: 900; }
+/* Icons rendered from the item's model (public/icons/items) have a clear background: give them the
+   painted icons' soft rarity glow so the cards still read by rarity. */
+img[src^="/icons/items/"] { background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--rarity, #8a8a8a) 30%, transparent) 0%, transparent 68%); }
 .card-text b { font-family: var(--head); font-weight: 800; font-size: 19px; letter-spacing: 0.01em; }
 .card-text small { font-family: var(--ui); font-size: 13px; }
 .eq-tag { color: var(--green); }
