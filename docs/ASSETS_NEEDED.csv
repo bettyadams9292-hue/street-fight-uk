@@ -432,25 +432,25 @@ Animations: everyday,Talk,talk,Mocap / keyframed animation clip,Moved by sine wa
 Animations: everyday,Wait,wait,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Animations: everyday,Wash face,wash_face,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
 Animations: everyday,Wash hands,wash_hands,Mocap / keyframed animation clip,Moved by sine waves in code,FALSE
-Sound,Big shot charging (warning swell),danger,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Parry tell (scrape),tell,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Swing whoosh,swing,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Menu move,uiMove,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Menu confirm,uiConfirm,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Night city ambience,ambience,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Oven hum (loop),oven,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Shower (loop),shower,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Frying pan sizzle (loop),sizzle,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Running tap (loop),tap,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Fridge open,fridge_open,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Fridge close,fridge_close,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Cupboard,cupboard,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Chopping,chop,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Plate / glass clink,clink,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Eating,eat,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Toilet flush,flush,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Tap on,tap_on,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
-Sound,Light switch,switch,Sound effect (.mp3/.ogg),Synthesised in code,FALSE
+Sound,Big shot charging (warning swell),danger,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Parry tell (scrape),tell,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Swing whoosh,swing,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Menu move,uiMove,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Menu confirm,uiConfirm,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Night city ambience,ambience,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Oven hum (loop),oven,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Shower (loop),shower,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Frying pan sizzle (loop),sizzle,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Running tap (loop),tap,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Fridge open,fridge_open,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Fridge close,fridge_close,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Cupboard,cupboard,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Chopping,chop,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Plate / glass clink,clink,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Eating,eat,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Toilet flush,flush,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Tap on,tap_on,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
+Sound,Light switch,switch,Sound effect (.mp3/.ogg),Synthesised in code,TRUE
 UI icons,Home,home,UI icon (SVG),Line icon drawn in code,FALSE
 UI icons,Mission,mission,UI icon (SVG),Line icon drawn in code,FALSE
 UI icons,Boss,boss,UI icon (SVG),Line icon drawn in code,FALSE
