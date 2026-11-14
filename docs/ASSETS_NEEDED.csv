@@ -222,27 +222,27 @@ Home furniture,Floating shelf,wall_shelf,3D model + shop icon,Built from boxes i
 Home furniture,Floor vase,vase,3D model + shop icon,Built from boxes in code,FALSE
 Home furniture,Trophy cabinet,trophy_cab,3D model + shop icon,Built from boxes in code,FALSE
 Home furniture,Neon sign,neon_sign,3D model + shop icon,Built from boxes in code,FALSE
-Home finishes (floor),Oak boards,f_oak,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (floor),Walnut boards,f_walnut,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (floor),Grey carpet,f_grey_carpet,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (floor),Cream carpet,f_cream_carpet,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (floor),Plum carpet,f_plum_carpet,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (floor),Red carpet,f_red_carpet,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (floor),Black & white tiles,f_check_tiles,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (floor),Stone tiles,f_stone_tiles,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (floor),Slate tiles,f_slate_tiles,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Magnolia paint,w_magnolia,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Brilliant white,w_white,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Sage green paint,w_sage,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Navy paint,w_navy,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Charcoal paint,w_charcoal,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Blush pink paint,w_blush,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Slate blue paint,w_slate_blue,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Stone paint,w_stone,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Regency stripe wallpaper,w_stripes,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Exposed brick slips,w_brick,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),Wood panelling,w_panelling,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
-Home finishes (wall),White metro tiles,w_tiles,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,FALSE
+Home finishes (floor),Oak boards,f_oak,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (floor),Walnut boards,f_walnut,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (floor),Grey carpet,f_grey_carpet,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (floor),Cream carpet,f_cream_carpet,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (floor),Plum carpet,f_plum_carpet,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (floor),Red carpet,f_red_carpet,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (floor),Black & white tiles,f_check_tiles,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (floor),Stone tiles,f_stone_tiles,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (floor),Slate tiles,f_slate_tiles,Tileable floor texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Magnolia paint,w_magnolia,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Brilliant white,w_white,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Sage green paint,w_sage,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Navy paint,w_navy,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Charcoal paint,w_charcoal,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Blush pink paint,w_blush,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Slate blue paint,w_slate_blue,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Stone paint,w_stone,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Regency stripe wallpaper,w_stripes,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Exposed brick slips,w_brick,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),Wood panelling,w_panelling,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
+Home finishes (wall),White metro tiles,w_tiles,Tileable wall texture (colour + normal),Flat colour or pattern drawn in code,TRUE
 Grow business: equipment,Lockable steel cabinet,cabinet,3D model + shop icon,Built from boxes in code,FALSE
 Grow business: equipment,Air handling unit,air_handler,3D model + shop icon,Built from boxes in code,FALSE
 Grow business: equipment,Industrial air system,air_system,3D model + shop icon,Built from boxes in code,FALSE
@@ -332,30 +332,30 @@ Buildings & backdrops,Interior room walls,room,3D building / wall model (modular
 Buildings & backdrops,Interior back wall,interior,3D building / wall model (modular),Built from boxes in code,FALSE
 Buildings & backdrops,Basement walls,basement,3D building / wall model (modular),Built from boxes in code,FALSE
 Buildings & backdrops,City skyline (off-strip areas),skyline,Skyline backdrop model or image,Built from boxes in code,FALSE
-Textures,Brick,brickTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Concrete,concreteTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Corrugated metal,corrugatedTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Graffiti,graffitiTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Road markings,markingsTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Paving slabs,pavingTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Plaster,plasterTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Posters,posterTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Road,roadTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Shop shutters,shutterTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Tiles,tileTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Windows,windowsTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Window grid,windowGridTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Lit windows at night,litWindowTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Wood floor,woodFloorTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Wood (furniture),woodTex,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Fabric weave (sofas),weaveTex,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Brushed metal,brushTex,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Fabric,fabricTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
+Textures,Brick,brickTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Concrete,concreteTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Corrugated metal,corrugatedTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Graffiti,graffitiTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Road markings,markingsTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Paving slabs,pavingTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Plaster,plasterTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Posters,posterTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Road,roadTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Shop shutters,shutterTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Tiles,tileTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Windows,windowsTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Window grid,windowGridTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Lit windows at night,litWindowTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Wood floor,woodFloorTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Wood (furniture),woodTex,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Fabric weave (sofas),weaveTex,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Brushed metal,brushTex,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Fabric,fabricTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
 Textures,Drips / grime,dripTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Shop and street sign boards,signTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Ground (kit streets),kitGroundTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Eyebrows,browTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
-Textures,Eyelashes,lashTexture,Texture (colour + normal map),Drawn on a canvas in code,FALSE
+Textures,Shop and street sign boards,signTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Ground (kit streets),kitGroundTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Eyebrows,browTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
+Textures,Eyelashes,lashTexture,Texture (colour + normal map),Drawn on a canvas in code,TRUE
 Animations: fighting moves,Hook,hook,Mocap / keyframed animation clip,Keyframed by hand in code,FALSE
 Animations: fighting moves,Uppercut,uppercut,Mocap / keyframed animation clip,Keyframed by hand in code,FALSE
 Animations: fighting moves,Haymaker,haymaker,Mocap / keyframed animation clip,Keyframed by hand in code,FALSE
@@ -501,12 +501,12 @@ UI icons,Sleep,sleep,UI icon (SVG),Line icon drawn in code,FALSE
 UI icons,Shower,shower,UI icon (SVG),Line icon drawn in code,TRUE
 UI icons,Tooth,tooth,UI icon (SVG),Line icon drawn in code,TRUE
 UI icons,Toilet,toilet,UI icon (SVG),Line icon drawn in code,TRUE
-Effects,Hit spark,burst_hit,Particle texture / VFX,Drawn in code,FALSE
-Effects,Heavy hit burst,burst_heavy,Particle texture / VFX,Drawn in code,FALSE
-Effects,Block spark,burst_block,Particle texture / VFX,Drawn in code,FALSE
-Effects,Weapon glint,burst_glint,Particle texture / VFX,Drawn in code,FALSE
-Effects,Danger flash,burst_danger,Particle texture / VFX,Drawn in code,FALSE
-Effects,Rain,rain,Particle texture / VFX,Drawn in code,FALSE
+Effects,Hit spark,burst_hit,Particle texture / VFX,Drawn in code,TRUE
+Effects,Heavy hit burst,burst_heavy,Particle texture / VFX,Drawn in code,TRUE
+Effects,Block spark,burst_block,Particle texture / VFX,Drawn in code,TRUE
+Effects,Weapon glint,burst_glint,Particle texture / VFX,Drawn in code,TRUE
+Effects,Danger flash,burst_danger,Particle texture / VFX,Drawn in code,TRUE
+Effects,Rain,rain,Particle texture / VFX,Drawn in code,TRUE
 Jewellery: Rings,Ashworth Court Band,r_court_silver,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
 Jewellery: Rings,Kingsley Flat Band,r_flat_gold,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
 Jewellery: Rings,Oval Signet,r_signet_oval,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
