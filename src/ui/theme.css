@@ -1011,3 +1011,29 @@ body:has(#ui .screen) .rotate-hint { display: none !important; }
 @media (orientation: portrait) and (max-width: 700px) {
   .reward-list { text-align: center; }
 }
+
+/* ---- Result screens (victory, battered, nicked): the choices are always on screen -------------------- */
+/* However long the list is, every button stays in view: the list scrolls above them. */
+.screen.pause-menu:has(.reward-list) .menu-list {
+  position: sticky;
+  bottom: calc(-1 * (24px + var(--safe-b)));
+  z-index: 1;
+  flex: none;
+  padding: 10px 0 calc(14px + var(--safe-b));
+  background: linear-gradient(to bottom, rgba(14, 15, 12, 0), rgba(14, 15, 12, 0.96) 26%);
+}
+.reward-list { max-width: min(760px, 94vw); }
+/* Phones on their side: little height, so a small title, a tight list and the buttons side by side. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .screen.pause-menu:has(.reward-list) { justify-content: safe center; padding-top: calc(8px + var(--safe-t)); }
+  .reward-art h2 { margin-bottom: 2px; }
+  .reward-art h2 img.reward-title { height: 46px; }
+  .reward-list { margin: 2px 0 4px; }
+  .reward-list li { font-size: 15px; line-height: 1.25; padding: 1px 0; }
+  .reward-list li.big { font-size: 20px; }
+  .screen.pause-menu:has(.reward-list) .menu-list { flex-direction: row; justify-content: center; gap: 28px; min-width: 0; padding: 6px 0 calc(10px + var(--safe-b)); }
+  .screen.pause-menu:has(.reward-list) .menu-btn.has-art .label img.title-art { height: 30px; }
+}
+@media (orientation: portrait) and (max-width: 700px) {
+  .screen.pause-menu:has(.reward-list) .menu-list { bottom: calc(-1 * (20px + var(--safe-b))); }
+}
