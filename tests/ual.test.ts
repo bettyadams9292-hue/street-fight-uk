@@ -33,6 +33,8 @@ test('nothing plays before the clips are loaded (the keyed poses carry on)', () 
 });
 
 registerMocap(JSON.parse(readFileSync('public/anim/ual_mocap.json', 'utf8')));
+// The owner's Mixamo takes stand in for some activities (ACTIVITY_CLIPS).
+registerMocap(JSON.parse(readFileSync('public/anim/mixamo_mocap.json', 'utf8')));
 markUalReady();
 
 const named = new Set<string>([
@@ -41,7 +43,7 @@ const named = new Set<string>([
   ...Object.values(STATE_CLIPS),
 ]);
 
-test('every clip the game names is in ual_mocap.json', () => {
+test('every clip the game names is in ual_mocap.json or mixamo_mocap.json', () => {
   for (const id of named) assert(mocapClip(id), `missing ${id}`);
 });
 
@@ -81,7 +83,7 @@ test('the fall ends lying down and the get-up ends standing', () => {
 
 test('every activity with a clip plays it; others keep the keyed pose', () => {
   for (const act of Object.keys(ACTIVITY_CLIPS)) assert(activityClipPose(act, 1.3, m, activityPose(act, 1.3)), `${act} has no pose`);
-  assert(activityClipPose('curl', 1, m, activityPose('curl', 1)) === null, 'curl should stay keyed');
+  assert(activityClipPose('press', 1, m, activityPose('press', 1)) === null, 'press should stay keyed');
 });
 
 test('sitting activities sit (hips near seat height), standing ones stand', () => {

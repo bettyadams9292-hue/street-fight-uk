@@ -26,6 +26,7 @@ export const STRIKE_CLIPS: Record<string, string[]> = {
   'elbow:elbow': ['mx_elbow'],
   'knee:knee': ['mx_knee'],
   'roundhouse:rearFoot': ['mx_roundhouse', 'mx_roundhouse_b'],
+  'roundhouse:leadFoot': ['mx_roundhouse_lead'],
   'headbutt:head': ['mx_headbutt'],
   'haymaker:rearHand': ['rk_cross_c', 'rk_cross'],
   'overhand:rearHand': ['rk_cross', 'rk_cross_c'],
@@ -42,9 +43,11 @@ export const REACTIONS = {
   body: 'rk_hit_body',
   stagger: 'rk_stagger',
   /** Takes for a shot to the head, one per hit in turn, so reactions don't repeat. */
-  heads: ['rk_hit_head', 'mx_hit_head', 'mx_hit_light', 'mx_hit_uppercut'],
+  heads: ['rk_hit_head', 'mx_hit_head', 'mx_hit_light', 'mx_hit_uppercut', 'mx_hit_big_b'],
   /** Takes for a stagger: rocked, a big shot, dazed. */
-  staggers: ['rk_stagger', 'mx_hit_big', 'mx_stunned'],
+  staggers: ['rk_stagger', 'mx_hit_big', 'mx_stunned', 'mx_hit_big_c'],
+  /** Lying hurt after a knockout, once the fall has played: loops. */
+  downed: ['mx_lying', 'mx_lying_b'],
   knockdown: 'rk_knockdown',
   ko: ['rk_ko', 'rk_ko_b'],
   getup: 'rk_getup',
