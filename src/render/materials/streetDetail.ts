@@ -57,12 +57,13 @@ export function streetDetail(mat: THREE.MeshStandardMaterial, seed: number): voi
   mat.onBeforeCompile = (sh: { uniforms: Record<string, { value: unknown }>; vertexShader: string; fragmentShader: string }) => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
-      .replace('void main() {', 'varying vec3 sdWorld;\nvarying vec3 sdNormal;\nvoid main() {')
-      .replace('#include <project_vertex>', '#include <project_vertex>\n  sdWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;\n  sdNormal = normalize(mat3(modelMatrix) * objectNormal);');
+      .replace('void main() {', 'attribute float sdWall;\nvarying float sdWallV;\nvarying vec3 sdWorld;\nvarying vec3 sdNormal;\nvoid main() {')
+      .replace('#include <project_vertex>', '#include <project_vertex>\n  sdWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;\n  sdNormal = normalize(mat3(modelMatrix) * objectNormal);\n  sdWallV = sdWall;');
     sh.fragmentShader = sh.fragmentShader
       .replace(
         'void main() {',
-        `varying vec3 sdWorld;
+        `varying float sdWallV;
+varying vec3 sdWorld;
 varying vec3 sdNormal;
 uniform sampler2D sdC[3];
 uniform sampler2D sdN[3];
@@ -96,9 +97,10 @@ void main() {
       if (lum < 0.05) { d = road; sdTn = roadN; sdK = 0.9; }
       else { d = pave; sdTn = paveN; sdK = 0.55; }
     } else if (abs(n.y) < 0.3) {
-      // Walls the colour of brick are brick.
+      // Building walls the colour of brick are brick. Awnings, signs and shop panels (props) never are,
+      // however red they are.
       vec3 c = diffuseColor.rgb;
-      if (c.r > c.g * 1.3 && c.r > c.b * 1.45 && lum > 0.012 && lum < 0.3) {
+      if (sdWallV > 0.5 && c.r > c.g * 1.3 && c.r > c.b * 1.45 && lum > 0.012 && lum < 0.3) {
         d = brick; sdTn = brickN; sdK = 0.75;
         sdT = alongZ ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
         sdB = vec3(0.0, 1.0, 0.0);

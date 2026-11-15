@@ -142,8 +142,11 @@ class Bucket {
   nrm: number[] = [];
   col: number[] = [];
   idx: number[] = [];
+  /** 1 on building walls (the only surfaces that may be laid in brick), 0 on props: awnings, signs, furniture. */
+  wall: number[] = [];
 
   add(part: Part, pl: Placement, tint: THREE.Color | null): void {
+    const isWall = /^nyc\/bldg/.test(pl.model) ? 1 : 0;
     const base = this.pos.length / 3;
     const c = Math.cos(pl.ry);
     const s = Math.sin(pl.ry);
@@ -164,6 +167,7 @@ class Bucket {
       this.nrm.push(nx * c + nz * s, ny, -nx * s + nz * c);
       if (tint) this.col.push(part.col[i * 3] * tint.r, part.col[i * 3 + 1] * tint.g, part.col[i * 3 + 2] * tint.b);
       else this.col.push(part.col[i * 3], part.col[i * 3 + 1], part.col[i * 3 + 2]);
+      this.wall.push(isWall);
     }
     for (let i = 0; i < part.idx.length; i++) this.idx.push(part.idx[i] + base);
   }
@@ -189,6 +193,7 @@ class Bucket {
         this.pos.push(b.x + k[0], b.y + k[1], b.z + k[2]);
         this.nrm.push(nx, ny, nz);
         this.col.push(c.r, c.g, c.b);
+        this.wall.push(1);
       }
       this.idx.push(v, v + 1, v + 2, v, v + 2, v + 3);
       v += 4;
@@ -201,6 +206,9 @@ class Bucket {
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
     g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nrm, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
+    // Blocks are building masses: walls. Padded so every vertex has a value.
+    while (this.wall.length < this.pos.length / 3) this.wall.push(1);
+    g.setAttribute('sdWall', new THREE.Float32BufferAttribute(this.wall, 1));
     g.setIndex(this.pos.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(this.idx, 1) : new THREE.Uint16BufferAttribute(this.idx, 1));
     g.computeBoundingSphere();
     g.computeBoundingBox();
