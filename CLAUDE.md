@@ -130,7 +130,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - caps, beanies and bucket hats are cut from the scalp, with a peak or brim on the head bone, and short hair goes under them;
   - trainers, runners and hi-tops are cut from the foot, laid on a shoe last, with a separate cupsole mesh;
   - cut edges are straightened (`smoothCutEdge`), the trouser crotch flattening no longer cuts into the belly, and tops ride over waistbands;
-  - 45 new Threads items; `tests/clothing.test.ts`; `?shot=anims&wear=[…]` poses chosen outfits.
+  - 38 new Threads items; `tests/clothing.test.ts`; `?shot=anims&wear=[…]` poses chosen outfits.
 
 ## Open questions and next steps
 
