@@ -122,6 +122,15 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 - #22: asset production: 302 of the 595 sheet rows replaced with real assets (sound, weapons, pickups, vehicles, icons, textures, property, animation). See `docs/assets/ASSET_RESUME.md`.
 - #23: Big Dunc progression. Boss rewards that don't fit wait on the ground and are saved (`save.bossLoot`); Hale House's gate, the objective and the victory screen say exactly what's left (`src/world/gates.ts`); result screens keep every button on screen.
 - #24: face-down falls no longer sink into the floor: a tipped body rests on its lowest point (`src/render/anim/ground.ts`).
+- #25: texture library: library sets on furniture, walls, floors and kit streets (`src/render/materials/`, `docs/assets/TEXTURE_ASSIGNMENTS.md`).
+
+**15 Nov 2026**
+- #26: clothing overhaul (`src/characters/human/garments.ts`):
+  - new styles: polo, shirt, jumper, quarter-zip, gilet, windbreaker, Harrington, chinos, cargo shorts, denim shorts; bucket hat, flat cap, glasses;
+  - caps, beanies and bucket hats are cut from the scalp, with a peak or brim on the head bone, and short hair goes under them;
+  - trainers, runners and hi-tops are cut from the foot, laid on a shoe last, with a separate cupsole mesh;
+  - cut edges are straightened (`smoothCutEdge`), the trouser crotch flattening no longer cuts into the belly, and tops ride over waistbands;
+  - 38 new Threads items; `tests/clothing.test.ts`; `?shot=anims&wear=[…]` poses chosen outfits.
 
 ## Open questions and next steps
 

@@ -104,10 +104,10 @@ const DRAW: Record<string, Painter> = {
   },
   top: (g, col, d) => {
     const style = d.wear?.top ?? 'tshirt';
-    const longSleeves = !['tshirt', 'vest', 'football'].includes(style);
+    const longSleeves = !['tshirt', 'vest', 'football', 'polo', 'gilet'].includes(style);
     g.fillStyle = gloss(g, col, 24, 110);
     g.beginPath();
-    if (style === 'vest') {
+    if (style === 'vest' || style === 'gilet') {
       g.moveTo(44, 22); g.lineTo(54, 22); g.quadraticCurveTo(64, 40, 74, 22); g.lineTo(84, 22); g.lineTo(88, 50); g.lineTo(90, 108); g.lineTo(38, 108); g.lineTo(40, 50); g.closePath();
     } else {
       const sl = longSleeves ? 100 : 56;
@@ -160,13 +160,40 @@ const DRAW: Record<string, Painter> = {
       g.fillStyle = '#e8e4d8'; g.fillRect(36, 58, 56, 5);
       g.fillStyle = '#c9a227'; g.beginPath(); g.arc(78, 44, 6, 0, Math.PI * 2); g.fill();
       g.fillStyle = '#e8e4d8'; g.font = 'bold 26px Arial'; g.textAlign = 'center'; g.fillText('9', 64, 98);
-    } else if (style === 'tshirt') {
+    } else if (style === 'tshirt' || style === 'jumper') {
       g.beginPath(); g.ellipse(64, 22, 12, 5, 0, 0, Math.PI); g.stroke();
+      if (style === 'jumper') {
+        // Ribbed hem and cuffs.
+        g.strokeStyle = shade(col, -0.4); g.lineWidth = 1.5;
+        for (let x = 38; x < 92; x += 4) { g.beginPath(); g.moveTo(x, 100); g.lineTo(x, 110); g.stroke(); }
+        for (const [x0, x1] of [[16, 28], [100, 112]]) for (let x = x0; x <= x1; x += 4) { g.beginPath(); g.moveTo(x, 94); g.lineTo(x, 102); g.stroke(); }
+      }
+    } else if (style === 'polo' || style === 'shirt' || style === 'harrington' || style === 'quarter_zip') {
+      // Collar points, then the front: buttons, a zip or a half zip.
+      g.fillStyle = shade(col, -0.2);
+      g.beginPath(); g.moveTo(50, 20); g.lineTo(64, 30); g.lineTo(56, 40); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(78, 20); g.lineTo(64, 30); g.lineTo(72, 40); g.closePath(); g.fill();
+      g.strokeStyle = shade(col, -0.45); g.lineWidth = 2;
+      const end = style === 'polo' ? 52 : style === 'quarter_zip' ? 60 : 110;
+      g.beginPath(); g.moveTo(64, 30); g.lineTo(64, end); g.stroke();
+      if (style === 'polo' || style === 'shirt') {
+        g.fillStyle = '#e8e4d8';
+        for (let y = 38; y < end; y += style === 'polo' ? 10 : 14) { g.beginPath(); g.arc(68, y, 2, 0, Math.PI * 2); g.fill(); }
+      }
+      if (style === 'harrington') { g.fillStyle = shade(col, -0.3); g.fillRect(36, 100, 56, 10); }
+    } else if (style === 'gilet') {
+      g.strokeStyle = shade(col, -0.45); g.lineWidth = 2;
+      g.beginPath(); g.moveTo(64, 26); g.lineTo(64, 108); g.stroke();
+      for (let y = 46; y < 106; y += 13) { g.beginPath(); g.moveTo(40, y); g.lineTo(88, y); g.stroke(); }
+    } else if (style === 'windbreaker') {
+      g.fillStyle = shade(col, -0.25); g.beginPath(); g.ellipse(64, 24, 18, 10, 0, 0, Math.PI); g.fill();
+      g.fillStyle = '#e8e4d8'; g.fillRect(36, 54, 56, 14);
+      g.strokeStyle = shade(col, -0.45); g.lineWidth = 2; g.beginPath(); g.moveTo(64, 30); g.lineTo(64, 110); g.stroke();
     }
   },
   bottoms: (g, col, d) => {
     const style = d.wear?.bottoms ?? 'jeans';
-    const short = style === 'shorts';
+    const short = style === 'shorts' || style === 'cargo_shorts' || style === 'denim_shorts';
     g.fillStyle = gloss(g, col, 16, 118);
     g.beginPath();
     g.moveTo(38, 16); g.lineTo(90, 16); g.lineTo(96, short ? 70 : 116); g.lineTo(70, short ? 70 : 116); g.lineTo(64, 46); g.lineTo(58, short ? 70 : 116); g.lineTo(32, short ? 70 : 116); g.closePath();
@@ -178,8 +205,14 @@ const DRAW: Record<string, Painter> = {
       g.strokeStyle = '#e8e4d8'; g.lineWidth = 3; g.beginPath(); g.moveTo(36, 26); g.lineTo(33, 112); g.moveTo(92, 26); g.lineTo(95, 112); g.stroke();
       if (style === 'joggers') { g.fillStyle = shade(col, -0.35); g.fillRect(32, 106, 26, 10); g.fillRect(70, 106, 26, 10); }
     }
-    if (style === 'jeans') {
+    if (style === 'jeans' || style === 'denim_shorts') {
       g.strokeStyle = '#c9a227'; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(44, 26); g.quadraticCurveTo(50, 40, 58, 30); g.moveTo(84, 26); g.quadraticCurveTo(78, 40, 70, 30); g.stroke(); g.setLineDash([]);
+    }
+    if (style === 'chinos') {
+      g.strokeStyle = shade(col, -0.4); g.lineWidth = 1.5; g.beginPath(); g.moveTo(48, 30); g.lineTo(52, 46); g.moveTo(80, 30); g.lineTo(76, 46); g.stroke();
+    }
+    if (style === 'cargo_shorts') {
+      g.fillStyle = shade(col, -0.25); rr(g, 34, 42, 16, 16, 3); g.fill(); rr(g, 78, 42, 16, 16, 3); g.fill();
     }
     if (style === 'cargos' || style === 'workwear') {
       g.fillStyle = shade(col, -0.25); rr(g, 34, 62, 18, 20, 3); g.fill(); rr(g, 76, 62, 18, 20, 3); g.fill();
@@ -204,6 +237,29 @@ const DRAW: Record<string, Painter> = {
     g.fillStyle = shade(col, -0.2); g.fillRect(26, 78, 76, 22);
     g.shadowColor = 'transparent'; g.strokeStyle = shade(col, -0.4); g.lineWidth = 2;
     for (let x = 30; x < 100; x += 6) { g.beginPath(); g.moveTo(x, 80); g.lineTo(x, 98); g.stroke(); }
+  },
+  bucket_hat: (g, col) => {
+    g.fillStyle = gloss(g, col, 30, 96);
+    g.beginPath(); g.moveTo(36, 82); g.quadraticCurveTo(38, 34, 64, 32); g.quadraticCurveTo(90, 34, 92, 82); g.closePath(); g.fill();
+    g.fillStyle = shade(col, -0.2); g.beginPath(); g.ellipse(64, 86, 50, 12, 0, 0, Math.PI * 2); g.fill();
+    g.shadowColor = 'transparent'; g.strokeStyle = shade(col, -0.45); g.lineWidth = 1.5;
+    for (const r of [44, 38]) { g.beginPath(); g.ellipse(64, 86, r, r * 0.22, 0, 0, Math.PI * 2); g.stroke(); }
+    for (const y of [70, 76]) { g.beginPath(); g.moveTo(37, y); g.lineTo(91, y); g.stroke(); }
+  },
+  flat_cap: (g, col) => {
+    g.fillStyle = gloss(g, col, 40, 92);
+    g.beginPath(); g.moveTo(22, 84); g.quadraticCurveTo(40, 44, 76, 46); g.quadraticCurveTo(108, 50, 112, 74); g.lineTo(104, 86); g.closePath(); g.fill();
+    g.fillStyle = shade(col, -0.25); g.beginPath(); g.moveTo(80, 76); g.quadraticCurveTo(100, 74, 118, 84); g.quadraticCurveTo(100, 92, 80, 88); g.closePath(); g.fill();
+    g.shadowColor = 'transparent'; g.strokeStyle = shade(col, 0.15); g.lineWidth = 1;
+    for (let x = 30; x < 104; x += 6) { g.beginPath(); g.moveTo(x, 84); g.lineTo(x + 8, 50); g.stroke(); }
+  },
+  glasses: (g, col) => {
+    g.strokeStyle = col; g.lineWidth = 5;
+    for (const x of [36, 92]) { rr(g, x - 22, 50, 44, 32, 9); g.stroke(); }
+    g.beginPath(); g.moveTo(58, 62); g.quadraticCurveTo(64, 56, 70, 62); g.stroke();
+    g.shadowColor = 'transparent';
+    g.fillStyle = 'rgba(200,225,255,0.22)'; for (const x of [36, 92]) { rr(g, x - 20, 52, 40, 28, 8); g.fill(); }
+    g.fillStyle = 'rgba(255,255,255,0.55)'; for (const x of [26, 82]) { g.fillRect(x, 56, 4, 12); }
   },
   sunglasses: (g, col) => {
     g.fillStyle = '#101012';

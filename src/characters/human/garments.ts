@@ -25,7 +25,27 @@ export type GarmentKind =
   | 'jeans'
   | 'work_trousers'
   | 'fight_shorts'
-  | 'shorts';
+  | 'shorts'
+  // ---- added in the clothing overhaul ----
+  | 'tee'
+  | 'polo'
+  | 'shirt'
+  | 'jumper'
+  | 'quarter_zip'
+  | 'gilet'
+  | 'windbreaker'
+  | 'harrington'
+  | 'chinos'
+  | 'cargo_shorts'
+  | 'denim_shorts'
+  // Hats, cut from the scalp
+  | 'beanie'
+  | 'cap'
+  | 'bucket_hat'
+  // Shoes, cut from the feet
+  | 'trainers'
+  | 'runners'
+  | 'hitops';
 
 export type Fabric = 'fleece' | 'knit' | 'nylon' | 'denim' | 'leather' | 'cotton' | 'canvas';
 
@@ -34,7 +54,7 @@ interface Style {
   drape?: number;
   /** Extra looseness towards the cuffs / ankles, m. */
   flare?: number;
-  part: 'top' | 'bottoms';
+  part: 'top' | 'bottoms' | 'head' | 'feet';
   /** How far out from the skin, m. */
   gap: number;
   fabric: Fabric;
@@ -58,6 +78,29 @@ interface Style {
   vest?: boolean;
   /** Collar at the neck. */
   collar?: boolean;
+  /** A buttoned placket down the front (whole length, or just the top for a polo). */
+  placket?: 'full' | 'short';
+  /** A zip from the collar to the chest only. */
+  halfZip?: boolean;
+  /** A band of the trim colour across the chest (a colour-blocked cagoule). */
+  panel?: boolean;
+  /** A ribbed crew neckband. */
+  neckband?: boolean;
+  /** Contrast topstitching (denim): thread colour. */
+  thread?: [number, number, number];
+  /** Cloth gathering in rings above the ankle (joggers and trackies). */
+  stack?: boolean;
+  /** Shoes: how far up the leg the upper comes, 0 at the ankle bone .. (hi-tops). */
+  collarT?: number;
+  /** Shoes: sole colour (default off-white) and its height, m. */
+  sole?: [number, number, number];
+  soleH?: number;
+  /** Shoes: a panel of the trim colour along the side. */
+  sidePanel?: boolean;
+  /** Hats: a peak (cap) or a brim all round (bucket hat). */
+  brim?: 'peak' | 'round';
+  /** Hats: how far down the head the hat comes (0 = the crown .. 1 = the chin). */
+  depth?: number;
 }
 
 export const GARMENTS: Record<GarmentKind, Style> = {
@@ -74,11 +117,34 @@ export const GARMENTS: Record<GarmentKind, Style> = {
   vest: { drape: 3, part: 'top', gap: 0.006, fabric: 'cotton', sleeve: 0, hem: 0.1, vest: true },
   trackies: { drape: 10, flare: 0.018, part: 'bottoms', gap: 0.016, fabric: 'nylon', leg: 1, rib: true, stripe: true },
   joggers: { drape: 9, flare: 0.012, part: 'bottoms', gap: 0.014, fabric: 'fleece', leg: 0.95, rib: true },
-  jeans: { drape: 6, flare: 0.008, part: 'bottoms', gap: 0.009, fabric: 'denim', leg: 1 },
+  jeans: { drape: 7, flare: 0.014, part: 'bottoms', gap: 0.011, fabric: 'denim', leg: 1 },
   work_trousers: { drape: 9, flare: 0.016, part: 'bottoms', gap: 0.015, fabric: 'canvas', leg: 1, work: true },
   fight_shorts: { drape: 8, flare: 0.02, part: 'bottoms', gap: 0.014, fabric: 'nylon', leg: 0.42, stripe: true, rib: true },
   shorts: { drape: 6, flare: 0.012, part: 'bottoms', gap: 0.011, fabric: 'cotton', leg: 0.35 },
+  tee: { drape: 5, part: 'top', gap: 0.009, fabric: 'cotton', sleeve: 0.36, hem: 0.04, neckband: true },
+  polo: { drape: 5, part: 'top', gap: 0.01, fabric: 'cotton', sleeve: 0.38, hem: 0.02, collar: true, placket: 'short', rib: true },
+  shirt: { drape: 6, flare: 0.004, part: 'top', gap: 0.012, fabric: 'cotton', sleeve: 1, hem: 0.02, collar: true, placket: 'full' },
+  jumper: { drape: 9, flare: 0.008, part: 'top', gap: 0.02, fabric: 'knit', sleeve: 1, hem: 0.08, rib: true, neckband: true },
+  quarter_zip: { drape: 8, flare: 0.008, part: 'top', gap: 0.017, fabric: 'fleece', sleeve: 1, hem: 0.1, rib: true, collar: true, halfZip: true },
+  gilet: { drape: 12, part: 'top', gap: 0.036, fabric: 'nylon', sleeve: 0, hem: 0.02, zip: true, quilt: true, collar: true },
+  windbreaker: { drape: 10, flare: 0.012, part: 'top', gap: 0.026, fabric: 'nylon', sleeve: 1, hem: 0.0, rib: true, zip: true, hood: true, panel: true },
+  harrington: { drape: 8, flare: 0.006, part: 'top', gap: 0.02, fabric: 'cotton', sleeve: 1, hem: 0.25, rib: true, zip: true, collar: true },
+  chinos: { drape: 8, flare: 0.012, part: 'bottoms', gap: 0.015, fabric: 'cotton', leg: 0.98 },
+  cargo_shorts: { drape: 7, flare: 0.016, part: 'bottoms', gap: 0.015, fabric: 'canvas', leg: 0.44, work: true },
+  denim_shorts: { drape: 6, flare: 0.01, part: 'bottoms', gap: 0.011, fabric: 'denim', leg: 0.3, thread: [0.55, 0.38, 0.12] },
+  beanie: { drape: 6, part: 'head', gap: 0.03, fabric: 'knit', rib: true, depth: 0.36 },
+  cap: { drape: 5, part: 'head', gap: 0.022, fabric: 'cotton', brim: 'peak', depth: 0.3 },
+  bucket_hat: { drape: 6, part: 'head', gap: 0.026, fabric: 'canvas', brim: 'round', depth: 0.3 },
+  trainers: { drape: 10, part: 'feet', gap: 0.012, fabric: 'leather', collarT: 0.0, sole: [0.9, 0.89, 0.86], soleH: 0.03, sidePanel: true },
+  runners: { drape: 10, part: 'feet', gap: 0.011, fabric: 'nylon', collarT: 0.0, sole: [0.92, 0.92, 0.9], soleH: 0.036, sidePanel: true },
+  hitops: { drape: 10, part: 'feet', gap: 0.013, fabric: 'leather', collarT: 0.14, sole: [0.9, 0.89, 0.86], soleH: 0.03, sidePanel: true },
 };
+
+// Denim and work trousers get topstitching too.
+GARMENTS.jeans.thread = [0.55, 0.38, 0.12];
+GARMENTS.denim_jacket.thread = [0.55, 0.38, 0.12];
+GARMENTS.joggers.stack = true;
+GARMENTS.trackies.stack = true;
 
 export interface GarmentColours {
   main: [number, number, number];
@@ -98,7 +164,10 @@ export interface GarmentMesh {
   index: Uint32Array;
   /** Body base vertices the garment covers (hide skin triangles made only of these). */
   covers: Uint8Array;
-  part: 'top' | 'bottoms';
+  part: 'top' | 'bottoms' | 'head' | 'feet';
+  /** A rigid piece on one bone (a cap's peak, a hat's brim), in the body's rest pose. */
+  /** Rigid parts on one bone each: a cap's peak, a hat's brim, a trainer's soles. */
+  extra?: Extra[];
 }
 
 type Group = 'torso' | 'hip' | 'neck' | 'head' | 'armL' | 'armR' | 'handL' | 'handR' | 'legL' | 'legR' | 'footL' | 'footR';
@@ -133,6 +202,220 @@ const memo = new WeakMap<Float32Array, Frame>();
 const adjacency = new WeakMap<BodyData, { start: Uint32Array; list: Uint32Array }>();
 
 /** Neighbouring base vertices (CSR), from the body's triangles. */
+/**
+ * Trainers cut from the foot would show every toe. Each foot's shell is laid onto a shoe last
+ * instead: measured from the foot (length, width, instep height along it), then given a flat sole,
+ * a rounded toe box a little past the toes and a heel counter behind the heel. The ankle opening
+ * keeps the foot's own shape, so it still meets the leg (or the hi-top's collar).
+ */
+function shoeLast(f: Frame, pos: Float32Array, list: number[], sp: Float32Array, st: Style, adj: { start: Uint32Array; list: Uint32Array }, soleC: [number, number, number]): Extra[] {
+  const BINS = 12;
+  const soles: Extra[] = [];
+  for (const side of ['footL', 'footR'] as const) {
+    const vs = list.filter((v) => f.group[v] === side);
+    if (vs.length < 20) continue;
+    // The foot's axis on the ground: heel to toe.
+    let z0 = Infinity, z1 = -Infinity;
+    for (const v of vs) {
+      z0 = Math.min(z0, pos[v * 3 + 2]);
+      z1 = Math.max(z1, pos[v * 3 + 2]);
+    }
+    const mean = (pick: (z: number) => boolean): [number, number] => {
+      let x = 0, z = 0, c = 0;
+      for (const v of vs) if (pick(pos[v * 3 + 2])) { x += pos[v * 3]; z += pos[v * 3 + 2]; c++; }
+      return [x / Math.max(1, c), z / Math.max(1, c)];
+    };
+    const heel = mean((z) => z < z0 + 0.03);
+    const toe = mean((z) => z > z1 - 0.03);
+    let ax = toe[0] - heel[0], az = toe[1] - heel[1];
+    const len = Math.hypot(ax, az) || 1;
+    ax /= len;
+    az /= len;
+    // Local coordinates: u along the foot (0 at the back of the heel, 1 at the tips of the toes), s across.
+    const loc = (x: number, z: number): [number, number] => {
+      const dx = x - heel[0], dz = z - heel[1];
+      return [dx * ax + dz * az, dz * ax * -1 + dx * az];
+    };
+    let u0 = Infinity, u1 = -Infinity;
+    for (const v of vs) {
+      const [u] = loc(pos[v * 3], pos[v * 3 + 2]);
+      u0 = Math.min(u0, u);
+      u1 = Math.max(u1, u);
+    }
+    const L = u1 - u0;
+    // Width either side of the axis, and the height of the top of the foot, in bins along it.
+    const wL = new Float32Array(BINS), wR = new Float32Array(BINS), top = new Float32Array(BINS);
+    for (const v of vs) {
+      const [u, sx] = loc(pos[v * 3], pos[v * 3 + 2]);
+      const b = Math.min(BINS - 1, Math.max(0, Math.floor(((u - u0) / L) * BINS)));
+      if (sx > 0) wL[b] = Math.max(wL[b], sx);
+      else wR[b] = Math.max(wR[b], -sx);
+      if (pos[v * 3 + 1] < 0.12) top[b] = Math.max(top[b], pos[v * 3 + 1]);
+    }
+    const smooth = (a: Float32Array) => {
+      const o = a.slice();
+      for (let r = 0; r < 3; r++) for (let i = 0; i < BINS; i++) o[i] = (o[Math.max(0, i - 1)] + o[i] * 2 + o[Math.min(BINS - 1, i + 1)]) / 4;
+      // Never narrower than the foot itself.
+      for (let i = 0; i < BINS; i++) o[i] = Math.max(o[i], a[i]);
+      return o;
+    };
+    const WL = smooth(wL), WR = smooth(wR), TOP = smooth(top);
+    const at = (a: Float32Array, k: number) => {
+      const p = Math.max(0, Math.min(BINS - 1, k * BINS - 0.5));
+      const i = Math.floor(p);
+      const j = Math.min(BINS - 1, i + 1);
+      return a[i] + (a[j] - a[i]) * (p - i);
+    };
+    const gap = st.gap + 0.004;
+    const toeRoom = 0.018;
+    const heelRoom = 0.006;
+    for (const v of vs) {
+      const x = pos[v * 3], y = pos[v * 3 + 1], z = pos[v * 3 + 2];
+      const [u, sx] = loc(x, z);
+      const k = (u - u0) / L;
+      // The ankle opening keeps the foot's shape; everything below it goes onto the last.
+      const blend = k > 0.4 ? 1 : Math.max(0, Math.min(1, (0.085 - y) / 0.03));
+      if (blend <= 0) continue;
+      const w = (sx > 0 ? at(WL, k) : at(WR, k)) + gap;
+      // A toe box: low and round, rather than the toes' own rise and fall.
+      const h = Math.max(0.045, Math.min(at(TOP, k) + gap, k > 0.7 ? 0.05 + (0.075 - 0.05) * (1 - (k - 0.7) / 0.3) : 1));
+      const half = h / 2;
+      // Where this point sits in the cross-section, on a squarish (superellipse) outline with a flat sole.
+      const cy = half;
+      const ang = Math.atan2((y - cy) / half, Math.abs(sx) / Math.max(0.01, w));
+      const c = Math.cos(ang), sn = Math.sin(ang);
+      const e = 0.6;
+      const rx = Math.sign(c) * Math.pow(Math.abs(c), e) * w;
+      const ry = cy + Math.sign(sn) * Math.pow(Math.abs(sn), sn < 0 ? 0.25 : e) * half;
+      // Lengthen: room past the toes, a heel counter behind; the toe end rounds off in plan.
+      let nu = u0 - heelRoom + (k * (L + toeRoom + heelRoom));
+      let ns = Math.sign(sx || 1) * rx;
+      if (k > 0.82) {
+        const r = (k - 0.82) / 0.18;
+        ns *= Math.sqrt(Math.max(0.15, 1 - r * r));
+      }
+      if (k < 0.12) {
+        const r = (0.12 - k) / 0.12;
+        ns *= Math.sqrt(Math.max(0.3, 1 - r * r));
+        nu -= 0.004 * r;
+      }
+      const nx = heel[0] + nu * ax + ns * az;
+      const nz = heel[1] + nu * az - ns * ax;
+      const ny = Math.max(-0.002, ry);
+      sp[v * 3] += (nx - sp[v * 3]) * blend;
+      sp[v * 3 + 1] += (ny - sp[v * 3 + 1]) * blend;
+      sp[v * 3 + 2] += (nz - sp[v * 3 + 2]) * blend;
+    }
+    // The cupsole: its own clean band round the last's outline (vertex colour on the foot's coarse
+    // mesh can't draw a crisp sole line), with the tread closing it underneath.
+    const soleH = st.soleH ?? 0.03;
+    const ring: [number, number][] = [];
+    const STEPS = 14;
+    const plan = (k: number, sgn: number): [number, number] => {
+      let ns = sgn * ((sgn > 0 ? at(WL, k) : at(WR, k)) + gap + 0.004);
+      if (k > 0.82) ns *= Math.sqrt(Math.max(0.12, 1 - ((k - 0.82) / 0.18) ** 2));
+      if (k < 0.12) ns *= Math.sqrt(Math.max(0.3, 1 - ((0.12 - k) / 0.12) ** 2));
+      const nu = u0 - heelRoom - 0.003 + k * (L + toeRoom + heelRoom + 0.006);
+      return [heel[0] + nu * ax + ns * az, heel[1] + nu * az - ns * ax];
+    };
+    for (let i = 0; i <= STEPS; i++) ring.push(plan(i / STEPS, 1));
+    for (let i = STEPS; i >= 0; i--) ring.push(plan(i / STEPS, -1));
+    const R = ring.length;
+    const P: number[] = [];
+    const C: number[] = [];
+    const I: number[] = [];
+    const tread = shade(soleC, 0.55);
+    const edge = shade(soleC, 0.8);
+    // Rows: underside, tread line, side, a lip at the top.
+    const rows: [number, number, [number, number, number]][] = [[-0.002, 0.996, tread], [0.005, 1, edge], [0.008, 1, soleC], [soleH, 1, soleC], [soleH + 0.002, 0.985, edge]];
+    let cx = 0, cz = 0;
+    for (const [x, z] of ring) { cx += x; cz += z; }
+    cx /= R;
+    cz /= R;
+    for (const [y, s, col] of rows)
+      for (const [x, z] of ring) {
+        P.push(cx + (x - cx) * s, y, cz + (z - cz) * s);
+        C.push(...col);
+      }
+    for (let r = 0; r < rows.length - 1; r++)
+      for (let i = 0; i < R; i++) {
+        const a = r * R + i;
+        const b = r * R + ((i + 1) % R);
+        I.push(a, a + R, b, b, a + R, b + R);
+      }
+    // The underside, fanned from the middle.
+    const mid = P.length / 3;
+    P.push(cx, -0.002, cz);
+    C.push(...tread);
+    for (let i = 0; i < R; i++) I.push(mid, i, (i + 1) % R);
+    soles.push({ position: new Float32Array(P), normal: new Float32Array(P.length), colour: new Float32Array(C), index: new Uint32Array(I), bone: side === 'footL' ? 'foot.L' : 'foot.R' });
+  }
+  // Toe creases land almost on top of each other on the last: relax the upper (not the sole's
+  // bottom or the cut edge) so its triangles lie flat.
+  const set = new Set(list.filter((v) => f.group[v] === 'footL' || f.group[v] === 'footR'));
+  const tmp = new Float32Array(sp.length);
+  for (let r = 0; r < 14; r++) {
+    for (const v of set) {
+      let ax = 0, ay = 0, az = 0, c = 0;
+      for (let k = adj.start[v]; k < adj.start[v + 1]; k++) {
+        const u = adj.list[k];
+        if (!set.has(u)) { c = 0; break; }
+        ax += sp[u * 3]; ay += sp[u * 3 + 1]; az += sp[u * 3 + 2]; c++;
+      }
+      if (!c || sp[v * 3 + 1] < 0.004) { tmp[v * 3] = sp[v * 3]; tmp[v * 3 + 1] = sp[v * 3 + 1]; tmp[v * 3 + 2] = sp[v * 3 + 2]; continue; }
+      tmp[v * 3] = sp[v * 3] * 0.5 + (ax / c) * 0.5;
+      tmp[v * 3 + 1] = Math.max(-0.002, sp[v * 3 + 1] * 0.5 + (ay / c) * 0.5);
+      tmp[v * 3 + 2] = sp[v * 3 + 2] * 0.5 + (az / c) * 0.5;
+    }
+    for (const v of set) { sp[v * 3] = tmp[v * 3]; sp[v * 3 + 1] = tmp[v * 3 + 1]; sp[v * 3 + 2] = tmp[v * 3 + 2]; }
+  }
+  return soles;
+}
+
+/**
+ * The cut runs along the body's triangles, so every hem, cuff, neckline, hat band and shoe collar
+ * zig-zags between two rings of vertices. Walk each open edge of the garment and slide its vertices
+ * towards their neighbours along that edge: the teeth fold onto one clean line.
+ */
+export function smoothCutEdge(keep: ArrayLike<number>, rb: ArrayLike<number>, n: number, sp: Float32Array, rounds = 10): number {
+  // Edges used by exactly one kept triangle are the garment's open edges.
+  const count = new Map<number, number>();
+  const key = (a: number, b: number) => (a < b ? a * n + b : b * n + a);
+  for (let i = 0; i < keep.length; i += 3) {
+    const t = [rb[keep[i]], rb[keep[i + 1]], rb[keep[i + 2]]];
+    for (let e = 0; e < 3; e++) {
+      const a = t[e];
+      const b = t[(e + 1) % 3];
+      if (a === b) continue;
+      const k = key(a, b);
+      count.set(k, (count.get(k) ?? 0) + 1);
+    }
+  }
+  const nb = new Map<number, number[]>();
+  for (const [k, c] of count) {
+    if (c !== 1) continue;
+    const a = Math.floor(k / n);
+    const b = k % n;
+    (nb.get(a) ?? nb.set(a, []).get(a)!).push(b);
+    (nb.get(b) ?? nb.set(b, []).get(b)!).push(a);
+  }
+  // Only plain links in a loop move: a vertex where open edges meet (a junction) stays put.
+  const loop = [...nb].filter(([, l]) => l.length === 2);
+  const next = new Float32Array(loop.length * 3);
+  // Taubin steps: a shrink then a slightly larger grow, so the teeth go but the loop keeps its size
+  // (plain averaging would pull a cuff or an ankle hem into the limb).
+  for (let r = 0; r < rounds * 2; r++) {
+    const k = r % 2 === 0 ? 0.5 : -0.53;
+    loop.forEach(([v, [a, b]], i) => {
+      for (let c = 0; c < 3; c++) next[i * 3 + c] = sp[v * 3 + c] + ((sp[a * 3 + c] + sp[b * 3 + c]) * 0.5 - sp[v * 3 + c]) * k;
+    });
+    loop.forEach(([v], i) => {
+      for (let c = 0; c < 3; c++) sp[v * 3 + c] = next[i * 3 + c];
+    });
+  }
+  return loop.length;
+}
+
 function neighbours(data: BodyData): { start: Uint32Array; list: Uint32Array } {
   const hit = adjacency.get(data);
   if (hit) return hit;
@@ -322,7 +605,7 @@ function hang(data: BodyData, pos: Float32Array, f: Frame, st: Style, list: numb
 const HANG = true;
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
-const shade = (c: [number, number, number], k: number): [number, number, number] => [c[0] * k, c[1] * k, c[2] * k];
+const shade = (c: [number, number, number], k: number): [number, number, number] => [Math.min(1, c[0] * k), Math.min(1, c[1] * k), Math.min(1, c[2] * k)];
 const mix = (a: [number, number, number], b: [number, number, number], t: number): [number, number, number] => [
   a[0] + (b[0] - a[0]) * t,
   a[1] + (b[1] - a[1]) * t,
@@ -330,6 +613,14 @@ const mix = (a: [number, number, number], b: [number, number, number], t: number
 ];
 
 /** Cut a garment from the morphed body. `normals` are the body's smooth normals (per base vertex). */
+export interface Extra {
+  position: Float32Array;
+  normal: Float32Array;
+  colour: Float32Array;
+  index: Uint32Array;
+  bone: string;
+}
+
 export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Array, kind: GarmentKind, colours: GarmentColours): GarmentMesh {
   const st = GARMENTS[kind];
   const f = bodyFrame(data, pos);
@@ -339,6 +630,8 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
   const trim = new Float32Array(n);
   const hemY = f.hipY + (f.waistY - f.hipY) * (st.hem ?? 0);
   const waistTop = f.waistY + 0.02;
+  const hd = st.part === 'head' ? headFrame(f, pos) : null;
+  const ankle = { L: headOf(data, pos, 'foot.L'), R: headOf(data, pos, 'foot.R') };
   for (let v = 0; v < n; v++) {
     const g = f.group[v];
     const y = pos[v * 3 + 1];
@@ -346,7 +639,23 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
     const t = f.t[v];
     let inn = false;
     let edge = 1;
-    if (st.part === 'top') {
+    if (hd) {
+      // A hat: the scalp above a line that runs lower at the back than over the forehead.
+      if (g === 'head') {
+        const rel = (hd.top - y) / hd.height;
+        const limit = hatLimit(st, hd, x, pos[v * 3 + 2]);
+        inn = rel <= limit;
+        edge = (limit - rel) / 0.05;
+      }
+    } else if (st.part === 'feet') {
+      // A shoe: the foot, and up the leg to its collar.
+      if (g === 'footL' || g === 'footR') inn = true;
+      else if (g === 'legL' || g === 'legR') {
+        const from = 0.985 - (st.collarT ?? 0);
+        inn = t >= from;
+        edge = (t - from) / 0.03;
+      }
+    } else if (st.part === 'top') {
       const neckCut = f.neckY + (st.vest ? 0.01 : st.collar || st.hood ? 0.015 : 0.0);
       if (st.hood && g === 'neck' && pos[v * 3 + 2] < f.neckZ - 0.01 && y < f.neckY + 0.07) {
         // A hood bunched round the back of the neck.
@@ -362,7 +671,8 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
         edge = Math.min((y - hemY) / 0.05, (neckCut - y) / 0.03);
         // A long coat carries on down the thighs.
       } else if ((g === 'armL' || g === 'armR') && !st.vest) {
-        inn = t <= (st.sleeve ?? 0) * 0.97;
+        // Sleeveless (a gilet): none of the arm, so the armhole is a clean loop.
+        inn = (st.sleeve ?? 0) > 0 && t <= (st.sleeve ?? 0) * 0.97;
         edge = ((st.sleeve ?? 0) * 0.97 - t) / 0.08;
       } else if ((g === 'legL' || g === 'legR') && (st.hem ?? 0) < 0) {
         const down = -(st.hem ?? 0);
@@ -490,12 +800,16 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
     for (const v of list) {
       const x = sp[v * 3];
       const y = sp[v * 3 + 1];
-      if (Math.abs(x) < 0.1 && y < f.hipY + 0.1 && y > f.hipY - 0.16 && sp[v * 3 + 2] > front) {
-        const k = 1 - Math.max(0, (Math.abs(x) - 0.06) / 0.04);
+      // Only the crotch: fading out above it, so the plane never cuts into the lower belly.
+      if (Math.abs(x) < 0.1 && y < f.hipY + 0.06 && y > f.hipY - 0.16 && sp[v * 3 + 2] > front) {
+        const k = (1 - Math.max(0, (Math.abs(x) - 0.06) / 0.04)) * clamp01((f.hipY + 0.06 - y) / 0.04);
         sp[v * 3 + 2] = sp[v * 3 + 2] + (front - sp[v * 3 + 2]) * Math.min(1, k);
       }
     }
   }
+  // A shoe goes onto its last first, so the collar is straightened where it finally sits.
+  const soles = st.part === 'feet' ? shoeLast(f, pos, list, sp, st, adj, st.sole ?? [0.9, 0.89, 0.86]) : null;
+  smoothCutEdge(keep, rb, n, sp);
   const m = render.length;
   const P = new Float32Array(m * 3);
   const N = new Float32Array(m * 3);
@@ -535,6 +849,65 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
       if (torsoBand || armBand) c = bandC;
     }
     if (st.work && g.startsWith('leg') && f.t[v] > 0.42 && f.t[v] < 0.58 && z > 0) c = shade(c, 0.78);
+    // ---- seams, stitching and folds: what makes cloth read as made, not painted ----
+    if (st.part === 'top' || st.part === 'bottoms') {
+      // Side seams down the torso, outseams and inseams down the legs, a seam round the shoulder.
+      const sideA = Math.atan2(Math.abs(x), z - f.hipZ);
+      const seamTorso = (g === 'torso' || g === 'hip') && Math.abs(sideA - Math.PI / 2) < 0.07 && y < f.neckY - 0.08;
+      const seamLeg = g.startsWith('leg') && (f.around[v] < 0.07 || f.around[v] > Math.PI - 0.09);
+      const seamShoulder = g.startsWith('arm') && f.t[v] < 0.035 && f.t[v] > 0.0;
+      if ((seamTorso || seamLeg || seamShoulder) && !(st.stripe && seamLeg)) c = st.thread ? mix(c, st.thread, 0.45) : shade(c, 0.86);
+      // Topstitched hems and waistband on denim.
+      if (st.thread && ((g.startsWith('leg') && f.t[v] > (st.leg ?? 1) * 0.97 - 0.03) || ((g === 'torso' || g === 'hip') && st.part === 'bottoms' && y > waistTop - 0.035))) c = mix(c, st.thread, 0.35);
+      // Creases inside the elbows and behind the knees, where cloth bunches when the joint bends.
+      const elbow = g.startsWith('arm') && Math.abs(f.t[v] - 0.5) < 0.07 && f.around[v] > 2.1;
+      const knee = g.startsWith('leg') && Math.abs(f.t[v] - 0.52) < 0.06 && z < 0 && st.part === 'bottoms';
+      if (elbow || knee) {
+        const w = 0.5 + 0.5 * Math.cos(((f.t[v] - 0.5) / 0.035) * Math.PI);
+        c = shade(c, 0.9 + 0.1 * w);
+        gap += 0.003 * w;
+      }
+      // Joggers and trackies gather above the cuff.
+      if (st.stack && g.startsWith('leg') && f.t[v] > 0.8) {
+        const ring = 0.5 + 0.5 * Math.cos(((f.t[v] - 0.8) / 0.045) * Math.PI * 2);
+        gap += 0.006 * ring;
+        c = shade(c, 0.9 + 0.1 * ring);
+      }
+    }
+    if (st.neckband && g === 'torso' && y > f.neckY - 0.03) c = shade(main, 0.82);
+    if (st.placket && g === 'torso' && z > 0 && Math.abs(x) < 0.013 && y > (st.placket === 'short' ? f.neckY - 0.14 : hemY)) {
+      c = shade(main, 0.9);
+      // Buttons every 8 cm (4 cm on a polo).
+      const step = st.placket === 'short' ? 0.04 : 0.08;
+      if (Math.abs(x) < 0.006 && ((f.neckY - y) % step) / step < 0.18) c = lum > 0.5 ? [0.2, 0.19, 0.18] : [0.85, 0.83, 0.78];
+    }
+    if (st.halfZip && g === 'torso' && z > 0 && Math.abs(x) < 0.006 && y > f.neckY - 0.16) c = zipC;
+    if (st.panel && g === 'torso' && y < f.neckY - 0.08 && y > f.neckY - 0.2) c = trimC;
+    if (st.part === 'feet') {
+      // Zones from the shoe's own shell (shoeLast), not the foot under it.
+      const a = ankle[g.endsWith('L') ? 'L' : 'R'];
+      const sx = sp[v * 3], sy = sp[v * 3 + 1], sz = sp[v * 3 + 2];
+      const soleH = st.soleH ?? 0.03;
+      // The sole is its own mesh (shoeLast); the upper inside it is just shaded darker.
+      if (sy < soleH && !g.startsWith('leg')) c = shade(main, 0.7);
+      else if (sy > 0.045 && sz > a[2] + 0.02 && sz < a[2] + 0.115 && Math.abs(sx - a[0]) < 0.017) {
+        // Laces up the top of the foot, crossing in pairs.
+        c = ((sz * 1000) % 16) / 16 < 0.5 ? shade(main, lum > 0.5 ? 0.7 : 1.5) : shade(main, 0.82);
+      } else if (sz < a[2] - 0.03 && sy < 0.085) c = shade(main, 0.82); // heel counter
+      else if (sz > a[2] + 0.13 && sy < soleH + 0.035) c = shade(main, 0.9); // toe cap
+      if (g.startsWith('leg') && tr > 0.4) c = shade(main, 0.7); // the padded collar
+    }
+    if (hd) {
+      const ang = Math.atan2(x, z - hd.cz);
+      // A cap's six panels meet at the button on top.
+      if (st.brim === 'peak' && ((ang + Math.PI) % (Math.PI / 3)) / (Math.PI / 3) < 0.06 && (hd.top - y) / hd.height > 0.03) c = shade(c, 0.82);
+      if ((hd.top - y) / hd.height < 0.025) c = shade(c, 0.75);
+      // Rings of topstitching round a bucket hat's crown.
+      if (st.brim === 'round') {
+        const fromHem = hatLimit(st, hd, x, z) - (hd.top - y) / hd.height;
+        if (fromHem < 0.1 && ((fromHem / 0.1) * 4) % 1 < 0.2) c = shade(c, 0.86);
+      }
+    }
     // Never closer to the skin than a few millimetres.
     const nx = normals[v * 3];
     const ny = normals[v * 3 + 1];
@@ -543,12 +916,16 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
     let qy = sp[v * 3 + 1];
     let qz = sp[v * 3 + 2];
     const d = (qx - x) * nx + (qy - y) * ny + (qz - z) * nz;
-    const least = st.part === 'bottoms' && Math.abs(x) < 0.1 && y < f.hipY + 0.1 && y > f.hipY - 0.16 && z > f.hipZ ? -1 : Math.min(gap, 0.005);
+    // A top's lower edge rides over any trousers' waistband, never inside it.
+    const overBand = st.part === 'top' && (g === 'torso' || g === 'hip') && y < f.waistY + 0.05 ? 0.024 : 0;
+    const least = st.part === 'bottoms' && Math.abs(x) < 0.1 && y < f.hipY + 0.03 && y > f.hipY - 0.16 && z > f.hipZ ? -1 : Math.max(overBand, Math.min(gap, 0.005));
     if (d < least) {
       qx += nx * (least - d);
       qy += ny * (least - d);
       qz += nz * (least - d);
     }
+    // Shoes stand on the floor, not in it.
+    if (st.part === 'feet' && qy < -0.002) qy = -0.002;
     P[l * 3] = qx;
     P[l * 3 + 1] = qy;
     P[l * 3 + 2] = qz;
@@ -588,7 +965,121 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
       N[l * 3 + 2] = (sgn * z) / len;
     }
   }
-  return { kind, fabric: st.fabric, render: Uint32Array.from(render), position: P, normal: N, colour: C, index: local, covers: inside, part: st.part };
+  // A hat's hem as a ring of points round the head (from the cut edge of the shell), for the brim.
+  if (hd && st.brim) {
+    const BINS = 40;
+    const acc2 = Array.from({ length: BINS }, () => [0, 0, 0, 0]);
+    for (let l = 0; l < m; l++) {
+      const v = rb[render[l]];
+      if (!pinned[v]) continue;
+      const a = Math.atan2(P[l * 3], P[l * 3 + 2] - hd.cz);
+      const b = Math.min(BINS - 1, Math.floor(((a + Math.PI) / (Math.PI * 2)) * BINS));
+      acc2[b][0] += P[l * 3];
+      acc2[b][1] += P[l * 3 + 1];
+      acc2[b][2] += P[l * 3 + 2];
+      acc2[b][3]++;
+    }
+    (hd as HeadFrame & { ring?: [number, number, number][] }).ring = acc2.filter((q) => q[3]).map((q) => [q[0] / q[3], q[1] / q[3], q[2] / q[3]] as [number, number, number]);
+  }
+  const extra: Extra[] = [];
+  if (hd && st.brim) extra.push(brimShell(st, hd, colours.main));
+  if (soles) extra.push(...soles);
+  // The skin under the cut edge stays: the edge has been straightened (smoothCutEdge), and hiding the
+  // old zig-zag would open holes through to the inside of the cloth.
+  const covers = inside.slice();
+  for (const v of list) if (pinned[v]) covers[v] = 0;
+  return { kind, fabric: st.fabric, render: Uint32Array.from(render), position: P, normal: N, colour: C, index: local, covers, part: st.part, extra };
+}
+
+interface HeadFrame {
+  top: number;
+  height: number;
+  cz: number;
+  /** Half-width and front and back of the head at the brim line. */
+  rx: number;
+  front: number;
+  back: number;
+  /** Height of the hem over the forehead. */
+  hemY: number;
+}
+
+/** The head's extent: crown, chin, centre front-to-back, and its outline where a hat's brim sits. */
+function headFrame(f: Frame, pos: Float32Array): HeadFrame {
+  let top = -Infinity, chin = Infinity, zs = 0, c = 0;
+  for (let v = 0; v < f.group.length; v++) {
+    if (f.group[v] !== 'head') continue;
+    const y = pos[v * 3 + 1];
+    top = Math.max(top, y);
+    chin = Math.min(chin, y);
+    zs += pos[v * 3 + 2];
+    c++;
+  }
+  const height = top - chin;
+  const cz = zs / Math.max(1, c);
+  return { top, height, cz, rx: 0, front: cz, back: cz, hemY: top };
+}
+
+/** How far down the head (0 crown .. 1 chin) the hat comes at this point: lowest at the back, clear of the ears. */
+function hatLimit(st: Style, hd: HeadFrame, x: number, z: number): number {
+  const fz = Math.max(-1, Math.min(1, (z - hd.cz) / 0.08));
+  const d = st.depth ?? 0.3;
+  // A round-brimmed hat sits level; a beanie or cap dips at the back.
+  if (st.brim === 'round') return d + 0.05;
+  const side = 1 - Math.abs(fz);
+  return d + 0.16 * Math.max(0, -fz) + 0.03 * side - (Math.abs(x) > 0.065 ? 0.02 * side : 0);
+}
+
+/** A cap's peak or a hat's brim, sized to the head, as a single sheet on the head bone (drawn both sides). */
+function brimShell(st: Style, hd0: HeadFrame, main: [number, number, number]): Extra {
+  const hd = hd0 as HeadFrame & { ring?: [number, number, number][] };
+  const ring = hd.ring!;
+  const P: number[] = [];
+  const I: number[] = [];
+  const C: number[] = [];
+  const under = shade(main, 0.7);
+  if (st.brim === 'peak') {
+    // Across the front of the head, out 7 cm, curving down at the sides.
+    const front = ring.filter((p) => p[2] > hd.cz + 0.005).sort((a, b) => a[0] - b[0]);
+    const across = 9;
+    const out = 5;
+    for (let i = 0; i <= across; i++) {
+      const u = i / across;
+      const p = front[Math.min(front.length - 1, Math.round(u * (front.length - 1)))];
+      const k = Math.sin(u * Math.PI);
+      for (let j = 0; j <= out; j++) {
+        const w = j / out;
+        const len = 0.075 * Math.sqrt(Math.max(0.05, k));
+        const dirx = (p[0] / (Math.abs(p[0]) + 0.05)) * 0.35;
+        // Starts just under the crown's edge so there's no gap between peak and cap.
+        P.push(p[0] + dirx * len * w, p[1] - 0.002 - 0.012 * w - 0.018 * (1 - k) * w, p[2] - 0.006 + (len + 0.006) * w);
+        C.push(...(j === 0 ? under : main));
+      }
+    }
+    for (let i = 0; i < across; i++)
+      for (let j = 0; j < out; j++) {
+        const a = i * (out + 1) + j;
+        const b = a + out + 1;
+        I.push(a, b, a + 1, b, b + 1, a + 1);
+      }
+  } else {
+    // All the way round, 5 cm out, sloping down.
+    const n = ring.length;
+    for (let i = 0; i < n; i++) {
+      const p = ring[i];
+      const dx = p[0];
+      const dz = p[2] - hd.cz;
+      const l = Math.hypot(dx, dz) || 1;
+      P.push(p[0], p[1], p[2]);
+      P.push(p[0] + (dx / l) * 0.05, p[1] - 0.025, p[2] + (dz / l) * 0.05);
+      C.push(...main, ...main);
+    }
+    for (let i = 0; i < n; i++) {
+      const a = i * 2;
+      const b = ((i + 1) % n) * 2;
+      I.push(a, b, a + 1, b, b + 1, a + 1);
+    }
+  }
+  return { position: new Float32Array(P), normal: new Float32Array(P.length), colour: new Float32Array(C), index: new Uint32Array(I), bone: 'head' };
 }
 
 /** Points for a hood lying round the back of the neck: a part-torus, all on the upper spine. */

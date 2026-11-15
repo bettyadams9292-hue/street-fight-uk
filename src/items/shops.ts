@@ -8,10 +8,15 @@ import { ITEMS, type ItemDef } from './items';
 
 export const SHOP_STOCK: string[] = [
   'hoodie_grey', 'hoodie_black', 'designer_hoodie', 'tracksuit_top', 'tracksuit_top_red', 'tshirt_white', 'tshirt_black', 'football_home', 'football_away',
-  'bomber_jacket', 'puffer_black', 'puffer_red', 'leather_jacket', 'denim_jacket', 'long_coat', 'vest_white', 'workwear_hivis',
-  'trackies_black', 'joggers_grey', 'jeans_blue', 'jeans_black', 'cargos_khaki', 'shorts_black',
-  'trainers_white', 'runners', 'hitops_black', 'boots_work', 'steel_toecaps',
-  'cap_black', 'cap_red', 'beanie', 'sunglasses', 'snood', 'chain_silver', 'chain_gold', 'watch_basic', 'earring_silver', 'ring_signet', 'belt_leather',
+  'hoodie_navy', 'tshirt_grey', 'tracksuit_top_grey', 'polo_navy', 'polo_white', 'polo_bottle', 'shirt_oxford', 'shirt_check',
+  'jumper_navy', 'jumper_oat', 'quarter_zip_black', 'quarter_zip_grey', 'gilet_black', 'gilet_olive', 'windbreaker', 'windbreaker_retro',
+  'harrington_stone', 'harrington_black',
+  'bomber_jacket', 'puffer_black', 'puffer_red', 'puffer_navy', 'leather_jacket', 'denim_jacket', 'long_coat', 'vest_white', 'workwear_hivis',
+  'trackies_black', 'trackies_navy', 'joggers_grey', 'joggers_black', 'jeans_blue', 'jeans_black', 'jeans_light', 'chinos_stone', 'chinos_navy',
+  'cargos_khaki', 'cargo_shorts', 'denim_shorts', 'shorts_black',
+  'trainers_white', 'trainers_black', 'trainers_navy', 'runners', 'runners_red', 'hitops_black', 'hitops_white', 'boots_work', 'steel_toecaps',
+  'cap_black', 'cap_red', 'cap_navy', 'cap_white', 'beanie', 'beanie_red', 'beanie_grey', 'bucket_hat', 'bucket_hat_black', 'flat_cap',
+  'sunglasses', 'glasses', 'snood', 'chain_silver', 'chain_gold', 'watch_basic', 'earring_silver', 'ring_signet', 'belt_leather',
   'wraps', 'mouthguard', 'headguard', 'bag_bumbag', 'bag_rucksack', 'bag_holdall',
 ];
 

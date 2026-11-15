@@ -152,11 +152,14 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
       // Each character plays one Ara clip, frozen at the same moment.
       await Promise.all([preloadAllHumans(), loadAraMocap()]);
       const t = Number(q.get('t') ?? 0.4);
+      const wear = q.get('wear') ? (JSON.parse(q.get('wear')!) as Partial<CharacterAppearance>[]) : null;
       let seed = 7;
       const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
       const t0 = performance.now();
       clips.forEach((id, i) => {
-        const rig = buildHumanRig(crowd ? npc(crowd, i).appearance : randomAppearance(rnd));
+        // &wear=<JSON list of looks> dresses them (cycled), for checking clothes in motion.
+        const look = wear ? { ...defaultAppearance(wear[i % wear.length].body ?? 'male'), ...wear[i % wear.length] } : null;
+        const rig = buildHumanRig(look ?? (crowd ? npc(crowd, i).appearance : randomAppearance(rnd)));
         if (!rig) throw new Error('could not build a rig');
         const pose = araPose(id, t, rig.metrics);
         if (!pose) throw new Error(`no clip ${id}`);

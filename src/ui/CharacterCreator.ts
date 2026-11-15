@@ -201,9 +201,10 @@ export function characterCreator(
     update();
   };
   const toggleAccessory = (acc: Accessory, on: boolean) => {
-    // A cap and a head guard can't be worn together.
-    const clash: Accessory | null = acc === 'cap' ? 'headguard' : acc === 'headguard' ? 'cap' : null;
-    const list = appearance.accessories.filter((x) => x !== acc && !(on && x === clash));
+    // One thing on the head and one on the face at a time, as in the game's wear slots.
+    const groups: Accessory[][] = [['cap', 'beanie', 'bucket_hat', 'flat_cap', 'headguard'], ['sunglasses', 'glasses', 'snood']];
+    const clash = groups.find((g) => g.includes(acc)) ?? [];
+    const list = appearance.accessories.filter((x) => x !== acc && !(on && clash.includes(x)));
     if (on) list.push(acc);
     set('accessories', list);
   };
@@ -302,7 +303,7 @@ export function characterCreator(
           ...ACCESSORIES.filter((acc) => !isLocked(`acc:${acc}`) || a.accessories.includes(acc)).map((acc) =>
             cycleRow(LABELS[acc], [{ value: false, label: 'Off' }, { value: true, label: 'On' }], a.accessories.includes(acc), (on) => {
               toggleAccessory(acc, on);
-              if ((acc === 'cap' || acc === 'headguard') && on) render();
+              if (on && ['cap', 'beanie', 'bucket_hat', 'flat_cap', 'headguard', 'sunglasses', 'glasses', 'snood'].includes(acc)) render();
             }),
           ),
           cycleRow('Metal', [{ value: 'gold' as const, label: 'Gold' }, { value: 'silver' as const, label: 'Silver' }], a.chainColour, (v) => set('chainColour', v)),
