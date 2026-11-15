@@ -3,6 +3,7 @@ import type { CharacterAppearance } from '../character/Appearance';
 import type { Fighter } from '../fighter/Fighter';
 import { buildCharacterRig, type Rig } from './CharacterRig';
 import { buildWeaponMesh, disposeGroup } from './weaponMesh';
+import { gymPiece, gymReady, loadGym } from './props/GymLibrary';
 import { FighterAnimator, type Traits } from './anim/animator';
 import { JOINTS, type Pose } from './poses';
 
@@ -138,6 +139,7 @@ export class FighterView {
       for (const m of this.rig.flashMaterials) m.emissive.setScalar(0);
     }
     this.syncWeapon();
+    this.syncGear();
   }
 
   private isWindingUpHeavy(): boolean {
@@ -168,7 +170,82 @@ export class FighterView {
   }
 
 
+  // ---- gym gear in the hands while training ----
+  private gearKind: 'dumbbells' | 'barbell' | null = null;
+  private gear: THREE.Object3D[] = [];
+  /** Where each fist is: a point on each forearm, where the weapon grip sits. */
+  private fists: [THREE.Object3D, THREE.Object3D] | null = null;
+
+  /**
+   * Curls and front raises hold a dumbbell in each fist; squats and presses hold the gym's barbell,
+   * placed every frame between the fists and along them (on the shoulders in a squat, overhead in a
+   * press). Both are the gym pack's own models (public/models/gym).
+   */
+  private syncGear(): void {
+    const act = this.fighter.activity;
+    const want = act === 'curl' || act === 'raises' ? 'dumbbells' : act === 'squat' || act === 'press' ? 'barbell' : null;
+    if (want !== this.gearKind) {
+      this.dropGear();
+      if (want && this.buildGear(want)) this.gearKind = want;
+    }
+    if (this.gearKind !== 'barbell' || !this.fists) return;
+    const bar = this.gear[0];
+    this.root.updateMatrixWorld(true);
+    const a = this.fists[0].getWorldPosition(new THREE.Vector3());
+    const b = this.fists[1].getWorldPosition(new THREE.Vector3());
+    this.root.worldToLocal(a);
+    this.root.worldToLocal(b);
+    bar.position.copy(a).add(b).multiplyScalar(0.5);
+    const dir = b.sub(a);
+    if (dir.lengthSq() > 1e-6) bar.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), dir.normalize());
+  }
+
+  private buildGear(kind: 'dumbbells' | 'barbell'): boolean {
+    if (!gymReady()) return void loadGym(), false;
+    if (!this.fists) {
+      this.fists = [new THREE.Object3D(), new THREE.Object3D()];
+      this.fists[0].position.set(0, -0.3, 0.02);
+      this.fists[1].position.set(0, -0.3, 0.02);
+      this.rig.joints.lElbow.add(this.fists[0]);
+      this.rig.joints.rElbow.add(this.fists[1]);
+    }
+    if (kind === 'dumbbells') {
+      for (const fist of this.fists) {
+        // The handle across the fist (the model's long axis is z), the heads either side.
+        const piece = gymPiece('dumbbell_small', 0.17, 0.16, 0.19, { keepAspect: true });
+        if (!piece) return this.dropGear(), false;
+        const g = new THREE.Group();
+        piece.position.y = -0.08;
+        g.add(piece);
+        g.rotation.y = Math.PI / 2;
+        fist.add(g);
+        this.gear.push(g);
+      }
+      return true;
+    }
+    // A bar 1.35 m long with 44 cm plates, centred on its own middle.
+    const piece = gymPiece('barbell', 1.35, 0.44, 0.44, { keepAspect: true });
+    if (!piece) return false;
+    const box = new THREE.Box3().setFromObject(piece);
+    piece.position.y -= (box.min.y + box.max.y) / 2;
+    const g = new THREE.Group();
+    g.add(piece);
+    this.root.add(g);
+    this.gear.push(g);
+    return true;
+  }
+
+  private dropGear(): void {
+    for (const g of this.gear) {
+      g.parent?.remove(g);
+      // The gym pack's meshes and materials are shared: only the wrappers go.
+    }
+    this.gear = [];
+    this.gearKind = null;
+  }
+
   dispose(): void {
+    this.dropGear();
     if (this.weaponMesh) disposeGroup(this.weaponMesh);
     this.root.remove(this.rig.root);
     this.rig.dispose();

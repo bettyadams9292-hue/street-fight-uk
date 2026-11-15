@@ -75,7 +75,15 @@ export const SHOTS: Record<ShotName, SceneFn> = {
     g.showMainMenu();
     game.advance(60);
   },
-  stance: (game, g) => training(game, g, 'stand'),
+  stance: (game, g) => {
+    training(game, g, 'stand');
+    // &act=<activity>: the player doing a training activity (gym gear in hand), for checking by eye.
+    const act = new URLSearchParams(location.search).get('act');
+    if (act && g.mode) {
+      g.mode.player.activity = act;
+      game.advance(Number(new URLSearchParams(location.search).get('frames') ?? 150));
+    }
+  },
   jab: (game, g) => {
     training(game, g, 'stand');
     press(game, g, 'lp', 7);
@@ -210,8 +218,10 @@ export function runShot(game: Game, name: string): void {
     console.error(e);
   }
   // Fonts change the menus' layout; wait for them so every picture has the same text.
-  void document.fonts.ready.then(() => {
-    game.advance(1);
+  // A training activity's gym gear (&act=) needs the gym pack loaded before the last frame.
+  const gear = new URLSearchParams(location.search).get('act') ? import('../render/props/GymLibrary').then((m) => m.loadGym()) : Promise.resolve();
+  void Promise.all([document.fonts.ready, gear]).then(() => {
+    game.advance(new URLSearchParams(location.search).get('act') ? 30 : 1);
     out.ready = true;
   });
 }
