@@ -29,7 +29,7 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 - Clothes with no proxy (hoodies, jackets, jeans and so on) are made in code by `garments.ts`.
 
 **Animation.**
-- Mocap: `public/anim/rokoko_mocap.json` (fight clips) and `ara_mocap.json` (walk, run, sit and so on).
+- Mocap: `public/anim/rokoko_mocap.json` (fight clips), `mixamo_mocap.json` (the owner's Mixamo library, `tools/mixamo/convert.py`) and `ara_mocap.json` (walk, run, sit and so on).
 - Everything else is keyed in code: `src/render/poses.ts`, `src/render/activityPoses.ts`.
 
 **UI** (`src/ui/`).
@@ -131,6 +131,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - trainers, runners and hi-tops are cut from the foot, laid on a shoe last, with a separate cupsole mesh;
   - cut edges are straightened (`smoothCutEdge`), the trouser crotch flattening no longer cuts into the belly, and tops ride over waistbands;
   - 38 new Threads items; `tests/clothing.test.ts`; `?shot=anims&wear=[…]` poses chosen outfits.
+- #27: animation overhaul phase 1: 14 Mixamo clips from the owner's library (`tools/mixamo/convert.py` → `public/anim/mixamo_mocap.json`). Hook, elbow, knee, rear roundhouse and headbutt are captured now; extra jab and cross takes; head hits and staggers cycle through several reactions (`REACTIONS.heads`, `staggers`). Phase 2 (the rest of the 65 clips) waits for the owner's approval.
 
 ## Open questions and next steps
 
