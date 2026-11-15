@@ -131,7 +131,8 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - trainers, runners and hi-tops are cut from the foot, laid on a shoe last, with a separate cupsole mesh;
   - cut edges are straightened (`smoothCutEdge`), the trouser crotch flattening no longer cuts into the belly, and tops ride over waistbands;
   - 38 new Threads items; `tests/clothing.test.ts`; `?shot=anims&wear=[…]` poses chosen outfits.
-- #27: animation overhaul phase 1: 14 Mixamo clips from the owner's library (`tools/mixamo/convert.py` → `public/anim/mixamo_mocap.json`). Hook, elbow, knee, rear roundhouse and headbutt are captured now; extra jab and cross takes; head hits and staggers cycle through several reactions (`REACTIONS.heads`, `staggers`). Phase 2 (the rest of the 65 clips) waits for the owner's approval.
+- #27: animation overhaul phase 1: 14 Mixamo clips from the owner's library (`tools/mixamo/convert.py` → `public/anim/mixamo_mocap.json`). Hook, elbow, knee, rear roundhouse and headbutt are captured now; extra jab and cross takes; head hits and staggers cycle through several reactions (`REACTIONS.heads`, `staggers`). Phase 2 followed in #28.
+- #28: animation phase 2 (29 clips, `mixamo_mocap.json`): lead roundhouse; more hit and stagger reactions; knocked-out fighters lie hurt in a loop; captured gym loops (bag, speed bag, curls) and sitting loops. Home gym kit has `routine`s (`src/training/gym.ts`) switching exercise every 6 s: curls and front raises, squats and presses, skipping, push-ups, burpees and squats. Dumbbells and the barbell are held while training (`FighterView.syncGear`); `?shot=stance&act=<activity>` shows it.
 
 ## Open questions and next steps
 
