@@ -18,8 +18,15 @@ import type { Pose } from '../poses';
 
 /** Strikes with a capture, keyed by `${anim}:${limb}`. A fighter cycles through the takes, one per throw. */
 export const STRIKE_CLIPS: Record<string, string[]> = {
-  'jab:leadHand': ['rk_jab', 'rk_jab_b'],
-  'cross:rearHand': ['rk_cross', 'rk_cross_b', 'rk_cross_c'],
+  'jab:leadHand': ['rk_jab', 'mx_jab', 'rk_jab_b'],
+  'cross:rearHand': ['rk_cross', 'mx_cross', 'rk_cross_b', 'mx_cross_b', 'rk_cross_c'],
+  // From the owner's Mixamo library (public/anim/mixamo_mocap.json, tools/mixamo/convert.py):
+  // these replace hand-keyed poses.
+  'hook:leadHand': ['mx_hook'],
+  'elbow:elbow': ['mx_elbow'],
+  'knee:knee': ['mx_knee'],
+  'roundhouse:rearFoot': ['mx_roundhouse', 'mx_roundhouse_b'],
+  'headbutt:head': ['mx_headbutt'],
   'haymaker:rearHand': ['rk_cross_c', 'rk_cross'],
   'overhand:rearHand': ['rk_cross', 'rk_cross_c'],
   'body_shot:rearHand': ['rk_cross_b'],
@@ -34,6 +41,10 @@ export const REACTIONS = {
   head: 'rk_hit_head',
   body: 'rk_hit_body',
   stagger: 'rk_stagger',
+  /** Takes for a shot to the head, one per hit in turn, so reactions don't repeat. */
+  heads: ['rk_hit_head', 'mx_hit_head', 'mx_hit_light', 'mx_hit_uppercut'],
+  /** Takes for a stagger: rocked, a big shot, dazed. */
+  staggers: ['rk_stagger', 'mx_hit_big', 'mx_stunned'],
   knockdown: 'rk_knockdown',
   ko: ['rk_ko', 'rk_ko_b'],
   getup: 'rk_getup',
@@ -44,10 +55,16 @@ let ready = false;
 
 /** Fetch the clips (about 180 KB). Resolves false, and the hand-made poses carry on, if they aren't there. */
 export function loadRokoko(url = '/anim/rokoko_mocap.json'): Promise<boolean> {
+  // The Mixamo takes are optional extras: without them, every move keeps its Rokoko take or keyed pose.
+  const extra = fetch(url.replace('rokoko_mocap', 'mixamo_mocap'))
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
   loading ??= fetch(url)
     .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
-    .then((d) => {
+    .then(async (d) => {
       registerMocap(d);
+      const mx = await extra;
+      if (mx) registerMocap(mx);
       ready = true;
       return true;
     })
@@ -70,10 +87,14 @@ export function rokokoReady(): boolean {
 /** The take for this strike, or null if it has none (or the clips aren't loaded). `seq` picks one of several. */
 export function strikeClip(anim: string, limb: string, seq: number): string | null {
   if (!ready) return null;
-  const list = STRIKE_CLIPS[`${anim}:${limb}`];
-  if (!list) return null;
-  const id = list[((seq % list.length) + list.length) % list.length];
-  return mocapClip(id) ? id : null;
+  return pickClip(STRIKE_CLIPS[`${anim}:${limb}`], seq);
+}
+
+/** One of several takes, in turn, skipping any that didn't load. */
+export function pickClip(list: readonly string[] | undefined, seq: number): string | null {
+  const have = (list ?? []).filter((id) => mocapClip(id));
+  if (!have.length) return null;
+  return have[((seq % have.length) + have.length) % have.length];
 }
 
 /**

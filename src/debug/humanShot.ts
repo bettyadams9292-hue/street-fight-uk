@@ -8,6 +8,7 @@ import { DEFAULT_SHAPE, type BodyShape } from '../characters/human/body';
 import { buildHuman, loadHumanAssets, preloadHuman, preloadAllHumans, type HumanSpec } from '../render/human/HumanBuilder';
 import { buildHumanRig } from '../render/human/HumanRig';
 import { araPose, loadAraMocap } from '../render/anim/araPose';
+import { loadRokoko } from '../render/anim/rokoko';
 import { JOINTS } from '../render/poses';
 import { defaultAppearance, randomAppearance, type CharacterAppearance } from '../character/Appearance';
 import type { JewelCat, JewelLook } from '../items/jewellery';
@@ -149,8 +150,8 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
       });
       (window as unknown as { __jewels: unknown }).__jewels = rigs;
     } else if (mode === 'anims') {
-      // Each character plays one Ara clip, frozen at the same moment.
-      await Promise.all([preloadAllHumans(), loadAraMocap()]);
+      // Each character plays one clip (Ara, Rokoko or Mixamo), frozen at the same moment.
+      await Promise.all([preloadAllHumans(), loadAraMocap(), loadRokoko()]);
       const t = Number(q.get('t') ?? 0.4);
       const wear = q.get('wear') ? (JSON.parse(q.get('wear')!) as Partial<CharacterAppearance>[]) : null;
       let seed = 7;

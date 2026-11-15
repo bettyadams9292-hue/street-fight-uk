@@ -25,3 +25,10 @@ The source FBX files are not in this repository. To rebuild the JSON, unpack the
 | rk_ko | Legacy/Combat/Boxing_GettingKnockedOut | 5.50–7.60 |
 | rk_ko_b | Combat/KnockOut_Loser | 9.6–12.4 |
 | rk_getup | IdlesMocapPack_noFACE/Rise_04_Smooth | 6.0–8.3 |
+
+## Mixamo takes (mixamo_mocap.json)
+
+Cut from the owner's Mixamo FBX library (`StreetFightUK-assets/animations`) by `tools/mixamo/convert.py`:
+Punching, Punching (1), Cross Punch, Hook, Elbow Punching, Illegal Knee, Roundhouse Kick, Mma Kick, Headbutt,
+Head Hit, Light Hit To Head, Receive Uppercut To The Face, Big Hit To Head, Stunned. Only converted joint
+rotations are shipped, not the FBX files.

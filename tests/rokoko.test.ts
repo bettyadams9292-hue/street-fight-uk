@@ -32,6 +32,8 @@ function assert(cond: unknown, msg: string): void {
 
 const M = MODEL_METRICS;
 const data = JSON.parse(readFileSync('public/anim/rokoko_mocap.json', 'utf8')) as Record<string, { duration: number; hit?: number; loop: boolean }>;
+// The owner's Mixamo takes (tools/mixamo/convert.py) sit beside the Rokoko ones.
+Object.assign(data, JSON.parse(readFileSync('public/anim/mixamo_mocap.json', 'utf8')));
 registerMocap(data as never);
 markRokokoReady();
 const body = (id: string, t: number) => solveBody(araMocapPose(id, t, M)!, M);
@@ -88,6 +90,8 @@ test('each strike reaches out with the right limb at its impact time', () => {
     const limb = key.split(':')[1];
     const side = limb.startsWith('lead') ? 'l' : 'r';
     const hand = limb.endsWith('Hand');
+    // Elbows, knees and headbutts are checked on their own below.
+    if (!hand && !limb.endsWith('Foot')) continue;
     for (const id of ids) {
       const c = mocapClip(id)!;
       assert(c.hit !== null && c.hit > 0.1 && c.hit < c.duration - 0.15, `${id}: impact at ${c.hit}`);
@@ -102,6 +106,28 @@ test('each strike reaches out with the right limb at its impact time', () => {
       } else {
         const up = at.ankle[side][1] - at.ankle[side === 'l' ? 'r' : 'l'][1];
         assert(up > 0.45, `${id} (${key}): the ${side} foot is only ${up.toFixed(2)} m up at impact`);
+      }
+    }
+  }
+});
+
+test('elbows, knees and headbutts drive forward or up at impact', () => {
+  for (const [key, ids] of Object.entries(STRIKE_CLIPS)) {
+    const limb = key.split(':')[1];
+    if (/(Hand|Foot)$/.test(limb)) continue;
+    for (const id of ids) {
+      const c = mocapClip(id)!;
+      assert(c.hit !== null && c.hit > 0.1 && c.hit < c.duration - 0.15, `${id}: impact at ${c.hit}`);
+      const at = body(id, c.hit!);
+      const start = body(id, 0);
+      if (limb === 'knee') {
+        const up = Math.max(at.ankle.r[1] - at.ankle.l[1], at.ankle.l[1] - at.ankle.r[1]);
+        assert(up > 0.2, `${id}: the knee only lifts the foot ${up.toFixed(2)} m`);
+      } else if (limb === 'head') {
+        assert(at.head[2] - start.head[2] > 0.06, `${id}: the head doesn't go forward (${(at.head[2] - start.head[2]).toFixed(2)})`);
+      } else {
+        const fwd = Math.max(at.hand.l[2] - start.hand.l[2], at.hand.r[2] - start.hand.r[2]);
+        assert(fwd > 0.08, `${id}: no arm drives forward (${fwd.toFixed(2)})`);
       }
     }
   }
@@ -134,8 +160,8 @@ test('a strike clip is stretched to the move: impact on the first active frame, 
       assert(c.hit! - strikeTime(id, 0, startup, active, recovery) <= Math.max((startup / 60) * 1.6, 0.08) + 1e-9, `${id}: wind-up too long for ${startup} frames`);
     }
   }
-  assert(strikeClip('jab', 'leadHand', 0) === 'rk_jab' && strikeClip('jab', 'leadHand', 1) === 'rk_jab_b', 'jabs take turns');
-  assert(strikeClip('jab', 'rearHand', 0) === null && strikeClip('roundhouse', 'rearFoot', 0) === null, 'a strike with the other limb has no take');
+  assert(strikeClip('jab', 'leadHand', 0) === 'rk_jab' && strikeClip('jab', 'leadHand', 1) === 'mx_jab' && strikeClip('jab', 'leadHand', 2) === 'rk_jab_b', 'jabs take turns');
+  assert(strikeClip('jab', 'rearHand', 0) === null && strikeClip('roundhouse', 'leadFoot', 0) === null, 'a strike with the other limb has no take');
 });
 
 console.log('In the game');
@@ -168,7 +194,7 @@ test('captured punches and kicks still land on the opponent at the first active 
     for (const b of ['lp', 'hp', 'lk', 'hk']) {
       const st = STYLES[style as keyof typeof STYLES];
       const d = st.moves[st.starters[b as 'lp']];
-      if (!d || !STRIKE_CLIPS[`${d.anim}:${d.limb}`]) continue;
+      if (!d || !STRIKE_CLIPS[`${d.anim}:${d.limb}`] || !/(Hand|Foot)$/.test(d.limb)) continue;
       tried++;
       const hand = d.limb.endsWith('Hand');
       const s = scene(style, style, Math.max(0.75, d.reach + 0.15));
