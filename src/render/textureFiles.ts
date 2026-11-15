@@ -16,6 +16,7 @@ import * as THREE from 'three';
 const BASE = '/textures/';
 
 import { FX_CELLS, TEXTURE_NAMES, WINDOW_CELLS, hasNormal, type TextureName, type WindowCell } from './textureList';
+import { surface, type LibraryName } from './materials/library';
 
 export { FX_CELLS, TEXTURE_NAMES, WINDOW_CELLS, hasNormal, type TextureName, type WindowCell };
 
@@ -248,6 +249,20 @@ export function attachNormals(root: THREE.Object3D): void {
   });
 }
 
+/**
+ * Home finishes from the texture library: the set, and the colour it is shifted to (none = its own).
+ * Paint is the trowelled plaster surface in the paint's colour. The black and white tiles and the
+ * striped wallpaper have no match in the library and keep their own files.
+ */
+const FINISH_LIBRARY: Record<string, [LibraryName, string?]> = {
+  f_oak: ['WoodFloor040'], f_walnut: ['WoodFloor064', '#5a3a22'],
+  f_grey_carpet: ['Fabric028', '#6a6a70'], f_cream_carpet: ['Fabric082A', '#c8bca4'], f_plum_carpet: ['Fabric028', '#6d5a7a'], f_red_carpet: ['Fabric026', '#7a3a2c'],
+  f_stone_tiles: ['Tiles143'], f_slate_tiles: ['Tiles138'],
+  w_magnolia: ['Concrete034', '#e8dcc0'], w_white: ['Concrete034', '#f0eee8'], w_sage: ['Concrete034', '#8a9a7a'], w_navy: ['Concrete034', '#22304a'],
+  w_charcoal: ['Concrete034', '#3a3c40'], w_blush: ['Concrete034', '#d8a8a0'], w_slate_blue: ['Concrete034', '#6d7a8c'], w_stone: ['Concrete034', '#8c7a5e'],
+  w_brick: ['Bricks005'], w_panelling: ['Wood066', '#6a4a2a'], w_tiles: ['Tiles105'],
+};
+
 /** Metres covered by one repeat of each home finish file. */
 const FINISH_TILE: Record<string, number> = {
   f_oak: 1, f_walnut: 1, f_grey_carpet: 1, f_cream_carpet: 1, f_plum_carpet: 1, f_red_carpet: 1,
@@ -264,6 +279,13 @@ const FINISH_ROUGH: Record<string, number> = {
  * repeated at the finish's real size. Null when the file isn't loaded (use the old look).
  */
 export function finishMaterial(id: string, w: number, h: number): THREE.MeshStandardMaterial | null {
+  // The finish in the owner's texture library, where it has one that is truly this finish.
+  const lib = FINISH_LIBRARY[id];
+  if (lib) {
+    const m = surface(lib[0], { tint: lib[1], w, h, rough: lib[0].startsWith('Tiles') ? 0.9 : 1, normal: lib[0] === 'Concrete034' ? 0.45 : 1, plain: lib[0] === 'Concrete034' });
+    m.userData.finishFile = id;
+    return m;
+  }
   const tile = FINISH_TILE[id];
   if (!tile) return null;
   const map = fileTexture(`home/${id}` as TextureName, w / tile, h / tile);

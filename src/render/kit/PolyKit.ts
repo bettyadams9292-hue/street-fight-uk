@@ -6,6 +6,7 @@
  * into at most four meshes (solid, glass, lit, plus sign boards), so a street
  * of two hundred pieces costs a handful of draw calls.
  */
+import { streetDetail } from '../materials/streetDetail';
 import * as THREE from 'three';
 import type { Block, Placement, Sign, StreetPlan } from '../../city/street';
 import { signTexture } from '../levelTextures';
@@ -281,7 +282,10 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     group.add(mesh);
     triangles += b.idx.length / 3;
   };
-  add(solid, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 }), true, 0, 'solid');
+  const street = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 });
+  // Asphalt, concrete and brick from the texture library, laid by world position (materials/streetDetail.ts).
+  streetDetail(street, [...plan.area].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7));
+  add(solid, street, true, 0, 'solid');
   // Windows and lamp heads glow; their own colour is ignored at night so every pane reads as warm light.
   const litMat = new THREE.MeshStandardMaterial({ color: '#2a2018', emissive: new THREE.Color('#ffc880'), emissiveIntensity: o.night === false ? 0.3 : 0.6, roughness: 0.5 });
   roomLight(litMat);

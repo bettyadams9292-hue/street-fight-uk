@@ -18,3 +18,8 @@ SIL Open Font License), which allows text rendered into images.
 `<name>_n.webp` files are normal maps (linear, OpenGL convention). "Two-tone" files (concrete,
 plaster, corrugated, tiles, markings, sign_board) hold light and shade in red and a second-colour
 mask in green, so the game paints them in any colours.
+
+
+## lib/ (the owner's texture library)
+
+130 material sets from ambientCG (https://ambientcg.com), licence CC0 1.0, supplied by the owner in `StreetFightUK-assets/texturesforgame` as 1K PNG sets. `tools/textures/process_library.py` resizes each to 512 px and writes colour (`_c`), OpenGL normal (`_n`) and a packed ambient occlusion / roughness / metalness file (`_orm`). The catalogue is `docs/assets/TEXTURE_CATALOGUE.md`.

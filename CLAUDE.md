@@ -45,6 +45,11 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 
 **Sound.** `src/audio/AudioManager.ts` uses the recorded mp3s in `public/audio`. Menu sounds, ambience and household sounds are synthesised in code.
 
+**Materials and textures.** The owner's texture library (130 ambientCG sets) is in `public/textures/lib`.
+- `src/render/materials/library.ts` loads sets on demand and makes the materials; `assign.ts` decides what gets which; `streetDetail.ts` lays asphalt, concrete and brick on the kit streets.
+- `docs/assets/TEXTURE_CATALOGUE.md` lists every set; `docs/assets/TEXTURE_ASSIGNMENTS.md` says where each is used and which are still spare.
+- The owner wants realistic surfaces: use a library set for new surfaces rather than a flat colour or a drawn texture.
+
 **Old docs.** `docs/ASSET_REGISTER.md` is out of date (it predates the asset packs). For what's still missing, use the asset list below.
 
 ## Assets still needed
@@ -114,7 +119,9 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - All of it is built in code: no new asset files.
 
 **14 Nov 2026**
+- #22: asset production: 302 of the 595 sheet rows replaced with real assets (sound, weapons, pickups, vehicles, icons, textures, property, animation). See `docs/assets/ASSET_RESUME.md`.
 - #23: Big Dunc progression. Boss rewards that don't fit wait on the ground and are saved (`save.bossLoot`); Hale House's gate, the objective and the victory screen say exactly what's left (`src/world/gates.ts`); result screens keep every button on screen.
+- #24: face-down falls no longer sink into the floor: a tipped body rests on its lowest point (`src/render/anim/ground.ts`).
 
 ## Open questions and next steps
 

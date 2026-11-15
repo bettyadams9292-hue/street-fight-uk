@@ -6,6 +6,7 @@
  * Packs load once (loadHumanAssets); textures load on first use and are shared.
  * Origin at the feet, facing +z, in the rest pose (arms in an A).
  */
+import { detail, type LibraryName } from '../materials/library';
 import * as THREE from 'three';
 import { BodyData, footY, morph, placeBones, type BodyMeta, type BodyShape } from '../../characters/human/body';
 import { ProxyData, fitProxy, proxySkin, type ProxyMeta } from '../../characters/human/proxy';
@@ -306,6 +307,17 @@ function lashTexture(): THREE.Texture | null {
   lashes = t;
   return t;
 }
+
+/** Each fabric's set in the texture library: [set, repeats across the garment, normal strength]. */
+const FABRIC_LIBRARY: Record<Fabric, [LibraryName, number, number]> = {
+  fleece: ['Fabric082A', 4, 0.8],
+  knit: ['Fabric026', 4, 1],
+  nylon: ['Fabric081A', 5, 0.5],
+  denim: ['Fabric022', 5, 1],
+  leather: ['Leather037', 3, 0.9],
+  cotton: ['Fabric064', 5, 0.7],
+  canvas: ['Fabric049', 5, 0.8],
+};
 
 const fabrics = new Map<Fabric, THREE.Texture>();
 
@@ -794,6 +806,9 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
     attachNormal(mat);
     if (mat.normalMap) disposables.push(mat.normalMap);
     disposables.push(mat);
+    // The cloth's real weave and sheen from the texture library (the colour stays per vertex).
+    const cloth = FABRIC_LIBRARY[mesh.fabric];
+    detail(mat, cloth[0], cloth[1], cloth[2]);
     const gm = new THREE.SkinnedMesh(gg, mat);
     gm.name = g.kind;
     root.add(gm);
