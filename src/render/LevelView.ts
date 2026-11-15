@@ -73,6 +73,8 @@ export class LevelView {
   cityBuilt = 0;
   /** Doorways the city kit built, so exits use them instead of drawing their own. */
   private kitDoors: number[] = [];
+  /** Doors the frontages draw themselves (house doors, mansion gates): an exit there uses that door, not another. */
+  private ownDoors: number[] = [];
   private mats = new Map<string, THREE.MeshStandardMaterial>();
   private pickupMeshes = new Map<string, THREE.Object3D>();
   private itemMeshes = new Map<string, THREE.Object3D>();
@@ -353,6 +355,8 @@ export class LevelView {
    * the wall. Picked per level and spot, so a street keeps its doors. False until the doors load.
    */
   private door(style: DoorStyle, x: number, w: number, h: number, out = 0.02, y = 0): boolean {
+    // Whether the model or the plain fallback ends up here, there is a door at x now.
+    if (!this.buildingExit) this.ownDoors.push(x);
     const m = doorPiece(style, hashString(`${this.level.id}:${Math.round(x * 10)}`), w, h);
     if (!m) return false;
     m.position.set(x, y, this.back + out);
@@ -1975,6 +1979,8 @@ export class LevelView {
     const rz = this.back + 0.08;
     gates.position.set(gateX, 0, rz);
     this.group.add(gates);
+    // The gates are the way in: no extra door in the gateway.
+    this.ownDoors.push(gateX);
     // Railings either side of the gate piers, in 4 m runs stretched to fill.
     for (const [a, b] of [[f.x0, gateX - 2.08], [gateX + 2.08, f.x1]]) {
       const n = Math.max(1, Math.ceil((b - a) / 4 - 0.01));
@@ -3636,12 +3642,30 @@ export class LevelView {
     this.seamBlocks.push({ exit: ex, group: g });
   }
 
+  /** True while an exit is being built, so its own door isn't taken for a frontage's. */
+  private buildingExit = false;
+
   private buildExit(ex: ExitDef): void {
+    this.buildingExit = true;
+    try {
+      this.buildExitInner(ex);
+    } finally {
+      this.buildingExit = false;
+    }
+  }
+
+  private buildExitInner(ex: ExitDef): void {
     if (ex.seam) return this.buildSeam(ex);
     if (ex.kind === 'door') {
       const z = this.back + 0.05;
       // The building already has a real doorway here: just sign it.
       const kitDoor = this.kitDoors.find((d) => Math.abs(d - ex.x) <= 1.2);
+      // The frontage drew its own door (or a mansion its gates) here: sign that one, add no second door.
+      const own = this.ownDoors.find((d) => Math.abs(d - ex.x) <= 1.2);
+      if (kitDoor === undefined && own !== undefined) {
+        this.exitSign(ex, own, 2.75, z + 0.12);
+        return;
+      }
       if (kitDoor !== undefined) {
         // Under the shop's own board where there is one, not over it.
         const board = this.street?.signs.find((s) => s.y > 3 && Math.abs(s.x - kitDoor) < s.w / 2 + 0.6);

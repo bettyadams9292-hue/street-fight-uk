@@ -213,6 +213,13 @@ export function runShot(game: Game, name: string): void {
     if (!scene) throw new Error(`No such shot: ${name}. Known: ${Object.keys(SHOTS).join(', ')}`);
     reseed();
     scene(game, game as unknown as Internals);
+    // &x=<metres>: walk the player (and camera) to that point along the street.
+    const at = new URLSearchParams(location.search).get('x');
+    const gi = game as unknown as Internals;
+    if (at && gi.world) {
+      gi.world.player.pos.x = Number(at);
+      game.advance(120);
+    }
   } catch (e) {
     out.error = (e as Error).message;
     console.error(e);

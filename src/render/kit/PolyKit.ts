@@ -29,6 +29,9 @@ interface ModelInfo {
   max: [number, number, number];
   parts: Partial<Record<PartName, PartInfo>>;
   paint?: string;
+  /** A building (its walls may be brick), and the z of its façade wall: the front is the side `wall` lies on. */
+  building?: boolean;
+  wall?: number;
 }
 
 type PartName = 'solid' | 'paint' | 'glass' | 'lit';
@@ -146,7 +149,11 @@ class Bucket {
   wall: number[] = [];
 
   add(part: Part, pl: Placement, tint: THREE.Color | null): void {
-    const isWall = /^nyc\/bldg/.test(pl.model) ? 1 : 0;
+    // Brick goes on a building's walls only: never on props, nor on what stands out in front of a façade
+    // (awnings, canopies, signs, shop fascias' projecting parts).
+    const info = index?.[pl.model];
+    const wallZ = info?.building ? info.wall ?? null : null;
+    const front = wallZ === null ? 0 : Math.sign(wallZ) || 1;
     const base = this.pos.length / 3;
     const c = Math.cos(pl.ry);
     const s = Math.sin(pl.ry);
@@ -167,7 +174,7 @@ class Bucket {
       this.nrm.push(nx * c + nz * s, ny, -nx * s + nz * c);
       if (tint) this.col.push(part.col[i * 3] * tint.r, part.col[i * 3 + 1] * tint.g, part.col[i * 3 + 2] * tint.b);
       else this.col.push(part.col[i * 3], part.col[i * 3 + 1], part.col[i * 3 + 2]);
-      this.wall.push(isWall);
+      this.wall.push(wallZ !== null && (part.pos[i * 3 + 2] - wallZ) * front < 0.2 ? 1 : 0);
     }
     for (let i = 0; i < part.idx.length; i++) this.idx.push(part.idx[i] + base);
   }
