@@ -44,6 +44,11 @@ export const ACTIVITY_CLIPS: Record<string, ActClip> = {
   // The owner's Mixamo takes (mixamo_mocap.json) where they suit better.
   bag: { clip: 'mx_bag' },
   curl: { clip: 'mx_curl' },
+  // Training routines (src/training/gym.ts): on the floor or under a bar, so the clip's own height is used.
+  squat: { clip: 'mx_squat' },
+  raises: { clip: 'mx_raises' },
+  pushup: { clip: 'mx_pushup' },
+  burpee: { clip: 'mx_burpee' },
   speedball: { clip: 'mx_speedbag' },
   sit_edge: { clip: 'ual_sit', keyedDrop: true },
   sit_talk: { clip: 'mx_sit_talk', keyedDrop: true },

@@ -32,5 +32,5 @@ Cut from the owner's Mixamo FBX library (`StreetFightUK-assets/animations`) by `
 Punching, Punching (1), Cross Punch, Hook, Elbow Punching, Illegal Knee, Roundhouse Kick, Mma Kick, Headbutt,
 Head Hit, Light Hit To Head, Receive Uppercut To The Face, Big Hit To Head (and its takes 1 and 2), Stunned;
 phase 2: Kicking (1), Laying Moaning, Laying Breathless, Bicep Curl, Speedbag, Punching Bag, Sitting Idle,
-Sitting Talking, Sitting Laughing. Only converted joint
+Sitting Talking, Sitting Laughing, Back Squat, Front Raises, Push Up, Burpee. Only converted joint
 rotations are shipped, not the FBX files.

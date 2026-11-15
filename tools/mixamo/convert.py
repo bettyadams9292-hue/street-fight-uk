@@ -42,6 +42,11 @@ C.CLIPS = {
     'mx_bag': ('Punching Bag.fbx', 0.0, 3.2, {'loop': True, 'aim': 'guard'}),
     'mx_sit': ('Sitting Idle.fbx', 0.0, 4.25, {'loop': True, 'face': 0.0}),
     'mx_sit_talk': ('Sitting Talking.fbx', 2.0, 8.0, {'loop': True, 'face': 0.0}),
+    # Training: exercise loops for the home gym (src/training/gym.ts routines).
+    'mx_squat': ('Back Squat.fbx', 0.0, 2.27, {'loop': True, 'face': 0.0}),
+    'mx_raises': ('Front Raises.fbx', 0.2, 6.0, {'loop': True, 'face': 0.0}),
+    'mx_pushup': ('Push Up.fbx', 0.0, 1.53, {'loop': True, 'face': 0.0}),
+    'mx_burpee': ('Burpee.fbx', 0.0, 3.13, {'loop': True, 'face': 0.0, 'turn': -90}),
     'mx_sit_laugh': ('Sitting Laughing.fbx', 0.0, 4.5, {'loop': True, 'face': 0.0}),
 }
 
