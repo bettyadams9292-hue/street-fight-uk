@@ -1,6 +1,6 @@
 import { groundLift } from './ground';
 import { araMocapPose, araPose, mocapClip, mocapStride } from './araPose';
-import { REACTIONS, clipDuration, guardPose, reactionPose, strikeClip, strikePose } from './rokoko';
+import { REACTIONS, clipDuration, guardPose, pickClip, reactionPose, strikeClip, strikePose } from './rokoko';
 import type { Fighter, FighterState } from '../../fighter/Fighter';
 import { isActiveFrame, type ActiveMove } from '../../combat/MoveData';
 import { activityPose } from '../activityPoses';
@@ -396,7 +396,7 @@ export class FighterAnimator {
 
       case 'hitstun': {
         // Captured reactions: the head snapping back, or folding over a body shot. Played as far as the stun lasts.
-        const clip = !hit || hit.height === 'high' ? REACTIONS.head : REACTIONS.body;
+        const clip = !hit || hit.height === 'high' ? (pickClip(REACTIONS.heads, f.hitSeq) ?? REACTIONS.head) : REACTIONS.body;
         const cap = reactionPose(clip, u * Math.min(clipDuration(clip), 0.25 + f.stateDuration / 60), this.m, true);
         const full = cap ?? (!hit || hit.height === 'high' ? HIT_HIGH : hit.height === 'mid' ? HIT_MID : HIT_LOW);
         // A jab moves you a little, a heavy shot a lot.
@@ -405,7 +405,8 @@ export class FighterAnimator {
         return { key: `hit${f.hitSeq}`, pose: u > 0.55 ? lerpPose(pose, stance, easeInOut((u - 0.55) / 0.45)) : pose, blend: 0.075 };
       }
       case 'stagger': {
-        const cap = reactionPose(REACTIONS.stagger, u * clipDuration(REACTIONS.stagger), this.m, true);
+        const sclip = pickClip(REACTIONS.staggers, f.hitSeq) ?? REACTIONS.stagger;
+        const cap = reactionPose(sclip, u * clipDuration(sclip), this.m, true);
         if (cap) return { key: `stagger${f.hitSeq}`, pose: u > 0.8 ? lerpPose(cap, stance, easeInOut((u - 0.8) / 0.2)) : cap, blend: 0.07 };
         const pose = hit?.height === 'mid' ? STAGGER_MID : STAGGER;
         // Unsteady: swaying over the feet, then pulling it back together.
