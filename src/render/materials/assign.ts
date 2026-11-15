@@ -55,14 +55,22 @@ interface Hsl {
 
 /** What a prop is upholstered in, or made of, when its colour alone can't say. */
 const SOFT = /^(sofa|bed|cinema_seats|terrace_sofa|pool_lounger|changing_booth|dojo_mat|wrestling_mat)$/;
-const LEATHER = /^(bar|bag|boxing_ring|casino_cage|roulette_table|blackjack_table|slot_machine)$/;
+const LEATHER = /^(bar|bag|boxing_ring|casino_cage|slot_machine)$/;
+/** Baize and canvas: card tables, the pool table, a boxing ring's floor. */
+const FELT = /^(roulette_table|blackjack_table|pool_table|boxing_ring)$/;
+/** Canvas covers: market stall canopies, and a shop's awning (its only rough, coloured part). */
+const CANVAS = /^(market_stall|shop)$/;
+/** White goods: enamelled steel, not porcelain. */
+const WHITE_GOODS = /^(fridge|cooker|washer|equipment)$/;
+/** Furniture and bins: a matt grey here is paint or plastic, never concrete. */
+const NOT_MASONRY = /^(shop_rail|shop_shelf|boxing_ring|market_stall|dumpster|skip|junk|fridge|changing_booth|display_cabinet|desk|counter|shop_counter|bar|bench|grow_shelf|dojo_mat|wrestling_mat|sofa|bed|chest|crates|pallets|cardboard)$/;
 const GLAZED = /^(toilet|basin|bath|pool_basin)$/;
 const WEATHERED = /^(skip|dumpster|drum|scrap|abandoned_car|container|containers|garages|fence|barrier|crane_leg|bollard_dock|forklift|junk|ruin|dock|warehouse)$/;
 const ROUGH_TIMBER = /^(pallets|pallet|crates|crate|hoarding|market_stall|workbench|grow_shelf|fence)$/;
 const GARDEN = /^(mansion|semi|house_front|terrace|fountain)$/;
 const WORKTOP = /^(counter|bar|shop_counter|glass_counter|dressing_island|pub_table)$/;
 /** Things whose look is their paint, glow or screen: never textured. */
-const LEAVE = /^(car|homecar|van|bus|tv|atm|vending|fruit_machine|jukebox|traffic_light|phonebox|cone|mannequin|computer_desk|terminal_desk|cinema_screen|projector|agent_board|agent_window|jewel_bust|hydro_prop|gym_prop|security_post|window)$/;
+const LEAVE = /^(cardboard|car|homecar|van|bus|tv|atm|vending|fruit_machine|jukebox|traffic_light|phonebox|cone|mannequin|computer_desk|terminal_desk|cinema_screen|projector|agent_board|agent_window|jewel_bust|hydro_prop|gym_prop|security_post|window)$/;
 
 export interface Guess {
   set: LibraryName;
@@ -88,7 +96,8 @@ export function guess(colour: THREE.ColorRepresentation, rough: number, metal: n
   // Grey by chroma, not saturation: near white or black, saturation swings wildly on a hair of tint.
   const srgb = c.clone().convertLinearToSRGB();
   const grey = Math.max(srgb.r, srgb.g, srgb.b) - Math.min(srgb.r, srgb.g, srgb.b) < 0.1;
-  const brown = hue >= 14 && hue <= 46 && hsl.s >= 0.18 && hsl.s <= 0.85 && hsl.l >= 0.1 && hsl.l <= 0.62;
+  // Wood tones are muted: orange, yellow and gold paint (an awning, a skip, a bollard) are more saturated.
+  const brown = hue >= 14 && hue <= 46 && hsl.s >= 0.18 && (hsl.s <= 0.62 || (hsl.l < 0.25 && hsl.s <= 0.85)) && hsl.l >= 0.1 && hsl.l <= 0.62;
 
   if (metal >= 0.35) {
     if (WEATHERED.test(kind)) return { set: pick(RUSTY, seed), tint: true, rough: 1 };
@@ -107,15 +116,24 @@ export function guess(colour: THREE.ColorRepresentation, rough: number, metal: n
   if (WORKTOP.test(kind) && grey && hsl.l < 0.35 && rough < 0.6) return { set: 'Rock058', tint: true, rough: 0.7 };
   if (WORKTOP.test(kind) && brown) return { set: nearest(['Wood071', 'Wood082B', 'Wood026'], c, seed, 2), tint: true, rough: 0.8 };
   if (GLAZED.test(kind) && grey) return { set: hsl.l > 0.45 ? 'Porcelain001' : 'Porcelain003', tint: true };
-  if (SOFT.test(kind) && !brown && hsl.l > 0.06) return { set: nearest(CLOTHS, c, seed, 3), tint: true, rough: 1 };
+  // Fridges and cookers are enamelled steel: white paint over metal.
+  if (WHITE_GOODS.test(kind) && grey && hsl.l > 0.6) return { set: 'Metal050C', tint: true, plain: true };
+  if (SOFT.test(kind) && hsl.l > 0.06) {
+    // A brown sofa or cinema seat is leather; mats and beds are cloth whatever their colour.
+    if (brown && /^(sofa|cinema_seats|terrace_sofa)$/.test(kind)) return { set: nearest(LEATHERS, c, seed, 3), tint: true };
+    return { set: nearest(CLOTHS, c, seed, 3), tint: true, rough: 1 };
+  }
+  // Baize on the card and pool tables, canvas on the ring floor: coloured and matt-ish.
+  if (FELT.test(kind) && !grey && !brown && hsl.s > 0.25 && rough >= (kind === 'boxing_ring' ? 0.6 : 0.35)) return { set: 'Fabric081A', tint: true, rough: 1, normal: 0.5 };
+  if (CANVAS.test(kind) && !grey && !brown && rough >= 0.85) return { set: 'Fabric081A', tint: true, rough: 1, normal: 0.6 };
   if (LEATHER.test(kind) && !grey && !brown && rough < 0.75) return { set: nearest(LEATHERS, c, seed, 3), tint: true };
   if (brown) {
     if (ROUGH_TIMBER.test(kind) || WEATHERED.test(kind)) return { set: nearest(ROUGH_WOODS, c, seed, 3), tint: true };
     return { set: nearest(WOODS, c, seed, 3), tint: true, rough: rough < 0.5 ? 0.75 : 1 };
   }
-  // White and glossy, not metal: glazed ceramic (worktop edges, white goods, tiles).
-  if (grey && hsl.l > 0.8 && rough <= 0.4) return { set: 'Porcelain001', tint: true };
-  // Grey and matt: concrete, render and stone. Near-black is rubber or plastic and stays plain.
-  if (grey && rough >= 0.7 && hsl.l > 0.1) return { set: hsl.l > 0.42 ? 'Concrete034' : 'Concrete042A', tint: true, normal: 0.8 };
+  // White gloss elsewhere (window frames, trim, bar tops) is gloss paint: left as plain paint.
+  // Grey and matt: concrete, render and stone, on buildings and grounds only. Near-black is rubber or
+  // plastic and stays plain, and so does grey furniture (painted shelving, bins, ring canvas).
+  if (grey && rough >= 0.7 && hsl.l > 0.1 && !NOT_MASONRY.test(kind)) return { set: hsl.l > 0.42 ? 'Concrete034' : 'Concrete042A', tint: true, normal: 0.8 };
   return null;
 }

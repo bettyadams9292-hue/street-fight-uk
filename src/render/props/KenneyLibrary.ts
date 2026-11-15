@@ -178,9 +178,9 @@ function surfacesFor(): Record<string, THREE.MeshStandardMaterial> {
  * "carpetWhite", a TV screen is "metalDark". Per model, the surface each part really gets.
  */
 const PART_SURFACE: Record<string, Record<string, string>> = {
-  bathtub: { carpetWhite: 'ceramic', metalLight: 'enamel' },
-  toilet: { carpetWhite: 'ceramic', metalLight: 'enamel' },
-  bathroomSink: { carpetWhite: 'ceramic', metalLight: 'enamel' },
+  bathtub: { carpetWhite: 'ceramic', metalLight: 'ceramic' },
+  toilet: { carpetWhite: 'ceramic', metalLight: 'ceramic' },
+  bathroomSink: { carpetWhite: 'ceramic', metalLight: 'ceramic' },
   kitchenStove: { carpetWhite: 'ceramic' },
   kitchenMicrowave: { carpetWhite: 'ceramic', metalMedium: 'enamelGrey' },
   kitchenFridgeLarge: { metalLight: 'enamel', metalMedium: 'enamelGrey' },

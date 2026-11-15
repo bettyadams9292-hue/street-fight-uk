@@ -133,6 +133,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - 38 new Threads items; `tests/clothing.test.ts`; `?shot=anims&wear=[…]` poses chosen outfits.
 - #27: animation overhaul phase 1: 14 Mixamo clips from the owner's library (`tools/mixamo/convert.py` → `public/anim/mixamo_mocap.json`). Hook, elbow, knee, rear roundhouse and headbutt are captured now; extra jab and cross takes; head hits and staggers cycle through several reactions (`REACTIONS.heads`, `staggers`). Phase 2 followed in #28.
 - #28: animation phase 2 (29 clips, `mixamo_mocap.json`): lead roundhouse; more hit and stagger reactions; knocked-out fighters lie hurt in a loop; captured gym loops (bag, speed bag, curls) and sitting loops. Home gym kit has `routine`s (`src/training/gym.ts`) switching exercise every 6 s: curls and front raises, squats and presses, skipping, push-ups, burpees and squats. Dumbbells and the barbell are held while training (`FighterView.syncGear`); `?shot=stance&act=<activity>` shows it.
+- #29: texture logic review: painted metal shades as paint (the bath and fridge were black); bath, toilet and basin porcelain, fridge and cooker white painted metal; kit-street brick only on building walls (per-vertex `sdWall`), so awnings aren't brick; `assign.ts` rules tightened (wood only on wood tones, porcelain only in bathrooms, concrete only on buildings and grounds, cloth for baize, canvas and awnings). `tests/textureLogic.test.ts` checks every textured surface in every level.
 
 ## Open questions and next steps
 

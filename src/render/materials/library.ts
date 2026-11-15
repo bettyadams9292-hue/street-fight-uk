@@ -123,10 +123,12 @@ export function dress(m: THREE.MeshStandardMaterial, name: LibraryName, o: Surfa
     m.aoMap = orm;
     m.aoMapIntensity = 0.8;
     m.roughness = o.rough ?? 1;
-    if (entry.metal) {
+    // Painted or powder-coated metal is paint on top: it shades like paint, not bare metal (which, with no
+    // reflections to show, renders nearly black).
+    if (entry.metal && entry.category !== 'metal-paint') {
       m.metalnessMap = orm;
       m.metalness = 1;
-    }
+    } else if (entry.category === 'metal-paint') m.metalness = Math.min(m.metalness, 0.1);
     const n = o.normal ?? 1;
     m.normalScale.set(n, n);
     m.color.copy(want ? (o.plain ? want : tintFor(name, want)) : WHITE);

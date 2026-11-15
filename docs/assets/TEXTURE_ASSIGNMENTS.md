@@ -59,3 +59,15 @@ Which set from the texture library (`TEXTURE_CATALOGUE.md`) goes on what, and th
 | Rocks022 | pebbledash: the kit house fronts have no texture coordinates to lay it on |
 | Tiles005 | pastel club tiles: for the nightclub interior when it is built |
 | WoodSiding009 | cream clapboard: no clapboard building in the game |
+
+## Logic review (15 Nov 2026)
+
+The owner found a black, grimy bath and fridge (the same material) and brick shop awnings. Fixed, and
+`tests/textureLogic.test.ts` now builds every level and checks each textured surface:
+- Painted metal (Metal050C) shades as paint, not bare metal: without reflections, full metalness rendered it black.
+- Baths, toilets and basins are white porcelain throughout; fridges and cookers are white painted metal.
+- Porcelain only in the bathroom; white gloss elsewhere stays gloss paint.
+- Concrete only on buildings and grounds, never on shelving, bins, the ring canvas or stall covers.
+- Wood only on wood colours: orange, yellow and gold paint (awnings, skips, forklifts, bollards) is no longer wood.
+- Card and pool table baize, the ring floor, market stall canopies and shop awnings are cloth (Fabric081A), not leather or planks.
+- Kit streets: brick only on building walls (`nyc/bldg*` and blocks), flagged per vertex; red awnings, signs and shop panels are never brick.
