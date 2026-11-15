@@ -161,7 +161,7 @@ test('a strike clip is stretched to the move: impact on the first active frame, 
     }
   }
   assert(strikeClip('jab', 'leadHand', 0) === 'rk_jab' && strikeClip('jab', 'leadHand', 1) === 'mx_jab' && strikeClip('jab', 'leadHand', 2) === 'rk_jab_b', 'jabs take turns');
-  assert(strikeClip('jab', 'rearHand', 0) === null && strikeClip('roundhouse', 'leadFoot', 0) === null, 'a strike with the other limb has no take');
+  assert(strikeClip('jab', 'rearHand', 0) === null && strikeClip('axe_kick', 'leadFoot', 0) === null, 'a strike with the other limb has no take');
 });
 
 console.log('In the game');

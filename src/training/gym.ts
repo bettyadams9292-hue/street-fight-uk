@@ -28,21 +28,23 @@ export interface GymKitDef {
   solid: boolean;
   /** Animation the player performs. */
   activity: TrainingActivity;
+  /** Exercises worked through in turn during a session (a few seconds each), starting with `activity`. */
+  routine?: TrainingActivity[];
   /** Where the player stands to use it (relative to the slot). */
   use: { dx: number; dz: number; facing: 1 | -1; y?: number };
   blurb: string;
 }
 
-export type TrainingActivity = 'bag' | 'curl' | 'press' | 'run' | 'cycle' | 'speedball' | 'skip';
+export type TrainingActivity = 'bag' | 'curl' | 'press' | 'run' | 'cycle' | 'speedball' | 'skip' | 'squat' | 'raises' | 'pushup' | 'burpee';
 
 export const GYM_KIT_LIST: GymKitDef[] = [
-  { id: 'dumbbells', name: 'Dumbbell rack', price: 120, trains: 'power', attribute: 'Strength', perRep: 6, fatigue: 16, slot: { x: 3.45, z: -1.85 }, size: [0.65, 0.3], solid: true, activity: 'curl', use: { dx: 0, dz: 1.0, facing: 1 }, blurb: 'Curls and rows. Steady strength work.' },
-  { id: 'barbell', name: 'Barbell & squat rack', price: 450, trains: 'power', attribute: 'Strength', perRep: 10, fatigue: 24, slot: { x: 5.0, z: -1.75 }, size: [0.75, 0.4], solid: true, activity: 'press', use: { dx: 0, dz: 0.85, facing: 1 }, blurb: 'Heavy compound lifts. The fastest way to get strong, and the most tiring.' },
+  { id: 'dumbbells', name: 'Dumbbell rack', price: 120, trains: 'power', attribute: 'Strength', perRep: 6, fatigue: 16, slot: { x: 3.45, z: -1.85 }, size: [0.65, 0.3], solid: true, activity: 'curl', routine: ['curl', 'raises'], use: { dx: 0, dz: 1.0, facing: 1 }, blurb: 'Curls and front raises. Steady strength work.' },
+  { id: 'barbell', name: 'Barbell & squat rack', price: 450, trains: 'power', attribute: 'Strength', perRep: 10, fatigue: 24, slot: { x: 5.0, z: -1.75 }, size: [0.75, 0.4], solid: true, activity: 'squat', routine: ['squat', 'press'], use: { dx: 0, dz: 0.85, facing: 1 }, blurb: 'Squats and presses. The fastest way to get strong, and the most tiring.' },
   { id: 'treadmill', name: 'Treadmill', price: 900, trains: 'stamina', attribute: 'Stamina', perRep: 9, fatigue: 22, slot: { x: 6.9, z: -1.7 }, size: [0.9, 0.4], solid: true, activity: 'run', use: { dx: -0.1, dz: 0, facing: 1, y: 0.18 }, blurb: 'Roadwork without the rain. Builds stamina.' },
   { id: 'exercise_bike', name: 'Exercise bike', price: 600, trains: 'health', attribute: 'Conditioning', perRep: 9, fatigue: 20, slot: { x: 8.65, z: -1.8 }, size: [0.6, 0.3], solid: true, activity: 'cycle', use: { dx: -0.05, dz: 0, facing: 1, y: 0.12 }, blurb: 'Intervals on the bike. Builds endurance and health.' },
   { id: 'speed_ball', name: 'Speed ball platform', price: 220, trains: 'technique', attribute: 'Technique', perRep: 8, fatigue: 14, slot: { x: 9.75, z: -2.05 }, size: [0.3, 0.2], solid: false, activity: 'speedball', use: { dx: -0.2, dz: 1.05, facing: 1 }, blurb: 'Rhythm and timing. Sharpens technique.' },
   { id: 'bag', name: 'Heavy punch bag', price: 180, trains: 'power', attribute: 'Punch power', perRep: 8, fatigue: 18, slot: { x: 10.9, z: -1.55 }, size: [0.3, 0.3], solid: true, activity: 'bag', use: { dx: -0.75, dz: 0.4, facing: 1 }, blurb: 'Power shots on the heavy bag.' },
-  { id: 'mat', name: 'Training mat', price: 150, trains: 'speed', attribute: 'Agility', perRep: 8, fatigue: 16, slot: { x: 11.15, z: -0.4 }, size: [0.75, 0.8], solid: false, activity: 'skip', use: { dx: -0.2, dz: 0, facing: 1 }, blurb: 'Skipping, footwork and stretching. Builds speed and agility. Mo spars on it too.' },
+  { id: 'mat', name: 'Training mat', price: 150, trains: 'speed', attribute: 'Agility', perRep: 8, fatigue: 16, slot: { x: 11.15, z: -0.4 }, size: [0.75, 0.8], solid: false, activity: 'skip', routine: ['skip', 'pushup', 'burpee', 'squat'], use: { dx: -0.2, dz: 0, facing: 1 }, blurb: 'Skipping, push-ups, burpees and squats. Builds speed and agility. Mo spars on it too.' },
 ];
 export const GYM_KIT: Record<string, GymKitDef> = Object.fromEntries(GYM_KIT_LIST.map((k) => [k.id, k]));
 

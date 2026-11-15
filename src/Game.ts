@@ -67,7 +67,10 @@ import { access, settle as settlePortfolio } from './realty/portfolio';
 import { COMPANIONS, COMPANION_WAITS_OUTSIDE, companionAvailable, companionRecover, crewState, followMe, relaxAtHome, winChallenge } from './companions/companions';
 import { healOverTime, injuryName, treatInjury } from './condition/condition';
 import { applyCrewModifiers } from './companions/crewFighter';
-import { GYM_KIT, SPAR_FATIGUE, SPAR_TRAINS, canTrain, finishSession, recover, type RepGrade } from './training/gym';
+import { GYM_KIT, SPAR_FATIGUE, SPAR_TRAINS, canTrain, finishSession, recover, type RepGrade, type TrainingActivity } from './training/gym';
+
+/** How long each exercise in a gym routine lasts before the next. */
+const ROUTINE_SECONDS = 6;
 import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, type FightGym } from './training/styleGyms';
 import { themeProfile } from './render/themes';
 import {
@@ -1150,7 +1153,7 @@ export class Game {
 
   // ---- home gym training and fighting-gym drills -----------------------------------------
 
-  private session: { game: RepGame | DrillGame; restore: { x: number; z: number; facing: 1 | -1 } } | null = null;
+  private session: { game: RepGame | DrillGame; restore: { x: number; z: number; facing: 1 | -1 }; routine?: TrainingActivity[]; clock?: number } | null = null;
 
   /** Use a piece of home gym kit: the rep timing game while your fighter does the work. */
   private startGymSession(kitId: string): void {
@@ -1171,7 +1174,7 @@ export class Game {
     f.activity = kit.activity;
     const rank = p.save.upgrades[kit.trains];
     const game = new RepGame(kit, kit.name, kit.attribute, rank, 10, () => this.endTraining(), () => this.endTraining());
-    this.session = { game, restore };
+    this.session = { game, restore, routine: kit.routine, clock: 0 };
     this.state = 'training';
     this.uiRoot.append(game.el);
   }
@@ -2330,6 +2333,12 @@ export class Game {
     const inFight = (this.state === 'playing' || this.state === 'paused' || this.state === 'transition' || this.state === 'editing' || this.state === 'training') && !!player;
     this.updateStairs(dt);
     this.session?.game.update(dt);
+    // Work through the kit's exercises in turn, a few seconds each.
+    const sess = this.session;
+    if (sess?.routine && sess.routine.length > 1 && player) {
+      sess.clock = (sess.clock ?? 0) + dt;
+      player.activity = sess.routine[Math.floor(sess.clock / ROUTINE_SECONDS) % sess.routine.length];
+    }
     this.renderer.render(dt, this.time, inFight ? player : null);
     if (inFight && player) {
       const enemy = this.world ? this.world.focusEnemy : this.mode!.focusEnemy;

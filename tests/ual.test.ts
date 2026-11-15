@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { activityPose } from '../src/render/activityPoses';
 import { mocapClip, registerMocap } from '../src/render/anim/araPose';
+import { GYM_KIT_LIST } from '../src/training/gym';
 import { MODEL_METRICS, solveBody } from '../src/render/anim/skeleton';
 import { ACTIVITY_CLIPS, STATE_CLIPS, STRIKE_CLIPS, activityClipPose, lowestPoint, markUalReady, ualDuration, ualPose, ualStrikeClip } from '../src/render/anim/ual';
 import { JOINTS } from '../src/render/poses';
@@ -33,6 +34,8 @@ test('nothing plays before the clips are loaded (the keyed poses carry on)', () 
 });
 
 registerMocap(JSON.parse(readFileSync('public/anim/ual_mocap.json', 'utf8')));
+// The owner's Mixamo takes stand in for some activities (ACTIVITY_CLIPS).
+registerMocap(JSON.parse(readFileSync('public/anim/mixamo_mocap.json', 'utf8')));
 markUalReady();
 
 const named = new Set<string>([
@@ -41,7 +44,7 @@ const named = new Set<string>([
   ...Object.values(STATE_CLIPS),
 ]);
 
-test('every clip the game names is in ual_mocap.json', () => {
+test('every clip the game names is in ual_mocap.json or mixamo_mocap.json', () => {
   for (const id of named) assert(mocapClip(id), `missing ${id}`);
 });
 
@@ -81,7 +84,28 @@ test('the fall ends lying down and the get-up ends standing', () => {
 
 test('every activity with a clip plays it; others keep the keyed pose', () => {
   for (const act of Object.keys(ACTIVITY_CLIPS)) assert(activityClipPose(act, 1.3, m, activityPose(act, 1.3)), `${act} has no pose`);
-  assert(activityClipPose('curl', 1, m, activityPose('curl', 1)) === null, 'curl should stay keyed');
+  assert(activityClipPose('press', 1, m, activityPose('press', 1)) === null, 'press should stay keyed');
+});
+
+test('gym routines move through real exercises: squats dip, push-ups and burpees reach the floor', () => {
+  const lowest = (act: string, dur: number) => {
+    let lo = Infinity;
+    for (let t = 0; t < dur; t += 0.05) {
+      const p = activityClipPose(act, t, m, activityPose(act, t));
+      assert(p, `${act} has no pose`);
+      lo = Math.min(lo, m.hipsY - (p.drop ?? 0));
+    }
+    return lo;
+  };
+  assert(lowest('squat', 2.3) < 0.6, 'the squat never goes down');
+  assert(lowest('pushup', 1.6) < 0.35, 'the push-up is not on the floor');
+  assert(lowest('burpee', 3.2) < 0.35, 'the burpee never reaches the floor');
+  assert(lowest('raises', 6) > 0.75, 'front raises are done standing');
+  for (const kit of GYM_KIT_LIST) {
+    if (!kit.routine) continue;
+    assert(kit.routine[0] === kit.activity, `${kit.id}: the routine starts somewhere else`);
+    for (const act of kit.routine) assert(activityClipPose(act, 1, m, activityPose(act, 1)) || act === 'press' || act === 'skip', `${kit.id}: ${act} has no clip`);
+  }
 });
 
 test('sitting activities sit (hips near seat height), standing ones stand', () => {

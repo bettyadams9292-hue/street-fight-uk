@@ -434,6 +434,12 @@ export class FighterAnimator {
           const clip = state === 'ko' ? REACTIONS.ko[f.id % REACTIONS.ko.length] : REACTIONS.knockdown;
           // Knocked flat: the Rokoko take or UAL's knockback, turn about; either stands in for the other.
           const ual = state === 'ko' ? null : ualPose(STATE_CLIPS.FALL_BACK, t, this.m);
+          // Knocked out and the fall played: lying hurt (a captured loop), eased in from where they landed.
+          const lie = state === 'ko' && t > clipDuration(clip) + 0.4 ? pickClip(REACTIONS.downed, f.id) : null;
+          if (lie) {
+            const p = reactionPose(lie, t - clipDuration(clip) - 0.4, this.m, false);
+            if (p) return { key: `lying${f.hitSeq}`, pose: p, blend: 0.6 };
+          }
           const cap = (ual && (f.id + f.hitSeq) % 2 === 1 ? ual : null) ?? reactionPose(clip, t, this.m, false) ?? ual;
           if (cap) return { key: `down${f.hitSeq}${state === 'ko' ? '' : 'k'}`, pose: cap, blend: 0.06 };
         }

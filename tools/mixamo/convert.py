@@ -29,6 +29,25 @@ C.CLIPS = {
     'mx_hit_uppercut': ('Receive Uppercut To The Face.fbx', 0.0, 1.20, {'face': 0.0}),
     'mx_hit_big': ('Big Hit To Head.fbx', 0.0, 1.60, {'face': 0.0}),
     'mx_stunned': ('Stunned.fbx', 0.0, 2.10, {'face': 0.0}),
+    # Phase 2. A southpaw take's lead (right) kick, mirrored: the lead-leg roundhouse.
+    'mx_roundhouse_lead': ('Kicking (1).fbx', 0.80, 2.20, {'hit': 0.47, 'aim': ['RightFoot', 0.47], 'orthodox': True, 'stance_t': 0.0}),
+    'mx_hit_big_b': ('Big Hit To Head (2).fbx', 0.0, 1.30, {'face': 0.0}),
+    'mx_hit_big_c': ('Big Hit To Head (1).fbx', 0.0, 1.57, {'face': 0.0}),
+    # Down and hurt after a knockout: loops.
+    'mx_lying': ('Laying Moaning.fbx', 0.0, 2.10, {'loop': True, 'face': 0.0}),
+    'mx_lying_b': ('Laying Breathless.fbx', 0.0, 0.83, {'loop': True, 'face': 0.0}),
+    # Gym and sitting: loops for the activities in src/render/anim/ual.ts ACTIVITY_CLIPS.
+    'mx_curl': ('Bicep Curl.fbx', 0.3, 5.6, {'loop': True, 'face': 0.0}),
+    'mx_speedbag': ('Speedbag.fbx', 0.3, 6.3, {'loop': True, 'face': 0.0}),
+    'mx_bag': ('Punching Bag.fbx', 0.0, 3.2, {'loop': True, 'aim': 'guard'}),
+    'mx_sit': ('Sitting Idle.fbx', 0.0, 4.25, {'loop': True, 'face': 0.0}),
+    'mx_sit_talk': ('Sitting Talking.fbx', 2.0, 8.0, {'loop': True, 'face': 0.0}),
+    # Training: exercise loops for the home gym (src/training/gym.ts routines).
+    'mx_squat': ('Back Squat.fbx', 0.0, 2.27, {'loop': True, 'face': 0.0}),
+    'mx_raises': ('Front Raises.fbx', 0.2, 6.0, {'loop': True, 'face': 0.0}),
+    'mx_pushup': ('Push Up.fbx', 0.0, 1.53, {'loop': True, 'face': 0.0}),
+    'mx_burpee': ('Burpee.fbx', 0.0, 3.13, {'loop': True, 'face': 0.0, 'turn': -90}),
+    'mx_sit_laugh': ('Sitting Laughing.fbx', 0.0, 4.5, {'loop': True, 'face': 0.0}),
 }
 
 if __name__ == '__main__':
