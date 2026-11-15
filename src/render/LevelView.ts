@@ -40,6 +40,8 @@ import {
 } from './levelTextures';
 import { brickTexture, canvas, shutterTexture, toTexture } from './textures';
 import { attachNormals, finishMaterial, flatNormalCanvas, textureImage, windowCell, type WindowCell } from './textureFiles';
+import { BRICKS, CONCRETES, FLOOR_TILES, PLACE_FLOORS, WALL_TILES, WOODS, WOOD_FLOORS, guess } from './materials/assign';
+import { dress, fitUVs, nearest, pick, surface, type LibraryName } from './materials/library';
 import { buildWeaponMesh, disposeGroup } from './weaponMesh';
 import { WEAPONS } from '../combat/Weapons';
 import { RARITY_COLOURS, itemDef } from '../items/items';
@@ -104,10 +106,43 @@ export class LevelView {
   private seamBlocks: { exit: ExitDef; group: THREE.Object3D }[] = [];
   /** Rooms and shops drawn to match the low-poly streets (flat colours, kit floor tiles). */
   private lowPoly = false;
+  /** The kind of prop or building being built right now: tells mat() what a plain colour is the surface of. */
+  private building = '';
+
+  /**
+   * The texture-library floor for a kind of floor: boards, tiles, carpet or a sealed concrete floor.
+   * The place decides which (a pub's boards aren't a dojo's); rooms in one building differ by a seed,
+   * so a house doesn't have one floor throughout. Carpets and concrete keep the colour asked for.
+   */
+  private libraryFloor(kind: KitFloor, colour: string, x0: number): THREE.MeshStandardMaterial | null {
+    const seed = hash(`${this.level.id}:floor:${Math.round(x0)}`);
+    const place = PLACE_FLOORS[this.level.theme === 'shop' ? (this.level.id.includes('jewel') ? 'jeweller' : this.level.id.includes('agent') || this.level.id.includes('keys') ? 'estate_agent' : 'shop') : this.level.theme];
+    let set: LibraryName;
+    let tint: string | undefined;
+    if (place) set = pick(place, seed);
+    else if (kind === 'boards') set = nearest(WOOD_FLOORS, colour, seed, 4);
+    else if (kind === 'tiles' || kind === 'encaustic') set = kind === 'encaustic' ? pick(['Tiles131', 'Tiles074', 'Tiles143', 'Tiles144'] as LibraryName[], seed) : nearest(FLOOR_TILES, colour, seed, 3);
+    else if (kind === 'carpet') {
+      set = nearest(['Fabric029', 'Fabric028', 'Fabric082A'] as LibraryName[], colour, seed, 1);
+      tint = colour;
+    } else {
+      set = nearest(CONCRETES, colour, seed, 1);
+      tint = colour;
+    }
+    // Plain weaves and concrete take the colour asked for; patterned floors keep their own.
+    if (set.startsWith('Concrete') || set === 'Fabric029' || set === 'Fabric028' || set === 'Fabric082A') tint = colour;
+    return surface(set, { tint, rough: set.startsWith('Tiles') ? 0.9 : 1 });
+  }
 
   /** A floor from the kit's tiles in the low-poly look; false (and nothing added) without the kit. */
   private kitGround(kind: KitFloor, x0: number, x1: number, z0: number, z1: number, colour: string): boolean {
     if (!this.lowPoly) return false;
+    // A real floor from the texture library where one suits this kind of floor in this kind of place.
+    const lib = this.libraryFloor(kind, colour, x0);
+    if (lib) {
+      this.ground(x0, x1, z0, z1, lib);
+      return true;
+    }
     const m = kitFloor(kind, x0, x1, z0, z1, colour, hash(`${this.level.id}:${Math.round(x0 * 10)}`));
     if (!m) return false;
     this.group.add(m);
@@ -134,10 +169,14 @@ export class LevelView {
   // ---- helpers ------------------------------------------------------------------
 
   private mat(colour: string | number, rough = 0.8, metal = 0, extra: Partial<THREE.MeshStandardMaterialParameters> = {}): THREE.MeshStandardMaterial {
-    const key = `${colour}|${rough}|${metal}|${JSON.stringify(extra)}`;
+    // Plain surfaces get a real one from the texture library, chosen by what is being built (materials/assign.ts).
+    // Anything with extras (glowing, see-through, double-sided) is left exactly as asked for.
+    const lib = Object.keys(extra).length === 0 ? guess(colour, rough, metal, this.building, hash(`${this.level.id}:${this.building}`)) : null;
+    const key = `${colour}|${rough}|${metal}|${JSON.stringify(extra)}|${lib?.set ?? ''}`;
     let m = this.mats.get(key);
     if (!m) {
       m = new THREE.MeshStandardMaterial({ color: colour, roughness: rough, metalness: metal, ...extra });
+      if (lib) dress(m, lib.set, { tint: lib.tint ? colour : undefined, rough: lib.rough ?? Math.min(1, rough + 0.25), normal: lib.normal, plain: lib.plain });
       this.mats.set(key, m);
     }
     return m;
@@ -269,7 +308,9 @@ export class LevelView {
       // A kit model already stands in for this one.
       if (this.street?.propDone[i]) continue;
       const before = this.group.children.length;
+      this.building = p.kind;
       this.buildProp(p);
+      this.building = '';
       this.propObjects.set(p, this.group.children.slice(before));
     }
     for (const ex of lvl.exits) this.buildExit(ex);
@@ -285,6 +326,8 @@ export class LevelView {
     // Normal maps for every texture that came from a file (public/textures).
     attachNormals(this.group);
     if (this.lowPoly && themeProfile(lvl.theme).interior) flattenTextures(this.group);
+    // Library textures repeat at their real size on whatever they were put on.
+    fitUVs(this.group);
   }
 
   /** Put a Kenney furniture model into the prop group, fitted to w × h × d; false if the kit isn't loaded. */
@@ -714,6 +757,15 @@ export class LevelView {
 
   private buildFacade(f: FacadeDef): void {
     if (f.x1 - f.x0 < 0.05) return;
+    this.building = f.kind;
+    try {
+      this.buildFacadeKind(f);
+    } finally {
+      this.building = '';
+    }
+  }
+
+  private buildFacadeKind(f: FacadeDef): void {
     switch (f.kind) {
       case 'terrace':
         return this.terrace(f, f.label === 'back');
@@ -2036,6 +2088,25 @@ export class LevelView {
     for (const dx of [-1.8, 1.8]) this.cyl(0.04, 0.06, 0.9, cx + dx, 0.45, this.back + 0.12, this.mat('#c9a227', 0.2, 0.9), 8);
   }
 
+  /** The texture-library wall for a wall pattern: painted plaster, brick, tiles or panelling. Null for patterns it has nothing for (stripes). */
+  private libraryWall(pattern: string, colour: string, x0: number): THREE.MeshStandardMaterial | null {
+    const seed = hash(`${this.level.id}:wall:${Math.round(x0)}`);
+    switch (pattern) {
+      case 'paint':
+        // Painted plaster: the trowelled surface of the pale concrete, in the wall's colour.
+        return surface('Concrete034', { tint: colour, normal: 0.45, plain: true });
+      case 'brick':
+        return surface(pick(BRICKS, seed));
+      case 'tiles':
+        // Cellars and lock-ups have seen better days: tiles missing.
+        return surface(this.level.theme === 'basement' ? pick(['Tiles133C', 'Tiles136C'] as LibraryName[], seed) : pick(WALL_TILES, seed), { rough: 0.9 });
+      case 'panelling':
+        return surface(nearest(WOODS, colour, seed, 3), { tint: colour });
+      default:
+        return null;
+    }
+  }
+
   private room(f: FacadeDef): void {
     const w = f.x1 - f.x0;
     const cx = (f.x0 + f.x1) / 2;
@@ -2048,7 +2119,9 @@ export class LevelView {
       const c1 = fin?.colour ?? (f.label === 'Garage' ? '#8a5a48' : f.label === 'Kitchen' ? '#e8e2cc' : colour);
       // A finish from its texture file (public/textures/home); otherwise its pattern built from blocks.
       const file = fin ? finishMaterial(fin.id, w, H) : null;
+      const lib = file ? null : this.libraryWall(pattern, c1, f.x0);
       if (file) this.panel(w, H, cx, H / 2, file, 0.02);
+      else if (lib) this.panel(w, H, cx, H / 2, lib, 0.02);
       else this.group.add(kitWall(pattern, c1, fin?.colour2, f.x0, f.x1, this.back + 0.02, H));
     } else {
       const wall = fin

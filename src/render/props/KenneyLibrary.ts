@@ -9,6 +9,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { attachNormal, fileTexture, loadTextureFiles, type TextureName } from '../textureFiles';
+import { CLOTHS, WOODS } from '../materials/assign';
+import { dress, nearest, type LibraryName } from '../materials/library';
 
 const BASE = '/models/kenney/';
 
@@ -156,6 +158,18 @@ function surfacesFor(): Record<string, THREE.MeshStandardMaterial> {
     plastic: m({ color: '#1c1d20', roughness: 0.45 }),
   });
   for (const v of Object.values(surfaces)) attachNormal(v);
+  // Real surfaces from the texture library, each kept in the colour above (materials/library.ts).
+  // boxUV lays the texture coordinates out in metres, so a set repeats at its own real size.
+  const LIB: Record<string, LibraryName> = {
+    wood: 'Wood082B', woodDark: 'Wood066', carpet: 'Fabric028', carpetWhite: 'Fabric001', carpetBlue: 'Fabric081A', carpetDarker: 'Fabric082A', fur: 'Fabric029',
+    metal: 'Metal052A', metalDark: 'Metal038', metalMedium: 'Metal061A', metalLight: 'Metal041A', ceramic: 'Porcelain001', enamel: 'Metal050C', enamelGrey: 'Metal050C',
+  };
+  const own: Record<string, string> = { wood: '#b08458', woodDark: '#5a3a22' };
+  for (const [k, set] of Object.entries(LIB)) {
+    const v = surfaces[k];
+    for (const key of ['map', 'normalMap'] as const) v[key] = null;
+    dress(v, set, { tint: own[k] ?? `#${v.color.getHexString()}`, w: 1, h: 1, rough: k.startsWith('metal') ? 0.9 : 1 });
+  }
   return surfaces;
 }
 
@@ -242,6 +256,24 @@ export function kenneyReady(): boolean {
  * A wood finish: wood tones keep the grain and shift its colour (the grain texture is about #8a5a32);
  * painted colours (whites, greys, near-black) lose the grain and become plain satin paint.
  */
+/** Wood and cloth variants, so two tables or two sofas aren't cut from the same plank or bolt. */
+const variants = new Map<string, THREE.MeshStandardMaterial>();
+function variant(base: 'wood' | 'woodDark' | 'carpet', set: LibraryName, colour: string): THREE.MeshStandardMaterial {
+  const key = `${base}|${set}|${colour}`;
+  let m = variants.get(key);
+  if (!m) {
+    m = new THREE.MeshStandardMaterial({ roughness: 0.8 });
+    m.name = base;
+    dress(m, set, { tint: colour, w: 1, h: 1 });
+    m.userData.shared = true;
+    variants.set(key, m);
+  }
+  return m;
+}
+const LIGHT_WOODS: LibraryName[] = ['Wood082B', 'Wood052', 'Wood096', 'Wood049'];
+const DARK_WOODS: LibraryName[] = ['Wood066', 'Wood026', 'Wood051', 'Wood084A', 'Wood067'];
+const idHash = (s: string): number => [...s].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+
 const finishes = new Map<string, THREE.MeshStandardMaterial>();
 function finish(colour: string): THREE.MeshStandardMaterial {
   let m = finishes.get(colour);
@@ -253,12 +285,13 @@ function finish(colour: string): THREE.MeshStandardMaterial {
   m = surfacesFor().wood.clone();
   m.name = 'wood';
   if (painted) {
-    m.map = null;
+    m.map = m.normalMap = m.roughnessMap = m.aoMap = null;
+    delete m.userData.lib;
     m.color.copy(c);
     m.roughness = 0.45;
   } else {
-    const ref = new THREE.Color('#8a5a32');
-    m.color.setRGB(c.r / ref.r, c.g / ref.g, c.b / ref.b);
+    // The library wood nearest this tone, shifted the rest of the way to it.
+    m = variant('wood', nearest(WOODS, colour, idHash(colour), 2), colour);
   }
   m.userData.shared = true;
   finishes.set(colour, m);
@@ -269,6 +302,19 @@ export function furniture(id: FurnitureId, w: number, h: number, d: number, opts
   const src = models.get(`furniture/${id}`);
   if (!src) return null;
   const inner = src.clone(true);
+  if (!opts.wood) {
+    // Each kind of piece has its own wood: the kit's two wood tones, in one of several real woods.
+    const h = idHash(id);
+    const light = variant('wood', LIGHT_WOODS[h % LIGHT_WOODS.length], '#b08458');
+    const dark = variant('woodDark', DARK_WOODS[h % DARK_WOODS.length], '#5a3a22');
+    inner.traverse((o: THREE.Object3D) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const name = (mesh.material as THREE.Material).name;
+      if (name === 'wood') mesh.material = light;
+      else if (name === 'woodDark') mesh.material = dark;
+    });
+  }
   if (opts.wood) {
     const m = finish(opts.wood);
     inner.traverse((o: THREE.Object3D) => {
@@ -279,8 +325,8 @@ export function furniture(id: FurnitureId, w: number, h: number, d: number, opts
     });
   }
   if (opts.upholstery) {
-    const up = surfacesFor().carpet.clone();
-    up.color.set(opts.upholstery);
+    // Upholstery in the colour asked for, in one of several cloths.
+    const up = variant('carpet', nearest(CLOTHS, opts.upholstery, idHash(id + opts.upholstery), 3), opts.upholstery);
     inner.traverse((o: THREE.Object3D) => {
       const mesh = o as THREE.Mesh;
       const name = mesh.isMesh ? (mesh.material as THREE.Material).name : '';

@@ -8,6 +8,7 @@
  * grime gathered along walls and kerbs, and wet patches that shine.
  */
 import * as THREE from 'three';
+import { LIBRARY, type LibraryName } from '../materials/catalogue';
 
 export type Surface = 'paving' | 'flags' | 'paviours' | 'setts' | 'yard' | 'asphalt' | 'marble' | 'concrete' | 'dirt';
 
@@ -15,10 +16,13 @@ const TEX = '/models/city/tex/';
 const loader = new THREE.TextureLoader();
 const cache = new Map<string, THREE.Texture>();
 
+/** Kit textures by name; the owner's texture library as `lib:<Set>_c` (colour) or `lib:<Set>_n` (normal). */
+const url = (name: string): string => (name.startsWith('lib:') ? `/textures/lib/${name.slice(4)}.webp` : `${TEX}${name}.webp`);
+
 function tex(name: string, srgb: boolean): THREE.Texture {
   const hit = cache.get(name);
   if (hit) return hit;
-  const t = loader.load(TEX + name + '.webp');
+  const t = loader.load(url(name));
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
   t.anisotropy = 8;
@@ -37,13 +41,15 @@ export function loadFlooring(): Promise<void> {
     ['T_Concrete_BaseColor', true], ['T_Concrete_Normal', false], ['T_Concrete_Asphalt_BaseColor', true],
     ['T_Dirt_BaseColor', true], ['T_Dirt_Normal', false], ['T_MarbleFloor_BaseColor', true], ['T_MarbleFloor_Normal', false],
     ['T_RedBrick_BaseColor', true], ['T_RedBrick_Normal', false], ['T_MetalConcrete_BaseColor', true], ['T_Street_Decals', true],
+    // The library sets the streets are laid in (GROUND below).
+    ...[...new Set(Object.values(GROUND).flat().map((g) => g.set))].flatMap((s): [string, boolean][] => [[`lib:${s}_c`, true], [`lib:${s}_n`, false]]),
   ];
   return Promise.all(
     names.map(
       ([n, srgb]) =>
         new Promise<void>((res) => {
           if (cache.has(n)) return res();
-          const t = loader.load(TEX + n + '.webp', () => res(), undefined, () => res());
+          const t = loader.load(url(n), () => res(), undefined, () => res());
           t.wrapS = t.wrapT = THREE.RepeatWrapping;
           t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
           t.anisotropy = 8;
@@ -84,6 +90,28 @@ const RECIPES: Record<Surface, Recipe> = {
   dirt: { grain: 'T_Dirt_BaseColor', normal: 'T_Dirt_Normal', scale: 3.0, pattern: 0, cell: [1, 1], joint: 0, tint: '#8a7a68', vary: 0, rough: 0.95, grainMix: 1 },
 };
 
+/**
+ * The owner's textures on the ground. Each surface has one or more library sets; a district's seed
+ * chooses among them, so two streets of the same kind aren't laid in the same asphalt or brick.
+ * `own` sets are already a laid pattern (block paving, setts, tiles): they show in their own colours
+ * with no joints drawn over them. The others are the grain inside the slabs and panels the shader lays.
+ */
+interface GroundSet {
+  set: LibraryName;
+  own?: boolean;
+}
+const GROUND: Record<Surface, GroundSet[]> = {
+  paving: [{ set: 'Concrete034' }],
+  flags: [{ set: 'Concrete034' }],
+  paviours: [{ set: 'PavingStones092', own: true }, { set: 'PavingStones123', own: true }, { set: 'PavingStones109', own: true }, { set: 'PavingStones102', own: true }],
+  setts: [{ set: 'PavingStones083', own: true }, { set: 'PavingStones036', own: true }],
+  yard: [{ set: 'Concrete042A' }, { set: 'Concrete034' }],
+  concrete: [{ set: 'Concrete034' }, { set: 'Concrete042A' }],
+  asphalt: [{ set: 'Road012A' }, { set: 'Road012B' }, { set: 'Road012C' }, { set: 'Road014B' }, { set: 'Road014C' }, { set: 'Road015A' }],
+  marble: [{ set: 'Tiles050', own: true }, { set: 'Tiles074', own: true }],
+  dirt: [{ set: 'Ground108', own: true }, { set: 'Ground020', own: true }, { set: 'Ground037', own: true }],
+};
+
 export interface SurfaceOptions {
   /** Colour multiplied in (district character: buff precinct, pale residential). */
   tint?: string;
@@ -114,8 +142,13 @@ float sfFbm(vec2 p) { float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s +=
 export function surfaceMaterial(kind: Surface, o: SurfaceOptions = {}): THREE.MeshStandardMaterial {
   const r = RECIPES[kind];
   const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(o.tint ?? '#ffffff'), roughness: r.rough, metalness: 0 });
-  const grain = tex(r.grain, true);
-  const normal = tex(r.normal, false);
+  const variants = GROUND[kind];
+  const g = variants[Math.abs(Math.floor(o.seed ?? 0)) % variants.length];
+  const entry = LIBRARY[g.set];
+  const grain = tex(`lib:${g.set}_c`, true);
+  const normal = tex(`lib:${g.set}_n`, false);
+  // The set's average brightness: the shader divides it out, so the recipe's tint sets the colour and the texture the detail.
+  const avg = Math.max(0.02, (entry.avg[0] + entry.avg[1] + entry.avg[2]) / 3);
   const stain = tex(kind === 'dirt' ? 'T_Concrete_BaseColor' : 'T_Dirt_BaseColor', true);
   const decals = tex('T_Street_Decals', true);
   mat.onBeforeCompile = (sh: { uniforms: Record<string, { value: unknown }>; vertexShader: string; fragmentShader: string }) => {
@@ -124,13 +157,14 @@ export function surfaceMaterial(kind: Surface, o: SurfaceOptions = {}): THREE.Me
       sfNormal: { value: normal },
       sfStain: { value: stain },
       sfDecals: { value: decals },
-      sfScale: { value: r.scale },
+      sfScale: { value: entry.tile },
+      sfAvg: { value: avg },
       sfCell: { value: new THREE.Vector2(r.cell[0], r.cell[1]) },
       sfJoint: { value: r.joint },
-      sfTint: { value: new THREE.Color(r.tint) },
+      sfTint: { value: g.own ? new THREE.Color(avg, avg, avg) : new THREE.Color(r.tint) },
       sfVary: { value: r.vary },
-      sfGrainMix: { value: r.grainMix },
-      sfPattern: { value: r.pattern },
+      sfGrainMix: { value: g.own ? 1 : r.grainMix },
+      sfPattern: { value: g.own ? 0 : r.pattern },
       sfWallZ: { value: o.wallZ ?? -1e4 },
       sfKerbZ: { value: o.kerbZ ?? 1e4 },
       sfWet: { value: o.wet ?? 0.5 },
@@ -146,7 +180,7 @@ export function surfaceMaterial(kind: Surface, o: SurfaceOptions = {}): THREE.Me
         'void main() {',
         `varying vec3 sfWorld;
 uniform sampler2D sfGrain, sfNormal, sfStain, sfDecals;
-uniform float sfScale, sfJoint, sfVary, sfGrainMix, sfPattern, sfWallZ, sfKerbZ, sfWet, sfPatches, sfBays, sfSeed;
+uniform float sfAvg, sfScale, sfJoint, sfVary, sfGrainMix, sfPattern, sfWallZ, sfKerbZ, sfWet, sfPatches, sfBays, sfSeed;
 uniform vec2 sfCell;
 uniform vec3 sfTint;
 ${GLSL_HASH}
@@ -174,8 +208,7 @@ void main() {`,
   // Grain from the kit texture, offset per stone so neighbouring stones don't match.
   vec2 guv = wp / sfScale + (sfPattern > 0.5 ? vec2(stoneId * 7.13, stoneId * 3.71) : vec2(0.0));
   vec3 g = texture2D(sfGrain, guv).rgb;
-  float gl = dot(g, vec3(0.3333));
-  vec3 base = sfTint * mix(vec3(1.0), g / max(0.05, gl) * gl * 2.0, sfGrainMix);
+  vec3 base = sfTint * mix(vec3(1.0), g / sfAvg, sfGrainMix);
   // Each stone a slightly different colour and wear.
   base *= 1.0 + (stoneId - 0.5) * sfVary * 2.0;
   // Large-scale staining from a second texture, broken up by noise.

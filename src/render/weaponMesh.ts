@@ -275,6 +275,11 @@ export function disposeGroup(g: THREE.Object3D): void {
       o.geometry.dispose();
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const m of mats) {
+        // Library textures (materials/library.ts) are shared by every level: leave them loaded.
+        if (m.userData.lib) {
+          if (!m.userData.shared) m.dispose();
+          continue;
+        }
         (m as THREE.MeshStandardMaterial).map?.dispose();
         (m as THREE.MeshStandardMaterial).emissiveMap?.dispose();
         (m as THREE.MeshStandardMaterial).normalMap?.dispose();
