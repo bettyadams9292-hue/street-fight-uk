@@ -413,6 +413,13 @@ const TOP_MESHES: Record<CharacterAppearance['top'], string[]> = {
   denim: ['top_long', 'collar'],
   coat: ['top_long', 'coat_skirt', 'collar'],
   workwear: ['top_long'],
+  polo: ['top_short', 'collar'],
+  shirt: ['top_long', 'collar'],
+  jumper: ['top_long'],
+  quarter_zip: ['top_long', 'collar'],
+  gilet: ['top_vest', 'collar'],
+  windbreaker: ['top_long', 'hood'],
+  harrington: ['top_long', 'collar'],
 };
 
 /** Which pack hairstyle stands in for each of the game's styles. */
@@ -785,6 +792,30 @@ function buildHeadwear(head: THREE.Group, a: CharacterAppearance, k: HeadKit, cy
     brim.position.set(0, cy + 0.04, 0.14);
     brim.rotation.x = 0.12;
     head.add(cap, brim);
+  }
+  if ((a.accessories.includes('bucket_hat') || a.accessories.includes('flat_cap')) && !a.accessories.includes('headguard')) {
+    const bucket = a.accessories.includes('bucket_hat');
+    const crown = k.mesh(new THREE.SphereGeometry(0.124, 18, 10, 0, Math.PI * 2, 0, Math.PI * (bucket ? 0.5 : 0.36)), hatMat);
+    crown.scale.set(hw, bucket ? 0.9 : 0.7, bucket ? 1 : 1.08);
+    crown.position.y = cy + (bucket ? 0.04 : 0.06);
+    // A bucket hat's brim goes all the way round; a flat cap has a short peak at the front.
+    const brim = bucket
+      ? k.mesh(new THREE.CylinderGeometry(0.13 * hw, 0.175 * hw, 0.03, 20, 1, true), hatMat)
+      : k.mesh(new THREE.BoxGeometry(0.15, 0.01, 0.06), hatMat);
+    if (bucket) brim.position.y = cy + 0.03;
+    else brim.position.set(0, cy + 0.055, 0.12);
+    head.add(crown, brim);
+  }
+  if (a.accessories.includes('glasses') && !a.accessories.includes('sunglasses')) {
+    const frame = k.std({ color: '#2a2420', roughness: 0.4 });
+    for (const s of [1, -1]) {
+      const rim = k.mesh(new THREE.TorusGeometry(0.017, 0.0025, 6, 14), frame, false);
+      rim.position.set(0.034 * s * (1 + 0.2 * f.eyeSpacing), cy + 0.016, 0.102);
+      head.add(rim);
+    }
+    const bridge = k.mesh(new THREE.BoxGeometry(0.03, 0.004, 0.005), frame, false);
+    bridge.position.set(0, cy + 0.022, 0.102);
+    head.add(bridge);
   }
   if (a.accessories.includes('chain')) {
     const chain = k.mesh(new THREE.TorusGeometry(0.085, 0.006, 6, 24), k.metal, false);

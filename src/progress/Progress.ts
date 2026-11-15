@@ -753,7 +753,8 @@ export class Progress {
         takenSlots.add(slot);
         if (!a.accessories.includes(w.accessory)) a.accessories.push(w.accessory);
         if (w.chain) a.chainColour = w.chain;
-        if ((slot === 'head' || slot === 'face') && colour) a.headColour = colour;
+        // The hat's colour (or a snood's, pulled up over the face). Glasses don't recolour a hat.
+        if (colour && (slot === 'head' || (slot === 'face' && w.accessory === 'snood'))) a.headColour = colour;
       }
     }
     applyJewellery(a, s);

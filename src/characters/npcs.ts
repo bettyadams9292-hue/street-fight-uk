@@ -48,11 +48,11 @@ const BRIGHT = ['#7d1a1a', '#b3121b', '#d4a017', '#c75b12', '#2f6fa8', '#5b2e8c'
 const STREET: DistrictLook = {
   female: 0.45,
   older: 0.25,
-  tops: { hoodie: 4, tracksuit: 2, tshirt: 2, puffer: 2, bomber: 1, denim: 1, coat: 1, football: 1 },
-  bottoms: { jeans: 4, joggers: 2, trackies: 2, cargos: 1 },
+  tops: { hoodie: 4, tracksuit: 2, tshirt: 2, puffer: 2, bomber: 1, denim: 1, coat: 1, football: 1, polo: 1, windbreaker: 1, quarter_zip: 1, jumper: 1, gilet: 0.5 },
+  bottoms: { jeans: 4, joggers: 2, trackies: 2, cargos: 1, chinos: 1 },
   shoes: { trainers: 4, runners: 2, boots: 1, hitops: 1 },
   colours: [...DARK, ...DARK, ...LIGHT, ...BRIGHT],
-  extras: { cap: 0.12, beanie: 0.1, watch: 0.2, chain: 0.06, sunglasses: 0.04, earring: 0.1 },
+  extras: { cap: 0.12, beanie: 0.1, watch: 0.2, chain: 0.06, sunglasses: 0.04, earring: 0.1, bucket_hat: 0.03, glasses: 0.06 },
   build: 0,
 };
 
@@ -79,12 +79,12 @@ export const DISTRICT_LOOKS: Record<string, DistrictLook> = {
     build: -0.1,
   },
   high_street: STREET,
-  residential: { ...STREET, older: 0.55, tops: { coat: 3, puffer: 2, hoodie: 2, denim: 1, tshirt: 1 }, bottoms: { jeans: 4, joggers: 2, workwear: 1 }, shoes: { trainers: 2, boots: 3, runners: 1 }, extras: { watch: 0.3, cap: 0.1 } },
+  residential: { ...STREET, older: 0.55, tops: { coat: 3, puffer: 2, hoodie: 2, denim: 1, tshirt: 1, jumper: 2, harrington: 1, gilet: 1 }, bottoms: { jeans: 4, joggers: 2, workwear: 1, chinos: 2 }, shoes: { trainers: 2, boots: 3, runners: 1 }, extras: { watch: 0.3, cap: 0.1, flat_cap: 0.08, glasses: 0.15 } },
   market: { ...STREET, older: 0.5, tops: { puffer: 3, coat: 3, hoodie: 2, workwear: 1 }, bottoms: { jeans: 4, cargos: 1, workwear: 1 }, extras: { beanie: 0.25, cap: 0.15, watch: 0.2 } },
   nightlife: {
     female: 0.5,
     older: 0.1,
-    tops: { tshirt: 3, leather: 2, bomber: 2, denim: 1, designer_hoodie: 1, vest: 1 },
+    tops: { tshirt: 3, leather: 2, bomber: 2, denim: 1, designer_hoodie: 1, vest: 1, shirt: 2, polo: 1, harrington: 1 },
     bottoms: { jeans: 5, cargos: 1, joggers: 1 },
     shoes: { trainers: 3, boots: 2, hitops: 2 },
     colours: [...DARK, ...BRIGHT, ...BRIGHT, '#e8e6e1'],
@@ -92,7 +92,7 @@ export const DISTRICT_LOOKS: Record<string, DistrictLook> = {
     build: 0,
   },
   precinct: { ...STREET, older: 0.1, tops: { tracksuit: 3, hoodie: 4, football: 2, puffer: 1 }, bottoms: { trackies: 4, joggers: 2, jeans: 2 }, extras: { cap: 0.25, chain: 0.1 } },
-  leisure: { ...STREET, tops: { tracksuit: 3, tshirt: 3, hoodie: 2, vest: 1 }, bottoms: { joggers: 3, shorts: 2, trackies: 2 }, shoes: { runners: 4, trainers: 2 }, build: -0.1 },
+  leisure: { ...STREET, tops: { tracksuit: 3, tshirt: 3, hoodie: 2, vest: 1, polo: 1 }, bottoms: { joggers: 3, shorts: 2, trackies: 2, cargo_shorts: 1, denim_shorts: 1 }, shoes: { runners: 4, trainers: 2 }, build: -0.1 },
   stadium: { ...STREET, female: 0.3, tops: { football: 7, hoodie: 2, bomber: 1, puffer: 1 }, bottoms: { jeans: 4, trackies: 2 }, extras: { cap: 0.15, beanie: 0.15 }, build: 0.2 },
   docks: { ...STREET, female: 0.15, older: 0.4, tops: { workwear: 6, puffer: 2, hoodie: 2 }, bottoms: { workwear: 5, cargos: 2, jeans: 2 }, shoes: { boots: 6, trainers: 1 }, extras: { beanie: 0.3, watch: 0.2 }, build: 0.25 },
   industrial: { ...STREET, female: 0.2, older: 0.4, tops: { workwear: 5, hoodie: 2, puffer: 2 }, bottoms: { workwear: 4, cargos: 3, jeans: 2 }, shoes: { boots: 5, trainers: 1 }, extras: { beanie: 0.2 }, build: 0.2 },

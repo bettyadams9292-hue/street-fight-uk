@@ -316,7 +316,7 @@ const FABRIC_LIBRARY: Record<Fabric, [LibraryName, number, number]> = {
   denim: ['Fabric022', 5, 1],
   leather: ['Leather037', 3, 0.9],
   cotton: ['Fabric064', 5, 0.7],
-  canvas: ['Fabric049', 5, 0.8],
+  canvas: ['Fabric049', 14, 0.45],
 };
 
 const fabrics = new Map<Fabric, THREE.Texture>();
@@ -802,13 +802,16 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
     gg.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
     gg.setIndex(new THREE.BufferAttribute(mesh.index, 1));
     disposables.push(gg);
-    const mat = new THREE.MeshStandardMaterial({ map: fabricTexture(mesh.fabric), vertexColors: true, roughness: FABRIC_ROUGH[mesh.fabric], side: THREE.DoubleSide });
+    // A shoe's upper is smooth leather or mesh: the drawn weave would streak over the foot's small patch of the atlas.
+    const mat = new THREE.MeshStandardMaterial({ map: mesh.part === 'feet' ? null : fabricTexture(mesh.fabric), vertexColors: true, roughness: FABRIC_ROUGH[mesh.fabric], side: THREE.DoubleSide });
     attachNormal(mat);
     if (mat.normalMap) disposables.push(mat.normalMap);
     disposables.push(mat);
     // The cloth's real weave and sheen from the texture library (the colour stays per vertex).
     const cloth = FABRIC_LIBRARY[mesh.fabric];
-    detail(mat, cloth[0], cloth[1], cloth[2]);
+    // Hats and shoes cover a small patch of the body's texture atlas: tile the weave finer there.
+    const fine = mesh.part === 'head' ? 10 : mesh.part === 'feet' ? 8 : 1;
+    detail(mat, cloth[0], cloth[1] * fine, cloth[2] * (mesh.part === 'feet' || mesh.part === 'head' ? 0.2 : 1));
     const gm = new THREE.SkinnedMesh(gg, mat);
     gm.name = g.kind;
     root.add(gm);
@@ -816,6 +819,32 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
     gm.castShadow = true;
     gm.receiveShadow = true;
     gm.frustumCulled = false;
+    // A cap's peak or a hat's brim: a rigid sheet on the head bone, in the same cloth.
+    for (const e of mesh.extra ?? []) {
+      if (!e.index.length) continue;
+      const bi = bones.findIndex((b) => b.name === e.bone);
+      const cnt = e.position.length / 3;
+      const eg = new THREE.BufferGeometry();
+      eg.setAttribute('position', new THREE.BufferAttribute(e.position, 3));
+      eg.setAttribute('color', new THREE.BufferAttribute(e.colour, 3));
+      const si = new Uint16Array(cnt * 4);
+      const sw = new Float32Array(cnt * 4);
+      for (let i = 0; i < cnt; i++) {
+        si[i * 4] = Math.max(0, bi);
+        sw[i * 4] = 1;
+      }
+      eg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
+      eg.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
+      eg.setIndex(new THREE.BufferAttribute(e.index, 1));
+      eg.computeVertexNormals();
+      disposables.push(eg);
+      const em = new THREE.SkinnedMesh(eg, mat);
+      em.name = `${g.kind}_${e.bone === 'head' ? 'brim' : 'sole'}`;
+      root.add(em);
+      em.bind(skeleton);
+      em.castShadow = true;
+      em.frustumCulled = false;
+    }
   }
   for (const { it, data } of items) addProxy(data, it.colour);
 

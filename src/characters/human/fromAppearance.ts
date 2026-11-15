@@ -56,6 +56,11 @@ export function toneOf(hex: string): number {
   return clamp(0.05 + 0.9 * ((light - lum(hex)) / (light - dark)));
 }
 
+/** Laces and side panel for trainers: a contrast that reads against the upper. */
+function shoeTrim(hex: string): string {
+  return lum(hex) > 0.35 ? '#1f2a44' : '#e8e6e1';
+}
+
 function mixHex(a: string, b: string, t: number): string {
   const pa = parseInt(a.slice(1), 16);
   const pb = parseInt(b.slice(1), 16);
@@ -63,11 +68,18 @@ function mixHex(a: string, b: string, t: number): string {
   return '#' + ((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0');
 }
 
-const TOPS: Record<TopStyle, GarmentKind | 'tee' | 'none'> = {
+const TOPS: Record<TopStyle, GarmentKind | 'none'> = {
   hoodie: 'hoodie',
   designer_hoodie: 'hoodie',
   tracksuit: 'tracksuit_top',
   tshirt: 'tee',
+  polo: 'polo',
+  shirt: 'shirt',
+  jumper: 'jumper',
+  quarter_zip: 'quarter_zip',
+  gilet: 'gilet',
+  windbreaker: 'windbreaker',
+  harrington: 'harrington',
   football: 'football',
   bomber: 'bomber',
   puffer: 'puffer',
@@ -86,6 +98,9 @@ const BOTTOMS: Record<BottomStyle, GarmentKind | 'cargo'> = {
   cargos: 'cargo',
   workwear: 'work_trousers',
   shorts: 'fight_shorts',
+  chinos: 'chinos',
+  cargo_shorts: 'cargo_shorts',
+  denim_shorts: 'denim_shorts',
 };
 
 const HAIR: Record<HairStyle, { m: string | null; f: string | null }> = {
@@ -156,26 +171,31 @@ export function appearanceToHuman(a: CharacterAppearance, skins: readonly SkinCh
   const items: SpecItem[] = [];
   const garments: SpecGarment[] = [];
   const top = TOPS[a.top];
-  if (top === 'tee') items.push({ id: female ? 'tee_female' : 'tee_male', colour: a.topColour });
-  else if (top === 'vest' && female) items.push({ id: 'camisole', colour: a.topColour });
+  if (top === 'vest' && female) items.push({ id: 'camisole', colour: a.topColour });
   else if (top !== 'none') garments.push({ kind: top, colour: a.topColour, trim: a.top === 'designer_hoodie' ? '#c9a24a' : undefined });
   else if (female) items.push({ id: 'camisole', colour: '#1b1d22' });
   const bottom = BOTTOMS[a.bottoms];
   if (bottom === 'cargo') items.push({ id: 'cargo_trousers', colour: a.bottomsColour });
   else garments.push({ kind: bottom, colour: a.bottomsColour });
-  const shoe = a.shoes === 'boots' || a.shoes === 'hitops' ? (female ? 'ankle_boots_f' : 'ankle_boots_m') : 'plimsolls';
-  items.push({ id: shoe, colour: a.shoesColour });
-  if (a.bottoms === 'shorts') items.push({ id: 'socks_low', colour: '#e8e6e1' });
+  // Trainers are cut from the foot (garments.ts) so they always fit; boots come from the pack.
+  if (a.shoes === 'boots') items.push({ id: female ? 'ankle_boots_f' : 'ankle_boots_m', colour: a.shoesColour });
+  else garments.push({ kind: a.shoes, colour: a.shoesColour, trim: shoeTrim(a.shoesColour) });
+  if (a.bottoms === 'shorts' || a.bottoms === 'cargo_shorts' || a.bottoms === 'denim_shorts') items.push({ id: 'socks_low', colour: '#e8e6e1' });
+  // Hats cut from the scalp (beanie, cap, bucket hat) or from the pack (flat cap). Short hair goes under the hat.
+  const hat = a.accessories.find((x): x is 'beanie' | 'cap' | 'bucket_hat' => x === 'beanie' || x === 'cap' || x === 'bucket_hat');
   const hair = HAIR[a.hair][female ? 'f' : 'm'];
-  if (hair && !a.accessories.includes('headguard')) items.push({ id: hair, colour: hairColour });
+  const shortHair = ['buzz', 'crop', 'quiff', 'curly', 'afro', 'cornrows', 'mohawk'].includes(a.hair);
+  if (hair && !a.accessories.includes('headguard') && !(hat && shortHair)) items.push({ id: hair, colour: hairColour });
+  if (hat) garments.push({ kind: hat, colour: a.headColour ?? '#2b2e35' });
   if (!female) {
     if (a.facialHair === 'moustache') items.push({ id: 'moustache_viking', colour: hairColour });
     else if (a.facialHair === 'goatee' || a.facialHair === 'short_beard') items.push({ id: 'beard_scruffy', colour: hairColour });
     else if (a.facialHair === 'full_beard') items.push({ id: 'beard_viking', colour: hairColour });
   }
   if (a.accessories.includes('wraps')) items.push({ id: 'fight_gloves', colour: '#d8d2c4' });
-  if (a.accessories.includes('cap') || a.accessories.includes('beanie')) items.push({ id: 'flat_cap', colour: a.headColour ?? '#2b2e35' });
+  if (a.accessories.includes('flat_cap')) items.push({ id: 'flat_cap', colour: a.headColour ?? '#4a4038' });
   if (a.accessories.includes('sunglasses')) items.push({ id: 'glasses_frames', colour: '#101012' });
+  else if (a.accessories.includes('glasses')) items.push({ id: 'glasses_library', colour: '#2a2420' });
   if (a.accessories.includes('snood')) items.push({ id: 'face_mask', colour: a.headColour ?? '#1b1d22' });
   const browColour = mixHex(mixHex(a.hairColour, '#1a120c', 0.35), '#bdb8b0', a.greying * 0.7);
   const browWeight = Math.max(0, Math.min(1, (female ? 0.3 : 0.65) + a.face.brow * 0.3));

@@ -63,7 +63,7 @@ export interface UseSpec {
 
 /** Drawn by the icon painter. */
 export type IconKind =
-  | 'weapon' | 'top' | 'bottoms' | 'shoes' | 'cap' | 'beanie' | 'sunglasses' | 'snood' | 'chain' | 'watch' | 'smartwatch' | 'ring'
+  | 'weapon' | 'top' | 'bottoms' | 'shoes' | 'cap' | 'beanie' | 'bucket_hat' | 'flat_cap' | 'glasses' | 'sunglasses' | 'snood' | 'chain' | 'watch' | 'smartwatch' | 'ring'
   | 'earring' | 'bracelet' | 'belt' | 'wraps' | 'gumshield' | 'headguard' | 'food' | 'drink' | 'medkit' | 'phone' | 'tablet'
   | 'headphones' | 'console' | 'handheld' | 'camera' | 'coin' | 'cash' | 'wallet_hw' | 'handbag' | 'trainers' | 'shirt_signed'
   | 'programme' | 'antique' | 'vinyl' | 'key' | 'document' | 'scrap' | 'bag' | 'card' | 'football' | 'grocery' | 'plate';
@@ -143,6 +143,25 @@ top('denim_jacket', 'Denim jacket', 'denim', 60, '#2f5a8a', 'Stonewashed with br
 top('long_coat', 'Long wool coat', 'coat', 120, '#2b2e35', 'Knee-length overcoat. Smart.', 'uncommon');
 top('vest_white', 'White vest', 'vest', 8, '#e8e6e1', 'Ribbed vest.');
 top('workwear_hivis', 'Hi-vis work jacket', 'workwear', 30, '#e8d000', 'Site jacket with reflective bands.');
+top('hoodie_navy', 'Navy hoodie', 'hoodie', 25, '#1f2a44', 'Plain pullover hoodie, kangaroo pocket.');
+top('tshirt_grey', 'Grey marl T-shirt', 'tshirt', 12, '#8a8c90', 'Crew neck, short sleeves.');
+top('tracksuit_top_grey', 'Grey tracksuit top', 'tracksuit', 45, '#55585e', 'Zip-up with stripes down the arms.');
+top('puffer_navy', 'Navy puffer jacket', 'puffer', 110, '#1f2a44', 'Quilted and warm. Takes the edge off a hit.', 'uncommon', [{ flat: 'maxPoise', add: 8, text: '+8 poise' }]);
+top('polo_navy', 'Navy polo shirt', 'polo', 30, '#1f2a44', 'Piqué cotton, two-button placket, ribbed collar.');
+top('polo_white', 'White polo shirt', 'polo', 30, '#e8e6e1', 'Piqué cotton, two-button placket, ribbed collar.');
+top('polo_bottle', 'Bottle green polo', 'polo', 30, '#1d3b2a', 'Piqué cotton, two-button placket, ribbed collar.');
+top('shirt_oxford', 'Oxford shirt', 'shirt', 35, '#c9d4e6', 'Pale blue button-down, worn untucked.');
+top('shirt_check', 'Check overshirt', 'shirt', 38, '#7a2a24', 'Brushed cotton flannel, full button front.');
+top('jumper_navy', 'Crew-neck jumper', 'jumper', 40, '#1f2a44', 'Lambswool knit with ribbed cuffs and hem.');
+top('jumper_oat', 'Oatmeal jumper', 'jumper', 40, '#b9a888', 'Lambswool knit with ribbed cuffs and hem.');
+top('quarter_zip_black', 'Quarter-zip top', 'quarter_zip', 45, '#1b1d22', 'Fleece pullover, half zip at the neck.');
+top('quarter_zip_grey', 'Grey quarter-zip', 'quarter_zip', 45, '#55585e', 'Fleece pullover, half zip at the neck.');
+top('gilet_black', 'Black gilet', 'gilet', 65, '#1b1d22', 'Quilted body warmer, no sleeves. Arms stay free.', 'common', [{ flat: 'maxPoise', add: 4, text: '+4 poise' }]);
+top('gilet_olive', 'Olive gilet', 'gilet', 65, '#3d4a2a', 'Quilted body warmer, no sleeves. Arms stay free.', 'common', [{ flat: 'maxPoise', add: 4, text: '+4 poise' }]);
+top('windbreaker', 'Windbreaker', 'windbreaker', 55, '#2f6fa8', 'Packable nylon shell with a hood and a chest panel.');
+top('windbreaker_retro', 'Retro windbreaker', 'windbreaker', 60, '#6b2a6a', 'Nineties colour-block nylon shell.');
+top('harrington_stone', 'Harrington jacket', 'harrington', 75, '#b9a27a', 'Cotton jacket with a check lining and ribbed cuffs.', 'uncommon');
+top('harrington_black', 'Black Harrington', 'harrington', 75, '#1b1d22', 'Cotton jacket with a check lining and ribbed cuffs.', 'uncommon');
 
 bottoms('trackies_black', 'Black trackies', 'trackies', 25, '#1b1d22', 'Tracksuit bottoms with side stripes.');
 bottoms('joggers_grey', 'Grey joggers', 'joggers', 25, '#6a6d74', 'Cuffed fleece joggers.');
@@ -151,6 +170,13 @@ bottoms('jeans_black', 'Black jeans', 'jeans', 40, '#1b1d22', 'Straight-leg deni
 bottoms('cargos_khaki', 'Cargo trousers', 'cargos', 45, '#5b5a3a', 'Side pockets for everything.');
 bottoms('shorts_black', 'Fight shorts', 'shorts', 20, '#1b1d22', 'Loose training shorts.');
 bottoms('work_trousers', 'Work trousers', 'workwear', 30, '#2b2e35', 'Heavy canvas with knee pads.');
+bottoms('trackies_navy', 'Navy trackies', 'trackies', 25, '#1f2a44', 'Tracksuit bottoms with side stripes.');
+bottoms('joggers_black', 'Black joggers', 'joggers', 25, '#1b1d22', 'Cuffed fleece joggers.');
+bottoms('jeans_light', 'Light-wash jeans', 'jeans', 40, '#5a7da0', 'Straight-leg denim, faded.');
+bottoms('chinos_stone', 'Stone chinos', 'chinos', 35, '#b9a27a', 'Cotton twill, tapered leg.');
+bottoms('chinos_navy', 'Navy chinos', 'chinos', 35, '#1f2a44', 'Cotton twill, tapered leg.');
+bottoms('cargo_shorts', 'Cargo shorts', 'cargo_shorts', 28, '#5b5a3a', 'Knee-length with side pockets.');
+bottoms('denim_shorts', 'Denim shorts', 'denim_shorts', 25, '#5a7da0', 'Cut-off denim, rolled hems.');
 
 shoes('trainers_white', 'White trainers', 'trainers', 60, '#e8e6e1', 'Clean low-tops.');
 shoes('runners', 'Running trainers', 'runners', 80, '#2f6fa8', 'Light and bouncy.', 'common', [{ stat: 'moveSpeedMult', mul: 1.04, text: '+4% move speed' }]);
@@ -158,6 +184,10 @@ shoes('hitops_black', 'High-tops', 'hitops', 75, '#1b1d22', 'Ankle-height basket
 shoes('boots_work', 'Work boots', 'boots', 70, '#5b3a24', 'Lace-up leather boots.');
 shoes('steel_toecaps', 'Steel toecap boots', 'boots', 90, '#151515', 'Kicks land heavier.', 'uncommon', [{ attr: 'strength', add: 2, text: '+2 Strength' }]);
 shoes('rare_trainers_worn', 'Limited trainers', 'trainers', 220, '#d4a017', 'Limited run, still in good nick. Worth more boxed.', 'rare');
+shoes('trainers_black', 'Black trainers', 'trainers', 60, '#1b1d22', 'All-black low-tops.');
+shoes('trainers_navy', 'Navy trainers', 'trainers', 60, '#1f2a44', 'Suede low-tops, gum-white sole.');
+shoes('runners_red', 'Red running trainers', 'runners', 80, '#b3121b', 'Light and bouncy.', 'common', [{ stat: 'moveSpeedMult', mul: 1.04, text: '+4% move speed' }]);
+shoes('hitops_white', 'White high-tops', 'hitops', 75, '#e8e6e1', 'Ankle-height basketball shoes.');
 
 // ---- accessories --------------------------------------------------------------------
 const acc = (id: string, name: string, slot: WearSlot, a: Accessory, value: number, icon: IconKind, colour: string, text: string, rarity: Rarity = 'common', stats?: ItemStat[], chain?: 'gold' | 'silver') =>
@@ -172,6 +202,14 @@ acc('cap_black', 'Black cap', 'head', 'cap', 18, 'cap', '#1b1d22', 'Flat brim, p
 acc('cap_red', 'Red cap', 'head', 'cap', 18, 'cap', '#b3121b', 'Flat brim, plain.');
 acc('beanie', 'Beanie', 'head', 'beanie', 14, 'beanie', '#2b2e35', 'Ribbed knit hat.');
 acc('sunglasses', 'Sunglasses', 'face', 'sunglasses', 25, 'sunglasses', '#101012', 'Dark lenses.');
+acc('cap_navy', 'Navy cap', 'head', 'cap', 18, 'cap', '#1f2a44', 'Curved peak, six panels.');
+acc('cap_white', 'White cap', 'head', 'cap', 18, 'cap', '#e8e6e1', 'Curved peak, six panels.');
+acc('beanie_red', 'Red beanie', 'head', 'beanie', 14, 'beanie', '#b3121b', 'Ribbed knit hat.');
+acc('beanie_grey', 'Grey beanie', 'head', 'beanie', 14, 'beanie', '#6a6d74', 'Ribbed knit hat.');
+acc('bucket_hat', 'Bucket hat', 'head', 'bucket_hat', 22, 'bucket_hat', '#5b5a3a', 'Canvas, stitched brim all the way round.');
+acc('bucket_hat_black', 'Black bucket hat', 'head', 'bucket_hat', 22, 'bucket_hat', '#1b1d22', 'Canvas, stitched brim all the way round.');
+acc('flat_cap', 'Flat cap', 'head', 'flat_cap', 30, 'flat_cap', '#4a4038', 'Wool tweed. Your grandad would approve.');
+acc('glasses', 'Glasses', 'face', 'glasses', 30, 'glasses', '#2a2420', 'Clear lenses in dark frames.');
 acc('snood', 'Face covering', 'face', 'snood', 12, 'snood', '#1b1d22', 'Neck snood pulled up over the face.');
 acc('lucky_chain', 'Lucky gold chain', 'neck', 'chain', 120, 'chain', '#d4af37', 'Your nan’s. You fight smarter wearing it.', 'rare', [{ attr: 'technique', add: 3, text: '+3 Technique' }], 'gold');
 acc('chain_silver', 'Silver chain', 'neck', 'chain', 60, 'chain', '#c9ccd2', 'Fine silver curb chain.', 'common', undefined, 'silver');
