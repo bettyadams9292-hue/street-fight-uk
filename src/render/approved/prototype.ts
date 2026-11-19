@@ -127,6 +127,22 @@ export interface ApprovedCopy {
   ry: number;
   /** Uniform scale, or per axis. */
   s?: number | [number, number, number];
+  /** Repaint colours of this copy: [from, to] hex pairs (an awning's stripes in its shop's colour). */
+  recolour?: readonly (readonly [string, string])[];
+}
+
+function repaint(g: THREE.BufferGeometry, pairs: readonly (readonly [string, string])[]): void {
+  const col = g.getAttribute('color') as THREE.BufferAttribute | undefined;
+  if (!col) return;
+  const swaps = pairs.map(([a, b]) => [new THREE.Color(a), new THREE.Color(b)] as const);
+  for (let i = 0; i < col.count; i++) {
+    for (const [from, to] of swaps) {
+      if (Math.abs(col.getX(i) - from.r) + Math.abs(col.getY(i) - from.g) + Math.abs(col.getZ(i) - from.b) < 0.02) {
+        col.setXYZ(i, to.r, to.g, to.b);
+        break;
+      }
+    }
+  }
 }
 
 /**
@@ -151,6 +167,7 @@ export function bakeApproved(copies: readonly ApprovedCopy[], o: { chunk?: numbe
     if (!ch) chunks.set(k, (ch = new Map()));
     for (const part of p.parts) {
       const g = part.geometry.clone().applyMatrix4(m4);
+      if (c.recolour?.length) repaint(g, c.recolour);
       let b = ch.get(part.material);
       if (!b) ch.set(part.material, (b = []));
       b.push(g);

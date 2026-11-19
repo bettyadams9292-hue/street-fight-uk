@@ -293,7 +293,7 @@ class Bucket {
         this.pos.push(b.x + k[0], b.y + k[1], b.z + k[2]);
         this.nrm.push(nx, ny, nz);
         this.col.push(c.r, c.g, c.b);
-        this.wall.push(1);
+        this.wall.push(b.plain ? 0 : 1);
         // A glowing block's faces are panes too: across is x (or z on the ends), up is y.
         if (this.win) this.win.push(nx !== 0 ? (k[2] + hz) / (2 * hz) : (k[0] + hx) / (2 * hx), ny !== 0 ? (k[2] + hz) / (2 * hz) : (k[1] + hy) / (2 * hy), r, nx !== 0 ? b.d : b.w);
       }

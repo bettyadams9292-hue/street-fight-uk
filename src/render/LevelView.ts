@@ -351,10 +351,15 @@ export class LevelView {
       const turned = Math.abs(Math.sin(a.ry)) > 0.7;
       const [mw, md] = turned ? [d, w] : [w, d];
       // Real size, unless the slot it stands in is clearly smaller (then just as small as needed, never under 70%).
-      const k = a.fit ? Math.max(0.7, Math.min(1, Math.min((a.fit.hx * 2) / mw, (a.fit.hz * 2) / md) * 1.25)) : 1;
-      return { id: a.id, x: a.x, y: a.y - box.min.y * k, z: a.z, ry: a.ry, s: k };
+      const k = a.fit && !a.indoor ? Math.max(0.7, Math.min(1, Math.min((a.fit.hx * 2) / mw, (a.fit.hz * 2) / md) * 1.25)) : 1;
+      const s: [number, number, number] = a.scale ?? [k, k, k];
+      return { id: a.id, x: a.x, y: a.y - box.min.y * s[1], z: a.z, ry: a.ry, s, recolour: a.recolour };
     });
-    this.group.add(bakeApproved(copies, { shadows: true, name: 'approved-street' }));
+    const out = copies.filter((_, i) => !list[i].indoor);
+    const inside = copies.filter((_, i) => list[i].indoor);
+    if (out.length) this.group.add(bakeApproved(out, { shadows: true, name: 'approved-street' }));
+    // Behind the glass, under the shop's own light: no sun shadows (as the other shop stock).
+    if (inside.length) this.group.add(bakeApproved(inside, { shadows: false, name: 'approved-shops' }));
   }
 
   /**
