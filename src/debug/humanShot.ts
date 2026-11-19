@@ -18,9 +18,9 @@ const shape = (s: Partial<BodyShape>): BodyShape => ({ ...DEFAULT_SHAPE, ...s, s
 
 /** Jewellery sets for `?shot=jewels`. */
 export const JEWEL_SETS: { body: 'male' | 'female'; look: Partial<CharacterAppearance>; jewels: Partial<Record<JewelCat, JewelLook>> }[] = [
-  { body: 'male', look: { top: 'tshirt', topColour: '#e8e6e1' }, jewels: { ring: { id: 'r_signet_onyx', finish: 'gold18' }, watch: { id: 'w_gold_president', finish: 'gold18' }, necklace: { id: 'n_cuban_14', finish: 'gold9' }, grill: { id: 'g_top6', finish: 'gold9' } } },
+  { body: 'male', look: { top: 'tshirt', topColour: '#e8e6e1' }, jewels: { ring: { id: 'r_signet_onyx', finish: 'gold18' }, watch: { id: 'w_gold_president', finish: 'gold18' }, necklace: { id: 'n_cuban_14', finish: 'gold9' }, grill: { id: 'g_top6', finish: 'gold9' }, bracelet: { id: 'b_cuban', finish: 'gold9' }, earring: { id: 'e_stud_diamond', finish: 'white' } } },
   { body: 'male', look: { top: 'hoodie', topColour: '#1f2a44', skinTone: '#5e3b24' }, jewels: { ring: { id: 'r_halo', finish: 'white' }, watch: { id: 'w_iced', finish: 'white' }, necklace: { id: 'n_crucifix', finish: 'gold18' }, grill: { id: 'g_full_iced', finish: 'white' } } },
-  { body: 'female', look: { top: 'vest', topColour: '#7d1a1a' }, jewels: { ring: { id: 'r_solitaire', finish: 'rose' }, watch: { id: 'w_square', finish: 'rose' }, necklace: { id: 'n_heart', finish: 'rose' } } },
+  { body: 'female', look: { top: 'vest', topColour: '#7d1a1a' }, jewels: { ring: { id: 'r_solitaire', finish: 'rose' }, watch: { id: 'w_square', finish: 'rose' }, necklace: { id: 'n_heart', finish: 'rose' }, bracelet: { id: 'b_tennis', finish: 'white' }, earring: { id: 'e_hoop_large', finish: 'gold9' } } },
   { body: 'male', look: { top: 'none' }, jewels: { ring: { id: 'r_statement', finish: 'gold18' }, watch: { id: 'w_sport', finish: 'steel' }, necklace: { id: 'n_rope_6', finish: 'silver' }, grill: { id: 'g_full_twotone', finish: 'gold9' } } },
 ];
 

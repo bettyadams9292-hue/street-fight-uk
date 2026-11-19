@@ -56,7 +56,7 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 
 ## Assets still needed
 
-The full list of every texture, model, icon, animation and sound still made in code is in the repo (595 rows: 508 made on 13 Nov 2026, plus 87 added for PR #20's jewellery and property):
+The full list of every texture, model, icon, animation and sound still made in code is in the repo (611 rows: 508 made on 13 Nov 2026, 87 added for PR #20's jewellery and property, and 16 for #36's bracelets and earrings):
 
 - `docs/ASSETS_NEEDED.xlsx`: open it in Excel or Google Sheets. Its columns are Area, Name, Game id, Asset needed, How it is made now, and Got it.
 - `docs/ASSETS_NEEDED.csv`: the same list as plain text, for Claude to read, search and update.
@@ -70,7 +70,7 @@ The main gaps:
 - Weapons: 31 of 36 have no model.
 - Owned vehicles: all 12 cars and 10 bikes are built in code.
 - Accessories with no worn model: earrings, belt, gumshield and headguard. Chains, watches and rings show as code-built pieces since #20, but still need proper models.
-- Jewellery (#20): 52 pieces with no model or icon, plus metal and gem materials.
+- Jewellery (#20, #36): 68 pieces with no model or icon (rings, watches, necklaces, bracelets, earrings, grills), plus metal and gem materials.
 - Property (#20): four mansion styles, 20 listing photos, a staircase, the estate agent boards, and rooms with no proper fittings (swimming pool, cinema, conservatory, roof terrace, dressing room).
 - Caps and beanies show a flat cap as a stand-in.
 - Hairstyles that borrow another style's model: afro, cornrows, mohawk, quiff, buzz, curly and ponytail.
@@ -164,16 +164,16 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 
 - #35: performance, first step: kit streets are baked in 12 m chunks (`STREET_CHUNK` in `render/kit/PolyKit.ts`) so off-screen parts are culled in both passes; a fight scene drew about 850k triangles a frame, now about 670k.
 
+- #36: polish, part 2:
+  - people are culled off screen (one fixed sphere per person, `cullAsCharacter` in `render/human/HumanBuilder.ts`) and the shadow camera is 20 m wide: a fight draws about 478k triangles a frame (850k before #35), the Red Lion 158k (963k);
+  - the black squares at the market were the kit's checkerboard plaza tiles under chevron paving: plazas use `PavingStones092` and grey ground is evened out (`streetDetail.ts`); noise hashes no longer multiply big world coordinates (phone GPU precision);
+  - fight balance: the harness walks the bot into each fight (drifting out of the trigger counted as a loss), the first fight is one lad then two, a few bosses and fights tuned (`docs/BALANCE.md`); `tools/economy/farming.ts` measures repeat-fight income (best about £3,700 an hour);
+  - bracelets (other wrist, new wear slot `bracelet`) and earrings (a pair on the lobes) at Halden & Crane, 8 of each; loot diamond studs and bracelets go in the jewellery box; Threads' silver earring is drawn as sleeper hoops and no longer sold.
+
 ## Open questions and next steps
 
-- **Polish and performance work still to do (started in #35, stopped by the owner on 19 Nov):**
-  - Characters are the biggest cost: about 36–40k triangles each, drawn in the colour pass and again in the shadow pass, and every skinned mesh has `frustumCulled = false` (`render/human/HumanBuilder.ts`, five places), so off-screen people are still drawn. Next step: give each character a fixed, generous bounding sphere and turn culling back on. The Red Lion with 12 people drew 538k character triangles.
-  - Then consider a lower-detail body for distant or background people, and clothes and hair not casting shadows (the body's shadow is enough).
-  - Profile again with the script approach used in #35: `window.__realNow` is the real clock in `?shot=` pages, since `performance.now` is frozen there; `renderer.info` with `autoReset = false` gives triangles per frame.
-  - Fight balance by bot simulation (duration and damage per encounter and boss, by difficulty) hasn't been done.
-  - Repeat-fight income was estimated at £3–5k an hour, not measured.
-  - The jeweller has no earrings or bracelets, so diamond earrings and the bracelets drop as sell-only items.
-  - The black squares on the ground at the first boss are still not looked at.
+- **Performance, still to do:** characters are about 36–40k triangles each (body about 27k). A lower-detail body for background people would be the next big win. Profiling: in `?shot=` pages `window.__realNow` is the real clock (`performance.now` is frozen there), and `renderer.info` with `autoReset = false` gives triangles per frame.
+- **Balance:** `docs/BALANCE.md`. A few late fights (underground platform, Hale House courtyard and gate) sit a little under target; the Estate King is easy.
 
 - PR #20's own "not done" list:
   - section 11 onwards of the jewellery and property brief;

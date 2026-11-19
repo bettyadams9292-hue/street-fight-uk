@@ -366,8 +366,9 @@ test('the slow-motion final blow is only the last enemy standing in the last wav
   const w = startFight(lvl, enc.id, p);
   const state = () => w.encounters.find((e) => e.def.id === enc.id)!;
   const first = state().enemies.filter((f) => !f.isKO);
-  assert(first.length >= 2, 'a wave of at least two');
-  assert(!w.isFinalBlow(first[0]), 'the first of a wave is not the final blow');
+  // The first fight opens with one lad, then two: the lone first one is not the final blow (a wave follows).
+  assert(first.length >= 1 && enc.waves.length >= 2, 'a first wave and a second');
+  assert(!w.isFinalBlow(first[0]), 'the first wave is not the final blow');
   // Clear every wave but leave one standing in the last.
   for (let i = 0; i < 900 && !(state().wave >= enc.waves.length - 1 && state().enemies.filter((f) => !f.isKO).length === 1); i++) {
     const up = state().enemies.filter((f) => !f.isKO);

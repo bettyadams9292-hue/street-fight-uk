@@ -1,6 +1,7 @@
 /**
  * Jewellery on the MakeHuman characters: rings on the ring finger, a watch on
- * the wrist, a chain round the neck and a grill on the top teeth.
+ * the wrist, a bracelet on the other wrist, earrings on the lobes, a chain round the neck and a grill on the
+ * top teeth.
  *
  * Each piece is measured off the character it goes on, in the rest pose,
  * before anything moves: the finger, wrist and neck are sampled from the
@@ -463,6 +464,54 @@ function watchPiece(d: JewelDef, look: JewelLook, prof: number[]): THREE.Group {
   return g;
 }
 
+/** A bracelet round a wrist: a band following the wrist's shape, in chain links, a solid bangle, or a line of stones. */
+function braceletPiece(d: JewelDef, look: JewelLook, prof: number[]): THREE.Group {
+  const g = new THREE.Group();
+  if (d.shape.cat !== 'bracelet') return g;
+  const s = d.shape;
+  const f = FINISHES[look.finish];
+  const width = Math.max(0.004, (s.gauge / 1000) * 1.4);
+  const thick = Math.max(0.0018, (s.gauge / 1000) * 0.45);
+  // Bracelets hang a little looser than a watch strap.
+  const loose = prof.map((r) => r + CLEAR + 0.002);
+  const tex = s.link === 'bangle' ? undefined : linkTexture(s.link, d.stone === 'diamond');
+  if (tex) tex.repeat.set(24, 1);
+  g.add(new THREE.Mesh(bandGeometry(loose, width, thick), d.stone === 'diamond' && s.link === 'tennis' ? stoneMat(STONES.diamond.colour) : metal(f.metal, f.roughness, tex)));
+  if (d.stone === 'diamond' && s.link !== 'tennis') g.add(new THREE.Mesh(bandGeometry(loose.map((r) => r + thick * 0.6), width * 0.4, thick * 0.5), stoneMat(STONES.diamond.colour)));
+  return g;
+}
+
+/** One earring at the lobe: +z points out from the head, +y up. */
+function earringPiece(d: JewelDef, look: JewelLook): THREE.Group {
+  const g = new THREE.Group();
+  if (d.shape.cat !== 'earring') return g;
+  const s = d.shape;
+  const f = FINISHES[look.finish];
+  const m = metal(f.metal, f.roughness);
+  const stone = d.stone ? stoneMat(STONES[d.stone].colour) : null;
+  const mm = s.size / 1000;
+  if (s.kind === 'stud' || s.kind === 'drop') {
+    const stud = new THREE.Mesh(new THREE.SphereGeometry(Math.max(0.0018, mm * 0.45), 10, 8), stone ?? m);
+    stud.scale.z = 0.6;
+    g.add(stud);
+    if (s.kind === 'drop') {
+      const drop = new THREE.Mesh(new THREE.OctahedronGeometry(mm * 0.6, 0), stone ?? m);
+      drop.scale.y = 1.5;
+      drop.position.y = -mm * 1.6;
+      g.add(drop, new THREE.Mesh(new THREE.CylinderGeometry(0.0004, 0.0004, mm * 1.1, 4), m));
+      (g.children[2] as THREE.Mesh).position.y = -mm * 0.7;
+    }
+  } else {
+    // A hoop through the lobe, hanging below it, side-on to the camera like a real one.
+    const r = Math.max(0.004, mm / 2);
+    const hoop = new THREE.Mesh(new THREE.TorusGeometry(r, Math.max(0.0007, mm * 0.04), 6, 24), stone ?? m);
+    hoop.rotation.y = Math.PI / 2;
+    hoop.position.y = -r + 0.001;
+    g.add(hoop);
+  }
+  return g;
+}
+
 /** A pendant hanging at the front of a chain, facing out. */
 function pendantPiece(kind: Pendant, m: THREE.Material, stone: THREE.Material | null): THREE.Group {
   const g = new THREE.Group();
@@ -589,6 +638,7 @@ export function looksFor(a: CharacterAppearance): Partial<Record<JewelCat, Jewel
   if (a.accessories.includes('chain')) out.necklace = a.chainColour === 'gold' ? { id: 'n_rope_3', finish: 'gold9' } : { id: 'n_curb_silver', finish: 'silver' };
   if (a.accessories.includes('watch')) out.watch = { id: 'w_silver_bracelet', finish: 'steel' };
   if (a.accessories.includes('ring')) out.ring = { id: 'r_signet_oval', finish: 'gold9' };
+  if (a.accessories.includes('earring')) out.earring = { id: 'e_hoop_small', finish: a.chainColour === 'gold' ? 'gold9' : 'silver' };
   return out;
 }
 
@@ -615,7 +665,7 @@ export function fitJewellery(a: CharacterAppearance, root: THREE.Object3D, skele
       }
     },
   };
-  if (!looks.ring && !looks.watch && !looks.necklace && !looks.grill) return out;
+  if (!looks.ring && !looks.watch && !looks.necklace && !looks.grill && !looks.bracelet && !looks.earring) return out;
   const cloud = cloudOf(root);
   const index = new Map<string, number>(skeleton.bones.map((b: THREE.Bone, i: number): [string, number] => [b.name, i]));
   const ids = (...names: string[]) => new Set(names.map((n) => index.get(n)).filter((i): i is number => i !== undefined));
@@ -677,6 +727,54 @@ export function fitJewellery(a: CharacterAppearance, root: THREE.Object3D, skele
     if (back.y < 0) back.negate();
     const prof = limbProfile(cloud, ids(`lowerarm01.${S}`, `lowerarm02.${S}`, `wrist.${S}`), centre, axis, back, 0.012, 24, 0.07, 1.3);
     if (prof) place(watchPiece(d, looks.watch, prof), frame(centre, axis, back), fore);
+  }
+
+  // ---- bracelet: the other wrist from the watch, the same height up the arm.
+  const O = S === 'L' ? 'R' : 'L';
+  if (looks.bracelet && has(`lowerarm01.${O}`, `wrist.${O}`)) {
+    const d = JEWELS[looks.bracelet.id];
+    const e = at(`lowerarm01.${O}`);
+    const w = at(`wrist.${O}`);
+    const axis = w.clone().sub(e);
+    const centre = e.clone().addScaledVector(axis, 0.9);
+    const across = has(`finger2-1.${O}`, `finger5-1.${O}`) ? at(`finger5-1.${O}`).sub(at(`finger2-1.${O}`)) : new THREE.Vector3(0, 0, 1);
+    const back = new THREE.Vector3().crossVectors(axis, across).normalize();
+    if (back.y < 0) back.negate();
+    const prof = limbProfile(cloud, ids(`lowerarm01.${O}`, `lowerarm02.${O}`, `wrist.${O}`), centre, axis, back, 0.012, 24, 0.07, 1.3);
+    const foreO = bones.has(`lowerarm02.${O}`) ? `lowerarm02.${O}` : `lowerarm01.${O}`;
+    if (prof) place(braceletPiece(d, looks.bracelet, prof), frame(centre, axis, back), foreO);
+  }
+
+  // ---- earrings: one on each lobe, found as the lowest point of the outermost part of each side of the head.
+  if (looks.earring && has('head')) {
+    const d = JEWELS[looks.earring.id];
+    const head = at('head');
+    const side = new THREE.Vector3().crossVectors(UP, front).normalize();
+    const hb = index.get('head') ?? -1;
+    for (const sign of [1, -1]) {
+      let wide = 0;
+      const pts: THREE.Vector3[] = [];
+      for (let i = 0; i < cloud.bone.length; i++) {
+        if (cloud.part[i] !== 0 || cloud.bone[i] !== hb) continue;
+        const p = new THREE.Vector3(cloud.pos[i * 3], cloud.pos[i * 3 + 1], cloud.pos[i * 3 + 2]);
+        const rel = p.clone().sub(head);
+        const sd = rel.dot(side) * sign;
+        if (sd <= 0 || Math.abs(rel.dot(front)) > 0.035) continue;
+        wide = Math.max(wide, sd);
+        pts.push(p);
+      }
+      if (!pts.length) continue;
+      // The ear: the outermost 12% of that side. Its lowest point is the lobe.
+      let lobe: THREE.Vector3 | null = null;
+      for (const p of pts) {
+        if (p.clone().sub(head).dot(side) * sign < wide * 0.88) continue;
+        if (!lobe || p.y < lobe.y) lobe = p;
+      }
+      if (!lobe) continue;
+      const out = side.clone().multiplyScalar(sign);
+      const m = new THREE.Matrix4().makeBasis(out.clone().cross(UP).negate(), UP, out).setPosition(lobe.clone().addScaledVector(out, 0.002));
+      place(earringPiece(d, looks.earring), m, 'head');
+    }
   }
 
   // ---- necklace: round the base of the neck, over the collarbones, dipping down the chest.
@@ -906,6 +1004,22 @@ export function previewPiece(look: JewelLook): THREE.Group {
       }
       g.rotation.x = 0.35;
     }
+  } else if (d.cat === 'bracelet') {
+    const prof = Array.from({ length: 24 }, (_, b) => {
+      const a = (b / 24) * Math.PI * 2;
+      return 1 / Math.sqrt((Math.sin(a) / 0.03) ** 2 + (Math.cos(a) / 0.022) ** 2);
+    });
+    const br = braceletPiece(d, look, prof);
+    br.rotation.x = Math.PI / 2 - 0.45;
+    g.add(br);
+  } else if (d.cat === 'earring') {
+    // The pair side by side, facing the camera.
+    for (const x of [-0.012, 0.012]) {
+      const e = earringPiece(d, look);
+      e.rotation.y = x < 0 ? -Math.PI / 2 : Math.PI / 2;
+      e.position.x = x;
+      g.add(e);
+    }
   } else if (d.cat === 'grill') {
     g.add(grillPiece(d, look, 0.026, 0.017, 0.0085));
     const low = grillPiece(d, look, 0.024, 0.017, 0.0085, true);
@@ -923,5 +1037,5 @@ export function previewPiece(look: JewelLook): THREE.Group {
 export function previewRadius(look: JewelLook): number {
   const d = JEWELS[look.id];
   if (!d) return 0.05;
-  return d.cat === 'necklace' ? 0.09 : d.cat === 'watch' ? 0.045 : d.cat === 'grill' ? 0.035 : 0.02;
+  return d.cat === 'necklace' ? 0.09 : d.cat === 'watch' || d.cat === 'bracelet' ? 0.045 : d.cat === 'grill' ? 0.035 : d.cat === 'earring' ? 0.025 : 0.02;
 }
