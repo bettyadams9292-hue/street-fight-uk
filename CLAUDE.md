@@ -162,7 +162,18 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - the casino's prize draw (paid back 201%) and motor competition (1 in 40 for any car: a money machine) now return under 100%, like every other game (`HOUSE_RETURN`, `compOdds`).
   - Target: first mansion about 28 hours after the towns, every property about 51.
 
+- #35: performance, first step: kit streets are baked in 12 m chunks (`STREET_CHUNK` in `render/kit/PolyKit.ts`) so off-screen parts are culled in both passes; a fight scene drew about 850k triangles a frame, now about 670k.
+
 ## Open questions and next steps
+
+- **Polish and performance work still to do (started in #35, stopped by the owner on 19 Nov):**
+  - Characters are the biggest cost: about 36–40k triangles each, drawn in the colour pass and again in the shadow pass, and every skinned mesh has `frustumCulled = false` (`render/human/HumanBuilder.ts`, five places), so off-screen people are still drawn. Next step: give each character a fixed, generous bounding sphere and turn culling back on. The Red Lion with 12 people drew 538k character triangles.
+  - Then consider a lower-detail body for distant or background people, and clothes and hair not casting shadows (the body's shadow is enough).
+  - Profile again with the script approach used in #35: `window.__realNow` is the real clock in `?shot=` pages, since `performance.now` is frozen there; `renderer.info` with `autoReset = false` gives triangles per frame.
+  - Fight balance by bot simulation (duration and damage per encounter and boss, by difficulty) hasn't been done.
+  - Repeat-fight income was estimated at £3–5k an hour, not measured.
+  - The jeweller has no earrings or bracelets, so diamond earrings and the bracelets drop as sell-only items.
+  - The black squares on the ground at the first boss are still not looked at.
 
 - PR #20's own "not done" list:
   - section 11 onwards of the jewellery and property brief;

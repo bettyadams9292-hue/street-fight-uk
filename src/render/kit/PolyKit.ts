@@ -2,9 +2,10 @@
  * The low-poly kits the long street is built from (public/models/polyfork,
  * Polyfork, CC BY 4.0, credits in CREDITS.txt beside the pack).
  *
- * The pack is one binary file. A whole district's worth of models is baked
- * into at most four meshes (solid, glass, lit, plus sign boards), so a street
- * of two hundred pieces costs a handful of draw calls.
+ * The pack is one binary file. A district's models are baked into a few meshes
+ * per 12 m chunk (solid, glass, lit, plus sign boards), so a street of two
+ * hundred pieces costs a few dozen draw calls, and the chunks off screen (or
+ * outside the shadow camera) are culled.
  */
 import { streetDetail } from '../materials/streetDetail';
 import * as THREE from 'three';
@@ -140,6 +141,9 @@ function model(id: string): Partial<Record<PartName, Part>> | null {
 }
 
 /** Grows as pieces are baked in. */
+/** Width of one baked chunk of street along x, metres: about two screens' worth on a phone. */
+export const STREET_CHUNK = 12;
+
 class Bucket {
   pos: number[] = [];
   nrm: number[] = [];
@@ -248,9 +252,15 @@ export interface KitFader {
  */
 export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): KitStreetView | null {
   if (!polyKitReady()) return null;
-  const solid = new Bucket();
-  const glass = new Bucket();
-  const lit = new Bucket();
+  // The street is baked in chunks along x, so the camera (and the shadow camera) can cull what's off screen.
+  // One mesh per district used to be drawn whole, twice (shadow pass and colour), for each of three districts.
+  const chunks = new Map<number, { solid: Bucket; glass: Bucket; lit: Bucket }>();
+  const chunk = (x: number) => {
+    const k = Math.floor(x / STREET_CHUNK);
+    let c = chunks.get(k);
+    if (!c) chunks.set(k, (c = { solid: new Bucket(), glass: new Bucket(), lit: new Bucket() }));
+    return c;
+  };
   const missing = new Set<string>();
   const tint = new THREE.Color();
   const paint = new THREE.Color();
@@ -262,7 +272,7 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
       missing.add(pl.model);
       continue;
     }
-    let into = { solid, glass, lit };
+    let into = chunk(pl.x);
     if (pl.own) {
       let o = own.get(pl.own);
       if (!o) own.set(pl.own, (o = { solid: new Bucket(), glass: new Bucket(), lit: new Bucket() }));
@@ -278,7 +288,10 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     if (m.glass) into.glass.add(m.glass, pl, null);
     if (m.lit) into.lit.add(m.lit, pl, null);
   }
-  for (const b of plan.blocks) (b.glow ? lit : solid).block(b);
+  for (const b of plan.blocks) {
+    const c = chunk(b.x);
+    (b.glow ? c.lit : c.solid).block(b);
+  }
 
   const group = new THREE.Group();
   group.name = `kit-street:${plan.area}`;
@@ -286,7 +299,6 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
   let triangles = 0;
   const add = (b: Bucket, mat: THREE.Material, shadows: boolean, order = 0, name = ''): void => {
     const g = b.geometry();
-    disposables.push(mat);
     if (!g) return;
     disposables.push(g);
     const mesh = new THREE.Mesh(g, mat);
@@ -300,12 +312,17 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
   const street = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 });
   // Asphalt, concrete and brick from the texture library, laid by world position (materials/streetDetail.ts).
   streetDetail(street, [...plan.area].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7), plan.ground);
-  add(solid, street, true, 0, 'solid');
   // Windows and lamp heads glow; their own colour is ignored at night so every pane reads as warm light.
   const litMat = new THREE.MeshStandardMaterial({ color: '#2a2018', emissive: new THREE.Color('#ffc880'), emissiveIntensity: o.night === false ? 0.3 : 0.6, roughness: 0.5 });
   roomLight(litMat);
-  add(lit, litMat, false, 0, 'lit');
-  add(glass, new THREE.MeshStandardMaterial({ color: '#9fc0d0', roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.22, depthWrite: false }), false, 2, 'glass');
+  const glassMat = new THREE.MeshStandardMaterial({ color: '#9fc0d0', roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.22, depthWrite: false });
+  disposables.push(street, litMat, glassMat);
+  for (const k of [...chunks.keys()].sort((a, b) => a - b)) {
+    const c = chunks.get(k)!;
+    add(c.solid, street, true, 0, 'solid');
+    add(c.lit, litMat, false, 0, 'lit');
+    add(c.glass, glassMat, false, 2, 'glass');
+  }
 
   // Vehicles of their own: one mesh each (bodywork plus glass), with their own materials so they can fade.
   const faders: KitFader[] = [];
