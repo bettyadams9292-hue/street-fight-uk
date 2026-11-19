@@ -232,9 +232,18 @@ export class InputManager {
 
   /**
    * Rumble the gamepad, if it has a motor and you're playing on it: `strong` is the low, heavy motor,
-   * `weak` the high buzz (0..1 each). Phones and keyboards do nothing.
+   * `weak` the high buzz (0..1 each). On a phone it's a short vibration instead, when `vibration` is on
+   * (Android browsers; iPhone Safari has no vibration API, so nothing happens there).
    */
+  vibration = true;
   rumble(strong: number, weak: number, ms: number): void {
+    if (this.lastDevice === 'touch') {
+      if (!this.vibration || typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+      // Phone motors are strong: keep buzzes short, scaled by how hard the hit was.
+      const len = Math.round(Math.max(8, Math.min(70, ms * (0.25 + Math.min(1, strong) * 0.45))));
+      try { navigator.vibrate(len); } catch { /* blocked until the first tap */ }
+      return;
+    }
     if (this.lastDevice !== 'gamepad' || typeof navigator === 'undefined' || !navigator.getGamepads) return;
     const pad = Array.from(navigator.getGamepads()).find((p): p is Gamepad => !!p && p.connected);
     const act = (pad as (Gamepad & { vibrationActuator?: { playEffect?: (t: string, p: object) => Promise<unknown> } }) | undefined)?.vibrationActuator;

@@ -20,3 +20,15 @@ These are original work for Street Fight UK. They contain no samples, so no lice
 | `amb_night_0` | night-time estate ambience (24 s seamless loop) |
 
 The live synthesis in `src/audio/AudioManager.ts` is still the fallback for any of these that fail to load.
+
+## Original music
+
+Also original work, with no samples: `tools/audio/make_music.py` synthesises three grime-style instrumentals at 140 bpm in F# minor (808 sub, square "eskibeat" lead, synthesised drums) and writes them as seamless stereo MP3 loops.
+
+| File | Plays |
+|---|---|
+| `music_menu.mp3` | main menu and character creator (14 s loop) |
+| `music_street.mp3` | out on the streets (28 s loop) |
+| `music_boss.mp3` | while a boss is up (28 s loop) |
+
+Home, shops, the pub and other rooms have no music. Volume is under Settings → Music volume.

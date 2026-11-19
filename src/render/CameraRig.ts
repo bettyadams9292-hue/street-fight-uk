@@ -23,7 +23,8 @@ export class CameraRig {
   setAspect(aspect: number): void {
     this.camera.aspect = aspect;
     // Keep horizontal coverage reasonable on tall (portrait) screens.
-    this.camera.fov = aspect < 1 ? 52 : aspect < 1.4 ? 42 : 34;
+    // Portrait trades a little width for bigger fighters (the off-screen markers show anyone outside it).
+    this.camera.fov = aspect < 1 ? 46 : aspect < 1.4 ? 42 : 34;
     this.camera.updateProjectionMatrix();
   }
 

@@ -25,6 +25,7 @@ export class AudioManager {
   private master!: GainNode;
   private sfx!: GainNode;
   private ambience!: GainNode;
+  private music!: GainNode;
   private noiseBuffer!: AudioBuffer;
   private ambienceStarted = false;
   private settings: Settings;
@@ -52,6 +53,7 @@ export class AudioManager {
       (b) => {
         this.decoded.set(id, b);
         if (id === 'sfx_amb_night_0') this.upgradeAmbience();
+        if (id === `sfx_music_${this.musicWant}`) this.syncMusic();
       },
       () => this.raw.delete(id),
     );
@@ -97,10 +99,13 @@ export class AudioManager {
     this.ambience = this.ctx.createGain();
     this.sfx.connect(this.master);
     this.ambience.connect(this.master);
+    this.music = this.ctx.createGain();
+    this.music.connect(this.master);
     this.master.connect(this.ctx.destination);
     this.noiseBuffer = this.makeNoise(2);
     this.applySettings(this.settings);
     for (const id of this.raw.keys()) this.decode(id);
+    this.syncMusic();
   }
 
   applySettings(s: Settings): void {
@@ -110,6 +115,7 @@ export class AudioManager {
     this.master.gain.setTargetAtTime(s.masterVolume, t, 0.05);
     this.sfx.gain.setTargetAtTime(s.effectsVolume, t, 0.05);
     this.ambience.gain.setTargetAtTime(s.ambienceVolume * 0.6, t, 0.2);
+    this.music.gain.setTargetAtTime(s.musicVolume * 0.5, t, 0.2);
   }
 
   private makeNoise(seconds: number): AudioBuffer {
@@ -469,4 +475,34 @@ export class AudioManager {
     this.recordedLoop(buf, this.ambience, 0.55, 1.5);
     return true;
   }
+
+  // ---- music -----------------------------------------------------------------
+
+  private musicWant: MusicTrack | null = null;
+  private musicNow: { track: MusicTrack; stop: () => void } | null = null;
+
+  /**
+   * Play a music loop (public/audio/music_*.mp3, made by tools/audio/make_music.py), crossfading from
+   * whatever was on; null fades it out. Safe to call every frame: it only acts on a change.
+   */
+  setMusic(track: MusicTrack | null): void {
+    if (track === this.musicWant) return;
+    this.musicWant = track;
+    this.syncMusic();
+  }
+
+  private syncMusic(): void {
+    if (!this.ctx) return;
+    if (this.musicNow?.track === this.musicWant) return;
+    const buf = this.musicWant ? this.decoded.get(`sfx_music_${this.musicWant}`) : null;
+    if (this.musicWant && !buf) return; // not loaded yet: decode() calls back here
+    this.musicNow?.stop();
+    this.musicNow = null;
+    if (this.musicWant && buf) {
+      const loop = this.recordedLoop(buf, this.music, 1, this.musicWant === 'boss' ? 0.6 : 2.5);
+      this.musicNow = { track: this.musicWant, stop: loop.stop };
+    }
+  }
 }
+
+export type MusicTrack = 'menu' | 'street' | 'boss';

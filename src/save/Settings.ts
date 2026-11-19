@@ -11,6 +11,9 @@ export interface Settings {
   masterVolume: number; // 0..1
   effectsVolume: number; // 0..1
   ambienceVolume: number; // 0..1
+  musicVolume: number; // 0..1
+  /** Phones: a short buzz on hits, blocks and knockdowns (Android; iPhone browsers ignore it). */
+  vibration: boolean;
   screenShake: boolean;
   quality: Quality;
   /** The Sodium Night look: reflections, glow and colour grade. Never used at low quality. */
@@ -29,6 +32,8 @@ export const DEFAULT_SETTINGS: Settings = {
   masterVolume: 0.8,
   effectsVolume: 0.9,
   ambienceVolume: 0.5,
+  musicVolume: 0.55,
+  vibration: true,
   screenShake: true,
   quality: 'medium',
   lighting: true,

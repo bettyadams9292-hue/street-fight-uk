@@ -57,6 +57,7 @@ export function settingsScreen(store: SettingsStore, ui: UIManager): Screen {
         sliderRow('Master volume', s.masterVolume, (v) => store.update({ masterVolume: v }), { art: 'master-volume' }),
         sliderRow('Effects volume', s.effectsVolume, (v) => store.update({ effectsVolume: v }), { art: 'effects-volume' }),
         sliderRow('Ambience volume', s.ambienceVolume, (v) => store.update({ ambienceVolume: v }), { art: 'ambience-volume' }),
+        sliderRow('Music volume', s.musicVolume, (v) => store.update({ musicVolume: v }), { art: 'music-volume' }),
         h('h3', {}, titleArt('Display', 'display')),
         cycleRow<Quality>('Graphics quality', [
           { value: 'low', label: 'Low', art: 'low' },
@@ -81,6 +82,10 @@ export function settingsScreen(store: SettingsStore, ui: UIManager): Screen {
           { value: 'on', label: 'Always on' },
           { value: 'off', label: 'Off' },
         ], s.touchControls, (v) => store.update({ touchControls: v }), 'touch-controls'),
+        cycleRow<boolean>('Vibration', [
+          { value: true, label: 'On' },
+          { value: false, label: 'Off' },
+        ], s.vibration, (v) => store.update({ vibration: v }), 'vibration'),
         h('h3', {}, titleArt('Training', 'training')),
         cycleRow<boolean>('Show hitboxes (F1)', [
           { value: false, label: 'Off' },

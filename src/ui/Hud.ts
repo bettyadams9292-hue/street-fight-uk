@@ -406,6 +406,32 @@ export class Hud {
     }
   }
 
+  /** Red arrows at the screen edge for anyone coming at you from outside the view (screen pixels). */
+  private markers: HTMLElement[] = [];
+  private markerLayer: HTMLElement | null = null;
+  updateMarkers(list: { y: number; side: -1 | 1; near: boolean }[]): void {
+    if (!this.markerLayer) {
+      this.markerLayer = h('div', { class: 'edge-markers' });
+      this.el.append(this.markerLayer);
+    }
+    while (this.markers.length < list.length) {
+      const m = h('div', { class: 'edge-marker' });
+      this.markerLayer.append(m);
+      this.markers.push(m);
+    }
+    this.markers.forEach((m, i) => {
+      const e = list[i];
+      if (!e) {
+        m.style.display = 'none';
+        return;
+      }
+      m.style.display = '';
+      m.classList.toggle('left', e.side < 0);
+      m.classList.toggle('near', e.near);
+      m.style.top = `${Math.round(e.y)}px`;
+    });
+  }
+
   clearBubbles(): void {
     for (const b of this.bubbles) b.el.remove();
     this.bubbles = [];

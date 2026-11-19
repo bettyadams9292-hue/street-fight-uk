@@ -1,6 +1,6 @@
 import { setHumansEnabled } from './render/human/HumanRig';
 import { slugify } from './ui/titles';
-import { AudioManager } from './audio/AudioManager';
+import { AudioManager, type MusicTrack } from './audio/AudioManager';
 import { DT } from './core/constants';
 import { TrainingMode } from './core/TrainingMode';
 import { ARCHETYPE_IDS, type ArchetypeId } from './ai/archetypes';
@@ -2043,12 +2043,38 @@ export class Game {
       v.health = Math.max(1, Math.round(v.maxHealth * frac));
     }
     this.audio.applySettings(s);
+    this.input.vibration = s.vibration;
     this.renderer.applyQuality(s.quality);
     setHumansEnabled(s.quality !== 'low');
     this.renderer.setLighting(s.lighting);
     this.renderer.hitboxes.visible = s.showHitboxes;
     this.hud.setFpsVisible(s.showFps);
     this.updateTouchVisibility();
+  }
+
+  /** Arrows on the screen edge for enemies closing in from outside the view (tight in portrait). */
+  private updateEdgeMarkers(player: Fighter): void {
+    const out: { y: number; side: -1 | 1; near: boolean }[] = [];
+    const foes = this.world ? [...this.world.enemies, ...this.world.police] : [];
+    const w = window.innerWidth;
+    for (const e of foes) {
+      if (e.isKO || Math.abs(e.pos.x - player.pos.x) > 14) continue;
+      const p = this.renderer.screenOf(e.pos.x, e.pos.y + 1.2, e.pos.z);
+      if (!p || (p.x >= 0 && p.x <= w)) continue;
+      out.push({ y: Math.max(80, Math.min(window.innerHeight * 0.6, p.y)), side: p.x < 0 ? -1 : 1, near: Math.abs(e.pos.x - player.pos.x) < 4 });
+    }
+    this.hud.updateMarkers(out);
+  }
+
+  /** Menu theme on the menus, the street track outside, the boss track while a boss is up, quiet indoors. */
+  private updateMusic(): void {
+    let want: MusicTrack | null = null;
+    if (this.state === 'menu' || this.state === 'studio') want = 'menu';
+    else if (this.world) {
+      if (this.world.activeBoss) want = 'boss';
+      else if (!INDOOR_THEMES.has(this.world.level.theme) && this.world.level.weather !== 'indoors') want = 'street';
+    } else if (this.mode) want = 'street';
+    this.audio.setMusic(want);
   }
 
   private touchWanted(): boolean {
@@ -2118,6 +2144,7 @@ export class Game {
         this.audio.block();
         this.renderer.fx.burst(hit.x, hit.y, hit.z, Math.sign(hit.target.pos.x - hit.attacker.pos.x) || 1, 'block');
         floatAt(hit.x, hit.y + 0.25, hit.z, hit.damage >= 0.5 ? `${Math.round(hit.damage)}` : 'BLOCK', 'block');
+        if (isPlayer(hit.target) || isPlayer(hit.attacker)) this.input.rumble(0.1, 0.3, 30);
       }),
       bus.on('guard:broken', () => {
         this.audio.guardBreak();
@@ -2126,10 +2153,12 @@ export class Game {
       }),
       bus.on('fighter:knockdown', () => {
         this.audio.knockdown();
+        this.input.rumble(0.8, 0.5, 140);
         this.hud.notify('KNOCKDOWN', 'info');
       }),
       bus.on('fighter:ko', ({ fighter }) => {
         this.audio.ko();
+        this.input.rumble(1, 0.6, 200);
         this.hud.notify(isPlayer(fighter) ? 'YOU’RE DOWN' : 'K.O.', 'big');
         if (this.settings.get().screenShake) cam.addShake(0.25);
         // The blow that wins the fight (or loses it) plays in slow motion, with the camera pushing in.
@@ -2329,6 +2358,7 @@ export class Game {
     }
 
     if (this.state === 'playing') this.house.update();
+    this.updateMusic();
     const player = this.activePlayer;
     const inFight = (this.state === 'playing' || this.state === 'paused' || this.state === 'transition' || this.state === 'editing' || this.state === 'training') && !!player;
     this.updateStairs(dt);
@@ -2345,6 +2375,7 @@ export class Game {
       // In story mode the boss has its own bar along the bottom.
       this.hud.update(realDt, player, this.world?.activeBoss && enemy === this.world.activeBoss ? null : enemy);
       this.hud.updateBubbles((x, y, z) => this.renderer.screenOf(x, y, z));
+      this.updateEdgeMarkers(player);
       if (this.world && this.progress) this.updateStoryHud(dt);
       this.updatePrompt();
     }
@@ -2352,6 +2383,9 @@ export class Game {
     if (!forced) requestAnimationFrame((n) => this.frame(n));
   }
 }
+
+/** Places with no music: home, shops, the pub and other rooms (their own sounds carry them). */
+const INDOOR_THEMES = new Set<string>(['home', 'shop', 'pawn', 'pub', 'furniture_store', 'car_showroom', 'bike_shop', 'basement', 'grow_shop', 'gym_store', 'casino']);
 
 /** Your own clothes are the basics; everything else is bought, found or stolen and worn from the inventory. */
 function starterLocked(key: string): boolean {
