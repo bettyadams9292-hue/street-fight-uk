@@ -44,6 +44,134 @@ export function createAsset(id:AssetId):THREE.Group{
  case 'gardenWaterButt':C(.39,1.02,0,.56,0,green,40);C(.42,.08,0,1.10,0,dark,40);C(.07,.06,0,.20,.40,steel);R([0,.20,.40],[0,.12,.50],.035,black);for(const x of [-.25,.25])B(.12,.10,.52,x,.05,0,black);break;
  }
 
+
+ // STRUCTURAL REBUILD: remove obstructing prototype geometry instead of stacking decorative patches.
+ if(['terracedDoor','bayWindow','sashWindow','shopFascia','pubWindow','shopAwning','butcherCounter','chippyWarmer','fishChipFryer'].includes(id)){
+  g.clear();
+  const clearGlass=new THREE.MeshPhysicalMaterial({color:0xb2cbd0,transparent:true,opacity:.32,roughness:.09,metalness:0,side:THREE.DoubleSide,depthWrite:false});
+  const trim=(w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>B(w,h,d,x,y,z,m);
+  switch(id){
+   case 'terracedDoor':{
+    // A solid four-panel Victorian door; the fanlight is a SEPARATE aperture above it.
+    const leaf=M(0x244c40,.12),recess=M(0x173a32),mould=M(0x426b5b);
+    B(.94,.10,.20,0,.08,.03,stone);
+    B(.10,2.30,.19,-.50,1.23,0,white);B(.10,2.30,.19,.50,1.23,0,white);
+    B(1.10,.12,.20,0,2.42,0,stone);
+    B(.90,2.02,.075,0,1.10,.06,leaf);
+    // Inset four-panel arrangement, moulding set just proud of the face.
+    for(const y of [.58,1.44])for(const x of [-.218,.218]){
+      const h=y>1?.52:.55;
+      B(.34,h,.008,x,y,.105,recess);
+      for(const xx of [x-.175,x+.175])B(.019,h+.025,.021,xx,y,.116,mould);
+      for(const yy of [y-h/2,y+h/2])B(.37,.020,.021,x,yy,.116,mould);
+      B(.28,h-.10,.006,x,y,.113,leaf);
+    }
+    // Door handle, knocker and letterbox all attached to the outer door plane.
+    B(.075,.10,.028,.32,1.04,.123,brass);
+    B(.15,.022,.05,.32,1.04,.147,brass);
+    B(.30,.07,.028,0,.41,.124,brass);
+    B(.21,.014,.030,0,.41,.144,black);
+    // Real fanlight above, separated by a timber transom, not floating in the door.
+    B(.90,.22,.015,0,2.24,.045,clearGlass);
+    B(.95,.055,.10,0,2.10,.10,white);
+    B(.035,.21,.035,0,2.24,.075,white);
+    B(.38,.025,.025,0,2.35,.082,white);
+    break;
+   }
+   case 'bayWindow':{
+    // Projecting three-light window with angled side returns and transparent glazing.
+    B(1.75,.10,.70,0,.12,.06,stone);B(1.77,.12,.74,0,1.38,.06,stone);
+    B(1.60,.13,.55,0,.26,.05,cream);
+    for(const x of [-.48,0,.48]){
+      B(.43,.95,.015,x,.84,.36,clearGlass);
+      for(const xx of [x-.225,x+.225])B(.035,1.02,.055,xx,.84,.385,white);
+      for(const yy of [.35,.83,1.34])B(.47,.035,.052,x,yy,.385,white);
+    }
+    for(const x of [-.77,.77])B(.06,1.18,.61,x,.82,.05,white);
+    B(1.65,.045,.055,0,.86,.39,white);break;
+   }
+   case 'sashWindow':{
+    B(1.22,.11,.18,0,.08,0,stone);
+    for(const x of [-.55,.55])B(.085,1.62,.14,x,.88,0,white);
+    for(const y of [.12,1.63])B(1.18,.09,.14,0,y,0,white);
+    B(1.02,1.40,.015,0,.87,.05,clearGlass);
+    B(1.04,.065,.07,0,.84,.11,white);
+    for(const x of [-.27,.27])B(.028,1.39,.03,x,.87,.11,white);
+    for(const y of [.44,1.25])B(1.03,.026,.03,0,y,.11,white);
+    B(.13,.022,.025,0,.80,.15,brass);break;
+   }
+   case 'shopFascia':{
+    // A shopfront with a genuinely open window and a recessed entrance.
+    B(2.9,.38,.19,0,2.20,0,green);
+    B(2.95,.075,.25,0,2.42,0,white);B(2.95,.07,.25,0,1.98,0,white);
+    for(const x of [-1.39,.56,1.39])B(.105,2.02,.18,x,1.00,0,wood);
+    B(2.80,.19,.30,0,.11,0,stone);
+    B(1.70,.30,.09,-.41,.34,.09,green);
+    B(1.68,1.39,.014,-.42,1.19,.07,clearGlass);
+    for(const x of [-1.25,.41])B(.045,1.39,.06,x,1.19,.11,white);
+    B(1.73,.055,.07,-.42,1.34,.11,white);
+    B(.73,1.81,.055,.99,1.00,-.10,green);
+    B(.58,1.25,.014,.99,1.32,-.061,clearGlass);
+    B(.55,.07,.04,.99,.72,-.04,wood);
+    B(.06,.13,.035,1.25,1.00,-.025,brass);
+    break;
+   }
+   case 'pubWindow':{
+    for(const x of [-.81,.81])B(.085,1.52,.16,x,.78,0,wood);
+    for(const y of [.09,1.48])B(1.67,.10,.16,0,y,0,wood);
+    B(1.50,1.33,.012,0,.79,.05,clearGlass);
+    for(const x of [-.50,0,.50])B(.028,1.35,.05,x,.79,.105,wood);
+    for(const y of [.44,.87,1.23])B(1.50,.03,.05,0,y,.105,wood);
+    B(1.75,.08,.28,0,.055,.08,stone);break;
+   }
+   case 'shopAwning':{
+    // Sloped fabric canopy; no disconnected flat stripes.
+    B(2.76,.13,.20,0,2.38,-.65,dark);
+    for(let i=0;i<12;i++){
+      const x=-1.265+i*.23;
+      const a=B(.229,.025,1.23,x,2.11,-.02,i%2?cream:red);
+      a.rotation.x=.21;
+      B(.229,.15,.027,x,1.95,.60,i%2?cream:red);
+    }
+    for(const x of [-1.23,1.23]){
+      R([x,2.34,-.60],[x,1.99,.60],.025,steel);
+      R([x,2.34,-.60],[x,2.20,.02],.015,steel);
+    }break;
+   }
+   case 'butcherCounter':{
+    B(1.72,.75,.77,0,.39,0,cream);B(1.76,.09,.84,0,.79,0,steel);
+    B(1.59,.035,.54,0,.80,.03,white);
+    for(const x of [-.50,0,.50]){const meat=new THREE.Mesh(new THREE.SphereGeometry(.15,18,12),red);meat.scale.set(1.12,.38,.85);meat.position.set(x,.87,.04);g.add(meat)}
+    B(1.67,.35,.015,0,.99,.39,clearGlass);
+    for(const x of [-.81,.81])B(.035,.41,.045,x,.97,.40,steel);
+    B(1.73,.06,.05,0,1.19,.41,steel);break;
+   }
+   case 'chippyWarmer':{
+    B(1.22,.78,.60,0,.41,0,steel);
+    B(1.12,.05,.51,0,.79,0,white);
+    for(const x of [-.34,0,.34]){
+      B(.31,.03,.38,x,.33,.07,slate);
+      for(let j=0;j<5;j++)B(.035,.045,.25,x-.12+j*.06,.39,.07,food);
+    }
+    B(1.12,.40,.012,0,.56,.31,clearGlass);
+    for(const x of [-.56,.56])B(.035,.45,.04,x,.57,.32,steel);
+    B(1.14,.06,.045,0,.81,.31,steel);break;
+   }
+   case 'fishChipFryer':{
+    B(1.60,.83,.75,0,.45,0,steel);
+    B(1.64,.08,.79,0,.89,0,white);
+    for(const x of [-.49,0,.49]){
+      B(.41,.018,.49,x,.95,0,slate);
+      for(const xx of [x-.16,x+.16])R([xx,.99,-.18],[xx,.99,.18],.015,steel);
+      R([x-.16,.99,.18],[x+.16,.99,.18],.015,steel);
+      B(.25,.07,.03,x,.80,.39,black);
+      C(.03,.025,x,.80,.42,red);
+    }
+    B(1.62,.11,.05,0,.15,.38,steel);break;
+   }
+  }
+ }
+
  // PASS ONE: construction, material layering, realistic fixtures and British character.
  const slate=M(0x4b5258,.18),aged=M(0x6b5448),brass=M(0xa98b54,.7),rubber=M(0x24282a),paper=M(0xe7ddc6),veg=M(0x5a823e),tomato=M(0xb83d32),ceramic=M(0xd8d6ce),enamel=M(0xced3d1,.1);
  const sphere=(r:number,x:number,y:number,z:number,m:THREE.Material,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o)};
