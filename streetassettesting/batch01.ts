@@ -83,8 +83,84 @@ export function createAsset(id:AssetId):THREE.Group{
   for(const x of [-.322,.322])box(.012,.40,.015,x,.245,.08,woodDark);
   box(.23,.14,.008,.08,.27,.264,cream);
  }
+
+ // UK high-street identity pass: measured fittings, practical fixtures, and grounded detailing.
+ const brass=m(0xa88b54,.65,.35),ink=m(0x1b2229),brick=m(0x9c4c3f),yellow=m(0xe2b941),grey=m(0x626b71,.3),white=m(0xf1efe7),tape=m(0x9b7d53);
+ const panel=(w:number,h:number,x:number,y:number,z:number,material:THREE.Material)=>box(w,h,.008,x,y,z,material);
+ const label=(w:number,h:number,x:number,y:number,z:number,colour:THREE.Material)=>{panel(w,h,x,y,z,white);panel(w*.75,h*.20,x,y,z+.008,colour)};
+ if(id==='retailCounter'||id==='shopCounterTill'){
+  // Compact UK newsagent/corner-shop counter with protective kickboard, card terminal and shelf edging.
+  box(1.77,.13,.055,0,.11,.354,ink);box(1.82,.025,.78,0,.955,0,grey);
+  for(const x of [-.56,0,.56])box(.018,.64,.028,x,.47,.355,brass);
+  box(.19,.095,.24,-.52,1.035,-.08,ink);box(.13,.014,.14,-.52,1.095,-.065,blue);
+  box(.42,.07,.28,-.14,1.025,.02,cream);
+  if(id==='shopCounterTill'){
+   // Customer-facing chip-and-PIN terminal and receipt printer.
+   box(.17,.065,.24,-.47,1.06,.09,dark);box(.13,.01,.09,-.47,1.1,.10,blue);
+   box(.18,.14,.19,.68,1.045,-.16,grey);box(.12,.10,.006,.68,1.09,-.056,white);
+  }
+ }
+ if(id==='highTable'){
+  // British pub/café poseur table: robust dark timber, brass foot ring, stable weighted base.
+  cyl(.38,.014,0,1.105,0,woodDark,48);
+  cyl(.23,.035,0,.29,0,brass,48);
+  for(let a=0;a<8;a++){const t=a*Math.PI/4;rod([Math.sin(t)*.22,.28,Math.cos(t)*.22],[Math.sin(t+.24)*.22,.28,Math.cos(t+.24)*.22],.011,brass);}
+ }
+ if(id==='stockedShelves'){
+  // Newsagent-style price-edge rails, product facings and shelf backboard.
+  box(1.8,2.06,.035,0,1.07,-.26,grey);
+  for(let row=0;row<4;row++){
+   const y=.23+row*.47;
+   for(let i=0;i<9;i++){const x=-.72+i*.18;label(.095,.045,x,y+.005,.287,ink);}
+  }
+  box(1.75,.14,.04,0,2.14,.25,red);
+ }
+ if(id==='manholeCover'){
+  // Flush UK ductile iron utility cover, double-lifting keyholes and anti-slip ribs.
+  for(let i=0;i<7;i++){const z=-.30+i*.10;box(.56,.012,.024,0,.118,z,ink);}
+  for(const x of [-.31,.31]){box(.075,.009,.035,x,.126,0,grey);box(.02,.009,.07,x,.13,0,ink);}
+  cyl(.51,.025,0,.026,0,grey,64);
+ }
+ if(id==='queueBarrier'){
+  // UK retractable queue stanchion, belt cartridge and stable circular weighted foot.
+  cyl(.145,.018,0,.038,0,grey);cyl(.045,.07,0,.9,0,ink);
+  box(.17,.052,.115,0,.985,0,ink);
+  for(const x of [-.07,.07])box(.022,.022,.09,x,.984,0,steel);
+ }
+ if(id==='drinksFridge'){
+  // Upright shop drinks chiller with black gasket, canopy, compressor grille and shelf labels.
+  box(.74,1.58,.023,0,1,.407,ink);
+  box(.68,1.49,.009,0,1,.423,glass);
+  for(const y of [.32,.69,1.06,1.43]){
+   box(.68,.026,.02,0,y,.429,steel);
+   for(let i=0;i<5;i++)label(.085,.04,-.27+i*.135,y+.028,.445,ink);
+  }
+  for(let i=0;i<9;i++)box(.055,.022,.015,-.29+i*.073,.105,.368,grey);
+  box(.65,.085,.012,0,1.85,.365,white);box(.58,.025,.012,0,1.85,.379,red);
+  box(.04,1.1,.055,.337,1.0,.45,steel);
+ }
+ if(id==='streetPlanter'){
+  // UK town-centre municipal planter: powder-coated steel bands and shrub foliage.
+  for(const y of [.14,.36,.57])cyl(.46,.022,0,y,0,ink,8);
+  for(let i=0;i<8;i++){const a=i*Math.PI/4;const o=box(.075,.43,.014,Math.sin(a)*.425,.32,Math.cos(a)*.425,grey);o.rotation.y=a;}
+  for(let i=0;i<12;i++){const a=i*2.399;const p=sphere(.10,Math.sin(a)*.24,1.04+(i%3)*.14,Math.cos(a)*.24,green);p.scale.set(1.2,.65,1.4);}
+ }
+ if(id==='globeStreetLight'){
+  // Traditional UK heritage-style globe column: finial, fluted shaft and cast base.
+  for(let i=0;i<8;i++){const a=i*Math.PI/4;rod([Math.sin(a)*.077,.30,Math.cos(a)*.077],[Math.sin(a)*.077,2.69,Math.cos(a)*.077],.009,grey);}
+  for(const y of [.15,.35,2.84,3.18])cyl(.105,.045,0,y,0,brass);
+  cyl(.11,.08,0,3.9,0,ink);sphere(.055,0,3.97,0,brass);
+ }
+ if(id==='cardboardBox'){
+  // UK parcel carton: taped centre seam, side flaps, printed shipping label.
+  box(.07,.012,.53,0,.512,0,tape);
+  for(const z of [-.22,.22])box(.62,.012,.045,0,.515,z,tape);
+  label(.29,.17,.07,.29,.271,ink);
+  for(let i=0;i<7;i++)box(.008,.08,.009,-.03+i*.022,.26,.283,ink);
+  box(.22,.012,.04,0,.18,.277,ink);
+ }
  g.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(g);
  if(Number.isFinite(bounds.min.y)&&Math.abs(bounds.min.y)>.001)for(const child of g.children)child.position.y-=bounds.min.y;
- g.userData={collection:'streetassettesting',batch:1,standalone:true,id,units:'metres',status:'review-required'};
+ g.userData={collection:'streetassettesting',batch:1,standalone:true,id,units:'metres',status:'UK-aesthetic-review-required',revision:'UK-v2'};
  return g;
 }
