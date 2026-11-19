@@ -9,6 +9,15 @@ export const EXPANSION_ASSETS = [
 {id:'dumbbellRack',label:'Commercial dumbbell rack',category:'gym'},
 {id:'olympicBarbell',label:'Olympic barbell',category:'gym'},
 {id:'loadedBarbell',label:'Loaded bumper-plate barbell',category:'gym'},
+{id:'barbell40kg',label:'Olympic barbell — 40 kg',category:'gym',weightKg:40,minStrengthLevel:1},
+{id:'barbell60kg',label:'Olympic barbell — 60 kg',category:'gym',weightKg:60,minStrengthLevel:2},
+{id:'barbell80kg',label:'Olympic barbell — 80 kg',category:'gym',weightKg:80,minStrengthLevel:3},
+{id:'barbell100kg',label:'Olympic barbell — 100 kg',category:'gym',weightKg:100,minStrengthLevel:4},
+{id:'barbell120kg',label:'Olympic barbell — 120 kg',category:'gym',weightKg:120,minStrengthLevel:5},
+{id:'barbell140kg',label:'Olympic barbell — 140 kg',category:'gym',weightKg:140,minStrengthLevel:6},
+{id:'barbell160kg',label:'Olympic barbell — 160 kg',category:'gym',weightKg:160,minStrengthLevel:7},
+{id:'barbell180kg',label:'Olympic barbell — 180 kg',category:'gym',weightKg:180,minStrengthLevel:8},
+{id:'barbell200kg',label:'Olympic barbell — 200 kg',category:'gym',weightKg:200,minStrengthLevel:9},
 {id:'squatRack',label:'Adjustable squat rack',category:'gym'},
 {id:'gymMirror',label:'Full-height gym wall mirror',category:'gym'},
 {id:'exerciseBike',label:'Studio exercise bike',category:'gym'},
@@ -252,15 +261,26 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
    const cap=disc(x+dx+(dx>0?.055:-.055),y,z,.038,.008,brushed);
   }
  };
- const barbell=(loaded:boolean)=>{
-  R([-1.12,.26,0],[1.12,.26,0],.014,brushed);
+ const barbell=(totalKg:number)=>{
+  // Standard 20kg bar. All loads are symmetric, physically supported by sleeves.
+  const barY=.265,plateMass=Math.max(0,(totalKg-20)/2);
+  R([-1.10,barY,0],[1.10,barY,0],.014,brushed);
   for(const sign of [-1,1]){
-   const sleeve=disc(sign*.89,.26,0,.025,.43,brushed);
-   if(loaded)for(const [j,r,m] of [[0,.22,red],[1,.19,blue],[2,.155,mat(0x3e9857,.15,.65)]] as const){
-    disc(sign*(.76+j*.08),.26,0,r,.07,m);
-    disc(sign*(.76+j*.08),.26,0,.037,.075,black);
+   const sleeve=disc(sign*.87,barY,0,.024,.42,brushed);
+   disc(sign*.665,barY,0,.038,.025,graphite);
+   let remaining=plateMass,offset=.715;
+   const options:[[number,number,THREE.Material],...Array<[number,number,THREE.Material]>]=[
+    [25,.225,red],[20,.215,blue],[15,.20,mat(0xd2b93e,.12,.6)],
+    [10,.18,mat(0x3e9857,.12,.65)],[5,.13,white],[2.5,.11,graphite]
+   ];
+   for(const [kg,r,m] of options){
+    while(remaining>=kg-.001&&offset<1.02){
+     disc(sign*(offset+.024),barY,0,r,.048,m);
+     disc(sign*(offset+.024),barY,0,.032,.050,black);
+     offset+=.051;remaining-=kg;
+    }
    }
-   disc(sign*1.05,.26,0,.052,.055,graphite);
+   disc(sign*(Math.min(offset+.025,1.075)),barY,0,.051,.035,graphite);
   }
  };
  if(id==='hexDumbbell10'||id==='hexDumbbell20')dumbbell(0,id==='hexDumbbell20'?.13:.11,0,id==='hexDumbbell20'?20:10);
@@ -271,7 +291,7 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
    for(let i=0;i<5;i++)dumbbell(-.66+i*.33,y+.105,.02,i>2?20:10);
   }
  }
- if(id==='olympicBarbell'||id==='loadedBarbell')barbell(id==='loadedBarbell');
+ if(id==='olympicBarbell'||id==='loadedBarbell'||/^barbell\\d+kg$/.test(id))barbell(id==='olympicBarbell'?20:id==='loadedBarbell'?100:Number(id.match(/\\d+/)?.[0]||20));
  if(id==='squatRack'){
   for(const x of [-.90,.90]){
    B(.11,2.3,.12,x,1.15,0,graphite);B(.15,.075,1.3,x,.038,.1,graphite);
@@ -418,25 +438,36 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
  };
  const chain=(gate:boolean,poor:boolean)=>{
   const w=gate?1.5:3.05,h=1.9;
+  const x0=-w/2+.045,x1=w/2-.045,y0=.205,y1=h-.025;
   for(const x of [-w/2,w/2]){
    R([x,.03,0],[x,h+.14,0],.043,zinc);
    sphere(x,h+.14,0,.049,brushed);
   }
   for(const y of [.18,h])R([-w/2,y,0],[w/2,y,0],.024,zinc);
-  const pitch=.17;
-  for(let t=-h;t<w+h;t+=pitch){
-   for(const slope of [-1,1]){
-    let first:[number,number,number]|null=null,last:[number,number,number]|null=null;
-    for(let x=-w/2;x<=w/2;x+=.025){
-     const y=slope*(x+w/2)+t;
-     if(y>.18&&y<h){
-      const point:[number,number,number]=[x,poor?y-.035*Math.sin(x*8):y,.012];
-      if(!first)first=point;last=point;
-     }
+  // Clip every diagonal to the inside of the rectangular frame.
+  // This produces complete diamond links without overshooting or free-floating lines.
+  const pitch=.145;
+  for(const slope of [-1,1]){
+   for(let t=y0-(x1-x0);t<=y1+(x1-x0);t+=pitch){
+    const hits:[number,number][]=[];
+    const test=(x:number,y:number)=>{
+     if(x>=x0-1e-6&&x<=x1+1e-6&&y>=y0-1e-6&&y<=y1+1e-6)hits.push([x,y]);
+    };
+    test(x0,t);test(x1,t+slope*(x1-x0));
+    if(slope!==0){test(x0+(y0-t)/slope,y0);test(x0+(y1-t)/slope,y1);}
+    const unique=hits.filter((p,i)=>hits.findIndex(q=>Math.hypot(p[0]-q[0],p[1]-q[1])<1e-5)===i);
+    if(unique.length<2)continue;
+    const p=unique[0],q=unique[1];
+    if(poor){
+     // Only the explicitly poor variant has small, localised missing links.
+     const mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;
+     if(mx>.15&&mx<.65&&my>.65&&my<1.10)continue;
     }
-    if(first&&last)R(first,last,.004,poor?rust:zinc);
+    R([p[0],p[1],0],[q[0],q[1],0],.0045,poor?rust:zinc);
    }
   }
+  // Tension bars bind the wire mesh to the gate/fence posts.
+  for(const x of [x0,x1])R([x,y0,0],[x,y1,0],.012,poor?rust:brushed);
   if(gate){
    B(.10,.12,.10,w/2-.13,1.05,.09,graphite);
    for(const y of [.33,1.68])B(.12,.07,.17,-w/2,y,.09,brushed);
@@ -498,6 +529,6 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
  const poor='tags' in entry&&entry.tags.includes('poor' as never);
  g.userData={collection:'SFUK_expansion',standalone:true,id,category:entry.category,
   tags:poor?['poor']:[],districtTags:poor?['poor']:[],units:'metres',pivot:'ground-centre',
-  referenceInspired:true,revision:4,quality:'procedural-work-in-progress'};
+  referenceInspired:true,weightKg:'weightKg' in entry?entry.weightKg:(id==='olympicBarbell'?20:id==='loadedBarbell'?100:undefined),minStrengthLevel:'minStrengthLevel' in entry?entry.minStrengthLevel:undefined,revision:5,quality:'procedural-work-in-progress'};
  return g;
 }
