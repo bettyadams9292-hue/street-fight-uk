@@ -4,11 +4,14 @@ export const ASSETS=[
 {id:'retailCounter',label:'Retail counter',category:'interior'},
 {id:'highTable',label:'High café table',category:'interior'},
 {id:'stockedShelves',label:'Stocked shop shelves',category:'interior'},
-{id:'manholeCover',label:'Cast-iron manhole cover',category:'street'},
-{id:'queueBarrier',label:'Queue barrier post',category:'interior'},
+{id:'manholeCover',label:'Rectangular UK utility access cover',category:'street'},
+{id:'queueBarrier',label:'UK queue barrier — closed/retracted',category:'interior'},
+{id:'queueBarrierOpen',label:'UK queue barrier — two posts connected',category:'interior'},
+{id:'queueBarrierLine',label:'UK queue barrier — three-post straight run',category:'interior'},
+{id:'queueBarrierCorner',label:'UK queue barrier — L-shaped connected run',category:'interior'},
 {id:'drinksFridge',label:'Glass-door drinks fridge',category:'interior'},
 {id:'streetPlanter',label:'Street planter',category:'street'},
-{id:'globeStreetLight',label:'Globe street light',category:'street'},
+{id:'globeStreetLight',label:'UK swan-neck street lamp',category:'street'},
 {id:'shopCounterTill',label:'Shop counter with till',category:'interior'},
 {id:'cardboardBox',label:'Cardboard shipping box',category:'interior'}
 ] as const;
@@ -43,12 +46,12 @@ export function createAsset(id:AssetId):THREE.Group{
    box(.09,.055,.012,x,y+.13,.113,cream);
   }
  }
- if(id==='manholeCover'){
+ if(false && id==='manholeCover'){
   cyl(.49,.075,0,.045,0,dark,64);cyl(.445,.016,0,.09,0,steel,64);
   for(let i=0;i<12;i++){const a=i*Math.PI/6;const o=box(.055,.016,.27,Math.cos(a)*.29,.104,Math.sin(a)*.29,dark);o.rotation.y=-a;}
   for(const x of [-.12,.12])box(.12,.018,.035,x,.105,0,black);
  }
- if(id==='queueBarrier'){
+ if(false && id==='queueBarrier'){
   cyl(.19,.035,0,.018,0,dark);cyl(.035,.94,0,.49,0,steel);cyl(.078,.055,0,.965,0,dark);
   cyl(.095,.03,0,1.002,0,steel);box(.16,.08,.10,0,.92,0,dark);
   // Retractable belt housing only: a single post does not have a floating belt.
@@ -66,12 +69,12 @@ export function createAsset(id:AssetId):THREE.Group{
   box(.038,1.14,.045,.32,1.01,.416,dark);
   box(.84,.16,.72,0,1.85,0,blue);box(.83,.06,.72,0,.045,0,black);
  }
- if(id==='streetPlanter'){
+ if(false && id==='streetPlanter'){
   const pot=cyl(.43,.60,0,.32,0,woodDark,8);cyl(.47,.055,0,.62,0,steel,8);cyl(.38,.025,0,.65,0,woodDark,8);
   for(let i=0;i<8;i++){const a=i*Math.PI/4;rod([Math.sin(a)*.14,.65,Math.cos(a)*.14],[Math.sin(a)*.34,1.12,Math.cos(a)*.34],.024,green);const foliage=sphere(.21,Math.sin(a)*.34,1.12,Math.cos(a)*.34,green);foliage.scale.y=1.6;}
   sphere(.28,0,1.18,0,green);
  }
- if(id==='globeStreetLight'){
+ if(false && id==='globeStreetLight'){
   cyl(.18,.09,0,.045,0,dark);cyl(.065,3.15,0,1.63,0,dark);
   for(const y of [.22,2.75])cyl(.095,.09,0,y,0,steel);
   cyl(.17,.075,0,3.23,0,dark);sphere(.30,0,3.56,0,cream);
@@ -115,13 +118,13 @@ export function createAsset(id:AssetId):THREE.Group{
   }
   box(1.75,.14,.04,0,2.14,.25,red);
  }
- if(id==='manholeCover'){
+ if(false && id==='manholeCover'){
   // Flush UK ductile iron utility cover, double-lifting keyholes and anti-slip ribs.
   for(let i=0;i<7;i++){const z=-.30+i*.10;box(.56,.012,.024,0,.118,z,ink);}
   for(const x of [-.31,.31]){box(.075,.009,.035,x,.126,0,grey);box(.02,.009,.07,x,.13,0,ink);}
   cyl(.51,.025,0,.026,0,grey,64);
  }
- if(id==='queueBarrier'){
+ if(false && id==='queueBarrier'){
   // UK retractable queue stanchion, belt cartridge and stable circular weighted foot.
   cyl(.145,.018,0,.038,0,grey);cyl(.045,.07,0,.9,0,ink);
   box(.17,.052,.115,0,.985,0,ink);
@@ -139,13 +142,13 @@ export function createAsset(id:AssetId):THREE.Group{
   box(.65,.085,.012,0,1.85,.365,white);box(.58,.025,.012,0,1.85,.379,red);
   box(.04,1.1,.055,.337,1.0,.45,steel);
  }
- if(id==='streetPlanter'){
+ if(false && id==='streetPlanter'){
   // UK town-centre municipal planter: powder-coated steel bands and shrub foliage.
   for(const y of [.14,.36,.57])cyl(.46,.022,0,y,0,ink,8);
   for(let i=0;i<8;i++){const a=i*Math.PI/4;const o=box(.075,.43,.014,Math.sin(a)*.425,.32,Math.cos(a)*.425,grey);o.rotation.y=a;}
   for(let i=0;i<12;i++){const a=i*2.399;const p=sphere(.10,Math.sin(a)*.24,1.04+(i%3)*.14,Math.cos(a)*.24,green);p.scale.set(1.2,.65,1.4);}
  }
- if(id==='globeStreetLight'){
+ if(false && id==='globeStreetLight'){
   // Traditional UK heritage-style globe column: finial, fluted shaft and cast base.
   for(let i=0;i<8;i++){const a=i*Math.PI/4;rod([Math.sin(a)*.077,.30,Math.cos(a)*.077],[Math.sin(a)*.077,2.69,Math.cos(a)*.077],.009,grey);}
   for(const y of [.15,.35,2.84,3.18])cyl(.105,.045,0,y,0,brass);
@@ -159,8 +162,67 @@ export function createAsset(id:AssetId):THREE.Group{
   for(let i=0;i<7;i++)box(.008,.08,.009,-.03+i*.022,.26,.283,ink);
   box(.22,.012,.04,0,.18,.277,ink);
  }
+
+ // Rebuilt UK assets: independent geometry, no stacked remnants of earlier prototypes.
+ const cast=m(0x414a4d,.45,.86),castEdge=m(0x252d30,.45,.86),paving=m(0x8c8d86,0,.95),galv=m(0x8c999e,.6,.58),tarmac=m(0x353a3e,0,.94),paint=m(0x353e40,.1,.72),leaf=m(0x3f6a42,0,.9),leafLight=m(0x568353,0,.88),bark=m(0x66503b,0,.95);
+ if(id==='manholeCover'){
+  // Rectangular UK pavement/road access cover, flush frame, raised chequer tread, twin key slots.
+  box(.92,.065,.69,0,.033,0,castEdge);
+  box(.85,.013,.62,0,.071,0,cast);
+  for(const x of [-.43,.43])box(.015,.014,.67,x,.083,0,galv);
+  for(const z of [-.315,.315])box(.87,.014,.014,0,.083,z,galv);
+  for(let row=0;row<8;row++)for(let col=0;col<11;col++){
+   const x=-.365+col*.073,z=-.255+row*.072;
+   const rib=box(.034,.006,.009,x,.082,z,castEdge);rib.rotation.y=(row+col)%2?Math.PI/4:-Math.PI/4;
+  }
+  for(const x of [-.32,.32]){box(.095,.008,.055,x,.086,0,castEdge);box(.024,.008,.045,x,.09,0,galv);}
+  for(const x of [-.405,.405])for(const z of [-.29,.29])cyl(.009,.007,x,.09,z,galv,12);
+ }
+ const barrierPost=(x:number,z:number)=>{
+  cyl(.185,.035,x,.018,z,castEdge,40);cyl(.15,.024,x,.047,z,galv,40);
+  cyl(.031,.88,x,.50,z,galv,20);cyl(.068,.085,x,.96,z,castEdge,24);
+  cyl(.082,.022,x,1.012,z,galv,24);
+  for(const a of [0,Math.PI/2,Math.PI,3*Math.PI/2])box(.045,.025,.013,x+Math.sin(a)*.068,.965,z+Math.cos(a)*.068,castEdge);
+ };
+ const barrierBelt=(a:[number,number],b:[number,number])=>{
+  const dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
+  const midX=(a[0]+b[0])/2,midZ=(a[1]+b[1])/2;
+  const belt=box(length-.13,.072,.009,midX,.965,midZ,red);
+  belt.rotation.y=-Math.atan2(dz,dx);
+  const stripe=box(length-.18,.008,.012,midX,.965,midZ,black);stripe.rotation.y=belt.rotation.y;
+ };
+ if(id==='queueBarrier')barrierPost(0,0);
+ if(id==='queueBarrierOpen'){barrierPost(-.9,0);barrierPost(.9,0);barrierBelt([-.9,0],[.9,0]);}
+ if(id==='queueBarrierLine'){for(const x of [-1.5,0,1.5])barrierPost(x,0);barrierBelt([-1.5,0],[0,0]);barrierBelt([0,0],[1.5,0]);}
+ if(id==='queueBarrierCorner'){barrierPost(-1.4,0);barrierPost(0,0);barrierPost(0,1.4);barrierBelt([-1.4,0],[0,0]);barrierBelt([0,0],[0,1.4]);}
+ if(id==='streetPlanter'){
+  // British high-street rectangular timber planter, substantial soil bed and natural shrub shapes.
+  box(1.35,.075,.65,0,.045,0,castEdge);
+  for(const z of [-.31,.31])for(let i=0;i<7;i++)box(.19,.53,.045,-.57+i*.19,.34,z,bark);
+  for(const x of [-.65,.65])for(let i=0;i<4;i++)box(.05,.53,.14,x,.34,-.24+i*.16,bark);
+  for(const y of [.11,.57]){box(1.4,.045,.055,0,y,-.32,castEdge);box(1.4,.045,.055,0,y,.32,castEdge);}
+  box(1.27,.055,.54,0,.58,0,m(0x4a3a2e,0,.99));
+  for(let i=0;i<5;i++){
+   const x=-.48+i*.24;rod([x,.58,0],[x,.94+(i%2)*.11,0],.018,bark);
+   for(let j=0;j<5;j++){const a=j*2.4+i;const o=sphere(.13,x+Math.sin(a)*.13,.93+(j%3)*.095,Math.cos(a)*.17,(i+j)%3?leaf:leafLight);o.scale.set(1.1,.7,1.25);}
+  }
+ }
+ if(id==='globeStreetLight'){
+  // Modern UK residential swan-neck lantern, not American globe lighting.
+  cyl(.15,.055,0,.028,0,castEdge);cyl(.075,.20,0,.15,0,galv,24);
+  cyl(.054,5.1,0,2.7,0,galv,20);
+  cyl(.062,.12,0,5.21,0,castEdge);
+  rod([0,5.12,0],[.55,5.35,0],.045,galv);
+  rod([.55,5.35,0],[1.0,5.31,0],.039,galv);
+  const lantern=box(.68,.12,.32,1.08,5.25,0,paint);
+  const hood=box(.77,.045,.36,1.08,5.34,0,castEdge);
+  const lens=box(.60,.012,.25,1.08,5.181,0,cream);
+  for(const z of [-.145,.145])box(.55,.045,.012,1.08,5.22,z,galv);
+  box(.17,.24,.10,0,1.65,.055,castEdge);
+  for(const y of [1.57,1.71])box(.15,.009,.11,0,y,.06,galv);
+ }
  g.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(g);
  if(Number.isFinite(bounds.min.y)&&Math.abs(bounds.min.y)>.001)for(const child of g.children)child.position.y-=bounds.min.y;
- g.userData={collection:'streetassettesting',batch:1,standalone:true,id,units:'metres',status:'UK-aesthetic-review-required',revision:'UK-v2'};
+ g.userData={collection:'streetassettesting',batch:1,standalone:true,id,units:'metres',status:'UK-aesthetic-review-required',revision:'UK-v3'};
  return g;
 }
