@@ -129,7 +129,10 @@ export interface SurfaceOptions {
 }
 
 const GLSL_HASH = /* glsl */ `
-float sfHash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+// Small multipliers first (Hoskins' hash), so the numbers never get big: the old hash multiplied stone ids
+// (up to ~800 m / 0.13 m) by 456 before taking fract, which runs out of precision on phone GPUs and can
+// overflow to infinity where floats are 16-bit, leaving whole stones black.
+float sfHash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 float sfNoise(vec2 p) {
   vec2 i = floor(p), f = fract(p);
   vec2 u = f * f * (3.0 - 2.0 * f);

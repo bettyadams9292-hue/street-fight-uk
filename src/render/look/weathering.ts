@@ -59,7 +59,7 @@ export function weather(mat: THREE.Material, o: WeatherOptions = {}): void {
         `varying vec3 wxWorld;
 uniform sampler2D wxDrips;
 uniform float wxDirt, wxStreaks, wxSplash;
-float wxHash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float wxHash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 float wxNoise(vec2 p) {
   vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
   return mix(mix(wxHash(i), wxHash(i + vec2(1, 0)), u.x), mix(wxHash(i + vec2(0, 1)), wxHash(i + vec2(1, 1)), u.x), u.y);

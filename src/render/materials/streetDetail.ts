@@ -22,7 +22,9 @@ const PAVES: LibraryName[] = ['Concrete034'];
 const PAVING_BY_GROUND: Record<string, LibraryName> = {
   street: 'PavingStones109', // grey small-block high-street pavement
   suburb: 'PavingStones036', // grey block paving
-  plaza: 'PavingStones102', // chevron precinct paving
+  // Precincts and the market: red and grey block paving. The chevron set (PavingStones102) read as a black and
+  // white checkerboard from the game's camera: the "black squares" reported at the market.
+  plaza: 'PavingStones092',
   lane: 'PavingStones083', // wet herringbone setts
   yard: 'PavingStones036',
   quay: 'PavingStones036',
@@ -88,7 +90,9 @@ void main() {
         '#include <color_fragment>',
         `#include <color_fragment>
   {
-    vec3 n = normalize(sdNormal);
+    // A normal that interpolates to nothing (opposite normals across a thin face) would normalise to NaN and
+    // draw black: fall back to up.
+    vec3 n = dot(sdNormal, sdNormal) > 1e-6 ? normalize(sdNormal) : vec3(0.0, 1.0, 0.0);
     float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
     // Every lookup is made for every pixel (so the texture filtering is right at the joins), then one is chosen.
     vec2 gUV = sdWorld.xz;
@@ -104,7 +108,16 @@ void main() {
     if (n.y > 0.7 && sdWorld.y < 0.4) {
       // Flat ground: the dark carriageway is asphalt, the rest concrete.
       if (lum < 0.05) { d = road; sdTn = roadN; sdK = 0.9; }
-      else { d = pave; sdTn = paveN; sdK = 0.8; }
+      else {
+        d = pave; sdTn = paveN; sdK = 0.8;
+        // The kit's plaza tiles are painted as a light and dark checkerboard. Under real paving that reads as
+        // big black squares, so greys are evened out to one brightness (the district's tint survives; coloured
+        // paint such as yellow lines doesn't count as grey and is left alone).
+        vec3 c0 = diffuseColor.rgb;
+        float hi = max(c0.r, max(c0.g, c0.b));
+        float sat = hi > 0.0 ? (hi - min(c0.r, min(c0.g, c0.b))) / hi : 0.0;
+        if (sat < 0.3) diffuseColor.rgb *= clamp(0.2 / max(lum, 0.02), 0.5, 3.0);
+      }
     } else if (abs(n.y) < 0.3) {
       // Building walls the colour of brick are brick. Awnings, signs and shop panels (props) never are,
       // however red they are.
@@ -122,7 +135,9 @@ void main() {
         '#include <normal_fragment_maps>',
         `#include <normal_fragment_maps>
   if (sdK > 0.0) {
-    vec3 nW = normalize(normalize(sdNormal) + (sdT * sdTn.x + sdB * sdTn.y) * 0.9);
+    vec3 sdN0 = dot(sdNormal, sdNormal) > 1e-6 ? normalize(sdNormal) : vec3(0.0, 1.0, 0.0);
+    vec3 nW = sdN0 + (sdT * sdTn.x + sdB * sdTn.y) * 0.9;
+    nW = dot(nW, nW) > 1e-6 ? normalize(nW) : sdN0;
     normal = normalize((viewMatrix * vec4(nW, 0.0)).xyz);
   }`,
       );
