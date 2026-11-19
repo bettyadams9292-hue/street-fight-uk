@@ -1157,3 +1157,49 @@ body.roam .touch-ui .attack-pad .use { left: 61px; top: auto; bottom: 0; width: 
   .touch-ui .attack-pad .use { left: -4px; top: -4px; width: 50px; height: 50px; font-size: 15px; }
   body.roam .touch-ui .attack-pad .use { left: 50px; top: auto; bottom: 0; width: 58px; height: 58px; font-size: 17px; }
 }
+
+/* ---- Notifications: a bell next to the map instead of big pop-ups; tap a need badge to see what's wrong ---- */
+.hud-btn.bell-btn, .hud-btn.zoom-btn { position: relative; display: flex; align-items: center; justify-content: center; }
+.bell-dot { position: absolute; top: 7px; right: 8px; width: 9px; height: 9px; background: var(--no-entry); box-shadow: 0 0 0 2px #fff; display: none; }
+.bell-btn.has-new .bell-dot { display: block; }
+.room-only { display: none !important; }
+body.room-on .hud.story .room-only { display: flex !important; }
+body.fight-on .room-only { display: none !important; }
+.zoom-btn.on { color: var(--accent); }
+.status-chip.need { cursor: pointer; border: 0; font: inherit; touch-action: manipulation; }
+.notif-tray {
+  position: absolute; z-index: 40; pointer-events: auto;
+  top: calc(134px + var(--safe-t)); right: calc(10px + var(--safe-r));
+  width: min(320px, calc(100vw - 20px)); max-height: 58vh; overflow-y: auto;
+  background: var(--asphalt); padding: 8px 10px 10px;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12), 0 6px 0 rgba(0, 0, 0, 0.5);
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  font-family: var(--ui); font-size: 14px; line-height: 1.3; color: var(--sign-white);
+}
+.notif-tray.off, .need-tip.off { display: none; }
+.notif-head { font-family: var(--head); font-weight: 800; font-size: 13px; letter-spacing: 0.04em; color: var(--faint); margin: 6px 0 4px; }
+.notif { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.notif .icon svg { width: 16px; height: 16px; }
+.notif.need.u2 .icon, .notif.warn { color: #ffb4b4; }
+.notif.need.u1 .icon { color: var(--accent); }
+.notif.empty { color: var(--faint); }
+.need-tip {
+  position: absolute; z-index: 39; pointer-events: none;
+  top: calc(134px + var(--safe-t)); right: calc(10px + var(--safe-r)); max-width: min(300px, 80vw);
+  background: var(--no-entry); color: #fff; font-family: var(--ui); font-weight: 700; font-size: 14px; padding: 6px 10px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
+}
+/* Pop-ups stay small on a phone: one short line or two, never across the screen, and they all go in the tray too. */
+.touch-ui .hud.story .toasts { align-items: flex-start; right: auto; max-width: 72vw; gap: 4px; }
+.touch-ui .toast { font-size: 13px; padding: 4px 10px 3px 13px; }
+.touch-ui .toast:nth-last-child(n + 3) { display: none; }
+@media (orientation: portrait) and (max-width: 700px) {
+  .touch-ui .hud-buttons .hud-btn { width: 38px; height: 38px; }
+  .touch-ui .hud-buttons { gap: 4px; }
+  .notif-tray { top: calc(56px + var(--safe-t)); }
+  .need-tip { top: calc(168px + var(--safe-t)); }
+  /* Room for the bell: the health bar stops short of the buttons. */
+  .touch-ui .fighter-panel.left { max-width: calc(100vw - 236px - var(--safe-r)); }
+  /* Indoors the zoom button sits on its own at the top left of the room, not in the crowded top row. */
+  body.room-on .touch-ui .hud.story .zoom-btn { position: fixed; left: calc(10px + var(--safe-l)); top: calc(168px + var(--safe-t)); }
+}

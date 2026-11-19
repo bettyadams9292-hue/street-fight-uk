@@ -24,6 +24,8 @@ export interface HouseHost {
   sound(kind: Parameters<import('../audio/AudioManager').AudioManager['house']>[0]): void;
   loop(id: 'shower' | 'tap' | 'sizzle' | 'oven', on: boolean): void;
   toast(text: string, kind?: 'cash' | 'item' | 'info' | 'warn'): void;
+  /** A quiet message for the notifications tray (no pop-up): the need nudges. */
+  nudge(text: string): void;
   say(text: string): void;
   /** Open a panel (the world waits); `closed` runs when it's shut. */
   panel(make: (close: () => void) => Screen, closed?: () => void): void;
@@ -714,13 +716,14 @@ export class HouseController {
     for (const k of urgent) {
       if (this.warned.has(k)) continue;
       this.warned.add(k);
-      this.host.toast(NUDGES[k], 'warn');
+      this.host.nudge(NUDGES[k]);
     }
     for (const k of [...this.warned]) if (!urgent.has(k as NeedKey)) this.warned.delete(k);
   }
 }
 
-const NUDGES: Record<NeedKey, string> = {
+/** What each need says when it wants attention (the tray, and a tapped need badge). */
+export const NUDGES: Record<NeedKey, string> = {
   hunger: 'You’re starving. Get something to eat (stamina comes back slower).',
   energy: 'You’re exhausted. Get some sleep at home.',
   hygiene: 'You could do with a shower.',

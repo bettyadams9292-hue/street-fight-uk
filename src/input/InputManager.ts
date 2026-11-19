@@ -2,7 +2,7 @@ import { emptyCommand, type CommandFrame, type PressButton } from './Commands';
 
 export type GameButton = PressButton;
 const PRESS_BUTTONS: readonly GameButton[] = ['lp', 'hp', 'lk', 'hk', 'jump', 'dodge', 'grab', 'swap'];
-export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory' | 'map' | 'character' | 'crew';
+export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory' | 'map' | 'character' | 'crew' | 'zoom';
 export type InputSource = 'keyboard' | 'gamepad' | 'touch';
 
 /** Keyboard layout. Kept in one place so a rebinding screen can edit it later. */
@@ -137,6 +137,7 @@ export class InputManager {
       else if (code === 'KeyM') this.emitMenu('map');
       else if (code === 'KeyH') this.emitMenu('character');
       else if (code === 'KeyG') this.emitMenu('crew');
+      else if (code === 'KeyZ') this.emitMenu('zoom');
       // Outside a fight these open the map and inventory; in one they stay swap style and heavy punch.
       else if (code === 'Tab') this.emitMenu('map', 'keyboard', true);
       else if (code === 'KeyI') this.emitMenu('inventory', 'keyboard', true);
