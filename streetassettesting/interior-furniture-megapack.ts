@@ -107,15 +107,42 @@ export function createAsset(id:string):THREE.Group {
    if(v===24)for(let i=0;i<4;i++)b(w-.13,.028,.035,0,.12+i*.23,d/2-.04,steel);
   }
  }
- if(k===1){const round=[0,4,6,12,13].includes(v),desk=v>=16&&v<=22,wide=[1,2,5,7,18,24].includes(v);const w=wide?1.75:desk?1.35:1.1,d=desk?.68:.75,h=v===8||v===9||v===10||v===11?.45:v===19?1.05:.76;
-  if(round){cyl(w*.47,.07,0,h,0,wood);cyl(.095,h-.08,0,(h-.08)/2,0,trim);cyl(.34,.055,0,.045,0,trim)}
-  else{b(w,.07,d,0,h,0);legs(w,d,h-.04,v%3===0?steel:wood)}
-  if([2,3,9].includes(v))b(w*.75,.028,d*.72,0,h-.065,0,trim);
-  if([8,9,10,11].includes(v))b(w*.7,.11,d*.6,0,h-.18,0,cloth);
-  if(desk){b(w*.55,.10,.35,-w*.12,h-.16,-d*.13,trim);if(v===18)b(.70,.07,.70,w*.55,h,0,wood);if(v===21)b(.35,.25,.4,w*.28,h+.16,0,glass)}
-  if(v===22)b(w*.58,.65,.035,0,h+.34,-d*.45,wood);
- }
 
+ if(k===1){
+  const round=[0,4,6,12,13].includes(v),coffee=[8,9,10,11].includes(v);
+  const desk=v>=16&&v<=22,wide=[1,2,5,7,18,24].includes(v);
+  const w=wide?1.72:desk?1.42:1.10,d=desk?.72:.76;
+  const h=coffee?.45:v===19?1.06:.76,top=.065,legH=h-top;
+  if(round){
+   cyl(w*.45,top,0,h-top/2,0,wood);
+   cyl(.085,legH,0,legH/2,0,steel);
+   cyl(.32,.055,0,.04,0,trim);
+  }else{
+   b(w,top,d,0,h-top/2,0,wood);
+   if(v===18){
+    // L desk: return wing and legs under BOTH surfaces.
+    const ext=.82;b(ext,top,d, w/2+ext/2-.08,h-top/2,0,wood);
+    for(const x of [-w/2+.09,w/2+ext-.16])for(const z of [-d/2+.09,d/2-.09])b(.065,legH,.065,x,legH/2,z,steel);
+    b(ext-.14,.08,.04,w/2+ext/2-.08,h-.13,-d/2+.08,steel);
+   }else{
+    for(const x of [-w/2+.09,w/2-.09])for(const z of [-d/2+.09,d/2-.09])b(.065,legH,.065,x,legH/2,z,v%3===0?steel:wood);
+   }
+   for(const z of [-d/2+.09,d/2-.09])b(w-.17,.09,.04,0,h-.115,z,wood);
+   for(const x of [-w/2+.09,w/2-.09])b(.04,.09,d-.17,x,h-.115,0,wood);
+  }
+  if([2,3].includes(v)){b(w*.8,.028,d*.75,0,h+.02,0,cloth)}
+  if([8,9,10,11].includes(v)){b(w*.75,.035,d*.6,0,h-.15,0,wood)}
+  if(desk){
+   // Drawer pedestals are grounded, with attached fronts and handles.
+   if([16,17,20,21].includes(v)){
+    const px=w*.32;b(.36,h-.09,.50,px,(h-.09)/2,.03,wood);
+    for(let j=0;j<3;j++){const y=.16+j*.17;b(.32,.15,.025,px,y,.298,cloth);b(.12,.018,.025,px,y,.322,steel)}
+   }
+   if(v===19){for(const x of [-w*.33,w*.33])b(.045,.90,.045,x,.48,-d*.33,steel)}
+   if(v===21){b(.36,.26,.35,-w*.28,h+.13,-d*.12,glass)}
+   if(v===22){b(w*.65,.53,.035,0,h+.26,-d/2+.03,wood)}
+  }
+ }
  const accent=new THREE.MeshStandardMaterial({color:0xc1a16d,roughness:.48,metalness:.4});
  const darkGlass=new THREE.MeshPhysicalMaterial({color:0x82969a,transparent:true,opacity:.4,roughness:.12,depthWrite:false});
  const edge=new THREE.MeshStandardMaterial({color:0x594b3d,roughness:.8});
@@ -161,41 +188,45 @@ export function createAsset(id:string):THREE.Group {
   if([15,16,17,18].includes(v)){b(w-.09,.035,d-.08,0,h*.42,0,wood);b(w-.09,.035,d-.08,0,h*.72,0,wood)}
   if(v===3||v===9)for(const x of [-w*.24,w*.24])b(.025,h*.76,.025,x,h*.52,face+.056,steel);
  }
+
  if(k===3){
   const office=v>=8&&v<=12,arm=v>=13&&v<=19,stool=v>=20&&v<=22;
-  const w=arm?.85:office?.66:stool?.44:.52,d=arm?.79:office?.64:.54,seat=stool?.76:.46;
+  const w=arm?.86:office?.67:stool?.46:.53,d=arm?.78:office?.66:.56,seat=stool?.75:.46;
   const upholstered=office||arm||[1,6,7,23,24].includes(v);
-  // Properly supported frame with tapered feet or five-spoke chair base.
+  const postMat=[2,6,8,9,10,11,12,22].includes(v)?steel:wood;
+  const frontZ=d/2-.065,backZ=-d/2+.065,sideX=w/2-.065;
   if(office){
-   cyl(.062,.42,0,.25,0,steel);cyl(.10,.06,0,.11,0,trim);
-   for(let i=0;i<5;i++){const a=i*Math.PI*2/5,x=Math.sin(a)*.33,z=Math.cos(a)*.33;rod([0,.105,0],[x,.075,z],.027,steel);cyl(.039,.045,x,.043,z,trim)}
+   // Continuous gas-lift column from floor base to underside of seat.
+   cyl(.055,seat-.12,0,(seat-.12)/2+.075,0,steel);
+   cyl(.10,.075,0,.105,0,trim);
+   for(let i=0;i<5;i++){const t=i*Math.PI*2/5,x=Math.sin(t)*.31,z=Math.cos(t)*.31;
+    rod([0,.105,0],[x,.08,z],.028,steel);cyl(.043,.055,x,.042,z,trim)}
   }else{
-   for(const x of [-w/2+.085,w/2-.085])for(const z of [-d/2+.085,d/2-.085]){
-    const leg=b(.066,seat-.09,.066,x,(seat-.09)/2,z,arm?trim:wood);
-    if(v===2||v===6||v===22)leg.material=steel;
+   // Rear legs continue ABOVE the seat to carry the chair back.
+   for(const x of [-sideX,sideX]){
+    b(.067,seat-.03,.067,x,(seat-.03)/2,frontZ,postMat);
+    const backH=stool?seat-.03:seat+.62;
+    const rear=b(.068,backH,.068,x,backH/2,backZ,postMat);
+    if(!stool)rear.rotation.x=-.045;
    }
-   for(const z of [-d/2+.095,d/2-.095])b(w-.16,.06,.04,0,seat-.15,z,wood);
-   for(const x of [-w/2+.095,w/2-.095])b(.04,.06,d-.16,x,seat-.15,0,wood);
+   for(const z of [frontZ,backZ])b(w-.13,.065,.048,0,seat-.17,z,postMat);
+   for(const x of [-sideX,sideX])b(.045,.065,d-.13,x,seat-.17,0,postMat);
   }
-  b(w-.045,.075,d-.05,0,seat,0,wood);
-  b(w-.075,.075,d-.09,0,seat+.07,.005,upholstered?cloth:wood);
-  // Angled back with upholstered pad, not a free-floating upright box.
+  b(w-.08,.085,d-.08,0,seat,0,upholstered?cloth:wood);
+  if(upholstered)b(w-.13,.055,d-.13,0,seat+.07,0,cushion);
   if(!stool){
-   const backH=arm?.65:office?.70:.52;
-   const frame=b(w-.065,backH,.075,0,seat+.12+backH/2,-d/2+.08,arm||office?cloth:wood);
-   frame.rotation.x=-.105;
-   if(upholstered){const pad=b(w-.17,backH-.13,.055,0,seat+.12+backH/2,-d/2+.125,cushion);pad.rotation.x=-.105}
-   else if([3,4,5,7].includes(v))for(let i=0;i<5;i++)rod([-w*.35+i*w*.175,seat+.19,-d/2+.025],[-w*.35+i*w*.175,seat+.52,-d/2+.05],.012,wood);
+   const bh=arm?.55:office?.64:.46;
+   // Back panel spans between the rear supports, touching the rear seat frame.
+   const panel=b(w-.15,bh,.067,0,seat+bh/2-.015,backZ,upholstered?cloth:wood);
+   panel.rotation.x=-.045;
+   if(upholstered){const pad=b(w-.20,bh-.12,.045,0,seat+bh/2-.015,backZ+.045,cushion);pad.rotation.x=-.045}
+   if([3,4,5,7].includes(v))for(let i=0;i<5;i++)rod([-w*.31+i*w*.155,seat+.08,backZ+.04],[-w*.31+i*w*.155,seat+bh-.05,backZ+.04],.012,wood);
   }
-  if(arm||office){
-   for(const side of [-1,1]){const x=side*(w/2-.055);
-    b(.058,.27,.055,x,seat+.17,-.09,office?steel:wood);
-    b(.11,.055,d*.67,x,seat+.33,-.01,upholstered?cloth:wood);
-   }
-  }
-  if(stool){for(const z of [-d*.34,d*.34])rod([-w*.35,.29,z],[w*.35,.29,z],.018,steel)}
-  if(v===16){b(w*.78,.09,.23,0,seat+.34,-d*.34,cushion)}
-  if(v===19){for(const x of [-w*.40,w*.40])rod([x,.09,-d*.35],[x,.68,d*.25],.02,wood)}
+  if(arm||office)for(const side of [-1,1]){const x=side*(w/2-.055);
+   b(.06,.25,.06,x,seat+.16,0,office?steel:wood);
+   b(.10,.055,d*.62,x,seat+.31,0,upholstered?cloth:wood)}
+  if(stool)for(const z of [frontZ,backZ])b(w-.13,.045,.045,0,.28,z,steel);
+  if(v===19)for(const x of [-sideX,sideX])rod([x,.10,backZ],[x,.62,frontZ],.018,wood);
  }
  if(k===4){
   const chaiseLeft=v===3||v===5,chaiseRight=v===4||v===6;
@@ -254,19 +285,6 @@ export function createAsset(id:string):THREE.Group {
   const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;g.add(o);return o;
  }
  function nail(x:number,y:number,z:number){const m=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),accent);m.position.set(x,y,z);g.add(m)}
- if(k===1){
-  const round=[0,4,6,12,13].includes(v),desk=v>=16&&v<=22,wide=[1,2,5,7,18,24].includes(v);
-  const w=wide?1.75:desk?1.35:1.1,d=desk?.68:.75,h=v===8||v===9||v===10||v===11?.45:v===19?1.05:.76;
-  if(!round){
-   // Apron connects the legs instead of leaving an unsupported top.
-   for(const z of [-d/2+.09,d/2-.09])b(w-.16,.095,.035,0,h-.11,z,wood);
-   for(const x of [-w/2+.09,w/2-.09])b(.035,.095,d-.16,x,h-.11,0,wood);
-   for(const x of [-w/2+.11,w/2-.11])nail(x,h-.11,d/2-.07);
-   bevelBox(w-.035,.015,d-.035,0,h+.042,0,wood,.01);
-  }else{cyl(.025,.025,0,h+.045,0,accent)}
-  if(desk){for(let j=0;j<3;j++){const yy=h-.23+j*.055;b(.28,.012,.024,w*.22,yy,d/2-.035,edge);nail(w*.22,yy,d/2-.012)}}
-  if([5,7].includes(v))for(const x of [-w*.33,w*.33])b(.016,.012,d*.8,x,h+.047,0,edge);
- }
  if(k===5){
   if(v<=9){const w=v===0?.98:v===1?1.20:v>=4?1.95:1.55,d=v===5?1.95:2.15;
    // Mattress piping, fitted duvet, and a pair of independent pillows.
