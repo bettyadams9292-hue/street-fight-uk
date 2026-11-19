@@ -38,6 +38,8 @@ function cmd(o: Partial<CommandFrame> & { press?: (keyof CommandFrame['pressed']
   if (o.moveZ !== undefined) c.moveZ = o.moveZ;
   if (o.block) c.block = true;
   for (const p of o.press ?? []) c.pressed[p] = true;
+  // As on a pad, where LB both uses and grabs: these tests press it to use doors, pickups and shops.
+  c.use = c.pressed.grab;
   return c;
 }
 function run(w: World, frames: number, c: (i: number) => CommandFrame = () => cmd()): void {

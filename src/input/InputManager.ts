@@ -18,7 +18,8 @@ export const KEY_BINDINGS = {
   block: ['Space'],
   jump: ['KeyC'],
   dodge: ['ShiftLeft', 'ShiftRight'],
-  grab: ['KeyU', 'KeyE'],
+  grab: ['KeyU'],
+  use: ['KeyE'],
   special: ['KeyO'],
   swap: ['Tab'],
   pause: ['Escape', 'KeyP'],
@@ -44,6 +45,8 @@ const FULL_PUSH_MS = 280;
 export class InputManager {
   private held = new Set<string>();
   private pressedQueue = new Set<GameButton>();
+  /** USE (E, the touch USE button, or LB on a pad, which also grabs) queued since the last step. */
+  private useQueued = false;
   private menuListeners = new Set<(a: MenuAction, source: InputSource, fightKey?: boolean) => void>();
   private padPrev: boolean[] = [];
   private padAxesPrev = { x: 0, y: 0 };
@@ -74,6 +77,12 @@ export class InputManager {
   onMenu(fn: (a: MenuAction, source: InputSource, fightKey?: boolean) => void): () => void {
     this.menuListeners.add(fn);
     return () => this.menuListeners.delete(fn);
+  }
+
+  /** The touch USE button. */
+  useFromTouch(): void {
+    this.useQueued = true;
+    this.lastDevice = 'touch';
   }
 
   /** Touch buttons call this. */
@@ -120,6 +129,7 @@ export class InputManager {
       else if ((KEY_BINDINGS.right as readonly string[]).includes(code)) this.tapDirection(1);
       for (const b of PRESS_BUTTONS) {
         if ((KEY_BINDINGS[b] as readonly string[]).includes(code)) this.pressedQueue.add(b);
+      if ((KEY_BINDINGS.use as readonly string[]).includes(code)) this.useQueued = true;
       }
       if (code === 'Escape') this.emitMenu('back');
       else if (code === 'KeyP') this.emitMenu('pause');
@@ -163,6 +173,8 @@ export class InputManager {
     const edge = (i: number) => pressed(i) && !this.padPrev[i];
 
     for (const b of PRESS_BUTTONS) if (edge(PAD_BUTTONS[b])) this.pressedQueue.add(b);
+    // A pad has no spare button: LB uses what's in front of you, and grabs when there's nothing to use.
+    if (edge(PAD.LB)) this.useQueued = true;
     if (edge(PAD.START)) this.emitMenu('pause', 'gamepad');
     // Right-stick click: I (heavy punch) and RB (special) are fight buttons.
     if (edge(PAD.RS)) this.emitMenu('inventory', 'gamepad');
@@ -221,6 +233,8 @@ export class InputManager {
     cmd.run = (this.runDir !== 0 && Math.sign(cmd.moveX) === this.runDir) || pushedOut;
     for (const b of this.pressedQueue) cmd.pressed[b] = true;
     this.pressedQueue.clear();
+    cmd.use = this.useQueued;
+    this.useQueued = false;
     // Touch: SP arms the next attack as a special.
     if (this.touch.specialArmed && (cmd.pressed.lp || cmd.pressed.hp || cmd.pressed.lk || cmd.pressed.hk)) {
       cmd.special = true;
@@ -253,6 +267,7 @@ export class InputManager {
   /** Drop anything queued (e.g. when pausing). */
   flush(): void {
     this.pressedQueue.clear();
+    this.useQueued = false;
   }
 }
 

@@ -117,7 +117,7 @@ export class HouseController {
     const a = this.active;
     if (!a) return real;
     this.age += dt;
-    if (!a.cancelled && this.age > 0.35 && (Math.hypot(real.moveX, real.moveZ) > 0.5 || real.pressed.grab || real.pressed.jump)) a.cancel();
+    if (!a.cancelled && this.age > 0.35 && (Math.hypot(real.moveX, real.moveZ) > 0.5 || real.pressed.grab || real.use || real.pressed.jump)) a.cancel();
     const cmd = a.update(dt);
     if (this.sleeping) {
       this.zzzT -= dt;

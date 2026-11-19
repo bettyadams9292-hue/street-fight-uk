@@ -98,7 +98,7 @@ export class Hud {
   private activityFill: HTMLElement;
   private sleepShade: HTMLElement;
 
-  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void }) {
+  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
       const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, h('span', { class: 'key-hint', text: `${i + 1} \u00b7 ` }), TRAINING_MODE_LABELS[m]) as HTMLButtonElement;
       this.modeButtons.set(m, b);
@@ -111,6 +111,18 @@ export class Hud {
     this.floaters = h('div', { class: 'floaters' });
     this.fps = h('div', { class: 'fps' });
     this.prompt = h('div', { class: 'prompt' });
+    // On a phone the "USE  Pick up can of pop" plate is the button: tap it to use the thing.
+    this.prompt.addEventListener('pointerdown', (e) => {
+      if (!this.prompt.classList.contains('interact')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.prompt.classList.add('down');
+      actions.use?.();
+    });
+    const lift = () => this.prompt.classList.remove('down');
+    this.prompt.addEventListener('pointerup', lift);
+    this.prompt.addEventListener('pointercancel', lift);
+    this.prompt.addEventListener('pointerleave', lift);
     this.subFill = h('div', { class: 'sub-fill' });
     this.subBar = h('div', { class: 'sub-bar' }, this.subFill);
     this.money = h('span', { class: 'money' });
@@ -297,7 +309,7 @@ export class Hud {
     const key = list.map((n) => `${n.key}:${n.text}:${n.urgency}`).join('|');
     if (key === this.needsKey) return;
     this.needsKey = key;
-    this.needsChips.replaceChildren(...list.map((n) => h('div', { class: `status-chip need u${n.urgency}`, title: 'Needs (H for details)' }, icon(NEED_ICONS[n.key] ?? 'info'), h('span', { text: n.text }))));
+    this.needsChips.replaceChildren(...list.map((n) => h('div', { class: `status-chip need u${n.urgency}`, title: 'Needs (H for details)' }, icon(NEED_ICONS[n.key] ?? 'info'), h('span', { class: 'need-text', text: n.text }))));
   }
 
   /** District name card when you arrive somewhere. */

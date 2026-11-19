@@ -176,6 +176,9 @@ export class Game {
       character: () => {
         if (this.state === 'playing' && this.world) this.openProfile();
       },
+      use: () => {
+        if (this.state === 'playing') this.input.useFromTouch();
+      },
     });
     this.hud.el.style.display = 'none';
     uiRoot.append(this.hud.el);
@@ -729,7 +732,7 @@ export class Game {
     if (!ex) return `${name}: no way through from here yet`;
     const dx = ex.x - w.player.pos.x;
     const m = Math.round(Math.abs(dx));
-    if (ex.kind === 'door') return m < 2 ? `${name}: through this door (E) to ${LEVELS[ex.to].name}` : `${name}: door ${dx > 0 ? '→' : '←'} ${m} m (${LEVELS[ex.to].name})`;
+    if (ex.kind === 'door') return m < 2 ? `${name}: through this door (use) to ${LEVELS[ex.to].name}` : `${name}: door ${dx > 0 ? '→' : '←'} ${m} m (${LEVELS[ex.to].name})`;
     return `${name}: ${dx > 0 ? '→ east' : '← west'} ${m} m to ${LEVELS[ex.to].name}`;
   }
 
@@ -2351,7 +2354,7 @@ export class Game {
         // House labels are "THING|What it does": FRIDGE  [E]  Open fridge.
         const [what, how] = it.label.includes('|') ? it.label.split('|') : [null, it.label];
         // "THING" on the plate, the key, then what it does; locked doors say so.
-        text = `${what ? `${what}\u0001` : ''}${k('E', 'LB', 'GRAB')} ${how}${locked ? ' (locked)' : ''}`;
+        text = `${what ? `${what}\u0001` : ''}${k('E', 'LB', 'USE')} ${how}${locked ? ' (locked)' : ''}`;
         interact = true;
       }
     }
@@ -2462,7 +2465,7 @@ export class Game {
           if (this.knockOff) {
             this.knockOff = false;
             this.dismount('Knocked off the bike');
-          } else if (cmd.pressed.grab && !this.world.interactable) {
+          } else if (cmd.use && !this.world.interactable) {
             this.dismount();
             break;
           }
