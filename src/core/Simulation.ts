@@ -80,22 +80,33 @@ export class Simulation {
         if (a.anchored || b.anchored) continue;
         // You and your crew never shove each other about: they step round you instead. Crew mates keep apart.
         if (a.team === 'player' && b.team === 'player' && !(a.crew && b.crew)) continue;
-        if (Math.abs(a.pos.z - b.pos.z) > PUSH_DEPTH) continue;
         if (Math.abs(a.pos.y - b.pos.y) > 1.0) continue;
+        // A passer-by and anyone else: round bodies, pushed apart along the line between them (so nobody walks
+        // through anybody at an angle). The passer-by gives way; you and fighters are barely moved.
+        if (a.team === 'neutral' || b.team === 'neutral') {
+          const ex = b.pos.x - a.pos.x;
+          const ez = b.pos.z - a.pos.z;
+          const d = Math.hypot(ex, ez);
+          const gap = PUSH_DISTANCE - d;
+          if (gap <= 0) continue;
+          const nx = d > 1e-4 ? ex / d : a.id < b.id ? 1 : -1;
+          const nz = d > 1e-4 ? ez / d : 0;
+          const wa = a.team === b.team ? 0.5 : a.team === 'neutral' ? 0.85 : 0.15;
+          // Pushed apart a bit each step rather than all at once, so bumping reads as a nudge, not a teleport.
+          const push = Math.min(gap, 0.12);
+          a.pos.x -= nx * push * wa;
+          a.pos.z -= nz * push * wa;
+          b.pos.x += nx * push * (1 - wa);
+          b.pos.z += nz * push * (1 - wa);
+          continue;
+        }
+        if (Math.abs(a.pos.z - b.pos.z) > PUSH_DEPTH) continue;
         const dx = b.pos.x - a.pos.x;
         const overlap = PUSH_DISTANCE - Math.abs(dx);
         if (overlap <= 0) continue;
         const dir = dx === 0 ? (a.facing === 1 ? 1 : -1) : Math.sign(dx);
         a.pos.x -= (dir * overlap) / 2;
         b.pos.x += (dir * overlap) / 2;
-        // Two passers-by bumping: they also slide sideways off each other, so they get past instead of locking up.
-        if (a.team === 'neutral' && b.team === 'neutral') {
-          const dz = b.pos.z - a.pos.z;
-          const side = dz === 0 ? (a.id < b.id ? 1 : -1) : Math.sign(dz);
-          const slide = Math.min(0.03, overlap * 0.5);
-          a.pos.z -= side * slide;
-          b.pos.z += side * slide;
-        }
       }
     }
   }

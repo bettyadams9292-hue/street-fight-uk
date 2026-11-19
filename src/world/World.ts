@@ -904,6 +904,53 @@ export class World {
     return this.level.objective;
   }
 
+  // ---- getting round things ----------------------------------------------------
+
+  /** Which way (in depth) each fighter is going round the thing in front of them, and until when. */
+  private detours = new Map<Fighter, { side: number; until: number }>();
+
+  /**
+   * Walking (or backing) straight into a bin, bench or car: rather than stop dead against it, step round it.
+   * Finds the nearest clear line in depth (either side, up to 1.6 m) and adds the sideways step to the
+   * command; the forward push stays, so you carry on the moment you're past. Only when you aren't already
+   * steering in depth yourself, and nothing changes if there's no way round (a wall, a closed gate).
+   */
+  private steerAround(f: Fighter, cmd: CommandFrame, frame: number): CommandFrame {
+    if (!f.isFree || f.anchored || !f.grounded || Math.abs(cmd.moveX) < 0.3 || Math.abs(cmd.moveZ) > 0.3) {
+      this.detours.delete(f);
+      return cmd;
+    }
+    const a = this.arena;
+    const dir = Math.sign(cmd.moveX);
+    const ahead = f.pos.x + dir * 0.15;
+    const r = BODY_RADIUS;
+    if (!a.blocked(ahead, f.pos.z, r)) {
+      this.detours.delete(f);
+      return cmd;
+    }
+    const b = a.bounds;
+    const lo = b.minZ + r;
+    const hi = b.maxZ - r;
+    // Keep going round the way you started, so you don't dither at the corner.
+    const held = this.detours.get(f);
+    if (held && held.until > frame) return { ...cmd, moveZ: held.side };
+    const clearRun = (z: number) => {
+      if (z < lo || z > hi || a.blocked(ahead, z, r)) return false;
+      for (let k = 1; k <= 4; k++) if (a.blocked(f.pos.x, f.pos.z + ((z - f.pos.z) * k) / 4, r * 0.9)) return false;
+      return true;
+    };
+    for (let step = 0.1; step <= 1.6; step += 0.1) {
+      const up = clearRun(f.pos.z - step);
+      const down = clearRun(f.pos.z + step);
+      if (!up && !down) continue;
+      // Both open: go towards the middle of the pavement.
+      const side = up && down ? (f.pos.z > (lo + hi) / 2 ? -1 : 1) : up ? -1 : 1;
+      this.detours.set(f, { side, until: frame + 20 });
+      return { ...cmd, moveZ: side };
+    }
+    return cmd;
+  }
+
   // ---- per-frame update -------------------------------------------------------
 
   step(input: CommandFrame): void {
@@ -927,8 +974,9 @@ export class World {
     }
 
     const commands = new Map<number, CommandFrame>();
-    commands.set(PLAYER_ID, cmd);
-    for (const [f, brain] of this.brains) commands.set(f.id, brain.think(frame));
+    commands.set(PLAYER_ID, this.steerAround(p, cmd, frame));
+    // Passers-by find their own way round things (CivilianBrain); everyone else gets the same help as you.
+    for (const [f, brain] of this.brains) commands.set(f.id, f.team === 'neutral' ? brain.think(frame) : this.steerAround(f, brain.think(frame), frame));
     this.sim.step(commands);
 
     this.syncHeld();
