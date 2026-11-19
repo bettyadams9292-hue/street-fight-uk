@@ -12,6 +12,18 @@ import { BodyData, footY, morph, placeBones, type BodyMeta, type BodyShape } fro
 import { ProxyData, fitProxy, proxySkin, type ProxyMeta } from '../../characters/human/proxy';
 import { cutBrows, cutLashes, type BrowMesh } from '../../characters/human/brows';
 import { cutGarment, type Fabric, type GarmentKind } from '../../characters/human/garments';
+
+/**
+ * Skinned meshes can't use their geometry's bounds (the bones move the vertices), so they used to have culling
+ * switched off, and every person in a level was drawn in both passes even when off screen. Instead each part
+ * gets one fixed sphere round the whole person: centred at the hips, 1.9 m across each way, which covers
+ * standing, reaching, kicking and lying flat (mesh space is metres with the feet at the origin).
+ */
+const CHARACTER_SPHERE = new THREE.Sphere(new THREE.Vector3(0, 0.9, 0), 1.9);
+function cullAsCharacter(mesh: THREE.SkinnedMesh): void {
+  mesh.frustumCulled = true;
+  mesh.boundingSphere = CHARACTER_SPHERE.clone();
+}
 import { attachNormal, fileTexture } from '../textureFiles';
 
 export interface SkinInfo {
@@ -555,7 +567,7 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
     mesh.renderOrder = p.order;
     mesh.castShadow = p.cast;
     mesh.receiveShadow = true;
-    mesh.frustumCulled = false;
+    cullAsCharacter(mesh);
     root.add(mesh);
     mesh.bind(skeleton);
   }
@@ -669,7 +681,7 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
   bodyMesh.bind(skeleton);
   bodyMesh.castShadow = true;
   bodyMesh.receiveShadow = true;
-  bodyMesh.frustumCulled = false;
+  cullAsCharacter(bodyMesh);
 
   // ---- eyes and items ----
   const addProxy = (data: ProxyData, colour?: string) => {
@@ -724,7 +736,7 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
     mesh.bind(skeleton);
     mesh.castShadow = data.meta.slot !== 'eyes';
     mesh.receiveShadow = true;
-    mesh.frustumCulled = false;
+    cullAsCharacter(mesh);
   };
   if (eyes) {
     addProxy(eyes, spec.eyeColour);
@@ -770,7 +782,7 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
       bmesh.renderOrder = 2;
       root.add(bmesh);
       bmesh.bind(skeleton);
-      bmesh.frustumCulled = false;
+      cullAsCharacter(bmesh);
     };
     const eyesAt: [number, number, number][] = [centre(1), centre(-1)];
     painted(cutBrows(body, pos, nb, eyesAt, spec.browWeight ?? 0.5), browTexture(), spec.browColour ?? '#2a1c12', 'eyebrows');
@@ -818,7 +830,7 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
     gm.bind(skeleton);
     gm.castShadow = true;
     gm.receiveShadow = true;
-    gm.frustumCulled = false;
+    cullAsCharacter(gm);
     // A cap's peak or a hat's brim: a rigid sheet on the head bone, in the same cloth.
     for (const e of mesh.extra ?? []) {
       if (!e.index.length) continue;
@@ -843,7 +855,7 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
       root.add(em);
       em.bind(skeleton);
       em.castShadow = true;
-      em.frustumCulled = false;
+      cullAsCharacter(em);
     }
   }
   for (const { it, data } of items) addProxy(data, it.colour);

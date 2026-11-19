@@ -3869,8 +3869,10 @@ export class LevelView {
     this.sun.position.set(-4, 12, 8);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(1024, 1024);
-    this.sun.shadow.camera.left = -14;
-    this.sun.shadow.camera.right = 14;
+    // Just wider than the widest view (a landscape phone sees about 11 m of street): 28 m used to draw three
+    // times the casters needed into the shadow map, at a third of the sharpness.
+    this.sun.shadow.camera.left = -10;
+    this.sun.shadow.camera.right = 10;
     this.sun.shadow.camera.top = 10;
     this.sun.shadow.camera.bottom = -6;
     this.sun.shadow.camera.near = 1;
