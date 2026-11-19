@@ -59,7 +59,13 @@ export function createAsset(id:AssetId):THREE.Group{
     for(const x of [-.53,.53])B(.105,2.42,.20,x,1.24,0,white);
     B(1.18,.11,.24,0,2.48,0,stone);
     // Door leaf stops at 2.10 m. Fanlight sits ABOVE the structural transom.
-    B(.94,2.03,.08,0,1.085,.035,leaf);
+    // Construct an actual aperture: side stiles, central muntin and horizontal rails.
+    for(const x of [-.43,.43])B(.09,2.03,.08,x,1.085,.035,leaf);
+    B(.095,2.03,.08,0,1.085,.035,leaf);
+    B(.94,.13,.08,0,.135,.035,leaf);
+    B(.94,.12,.08,0,1.115,.035,leaf);
+    B(.94,.12,.08,0,2.035,.035,leaf);
+    for(const x of [-.225,.225])B(.34,.78,.072,x,.66,.035,leaf);
     for(const x of [-.225,.225]){
       // Glazed top lights are transparent rather than painted over a solid door panel.
       B(.34,.71,.012,x,1.61,.082,recess);
