@@ -100,7 +100,7 @@ export class Hud {
 
   constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
-      const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, `${i + 1} \u00b7 ${TRAINING_MODE_LABELS[m]}`) as HTMLButtonElement;
+      const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, h('span', { class: 'key-hint', text: `${i + 1} \u00b7 ` }), TRAINING_MODE_LABELS[m]) as HTMLButtonElement;
       this.modeButtons.set(m, b);
       return b;
     });
@@ -162,7 +162,7 @@ export class Hud {
         h('span', { class: 'training-label', text: 'Partner:' }),
         ...modes,
         this.opponentButton,
-        h('button', { class: 'chip', title: 'Key R', onclick: () => actions.reset() }, 'R \u00b7 Reset'),
+        h('button', { class: 'chip', title: 'Key R', onclick: () => actions.reset() }, h('span', { class: 'key-hint', text: 'R \u00b7 ' }), 'Reset'),
       ),
       h(
         'div',
@@ -183,7 +183,7 @@ export class Hud {
 
   setMode(mode: TrainingOpponent, archetype: ArchetypeId): void {
     for (const [m, b] of this.modeButtons) b.classList.toggle('on', m === mode);
-    this.opponentButton.textContent = `N \u00b7 ${ARCHETYPES[archetype].name} \u203a`;
+    this.opponentButton.replaceChildren(h('span', { class: 'key-hint', text: 'N \u00b7 ' }), `${ARCHETYPES[archetype].name} \u203a`);
     this.opponentButton.classList.toggle('on', mode === 'spar');
   }
 

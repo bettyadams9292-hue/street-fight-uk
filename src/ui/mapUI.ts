@@ -83,6 +83,10 @@ function rngFor(seed: string): () => number {
 const pts = (list: Pt[]) => list.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
 /** Static artwork: water, parks, district wash, side streets, blocks, main roads, roundabouts, labels. */
+function touchScreen(): boolean {
+  return typeof window !== 'undefined' && (window.matchMedia?.('(pointer: coarse)').matches || 'ontouchstart' in window);
+}
+
 function townSvg(progress: Progress): string {
   const rs = roads();
   const out: string[] = [];
@@ -277,8 +281,10 @@ export function mapScreen(o: MapOptions): Screen {
       const d = place(dest).at;
       dg.setAttribute('transform', `translate(${d.x} ${d.y}) scale(${k.toFixed(3)})`);
     }
-    svg.classList.toggle('far', view.w > 1900);
-    svg.classList.toggle('near', view.w < 1000);
+    // By on-screen size, not map width, so a narrow phone hides the small street names (they overlap
+    // once they're under about 8 px) and keeps only the big district names until you zoom in.
+    svg.classList.toggle('far', view.w > 1900 || 15 / k < 8);
+    svg.classList.toggle('near', view.w < 1000 && 15 / k >= 8);
     zoomFill.style.height = `${((MAX_W - view.w) / (MAX_W - MIN_W)) * 100}%`;
   }
 
@@ -573,7 +579,7 @@ export function mapScreen(o: MapOptions): Screen {
           h('button', { class: 'icon-btn', 'aria-label': 'Centre on me', title: 'Centre on me (C)', onclick: () => flyTo(here, 1200) }, icon('target')),
         ),
         filterBar,
-        h('div', { class: 'map-hint', text: o.calm ? 'Drag to move · scroll or pinch to zoom · click a place' : 'You’re in a fight: no cabs until it’s over' }),
+        h('div', { class: 'map-hint', text: o.calm ? (touchScreen() ? 'Drag to move · pinch to zoom · tap a place' : 'Drag to move · scroll to zoom · click a place') : 'You’re in a fight: no cabs until it’s over' }),
       ),
       panel,
     ),

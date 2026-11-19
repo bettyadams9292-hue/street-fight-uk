@@ -372,7 +372,8 @@ kbd, .key {
 .objective::before { content: none; }
 .objective:empty { display: none; }
 .route-line { color: #fff; font-family: var(--head); font-weight: 700; font-size: 15px; background: var(--motorway); padding: 3px 9px 2px 7px; display: inline-flex; box-shadow: inset 0 0 0 1.5px #fff, inset 0 0 0 3px var(--motorway); margin-top: 5px; }
-.hud.story.fighting .story-info .objective, .hud.story.fighting .route-line { opacity: 0.45; }
+/* In a fight the objective ("Clear the area") stays readable; only the route line dims. */
+.hud.story.fighting .route-line { opacity: 0.45; }
 
 /* Entering an area: a primary-route sign. */
 .hud.story .area-banner { top: 22%; }
@@ -1091,3 +1092,10 @@ body.fight-on .touch-ui .hud-btn.story-only { display: none; }
 .combo-routes li { padding: 5px 0; border-bottom: 1px solid rgba(242, 240, 232, 0.08); }
 .combo-routes .route-keys { display: block; }
 .combo-routes .route-names { display: block; font-size: 13px; opacity: 0.75; margin-top: 2px; }
+/* Keyboard shortcuts on the practice chips mean nothing on a phone. */
+.touch-ui .key-hint { display: none; }
+/* Creator footer: three painted buttons on one line, sized to fit beside each other. */
+.creator-footer { flex-wrap: nowrap; align-items: center; justify-content: space-between; }
+.creator-footer .menu-btn.has-art { flex: 1 1 0; min-width: 0; padding: 4px 2px; }
+.creator-footer .menu-btn.has-art .label { flex: 1 1 auto; min-width: 0; width: 100%; }
+.creator-footer .menu-btn.has-art .label img.title-art { width: 100%; height: auto; max-height: 36px; max-width: 100%; object-fit: contain; }
