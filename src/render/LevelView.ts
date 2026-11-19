@@ -25,6 +25,7 @@ import { themeProfile } from './themes';
 import { kitStreet, planStreet, type StreetPlan } from '../city/street';
 import { buildKitStreet, hasKitPiece, kitFloor, kitPiece, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
 import { exitLocked, type World } from '../world/World';
+import { isSubwayStairs, SUBWAY_GAP } from '../world/strip';
 import {
   concreteTexture,
   corrugatedTexture,
@@ -2224,6 +2225,17 @@ export class LevelView {
   private buildWall(w: { minX: number; maxX: number; minZ: number; maxZ: number; visual?: 'wall' | 'none' }): void {
     if (w.visual === 'none') return;
     const home = this.level.theme === 'home';
+    if (!home) {
+      // Outdoors a barrier is a steel railing (like the gate it meets), not a solid block.
+      const steel = this.mat('#3a4048', 0.4, 0.8);
+      const len = w.maxX - w.minX;
+      const cz = (w.minZ + w.maxZ) / 2;
+      const cx = (w.minX + w.maxX) / 2;
+      this.box(len, 0.07, 0.07, cx, 1.08, cz, steel);
+      this.box(len, 0.05, 0.05, cx, 0.55, cz, steel);
+      for (let x = w.minX; x <= w.maxX + 0.01; x += 1.2) this.box(0.07, 1.12, 0.07, x, 0.56, cz, steel);
+      return;
+    }
     const h = home ? 3 : 1.1;
     // Room dividers are see-through enough that you never lose yourself behind one.
     const m = home ? new THREE.MeshStandardMaterial({ color: '#d8d0c0', roughness: 0.9, transparent: true, opacity: 0.45, depthWrite: false }) : this.mat('#3a3d42', 0.5, 0.6);
@@ -3645,6 +3657,72 @@ export class LevelView {
   /** True while an exit is being built, so its own door isn't taken for a frontage's. */
   private buildingExit = false;
 
+  /**
+   * The way down to the subway: concrete steps dropping away from the pavement between tiled
+   * walls to a lit tunnel mouth, green railings along the top, and a SUBWAY sign on a frame
+   * over the entrance. Fills the gap the street plan leaves in the buildings.
+   */
+  private subwayEntrance(x: number): void {
+    const z0 = this.back + 0.02; // the top step, on the building line
+    const W = SUBWAY_GAP * 2;
+    const len = 5.2;
+    const drop = 3.0;
+    const steps = 16;
+    const stepW = W - 0.9;
+    const concrete = this.mat('#a7a49c', 0.92);
+    const nosing = this.mat('#d8b23a', 0.6);
+    const tile = this.mat('#e3dccb', 0.45);
+    const tileBand = this.mat('#1f4fd1', 0.45);
+    const dark = this.mat('#07080b', 1);
+    const rail = this.mat('#1d3a2a', 0.45, 0.4);
+    const light = this.mat('#fff4d6', 0.4, 0, { emissive: 0xfff0cc, emissiveIntensity: 1.1 });
+    const paving = this.mat('#8d8a84', 0.9);
+    // The steps, each a block down to the floor of the one below.
+    for (let i = 0; i < steps; i++) {
+      const tz = z0 - (i + 0.5) * (len / steps);
+      const ty = -(i + 1) * (drop / steps);
+      this.box(stepW, drop / steps + 0.05, len / steps + 0.02, x, ty + drop / steps / 2 - 0.025, tz, concrete, false);
+      this.box(stepW, 0.03, 0.06, x, ty + drop / steps + 0.004, tz + len / steps / 2 - 0.04, nosing, false);
+    }
+    // A landing at the bottom, and the tunnel mouth beyond it.
+    const zb = z0 - len;
+    this.box(stepW, 0.2, 1.4, x, -drop - 0.1, zb - 0.7, concrete, false);
+    this.box(stepW + 0.1, 2.6, 0.2, x, -drop + 1.3, zb - 1.5, dark, false);
+    this.box(stepW, 0.12, 0.3, x, -drop + 2.5, zb - 1.3, light, false);
+    // Tiled walls either side, running up past the pavement into a parapet, with a blue band.
+    for (const side of [-1, 1]) {
+      const wx = x + side * (stepW / 2 + 0.12);
+      this.box(0.24, drop + 1.1, len + 1.6, wx, (drop + 1.1) / 2 - drop - 0.05 - 0.05, z0 - (len + 1.6) / 2 + 0.05, tile, false);
+      this.box(0.25, 0.22, len + 1.6, wx, -drop + 1.6, z0 - (len + 1.6) / 2 + 0.05, tileBand, false);
+      // Strip lights down the walls.
+      for (let k = 0; k < 3; k++) this.box(0.05, 0.08, 0.9, wx - side * 0.13, -0.5 - k * 1.0 + 0.1, z0 - 1.2 - k * 1.6, light, false);
+      // Railings along the parapet: posts and two rails.
+      const rz0 = z0 - 0.1;
+      const rz1 = z0 - len - 1.4;
+      for (let pz = rz0; pz >= rz1 - 0.01; pz -= 0.9) this.box(0.05, 0.95, 0.05, wx, 1.05 + 0.475, pz, rail, false);
+      this.box(0.06, 0.06, rz0 - rz1, wx, 2.0, (rz0 + rz1) / 2, rail, false);
+      this.box(0.04, 0.04, rz0 - rz1, wx, 1.45, (rz0 + rz1) / 2, rail, false);
+      // Paving beside the well, out to the buildings either side.
+      const edge = SUBWAY_GAP - (stepW / 2 + 0.24);
+      if (edge > 0.05) this.box(edge, 0.06, len + 1.6, x + side * (stepW / 2 + 0.24 + edge / 2), -0.03, z0 - (len + 1.6) / 2, paving, false);
+    }
+    // The back of the well at street level, and a wall behind it so the skyline isn't seen through the gap.
+    this.box(W, 1.1, 0.25, x, 0.5, zb - 1.6, tile, false);
+    this.box(W, 0.1, 0.25, x, 1.08, zb - 1.6, rail, false);
+    const brick = this.mat('#7a4636', 0.9);
+    this.box(W + 0.2, 4.5, 0.3, x, 2.25, zb - 2.6, brick, false);
+    // A frame over the top of the steps carrying the SUBWAY sign.
+    for (const side of [-1, 1]) this.box(0.12, 3.1, 0.12, x + side * (stepW / 2 + 0.12), 1.55, z0 + 0.05, rail, false);
+    this.box(stepW + 0.4, 0.12, 0.12, x, 3.1, z0 + 0.05, rail, false);
+    const t = signTexture('SUBWAY', '#1f4fd1', '#ffffff', { w: 512, h: 128 });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(stepW - 0.1, (stepW - 0.1) / 4), new THREE.MeshStandardMaterial({ map: t, roughness: 0.5, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.35 }));
+    sign.position.set(x, 2.62, z0 + 0.12);
+    this.group.add(sign);
+    const lamp = new THREE.PointLight(0xfff0cc, 1.4, 6, 1.6);
+    lamp.position.set(x, -1.2, z0 - 2.4);
+    this.group.add(lamp);
+  }
+
   private buildExit(ex: ExitDef): void {
     this.buildingExit = true;
     try {
@@ -3658,6 +3736,12 @@ export class LevelView {
     if (ex.seam) return this.buildSeam(ex);
     if (ex.kind === 'door') {
       const z = this.back + 0.05;
+      // Stairs down to the subway: a stairwell in a gap in the buildings, not a door in a garage.
+      if (isSubwayStairs(this.level, ex)) {
+        this.subwayEntrance(ex.x);
+        this.exitSign(ex, ex.x, 3.35, this.back + 0.4);
+        return;
+      }
       // The building already has a real doorway here: just sign it.
       const kitDoor = this.kitDoors.find((d) => Math.abs(d - ex.x) <= 1.2);
       // The frontage drew its own door (or a mansion its gates) here: sign that one, add no second door.

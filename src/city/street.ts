@@ -2,7 +2,7 @@ import { Rng } from '../core/Rng';
 import type { AreaId } from '../progress/Progress';
 import type { FacadeDef, FacadeKind, LevelDef, PropKind } from '../world/LevelTypes';
 import { propHalf } from '../world/LevelTypes';
-import { onStrip, stripNeighbours } from '../world/strip';
+import { onStrip, stripNeighbours, isSubwayStairs, SUBWAY_GAP } from '../world/strip';
 import { KIT_METRICS } from './polyKitMetrics';
 
 /**
@@ -547,19 +547,33 @@ export function planStreet(level: LevelDef): StreetPlan {
     plan.blocks.push({ x: (x0 + x1) / 2, y: 0.006, z: KERB_Z + KERB_DEPTH + 0.29, w: x1 - x0, h: 0.012, d: 0.07, colour: '#d9b521' });
     // Drains in the gutter and covers in the road.
     for (let x = x0 + 9 + rng.next() * 6; x < x1 - 4; x += 22 + rng.next() * 8) put('nyc/prop-manhole-cover', x, -0.24, KERB_Z + KERB_DEPTH + 1.9 + rng.next(), { sy: 0.9 });
-  } else if (d.ground === 'plaza') {
-    tile('plaza', d.pavement ?? 'nyc/tile-plaza', x0, x1, back, far, { y: d.pavement && size(d.pavement).h > 0.01 ? -size(d.pavement).h : 0 });
-  } else if (d.ground === 'lane') {
-    tile('cobbles', 'nyc/tile-plaza', x0, x1, back, far, { tint: '#8c8780', scale: 0.5 });
-  } else if (d.ground === 'yard') {
-    tile('yard', 'hood/driveway-slab-tile', x0, x1, back, far, { y: -0.05, tint: '#b9b6ae' });
   } else {
-    // A quay: concrete to the edge, a timber fender along it, then water.
-    tile('yard', 'hood/driveway-slab-tile', x0, x1, back, front - 0.4, { y: -0.05, tint: '#aeb0ac' });
-    tile('deck', 'cafe/timber-deck-tile', x0, x1, front - 0.4, front + 0.4, { scale: 2, y: -0.02 });
-    plan.surfaces.push({ kind: 'water', x0, x1, z0: front + 0.4, z1: far + 20 });
-    plan.blocks.push({ x: (x0 + x1) / 2, y: -0.9, z: front + 0.4 + (far + 20 - front - 0.4) / 2, w: x1 - x0, h: 0.1, d: far + 20 - front - 0.4, colour: '#14303f' });
-    plan.blocks.push({ x: (x0 + x1) / 2, y: -0.5, z: front + 0.45, w: x1 - x0, h: 1, d: 0.1, colour: '#5c5a56' });
+    // Districts with no pavement and kerb of their own (a precinct, a lane, a yard, a quay) keep
+    // their ground where you walk, then a kerb and the road carry on in front, so the road runs
+    // the whole length of the city.
+    const edge = front;
+    if (d.ground === 'plaza') {
+      tile('plaza', d.pavement ?? 'nyc/tile-plaza', x0, x1, back, edge, { y: d.pavement && size(d.pavement).h > 0.01 ? -size(d.pavement).h : 0 });
+    } else if (d.ground === 'lane') {
+      tile('cobbles', 'nyc/tile-plaza', x0, x1, back, edge, { tint: '#8c8780', scale: 0.5 });
+    } else if (d.ground === 'yard') {
+      tile('yard', 'hood/driveway-slab-tile', x0, x1, back, edge, { y: -0.05, tint: '#b9b6ae' });
+    } else {
+      // A quay: paving out to a timber fender along the old quay edge.
+      tile('yard', 'hood/driveway-slab-tile', x0, x1, back, edge - 0.4, { y: -0.05, tint: '#aeb0ac' });
+      tile('deck', 'cafe/timber-deck-tile', x0, x1, edge - 0.4, edge, { scale: 2, y: -0.02 });
+    }
+    plan.surfaces.push({ kind: 'kerb', x0, x1, z0: edge, z1: edge + KERB_DEPTH });
+    {
+      const s = size('nyc/curb-strip');
+      const n = Math.max(1, Math.round((x1 - x0) / s.w));
+      const cw = (x1 - x0) / n;
+      for (let i = 0; i < n; i++) put('nyc/curb-strip', x0 + cw * (i + 0.5), 0, edge + KERB_DEPTH / 2, { sx: cw / s.w, sy: 0.6 });
+    }
+    tile('road', 'cars/lane-marking-decal', x0, x1, edge + KERB_DEPTH, edge + KERB_DEPTH + 4, { y: -0.02 });
+    tile('road', 'cars/road-tile', x0, x1, edge + KERB_DEPTH + 4, far + 4, { y: -0.05 });
+    plan.blocks.push({ x: (x0 + x1) / 2, y: 0.006, z: edge + KERB_DEPTH + 0.14, w: x1 - x0, h: 0.012, d: 0.07, colour: '#d9b521' });
+    plan.blocks.push({ x: (x0 + x1) / 2, y: 0.006, z: edge + KERB_DEPTH + 0.29, w: x1 - x0, h: 0.012, d: 0.07, colour: '#d9b521' });
   }
 
   // ---- props ------------------------------------------------------------------------------
@@ -610,6 +624,19 @@ export function planStreet(level: LevelDef): StreetPlan {
     if (first.x0 > x0 + 0.05) run.push({ ...first, x0, x1: first.x0, label: undefined });
     run.push(...facades);
     if (last.x1 < x1 - 0.05) run.push({ ...last, x0: last.x1, x1, label: undefined });
+    // Gaps in the frontage where stairs go down to the subway (LevelView draws the stairwell there).
+    const gaps = level.exits.filter((e) => isSubwayStairs(level, e)).map((e) => [e.x - SUBWAY_GAP, e.x + SUBWAY_GAP] as const);
+    if (gaps.length) {
+      const cut: FacadeDef[] = [];
+      for (const f of run) {
+        let pieces: FacadeDef[] = [f];
+        for (const [g0, g1] of gaps) {
+          pieces = pieces.flatMap((p) => (g1 <= p.x0 || g0 >= p.x1 ? [p] : [{ ...p, x1: g0 }, { ...p, x0: g1, label: undefined }]).filter((q) => q.x1 - q.x0 > 1.2));
+        }
+        cut.push(...pieces);
+      }
+      run.splice(0, run.length, ...cut);
+    }
     let prev = '';
     for (const f of run) {
       const label = f.label && f.label !== 'back' ? f.label : '';

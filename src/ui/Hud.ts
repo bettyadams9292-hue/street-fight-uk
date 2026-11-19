@@ -302,12 +302,20 @@ export class Hud {
 
   /** District name card when you arrive somewhere. */
   showBanner(district: string, place: string): void {
-    // The painted place name where there is one (e.g. tanner-road-estate.webp), else the words.
-    const line = (text: string, cls: string) => {
-      const slug = titleFor(text);
-      return slug ? h('div', { class: `${cls} has-art` }, titleArt(text, slug)) : h('div', { class: cls, text });
-    };
-    this.banner.replaceChildren(line(district, 'district'), line(place, 'place'));
+    // One painted title, never two stacked on top of each other: the place's own painting where
+    // there is one, else the district's with the place in words, else plain words. The other name
+    // goes underneath as a small plain line.
+    const placeArt = titleFor(place);
+    const districtArt = placeArt ? null : titleFor(district);
+    const big = placeArt
+      ? h('div', { class: 'place-title has-art' }, titleArt(place, placeArt))
+      : districtArt
+        ? h('div', { class: 'place-title has-art' }, titleArt(district, districtArt))
+        : h('div', { class: 'place-title', text: place || district });
+    const smallText = placeArt ? (district !== place ? district : '') : districtArt ? place : place && district !== place ? district : '';
+    const parts: HTMLElement[] = [big];
+    if (smallText) parts.push(h('div', { class: 'place-sub', text: smallText }));
+    this.banner.replaceChildren(...parts);
     this.banner.classList.remove('show');
     void this.banner.offsetWidth;
     this.banner.classList.add('show');

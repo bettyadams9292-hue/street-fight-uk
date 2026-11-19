@@ -299,7 +299,7 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
   };
   const street = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 });
   // Asphalt, concrete and brick from the texture library, laid by world position (materials/streetDetail.ts).
-  streetDetail(street, [...plan.area].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7));
+  streetDetail(street, [...plan.area].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7), plan.ground);
   add(solid, street, true, 0, 'solid');
   // Windows and lamp heads glow; their own colour is ignored at night so every pane reads as warm light.
   const litMat = new THREE.MeshStandardMaterial({ color: '#2a2018', emissive: new THREE.Color('#ffc880'), emissiveIntensity: o.night === false ? 0.3 : 0.6, roughness: 0.5 });

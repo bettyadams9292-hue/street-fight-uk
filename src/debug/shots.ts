@@ -116,6 +116,7 @@ export const SHOTS: Record<ShotName, SceneFn> = {
     game.advance(260);
   },
   estate_garages: (game, g) => story(game, g, 'estate', 'subway'),
+  subway_stairs: (game, g) => story(game, g, 'subway', 'estate'),
   estate_gym: (game, g) => story(game, g, 'estate', 'boxing'),
   // One picture per district, from its first entrance, for the city rebuild.
   // The long street: the line between two districts (before and after walking over it), and shops you can see into.

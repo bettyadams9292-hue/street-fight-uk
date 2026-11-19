@@ -11,7 +11,7 @@ import { emptyCommand } from '../src/input/Commands';
 import { Progress, newSave, type AreaId } from '../src/progress/Progress';
 import { propHalf, type LevelDef } from '../src/world/LevelTypes';
 import { LEVELS } from '../src/world/levels';
-import { STRIP, onStrip, stripLength, stripNeighbours, stripOffsets } from '../src/world/strip';
+import { STRIP, onStrip, stripLength, stripNeighbours, stripOffsets, isSubwayStairs, SUBWAY_GAP } from '../src/world/strip';
 import { World, exitLocked } from '../src/world/World';
 
 let passed = 0;
@@ -198,9 +198,12 @@ test('buildings fill the frontage edge to edge without overlapping', () => {
       const overlap = fronts[i - 1][1] - fronts[i][0];
       assert(overlap < 1.0, `${id}: ${fronts[i - 1][2]} overlaps ${fronts[i][2]} by ${overlap.toFixed(2)} m at x ${fronts[i][0].toFixed(1)}`);
     }
+    // Stairs down to the subway leave a gap in the frontage on purpose (LevelView draws the stairwell there).
+    const gaps = L[id].exits.filter((e) => isSubwayStairs(L[id], e)).map((e) => [e.x - SUBWAY_GAP, e.x + SUBWAY_GAP]);
     for (const f of L[id].facades) {
       if (f.kind === 'fence' || f.kind === 'hoarding' || f.x1 - f.x0 < 3) continue;
       const mid = (f.x0 + f.x1) / 2;
+      if (gaps.some(([g0, g1]) => mid >= g0 - 1.5 && mid <= g1 + 1.5)) continue;
       assert(fronts.some((b) => b[0] <= mid + 0.01 && b[1] >= mid - 0.01), `${id}: nothing built at x ${mid} (${f.kind} ${f.label ?? ''})`);
     }
   }
