@@ -2514,6 +2514,8 @@ export class Game {
       this.hud.updateBubbles((x, y, z) => this.renderer.screenOf(x, y, z));
       this.updateEdgeMarkers(player);
       document.body.classList.toggle('fight-on', !!this.world?.fightOn);
+      // Out and about in the story with no fight near: the touch pad drops to PUNCH, KICK and JUMP.
+      document.body.classList.toggle('roam', !!this.world && !this.world.fightOn);
       if (this.world && this.progress) this.updateStoryHud(dt);
       this.updatePrompt();
     }

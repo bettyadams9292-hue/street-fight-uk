@@ -1101,3 +1101,41 @@ body.fight-on .touch-ui .hud-btn.story-only { display: none; }
 .creator-footer .menu-btn.has-art .label img.title-art { width: 100%; height: auto; max-height: 36px; max-width: 100%; object-fit: contain; }
 /* Phones: the jewellery box's list and the selected piece stack (two 240 px columns ran off a portrait screen). */
 @media (max-width: 720px) { .jw-box { grid-template-columns: 1fr; } }
+
+/* ---- Simpler touch screen (phones) ----
+   Walking about, the pad is three buttons: PUNCH, KICK, JUMP. Block, dodge, grab, special, style and the hard
+   hits appear only when a fight starts (body.fight-on), so a new player sees a stick and three buttons. */
+.attack-pad .jmp { display: none; left: 61px; top: 0; }
+body.roam .touch-ui .side-pad, body.roam .touch-ui .extra-pad,
+body.roam .touch-ui .attack-pad .hp, body.roam .touch-ui .attack-pad .hk { display: none; }
+body.roam .touch-ui .attack-pad .jmp { display: flex; }
+body.roam .touch-ui .attack-pad .lk { left: auto; right: 0; top: 61px; bottom: auto; }
+
+/* Needs are small icon badges on touch screens (the full words are on the character screen). */
+.touch-ui .status-chip.need { width: 30px; height: 30px; padding: 0; justify-content: center; }
+.touch-ui .status-chip.need span { display: none; }
+.touch-ui .status-chip.need svg { width: 17px; height: 17px; }
+.touch-ui .needs-chips { gap: 4px; }
+
+@media (orientation: portrait) and (max-width: 700px) {
+  /* The strip was centred with a transform that pushed half of it off the left edge. */
+  .touch-ui .hud .status-strip { transform: none; gap: 4px; }
+  /* Walking about, the chips sit in the empty space to the right of LVL and money, never over the objective. */
+  .touch-ui .hud.story:not(.fighting) .status-strip { top: calc(96px + var(--safe-t)); left: 45%; right: calc(10px + var(--safe-r)); justify-content: flex-end; }
+  .touch-ui .hud .status-strip .status-chip { font-size: 12px; padding: 4px 8px; }
+  .touch-ui .hud .status-strip .status-chip.need { padding: 0; }
+
+  /* Walking about: no bottom row, so the stick gets the whole lower left and the pad sits lower. */
+  body.roam .touch-ui .attack-pad .jmp { left: 50px; top: 0; }
+  body.roam .touch-ui .attack-pad .lk { left: auto; right: 0; top: 50px; }
+  body.roam .touch-ui .attack-pad { bottom: calc(-36px + var(--safe-b)); }
+  body.roam .touch-ui .stick-zone { bottom: calc(10px + var(--safe-b)); height: calc(var(--deck-pad) + 70px + var(--deck-row)); }
+  body.roam .touch-ui .stick-base { top: 62%; }
+
+  /* In a fight the bottom row is five: BLOCK, DODGE, JUMP, GRAB, SPECIAL. STYLE SWAP moves up beside pause,
+     where the map, bag and crew buttons were (they hide during a fight). */
+  .touch-ui .side-pad { right: calc((100% - 20px) / 5 + 13px + var(--safe-r)); }
+  .touch-ui .extra-pad { width: calc((100% - 20px) / 5 - 3px); grid-template-columns: 1fr; }
+  .touch-ui .extra-pad .swap { position: fixed; top: calc(10px + var(--safe-t)); right: calc(56px + var(--safe-r)); width: 74px; height: 40px; }
+  .touch-ui .side-pad .touch-btn, .touch-ui .extra-pad .touch-btn { font-size: 14px; }
+}

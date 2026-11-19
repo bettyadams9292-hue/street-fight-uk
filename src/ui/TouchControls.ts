@@ -45,6 +45,8 @@ export class TouchControls {
       btn('PUNCH', 'lp', () => input.pressFromTouch('lp')),
       btn('KICK', 'hk', () => input.pressFromTouch('hk'), undefined, 'HARD'),
       btn('KICK', 'lk', () => input.pressFromTouch('lk')),
+      // Walking about (no fight on), the pad is just PUNCH, KICK and this JUMP: the rest only appear when a fight starts.
+      btn('JUMP', 'jmp', () => input.pressFromTouch('jump')),
     );
     const side = h(
       'div',
@@ -96,10 +98,15 @@ export class TouchControls {
     e.preventDefault();
     zone.setPointerCapture(e.pointerId);
     this.stickId = e.pointerId;
+    // The ring centres on the thumb but stays wholly inside its zone, so it never sits over a button.
     const r = zone.getBoundingClientRect();
-    this.origin = { x: e.clientX, y: e.clientY };
-    this.stickBase.style.left = `${e.clientX - r.left}px`;
-    this.stickBase.style.top = `${e.clientY - r.top}px`;
+    const half = this.stickBase.offsetWidth / 2 || 54;
+    const clamp = (v: number, lo: number, hi: number) => (hi < lo ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
+    const cx = clamp(e.clientX - r.left, half, r.width - half);
+    const cy = clamp(e.clientY - r.top, half, r.height - half);
+    this.origin = { x: r.left + cx, y: r.top + cy };
+    this.stickBase.style.left = `${cx}px`;
+    this.stickBase.style.top = `${cy}px`;
     this.stickBase.classList.add('live');
     this.stickMove(e);
   }

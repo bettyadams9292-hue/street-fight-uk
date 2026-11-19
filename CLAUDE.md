@@ -169,6 +169,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - the black squares at the market were the kit's checkerboard plaza tiles under chevron paving: plazas use `PavingStones092` and grey ground is evened out (`streetDetail.ts`); noise hashes no longer multiply big world coordinates (phone GPU precision);
   - fight balance: the harness walks the bot into each fight (drifting out of the trigger counted as a loss), the first fight is one lad then two, a few bosses and fights tuned (`docs/BALANCE.md`); `tools/economy/farming.ts` measures repeat-fight income (best about £3,700 an hour);
   - bracelets (other wrist, new wear slot `bracelet`) and earrings (a pair on the lobes) at Halden & Crane, 8 of each; loot diamond studs and bracelets go in the jewellery box; Threads' silver earring is drawn as sleeper hoops and no longer sold.
+  - simpler phone screen: walking about, the touch pad is just the stick, PUNCH, KICK and JUMP (`body.roam`); block, dodge, grab, special, style and the hard hits appear in a fight. In portrait STYLE SWAP sits beside pause in a fight, needs are small icon badges right of LVL and money (the strip was half off-screen), and the stick ring stays inside its zone.
 
 ## Open questions and next steps
 
