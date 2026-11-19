@@ -36,21 +36,28 @@ export function createAsset(id:AssetId):THREE.Group{
  }
  if(id==='scrapHeap'){
 
-  // A compact, overlapping heap of discarded British domestic electronics.
-  const plastic=[m(0xb3a99a),m(0x4c5355),m(0x7c766c),m(0x8b624a),m(0x34434b)];
-  const device=(x:number,y:number,z:number,w:number,h:number,d:number,angle:number,kind:number)=>{
-   const body=B(w,h,d,x,y,z,plastic[kind%plastic.length]);body.rotation.z=angle;
-   const screen=B(w*.72,h*.57,.009,x,y+.02,z+d*.505,kind%3===0?glass:dark);screen.rotation.z=angle;
-   B(w*.22,.015,.013,x,y-h*.35,z+d*.52,steel).rotation.z=angle;
-   for(let t=0;t<3;t++) C(.014,.008,x+w*.30,y+h*(t-1)*.18,z+d*.53,black,12).rotation.x=Math.PI/2;
-  };
-  device(-.43,.28,.05,.77,.43,.35,-.16,0);
-  device(.31,.34,-.18,.66,.49,.30,.13,1);
-  device(-.15,.73,-.12,.55,.38,.30,.19,2);
-  device(.42,.73,.13,.49,.34,.26,-.18,3);
-  device(-.46,.67,-.30,.35,.24,.28,.22,4);
-  for(let i=0;i<5;i++){const x=-.7+i*.35;const box=B(.29,.13,.29,x,.12,.42,plastic[(i+2)%5]);box.rotation.y=i*.27;}
-  for(let i=0;i<7;i++){const x=-.64+i*.19,z=.3+Math.sin(i*2)*.19;R([x,.20,z],[x+.12,.38,z+.09],.008,black);}
+  const shell=[m(0xbbb7a8),m(0x4d585b),m(0x7a7770),m(0x836f59),m(0x39444a)];
+  const screen=m(0x222e32,.15,.35),copper=m(0x987453,.6,.65);
+  // Uneven underlying scrap pile: no rectangular floor and no repeated display grid.
+  for(let i=0;i<13;i++){const x=Math.sin(i*2.17)*.67,z=Math.cos(i*2.91)*.42;
+   const y=.13+(i%4)*.115;const o=B(.22+(i%3)*.12,.11+(i%4)*.045,.19+(i%2)*.13,x,y,z,shell[i%5]);o.rotation.set((i%3-1)*.15,i*.74,(i%5-2)*.18);}
+  // Distinct appliances: television, microwave, washing-machine face, PC tower and stereo.
+  const tv=B(.71,.47,.33,-.39,.56,-.16,shell[0]);tv.rotation.z=-.17;
+  const tvGlass=B(.53,.31,.013,-.39,.58,.014,screen);tvGlass.rotation.z=-.17;
+  const microwave=B(.56,.32,.34,.35,.48,.08,shell[1]);microwave.rotation.z=.16;
+  B(.36,.22,.015,.30,.49,.257,screen).rotation.z=.16;
+  for(let i=0;i<2;i++){const knob=C(.028,.016,.57,.54-i*.10,.26,steel,16);knob.rotation.x=Math.PI/2;}
+  const washer=B(.51,.49,.43,.05,.84,-.28,shell[0]);washer.rotation.z=-.13;
+  const glassDoor=C(.16,.025,.06,.85,-.047,screen,32);glassDoor.rotation.x=Math.PI/2;
+  const ring=new T.Mesh(new T.TorusGeometry(.165,.018,8,32),steel);ring.position.set(.06,.85,-.023);g.add(ring);
+  const tower=B(.25,.59,.33,-.66,.34,.31,shell[2]);tower.rotation.z=.38;
+  B(.12,.017,.013,-.61,.47,.485,screen);
+  const radio=B(.53,.19,.20,.41,.89,.20,shell[3]);radio.rotation.z=-.21;
+  for(let i=0;i<2;i++){const speaker=C(.067,.012,.24+i*.31,.89,.306,dark,24);speaker.rotation.x=Math.PI/2;}
+  // Loose cables and rusted metal lengths are partly buried, not floating.
+  for(let i=0;i<9;i++){const x=Math.sin(i*1.8)*.61,z=Math.cos(i*1.3)*.37;
+   R([x,.11,z],[x+.16,.20+(i%3)*.07,z+.09],.007,i%3?black:copper);}
+  for(let i=0;i<4;i++){const x=-.52+i*.33;const p=B(.31,.022,.06,x,.14,.47,i%2?rust:steel);p.rotation.y=i*.53;}
 
  }
  if(id==='storageRack'){
@@ -90,34 +97,43 @@ export function createAsset(id:AssetId):THREE.Group{
  }
  if(id==='shippingContainer'){
 
-  // Corrugated 20-foot-style shipping container, door at its short end.
-  const faded=m(0x547687,.42,.72),edge=m(0x465158,.7,.46),mark=m(0xb4b9ad);
-  B(3.35,2.23,1.42,0,1.15,0,faded);
-  for(const z of [-.715,.715])for(let i=0;i<23;i++)B(.034,2.09,.028,-1.59+i*.144,1.15,z,edge);
-  for(const x of [-1.67,1.67])for(let i=0;i<9;i++)B(.025,2.09,.11,x,1.15,-.59+i*.147,edge);
-  for(const x of [-1.67,1.67])for(const z of [-.71,.71])B(.10,2.29,.105,x,1.145,z,edge);
-  B(3.36,.085,1.44,0,2.29,0,edge);
-  B(3.36,.075,1.44,0,.04,0,edge);
-  // Two proper hinged doors, seam, vertical locking bars, hinges and handles.
-  for(const x of [-.355,.355]){
-   B(.69,2.12,.032,1.698,1.15,x,faded);
-   for(const z of [x-.24,x+.24])R([1.75,.22,z],[1.75,2.08,z],.019,steel);
-   for(const y of [.32,1.88])B(.11,.11,.055,1.75,y,x-.29,edge);
-   B(.075,.13,.10,1.79,1.12,x+.21,brass);
+  // Closed, flush, structurally connected ISO-style container. X axis is its length.
+  const paint=m(0x4c7482,.46,.7),frame=m(0x35434b,.7,.48),ridge=m(0x355967,.45,.73),whiteMark=m(0xb8b9a8);
+  B(3.28,2.15,1.36,0,1.13,0,paint);
+  // Narrow corrugation strips are bonded to each side, not detached.
+  for(const z of [-.689,.689])for(let i=0;i<24;i++)B(.038,2.03,.028,-1.57+i*.136,1.14,z,ridge);
+  for(const x of [-1.64,1.64])for(let i=0;i<9;i++)B(.022,2.04,.095,x,1.14,-.55+i*.137,ridge);
+  for(const x of [-1.64,1.64])for(const z of [-.68,.68])B(.092,2.25,.09,x,1.125,z,frame);
+  for(const y of [.048,2.245])B(3.38,.085,1.45,0,y,0,frame);
+  // The end face is divided along Z, not along the length of the container.
+  for(const z of [-.342,.342]){
+   B(.045,2.06,.664,1.674,1.13,z,paint);
+   for(let i=0;i<4;i++)B(.014,1.94,.025,1.702,1.13,z-.245+i*.163,ridge);
+   for(const rodZ of [z-.21,z+.21]){
+    R([1.724,.19,rodZ],[1.724,2.05,rodZ],.014,steel);
+    for(const y of [.27,1.98])B(.075,.07,.06,1.725,y,rodZ,frame);
+   }
+   for(const y of [.35,.94,1.55,1.96])B(.07,.065,.055,1.72,y,z+(z>0?.30:-.30),frame);
+   B(.055,.085,.12,1.76,1.03,z+.16,steel);
   }
-  B(.04,2.17,.09,1.72,1.15,0,edge);
-  for(let i=0;i<4;i++)B(.28,.018,.012,-.75+i*.23,1.38,.737,mark);
+  B(.055,2.14,.035,1.72,1.13,0,frame);
+  for(let i=0;i<4;i++)B(.21,.012,.013,-.95+i*.25,1.47,.71,whiteMark);
 
  }
  if(id==='tyreStack'){
 
-  // Stacked tyres with open centres, deep sidewalls and repeated tread blocks.
+  // Car tyres with squared shoulders, real hollow centre and recessed tread.
+  const sidewall=m(0x242528,.02,.95),tread=m(0x191b1d,.01,.99),groove=m(0x333437);
   for(let j=0;j<2;j++)for(let i=0;i<4;i++){
-   const x=j*.58-.29,y=.115+i*.225,z=j===0?-.035:.045;
-   const tyre=new T.Mesh(new T.TorusGeometry(.225,.095,14,40),rubber);
-   tyre.rotation.x=Math.PI/2;tyre.position.set(x,y,z);g.add(tyre);
-   const side=new T.Mesh(new T.TorusGeometry(.155,.024,10,40),dark);side.rotation.x=Math.PI/2;side.position.set(x,y+.081,z);g.add(side);
-   for(let k=0;k<24;k++){const a=k*Math.PI/12;const o=B(.058,.032,.085,x+Math.cos(a)*.288,y,z+Math.sin(a)*.288,rubber);o.rotation.y=-a;}
+   const x=j*.61-.305,z=j===0?-.035:.05,y=.105+i*.205;
+   // Lathe cross-section defines a broad flat tread and hollow central aperture.
+   const p=[[.135,-.083],[.17,-.085],[.22,-.083],[.265,-.069],[.272,-.038],[.272,.038],[.265,.069],[.22,.083],[.17,.085],[.135,.083],[.125,.052],[.125,-.052]].map(v=>new T.Vector2(v[0],v[1]+y));
+   const tyre=new T.Mesh(new T.LatheGeometry(p,48),sidewall);tyre.position.set(x,0,z);g.add(tyre);
+   for(let k=0;k<36;k++){const a=k*Math.PI/18;
+    for(const off of [-.043,.043]){const block=B(.065,.042,.047,x+Math.cos(a)*.269,y+off,z+Math.sin(a)*.269,tread);block.rotation.y=-a;}
+   }
+   for(const off of [-.037,.037]){const band=new T.Mesh(new T.TorusGeometry(.268,.004,6,48),groove);band.rotation.x=Math.PI/2;band.position.set(x,y+off,z);g.add(band);}
+   const rim=new T.Mesh(new T.TorusGeometry(.143,.012,8,40),dark);rim.rotation.x=Math.PI/2;rim.position.set(x,y+.087,z);g.add(rim);
   }
 
  }
@@ -131,25 +147,33 @@ export function createAsset(id:AssetId):THREE.Group{
  }
  if(id==='fruitMachine'){
 
-  // UK pub fruit machine: tall illuminated header, slanted play deck and detailed reel window.
-  const magenta=m(0xc03787,.05,.32),gold=m(0xe6aa3c,.3,.3),navy=m(0x1b2635),lime=m(0x72b653);
-  B(.73,1.55,.52,0,.81,0,black);
-  B(.76,.62,.55,0,1.53,-.015,magenta);
-  B(.66,.48,.018,0,1.54,.273,navy);
-  for(let i=0;i<9;i++){const x=-.25+(i%3)*.25,y=1.70-Math.floor(i/3)*.135;
-   B(.17,.09,.021,x,y,.288,i%3===0?gold:i%3===1?lime:magenta);}
-  B(.70,.52,.52,0,1.00,0,navy);
-  const deck=B(.68,.29,.38,0,.93,.295,magenta);deck.rotation.x=-.58;
-  for(let i=0;i<3;i++){const x=-.205+i*.205;
-   B(.17,.17,.026,x,1.05,.474,white);
-   B(.10,.09,.029,x,1.05,.491,i===0?red:i===1?gold:lime);
+  // Recognisable UK pub fruit machine: curved-style fascia, reel window, prize grid, button deck.
+  const mag=m(0xa51d65,.15,.38),gold=m(0xd5a64a,.25,.38),lime=m(0x79b33d),navy=m(0x182333),lit=m(0xede3ba,.02,.32),orange=m(0xd66c32);
+  B(.75,1.64,.50,0,.84,0,black);
+  B(.76,.11,.53,0,1.71,0,mag);
+  B(.71,.48,.024,0,1.43,.265,navy);
+  // Illuminated jackpot/feature trail, smaller symbols and illuminated perimeter.
+  B(.65,.065,.032,0,1.65,.29,gold);
+  for(let i=0;i<20;i++){const x=-.264+(i%5)*.132,y=1.57-Math.floor(i/5)*.088;
+   B(.104,.062,.016,x,y,.29,i%5===0?orange:i%4===0?lime:i%3===0?gold:mag);
+   B(.038,.023,.018,x,y,.301,lit);}
+  for(const x of [-.346,.346])B(.016,.44,.024,x,1.44,.289,mag);
+  // Slanted play deck, with matching reel windows and staggered push buttons.
+  const deck=B(.72,.24,.36,0,.93,.285,mag);deck.rotation.x=-.49;
+  B(.62,.19,.026,0,1.035,.458,navy);
+  for(let i=0;i<3;i++){const x=-.204+i*.204;
+   B(.17,.14,.028,x,1.044,.478,lit);
+   B(.075,.072,.03,x,1.046,.497,i===0?orange:i===1?lime:gold);
   }
-  for(let i=0;i<8;i++){const x=-.25+(i%4)*.17,y=.87-Math.floor(i/4)*.09;B(.11,.045,.025,x,y,.483,i%2?lime:gold);}
-  B(.62,.13,.05,0,.63,.285,black);
-  B(.50,.03,.055,0,.61,.32,steel);
-  B(.63,.27,.027,0,.28,.275,magenta);
-  for(let i=0;i<6;i++)B(.075,.025,.02,-.25+i*.10,.28,.297,i%2?gold:lime);
-  B(.72,.065,.55,0,.065,0,dark);
+  for(let i=0;i<10;i++){const x=-.255+(i%5)*.127,y=.86-Math.floor(i/5)*.063;
+   B(.092,.036,.03,x,y,.457,i%4===0?orange:i%3===0?lime:gold);}
+  B(.56,.06,.06,0,.65,.294,navy);
+  B(.44,.013,.017,0,.659,.333,steel);
+  B(.67,.34,.023,0,.32,.264,mag);
+  B(.57,.25,.025,0,.33,.282,navy);
+  for(let i=0;i<12;i++){const x=-.23+(i%4)*.155,y=.405-Math.floor(i/4)*.07;
+   B(.105,.041,.017,x,y,.299,i%3===0?gold:i%3===1?mag:lime);}
+  B(.76,.07,.53,0,.045,0,dark);
 
  }
  if(id==='washBasin'){
@@ -170,6 +194,6 @@ export function createAsset(id:AssetId):THREE.Group{
   R([0,.62,-.12],[0,.44,-.12],.033,white);
   R([0,.44,-.12],[0,.44,-.30],.033,white);
  }
- g.userData={collection:'streetassettesting',batch:3,id,units:'metres',status:'review-required',revision:'structural-rebuild-v2',style:'British streets and interiors'};
+ g.userData={collection:'streetassettesting',batch:3,id,units:'metres',status:'review-required',revision:'polish-v3',style:'British streets and interiors'};
  return g;
 }
