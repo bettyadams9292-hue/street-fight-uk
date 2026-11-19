@@ -140,6 +140,84 @@ function model(id: string): Partial<Record<PartName, Part>> | null {
   return out;
 }
 
+/**
+ * Each lit pane's own coordinates, worked out once per model part: the triangles are grouped into the separate
+ * panes they make up, and every corner gets (u across, v up) within its pane, the pane's width in model metres,
+ * and the pane's number. The window shader (roomLight) draws a frame, glass and a room from these.
+ */
+const paneCache = new WeakMap<Part, Float32Array>();
+function panes(part: Part): Float32Array {
+  const hit = paneCache.get(part);
+  if (hit) return hit;
+  const n = part.pos.length / 3;
+  const parent = new Int32Array(n).map((_, i) => i);
+  const find = (i: number): number => {
+    while (parent[i] !== i) i = parent[i] = parent[parent[i]];
+    return i;
+  };
+  const join = (a: number, b: number) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  };
+  for (let t = 0; t < part.idx.length; t += 3) {
+    join(part.idx[t], part.idx[t + 1]);
+    join(part.idx[t], part.idx[t + 2]);
+  }
+  // Corners in exactly the same place join too (a pane split into separate triangles).
+  const seen = new Map<string, number>();
+  for (let i = 0; i < n; i++) {
+    const key = `${Math.round(part.pos[i * 3] * 500)},${Math.round(part.pos[i * 3 + 1] * 500)},${Math.round(part.pos[i * 3 + 2] * 500)}`;
+    const j = seen.get(key);
+    if (j === undefined) seen.set(key, i);
+    else join(i, j);
+  }
+  const groups = new Map<number, number[]>();
+  for (let i = 0; i < n; i++) {
+    const r = find(i);
+    let g = groups.get(r);
+    if (!g) groups.set(r, (g = []));
+    g.push(i);
+  }
+  const out = new Float32Array(n * 4);
+  let k = 0;
+  for (const g of groups.values()) {
+    // The pane's facing: across is horizontal and square to it; up is up.
+    let nx = 0;
+    let nz = 0;
+    for (const i of g) {
+      nx += part.nrm[i * 3];
+      nz += part.nrm[i * 3 + 2];
+    }
+    const len = Math.hypot(nx, nz);
+    const tx = len > 1e-3 ? -nz / len : 1;
+    const tz = len > 1e-3 ? nx / len : 0;
+    let s0 = Infinity, s1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const i of g) {
+      const sv = part.pos[i * 3] * tx + part.pos[i * 3 + 2] * tz;
+      const y = part.pos[i * 3 + 1];
+      s0 = Math.min(s0, sv); s1 = Math.max(s1, sv); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    }
+    const w = Math.max(1e-3, s1 - s0);
+    const h = Math.max(1e-3, y1 - y0);
+    for (const i of g) {
+      const sv = part.pos[i * 3] * tx + part.pos[i * 3 + 2] * tz;
+      out[i * 4] = (sv - s0) / w;
+      out[i * 4 + 1] = (part.pos[i * 3 + 1] - y0) / h;
+      out[i * 4 + 2] = w;
+      out[i * 4 + 3] = k;
+    }
+    k++;
+  }
+  paneCache.set(part, out);
+  return out;
+}
+
+function paneHash(x: number, z: number, k: number): number {
+  const v = Math.sin(x * 12.9898 + z * 78.233 + k * 37.719) * 43758.5453;
+  return v - Math.floor(v);
+}
+
 /** Grows as pieces are baked in. */
 /** Width of one baked chunk of street along x, metres: about two screens' worth on a phone. */
 export const STREET_CHUNK = 12;
@@ -151,6 +229,12 @@ class Bucket {
   idx: number[] = [];
   /** 1 on building walls (the only surfaces that may be laid in brick), 0 on props: awnings, signs, furniture. */
   wall: number[] = [];
+  /** Lit panes only: (u, v) within the pane, a random number for the pane, and its width in metres. */
+  win: number[] | null;
+
+  constructor(lit = false) {
+    this.win = lit ? [] : null;
+  }
 
   add(part: Part, pl: Placement, tint: THREE.Color | null): void {
     // Brick goes on a building's walls only: never on props, nor on what stands out in front of a façade
@@ -180,6 +264,10 @@ class Bucket {
       else this.col.push(part.col[i * 3], part.col[i * 3 + 1], part.col[i * 3 + 2]);
       this.wall.push(wallZ !== null && (part.pos[i * 3 + 2] - wallZ) * front < 0.2 ? 1 : 0);
     }
+    if (this.win) {
+      const pw = panes(part);
+      for (let i = 0; i < n; i++) this.win.push(pw[i * 4], pw[i * 4 + 1], paneHash(pl.x, pl.z, pw[i * 4 + 3]), pw[i * 4 + 2] * Math.abs(pl.sx));
+    }
     for (let i = 0; i < part.idx.length; i++) this.idx.push(part.idx[i] + base);
   }
 
@@ -200,11 +288,14 @@ class Bucket {
     ];
     let v = base;
     for (const [nx, ny, nz, corners] of faces) {
+      const r = paneHash(b.x, b.z, nx * 3 + nz * 7 + ny * 11);
       for (const k of corners) {
         this.pos.push(b.x + k[0], b.y + k[1], b.z + k[2]);
         this.nrm.push(nx, ny, nz);
         this.col.push(c.r, c.g, c.b);
         this.wall.push(1);
+        // A glowing block's faces are panes too: across is x (or z on the ends), up is y.
+        if (this.win) this.win.push(nx !== 0 ? (k[2] + hz) / (2 * hz) : (k[0] + hx) / (2 * hx), ny !== 0 ? (k[2] + hz) / (2 * hz) : (k[1] + hy) / (2 * hy), r, nx !== 0 ? b.d : b.w);
       }
       this.idx.push(v, v + 1, v + 2, v, v + 2, v + 3);
       v += 4;
@@ -220,6 +311,7 @@ class Bucket {
     // Blocks are building masses: walls. Padded so every vertex has a value.
     while (this.wall.length < this.pos.length / 3) this.wall.push(1);
     g.setAttribute('sdWall', new THREE.Float32BufferAttribute(this.wall, 1));
+    if (this.win) g.setAttribute('rlWin', new THREE.Float32BufferAttribute(this.win, 4));
     g.setIndex(this.pos.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(this.idx, 1) : new THREE.Uint16BufferAttribute(this.idx, 1));
     g.computeBoundingSphere();
     g.computeBoundingBox();
@@ -258,7 +350,7 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
   const chunk = (x: number) => {
     const k = Math.floor(x / STREET_CHUNK);
     let c = chunks.get(k);
-    if (!c) chunks.set(k, (c = { solid: new Bucket(), glass: new Bucket(), lit: new Bucket() }));
+    if (!c) chunks.set(k, (c = { solid: new Bucket(), glass: new Bucket(), lit: new Bucket(true) }));
     return c;
   };
   const missing = new Set<string>();
@@ -275,7 +367,7 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     let into = chunk(pl.x);
     if (pl.own) {
       let o = own.get(pl.own);
-      if (!o) own.set(pl.own, (o = { solid: new Bucket(), glass: new Bucket(), lit: new Bucket() }));
+      if (!o) own.set(pl.own, (o = { solid: new Bucket(), glass: new Bucket(), lit: new Bucket(true) }));
       into = o;
     }
     const t = pl.tint ? tint.set(pl.tint) : null;
@@ -379,19 +471,59 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
 function roomLight(mat: THREE.MeshStandardMaterial): void {
   mat.onBeforeCompile = (sh: { vertexShader: string; fragmentShader: string }) => {
     sh.vertexShader = sh.vertexShader
-      .replace('void main() {', 'varying vec3 rlWorld;\nvoid main() {')
-      .replace('#include <project_vertex>', '#include <project_vertex>\n  rlWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      .replace('void main() {', 'attribute vec4 rlWin;\nvarying vec3 rlWorld;\nvarying vec4 vWin;\nvoid main() {')
+      .replace('#include <project_vertex>', '#include <project_vertex>\n  rlWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;\n  vWin = rlWin;');
     sh.fragmentShader = sh.fragmentShader
       .replace(
         'void main() {',
         `varying vec3 rlWorld;
+varying vec4 vWin;
 float rlHash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 void main() {`,
       )
       .replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+  float rlFrame = 0.0;
+  if (vWin.w > 0.01) {
+    // A window, not a panel: a white frame and glazing bars, and glass that shows the sky (lighter up top).
+    vec2 uv = vWin.xy;
+    float w = max(vWin.w, 0.3);
+    float bx = 0.07 / w;
+    float by = 0.06;
+    rlFrame = max(max(step(uv.x, bx), step(1.0 - bx, uv.x)), max(step(uv.y, by), step(1.0 - by, uv.y)));
+    if (w > 1.1) rlFrame = max(rlFrame, step(abs(uv.x - 0.5), 0.03 / w));
+    if (vWin.z > 0.5) rlFrame = max(rlFrame, step(abs(uv.y - 0.7), 0.025));
+    vec3 sky = mix(vec3(0.05, 0.065, 0.085), vec3(0.28, 0.33, 0.4), smoothstep(0.1, 1.0, uv.y + 0.15 * (uv.x - 0.5)));
+    diffuseColor.rgb = mix(sky, vec3(0.82, 0.8, 0.76), rlFrame);
+  }`,
+      )
+      .replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
-  {
+  if (vWin.w > 0.01) {
+    // The room behind the glass: one in five or so dark, the rest lit from a ceiling lamp, falling off to the
+    // sill, some with curtains drawn back at the sides, some with blinds, a few blue with a telly on.
+    vec2 uv = vWin.xy;
+    float r = vWin.z;
+    float r2 = fract(r * 7.13);
+    float r3 = fract(r * 13.7);
+    float on = step(0.22, r);
+    vec3 tint = r3 > 0.86 ? vec3(0.55, 0.72, 1.2) : (r3 < 0.3 ? vec3(1.1, 0.82, 0.58) : vec3(1.0));
+    float lamp = exp(-((uv.x - 0.5) * (uv.x - 0.5) * 5.0 + (uv.y - 0.95) * (uv.y - 0.95) * 6.0));
+    vec3 room = tint * (0.28 + 0.8 * lamp) * mix(0.45, 1.0, smoothstep(0.0, 0.8, uv.y));
+    // Furniture and the sill: the bottom quarter in shadow.
+    room *= mix(0.45, 1.0, smoothstep(0.12, 0.32, uv.y));
+    if (r2 > 0.5) {
+      float cw = 0.14 + 0.12 * r3;
+      float cur = max(step(uv.x, cw), step(1.0 - cw, uv.x));
+      vec3 cloth = r3 > 0.6 ? vec3(0.55, 0.18, 0.16) : (r3 > 0.3 ? vec3(0.25, 0.3, 0.5) : vec3(0.75, 0.68, 0.55));
+      room = mix(room, cloth * (0.35 + 0.5 * lamp), cur);
+    } else if (r2 < 0.2) {
+      room *= 0.62 + 0.38 * step(0.45, fract(uv.y * 16.0));
+    }
+    totalEmissiveRadiance *= room * on * (1.0 - rlFrame);
+  } else {
     vec2 cell = floor(vec2((rlWorld.x + rlWorld.z) / 1.3, rlWorld.y / 1.7));
     float h = rlHash(cell);
     float h2 = rlHash(cell + 17.0);
@@ -402,7 +534,7 @@ void main() {`,
   }`,
       );
   };
-  mat.customProgramCacheKey = () => 'room-light';
+  mat.customProgramCacheKey = () => 'room-light-2';
 }
 
 function signBoard(s: Sign): THREE.Mesh {

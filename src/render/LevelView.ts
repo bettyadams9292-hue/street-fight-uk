@@ -3792,6 +3792,12 @@ export class LevelView {
         this.exitSign(ex, kitDoor, board ? board.y - board.h / 2 - 0.3 : 3.25, this.back + 0.35);
         return;
       }
+      // A property for sale or let on a kit street: its building already has a front door, and the listing stands
+      // at it (realty/catalogue.ts x), so it's only signed. Drawing a second door here put one over the windows.
+      if (this.street && ex.to === 'property') {
+        this.exitSign(ex, ex.x, 2.75, z + 0.12);
+        return;
+      }
       // A real door on the wall behind the door point (DoorLibrary); the old lit doorway until the doors load.
       const isStairs = ex.id.includes('stairs') || ex.id.includes('steps');
       // Stairs drawn as a model (the stairwell in the garage floor, the basement stairs with their own door at the top): just sign them.
