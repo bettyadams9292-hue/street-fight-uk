@@ -171,6 +171,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - bracelets (other wrist, new wear slot `bracelet`) and earrings (a pair on the lobes) at Halden & Crane, 8 of each; loot diamond studs and bracelets go in the jewellery box; Threads' silver earring is drawn as sleeper hoops and no longer sold.
   - simpler phone screen: walking about, the touch pad is just the stick, PUNCH, KICK and JUMP (`body.roam`); block, dodge, grab, special, style and the hard hits appear in a fight. In portrait STYLE SWAP sits beside pause in a fight, needs are small icon badges right of LVL and money (the strip was half off-screen), and the stick ring stays inside its zone.
 - #37: USE is its own action, not GRAB: on phones tap the "USE …" plate (`Hud` prompt, `InputManager.useFromTouch`, `CommandFrame.use`); E uses and U grabs on a keyboard; LB on a pad does both (use wins when there's something to use). Needs badges show their icons again (`.need-text`).
+- #39: running keeps you on screen (`CameraRig.updateWorld`: dead zone scales with screen width, the camera leads the way you run, you're held 0.55 m inside the edge; a portrait sprint went from 117% to 44% of the way to the edge); passers-by and anyone they bump are pushed apart as round bodies, the passer-by giving way (`Simulation.separate`); walking or backing into a prop steps you round it to the nearest gap (`World.steerAround`, also enemies and crew).
 
 ## Open questions and next steps
 
