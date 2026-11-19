@@ -17,7 +17,15 @@ if(id==='pubDartboard'){B(.65,.78,.09,0,1.45,0,wood);const face=C(.27,.022,0,1.4
 if(id==='bikeRack'){R([-.35,.02,0],[-.35,.78,0],.025,steel);R([.35,.02,0],[.35,.78,0],.025,steel);R([-.35,.78,0],[.35,.78,0],.025,steel);for(const x of [-.35,.35])C(.095,.025,x,.015,0,grey);}
 if(id==='arcadeCabinet'){B(.68,1.35,.65,0,.72,0,dark);B(.68,.36,.65,0,1.55,-.03,red);B(.54,.48,.025,0,1.12,.34,glass);B(.57,.20,.31,0,.76,.33,steel);for(const x of [-.15,.15])C(.035,.06,x,.87,.43,yellow);}
 if(id==='dumpster'){B(1.48,1.02,.89,0,.65,0,green);B(1.56,.075,.96,0,1.19,0,dark);for(const x of [-.57,.57])for(const z of [-.34,.34])C(.09,.06,x,.11,z,black);for(const x of [-.43,.43])B(.10,.10,.98,x,.70,0,steel);}
-if(id==='pallet'){for(const z of [-.37,0,.37]){B(1.15,.08,.16,0,.07,z,wood);B(1.15,.06,.16,0,.27,z,wood);}for(const x of [-.46,0,.46])B(.17,.13,.86,x,.17,0,wood);}
+if(id==='pallet'){
+ // EXACT single-pallet construction extracted from approved Batch 03 palletStack.
+ const plank=[m(0x8b7359),m(0x76614b),m(0x9a8060),m(0x695441)],woodDark=m(0x574431);
+ const base=0,ox=0,oz=0,k=0;
+ for(let j=0;j<5;j++) B(.18,.024,.79,ox-.40+j*.20,base+.132,oz,plank[(j+k)%4]);
+ for(const x of [-.39,0,.39])for(const z of [-.30,.30])B(.16,.088,.17,ox+x,base+.072,oz+z,woodDark);
+ for(const x of [-.39,0,.39])B(.16,.023,.79,ox+x,base+.018,oz,plank[(k+1)%4]);
+ for(const z of [-.32,.32])B(1.0,.025,.12,ox,base+.114,oz+z,woodDark);
+}
 if(id==='trafficLight'){C(.07,.11,0,.055,0,grey);C(.043,2.45,0,1.24,0,steel);B(.33,.96,.26,0,2.18,.10,black);for(let i=0;i<3;i++){const lens=C(.115,.023,0,2.47-i*.29,.244,[red,yellow,green][i],32);lens.rotation.x=Math.PI/2;}B(.36,.065,.33,0,2.69,.10,dark);}
 if(id==='vendingMachine'){B(.87,1.72,.72,0,.88,0,dark);B(.58,1.19,.025,-.11,1.06,.37,glass);for(let i=0;i<4;i++)for(let j=0;j<3;j++)B(.11,.14,.07,-.32+j*.20,.65+i*.26,.39,[red,green,yellow][j]);B(.12,.38,.025,.34,1.10,.38,grey);B(.55,.16,.06,0,.28,.39,black);}
 if(id==='parkingMeter'){B(.29,.13,.27,0,.07,0,dark);B(.16,1.27,.16,0,.75,0,steel);B(.43,.68,.30,0,1.67,0,dark);B(.31,.24,.012,0,1.81,.157,glass);B(.13,.025,.014,0,1.53,.16,cream);B(.10,.10,.014,0,1.35,.16,yellow);}
@@ -29,4 +37,126 @@ if(id==='newspaperStand'){for(const x of [-.55,.55])R([x,0,0],[x,1.52,0],.025,st
 if(id==='shoppingBasket'){B(.55,.04,.35,0,.08,0,red);for(const z of [-.19,.19])B(.59,.31,.025,0,.25,z,red);for(const x of [-.29,.29])B(.025,.31,.39,x,.25,0,red);for(let x=-.20;x<=.21;x+=.10)for(const z of [-.204,.204])B(.045,.11,.009,x,.26,z,dark);R([-.22,.43,0],[0,.76,0],.019,black);R([0,.76,0],[.22,.43,0],.019,black);}
 if(id==='deliveryTrolley'){B(.52,.045,.36,0,.12,.16,steel);for(const x of [-.23,.23]){R([x,.12,.14],[x,1.27,-.22],.025,steel);const w=C(.105,.045,x,.12,-.22,black);w.rotation.z=Math.PI/2;}R([-.23,1.27,-.22],[.23,1.27,-.22],.026,steel);B(.38,.52,.30,0,.43,.10,wood);}
 if(id==='marketStall'){for(const x of [-.91,.91])for(const z of [-.50,.50])R([x,0,z],[x,2.15,z],.026,steel);B(2.0,.09,1.13,0,2.18,0,red);for(let i=0;i<7;i++)B(.27,.012,1.14,-.83+i*.277,2.236,0,i%2?cream:red);B(1.82,.09,.80,0,.96,0,wood);for(const x of [-.74,.74])B(.06,.88,.06,x,.49,0,steel);}
+
+/** Batch 05 detail pass: recognisable UK materials, practical construction and scale. */
+const rubber=m(0x202326),silver=m(0xb7bfc0,.65),ivory=m(0xf2ede1),brick=m(0x956d59),blue=m(0x2e536b),rust=m(0x785443,.3);
+const tor=(major:number,tube:number,x:number,y:number,z:number,material:T.Material,rx=0)=>{const o=new T.Mesh(new T.TorusGeometry(major,tube,10,48),material);o.position.set(x,y,z);o.rotation.x=rx;g.add(o);return o};
+const sphere=(radius:number,x:number,y:number,z:number,material:T.Material)=>{const o=new T.Mesh(new T.SphereGeometry(radius,16,12),material);o.position.set(x,y,z);g.add(o);return o};
+const wheel=(x:number,y:number,z:number,r=.10)=>{const w=C(r,.055,x,y,z,rubber,28);w.rotation.z=Math.PI/2;const hub=C(r*.33,.058,x,y,z,silver,20);hub.rotation.z=Math.PI/2;};
+if(id==='laundretteWasher'||id==='laundretteDryer'){
+ const ys=id==='laundretteWasher'?[.44]:[.40,1.00];
+ for(const y of ys){tor(.226,.023,0,y,.363,silver);tor(.17,.010,0,y,.375,rubber);const drum=C(.152,.012,0,y,.380,dark,48);drum.rotation.x=Math.PI/2;for(let i=0;i<12;i++){const a=i*Math.PI/6;const dot=C(.009,.009,Math.cos(a)*.105,y+Math.sin(a)*.105,.39,grey,10);dot.rotation.x=Math.PI/2;}}
+ for(const x of [-.20,.14,.25]){const knob=C(x===-.20?.034:.019,.014,x,id==='laundretteWasher'?.79:1.32,.373,x===-.20?silver:green,24);knob.rotation.x=Math.PI/2;}
+ B(.16,.043,.015,.04,id==='laundretteWasher'?.79:1.32,.372,black);
+ for(const x of [-.30,.30])B(.035,.065,.035,x,.03,0,rubber);
+}
+if(id==='bakeryDisplay'){
+ for(const z of [-.26,.26])B(1.30,.035,.032,0,1.39,z,wood);
+ for(const y of [.42,.85,1.22])for(let j=0;j<5;j++){const loaf=B(.155,.095,.23,-.44+j*.22,y+.095,0,m(0xb17b3f));loaf.rotation.z=(j%3-1)*.055;for(let k=0;k<2;k++)B(.008,.007,.18,-.47+j*.22+k*.045,y+.146,.01,cream);}
+ B(1.27,.018,.58,0,.03,0,wood);
+}
+if(id==='takeawayCounter'){
+ for(const x of [-.70,.70])B(.065,.72,.04,x,.50,.375,steel);
+ B(1.58,.08,.045,0,.83,.375,steel);
+ B(.47,.22,.24,.42,1.38,-.13,black);
+ B(.32,.05,.18,.42,1.58,-.13,cream);
+ B(.36,.045,.22,-.42,1.065,-.08,red);
+ for(let i=0;i<3;i++)B(.09,.07,.08,-.50+i*.12,1.12,-.10,cream);
+}
+if(id==='pubDartboard'){
+ for(const x of [-.33,.33])B(.025,.76,.12,x,1.45,.055,wood);
+ tor(.26,.013,0,1.45,.09,ivory);
+ for(let i=0;i<20;i++){const a=i*Math.PI/10;R([0,1.45,.09],[Math.sin(a)*.258,1.45+Math.cos(a)*.258,.09],.003,silver);}
+ sphere(.024,0,1.45,.107,red);
+ B(.17,.05,.04,0,1.08,.09,black);
+}
+if(id==='bikeRack'){
+ // Standard Sheffield hoop: uprights, crossbar and curved top corners.
+ for(const x of [-.35,.35])tor(.055,.024,x,.76,0,steel);
+ for(const x of [-.35,.35])B(.16,.018,.16,x,.014,0,grey);
+}
+if(id==='arcadeCabinet'){
+ B(.59,.025,.035,0,1.46,.35,yellow);
+ B(.55,.035,.03,0,.96,.36,black);
+ for(const x of [-.22,-.07,.08,.23]){const b=C(.024,.018,x,.82,.46,x>0?red:green,16);b.rotation.x=Math.PI/2;}
+ R([-.15,.78,.45],[-.15,.95,.45],.014,black);
+ sphere(.045,-.15,.95,.45,red);
+ B(.44,.12,.015,0,.30,.333,grey);
+ B(.50,.10,.03,0,1.63,.34,cream);
+}
+if(id==='dumpster'){
+ for(const x of [-.64,.64])B(.045,.90,.03,x,.65,.463,steel);
+ for(let i=0;i<4;i++)B(.035,.75,.026,-.45+i*.30,.62,.468,green);
+ B(.80,.07,.12,0,1.19,-.48,black);
+ for(const x of [-.57,.57])for(const z of [-.34,.34])wheel(x,.115,z,.075);
+ B(.16,.13,.045,0,.81,.468,ivory);
+}
+if(id==='trafficLight'){
+ for(let i=0;i<3;i++){const y=2.47-i*.29;tor(.119,.013,0,y,.26,black);B(.27,.045,.13,0,y+.145,.245,black);}
+ B(.24,.15,.20,0,1.66,.10,grey);
+ B(.13,.07,.07,0,.22,0,steel);
+}
+if(id==='vendingMachine'){
+ for(let i=0;i<4;i++)B(.55,.022,.10,-.10,.55+i*.27,.425,steel);
+ for(let i=0;i<4;i++)for(let j=0;j<3;j++){B(.075,.018,.012,-.32+j*.20,.58+i*.26,.44,ivory);}
+ B(.13,.06,.03,.34,1.40,.397,blue);
+ B(.14,.025,.025,.34,.91,.40,black);
+ B(.60,.08,.05,0,.35,.425,grey);
+}
+if(id==='parkingMeter'){
+ B(.36,.06,.33,0,1.99,0,dark);
+ B(.21,.14,.016,0,1.81,.171,blue);
+ for(let i=0;i<3;i++)for(let j=0;j<3;j++)B(.045,.025,.015,-.09+j*.09,1.68-i*.07,.173,grey);
+ B(.16,.025,.016,0,1.37,.174,black);
+}
+if(id==='cashMachine'){
+ B(.63,.055,.04,0,1.78,.315,blue);
+ for(let i=0;i<3;i++)for(let j=0;j<3;j++)B(.075,.045,.012,-.16+j*.16,1.00-i*.075,.33,grey);
+ B(.25,.035,.03,0,1.16,.32,black);
+ B(.20,.045,.03,0,.64,.32,blue);
+}
+if(id==='noticeBoard'){
+ for(let i=0;i<5;i++){B(.13,.013,.018,-.48+i*.24,1.51,.075,cream);B(.14,.013,.018,-.48+i*.24,1.31,.075,grey);}
+ for(const x of [-.67,.67])B(.11,.09,.20,x,.04,0,grey);
+ B(1.49,.04,.08,0,1.90,.10,wood);
+}
+if(id==='gardenShed'){
+ // Timber lap boards, roof felt, door hinges and an actual pitched ridge.
+ for(let y=.22;y<1.71;y+=.17)for(const z of [-.67,.67])B(1.74,.025,.023,0,y,z,wood);
+ for(let y=.22;y<1.71;y+=.17)for(const x of [-.86,.86])B(.025,.025,1.34,x,y,0,wood);
+ for(const y of [.30,1.16])B(.10,.035,.025,.20,y,.746,steel);
+ B(.12,.18,.03,-.20,.88,.745,black);
+ for(const x of [-.42,.42]){const roof=B(1.12,.075,1.58,x,1.89,0,dark);roof.rotation.z=x<0?.20:-.20;}
+ B(1.92,.035,.08,0,2.00,0,dark);
+}
+if(id==='cafeMenuStand'){
+ for(const x of [-.35,.35])R([x,0,-.22],[x,.99,0],.024,wood);
+ for(let i=0;i<5;i++)B(.32,.015,.012,-.10+(i%2)*.15,1.62-i*.14,.058,ivory);
+ B(.89,.04,.07,0,.88,.025,wood);
+}
+if(id==='newspaperStand'){
+ for(let i=0;i<4;i++)for(let j=0;j<5;j++){const x=-.43+j*.21,y=.53+i*.31;B(.16,.17,.01,x,y,.165,ivory);B(.15,.045,.012,x,y+.06,.173,[red,blue,green,dark,yellow][j]);B(.12,.015,.012,x,y+.015,.175,grey);}
+ for(const x of [-.55,.55])B(.16,.025,.28,x,.03,0,dark);
+}
+if(id==='shoppingBasket'){
+ // Basket has an open top, vented walls and two hinged handles.
+ for(let i=0;i<4;i++)for(const z of [-.206,.206])B(.43,.025,.012,0,.14+i*.078,z,red);
+ for(let i=0;i<3;i++)for(const x of [-.296,.296])B(.012,.025,.30,x,.14+i*.09,0,red);
+ for(const x of [-.22,.22]){tor(.025,.009,x,.43,0,steel);B(.045,.035,.025,x,.43,0,black);}
+ B(.48,.05,.055,0,.75,0,black);
+}
+if(id==='deliveryTrolley'){
+ for(const x of [-.23,.23])wheel(x,.12,-.22,.105);
+ B(.52,.035,.10,0,.10,.30,steel);
+ for(const y of [.42,.72,1.03])R([-.23,y,-.12],[.23,y,-.12],.014,steel);
+ B(.35,.035,.08,0,1.29,-.22,rubber);
+}
+if(id==='marketStall'){
+ // Canvas valance, striped roof, market counter and rear bracing.
+ for(let i=0;i<7;i++)B(.27,.15,.025,-.83+i*.277,2.12,.56,i%2?cream:red);
+ for(const x of [-.89,.89])R([x,.20,-.5],[x,2.16,.50],.014,steel);
+ for(let i=0;i<5;i++){const x=-.67+i*.34;B(.26,.13,.25,x,1.09,0,[green,yellow,red,green,yellow][i]);}
+ B(1.88,.14,.10,0,.80,.39,wood);
+}
+
 g.userData={collection:'streetassettesting',batch:5,id,status:'review-required',units:'metres'};return g;}
