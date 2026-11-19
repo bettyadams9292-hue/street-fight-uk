@@ -153,6 +153,7 @@ export function createStreetAsset(name: StreetAssetName): THREE.Group {
   }
   enhanceReferenceProps(g, name);
   upgradeDepthAndSurfaces(g, name);
+  polishEveryRemainingAsset(g, name);
   g.userData = { collection: 'newassetsfromchatgpt', standalone: true, units: 'metres', assetName: name };
   return finishProductionAsset(g, name);
 }
@@ -630,25 +631,34 @@ function addLabel(g:THREE.Group,text:string,w:number,h:number,x:number,y:number,
 function finishProductionAsset(g:THREE.Group,name:StreetAssetName) {
   // Existing models use separate geometry per mesh; keep the art untouched,
   // replace bland surface materials and apply text on their visible front.
+  // Stable physically-based solid materials. Do not allocate hundreds of
+  // canvas maps on mobile: original colours must survive every load.
+  const stable=new Map<string,THREE.MeshStandardMaterial>();
   g.traverse(obj=>{
     if(!(obj instanceof THREE.Mesh))return;
     obj.castShadow=true;obj.receiveShadow=true;
-    const material=obj.material;
-    if(!(material instanceof THREE.MeshStandardMaterial))return;
-    if(material.transparent||material.opacity<.99)return;
-    const hex=material.color.getHex();
-    const kind=[0x4b4a46,0x55565a,0x8a8276].includes(hex)?'wood':
-      material.metalness>.25?'metal':'paint';
-    const maps=authoredMaps(hex,kind);
-    if(!maps)return;
-    // Avoid compounding existing texture maps from older enhancement passes.
-    // Keep original calibrated colour: older v5 code replaced it with white
-    // and relied on generated canvas maps, causing missing/faded colours on iOS.
-    if(material.map){material.map=null;}
-    material.normalMap=maps.normal;
-    material.normalScale.set(.12,.12);
-    material.roughnessMap=maps.roughness;
-    material.needsUpdate=true;
+    const old=obj.material;
+    if(!(old instanceof THREE.MeshStandardMaterial))return;
+    if(old.transparent||old.opacity<.99)return;
+    // Legacy detail passes set colour to white and put colour in CanvasTexture.
+    // Recover that colour from the first pixel of the source canvas when needed.
+    let hex=old.color.getHex();
+    if(hex===0xffffff&&old.map instanceof THREE.CanvasTexture){
+      const canvas=old.map.image as HTMLCanvasElement;
+      try{const ctx=canvas.getContext('2d');if(ctx){
+        const px=ctx.getImageData(1,1,1,1).data;
+        hex=(px[0]<<16)|(px[1]<<8)|px[2];
+      }}catch(_e){/* retain colour if canvas unavailable */}
+    }
+    const metal=old.metalness>.24;
+    const key=hex+':'+(metal?'metal':'paint');
+    let m=stable.get(key);
+    if(!m){
+      m=new THREE.MeshStandardMaterial({color:hex,metalness:metal?.42:.05,
+        roughness:metal?.48:.76});
+      stable.set(key,m);
+    }
+    obj.material=m;
   });
   const text=(t:string,w:number,h:number,x:number,y:number,z:number,bg?:string,fg?:string,fs?:number)=>
     addLabel(g,t,w,h,x,y,z,bg,fg,fs);
@@ -711,4 +721,115 @@ export function auditStreetAsset(g:THREE.Group,name:StreetAssetName):AssetAudit 
     drawCallsEstimate:meshes,width:+size.x.toFixed(3),height:+size.y.toFixed(3),
     depth:+size.z.toFixed(3),groundOffset:+bb.min.y.toFixed(3),
     issues,passes:issues.length===0};
+}
+
+/** V7 dimensional art pass for all fifteen assets not rebuilt in v4.
+ * Adds distinct silhouette details without touching the game. */
+function polishEveryRemainingAsset(g:THREE.Group,name:StreetAssetName){
+ const dark=0x22282e,steel=0x6f7a80,white=0xeae8dd,red=0xb32a32,
+   yellow=0xe9c64c,wood=0x665043,shadow=0x14191d;
+ const B=(w:number,h:number,d:number,x:number,y:number,z:number,c:number)=>{
+   const m=box(g,w,h,d,x,y,z,c);m.name='V7 dimensional detail';return m;};
+ const C=(r:number,h:number,x:number,y:number,z:number,c:number)=>cylinder(g,r,h,x,y,z,c);
+ const bolt=(x:number,y:number,z:number)=>C(.014,.018,x,y,z,0xc3c8c9);
+ switch(name){
+ case 'busBench':
+   for(let i=0;i<4;i++)B(1.62,.035,.082,0,.59,-.21+i*.14,0xb82f2e);
+   for(const x of [-.68,.68]){
+     B(.08,.30,.06,x,.72,-.23,dark);
+     B(.18,.045,.36,x,.05,0,dark);
+     for(const y of [.54,.84])bolt(x,y,.29);
+   }break;
+ case 'timetableBoard':
+   B(.72,1.01,.06,0,1.51,.105,dark);
+   B(.61,.88,.02,0,1.51,.146,white);
+   B(.61,.12,.026,0,1.90,.164,red);
+   for(let i=0;i<10;i++){
+     B(.44,.013,.027,-.045,1.78-i*.068,.171,i%3===0?0x4a6175:0xabb0ad);
+     B(.07,.013,.028,.24,1.78-i*.068,.172,0x9a9e9b);
+   }
+   for(const x of [-.29,.29])for(const y of [1.07,1.95])bolt(x,y,.18);
+   break;
+ case 'streetLamp':
+   C(.115,.14,0,.075,0,dark);
+   C(.07,.23,0,3.10,0,steel);
+   B(.48,.08,.29,1.03,4.29,0,dark);
+   B(.40,.025,.24,1.03,4.235,0,0xfff2c0);
+   for(const x of [.84,1.22])B(.025,.11,.25,x,4.29,0,steel);
+   break;
+ case 'bollard':
+   C(.14,.07,0,.045,0,shadow);
+   C(.13,.055,0,.85,0,steel);
+   C(.15,.07,0,.93,0,dark);
+   for(const y of [.66,.72])C(.115,.017,0,y,0,0xd6d8d3);
+   break;
+ case 'railings':
+   for(let i=0;i<6;i++){
+     const x=-1.25+i*.5;
+     C(.085,.09,x,.045,0,shadow);
+     C(.063,.085,x,1.10,0,dark);
+     C(.045,.055,x,1.16,0,steel);
+     B(.12,.018,.09,x,.30,.002,steel);
+   }
+   for(const y of [.28,.89])B(2.65,.016,.075,0,y,.042,steel);
+   break;
+ case 'recyclingBin':
+   B(.58,.06,.51,0,.99,0,0x2a3438);
+   B(.34,.16,.035,0,.77,.255,0x0c1719);
+   B(.30,.13,.04,0,.47,.26,white);
+   B(.44,.03,.055,0,.22,.258,0x1d6551);
+   for(const x of [-.23,.23])B(.03,.68,.045,x,.50,.256,0x235e4a);
+   break;
+ case 'electricalCabinet':
+   B(.84,1.35,.035,0,.75,.255,0x315c48);
+   B(.76,1.25,.025,0,.76,.28,0x567563);
+   for(const x of [-.33,.33])B(.025,1.28,.045,x,.76,.30,0x244738);
+   for(let i=0;i<8;i++)B(.35,.013,.035,0,.36+i*.035,.306,0x263d34);
+   B(.06,.14,.055,.29,.76,.31,shadow);
+   B(.18,.12,.025,-.17,1.18,.306,0xd4cdb6);
+   break;
+ case 'streetNameSign':
+   B(1.77,.40,.045,0,1.72,.055,0x272f36);
+   B(1.65,.32,.025,0,1.72,.086,white);
+   for(const x of [-.73,.73])for(const y of [1.58,1.85])bolt(x,y,.105);
+   break;
+ case 'pedestrianCrossing':
+   for(let i=0;i<5;i++){
+     B(2.7,.003,.018,0,.036,-1.35+i*.6,0xd0d0c9);
+     B(2.7,.003,.018,0,.036,-1.05+i*.6,0xd0d0c9);
+   }
+   for(const x of [-1.45,1.45])for(const z of [-1.5,1.5])
+     B(.035,.035,.12,x,.04,z,0x555c5e);
+   break;
+ case 'roadSign':
+   B(1.28,.62,.045,0,2.1,.09,white);
+   B(1.18,.52,.03,0,2.1,.125,0x216397);
+   for(const x of [-.52,.52])bolt(x,2.1,.15);
+   break;
+ case 'parkBench':
+   for(let i=0;i<4;i++){
+     const slat=B(1.82,.025,.035,0,.67+i*.17,-.20-i*.06,0x95765b);
+     slat.rotation.x=-.24;
+   }
+   for(let i=0;i<3;i++)B(1.80,.025,.03,0,.49,.18-i*.18,0x94765b);
+   for(const x of [-.72,.72]){
+     B(.14,.09,.36,x,.045,0,shadow);
+     for(const y of [.48,.77,1.04])bolt(x,y,-.28);
+   }break;
+ case 'wheelieBinBlack':case 'wheelieBinBrown':
+ case 'wheelieBinGreen':case 'wheelieBinBlue':{
+   const colour=name==='wheelieBinBlue'?0x286db4:name==='wheelieBinGreen'?0x68935c:
+     name==='wheelieBinBrown'?0x8c674b:0x353a3f;
+   B(.68,.07,.77,0,1.18,0,colour);
+   B(.60,.025,.045,0,1.22,.34,0x262d31);
+   for(const x of [-.29,.29]){
+     B(.022,.78,.04,x,.59,.354,colour);
+     B(.12,.05,.09,x,.07,-.36,shadow);
+   }
+   for(const y of [.38,.95])B(.50,.02,.03,0,y,.365,0x59636a);
+   B(.38,.20,.026,0,.65,.383,colour);
+   break;
+ }
+ }
+ g.userData.visualRevision=7;
 }
