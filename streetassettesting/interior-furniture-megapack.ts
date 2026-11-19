@@ -58,11 +58,11 @@ export function createAsset(id:string):THREE.Group {
    for(const x of [-w*.38,0,w*.38]){b(.035,h-.15,.04,x,h/2,-d/2+.055,steel);
     for(let i=0;i<16;i++)b(.014,.024,.008,x,.17+i*(h-.35)/16,-d/2+.084,trim)}
    for(let i=0;i<5;i++){const y=.19+i*.39;plank(y,w-.09,d-.055,.035,wood);
-    for(const x of [-w*.36,w*.36])rod([x,y-.02,-d/2+.05],[x,y-.15,d/2-.06],.012,steel)}
+    for(const x of [-w*.36,w*.36]){b(.035,.035,d-.09,x,y-.048,.02,steel);b(.045,.10,.045,x,y-.09,-d/2+.07,steel)}}
   }else if(v===8){
    // Double-sided freestanding shop gondola.
    b(w,1.15,.12,0,.73,0,cloth);
-   for(const sideSign of [-1,1])for(let i=0;i<3;i++){const z=sideSign*(.20+i*.22);b(w-.07,.045,.22,0,.24+i*.37,z,wood)}
+   for(const sideSign of [-1,1])for(let i=0;i<3;i++){const y=.24+i*.37,z=sideSign*(.12+.25/2);b(w-.09,.045,.29,0,y,z,wood);for(const x of [-w*.38,w*.38]){b(.035,.095,.22,x,y-.065,z,steel)}}
    for(const x of [-w/2+.04,w/2-.04])post(x,0,1.48);
    b(w,.07,d,0,.08,0,trim);
   }else if(v===3){
