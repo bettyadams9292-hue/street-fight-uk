@@ -147,6 +147,7 @@ export function createStreetAsset(name: StreetAssetName): THREE.Group {
     }
   }
   enhanceReferenceProps(g, name);
+  upgradeDepthAndSurfaces(g, name);
   g.userData = { collection: 'newassetsfromchatgpt', standalone: true, units: 'metres', assetName: name };
   return g;
 }
@@ -236,4 +237,156 @@ function enhanceReferenceProps(g: THREE.Group, name: StreetAssetName) {
   // Mark all enhanced props for later texture/LOD pipeline.
   g.userData.referenceEnhanced = true;
   g.userData.materialStyle = 'stylised UK street furniture; procedural PBR';
+}
+
+/**
+ * Detail pass v3. Standalone models only. Geometry is real, not flat decal art.
+ * Canvas texture generation is deterministic and browser-only; falls back to PBR
+ * materials if canvas is unavailable. Shared geometries remain small.
+ */
+function surfaceTexture(base: number, seed = 17): THREE.CanvasTexture | null {
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas'); canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext('2d'); if (!ctx) return null;
+  const col = new THREE.Color(base);
+  ctx.fillStyle = '#' + col.getHexString(); ctx.fillRect(0,0,256,256);
+  let n = seed;
+  const rand=()=>{n=(n*1664525+1013904223)>>>0;return n/4294967296;};
+  // Fine paint/plastic grain, scratches and grime around edges.
+  for(let i=0;i<2600;i++){
+    const x=rand()*256,y=rand()*256,edge=Math.min(x,y,256-x,256-y);
+    ctx.fillStyle=rand()>.5?'rgba(255,255,255,.055)':'rgba(0,0,0,.075)';
+    if(edge<18)ctx.fillStyle='rgba(22,19,17,.12)';
+    ctx.fillRect(x,y,rand()*2+0.3,rand()*3+.3);
+  }
+  for(let i=0;i<24;i++){
+    ctx.strokeStyle='rgba(230,225,207,.09)';ctx.lineWidth=.4+rand();
+    const x=rand()*256,y=rand()*256;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rand()*18-9,y+rand()*24-12);ctx.stroke();
+  }
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=4;
+  return texture;
+}
+function upgradeDepthAndSurfaces(g: THREE.Group, name: StreetAssetName) {
+  const B=(w:number,h:number,d:number,x:number,y:number,z:number,c:number)=>box(g,w,h,d,x,y,z,c);
+  const metallic=0x292e32, gold=0xc7a04b, black=0x151719;
+  // Give painted metal and moulded plastic nonuniform surfaces, not flat colour.
+  const textured = new Map<number, THREE.Texture | null>();
+  g.traverse(obj=>{
+    if(!(obj instanceof THREE.Mesh))return;
+    const m=obj.material;
+    if(!(m instanceof THREE.MeshStandardMaterial))return;
+    const hex=m.color.getHex();
+    if(hex===C.glass){
+      m.transparent=true;m.opacity=.23;m.metalness=.05;m.roughness=.14;
+      m.depthWrite=false;m.side=THREE.DoubleSide;
+    } else {
+      if(!textured.has(hex))textured.set(hex,surfaceTexture(hex,hex%10000));
+      const tex=textured.get(hex);
+      if(tex){m.map=tex;m.color.setHex(0xffffff);m.needsUpdate=true;}
+      m.roughness=hex===C.steel?.42:.72;
+    }
+  });
+  if(name==='telephoneBox'){
+    // Four distinct inset-glass wall frames; full front door with a visible
+    // separate hinged leaf, raised glazing bars, handle, lock and threshold.
+    // Front faces positive Z; door pivot on front-left jamb.
+    const hinge=new THREE.Group();hinge.name='Hinged telephone box door';
+    hinge.position.set(-.42,0,.475);g.add(hinge);
+    const d=(w:number,h:number,depth:number,x:number,y:number,z:number,c:number)=>{
+      const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,depth),mat(c,.38,.38));
+      m.position.set(x,y,z);m.castShadow=true;hinge.add(m);return m;
+    };
+    d(.085,1.98,.09,.04,1.08,0,C.red);
+    d(.085,1.98,.09,.80,1.08,0,C.red);
+    d(.86,.09,.10,.42,2.02,0,C.red);
+    d(.86,.12,.10,.42,.13,0,C.red);
+    d(.86,.085,.10,.42,1.20,0,C.red);
+    for(const y of [.43,.76,1.52,1.79])d(.76,.045,.075,.42,y,.02,C.red);
+    const glass=new THREE.Mesh(new THREE.BoxGeometry(.70,.66,.015),
+      new THREE.MeshPhysicalMaterial({color:0xb2d1dc,transparent:true,opacity:.24,
+        roughness:.13,metalness:0,depthWrite:false,side:THREE.DoubleSide}));
+    glass.position.set(.42,1.65,.005);hinge.add(glass);
+    d(.065,.20,.07,.74,1.04,.085,0xc4c8c8);
+    d(.065,.09,.075,.74,.91,.09,black);
+    for(const y of [.48,1.52])B(.08,.10,.12,-.425,y,.48,0x8b171d);
+    B(.93,.07,.24,0,.09,.50,0x5c6062);
+    // Raised cream nameplate and red header moulding.
+    B(.80,.19,.055,0,2.31,.54,0xe7dcbf);
+    B(.98,.06,.11,0,2.49,.03,0x8f1722);
+    // Keep the leaf closed by default; set rotation.y to open it in the viewer.
+    hinge.userData={interactivePart:'door',opensOnY:true};
+  }
+  if(name==='busShelter'){
+    // Transparent glazing with real mullions and layered roof fascia.
+    for(const x of [-1.46,0,1.46]){
+      B(.055,1.82,.065,x,1.22,-.48,metallic);
+    }
+    B(3.18,.09,.08,0,2.11,-.47,metallic);
+    B(3.2,.06,.09,0,.34,-.47,metallic);
+    for(const x of [-1.46,1.46])B(.07,1.75,.90,x,1.22,0,metallic);
+    B(3.36,.09,1.31,0,2.55,0,black);
+    // LED pixels and a framed route information board.
+    for(let row=0;row<3;row++)for(let i=0;i<16;i++)
+      B(.025,.018,.01,.41+i*.039,2.27-row*.078,.672,0xee3034);
+    B(.08,1.45,.65,-1.43,1.14,-.05,metallic);
+    B(.045,1.28,.52,-1.38,1.16,-.05,0xe1e0d8);
+    for(let i=0;i<8;i++)B(.018,.025,.42,-1.35,1.64-i*.13,-.04,0x6e777d);
+  }
+  if(name==='pillarPostBox'){
+    // Cast cap, crown-like ribs, door seam and raised collection plate.
+    for(let i=0;i<10;i++){
+      const a=i*Math.PI/5;
+      const rib=cylinder(g,.015,.21,Math.sin(a)*.252,1.23,Math.cos(a)*.252,0x921923);
+      rib.rotation.z=.04;
+    }
+    B(.29,.30,.038,0,.54,.255,0xa51c26);
+    B(.20,.15,.045,0,.54,.283,0xd4c8ac);
+    B(.30,.028,.055,0,.35,.262,0x87131c);
+    B(.37,.07,.075,0,1.04,.263,black);
+  }
+  if(name==='litterBin'){
+    B(.44,.69,.065,0,.50,.265,0x1c2024);
+    for(const x of [-.20,.20])B(.025,.71,.07,x,.50,.30,gold);
+    B(.45,.035,.08,0,.87,.28,gold);
+    B(.45,.035,.08,0,.14,.28,gold);
+    B(.29,.17,.065,0,.53,.318,black);
+    B(.26,.025,.073,0,.60,.35,gold);
+    for(const x of [-.18,.18])B(.07,.16,.07,x,1.02,0,black);
+  }
+  if(name==='parkBench'){
+    // Slat seams, bolts, thicker cast feet and worn timber edging.
+    for(const x of [-.69,.69]){
+      for(const y of [.48,.80,1.10])cylinder(g,.019,.018,x,y,-.25,0xaeb1b3);
+      B(.24,.07,.42,x,.055,-.02,0x272b2f);
+    }
+    for(let i=0;i<4;i++)B(1.72,.016,.012,0,.67+i*.17,-.252-i*.06,0x8a8276);
+  }
+  if(name.startsWith('wheelieBin')){
+    // Recessed body panels, lip, lid hinge, axles and treaded rubber wheels.
+    B(.54,.70,.025,0,.57,.352,0x323c42);
+    const colour=name==='wheelieBinBlue'?0x2d74c3:name==='wheelieBinGreen'?0x82a77b:
+      name==='wheelieBinBrown'?0xa57b54:0x44494e;
+    B(.49,.65,.027,0,.57,.371,colour);
+    for(const x of [-.27,.27])B(.025,.70,.05,x,.57,.39,colour);
+    for(const x of [-.24,.24]){
+      const wheel=cylinder(g,.125,.065,x,.13,-.37,black);wheel.rotation.z=Math.PI/2;
+      cylinder(g,.032,.072,x,.13,-.37,0x7b8388).rotation.z=Math.PI/2;
+    }
+    B(.70,.06,.09,0,1.19,-.32,colour);
+    B(.49,.06,.04,0,1.17,.39,black);
+  }
+  if(name==='wallPostBox'){
+    B(.36,.42,.06,0,.54,.155,0x9f1923);
+    B(.26,.18,.07,0,.48,.19,0xd3c8a9);
+    B(.38,.065,.085,0,.73,.18,black);
+  }
+  if(name==='electricalCabinet'){
+    for(const x of [-.33,.33])B(.03,1.27,.05,x,.76,.27,0x455f51);
+    for(let i=0;i<4;i++)B(.38,.024,.05,0,.39+i*.09,.27,0x385449);
+    B(.07,.12,.07,.32,.77,.30,0x181d1d);
+  }
+  g.userData.detailVersion=3;
+  g.userData.textureType='procedural painted metal/plastic grain, PBR';
 }
