@@ -322,7 +322,7 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
    for(let i=0;i<5;i++)dumbbell(-.66+i*.33,y+.105,.02,i>2?20:10);
   }
  }
- if(id==='olympicBarbell'||id==='loadedBarbell'||/^barbell\\d+kg$/.test(id))barbell(id==='olympicBarbell'?20:id==='loadedBarbell'?100:Number(id.match(/\\d+/)?.[0]||20));
+ if(id==='olympicBarbell'||id==='loadedBarbell'||/^barbell\d+kg$/.test(id))barbell(id==='olympicBarbell'?20:id==='loadedBarbell'?100:Number(id.match(/\d+/)?.[0]||20));
  if(id==='squatRack'){
   for(const x of [-.90,.90]){
    B(.11,2.3,.12,x,1.15,0,graphite);B(.15,.075,1.3,x,.038,.1,graphite);
@@ -560,6 +560,6 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
  const poor='tags' in entry&&entry.tags.includes('poor' as never);
  g.userData={collection:'SFUK_expansion',standalone:true,id,category:entry.category,
   tags:poor?['poor']:[],districtTags:poor?['poor']:[],units:'metres',pivot:'ground-centre',
-  referenceInspired:true,storeItem:'storeItem' in entry?entry.storeItem:false,weightKg:'weightKg' in entry?entry.weightKg:(id==='olympicBarbell'?20:id==='loadedBarbell'?100:undefined),minStrengthLevel:'minStrengthLevel' in entry?entry.minStrengthLevel:undefined,revision:6,quality:'procedural-work-in-progress'};
+  referenceInspired:true,storeItem:'storeItem' in entry?entry.storeItem:false,weightKg:'weightKg' in entry?entry.weightKg:(id==='olympicBarbell'?20:id==='loadedBarbell'?100:undefined),minStrengthLevel:'minStrengthLevel' in entry?entry.minStrengthLevel:undefined,revision:7,quality:'procedural-work-in-progress'};
  return g;
 }
