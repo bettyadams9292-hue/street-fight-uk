@@ -31,29 +31,122 @@ export function createAsset(id:string):THREE.Group {
   if(desk){b(w*.55,.10,.35,-w*.12,h-.16,-d*.13,trim);if(v===18)b(.70,.07,.70,w*.55,h,0,wood);if(v===21)b(.35,.25,.4,w*.28,h+.16,0,glass)}
   if(v===22)b(w*.58,.65,.035,0,h+.34,-d*.45,wood);
  }
- if(k===2){const w=[2,3,5,6,11,12].includes(v)?1.55:v%4===0?.70:1.15,h=v<5?2.05:v%5===0?1.80:1.05,d=v<5?.62:.47; b(w,h,d,0,h/2,0);
-  b(w+.07,.055,d+.05,0,h+.025,0,trim);b(w+.07,.07,d+.06,0,.04,0,trim);
-  if([12,13,14,28].includes(v)){const n=v===28?8:4;for(let i=0;i<n;i++){const y=.19+i*(h-.30)/n;b(w-.10,.028,.045,0,y,d/2+.02,trim);handle(0,y+.09,d/2+.06)}}
-  else if([8,9,17,26].includes(v)){for(const x of [-w*.24,w*.24]){b(w*.46,h*.75,.012,x,h*.53,d/2+.012,glass);handle(x,h*.5,d/2+.04)}}
-  else{b(.026,h*.85,.035,0,h*.52,d/2+.02,trim);for(const x of [-w*.25,w*.25])handle(x,h*.51,d/2+.05)}
-  if([7,18,19,20].includes(v))b(w*.76,.08,.055,0,h*.18,d/2+.05,steel);
+
+ // Dedicated second-generation construction for cabinetry, chairs and sofas.
+ // Replaces their earlier primitive bodies instead of stacking extra lines on top.
+ if(k===2){
+  const tall=v<5||[4,24].includes(v),wide=[2,3,5,6,11,12,28].includes(v);
+  const w=wide?1.52:[4,13,14,20,24].includes(v)?.72:1.10;
+  const h=tall?2.02:[13,14,28].includes(v)?1.25:1.04;
+  const d=tall?.60:[15,16,17,18].includes(v)?.59:.46;
+  const face=d/2+.008,frame=.058,foot=.09;
+  // Actual hollow cabinet shell, with interior void and inset back.
+  for(const x of [-w/2+.025,w/2-.025])b(.05,h-foot,d,x,(h+foot)/2,0,wood);
+  b(w,.05,d,0,h-.025,0,wood);b(w,.05,d,0,foot+.025,0,wood);
+  b(w-.10,h-foot-.10,.025,0,(h+foot)/2,-d/2+.025,edge);
+  for(const x of [-w/2+.09,w/2-.09])for(const z of [-d/2+.09,d/2-.09])b(.075,foot,.075,x,foot/2,z,trim);
+  b(w+.035,.035,d+.035,0,h+.016,0,wood);
+  const drawer=[12,13,14,28].includes(v),glassDoor=[8,9,17,26].includes(v),open=[7,18].includes(v);
+  if(drawer){
+   const n=v===28?8:v===12?4:5;
+   for(let i=0;i<n;i++){const dh=(h-foot-.12)/n,y=foot+.09+(i+.5)*dh;
+    b(w-.14,dh-.018,.035,0,y,face,wood);
+    for(const x of [-w*.21,w*.21]){b(.12,.018,.022,x,y,face+.03,steel);for(const xx of [-.045,.045])cyl(.013,.026,x+xx,y,face+.043,accent)}
+    b(w-.17,.012,.012,0,y+dh*.43,face+.027,edge);
+   }
+  }else if(open){
+   for(let i=1;i<4;i++)b(w-.10,.04,d-.08,0,foot+i*(h-foot)/4,0,wood);
+   for(let i=0;i<3;i++)for(const x of [-w*.28,0,w*.28])b(.14,.20,.24,x,foot+.15+i*(h-foot)/4,0,i%2?cloth:wood);
+  }else{
+   const n=wide?3:2,pw=(w-.13)/n;
+   for(let i=0;i<n;i++){
+    const x=-w/2+.065+(i+.5)*pw;
+    // Four-piece door frame, genuinely recessed centre infill.
+    b(pw-.015,.055,.040,x,h-.09,face,wood);
+    b(pw-.015,.055,.040,x,foot+.08,face,wood);
+    for(const xx of [-pw/2+.025,pw/2-.025])b(.050,h-foot-.21,.04,x+xx,(h+foot)/2,face,wood);
+    b(pw-.12,h-foot-.27,.019,x,(h+foot)/2,face-.014,glassDoor?glass:cloth);
+    b(.025,.105,.026,x+(i<n/2?pw*.27:-pw*.27),(h+foot)/2,face+.043,accent);
+    for(const yy of [foot+.13,h-.12]){b(.026,.044,.018,x-pw/2+.03,yy,face+.047,steel)}
+   }
+   if([0,1,2,3].includes(v))b(w-.10,.022,.022,0,h*.53,face+.045,edge);
+  }
+  if([15,16,17,18].includes(v)){b(w-.09,.035,d-.08,0,h*.42,0,wood);b(w-.09,.035,d-.08,0,h*.72,0,wood)}
+  if(v===3||v===9)for(const x of [-w*.24,w*.24])b(.025,h*.76,.025,x,h*.52,face+.056,steel);
  }
- if(k===3){const office=v>=8&&v<=12,arm=v>=13&&v<=19,stool=v>=20&&v<=22;const w=arm?.85:office?.62:.50,seat=stool?.75:.46,d=arm?.73:.52;
-  if(office){cyl(.075,.48,0,.26,0,steel);for(let i=0;i<5;i++){const a=i*Math.PI*2/5;rod([0,.09,0],[Math.sin(a)*.34,.08,Math.cos(a)*.34],.025,steel);cyl(.045,.05,Math.sin(a)*.34,.05,Math.cos(a)*.34,trim)}}
-  else legs(w,d,seat-.08,v%4===2?steel:wood);
-  b(w,.11,d,0,seat,0,arm||office?cloth:wood);
-  if(!stool){b(w,.65,.105,0,seat+.35,-d/2+.03,arm||office?cloth:wood);b(w*.87,.32,.065,0,seat+.40,-d/2+.12,arm?cushion:cloth)}
-  if(arm||office)for(const x of [-w/2+.035,w/2-.035]){b(.11,.22,d*.7,x,seat+.15,0,cloth);b(.10,.05,.31,x,seat+.27,0,trim)}
-  if(v===19)for(const x of [-w*.4,w*.4])rod([x,.1,-d*.42],[x,.62,d*.3],.018,wood);
+ if(k===3){
+  const office=v>=8&&v<=12,arm=v>=13&&v<=19,stool=v>=20&&v<=22;
+  const w=arm?.85:office?.66:stool?.44:.52,d=arm?.79:office?.64:.54,seat=stool?.76:.46;
+  const upholstered=office||arm||[1,6,7,23,24].includes(v);
+  // Properly supported frame with tapered feet or five-spoke chair base.
+  if(office){
+   cyl(.062,.42,0,.25,0,steel);cyl(.10,.06,0,.11,0,trim);
+   for(let i=0;i<5;i++){const a=i*Math.PI*2/5,x=Math.sin(a)*.33,z=Math.cos(a)*.33;rod([0,.105,0],[x,.075,z],.027,steel);cyl(.039,.045,x,.043,z,trim)}
+  }else{
+   for(const x of [-w/2+.085,w/2-.085])for(const z of [-d/2+.085,d/2-.085]){
+    const leg=b(.066,seat-.09,.066,x,(seat-.09)/2,z,arm?trim:wood);
+    if(v===2||v===6||v===22)leg.material=steel;
+   }
+   for(const z of [-d/2+.095,d/2-.095])b(w-.16,.06,.04,0,seat-.15,z,wood);
+   for(const x of [-w/2+.095,w/2-.095])b(.04,.06,d-.16,x,seat-.15,0,wood);
+  }
+  b(w-.045,.075,d-.05,0,seat,0,wood);
+  b(w-.075,.075,d-.09,0,seat+.07,.005,upholstered?cloth:wood);
+  // Angled back with upholstered pad, not a free-floating upright box.
+  if(!stool){
+   const backH=arm?.65:office?.70:.52;
+   const frame=b(w-.065,backH,.075,0,seat+.12+backH/2,-d/2+.08,arm||office?cloth:wood);
+   frame.rotation.x=-.105;
+   if(upholstered){const pad=b(w-.17,backH-.13,.055,0,seat+.12+backH/2,-d/2+.125,cushion);pad.rotation.x=-.105}
+   else if([3,4,5,7].includes(v))for(let i=0;i<5;i++)rod([-w*.35+i*w*.175,seat+.19,-d/2+.025],[-w*.35+i*w*.175,seat+.52,-d/2+.05],.012,wood);
+  }
+  if(arm||office){
+   for(const side of [-1,1]){const x=side*(w/2-.055);
+    b(.058,.27,.055,x,seat+.17,-.09,office?steel:wood);
+    b(.11,.055,d*.67,x,seat+.33,-.01,upholstered?cloth:wood);
+   }
+  }
+  if(stool){for(const z of [-d*.34,d*.34])rod([-w*.35,.29,z],[w*.35,.29,z],.018,steel)}
+  if(v===16){b(w*.78,.09,.23,0,seat+.34,-d*.34,cushion)}
+  if(v===19){for(const x of [-w*.40,w*.40])rod([x,.09,-d*.35],[x,.68,d*.25],.02,wood)}
  }
- if(k===4){const isL=v>=3&&v<=6,isU=v===7,mod=v===8||v===9;const w=isL||isU||mod?2.65:v===0||v===18?1.55:2.1,d=.90,seat=.43;
-  b(w,.14,d,0,seat,0,cloth);b(w,.64,.18,0,.86,-d/2+.05,cloth);
-  for(const x of [-w/2+.10,w/2-.10])b(.19,.62,d,x,.62,0,cloth);
-  const n=Math.max(2,Math.round(w/.56));
-  for(let i=0;i<n;i++){const x=-w/2+(i+.5)*w/n;b(w/n-.035,.14,.67,x,.55,.08,cushion);b(w/n-.04,.40,.15,x,.94,-d/2+.17,cushion)}
-  if(isL||isU||mod){const side=v===3||v===5?-1:1;const x=side*(w/2-.45);b(.88,.14,1.60,x,seat,.47,cloth);b(.79,.14,1.48,x,.55,.48,cushion);b(.18,.60,1.60,side*(w/2-.07),.70,.45,cloth);if(isU){b(.88,.14,1.60,-x,seat,.47,cloth);b(.79,.14,1.48,-x,.55,.48,cushion)}}
-  if([10,11,12].includes(v)){for(let i=0;i<6;i++)for(const x of [-w/2+.18+i*(w-.36)/5])b(.024,.024,.025,x,.96,-d/2+.258,trim)}
-  for(const x of [-w/2+.17,w/2-.17])for(const z of [-.30,.30])b(.09,.09,.09,x,.06,z,trim);
+ if(k===4){
+  const chaiseLeft=v===3||v===5,chaiseRight=v===4||v===6;
+  const isL=chaiseLeft||chaiseRight,isU=v===7,mod=v===8||v===9;
+  const w=isL||isU||mod?2.68:v===0||v===18?1.62:2.12;
+  const d=.88,seat=.42,backY=.89,sections=Math.max(2,Math.round(w/.58));
+  // Structural base and full-width back. Cushions are separate padded solids.
+  b(w,.19,d,0,.32,0,trim);
+  b(w,.52,.18,0,.79,-d/2+.08,cloth);
+  for(const side of [-1,1]){
+   const x=side*(w/2-.095);
+   b(.19,.52,d,x,.60,0,cloth);
+   b(.14,.045,.60,x,.88,.02,cushion);
+  }
+  for(let i=0;i<sections;i++){
+   const x=-w/2+(i+.5)*w/sections,sw=w/sections-.035;
+   b(sw,.16,d-.27,x,seat+.09,.095,cushion);
+   b(sw,.40,.15,x,backY,-d/2+.19,cushion);
+   // Fabric piping is recessed against cushion edges, not detached in space.
+   b(sw-.04,.012,d-.32,x,seat+.176,.095,cloth);
+   for(const yy of [.78,.96]){const button=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),edge);button.position.set(x,yy,-d/2+.277);g.add(button)}
+  }
+  // Chaise extension forms a continuous L with actual matching cushions.
+  function chaise(side:number){
+   const x=side*(w/2-.46),length=1.53;
+   b(.91,.19,length,x,.32,.40,trim);
+   b(.83,.16,length-.12,x,seat+.09,.42,cushion);
+   b(.83,.012,length-.16,x,seat+.176,.42,cloth);
+   b(.18,.52,length,side*(w/2-.09),.60,.40,cloth);
+   b(.14,.045,length-.16,side*(w/2-.09),.88,.41,cushion);
+   // No separate sofa front cushion under the chaise: visually continuous.
+  }
+  if(isL)chaise(-1);
+  if(chaiseRight)chaise(1);
+  if(isU){chaise(-1);chaise(1)}
+  if(mod)for(let i=1;i<sections;i++){const x=-w/2+i*w/sections;b(.014,.015,.69,x,.595,.095,edge)}
+  if([10,11,12].includes(v))for(let i=0;i<sections;i++){const x=-w/2+(i+.5)*w/sections;for(const yy of [.76,.93]){const button=new THREE.Mesh(new THREE.SphereGeometry(.019,10,8),trim);button.position.set(x,yy,-d/2+.28);g.add(button)}}
+  for(const x of [-w/2+.20,w/2-.20])for(const z of [-.28,.28])b(.075,.10,.075,x,.05,z,wood);
  }
  if(k===5){if(v<=9){const w=v===0?.98:v===1?1.20:v>=4?1.95:1.55,d=v===5?1.95:2.15;legs(w,d,.38);b(w,.19,d,0,.45,0,wood);b(w*.95,.17,d*.89,0,.61,0,cloth);b(w,.78,.10,0,.79,-d/2,wood);b(w*.88,.16,.36,0,.72,-d*.36,cushion);if(v===5){b(w,.14,d*.52,0,1.35,0,wood);for(const x of [-w/2+.07,w/2-.07])b(.08,1.45,.08,x,.75,0,wood)}}
   else if(v===13){cyl(.05,1.75,0,.90,0,wood);for(let i=0;i<6;i++){const a=i*Math.PI/3;rod([0,1.62,0],[Math.sin(a)*.31,1.76,Math.cos(a)*.31],.025,wood)}}
@@ -100,45 +193,6 @@ export function createAsset(id:string):THREE.Group {
   }else{cyl(.025,.025,0,h+.045,0,accent)}
   if(desk){for(let j=0;j<3;j++){const yy=h-.23+j*.055;b(.28,.012,.024,w*.22,yy,d/2-.035,edge);nail(w*.22,yy,d/2-.012)}}
   if([5,7].includes(v))for(const x of [-w*.33,w*.33])b(.016,.012,d*.8,x,h+.047,0,edge);
- }
- if(k===2){
-  const w=[2,3,5,6,11,12].includes(v)?1.55:v%4===0?.70:1.15,h=v<5?2.05:v%5===0?1.80:1.05,d=v<5?.62:.47;
-  // Door perimeter frame is inset to read as joinery, not a blank cuboid.
-  for(const x of [-w/2+.07,w/2-.07])b(.026,h-.20,.023,x,h/2,d/2+.021,edge);
-  for(const y of [.14,h-.11])b(w-.14,.025,.025,0,y,d/2+.021,edge);
-  if(![12,13,14,28].includes(v)){
-   const count=[8,9,17,26].includes(v)?2:2;
-   for(let i=0;i<count;i++){const x=(i-.5)*w*.49;
-    bevelBox(w*.39,h*.69,.015,x,h*.53,d/2+.027,[8,9,17,26].includes(v)?darkGlass:wood,.009);
-    for(const yy of [h*.23,h*.83])b(w*.33,.013,.012,x,yy,d/2+.043,edge);
-   }
-  }
-  if([15,16,17,18].includes(v)){for(let x=-w*.4;x<w*.45;x+=.19)b(.008,h*.5,.012,x,h*.55,d/2+.044,trim)}
-  for(const x of [-w/2+.10,w/2-.10])for(const z of [-d/2+.10,d/2-.10])b(.06,.06,.06,x,.03,z,trim);
- }
- if(k===3){
-  const office=v>=8&&v<=12,arm=v>=13&&v<=19,stool=v>=20&&v<=22,w=arm?.85:office?.62:.50,seat=stool?.75:.46,d=arm?.73:.52;
-  bevelBox(w*.88,.07,d*.81,0,seat+.083,0,arm||office?cushion:wood,.025);
-  if(!stool){bevelBox(w*.78,.48,.055,0,seat+.36,-d/2+.11,arm||office?cushion:wood,.015)}
-  if(office){b(.075,.23,.05,0,.48,-d*.28,steel);for(const x of [-.23,.23])cyl(.035,.035,x,.08,.19,trim)}
-  if(arm){for(const x of [-w/2+.03,w/2-.03])bevelBox(.11,.06,d*.65,x,seat+.30,0,cloth,.018)}
-  if(stool){for(const z of [-d*.36,d*.36])rod([-w*.39,.27,z],[w*.39,.27,z],.016,steel)}
-  if([3,4,5,6,7].includes(v))for(let i=0;i<5;i++){const x=-w*.35+i*w*.175;rod([x,seat+.48,-d/2+.09],[x,seat+.70,-d/2+.09],.014,wood)}
- }
- if(k===4){
-  const isL=v>=3&&v<=6,isU=v===7,mod=v===8||v===9,w=isL||isU||mod?2.65:v===0||v===18?1.55:2.1;
-  const n=Math.max(2,Math.round(w/.56));
-  for(let i=0;i<n;i++){const x=-w/2+(i+.5)*w/n;
-   // Separate piped cushion edges, inset seams and tufting.
-   bevelBox(w/n-.07,.018,.58,x,.633,.075,cloth,.007);
-   b(.009,.012,.53,x+(w/n-.09)/2,.648,.075,edge);
-   for(const y of [.85,1.02])nail(x,y,-.39);
-  }
-  for(const x of [-w/2+.13,w/2-.13]){bevelBox(.17,.035,.74,x,.98,0,cloth,.014)}
-  if(isL||isU||mod){const side=v===3||v===5?-1:1,x=side*(w/2-.45);
-   for(let z=.04;z<1.18;z+=.37)bevelBox(.73,.018,.015,x,.635,z,cloth,.004);
-  }
-  if([10,11,12].includes(v)){for(let i=0;i<8;i++)nail(-w/2+.16+i*(w-.32)/7,.86,-.39)}
  }
  if(k===5){
   if(v<=9){const w=v===0?.98:v===1?1.20:v>=4?1.95:1.55,d=v===5?1.95:2.15;
