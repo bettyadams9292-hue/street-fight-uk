@@ -45,7 +45,7 @@ import {
   takeOutBike,
 } from '../src/property/state';
 import {
-  COMP_ODDS,
+  compOdds,
   COMP_TICKET,
   DRAW_TICKET,
   compPrize,
@@ -355,7 +355,7 @@ test('prize draw and the motor competition; a won car parks outside the house li
   p.save.trips = 0;
   const prize = compPrize(0);
   assert(prize.kind === 'car', 'a car this week');
-  const win = playCompetition(p, seq(0.1 / COMP_ODDS));
+  const win = playCompetition(p, seq(0.1 / compOdds(prize)));
   assert(win.ok && win.detail.won && !win.detail.cashInstead, 'won');
   const car = p.save.property.cars.find((c) => c.id === prize.id);
   assert(car && car.from === 'won' && p.save.property.activeCar === car.uid, 'in the collection, on the drive');

@@ -4,7 +4,7 @@
  */
 import type { Progress } from '../progress/Progress';
 import type { ItemStack } from './Inventory';
-import { ITEMS, type ItemDef } from './items';
+import { BAG_SLOTS, ITEMS, type ItemDef } from './items';
 
 export const SHOP_STOCK: string[] = [
   'hoodie_grey', 'hoodie_black', 'designer_hoodie', 'tracksuit_top', 'tracksuit_top_red', 'tshirt_white', 'tshirt_black', 'football_home', 'football_away',
@@ -16,7 +16,8 @@ export const SHOP_STOCK: string[] = [
   'cargos_khaki', 'cargo_shorts', 'denim_shorts', 'shorts_black',
   'trainers_white', 'trainers_black', 'trainers_navy', 'runners', 'runners_red', 'hitops_black', 'hitops_white', 'boots_work', 'steel_toecaps',
   'cap_black', 'cap_red', 'cap_navy', 'cap_white', 'beanie', 'beanie_red', 'beanie_grey', 'bucket_hat', 'bucket_hat_black', 'flat_cap',
-  'sunglasses', 'glasses', 'snood', 'chain_silver', 'chain_gold', 'watch_basic', 'earring_silver', 'ring_signet', 'belt_leather',
+  // Chains, watches and rings are the jeweller's (Halden & Crane, Riverside Centre), not Threads'.
+  'sunglasses', 'glasses', 'snood', 'earring_silver', 'belt_leather',
   'wraps', 'mouthguard', 'headguard', 'bag_bumbag', 'bag_rucksack', 'bag_holdall',
 ];
 
@@ -37,6 +38,9 @@ export type BuyResult = { ok: true; price: number; where: 'pocket' | 'storage' }
 export function buyItem(p: Progress, id: string, mult: number, stock: readonly string[] = SHOP_STOCK): BuyResult {
   const d = ITEMS[id];
   if (!d || !stock.includes(id)) return { ok: false, reason: 'They don’t sell that.' };
+  // Only your biggest bag counts: a smaller (or the same) one would be money for nothing.
+  const bag = BAG_SLOTS[id];
+  if (bag && [...p.save.inventory, ...p.save.storage].some((s) => (BAG_SLOTS[s.id] ?? 0) >= bag)) return { ok: false, reason: 'You’ve already got a bag at least that big. Only your biggest one counts.' };
   const price = shopPrice(d, mult);
   if (!p.pay(price)) return { ok: false, reason: `You need £${price}. Pocket money first, then the tin at home.` };
   const left = p.giveItem(id);

@@ -2,6 +2,8 @@ import { sanitiseCharacter, finalAttributes, BACKGROUNDS, type PlayerCharacter }
 import { WEAPON_IDS, WEAPONS } from '../combat/Weapons';
 import { addStack, defOf, sanitiseStack, spaceFor, takeStack, type ItemStack } from '../items/Inventory';
 import { BAG_SLOTS, ITEMS, WEAR_SLOTS, weaponItemId, type WearSlot } from '../items/items';
+import { JEWEL_ITEMS } from '../items/jewellery';
+import { MAX_JEWELS } from '../items/jewelleryBox';
 import type { CharacterAppearance } from '../character/Appearance';
 import { STYLE_IDS, type StyleId } from '../styles/StyleData';
 import type { Fighter, FighterConfig, Perk } from '../fighter/Fighter';
@@ -349,8 +351,27 @@ export type PurchaseResult = { ok: true } | { ok: false; reason: string };
  * The one place progress changes. Rewards go through `claim` so a one-time
  * reward (boss, secret, encounter) can never be paid twice.
  */
+/** Hunger at or above this and you can't face any more food (drinks and medicine still work). */
+export const STUFFED = 95;
+
 export class Progress {
-  constructor(public save: GameSave) {}
+  constructor(public save: GameSave) {
+    this.adoptLooseJewellery();
+  }
+
+  /**
+   * Saves from before loot jewellery went in the jewellery box: any piece still sitting in your pockets or the
+   * stash (not stolen) moves into the box, so it can be worn. Runs on every load; does nothing once done.
+   */
+  private adoptLooseJewellery(): void {
+    for (const list of [this.save.inventory, this.save.storage]) {
+      for (let i = list.length - 1; i >= 0; i--) {
+        const st = list[i];
+        if (!JEWEL_ITEMS[st.id] || st.stolen) continue;
+        if (this.intoJewelleryBox(st)) list.splice(i, 1);
+      }
+    }
+  }
 
   // ---- flags and one-time rewards -----------------------------------------------
   has(flag: string): boolean {
@@ -491,7 +512,24 @@ export class Progress {
   /** Put a stack in your pockets. Returns whatever didn't fit (to leave on the floor). */
   pocket(stack: ItemStack): ItemStack | null {
     this.discover(stack.id);
+    // Jewellery from the jeweller's range goes in the jewellery box, where you can wear it (stolen pieces don't:
+    // they're hot, and only the pawn shop takes them).
+    if (this.intoJewelleryBox(stack)) return null;
     return addStack(this.save.inventory, this.inventoryCap, stack, () => this.newUid());
+  }
+
+  /** Moves a loot jewellery stack (not stolen) into the jewellery box, as many as fit. True if none is left. */
+  private intoJewelleryBox(stack: ItemStack): boolean {
+    const look = JEWEL_ITEMS[stack.id];
+    if (!look || stack.stolen) return false;
+    const box = this.save.jewellery;
+    while (stack.qty > 0 && box.owned.length < MAX_JEWELS) {
+      const uid = `j${box.seq++}`;
+      box.owned.push({ uid, id: look.id, finish: look.finish, paid: 0, at: Math.floor(this.save.playTime) });
+      box.unseen.push(uid);
+      stack.qty--;
+    }
+    return stack.qty <= 0;
   }
 
   /** Give new items. Returns what didn't fit. */
@@ -629,6 +667,8 @@ export class Progress {
     const st = this.findCarried(uid);
     const use = st ? ITEMS[st.id].use : undefined;
     if (!st || !use) return { ok: false, reason: 'You can\u2019t use that' };
+    // Food heals a little and fills you up; you can't eat when you're stuffed. Medicine works whenever.
+    if (use.needs && use.needs.fill >= 10 && this.save.needs.hunger >= STUFFED) return { ok: false, reason: 'You\u2019re stuffed. Plasters or a first aid kit will still work.' };
     takeStack(this.save.inventory, uid, 1, () => this.newUid());
     // First aid patches up your worst injury by a level; plasters see to bruising.
     let treated: string | null = null;

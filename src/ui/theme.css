@@ -1099,3 +1099,5 @@ body.fight-on .touch-ui .hud-btn.story-only { display: none; }
 .creator-footer .menu-btn.has-art { flex: 1 1 0; min-width: 0; padding: 4px 2px; }
 .creator-footer .menu-btn.has-art .label { flex: 1 1 auto; min-width: 0; width: 100%; }
 .creator-footer .menu-btn.has-art .label img.title-art { width: 100%; height: auto; max-height: 36px; max-width: 100%; object-fit: contain; }
+/* Phones: the jewellery box's list and the selected piece stack (two 240 px columns ran off a portrait screen). */
+@media (max-width: 720px) { .jw-box { grid-template-columns: 1fr; } }

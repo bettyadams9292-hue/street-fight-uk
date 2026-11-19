@@ -231,7 +231,7 @@ function boxBody(progress: Progress, selUid: string | null, select: (uid: string
         jewelSlot({ id: sel.id, finish: sel.finish }),
         h('h3', { text: d.name }),
         h('div', { class: 'jw-chips' }, chip(RARITY_LABELS[d.rarity], RARITY_COLOURS[d.rarity]), chip(FINISHES[sel.finish].quality, FINISHES[sel.finish].metal), d.stone ? chip(STONES[d.stone].name, STONES[d.stone].colour) : null),
-        h('p', { class: 'hint', text: `${d.spec}. Bought for ${money(sel.paid)}.` }),
+        h('p', { class: 'hint', text: `${d.spec}. ${sel.paid > 0 ? `Bought for ${money(sel.paid)}.` : 'Taken in a fight: it cost you nothing.'}` }),
         h('div', { class: 'row-actions' }, ...acts),
       ),
     ),

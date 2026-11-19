@@ -50,6 +50,8 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 - `docs/assets/TEXTURE_CATALOGUE.md` lists every set; `docs/assets/TEXTURE_ASSIGNMENTS.md` says where each is used and which are still spare.
 - The owner wants realistic surfaces: use a library set for new surfaces rather than a flat colour or a drawn texture.
 
+**Economy.** `docs/ECONOMY.md` has the targets and where every number lives. Run `npx tsx tools/economy/model.ts` after changing a price or reward; `tests/economy.test.ts` fails if the curve breaks.
+
 **Old docs.** `docs/ASSET_REGISTER.md` is out of date (it predates the asset packs). For what's still missing, use the asset list below.
 
 ## Assets still needed
@@ -149,6 +151,16 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - grunts have first names and a shouted tell (`GRUNT_NAMES`, `Archetype.tell`; never uses the fight's RNG);
   - Threads and the Red Lion dressed;
   - boss challenges (Untouchable, No guard, Quick work; `challenge:<boss>:<id>`, £25 each) and a shareable KO photo.
+
+- #34: economy fixes (`docs/ECONOMY.md`; `npx tsx tools/economy/model.ts` prints the whole economy; `tests/economy.test.ts` holds the targets):
+  - loot and boss jewellery are jeweller pieces in the jewellery box, wearable, priced the same both ways (`JEWEL_ITEMS`); Threads sells no jewellery; old saves' loose loot jewellery moves into the box;
+  - story boss purses about tripled (cash ≥ 90% of each boss's loot); the victory screen says what the loot is worth;
+  - towns pay about double; the grow business £14 a unit; rent yields 1–1.5% a month (pays back in 11–17 h);
+  - house prices settle towards a long-run level instead of compounding (index 0.75–1.8); mansions £650k–£1.25m, penthouse £480k;
+  - arrest fine capped (`arrestFine`); food heals less and not when stuffed; plasters on the Red Lion menu; no smaller bags than one you own;
+  - the jewellery box stacks in portrait;
+  - the casino's prize draw (paid back 201%) and motor competition (1 in 40 for any car: a money machine) now return under 100%, like every other game (`HOUSE_RETURN`, `compOdds`).
+  - Target: first mansion about 28 hours after the towns, every property about 51.
 
 ## Open questions and next steps
 

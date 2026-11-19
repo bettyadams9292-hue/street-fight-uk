@@ -213,7 +213,7 @@ acc('glasses', 'Glasses', 'face', 'glasses', 30, 'glasses', '#2a2420', 'Clear le
 acc('snood', 'Face covering', 'face', 'snood', 12, 'snood', '#1b1d22', 'Neck snood pulled up over the face.');
 acc('lucky_chain', 'Lucky gold chain', 'neck', 'chain', 120, 'chain', '#d4af37', 'Your nan’s. You fight smarter wearing it.', 'rare', [{ attr: 'technique', add: 3, text: '+3 Technique' }], 'gold');
 acc('chain_silver', 'Silver chain', 'neck', 'chain', 60, 'chain', '#c9ccd2', 'Fine silver curb chain.', 'common', undefined, 'silver');
-acc('chain_gold', 'Gold chain', 'neck', 'chain', 180, 'chain', '#d4af37', '9ct gold rope chain.', 'uncommon', undefined, 'gold');
+acc('chain_gold', 'Gold chain', 'neck', 'chain', 180, 'chain', '#d4af37', 'Thin 9ct gold chain from Threads.', 'uncommon', undefined, 'gold');
 acc('watch_basic', 'Digital watch', 'wrist', 'watch', 20, 'watch', '#1b1d22', 'Does the job.');
 acc('earring_silver', 'Silver earring', 'ears', 'earring', 25, 'earring', '#c9ccd2', 'Small hoop.');
 acc('ring_signet', 'Signet ring', 'finger', 'ring', 90, 'ring', '#d4af37', 'Heavy gold signet. Adds weight to a punch.', 'uncommon', [{ stat: 'damageMult', mul: 1.03, text: '+3% damage' }]);
@@ -229,15 +229,15 @@ const drink = (id: string, name: string, stamina: number, value: number, text: s
   const n = needs ?? { fill: 3, diet: 40, bladder: 15 };
   add({ id, name, text, category: 'consumable', rarity: 'common', value, stack: 5, icon: 'drink', colour, store: 'fridge', use: { stamina, heal, needs: n, text: `+${stamina} stamina${heal ? `, +${heal} health` : ''}` } });
 };
-food('chips', 'Chips', 25, 3, 'Salt and vinegar, wrapped in paper.', '#e8c060', 0, { fill: 25, diet: 20 });
-food('kebab', 'Kebab', 40, 7, 'Doner with everything.', '#c88a4a', 0, { fill: 45, diet: 25 });
-food('pasty', 'Pasty', 30, 3, 'Steak and potato, still warm.', '#d8a050', 0, { fill: 35, diet: 30 });
-food('sausage_roll', 'Sausage roll', 30, 2, 'Flaky pastry, greasy bag.', '#d8a860', 0, { fill: 25, diet: 25 });
-food('meal_deal', 'Meal deal', 35, 4, 'Sandwich, crisps and a drink.', '#4a9a5a', 10, { fill: 35, diet: 45, bladder: 8 });
-food('bacon_butty', 'Bacon butty', 35, 3, 'Brown sauce, obviously.', '#c86040', 0, { fill: 30, diet: 35 });
-food('curry', 'Curry', 45, 9, 'Chicken tikka and rice from the takeaway.', '#d88a2a', 0, { fill: 50, diet: 45 });
-food('fry_up', 'Full English', 60, 10, 'Everything on one plate.', '#e8a040', 20, { fill: 60, diet: 45, energy: 10 });
-food('protein_bar', 'Protein bar', 15, 2, 'Chewy. Tastes of chalk.', '#5a3a2a', 15, { fill: 12, diet: 60, energy: 5 });
+food('chips', 'Chips', 15, 3, 'Salt and vinegar, wrapped in paper.', '#e8c060', 0, { fill: 25, diet: 20 });
+food('kebab', 'Kebab', 28, 7, 'Doner with everything.', '#c88a4a', 0, { fill: 45, diet: 25 });
+food('pasty', 'Pasty', 20, 3, 'Steak and potato, still warm.', '#d8a050', 0, { fill: 35, diet: 30 });
+food('sausage_roll', 'Sausage roll', 15, 2, 'Flaky pastry, greasy bag.', '#d8a860', 0, { fill: 25, diet: 25 });
+food('meal_deal', 'Meal deal', 22, 4, 'Sandwich, crisps and a drink.', '#4a9a5a', 10, { fill: 35, diet: 45, bladder: 8 });
+food('bacon_butty', 'Bacon butty', 20, 3, 'Brown sauce, obviously.', '#c86040', 0, { fill: 30, diet: 35 });
+food('curry', 'Curry', 30, 9, 'Chicken tikka and rice from the takeaway.', '#d88a2a', 0, { fill: 50, diet: 45 });
+food('fry_up', 'Full English', 40, 10, 'Everything on one plate.', '#e8a040', 20, { fill: 60, diet: 45, energy: 10 });
+food('protein_bar', 'Protein bar', 10, 2, 'Chewy. Tastes of chalk.', '#5a3a2a', 15, { fill: 12, diet: 60, energy: 5 });
 drink('energy_drink', 'Energy drink', 60, 2, 'Can of something fizzy and bright.', '#3ad84a', 0, { fill: 0, diet: 10, energy: 15, bladder: 18 });
 drink('can_of_pop', 'Can of pop', 30, 1, 'Fizzy and cold.', '#d82a2a', 5, { fill: 2, diet: 10, bladder: 15 });
 drink('water', 'Bottle of water', 40, 1, 'Fresh and cold.', '#8ac8ff', 0, { fill: 0, diet: 70, bladder: 15 });
@@ -295,24 +295,24 @@ meal('m_steak', 'Steak and potatoes', '#a8303a', 'Sirloin, roast potatoes, mushr
 meal('m_pasta', 'Pasta bake', '#c83a2a', 'Penne in tomato sauce under melted cheddar.', 40, { fill: 60, diet: 65, energy: 6 });
 meal('m_burger', 'Homemade cheeseburger', '#a8484a', 'Smash burger, onions, cheese.', 45, { fill: 60, diet: 42, energy: 6 });
 meal('m_curry', 'Chicken curry and rice', '#d88a2a', 'Tikka masala with basmati.', 50, { fill: 70, diet: 70, energy: 10 });
-add({ id: 'plasters', name: 'Plasters', text: 'A box of plasters.', category: 'consumable', rarity: 'common', value: 2, stack: 5, icon: 'medkit', colour: '#e8c8a0', use: { heal: 20, text: '+20 health' } });
-add({ id: 'first_aid', name: 'First aid kit', text: 'Bandages, wipes, the lot.', category: 'consumable', rarity: 'uncommon', value: 15, stack: 3, icon: 'medkit', colour: '#d81e1e', use: { healPct: 0.6, text: 'Restores 60% of your health' } });
+add({ id: 'plasters', name: 'Plasters', text: 'A box of plasters. Sees to bruising, and works however full you are.', category: 'consumable', rarity: 'common', value: 3, stack: 10, icon: 'medkit', colour: '#e8c8a0', use: { heal: 35, text: '+35 health, treats bruising' } });
+add({ id: 'first_aid', name: 'First aid kit', text: 'Bandages, wipes, the lot. Patches up your worst injury too.', category: 'consumable', rarity: 'uncommon', value: 10, stack: 5, icon: 'medkit', colour: '#d81e1e', use: { healPct: 0.6, text: 'Restores 60% of your health, treats your worst injury' } });
 
 // ---- valuables (sell at the pawn shop) --------------------------------------------------------
 const val = (id: string, name: string, icon: IconKind, rarity: Rarity, value: number, colour: string, text: string, stack = 1) =>
   add({ id, name, text, category: 'valuable', rarity, value, stack, icon, colour });
 // jewellery
-val('watch_diver', 'Prestige diver watch', 'watch', 'epic', 1800, '#c9ccd2', 'Swiss-made steel diver’s watch. Heavy, ticking smoothly. Probably real.');
-val('watch_gold', 'Gold dress watch', 'watch', 'rare', 650, '#d4af37', 'Slim gold case, leather strap.');
-val('watch_silver', 'Silver watch', 'watch', 'uncommon', 140, '#c9ccd2', 'Steel bracelet, quartz movement.');
-val('watch_cheap', 'Fashion watch', 'watch', 'common', 25, '#a07850', 'Big face, small value.', 3);
-val('chain_cuban', 'Cuban-link chain', 'chain', 'epic', 1200, '#d4af37', 'Thick gold Cuban links. Weighs a ton.');
-val('chain_rope', 'Gold rope chain', 'chain', 'rare', 380, '#d4af37', '9ct gold rope chain.');
-val('chain_cheap', 'Plated chain', 'chain', 'common', 15, '#c9a22a', 'Gold-plated. The plating is coming off.', 3);
+val('watch_diver', 'Marchetti Diamond Bezel (steel)', 'watch', 'epic', 1920, '#c9ccd2', 'Steel case, a ring of diamonds round the dial. Goes straight in your jewellery box, unless it’s stolen.');
+val('watch_gold', 'Kingsley Dress Watch (9ct gold)', 'watch', 'rare', 540, '#d4af37', 'Slim gold case, leather strap. Goes straight in your jewellery box, unless it’s stolen.');
+val('watch_silver', 'Crane Oyster-style (steel)', 'watch', 'uncommon', 260, '#c9ccd2', 'Steel bracelet, black dial. Goes straight in your jewellery box, unless it’s stolen.');
+val('watch_cheap', 'Kasio Digital (black)', 'watch', 'common', 30, '#2c2c31', 'Alarm, stopwatch, backlight. Goes straight in your jewellery box, unless it’s stolen.', 3);
+val('chain_cuban', 'Cuban Link 8 mm (9ct gold)', 'chain', 'epic', 1600, '#d4af37', 'Thick gold Cuban links. Weighs a ton. Goes straight in your jewellery box, unless it’s stolen.');
+val('chain_rope', 'Fine Rope Chain (9ct gold)', 'chain', 'rare', 260, '#d4af37', 'Twisted 3 mm rope that catches the light. Goes straight in your jewellery box, unless it’s stolen.');
+val('chain_cheap', 'Box Chain (steel)', 'chain', 'common', 45, '#b9bdc4', 'Neat square links. Goes straight in your jewellery box, unless it’s stolen.', 3);
 val('bracelet_gold', 'Gold bracelet', 'bracelet', 'rare', 320, '#d4af37', 'Curb-link bracelet.');
 val('bracelet_silver', 'Silver bracelet', 'bracelet', 'uncommon', 70, '#c9ccd2', 'Chunky silver links.', 3);
-val('ring_gold', 'Gold ring', 'ring', 'uncommon', 120, '#d4af37', 'Plain gold band.', 3);
-val('ring_diamond', 'Diamond-style ring', 'ring', 'epic', 900, '#e8f4ff', 'Big sparkly stone on white gold.');
+val('ring_gold', 'Kingsley Flat Band (9ct gold)', 'ring', 'uncommon', 220, '#d4af37', 'A wide flat gold band. Goes straight in your jewellery box, unless it’s stolen.', 3);
+val('ring_diamond', 'Velloni Solitaire (white gold)', 'ring', 'epic', 2800, '#e8f4ff', 'One proper diamond on white gold. Goes straight in your jewellery box, unless it’s stolen.');
 val('earrings_diamond', 'Diamond studs', 'earring', 'rare', 420, '#e8f4ff', 'A pair of diamond-look studs.');
 // electronics
 val('phone_flagship', 'Flagship smartphone', 'phone', 'rare', 380, '#2a2d33', 'This year’s model, barely a scratch.');
@@ -369,9 +369,9 @@ add({ id: 'lighter', name: 'Zippo lighter', text: 'Engraved steel lighter. Sells
 add({ id: 'bus_pass', name: 'Bus pass', text: 'Somebody’s. Dave’s Cabs take it as a free ride.', category: 'misc', rarity: 'common', value: 0, stack: 5, icon: 'card', colour: '#2f6fa8', unsellable: true });
 
 // ---- backpacks (carry capacity) ----------------------------------------------------------------
-add({ id: 'bag_bumbag', name: 'Bum bag', text: '+4 inventory slots while you have it.', category: 'misc', rarity: 'common', value: 40, icon: 'bag', colour: '#1b1d22', unsellable: false });
-add({ id: 'bag_rucksack', name: 'Rucksack', text: '+8 inventory slots while you have it.', category: 'misc', rarity: 'uncommon', value: 120, icon: 'bag', colour: '#2f4a2d' });
-add({ id: 'bag_holdall', name: 'Gym holdall', text: '+12 inventory slots while you have it.', category: 'misc', rarity: 'rare', value: 260, icon: 'bag', colour: '#1f2a44' });
+add({ id: 'bag_bumbag', name: 'Bum bag', text: '+4 inventory slots while you carry it. Only your biggest bag counts.', category: 'misc', rarity: 'common', value: 40, icon: 'bag', colour: '#1b1d22', unsellable: false });
+add({ id: 'bag_rucksack', name: 'Rucksack', text: '+8 inventory slots while you carry it. Only your biggest bag counts.', category: 'misc', rarity: 'uncommon', value: 120, icon: 'bag', colour: '#2f4a2d' });
+add({ id: 'bag_holdall', name: 'Gym holdall', text: '+12 inventory slots while you carry it. Only your biggest bag counts.', category: 'misc', rarity: 'rare', value: 260, icon: 'bag', colour: '#1f2a44' });
 
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(defs.map((d) => [d.id, d]));
 export const ITEM_LIST: readonly ItemDef[] = defs;

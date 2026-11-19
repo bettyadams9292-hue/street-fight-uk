@@ -9,6 +9,8 @@ import { Progress, newSave, sanitiseSave } from '../src/progress/Progress';
 import { LEVELS } from '../src/world/levels';
 import { gateNeeds, lockedMessage } from '../src/world/gates';
 import { World, exitLocked } from '../src/world/World';
+import { JEWEL_ITEMS } from '../src/items/jewellery';
+import { BOSSES } from '../src/ai/bosses';
 
 let failed = 0;
 function test(name: string, fn: () => void): void {
@@ -61,47 +63,49 @@ const fill = (p: Progress) => {
   assert(p.spaceFor('dunc_phone') === 0, 'pockets are not full');
 };
 const has = (p: Progress, id: string) => p.save.inventory.some((s) => s.id === id);
+/** Dunc's chain is a piece from the jeweller's range: it goes in the jewellery box, never your pockets. */
+const chains = (p: Progress) => p.save.jewellery.owned.filter((o) => o.id === JEWEL_ITEMS.chain_cuban.id).length;
+const PURSE = BOSSES.dunc.reward.cash;
 const count = (p: Progress, w: World | null, id: string) => p.save.inventory.filter((s) => s.id === id).length + p.save.storage.filter((s) => s.id === id).length + (w ? w.items.filter((g) => g.stack.id === id).length : p.save.bossLoot.filter((k) => k.stack.id === id).length);
 
 console.log('Big Dunc and the way on');
 
-test('beating Dunc ends the fight, pays once and puts his phone and chain in your pockets', () => {
+test('beating Dunc ends the fight, pays once, puts his phone in your pockets and his chain in your jewellery box', () => {
   const p = fresh();
   const cash = p.save.cash.pocket;
   const r = beatDunc(p);
   assert(r.defeats === 1, `boss:defeated fired ${r.defeats} times`);
   assert(!r.w.activeEncounter && !r.w.locked, 'the Pit is still locked after the fight');
   assert(p.has('boss_dunc') && p.has('has_dunc_phone'), 'the win was not recorded');
-  assert(has(p, 'dunc_phone') && has(p, 'chain_cuban') && r.left.length === 0, 'the rewards are not in your pockets');
-  assert(p.save.cash.pocket === cash + 600, `paid £${p.save.cash.pocket - cash}`);
+  assert(has(p, 'dunc_phone') && chains(p) === 1 && !has(p, 'chain_cuban') && r.left.length === 0, 'the rewards are not where they belong');
+  assert(p.save.cash.pocket === cash + PURSE, `paid £${p.save.cash.pocket - cash}`);
   // Coming back: no second fight, no second reward.
   const again = new World(L, p, { entry: 'left', seed: 2, at: { x: 60, z: 0 } });
   for (let i = 0; i < 200; i++) again.step({ ...emptyCommand(), moveX: 1 });
-  assert(!again.activeEncounter && count(p, again, 'dunc_phone') === 1 && count(p, again, 'chain_cuban') === 1 && p.save.cash.pocket === cash + 600, 'the fight or its rewards came round again');
+  assert(!again.activeEncounter && count(p, again, 'dunc_phone') === 1 && chains(p) === 1 && count(p, again, 'chain_cuban') === 0 && p.save.cash.pocket === cash + PURSE, 'the fight or its rewards came round again');
 });
 
-test('with full pockets the rewards wait on the ground: through leaving, saving and reloading, and only once', () => {
+test('with full pockets the phone waits on the ground (the chain still goes in the box): through leaving, saving and reloading, and only once', () => {
   const p = fresh();
   fill(p);
   const r = beatDunc(p);
-  assert(r.left.length === 2 && r.items.length === 0, `left ${r.left.length}, took ${r.items.length}`);
+  assert(r.left.length === 1 && r.items.length === 1 && chains(p) === 1, `left ${r.left.length}, took ${r.items.length}`);
   assert(p.has('has_dunc_phone'), 'the phone on the floor does not count');
-  assert(r.w.items.filter((g) => g.kept).length === 2 && p.save.bossLoot.length === 2, 'the rewards are not on the ground');
+  assert(r.w.items.filter((g) => g.kept).length === 1 && p.save.bossLoot.length === 1, 'the phone is not on the ground');
   // Leave (the world is thrown away), save, close the game, load, walk back in.
   const loaded = sanitiseSave(JSON.parse(JSON.stringify(p.save)));
   assert(loaded, 'the save did not load');
   const p2 = new Progress(loaded);
-  assert(p2.save.bossLoot.length === 2, 'the save forgot the rewards');
+  assert(p2.save.bossLoot.length === 1 && chains(p2) === 1, 'the save forgot the rewards');
   const w2 = new World(L, p2, { entry: 'left', seed: 3 });
   const phone = w2.items.find((g) => g.stack.id === 'dunc_phone');
-  const chain = w2.items.find((g) => g.stack.id === 'chain_cuban');
-  assert(phone && chain, 'the rewards were gone when you came back');
-  // Still no room: they stay put.
-  assert(!w2.pickUp(phone) && w2.items.includes(phone) && p2.save.bossLoot.length === 2, 'picked up with no room');
-  // Make room and take them.
-  p2.save.inventory.splice(0, 2);
-  assert(w2.pickUp(phone) && w2.pickUp(chain), 'could not pick the rewards up');
-  assert(has(p2, 'dunc_phone') && has(p2, 'chain_cuban') && p2.save.bossLoot.length === 0, 'the save still thinks they are on the ground');
+  assert(phone && !w2.items.some((g) => g.stack.id === 'chain_cuban'), 'the phone was gone when you came back');
+  // Still no room: it stays put.
+  assert(!w2.pickUp(phone) && w2.items.includes(phone) && p2.save.bossLoot.length === 1, 'picked up with no room');
+  // Make room and take it.
+  p2.save.inventory.splice(0, 1);
+  assert(w2.pickUp(phone), 'could not pick the phone up');
+  assert(has(p2, 'dunc_phone') && chains(p2) === 1 && p2.save.bossLoot.length === 0, 'the save still thinks it is on the ground');
   // Come back again: nothing there to take twice.
   const w3 = new World(L, new Progress(sanitiseSave(JSON.parse(JSON.stringify(p2.save)))!), { entry: 'left', seed: 4 });
   assert(!w3.items.some((g) => g.stack.id === 'dunc_phone' || g.stack.id === 'chain_cuban'), 'the rewards came back after being taken');
@@ -113,10 +117,10 @@ test('a tampered save can never hold the same reward in your pockets and on the 
   beatDunc(p);
   const raw = JSON.parse(JSON.stringify(p.save));
   raw.inventory.pop();
-  raw.inventory.push(raw.bossLoot[1].stack); // the chain, in both places
+  raw.inventory.push(raw.bossLoot[0].stack); // the phone, in both places
   const loaded = sanitiseSave(raw)!;
-  const all = [...loaded.inventory, ...loaded.bossLoot.map((k) => k.stack)].filter((s) => s.id === 'chain_cuban');
-  assert(all.length === 1, `${all.length} Cuban chains after loading`);
+  const all = [...loaded.inventory, ...loaded.bossLoot.map((k) => k.stack)].filter((s) => s.id === 'dunc_phone');
+  assert(all.length === 1, `${all.length} phones after loading`);
 });
 
 test('an old save with no bossLoot loads', () => {

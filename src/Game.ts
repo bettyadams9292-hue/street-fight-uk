@@ -780,7 +780,7 @@ export class Game {
         if (this.settings.get().screenShake) this.renderer.cameraRig.addShake(0.2);
         this.audio.guardBreak();
       }),
-      ev.on('boss:defeated', ({ boss, first, cash, xp, items, left }) => {
+      ev.on('boss:defeated', ({ boss, first, cash, xp, items, left, worth }) => {
         this.hud.notify(`${boss.name.toUpperCase()} IS DONE`, 'big');
         const challenges = this.judgeBossRun(boss.id);
         const next = first ? this.unlockedBy(boss.flag) : null;
@@ -802,6 +802,7 @@ export class Game {
               { text: `+${xp} XP · level ${this.progress!.save.level}` },
             ];
             if (items.length) lines.push({ text: `Took: ${items.join(', ')}` });
+            if (worth > 0) lines.push({ text: `What you took would sell for about \u00a3${worth.toLocaleString('en-GB')} (the jeweller, or Mr Kaur at the pawn shop)` });
             if (left.length) lines.push({ text: `Pockets full. On the ground by ${boss.name}: ${left.join(', ')}. It stays there until you pick it up.` });
             if (next) lines.push({ text: `Unlocked: ${next}`, big: true });
             if (boss.flag === 'boss_dunc') lines.push({ text: 'Dunc\u2019s phone has one contact: THE BOSS. He\u2019s at Hale House, past the Pit.' });
@@ -832,9 +833,9 @@ export class Game {
         this.audio.coins();
         this.hud.toast(`+\u00a3${amount}`, 'cash');
       }),
-      ev.on('item:picked', ({ name, qty, rarity, stolen }) => {
+      ev.on('item:picked', ({ name, qty, rarity, stolen, jewel }) => {
         this.audio.uiConfirm();
-        this.hud.toast(`${name}${qty > 1 ? ` \u00d7${qty}` : ''}${stolen ? ' (stolen)' : ''}`, 'item', RARITY_COLOURS[rarity as keyof typeof RARITY_COLOURS]);
+        this.hud.toast(`${name}${qty > 1 ? ` \u00d7${qty}` : ''}${stolen ? ' (stolen)' : ''}${jewel ? ': in your jewellery box' : ''}`, 'item', RARITY_COLOURS[rarity as keyof typeof RARITY_COLOURS]);
         this.saveGame();
       }),
       ev.on('item:held', ({ name }) => {
@@ -842,7 +843,7 @@ export class Game {
         this.hud.toast(`Holding: ${name}. Light/heavy to swing, Grab to throw or drop.`, 'item');
         this.saveGame();
       }),
-      ev.on('item:full', ({ name }) => this.hud.toast(`Pockets full: no room for the ${name.toLowerCase()}. Open the inventory (I / RB / BAG) to make space.`, 'warn')),
+      ev.on('item:full', ({ name }) => this.hud.toast(`Pockets full: no room for the ${name.toLowerCase()}. Open the inventory (I, RB, or the bag button) to make space.`, 'warn')),
       ev.on('searched', ({ label, found }) => {
         if (found.length) this.audio.uiConfirm();
         this.hud.toast(found.length ? `${label}: ${found.join(', ')}` : `${label}: nothing`, found.length ? 'item' : 'info');

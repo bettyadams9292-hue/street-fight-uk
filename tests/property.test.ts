@@ -199,7 +199,7 @@ test('prices move a little month to month, the same for every save, within limit
     let moved = false;
     for (let m = 1; m < 400; m++) {
       const i = marketIndex(tier, m);
-      assert(i >= 0.7 && i <= 2.4, `${tier} ${m}: ${i}`);
+      assert(i >= 0.75 && i <= 1.8, `${tier} ${m}: ${i}`);
       if (Math.abs(i - marketIndex(tier, m - 1)) > 1e-9) moved = true;
       assert(Math.abs(i / marketIndex(tier, m - 1) - 1) < 0.05, 'no wild jumps');
     }

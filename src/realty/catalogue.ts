@@ -74,13 +74,13 @@ export const PROPERTY_LIST: PropertyDef[] = [
   P({ id: 'a_shaws_9', name: 'Apartment 9, Shaw’s Wharf', cat: 'apartment', type: 'Modern designer apartment', area: 'docks', x: 66, locality: 'Canal Docks', tier: 'mid', beds: 2, baths: 2, sqft: 1200, quality: 4, price: 175000, rooms: ['hall', 'living', 'kitchen', 'bar', 'master', 'ensuite', 'study', 'bathroom'], stairs: true, blurb: 'Architect-designed duplex in the old shipping office, with a bar and a mezzanine study.' }),
   P({ id: 'a_ashcombe_tower', name: 'Apartment 1806, Ashcombe Tower', cat: 'apartment', type: 'High-rise apartment', area: 'ashcombe', x: 36, locality: 'Ashcombe Park', tier: 'prime', beds: 2, baths: 2, sqft: 1250, quality: 4, price: 210000, rooms: ['hall', 'living', 'kitchen', 'dining', 'master', 'ensuite', 'bedroom', 'bathroom'], stairs: false, blurb: 'Eighteenth floor with a concierge, a residents’ gym and a view to the docks.' }),
   P({ id: 'a_belgrave_2', name: 'Apartment 2, Belgrave Mansions', cat: 'apartment', type: 'Large multi-bedroom apartment', area: 'ashcombe', x: 52, locality: 'Ashcombe Park', tier: 'prime', beds: 4, baths: 3, sqft: 2600, quality: 4, price: 390000, rooms: ['hall', 'living', 'dining', 'kitchen', 'study', 'bedroom', 'bedroom', 'bathroom', 'bedroom', 'master', 'ensuite'], stairs: false, blurb: 'A whole floor of a Victorian mansion block: high ceilings, cornicing, four bedrooms.' }),
-  P({ id: 'a_pinnacle_ph', name: 'The Penthouse, The Pinnacle', cat: 'apartment', type: 'Penthouse apartment', area: 'ashcombe', x: 98, locality: 'Ashcombe Park', tier: 'super', beds: 3, baths: 3, sqft: 3100, quality: 5, price: 680000, rooms: ['hall', 'living', 'kitchen', 'bar', 'dining', 'cinema', 'master', 'dressing', 'ensuite', 'bedroom', 'bathroom', 'terrace'], stairs: true, blurb: 'Top two floors of The Pinnacle with a wraparound roof terrace and its own lift.' }),
+  P({ id: 'a_pinnacle_ph', name: 'The Penthouse, The Pinnacle', cat: 'apartment', type: 'Penthouse apartment', area: 'ashcombe', x: 98, locality: 'Ashcombe Park', tier: 'super', beds: 3, baths: 3, sqft: 3100, quality: 5, price: 480000, rooms: ['hall', 'living', 'kitchen', 'bar', 'dining', 'cinema', 'master', 'dressing', 'ensuite', 'bedroom', 'bathroom', 'terrace'], stairs: true, blurb: 'Top two floors of The Pinnacle with a wraparound roof terrace and its own lift.' }),
   // ---- mansions ------------------------------------------------------------------------------
-  P({ id: 'm_wyvern_hall', name: 'Wyvern Hall', cat: 'mansion', type: 'Gated mansion', area: 'ashcombe', x: 66, locality: 'Ashcombe Park', tier: 'super', beds: 6, baths: 5, sqft: 7200, quality: 5, price: 1400000, rooms: ['hall', 'living', 'dining', 'kitchen', 'bar', 'games', 'cinema', 'gym', 'study', 'master', 'dressing', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'bedroom'], stairs: true, garden: 'grounds', gated: true, blurb: 'Electric gates, CCTV, a games room and a bar. Built for someone who likes their privacy.' }),
-  P({ id: 'm_ashcombe_manor', name: 'Ashcombe Manor', cat: 'mansion', type: 'Traditional luxury estate', area: 'ashcombe', x: 116, locality: 'Ashcombe Park', tier: 'super', beds: 8, baths: 6, sqft: 11000, quality: 5, price: 1900000, rooms: ['hall', 'living', 'dining', 'kitchen', 'study', 'games', 'bar', 'conservatory', 'master', 'dressing', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'bedroom', 'bedroom'], stairs: true, garden: 'grounds', gated: true, blurb: 'The big house the park is named after: Georgian, listed, with a library and a sweeping staircase.' }),
-  P({ id: 'm_glasshouse', name: 'The Glasshouse', cat: 'mansion', type: 'Modern architectural mansion', area: 'ashcombe', x: 136, locality: 'Ashcombe Park', tier: 'super', beds: 6, baths: 6, sqft: 9400, quality: 5, price: 2400000, rooms: ['hall', 'living', 'kitchen', 'dining', 'pool', 'gym', 'cinema', 'bar', 'master', 'dressing', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'terrace'], stairs: true, garden: 'grounds', gated: true, blurb: 'Award-winning glass and steel, with an indoor pool and a cinema. Featured in every magazine.' }),
-  P({ id: 'm_heathfield', name: 'Heathfield House', cat: 'mansion', type: 'Mansion with large gardens', area: 'ashcombe', x: 156, locality: 'Ashcombe Park', tier: 'super', beds: 6, baths: 4, sqft: 6800, quality: 5, price: 1600000, rooms: ['hall', 'living', 'dining', 'kitchen', 'conservatory', 'study', 'games', 'master', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'bedroom'], stairs: true, garden: 'grounds', gated: true, blurb: 'Two acres of lawns, a walled garden and an orangery. The tennis court needs a net.' }),
-  P({ id: 'm_kensington_lodge', name: 'Kensington Lodge', cat: 'mansion', type: 'Large luxury mansion', area: 'ashcombe', x: 176, locality: 'Ashcombe Park', tier: 'super', beds: 7, baths: 5, sqft: 8200, quality: 5, price: 1200000, rooms: ['hall', 'living', 'dining', 'kitchen', 'bar', 'cinema', 'gym', 'study', 'master', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'bedroom'], stairs: true, garden: 'grounds', gated: true, blurb: 'Seven bedrooms of marble and gold taps. Subtle it isn’t.' }),
+  P({ id: 'm_wyvern_hall', name: 'Wyvern Hall', cat: 'mansion', type: 'Gated mansion', area: 'ashcombe', x: 66, locality: 'Ashcombe Park', tier: 'super', beds: 6, baths: 5, sqft: 7200, quality: 5, price: 750000, rooms: ['hall', 'living', 'dining', 'kitchen', 'bar', 'games', 'cinema', 'gym', 'study', 'master', 'dressing', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'bedroom'], stairs: true, garden: 'grounds', gated: true, blurb: 'Electric gates, CCTV, a games room and a bar. Built for someone who likes their privacy.' }),
+  P({ id: 'm_ashcombe_manor', name: 'Ashcombe Manor', cat: 'mansion', type: 'Traditional luxury estate', area: 'ashcombe', x: 116, locality: 'Ashcombe Park', tier: 'super', beds: 8, baths: 6, sqft: 11000, quality: 5, price: 1000000, rooms: ['hall', 'living', 'dining', 'kitchen', 'study', 'games', 'bar', 'conservatory', 'master', 'dressing', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'bedroom', 'bedroom'], stairs: true, garden: 'grounds', gated: true, blurb: 'The big house the park is named after: Georgian, listed, with a library and a sweeping staircase.' }),
+  P({ id: 'm_glasshouse', name: 'The Glasshouse', cat: 'mansion', type: 'Modern architectural mansion', area: 'ashcombe', x: 136, locality: 'Ashcombe Park', tier: 'super', beds: 6, baths: 6, sqft: 9400, quality: 5, price: 1250000, rooms: ['hall', 'living', 'kitchen', 'dining', 'pool', 'gym', 'cinema', 'bar', 'master', 'dressing', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'terrace'], stairs: true, garden: 'grounds', gated: true, blurb: 'Award-winning glass and steel, with an indoor pool and a cinema. Featured in every magazine.' }),
+  P({ id: 'm_heathfield', name: 'Heathfield House', cat: 'mansion', type: 'Mansion with large gardens', area: 'ashcombe', x: 156, locality: 'Ashcombe Park', tier: 'super', beds: 6, baths: 4, sqft: 6800, quality: 5, price: 850000, rooms: ['hall', 'living', 'dining', 'kitchen', 'conservatory', 'study', 'games', 'master', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'bedroom'], stairs: true, garden: 'grounds', gated: true, blurb: 'Two acres of lawns, a walled garden and an orangery. The tennis court needs a net.' }),
+  P({ id: 'm_kensington_lodge', name: 'Kensington Lodge', cat: 'mansion', type: 'Large luxury mansion', area: 'ashcombe', x: 176, locality: 'Ashcombe Park', tier: 'super', beds: 7, baths: 5, sqft: 8200, quality: 5, price: 650000, rooms: ['hall', 'living', 'dining', 'kitchen', 'bar', 'cinema', 'gym', 'study', 'master', 'ensuite', 'bedroom', 'bathroom', 'bedroom', 'bedroom'], stairs: true, garden: 'grounds', gated: true, blurb: 'Seven bedrooms of marble and gold taps. Subtle it isn’t.' }),
 ];
 
 export const PROPERTIES: Readonly<Record<string, PropertyDef>> = Object.fromEntries(PROPERTY_LIST.map((p) => [p.id, p]));
@@ -90,15 +90,28 @@ export const PROPERTIES: Readonly<Record<string, PropertyDef>> = Object.fromEntr
 /** One letting month, in seconds of play (time in menus and paused doesn't count). */
 export const MONTH = 600;
 
-/** Price growth per month and how jumpy it is, by neighbourhood. */
-const TREND: Record<Tier, { drift: number; vol: number }> = {
-  budget: { drift: 0.0015, vol: 0.012 },
-  mid: { drift: 0.003, vol: 0.012 },
-  prime: { drift: 0.0045, vol: 0.015 },
-  super: { drift: 0.005, vol: 0.02 },
+/**
+ * How each neighbourhood's prices move. Over the long run they settle `growth` above where they started (the
+ * nicer the area, the more it gains), approaching it over a few hundred months, with month-to-month wobble on
+ * top that drifts back towards the trend. Unchecked compound growth used to double the mansions' prices in
+ * thirty hours of play, which made saving up for one a moving target.
+ */
+const TREND: Record<Tier, { growth: number; vol: number }> = {
+  budget: { growth: 0.15, vol: 0.012 },
+  mid: { growth: 0.22, vol: 0.012 },
+  prime: { growth: 0.3, vol: 0.015 },
+  super: { growth: 0.38, vol: 0.02 },
 };
-/** Gross rent per month as a share of value: cheap places earn more for what they cost. */
-const YIELD: Record<Tier, number> = { budget: 0.0075, mid: 0.0062, prime: 0.0052, super: 0.0042 };
+/** Months for the trend to get about two-thirds of the way to its long-run level. */
+const TREND_MONTHS = 240;
+/** How much of last month's wobble carries over (the rest drifts back to the trend). */
+const CARRY = 0.94;
+/**
+ * Gross rent per month as a share of value: cheap places earn more for what they cost. Well above real yields
+ * because a letting month is ten minutes of play: a place pays for itself in 11 to 17 hours of letting
+ * (tools/economy/model.ts; targets in docs/ECONOMY.md).
+ */
+const YIELD: Record<Tier, number> = { budget: 0.015, mid: 0.0135, prime: 0.012, super: 0.01 };
 /** Agent's fee on a sale. */
 export const SALE_FEE = 0.02;
 
@@ -116,16 +129,18 @@ export function hash01(s: string): number {
 }
 
 const indexCache = new Map<Tier, number[]>();
-/** The neighbourhood's price index after `month` months (1 at the start). Kept within 0.7 to 2.4. */
+/** The neighbourhood's price index after `month` months (1 at the start). Kept within 0.75 to 1.8. */
 export function marketIndex(tier: Tier, month: number): number {
   const m = Math.max(0, Math.floor(month));
   let list = indexCache.get(tier);
   if (!list) indexCache.set(tier, (list = [1]));
   const t = TREND[tier];
+  const trend = (k: number) => 1 + t.growth * (1 - Math.exp(-k / TREND_MONTHS));
   while (list.length <= m) {
     const k = list.length;
-    const shock = (hash01(`${tier}:${k}`) - 0.5) * 2 * t.vol;
-    list.push(Math.max(0.7, Math.min(2.4, list[k - 1] * (1 + t.drift + shock))));
+    // Last month's wobble around the trend, mostly kept, plus this month's shock.
+    const wobble = Math.log(list[k - 1] / trend(k - 1)) * CARRY + (hash01(`${tier}:${k}`) - 0.5) * 2 * t.vol;
+    list.push(Math.max(0.75, Math.min(1.8, trend(k) * Math.exp(wobble))));
   }
   return list[m];
 }
