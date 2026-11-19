@@ -14,6 +14,7 @@ export const ASSETS=[
 ] as const;
 export type AssetId=typeof ASSETS[number]['id'];
 export function createAsset(id:AssetId):THREE.Group{
+ return buildBatch02V3(id);
  const g=new THREE.Group();g.name='SFUK_B02_'+id;
  const mat=(c:number,metal=0,rough=.7)=>new THREE.MeshStandardMaterial({color:c,metalness:metal,roughness:rough});
  const oak=mat(0x805d3e),darkOak=mat(0x453327),black=mat(0x25292b),steel=mat(0x8a9397,.72,.42),cream=mat(0xe6e0d1),green=mat(0x386849),blue=mat(0x305f8a),red=mat(0x9b3d38),glass=mat(0x8eb6b5,.2,.22),brass=mat(0xb29553,.65,.38),card=mat(0xb5a68a),slate=mat(0x313b35),cushion=mat(0x4a595b);
@@ -161,5 +162,135 @@ export function createAsset(id:AssetId):THREE.Group{
  }
  const bounds=new THREE.Box3().setFromObject(g);if(Number.isFinite(bounds.min.y))for(const child of g.children)child.position.y-=bounds.min.y;
  g.userData={collection:'streetassettesting',batch:2,units:'metres',status:'review-required',id,style:'British high street',revision:'polish-v2'};
+ return g;
+}
+
+/** Clean rebuild. Previous prototype is unreachable, retained for comparison. */
+function buildBatch02V3(id:AssetId):THREE.Group{
+ const T=THREE,g=new T.Group();g.name='SFUK_B02_V3_'+id;
+ const mat=(c:number,metal=0,rough=.7)=>new T.MeshStandardMaterial({color:c,metalness:metal,roughness:rough});
+ const black=mat(0x25282a,.2),steel=mat(0x919a9d,.75,.4),oak=mat(0x76543b),walnut=mat(0x3f2e25),cream=mat(0xe6e1d4),paper=mat(0xf1ede1),green=mat(0x36583e),amber=mat(0x93602e,.15,.28),blue=mat(0x345879),red=mat(0xa2473d),glass=new T.MeshPhysicalMaterial({color:0xb8d5d6,metalness:0,roughness:.12,transparent:true,opacity:.22,depthWrite:false,side:T.DoubleSide}),brass=mat(0xa88c52,.7,.38),fabric=mat(0x55666a,0,.96),soil=mat(0x42382d),rust=mat(0x755143);
+ const B=(w:number,h:number,d:number,x:number,y:number,z:number,m:T.Material)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g.add(o);return o};
+ const C=(r:number,h:number,x:number,y:number,z:number,m:T.Material,n=32)=>{const o=new T.Mesh(new T.CylinderGeometry(r,r,h,n),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g.add(o);return o};
+ const S=(r:number,x:number,y:number,z:number,m:T.Material)=>{const o=new T.Mesh(new T.SphereGeometry(r,20,14),m);o.position.set(x,y,z);o.castShadow=true;g.add(o);return o};
+ const R=(a:number[],b:number[],r:number,m:T.Material)=>{const p=new T.Vector3(...a),q=new T.Vector3(...b),v=q.clone().sub(p);const o=new T.Mesh(new T.CylinderGeometry(r,r,v.length(),12),m);o.position.copy(p.add(q).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),v.normalize());g.add(o);return o};
+ const bottle=(x:number,y:number,z:number,i:number)=>{
+  const liquid=[green,amber,red,blue][i%4];
+  C(.037,.22,x,y+.11,z,liquid,20);
+  const shoulder=new T.Mesh(new T.CylinderGeometry(.016,.037,.06,20),liquid);shoulder.position.set(x,y+.25,z);g.add(shoulder);
+  C(.016,.085,x,y+.325,z,liquid,16);C(.019,.023,x,y+.37,z,brass,16);
+  B(.063,.065,.004,x,y+.14,z+.038,paper);
+  B(.046,.009,.005,x,y+.155,z+.042,black);
+ };
+ if(id==='backBarShelves'){
+  // British pub back bar: actual shelf depths, recessed mirror and diverse spacing.
+  B(2.30,2.15,.10,0,1.075,-.25,walnut);
+  B(2.13,1.95,.012,0,1.14,-.189,mat(0x879a94,.3,.19));
+  for(const x of [-1.13,1.13])B(.075,2.16,.47,x,1.08,-.02,walnut);
+  for(const y of [.12,.62,1.12,1.62,2.11]){
+   B(2.28,.07,.47,0,y,0,oak);B(2.22,.014,.018,0,y+.043,.235,brass);
+  }
+  for(let row=0;row<4;row++)for(let i=0;i<9;i++){
+   const x=-.94+i*.235+(row%2)*.025,y=.16+row*.5;
+   bottle(x,y,.045,i+row*3);
+  }
+  // Glass racks hang from top rather than floating across bottles.
+  for(let i=0;i<6;i++){const x=-.75+i*.30;R([x,2.07,.13],[x,1.88,.13],.006,steel);C(.047,.012,x,1.875,.13,glass);}
+ }
+ if(id==='cardTerminal'){
+  // Actual countertop card reader, screen, numeric keypad and tilted body.
+  B(.105,.055,.12,0,.055,.035,black);
+  const body=B(.13,.045,.22,0,.12,-.015,black);body.rotation.x=-.16;
+  const screen=B(.108,.008,.082,0,.154,-.07,blue);screen.rotation.x=-.16;
+  B(.065,.008,.006,0,.158,-.109,cream);
+  for(let i=0;i<12;i++){const x=-.038+(i%3)*.038,z=.008+Math.floor(i/3)*.037;B(.024,.009,.023,x,.158,z,i===11?green:i===9?red:steel);}
+  B(.12,.013,.012,0,.132,.102,black);
+ }
+ if(id==='receptionCounter'){
+  // Flush, inset joinery: no panels sticking through the counter or levitating accessories.
+  B(2.25,.91,.74,0,.455,0,oak);B(2.29,.055,.78,0,.94,0,walnut);
+  B(2.12,.68,.016,0,.48,.383,cream);
+  for(const x of [-.72,0,.72]){
+   B(.65,.59,.008,x,.48,.395,walnut);
+   B(.59,.53,.009,x,.48,.402,oak);
+  }
+  B(2.22,.07,.06,0,.08,.405,walnut);
+  // Low visitor writing ledge sits forward but below worktop.
+  B(.54,.035,.22,-.69,.80,.46,oak);
+  B(.34,.04,.24,.48,.985,-.08,black);
+  B(.30,.20,.014,.48,1.12,-.175,blue);
+  B(.18,.045,.16,-.31,.995,-.03,black);
+ }
+ if(id==='wineBottle'){
+  bottle(0,0,0,1);
+  // Thin neck band and cork; no large square plate protruding from the bottle.
+  C(.017,.022,0,.392,0,amber,18);
+ }
+ if(id==='oilDrum'){
+  // 200-litre-style steel drum: three pressed ribs, realistic rim and bungs.
+  C(.29,.85,0,.44,0,blue,48);
+  for(const y of [.055,.29,.57,.855])C(.296,.022,0,y,0,steel,48);
+  C(.286,.024,0,.88,0,black,48);
+  for(const x of [-.16,.16]){C(.039,.016,x,.902,0,steel,20);C(.024,.011,x,.915,0,black,20);}
+  B(.24,.16,.008,0,.46,.291,paper);
+  B(.19,.018,.01,0,.50,.298,black);
+  for(let i=0;i<5;i++)B(.014,.06,.011,-.08+i*.04,.435,.30,black);
+ }
+ if(id==='pastryCabinet'){
+  // Countertop hot-food case: transparent glazing, visible stocked trays and framed doors.
+  B(1.20,.16,.69,0,.08,0,black);
+  B(1.19,.075,.68,0,1.13,0,black);
+  for(const x of [-.58,.58])for(const z of [-.33,.33])B(.022,.97,.022,x,.64,z,steel);
+  B(1.12,.91,.008,0,.64,.33,glass);
+  B(1.12,.91,.008,0,.64,-.33,glass);
+  for(const x of [-.58,.58])B(.008,.91,.64,x,.64,0,glass);
+  for(const y of [.28,.57,.86]){
+   B(1.06,.023,.52,0,y,0,steel);
+   for(let i=0;i<5;i++){
+    const p=S(.077,-.41+i*.205,y+.075,.015,amber);p.scale.set(1.18,.62,.82);
+    B(.09,.018,.042,-.41+i*.205,y+.025,.265,paper);
+   }
+  }
+  B(.36,.055,.012,0,.14,.352,paper);
+  B(1.14,.028,.022,0,.98,.338,steel);
+ }
+ if(id==='waitingSofa'){
+  // Two-seat compact UK waiting room sofa, cushions properly resting on seat base.
+  B(1.76,.20,.71,0,.29,0,fabric);
+  B(1.76,.72,.15,0,.66,-.29,fabric);
+  for(const x of [-.79,.79]){B(.18,.49,.72,x,.46,0,fabric);B(.16,.045,.64,x,.725,0,walnut);}
+  for(const x of [-.385,.385]){
+   B(.73,.17,.56,x,.47,.055,fabric);
+   B(.71,.46,.14,x,.77,-.185,fabric);
+   B(.012,.04,.55,x+.355,.56,.055,black);
+  }
+  for(const x of [-.70,.70])for(const z of [-.23,.23])B(.06,.12,.06,x,.07,z,black);
+ }
+ if(id==='pottedTree'){
+  C(.25,.36,0,.19,0,mat(0x6b6c64,.1,.88),12);
+  C(.27,.035,0,.38,0,steel,12);C(.23,.018,0,.403,0,soil,12);
+  R([0,.4,0],[0,1.68,0],.043,oak);
+  for(let i=0;i<13;i++){
+   const a=i*2.4,y=.93+(i%5)*.17,r=.16+(i%3)*.09;
+   R([0,y-.18,0],[Math.cos(a)*r,y,Math.sin(a)*r],.014,oak);
+   const p=S(.16,Math.cos(a)*r,y,Math.sin(a)*r,i%3?green:mat(0x5e824d));p.scale.set(1.15,.65,1.3);
+  }
+  S(.19,0,1.72,0,green);
+ }
+ if(id==='wallClock'){
+  const rim=C(.29,.045,0,.30,0,black,48);rim.rotation.x=Math.PI/2;
+  const face=C(.266,.008,0,.30,.03,paper,48);face.rotation.x=Math.PI/2;
+  for(let i=0;i<12;i++){const a=i*Math.PI/6;const t=B(.012,.033,.006,Math.sin(a)*.23,.30+Math.cos(a)*.23,.038,black);t.rotation.z=-a;}
+  R([0,.30,.048],[.12,.38,.048],.007,black);R([0,.30,.05],[-.07,.46,.05],.009,black);
+  S(.012,0,.30,.056,brass);
+ }
+ if(id==='chalkboardMenu'){
+  B(.85,1.18,.055,0,.63,0,walnut);B(.75,1.07,.009,0,.64,.034,mat(0x27322c));
+  for(let i=0;i<6;i++){B(.44,.009,.008,-.08,1.02-i*.14,.042,cream);B(.08,.009,.008,.25,1.02-i*.14,.042,cream);}
+  R([-.36,1.15,-.03],[0,.08,-.38],.022,walnut);R([.36,1.15,-.03],[0,.08,-.38],.022,walnut);
+  B(.5,.035,.06,0,.12,-.22,walnut);
+ }
+ const bounds=new T.Box3().setFromObject(g);if(Number.isFinite(bounds.min.y)&&Math.abs(bounds.min.y)>.001)for(const child of g.children)child.position.y-=bounds.min.y;
+ g.userData={collection:'streetassettesting',batch:2,id,units:'metres',revision:'geometry-rebuild-v3',status:'review-required'};
  return g;
 }
