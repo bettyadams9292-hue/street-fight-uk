@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Street Fight UK | Standalone Asset Gallery</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#11161d;color:#edf0f4;font:15px system-ui,sans-serif}
+header{padding:22px 5%;border-bottom:1px solid #35404b}h1{font-size:24px;margin:0 0 8px}p{color:#abb6c4;margin:4px 0}
+#status{padding:15px 5%;color:#d8b96e}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;padding:18px 5%}
+.tile{border:1px solid #35404b;border-radius:14px;background:#1b232d;overflow:hidden}
+.tile canvas{display:block;width:100%;height:250px;touch-action:pan-y}.tile footer{padding:12px 15px;border-top:1px solid #35404b;text-transform:capitalize}
+small{display:block;color:#9eabb9;margin-top:4px}button{background:#303e50;color:white;border:1px solid #5a6d80;padding:8px 12px;border-radius:7px;cursor:pointer}
+</style></head><body>
+<header><h1>Street Fight UK — New Assets from ChatGPT</h1><p>Live 3D previews of the actual standalone procedural models on the dev branch. Drag to rotate; use the controls to zoom.</p><p>No game files are imported or modified by this page.</p></header>
+<div id="status">Loading Three.js and the original asset file…</div><main class="grid" id="grid"></main>
+<script type="module">
+const status=document.getElementById('status');
+try{
+ const THREE=await import('https://esm.sh/three@0.180.0');
+ const ts=await import('https://esm.sh/typescript@5.9.3');
+ const url='https://raw.githubusercontent.com/bettyadams9292-hue/street-fight-uk/dev/newassetsfromchatgpt.ts';
+ const response=await fetch(url,{cache:'no-store'});
+ if(!response.ok)throw Error('Unable to fetch asset source: '+response.status);
+ const source=await response.text();
+ const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+ const js=compiled.replace(/from\s*(['"])three\1/g,"from 'https://esm.sh/three@0.180.0'");
+ const blob=URL.createObjectURL(new Blob([js],{type:'text/javascript'}));
+ const {createStreetAsset,STREET_ASSET_NAMES}=await import(blob);
+ URL.revokeObjectURL(blob);
+ const grid=document.getElementById('grid');
+ const label=n=>n.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase());
+ const scenes=[];
+ for(const name of STREET_ASSET_NAMES){
+   const tile=document.createElement('section');tile.className='tile';
+   const canvas=document.createElement('canvas');
+   const footer=document.createElement('footer');footer.textContent=label(name);
+   const hint=document.createElement('small');hint.textContent='Drag to rotate · scroll or pinch to zoom';footer.append(hint);
+   tile.append(canvas,footer);grid.append(tile);
+   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+   renderer.setSize(tile.clientWidth,250,false);
+   renderer.outputColorSpace=THREE.SRGBColorSpace;
+   const scene=new THREE.Scene();
+   const object=createStreetAsset(name);scene.add(object);
+   scene.add(new THREE.HemisphereLight(0xffffff,0x586270,2.2));
+   const sun=new THREE.DirectionalLight(0xffffff,2.6);sun.position.set(4,8,6);scene.add(sun);
+   const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+   const radius=Math.max(size.x,size.y,size.z,1);
+   const camera=new THREE.PerspectiveCamera(42,tile.clientWidth/250,.01,100);
+   let yaw=.6,zoom=1.8;
+   const render=()=>{
+     const distance=radius*zoom+1;
+     camera.position.set(center.x+Math.sin(yaw)*distance*.7,center.y+distance*.42,center.z+Math.cos(yaw)*distance*.7);
+     camera.lookAt(center);renderer.render(scene,camera);
+   };
+   let down=false,last=0;
+   canvas.addEventListener('pointerdown',e=>{down=true;last=e.clientX;canvas.setPointerCapture(e.pointerId)});
+   canvas.addEventListener('pointerup',()=>down=false);
+   canvas.addEventListener('pointermove',e=>{if(!down)return;yaw+=(e.clientX-last)*.012;last=e.clientX;render()});
+   canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.8,Math.min(4,zoom+Math.sign(e.deltaY)*.15));render()},{passive:false});
+   scenes.push({tile,renderer,camera,render});render();
+ }
+ addEventListener('resize',()=>{for(const s of scenes){const w=s.tile.clientWidth;s.renderer.setSize(w,250,false);s.camera.aspect=w/250;s.camera.updateProjectionMatrix();s.render()}});
+ status.textContent=STREET_ASSET_NAMES.length+' models loaded from newassetsfromchatgpt.ts — live 3D, not mockup screenshots.';
+}catch(error){status.textContent='Preview could not load: '+error.message;console.error(error)}
+</script></body></html>
