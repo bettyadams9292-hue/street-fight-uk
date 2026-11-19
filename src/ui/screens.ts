@@ -57,6 +57,7 @@ export function settingsScreen(store: SettingsStore, ui: UIManager): Screen {
         sliderRow('Master volume', s.masterVolume, (v) => store.update({ masterVolume: v }), { art: 'master-volume' }),
         sliderRow('Effects volume', s.effectsVolume, (v) => store.update({ effectsVolume: v }), { art: 'effects-volume' }),
         sliderRow('Ambience volume', s.ambienceVolume, (v) => store.update({ ambienceVolume: v }), { art: 'ambience-volume' }),
+        sliderRow('Music volume', s.musicVolume, (v) => store.update({ musicVolume: v }), { art: 'music-volume' }),
         h('h3', {}, titleArt('Display', 'display')),
         cycleRow<Quality>('Graphics quality', [
           { value: 'low', label: 'Low', art: 'low' },
@@ -81,6 +82,10 @@ export function settingsScreen(store: SettingsStore, ui: UIManager): Screen {
           { value: 'on', label: 'Always on' },
           { value: 'off', label: 'Off' },
         ], s.touchControls, (v) => store.update({ touchControls: v }), 'touch-controls'),
+        cycleRow<boolean>('Vibration', [
+          { value: true, label: 'On' },
+          { value: false, label: 'Off' },
+        ], s.vibration, (v) => store.update({ vibration: v }), 'vibration'),
         h('h3', {}, titleArt('Training', 'training')),
         cycleRow<boolean>('Show hitboxes (F1)', [
           { value: false, label: 'Off' },
@@ -117,24 +122,24 @@ export function controlsScreen(ui: UIManager): Screen {
     ['Move left / right', 'A / D or \u2190 \u2192', 'Left stick / D-pad', 'Left stick'],
     ['Move into / out of screen', 'W / S or \u2191 \u2193', 'Left stick / D-pad', 'Left stick'],
     ['Sprint (uses stamina in a fight)', 'Double-tap A / D and hold', 'Stick all the way, or double-tap D-pad', 'Push the stick to the edge'],
-    ['Light punch', 'J', 'X', 'LP'],
-    ['Heavy punch', 'I', 'Y', 'HP'],
-    ['Light kick', 'K', 'A', 'LK'],
-    ['Heavy kick', 'L', 'B', 'HK'],
+    ['Punch', 'J', 'X', 'PUNCH'],
+    ['Hard punch', 'I', 'Y', 'PUNCH (hard)'],
+    ['Kick', 'K', 'A', 'KICK'],
+    ['Hard kick', 'L', 'B', 'KICK (hard)'],
     ['Block (hold) / parry (tap just before a hit)', 'Space', 'RT', 'BLOCK'],
     ['Dodge (hold up/down to sidestep)', 'Shift', 'LT', 'DODGE'],
     ['Grab / break free / let go', 'U', 'LB', 'GRAB'],
     ['Use / pick up / open (doors, weapons, stations)', 'E or U', 'LB', 'GRAB'],
-    ['Weapon: swing light / heavy', 'J or K / I or L', 'X or A / Y or B', 'LP or LK / HP or HK'],
-    ['Dash strike (from neutral)', '\u2192 + I', '\u2192 + Y', '\u2192 + HP'],
+    ['Weapon: swing light / heavy', 'J or K / I or L', 'X or A / Y or B', 'PUNCH or KICK / the hard ones'],
+    ['Dash strike (from neutral)', '\u2192 + I', '\u2192 + Y', '\u2192 + hard PUNCH'],
     ['Jump attack', 'C then any attack', 'L3 then any attack', 'JUMP then attack'],
-    ['Special (hold, then attack)', 'O', 'RB', 'SP then attack'],
-    ['Finisher (opponent nearly out and reeling)', 'O + I', 'RB + Y', 'SP then HP'],
-    ['Swap style (in a fight)', 'Tab', 'Back / View', 'SWAP'],
-    ['Map', 'M (or Tab outside a fight)', 'Pause → Map', 'MAP button'],
+    ['Special (hold, then attack)', 'O', 'RB', 'SPECIAL then attack'],
+    ['Finisher (opponent nearly out and reeling)', 'O + I', 'RB + Y', 'SPECIAL then hard PUNCH'],
+    ['Swap style (in a fight)', 'Tab', 'Back / View', 'STYLE'],
+    ['Map', 'M (or Tab outside a fight)', 'Pause → Map', 'Map button (out of a fight)'],
     ['Jump', 'C', 'Left stick click', 'JUMP'],
     ['Pause', 'Esc / P', 'Start', '\u275a\u275a'],
-    ['Inventory (story)', 'B (or I outside a fight)', 'Right-stick click', 'BAG'],
+    ['Inventory (story)', 'B (or I outside a fight)', 'Right-stick click', 'Bag button (out of a fight)'],
     ['Character & crew (stats, injuries, companions)', 'H', 'Pause → Character & crew', 'Person button'],
     ['Crew orders: follow / wait here / get ready (at home: come with me / relax)', 'G', '—', 'Crew tab'],
     ['At home: use the fridge, cooker, sink, shower, toilet, bed, telly (walk up to it)', 'E', 'LB', 'GRAB'],
@@ -145,13 +150,13 @@ export function controlsScreen(ui: UIManager): Screen {
     ['Hitboxes', 'F1', '\u2014', 'Settings'],
   ];
   const combos = [
-    'Street: Jab \u2192 Jab \u2192 Hook \u2192 Haymaker (LP LP LP HP), Front kick \u2192 Roundhouse (LK HK)',
-    'Boxing: Jab \u2192 Jab \u2192 Cross \u2192 Hook \u2192 Uppercut (LP LP HP LP HP)',
-    'Kickboxing: Jab \u2192 Cross \u2192 Low kick \u2192 Roundhouse (LP HP LK HK)',
-    'Muay Thai: Jab \u2192 Leg kick \u2192 Body kick (LP LK HK), Elbow \u2192 Knee (HP LK)',
-    'Karate: Lunge punch \u2192 Reverse punch (LP HP), Front kick \u2192 Head kick (LK HK)',
-    'Wrestling and BJJ: Jab \u2192 shoot for the legs (LP LK), then grapple',
-    'In a clinch: LP strike, LK throw, HK takedown or power strike, GRAB to let go',
+    'Street: Jab \u2192 Jab \u2192 Hook \u2192 Haymaker (punch, punch, punch, hard punch), Front kick \u2192 Roundhouse (kick, hard kick)',
+    'Boxing: Jab \u2192 Jab \u2192 Cross \u2192 Hook \u2192 Uppercut (punch, punch, hard punch, punch, hard punch)',
+    'Kickboxing: Jab \u2192 Cross \u2192 Low kick \u2192 Roundhouse (punch, hard punch, kick, hard kick)',
+    'Muay Thai: Jab \u2192 Leg kick \u2192 Body kick (punch, kick, hard kick), Elbow \u2192 Knee (hard punch, kick)',
+    'Karate: Lunge punch \u2192 Reverse punch (punch, hard punch), Front kick \u2192 Head kick (kick, hard kick)',
+    'Wrestling and BJJ: Jab \u2192 shoot for the legs (punch, kick), then grapple',
+    'In a clinch: punch to strike, kick to throw, hard kick for a takedown or power strike, GRAB to let go',
   ];
   const el = h(
     'div',
@@ -177,7 +182,7 @@ export function controlsScreen(ui: UIManager): Screen {
 
 // ---------------------------------------------------------------- pause ------
 
-export function pauseMenu(actions: { resume: () => void; settings: () => void; controls: () => void; practice: () => void; quit: () => void }): Screen {
+export function pauseMenu(actions: { resume: () => void; settings: () => void; controls: () => void; moves: () => void; practice: () => void; quit: () => void }): Screen {
   const el = h(
     'div',
     { class: 'screen pause-menu' },
@@ -187,6 +192,7 @@ export function pauseMenu(actions: { resume: () => void; settings: () => void; c
       'nav',
       { class: 'menu-list' },
       menuButton('Resume', actions.resume, undefined, '', undefined, undefined, 'resume'),
+      menuButton('Moves', actions.moves, 'Every move and combo you know', '', undefined, undefined, 'moves'),
       menuButton('Practice styles', actions.practice, 'Try any fighting style', '', undefined, undefined, 'practice-styles'),
       menuButton('Settings', actions.settings, undefined, '', undefined, undefined, 'settings'),
       menuButton('Controls', actions.controls, undefined, '', undefined, undefined, 'controls'),

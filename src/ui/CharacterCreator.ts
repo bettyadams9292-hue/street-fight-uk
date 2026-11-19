@@ -41,6 +41,7 @@ import type { StudioFraming } from '../render/StudioView';
 import { ATTRIBUTE_NAMES, Stats, type AttributeName, type Attributes } from '../stats/Stats';
 import { cycleRow, menuButton, sliderRow, stepperRow, swatchRow } from './controls';
 import { h } from './dom';
+import { titleArt } from './titles';
 import type { Screen } from './UIManager';
 
 type Tab = 'body' | 'face' | 'hair' | 'skin' | 'clothes' | 'fighter';
@@ -112,7 +113,7 @@ export function characterCreator(
   });
 
   const status = h('div', { class: 'creator-status' });
-  const primary = menuButton(mode === 'new' ? 'Next' : 'Save look', () => onPrimary(), undefined, 'primary');
+  const primary = menuButton(mode === 'new' ? 'Next' : 'Save look', () => onPrimary(), undefined, 'primary', undefined, undefined, mode === 'new' ? 'next' : 'save-look');
   const footer = h(
     'div',
     { class: 'creator-footer' },
@@ -122,7 +123,7 @@ export function characterCreator(
       appearance = randomAppearance(Math.random, body);
       update();
       render();
-    }),
+    }, undefined, '', undefined, undefined, 'randomise-look'),
     primary,
   );
 
@@ -224,7 +225,12 @@ export function characterCreator(
   function render(): void {
     status.textContent = '';
     status.classList.remove('warn');
-    primary.querySelector('.label')!.textContent = mode === 'edit' ? 'Save look' : tab === 'fighter' ? 'Create fighter' : 'Next';
+    // All three footer buttons are painted, like BACK (the primary's graphic follows its words).
+    const word = mode === 'edit' ? 'Save look' : tab === 'fighter' ? 'Create fighter' : 'Next';
+    if (primary.getAttribute('aria-label') !== word) {
+      primary.querySelector('.label')!.replaceChildren(titleArt(word, word.toLowerCase().replace(/ /g, '-')));
+      primary.setAttribute('aria-label', word);
+    }
     const a = appearance;
     switch (tab) {
       case 'body':

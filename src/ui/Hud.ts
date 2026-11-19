@@ -100,7 +100,7 @@ export class Hud {
 
   constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
-      const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, `${i + 1} \u00b7 ${TRAINING_MODE_LABELS[m]}`) as HTMLButtonElement;
+      const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, h('span', { class: 'key-hint', text: `${i + 1} \u00b7 ` }), TRAINING_MODE_LABELS[m]) as HTMLButtonElement;
       this.modeButtons.set(m, b);
       return b;
     });
@@ -162,7 +162,7 @@ export class Hud {
         h('span', { class: 'training-label', text: 'Partner:' }),
         ...modes,
         this.opponentButton,
-        h('button', { class: 'chip', title: 'Key R', onclick: () => actions.reset() }, 'R \u00b7 Reset'),
+        h('button', { class: 'chip', title: 'Key R', onclick: () => actions.reset() }, h('span', { class: 'key-hint', text: 'R \u00b7 ' }), 'Reset'),
       ),
       h(
         'div',
@@ -183,7 +183,7 @@ export class Hud {
 
   setMode(mode: TrainingOpponent, archetype: ArchetypeId): void {
     for (const [m, b] of this.modeButtons) b.classList.toggle('on', m === mode);
-    this.opponentButton.textContent = `N \u00b7 ${ARCHETYPES[archetype].name} \u203a`;
+    this.opponentButton.replaceChildren(h('span', { class: 'key-hint', text: 'N \u00b7 ' }), `${ARCHETYPES[archetype].name} \u203a`);
     this.opponentButton.classList.toggle('on', mode === 'spar');
   }
 
@@ -406,6 +406,32 @@ export class Hud {
     }
   }
 
+  /** Red arrows at the screen edge for anyone coming at you from outside the view (screen pixels). */
+  private markers: HTMLElement[] = [];
+  private markerLayer: HTMLElement | null = null;
+  updateMarkers(list: { y: number; side: -1 | 1; near: boolean }[]): void {
+    if (!this.markerLayer) {
+      this.markerLayer = h('div', { class: 'edge-markers' });
+      this.el.append(this.markerLayer);
+    }
+    while (this.markers.length < list.length) {
+      const m = h('div', { class: 'edge-marker' });
+      this.markerLayer.append(m);
+      this.markers.push(m);
+    }
+    this.markers.forEach((m, i) => {
+      const e = list[i];
+      if (!e) {
+        m.style.display = 'none';
+        return;
+      }
+      m.style.display = '';
+      m.classList.toggle('left', e.side < 0);
+      m.classList.toggle('near', e.near);
+      m.style.top = `${Math.round(e.y)}px`;
+    });
+  }
+
   clearBubbles(): void {
     for (const b of this.bubbles) b.el.remove();
     this.bubbles = [];
@@ -454,7 +480,8 @@ export class Hud {
 
     b.name.textContent = f.name.toUpperCase();
     const second = f.secondaryStyle ? ` \u00b7 swap: ${(f.usingSecondary ? f.primaryStyle : f.secondaryStyle).name}` : '';
-    const styleText = f.style.name + second;
+    // Named grunts show what they are ("Street Thug") where everyone else shows their style.
+    const styleText = (f.tag ?? f.style.name) + second;
     if (b.style.textContent !== styleText) b.style.textContent = styleText;
     b.hpFill.style.width = `${hp * 100}%`;
     // The recoverable segment sits just past the current health, on whichever side the bar fills from.

@@ -836,7 +836,7 @@ kbd { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing:
 .hud.story .style-row { opacity: 0; transition: opacity .2s; }
 .hud.story.fighting .style-row { opacity: 1; }
 .hud.story:not(.fighting) .xp-bar { opacity: .55; }
-.hud.story.fighting .story-info .objective, .hud.story.fighting .route-line { opacity: .55; }
+.hud.story.fighting .route-line { opacity: .55; }
 
 /* ---- Inventory ---- */
 .inv-title { display: flex; align-items: center; gap: 10px; }

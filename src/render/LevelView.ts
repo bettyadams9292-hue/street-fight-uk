@@ -2206,7 +2206,8 @@ export class LevelView {
     if (f.label === 'Gym') {
       this.box(3, 1.6, 0.03, cx - 1.2, 1.4, this.back + 0.02, this.mat('#a8b8c8', 0.05, 0.2, { emissive: 0x5a6a7a, emissiveIntensity: 0.45 }), false);
     }
-    if (f.label) {
+    // Name plates only on the garage and gym walls: in your own house "BEDROOM" on the wall read as debug text.
+    if (f.label && !isHome) {
       const t = signTexture(f.label.toUpperCase(), '#1a1a1a', '#e8e4d8', { w: 512, h: 96 });
       // Top left of the room, clear of door signs and wall pieces.
       this.panel(1.4, 0.26, f.x0 + 0.95, 2.72, new THREE.MeshStandardMaterial({ map: t }), 0.04);

@@ -319,7 +319,7 @@ export function tinScreen(progress: Progress, close: () => void, changed: () => 
 
 // ---- story menus --------------------------------------------------------------------------
 
-export function storyPauseMenu(actions: { resume: () => void; inventory: () => void; map: () => void; character: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; quit: () => void }): Screen {
+export function storyPauseMenu(actions: { resume: () => void; inventory: () => void; map: () => void; character: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; moves: () => void; quit: () => void }): Screen {
   const el = h(
     'div',
     { class: 'screen pause-menu' },
@@ -332,6 +332,7 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
       menuButton('Map', actions.map, undefined, '', 'map', 'M', 'map'),
       menuButton('Inventory', actions.inventory, undefined, '', 'bag', 'I', 'inventory'),
       menuButton('Character & crew', actions.character, undefined, '', 'contact', 'H', 'character-and-crew'),
+      menuButton('Moves', actions.moves, 'Every move and combo you know', '', undefined, undefined, 'moves'),
       actions.home ? menuButton('Head home', actions.home, 'Fights here will still be waiting', '', 'home', undefined, 'head-home') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
       h('div', { class: 'menu-gap' }),
       menuButton('Save', actions.save, undefined, '', 'save', undefined, 'save'),

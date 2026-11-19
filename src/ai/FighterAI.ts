@@ -90,6 +90,19 @@ export class FighterAI {
     this.nextFeintAt = 90 + Math.floor(rng.next() * 240);
   }
 
+  /**
+   * The archetype's tell: a shout as it commits to its signature move. Every other time, cycling the
+   * lines, and without touching the fight's random numbers (so replays and tests stay the same).
+   */
+  private tells = 0;
+  private tell(on: 'grab' | 'heavy' | 'special'): void {
+    const t = this.archetype.tell;
+    if (!t || t.on !== on || !this.onSay) return;
+    const n = this.tells++;
+    if (n % 2) return;
+    this.onSay(t.lines[(n >> 1) % t.lines.length], 'warn');
+  }
+
   private say(lines: readonly string[], kind: 'taunt' | 'warn'): void {
     this.onSay?.(lines[Math.floor(this.rng.next() * lines.length)], kind);
   }
@@ -474,12 +487,14 @@ export class FighterAI {
       if (shoot && dist < 1.2) cmd.pressed.lk = true;
       else if (dist < 0.8) cmd.pressed.grab = true;
       else cmd.moveX = toward;
+      if (cmd.pressed.lk || cmd.pressed.grab) this.tell('grab');
       return cmd;
     }
     const specials = Object.keys(style.specials) as AttackButton[];
     if (specials.length && this.rng.chance(a.specialChance + (this.enraged ? 0.15 : 0)) && stamina > 0.3) {
       cmd.special = true;
       cmd.pressed[specials[Math.floor(this.rng.next() * specials.length)]] = true;
+      this.tell('special');
       return cmd;
     }
     // Keep getting blocked? Change it up: grab them, or go to the legs.
@@ -498,6 +513,7 @@ export class FighterAI {
     ls.push(starter);
     if (ls.length > 3) ls.shift();
     cmd.pressed[starter] = true;
+    if (starter === 'hp' || starter === 'hk') this.tell('heavy');
     this.plan = this.planCombo(starter, a.comboLength - 1);
     return cmd;
   }

@@ -15,12 +15,13 @@ src = {
 ORIGINAL = 'Original sound for Street Fight UK, rendered by tools/audio/make_sounds.py'
 for k in ('swing', 'tell', 'danger', 'ui', 'house', 'loop', 'amb'):
   src[k] = ORIGINAL
+src['music'] = 'Original music for Street Fight UK, rendered by tools/audio/make_music.py'
 lines = []
 for f in files:
   sid = f[:-4]
   size = os.path.getsize(os.path.join(root, 'public/audio', f))
   kind = sid.split('_')[0]
-  note = src[kind] if src[kind] == ORIGINAL else src[kind] + '; trimmed and levelled by tools/audio/build_sounds.sh'
+  note = src[kind] if src[kind] == ORIGINAL or kind == 'music' else src[kind] + '; trimmed and levelled by tools/audio/build_sounds.sh'
   lines.append(f"  {{ id: 'sfx_{sid}', kind: 'audio', url: '/audio/{f}', bytes: {size}, group: 'audio', fallback: 'synthesised in AudioManager', source: '{note}' }},")
 out = """/**
  * Recorded sound effects (written by tools/audio/write_manifest.py; credits in public/audio/CREDITS.md).

@@ -103,6 +103,8 @@ export const FINISH_HEALTH = 0.15;
 export class Fighter {
   readonly id: number;
   readonly name: string;
+  /** What they are, shown under their bar when the name is a person's ("Street Thug" under "KYLE"). */
+  tag?: string;
   team: Team;
   readonly appearance: CharacterAppearance;
   readonly stats: Stats;
