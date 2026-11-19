@@ -642,11 +642,12 @@ function finishProductionAsset(g:THREE.Group,name:StreetAssetName) {
     const maps=authoredMaps(hex,kind);
     if(!maps)return;
     // Avoid compounding existing texture maps from older enhancement passes.
+    // Keep original calibrated colour: older v5 code replaced it with white
+    // and relied on generated canvas maps, causing missing/faded colours on iOS.
     if(material.map){material.map=null;}
-    material.map=maps.color;material.normalMap=maps.normal;
+    material.normalMap=maps.normal;
     material.normalScale.set(.12,.12);
     material.roughnessMap=maps.roughness;
-    material.color.setHex(0xffffff);
     material.needsUpdate=true;
   });
   const text=(t:string,w:number,h:number,x:number,y:number,z:number,bg?:string,fg?:string,fs?:number)=>
