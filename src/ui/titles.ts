@@ -8,7 +8,7 @@ import { h } from './dom';
 /** Every graphic in public/art/titles (tests/titles.test.ts keeps this in step with the folder). */
 export const TITLE_SLUGS: ReadonlySet<string> = new Set([
   // Added for the audit fixes (tools/titles/gen.py).
-  'next', 'save-look', 'create-fighter', 'randomise-look', 'moves', 'music-volume', 'vibration',
+  'next', 'save-look', 'create-fighter', 'randomise-look', 'moves', 'music-volume', 'vibration', 'share-ko-photo',
   'abandoned-factory',
   'ambience-volume',
   'arch-the-big-boss',

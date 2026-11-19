@@ -782,6 +782,7 @@ export class Game {
       }),
       ev.on('boss:defeated', ({ boss, first, cash, xp, items, left }) => {
         this.hud.notify(`${boss.name.toUpperCase()} IS DONE`, 'big');
+        const challenges = this.judgeBossRun(boss.id);
         const next = first ? this.unlockedBy(boss.flag) : null;
         // Gates that need several things (Hale House): opened by this, or exactly what is still to do.
         const gate = first ? this.gateAfter(boss, w) : null;
@@ -810,6 +811,8 @@ export class Game {
               for (const n of gate.needs) lines.push({ text: `\u2022 ${n.label}${n.where ? ` (${n.where})` : ''}` });
             }
             if (boss.flag === 'boss_final') lines.push({ text: 'That\u2019s the lot. The whole town is yours.', big: true });
+            for (const c of challenges) lines.push({ text: `${c.done ? '\u2713' : '\u2717'} ${c.name}: ${c.text}${c.paid ? ` (+\u00a3${CHALLENGE_PAY})` : c.done ? ' (done before)' : ''}` });
+            const shot = this.koShot;
             this.ui.replaceAll(
               rewardScreen(
                 'VICTORY',
@@ -817,6 +820,7 @@ export class Game {
                 [
                   { label: 'Head home', sub: 'Bank your cash, train up, save', go: () => this.goHome(false) },
                   { label: 'Stay and explore', go: () => this.resume() },
+                  ...(shot ? [{ label: 'Share KO photo', sub: 'Save or send the knockout', go: () => void shareKoPhoto(shot, boss.name) }] : []),
                 ],
                 ['you-win', 'level-complete'],
               ),
@@ -2064,6 +2068,72 @@ export class Game {
     this.updateTouchVisibility();
   }
 
+  // ---- boss challenges and the KO photo ----------------------------------------------
+
+  /** The boss fight in progress: when it started, damage you took, whether you blocked. */
+  private bossRun: { boss: Fighter; start: number; taken: number; blocked: boolean; maxHp: number } | null = null;
+  private koShotAt = 0;
+  private koShot: string | null = null;
+
+  private trackBossRun(): void {
+    const boss = this.world?.activeBoss ?? null;
+    if (boss && this.bossRun?.boss !== boss && !boss.isKO) {
+      this.bossRun = { boss, start: this.time, taken: 0, blocked: false, maxHp: this.world!.player.vitals.maxHealth };
+      this.koShot = null;
+    }
+  }
+
+  /**
+   * Three challenges on every boss, judged when it goes down: each pays once (CHALLENGE_PAY), and the
+   * victory screen lists all three, ticked or not, so there's a reason to go back and do it better.
+   */
+  private judgeBossRun(bossId: string): { name: string; text: string; done: boolean; paid: boolean }[] {
+    const run = this.bossRun;
+    this.bossRun = null;
+    if (!run || !this.progress) return [];
+    const secs = this.time - run.start;
+    const list = [
+      { id: 'untouchable', name: 'Untouchable', text: 'lose less than a quarter of your health', done: run.taken < run.maxHp * 0.25 },
+      { id: 'no_guard', name: 'No guard', text: 'win without blocking', done: !run.blocked },
+      { id: 'quick', name: 'Quick work', text: `win inside ${BOSS_QUICK_SECONDS} seconds`, done: secs < BOSS_QUICK_SECONDS },
+    ];
+    return list.map((c) => {
+      const key = `challenge:${bossId}:${c.id}`;
+      const before = this.progress!.has(key);
+      const paid = c.done && this.progress!.claim(key);
+      if (paid) this.progress!.addCash(CHALLENGE_PAY);
+      return { name: c.name, text: c.text, done: c.done || before, paid };
+    });
+  }
+
+  /** The frame as drawn, with the game's name and the round stamped on (a JPEG data URL), or null. */
+  private captureKo(): string | null {
+    try {
+      const src = this.renderer.canvas;
+      const c = document.createElement('canvas');
+      const scale = Math.min(1, 1280 / Math.max(src.width, src.height));
+      c.width = Math.round(src.width * scale);
+      c.height = Math.round(src.height * scale);
+      const g = c.getContext('2d');
+      if (!g) return null;
+      g.drawImage(src, 0, 0, c.width, c.height);
+      const u = c.height / 20;
+      g.fillStyle = 'rgba(10, 11, 9, 0.6)';
+      g.fillRect(0, c.height - u * 2.2, c.width, u * 2.2);
+      g.font = `italic 900 ${Math.round(u * 1.2)}px "Big Shoulders Display", Impact, sans-serif`;
+      g.fillStyle = '#ffffff';
+      g.textBaseline = 'middle';
+      g.fillText('STREET FIGHT UK', u * 0.8, c.height - u * 1.1);
+      const name = this.progress?.save.character.name ?? '';
+      g.textAlign = 'right';
+      g.fillStyle = '#e8333a';
+      g.fillText(`K.O.${name ? `  \u00b7  ${name.toUpperCase()}` : ''}`, c.width - u * 0.8, c.height - u * 1.1);
+      return c.toDataURL('image/jpeg', 0.88);
+    } catch {
+      return null;
+    }
+  }
+
   /** Arrows on the screen edge for enemies closing in from outside the view (tight in portrait). */
   private updateEdgeMarkers(player: Fighter): void {
     const out: { y: number; side: -1 | 1; near: boolean }[] = [];
@@ -2148,6 +2218,7 @@ export class Game {
           }
         }
         if (isPlayer(hit.target)) {
+          if (this.bossRun) this.bossRun.taken += hit.damage;
           const share = hit.damage / Math.max(1, hit.target.vitals.maxHealth);
           this.hud.hurt(Math.min(1, share * 6));
           this.input.rumble(0.35 + share * 4, 0.4, heavy ? 160 : 90);
@@ -2158,6 +2229,7 @@ export class Game {
         this.renderer.fx.burst(hit.x, hit.y, hit.z, Math.sign(hit.target.pos.x - hit.attacker.pos.x) || 1, 'block');
         floatAt(hit.x, hit.y + 0.25, hit.z, hit.damage >= 0.5 ? `${Math.round(hit.damage)}` : 'BLOCK', 'block');
         if (isPlayer(hit.target) || isPlayer(hit.attacker)) this.input.rumble(0.1, 0.3, 30);
+        if (isPlayer(hit.target) && this.bossRun) this.bossRun.blocked = true;
       }),
       bus.on('guard:broken', () => {
         this.audio.guardBreak();
@@ -2171,6 +2243,8 @@ export class Game {
       }),
       bus.on('fighter:ko', ({ fighter }) => {
         this.audio.ko();
+        // A boss going down: take the KO photo a moment in, once the camera has pushed in.
+        if (this.world && fighter === this.world.activeBoss) this.koShotAt = this.time + 0.45;
         this.input.rumble(1, 0.6, 200);
         this.hud.notify(isPlayer(fighter) ? 'YOU’RE DOWN' : 'K.O.', 'big');
         if (this.settings.get().screenShake) cam.addShake(0.25);
@@ -2427,6 +2501,11 @@ export class Game {
       player.activity = sess.routine[Math.floor(sess.clock / ROUTINE_SECONDS) % sess.routine.length];
     }
     this.renderer.render(dt, this.time, inFight ? player : null);
+    this.trackBossRun();
+    if (this.koShotAt && this.time >= this.koShotAt) {
+      this.koShotAt = 0;
+      this.koShot = this.captureKo();
+    }
     if (inFight && player) {
       const enemy = this.world ? this.world.focusEnemy : this.mode!.focusEnemy;
       // In story mode the boss has its own bar along the bottom.
@@ -2440,6 +2519,30 @@ export class Game {
 
     if (!forced) requestAnimationFrame((n) => this.frame(n));
   }
+}
+
+/** Boss challenges: what each pays the first time, and the time limit on Quick work. */
+const CHALLENGE_PAY = 25;
+const BOSS_QUICK_SECONDS = 75;
+
+/** Send the KO photo through the phone's share sheet, or download it where there isn't one. */
+async function shareKoPhoto(dataUrl: string, bossName: string): Promise<void> {
+  const fileName = `street-fight-uk-ko-${bossName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jpg`;
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], fileName, { type: 'image/jpeg' });
+    const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean };
+    if (nav.share && nav.canShare?.({ files: [file] })) {
+      await nav.share({ files: [file], title: `Knocked out ${bossName}`, text: `Just put ${bossName} down in Street Fight UK` });
+      return;
+    }
+  } catch {
+    /* share cancelled or unsupported: fall through to a download */
+  }
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = fileName;
+  a.click();
 }
 
 /** Places with no music: home, shops, the pub and other rooms (their own sounds carry them). */
