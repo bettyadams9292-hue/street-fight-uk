@@ -12,7 +12,7 @@ export type StreetAssetName =
   | 'busBench' | 'timetableBoard' | 'streetLamp' | 'bollard'
   | 'railings' | 'litterBin' | 'recyclingBin' | 'telephoneBox'
   | 'electricalCabinet' | 'streetNameSign' | 'pedestrianCrossing'
-  | 'roadSign';
+  | 'roadSign' | 'wheelieBinBlack' | 'wheelieBinBrown' | 'wheelieBinGreen' | 'wheelieBinBlue' | 'parkBench';
 
 const C = {
   red: 0xb61d29, darkRed: 0x801521, charcoal: 0x262b31,
@@ -135,11 +135,18 @@ export function createStreetAsset(name: StreetAssetName): THREE.Group {
       pole(g, 0, 0, 0, 2.30, C.steel);
       sign(g, 'TOWN CENTRE', 1.18, .52, 0, 2.10, .055, C.blue, C.white);
       break;
+    case 'wheelieBinBlack':
+    case 'wheelieBinBrown':
+    case 'wheelieBinGreen':
+    case 'wheelieBinBlue':
+    case 'parkBench':
+      break;
     default: {
       const exhaustive: never = name;
       throw new Error('Unknown street asset: ' + exhaustive);
     }
   }
+  enhanceReferenceProps(g, name);
   g.userData = { collection: 'newassetsfromchatgpt', standalone: true, units: 'metres', assetName: name };
   return g;
 }
@@ -147,5 +154,86 @@ export const STREET_ASSET_NAMES: readonly StreetAssetName[] = [
   'pillarPostBox', 'wallPostBox', 'busStopPole', 'busShelter', 'busBench',
   'timetableBoard', 'streetLamp', 'bollard', 'railings', 'litterBin',
   'recyclingBin', 'telephoneBox', 'electricalCabinet', 'streetNameSign',
-  'pedestrianCrossing', 'roadSign',
+  'pedestrianCrossing', 'roadSign', 'wheelieBinBlack', 'wheelieBinBrown',
+  'wheelieBinGreen', 'wheelieBinBlue', 'parkBench',
 ] as const;
+
+/** Photo-reference enhancements: black-framed London bus shelter, cast-iron
+ *  litter bin, red post box, slatted bench and UK four-colour wheelie bins.
+ *  No textures are fetched remotely; all detailing is procedural and offline.
+ *  Roughness/colour variation suggests use without large texture downloads.
+ */
+function enhanceReferenceProps(g: THREE.Group, name: StreetAssetName) {
+  const add = (w:number,h:number,d:number,x:number,y:number,z:number,c:number) => box(g,w,h,d,x,y,z,c);
+  const metal = C.charcoal, faded = 0x525a60, timber = 0x4b4a46;
+  if (name === 'busShelter') {
+    // Framed transparent glazed sides and dark fascia.
+    for (const x of [-1.45,1.45]) {
+      for (const y of [.45,1.30,2.10]) add(.075,.06,.94,x,y,0,metal);
+      add(.055,1.75,.045,x,1.2,.44,metal);
+    }
+    add(3.28,.20,1.28,0,2.42,0,0x22262b);
+    add(1.00,.30,.07,.75,2.17,.61,0x151a1e);
+    // LED display represented by red illuminated bars (not live timetable text).
+    for (let i=0;i<3;i++) add(.76,.025,.012,.75,2.26-i*.09,.654,0xe73535);
+    for (const x of [-1.34,1.34]) add(.07,1.8,.07,x,1.15,.44,metal);
+    // Bench front red timber slat and supports.
+    add(2.28,.11,.09,0,.63,.03,0xa5332a);
+    for (const x of [-.95,.95]) add(.08,.60,.08,x,.32,.04,metal);
+    // Information panels with frames.
+    add(.74,1.18,.055,-.87,1.35,-.40,0x24292d);
+    add(.64,1.07,.06,-.87,1.35,-.36,0xe3e2d9);
+  }
+  if (name === 'pillarPostBox') {
+    cylinder(g,.295,.09,0,1.36,0,0x9f1925);
+    cylinder(g,.28,.06,0,.12,0,0x8c1720);
+    add(.34,.09,.05,0,1.04,.247,0x1e1d1d);
+    add(.22,.14,.03,0,.78,.267,0xd6c8a4);
+    for (const y of [.18,1.22]) cylinder(g,.255,.025,0,y,0,0xc12632);
+  }
+  if (name === 'litterBin') {
+    // Victorian-inspired cast-iron black bin with gold banding and inset panels.
+    for (const y of [.12,.88]) add(.57,.035,.51,0,y,0,0xc49d42);
+    for (const x of [-.22,.22]) add(.035,.65,.04,x,.51,.246,0x35393c);
+    add(.34,.18,.035,0,.49,.259,0x1d1d1e);
+    add(.28,.025,.039,0,.50,.281,0xd6b34c);
+    add(.40,.12,.08,0,1.02,0,0x202326);
+  }
+  if (name === 'busBench' || name === 'parkBench') {
+    if(name === 'parkBench') {
+      // Angled backrest and separated weathered slats.
+      for (let i=0;i<4;i++) {
+        const slat=add(1.78,.12,.085,0,.67+i*.17,-.20-i*.06,timber);
+        slat.rotation.x=-.24;
+      }
+      for(let i=0;i<3;i++) add(1.78,.065,.125,0,.47,.18-i*.18,0x55565a);
+      for(const x of [-.68,.68]) {
+        add(.12,.51,.34,x,.255,-.02,0x30363b);
+        add(.10,.73,.11,x,.67,-.28,0x30363b);
+      }
+    } else {
+      for(let i=0;i<3;i++) add(1.60,.025,.10,0,.565,-.17+i*.16,0x9d352b);
+    }
+  }
+  if(name.startsWith('wheelieBin')) {
+    const colours: Record<string,number> = {
+      wheelieBinBlack:0x34383b,wheelieBinBrown:0x99724f,
+      wheelieBinGreen:0x729b67,wheelieBinBlue:0x2167b7
+    };
+    const c=colours[name];
+    add(.67,1.04,.67,0,.56,0,c);
+    add(.74,.12,.77,0,1.12,0,c);
+    add(.62,.035,.09,0,1.19,-.33,c);
+    for(const x of [-.25,.25]) {
+      const wheel=cylinder(g,.105,.07,x,.12,-.36,0x171b1e);
+      wheel.rotation.z=Math.PI/2;
+      add(.025,.76,.03,x,.59,.35,0x454b4e);
+    }
+    add(.41,.43,.015,0,.69,.345,c===0x34383b?0x414649:c);
+    add(.45,.025,.015,0,.92,.36,0x4c5254);
+    add(.45,.045,.07,0,1.11,.37,0x252b30);
+  }
+  // Mark all enhanced props for later texture/LOD pipeline.
+  g.userData.referenceEnhanced = true;
+  g.userData.materialStyle = 'stylised UK street furniture; procedural PBR';
+}
