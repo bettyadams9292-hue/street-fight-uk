@@ -478,6 +478,14 @@ export class Game {
     this.ui.push(moveListScreen(styles, device, () => this.ui.pop()));
   }
 
+  /** Back to the game from a station that opened nothing (or handed over to something else): controls back too. */
+  private backToPlay(): void {
+    this.state = 'playing';
+    this.accumulator = 0;
+    this.input.flush();
+    this.updateTouchVisibility();
+  }
+
   private resume(): void {
     if (this.state !== 'paused') return;
     this.ui.replaceAll(null);
@@ -1029,19 +1037,19 @@ export class Game {
           this.hubDirty = true;
         }, () => {
           this.ui.replaceAll(null);
-          this.state = 'playing';
+          this.backToPlay();
           const def = COMPANIONS[station?.tab ?? ''];
           if (station && def && w.startChallenge(station, def)) this.hud.toast(`${def.nickname} squares up. Beat them and they’ll join you.`, 'warn');
         });
         break;
       case 'train':
-        this.state = 'playing';
+        this.backToPlay();
         return this.startGymSession(station?.tab ?? '');
       case 'style_drill':
-        this.state = 'playing';
+        this.backToPlay();
         return this.startDrill((station?.tab ?? 'boxing_gym') as FightGym['id']);
       case 'sparring':
-        this.state = 'playing';
+        this.backToPlay();
         if (w.duel) {
           w.stopDuel();
           return;
@@ -1072,10 +1080,10 @@ export class Game {
       case 'contacts':
         screen = contactsScreen(p, close, () => {
           this.ui.replaceAll(null);
-          this.state = 'playing';
+          this.backToPlay();
           this.openMap();
         }, () => {
-          this.state = 'playing';
+          this.backToPlay();
           this.openProfile('crew');
         });
         break;
@@ -1114,7 +1122,7 @@ export class Game {
       case 'car':
         screen = carScreen(p, close, saved, (area, entry) => {
           this.ui.replaceAll(null);
-          this.state = 'playing';
+          this.backToPlay();
           this.changeArea(area, entry, null);
         }, () => {
           this.ui.replaceAll(null);
@@ -1201,6 +1209,7 @@ export class Game {
     const game = new RepGame(kit, kit.name, kit.attribute, rank, 10, () => this.endTraining(), () => this.endTraining());
     this.session = { game, restore, routine: kit.routine, clock: 0 };
     this.state = 'training';
+    this.updateTouchVisibility();
     this.uiRoot.append(game.el);
   }
 
@@ -1215,8 +1224,7 @@ export class Game {
     f.activity = null;
     f.pos = { x: s.restore.x, y: 0, z: s.restore.z };
     f.facing = s.restore.facing;
-    this.state = 'playing';
-    this.input.flush();
+    this.backToPlay();
     if (s.game instanceof RepGame) {
       const kit = s.game.kit!;
       const r = finishSession(p, kit.trains, kit.perRep, kit.fatigue, s.game.grades);
