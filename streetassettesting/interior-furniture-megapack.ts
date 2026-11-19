@@ -16,12 +16,96 @@ export function createAsset(id:string):THREE.Group {
  function legs(w:number,d:number,h:number,m:THREE.Material=wood){for(const x of [-w/2+.09,w/2-.09])for(const z of [-d/2+.09,d/2-.09])b(.07,h,.07,x,h/2,z,m)}
  function handle(x:number,y:number,z:number){b(.14,.025,.035,x,y,z,steel);cyl(.022,.045,x-.06,y,z+.02,steel);cyl(.022,.045,x+.06,y,z+.02,steel)}
  function shelves(w:number,h:number,d:number,count:number,mat:THREE.Material=wood){for(const x of [-w/2,w/2])b(.065,h,d,x,h/2,0,mat);for(let i=0;i<=count;i++)b(w+.07,.045,d,0,.045+i*(h-.09)/count,0,mat);b(w,.035,.03,0,h/2,-d/2,trim)}
- if(k===0){const w= v%5===2?.85:1.3,h=v%6===4?1.05:1.95,d=.32+(v%3)*.07; shelves(w,h,d,v%4+3,v%5===2?steel:wood);
-  if([2,9,16,25,27].includes(v)){for(let i=0;i<4;i++)b(.035,h*.8,.035,-w/2+i*w/3,h*.52,d/2+.02,steel)}
-  if([6,7,17].includes(v)){for(let y=.18;y<h;y+=.4)rod([-w/2,y,-d/2],[w/2,y,d/2],.012,steel)}
-  if([10,27].includes(v)){for(let i=0;i<3;i++)b(w*.25,.38,.012,-w*.29+i*w*.29,.45,d/2+.01,glass)}
-  if([19,28].includes(v)){for(let i=0;i<7;i++)cyl(.038,.22,-w*.37+i*w*.12,.32,d*.13,cushion)}
-  if([5,23].includes(v))for(const x of [-w*.24,w*.24])for(const y of [.45,1.05,1.60])b(.025,.40,d*.8,x,y,0,trim);
+
+ if(k===0){
+  // Every shelf archetype is assembled independently: no shared box-case body.
+  const h=[1.9,1.05,1.72,1.78,.9,1.48,1.82,2.15,1.48,2.05,1.6,1.88,1.88,.72,1.85,1.9,.9,1.8,.65,1.6,1.3,1.7,2.1,1.4,1.0,1.15,.75,1.75,1.6,1.7][v];
+  const w=[1.12,1.32,1.05,1.0,1.1,1.4,1.48,1.82,1.22,1.55,1.1,1.72,1.72,1.65,.93,1.25,1.4,1.2,.88,.76,1.0,1.2,1.7,1.5,.75,1.2,.8,1.2,.95,1.4][v];
+  const d=[.34,.36,.78,.39,.25,.35,.53,.68,.86,.46,.43,.39,.39,.38,.33,.49,.31,.46,.34,.34,.24,.34,.43,.38,.25,.58,.36,.30,.29,.40][v];
+  const metal=[6,7,8,9,17,27].includes(v),mat=metal?steel:wood;
+  const side=(x:number,y:number,z:number,hh:number,dd:number,m:THREE.Material=mat)=>b(.045,hh,dd,x,y,z,m);
+  const plank=(y:number,ww=w,dd=d,zz=0,m:THREE.Material=mat)=>b(ww,.043,dd,0,y,zz,m);
+  const post=(x:number,z:number,hh=h)=>b(.055,hh,.055,x,hh/2,z,metal?steel:wood);
+  const books=(y:number,span=w)=>{for(let j=0;j<7;j++){const bh=.14+(j*3%5)*.023;const x=-span*.38+j*span*.125;b(span*.075,bh,.17,x,y+bh/2,.015,j%3===0?cloth:j%3===1?edge:wood)}};
+  const closed=[0,1,11,12,13,14,21,22,23].includes(v);
+  if(v===2){
+   // Corner bookcase: two PERPENDICULAR wings, both open towards the room.
+   const wing=.90,depth=.30;
+   for(let i=0;i<5;i++){const y=.075+i*.40;
+    b(wing,.044,depth,wing/2-wing*.5,y,-depth/2,wood);
+    b(depth,.044,wing,-wing/2+depth/2,y,wing/2-wing*.5,wood);
+   }
+   for(const x of [-wing/2,wing/2])b(.045,h,.045,x,h/2,-depth+.02,wood);
+   for(const z of [-wing/2,wing/2])b(.045,h,.045,-depth+.02,h/2,z,wood);
+   b(.035,h,.035,-depth/2,h/2,-depth/2,trim);
+  }else if(v===5||v===23){
+   // True cube grid: uninterrupted full-height dividers and full-width shelves.
+   const cols=v===5?3:4,rows=v===5?3:3,hh=h/rows;
+   for(let i=0;i<=cols;i++)side(-w/2+i*w/cols,h/2,0,h,d);
+   for(let j=0;j<=rows;j++)plank(.022+j*(h-.044)/rows);
+   if(v===23)for(let i=0;i<cols;i++)for(let j=0;j<rows;j++)if((i+j)%3===0)b(w/cols-.055,hh-.05,.018,-w/2+(i+.5)*w/cols,(j+.5)*hh,d/2+.013,cloth);
+  }else if(v===7||v===6||v===17){
+   // Industrial shelving is OPEN: steel uprights, horizontal beams and braces.
+   for(const x of [-w/2+.035,w/2-.035])for(const z of [-d/2+.035,d/2-.035])post(x,z);
+   const n=v===7?5:4;
+   for(let i=0;i<=n;i++){const y=.12+i*(h-.22)/n;plank(y,w-.10,d-.09,v===7?0:0,v===7?wood:steel);
+    for(const z of [-d/2+.03,d/2-.03])b(w-.06,.065,.04,0,y-.045,z,steel)}
+   for(const x of [-w/2+.03,w/2-.03])rod([x,.13,-d/2+.04],[x,h-.08,d/2-.04],.014,steel);
+  }else if(v===9){
+   // Retail wall bay: rear perforated standards, shelves project forward unobstructed.
+   b(w,.055,d,0,.035,0,trim);
+   b(w,h-.10,.035,0,h/2,-d/2+.02,cloth);
+   for(const x of [-w*.38,0,w*.38]){b(.035,h-.15,.04,x,h/2,-d/2+.055,steel);
+    for(let i=0;i<16;i++)b(.014,.024,.008,x,.17+i*(h-.35)/16,-d/2+.084,trim)}
+   for(let i=0;i<5;i++){const y=.19+i*.39;plank(y,w-.09,d-.055,.035,wood);
+    for(const x of [-w*.36,w*.36])rod([x,y-.02,-d/2+.05],[x,y-.15,d/2-.06],.012,steel)}
+  }else if(v===8){
+   // Double-sided freestanding shop gondola.
+   b(w,1.15,.12,0,.73,0,cloth);
+   for(const sideSign of [-1,1])for(let i=0;i<3;i++){const z=sideSign*(.20+i*.22);b(w-.07,.045,.22,0,.24+i*.37,z,wood)}
+   for(const x of [-w/2+.04,w/2-.04])post(x,0,1.48);
+   b(w,.07,d,0,.08,0,trim);
+  }else if(v===3){
+   // Leaning ladder shelf with slanted rear uprights.
+   for(const x of [-w*.43,w*.43])rod([x,.06,d*.35],[x,h,-d*.32],.028,wood);
+   for(let i=0;i<5;i++){const y=.20+i*.34,z=d*.29-(y/h)*d*.58;b(w-.13,.045,d*.65,0,y,z,wood)}
+  }else if(v===4){
+   // Three floating shelves, no side walls or back carcass.
+   for(let i=0;i<3;i++){const y=.16+i*.33;b(w,.055,d,0,y,0,wood);
+    for(const x of [-w*.36,w*.36]){b(.025,.14,.025,x,y-.07,-d*.34,steel)}}
+  }else if(v===10||v===27){
+   for(const x of [-w/2+.035,w/2-.035])for(const z of [-d/2+.035,d/2-.035])post(x,z);
+   for(let i=0;i<5;i++)plank(.08+i*(h-.15)/4,w-.08,d-.08,0,glass);
+   for(const x of [-w/2+.03,w/2-.03])b(.035,h,.035,x,h/2,d/2-.03,steel);
+  }else if(v===18||v===19||v===20||v===28){
+   for(const x of [-w/2+.035,w/2-.035])post(x,0);
+   for(let i=0;i<5;i++)plank(.10+i*(h-.15)/4,w-.06,d-.04);
+   if(v===18)for(let i=0;i<4;i++)for(const x of [-w*.30,0,w*.30])b(.20,.085,.25,x,.14+i*.14,0,trim);
+   if(v===19)for(let i=0;i<5;i++)for(let j=0;j<4;j++)cyl(.036,.18,-w*.34+j*w*.22,.15+i*.29,0,cloth);
+   if(v===20)for(let i=0;i<4;i++)b(w*.8,.04,.07,0,.20+i*.30,d/2,steel);
+  }else if(v===25){
+   // Stepped under-stair storage, each bay a different height.
+   for(let i=0;i<4;i++){const hh=.36+i*.25,x=-w/2+(i+.5)*w/4;
+    b(w/4-.015,.04,d,x,.06,0,wood);b(w/4-.015,.04,d,x,hh,0,wood);
+    b(.04,hh,d,x+w/8,hh/2,0,wood);b(w/4-.06,hh-.10,.02,x,hh/2,d/2,cloth)}
+  }else if(v===26){
+   // Display plinth: low, broad and intentionally solid.
+   b(w,.58,d,0,.29,0,wood);b(w+.09,.07,d+.09,0,.62,0,trim);b(w+.04,.045,d+.04,0,.035,0,wood);
+  }else if(v===29){
+   for(const x of [-w/2+.04,w/2-.04])post(x,0);
+   for(let i=0;i<4;i++)plank(.12+i*.46,w-.06,d-.04);
+   for(let i=0;i<3;i++)for(let j=0;j<5;j++)b(.15,.19,.18,-w*.36+j*w*.18,.21+i*.45,0,cloth);
+  }else{
+   // Domestic bookcases: side panels and shelves, not decorative front posts.
+   for(const x of [-w/2+.025,w/2-.025])side(x,h/2,0,h,d,wood);
+   b(w-.09,h-.06,.018,0,h/2,-d/2+.018,cloth);
+   const n=[0,1,11,12,21,22].includes(v)?5:3;
+   for(let i=0;i<=n;i++)plank(.045+i*(h-.09)/n,w-.06,d-.045,.015,wood);
+   if(closed)for(let i=0;i<n;i++)books(.065+i*(h-.09)/n,w-.09);
+   if(v===13){b(w*.72,.42,.035,0,.42,-d/2+.06,trim);b(w*.68,.36,.025,0,.42,-d/2+.032,glass)}
+   if(v===14)for(const x of [-w/2+.07,w/2-.07])b(.045,h,.035,x,h/2,d/2-.03,wood);
+   if(v===24)for(let i=0;i<4;i++)b(w-.13,.028,.035,0,.12+i*.23,d/2-.04,steel);
+  }
  }
  if(k===1){const round=[0,4,6,12,13].includes(v),desk=v>=16&&v<=22,wide=[1,2,5,7,18,24].includes(v);const w=wide?1.75:desk?1.35:1.1,d=desk?.68:.75,h=v===8||v===9||v===10||v===11?.45:v===19?1.05:.76;
   if(round){cyl(w*.47,.07,0,h,0,wood);cyl(.095,h-.08,0,(h-.08)/2,0,trim);cyl(.34,.055,0,.045,0,trim)}
@@ -170,17 +254,6 @@ export function createAsset(id:string):THREE.Group {
   const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;g.add(o);return o;
  }
  function nail(x:number,y:number,z:number){const m=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),accent);m.position.set(x,y,z);g.add(m)}
- if(k===0){
-  const w=v%5===2?.85:1.3,h=v%6===4?1.05:1.95,d=.32+(v%3)*.07;
-  // Continuous front edge banding and screw heads: each belongs to a shelf.
-  for(let i=0;i<=v%4+3;i++){const y=.045+i*(h-.09)/(v%4+3);bevelBox(w+.055,.018,.014,0,y,d/2+.007,edge,.004);for(const x of [-w/2+.08,w/2-.08])nail(x,y,d/2+.018)}
-  for(const x of [-w/2+.04,w/2+.04]){bevelBox(.024,h-.11,.018,x,h/2,d/2+.013,edge,.005)}
-  // Bookcase stock: angled spines, irregular heights and varied colours.
-  if([0,1,3,11,12,19,21,22].includes(v)){
-   const rows=v%4+3;for(let row=0;row<rows;row++){const y=.09+row*(h-.09)/rows;for(let j=0;j<8;j++){const x=-w*.40+j*w*.105;const bh=.15+(j*7+row*3)%5*.025;bevelBox(w*.075,bh,.19,x,y+bh/2,.005,j%3===0?cloth:j%3===1?wood:edge,.004)}}
-  }
-  if([6,7,16,17].includes(v)){for(let i=0;i<4;i++)b(w*.80,.018,.018,0,.18+i*.40,-d/2-.01,steel)}
- }
  if(k===1){
   const round=[0,4,6,12,13].includes(v),desk=v>=16&&v<=22,wide=[1,2,5,7,18,24].includes(v);
   const w=wide?1.75:desk?1.35:1.1,d=desk?.68:.75,h=v===8||v===9||v===10||v===11?.45:v===19?1.05:.76;
