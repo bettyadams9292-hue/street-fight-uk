@@ -136,6 +136,10 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 - #29: texture logic review: painted metal shades as paint (the bath and fridge were black); bath, toilet and basin porcelain, fridge and cooker white painted metal; kit-street brick only on building walls (per-vertex `sdWall`), so awnings aren't brick; `assign.ts` rules tightened (wood only on wood tones, porcelain only in bathrooms, concrete only on buildings and grounds, cloth for baize, canvas and awnings). `tests/textureLogic.test.ts` checks every textured surface in every level.
 - #30: kit-street brick on every building model (the pack's `building` flag), never on anything over 20 cm in front of a façade (awnings, canopies, signs); frontages record the doors they draw (`ownDoors`, mansion gates), so an exit there signs that door instead of adding a second. `?shot=<scene>&x=` (debug; didn't move the camera in testing). Still open: black-squares ground reported at the first boss (market setts surface suspected).
 
+**19 Nov 2026**
+- #31: area banner shows one painted title with the other name as a small line (`Hud.showBanner`), clear of the use prompt; subway stairs are a stairwell in a gap in the frontage (`isSubwayStairs`/`SUBWAY_GAP` in `world/strip.ts`, gap in `city/street.ts`, `LevelView.subwayEntrance`); outdoor barriers are railings; precincts, lanes, yards and the quay get a kerb and road in front (street.ts ground section); kit-street paving by ground kind (`PAVING_BY_GROUND` in `render/materials/streetDetail.ts`). `?shot=subway_stairs`.
+- This PR: City Centre and Ring Road Subway dressed with kit street furniture and security-set CCTV posts (`levels.ts`), and the subway gets 4 pedestrians (`civilians.ts`). Keep street furniture against the back wall (z ≤ -1.85) or at the kerb (z ≤ -0.22): `tests/npc.test.ts` limits pedestrian about-turns to 1.8 a minute and dev sits at 1.78, so anything in the walking lanes fails it (a planter at z -1.85 did).
+
 ## Open questions and next steps
 
 - PR #20's own "not done" list:
