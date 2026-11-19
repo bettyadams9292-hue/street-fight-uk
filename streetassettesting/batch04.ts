@@ -7,7 +7,6 @@ export const ASSETS=[
 {id:'shoppingTrolley',label:'Abandoned supermarket trolley',gameId:'trolley'},
 {id:'pubBarrel',label:'Pub beer barrel',gameId:'barrel'},
 {id:'woodenCrate',label:'Industrial timber crate',gameId:'crate'},
-{id:'securityCamera',label:'Wall-mounted CCTV camera',gameId:'cctv'},
 {id:'parkPicnicTable',label:'Weathered picnic table',gameId:'picnic_table'}
 ] as const;
 export type AssetId=typeof ASSETS[number]['id'];
@@ -19,17 +18,17 @@ const B=(w:number,h:number,d:number,x:number,y:number,z:number,m:T.Material)=>{c
 const C=(r:number,h:number,x:number,y:number,z:number,m:T.Material,n=32)=>{const o=new T.Mesh(new T.CylinderGeometry(r,r,h,n),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g.add(o);return o};
 const R=(a:number[],b:number[],r:number,m:T.Material)=>{const p=new T.Vector3(...a),q=new T.Vector3(...b),v=q.clone().sub(p);const o=new T.Mesh(new T.CylinderGeometry(r,r,v.length(),10),m);o.position.copy(p.add(q).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),v.normalize());g.add(o);return o};
 if(id==='skipBin'){
- const yellow=mat(0xe5a01b,.28,.52),edge=mat(0xb87912,.48,.54);
- // Open-topped, tapered steel builders skip with sloping end profiles.
- B(1.60,.075,.92,0,.075,0,yellow);
- const wall=(points:number[][],depth:number,z:number,m:T.Material)=>{const sh=new T.Shape();sh.moveTo(points[0][0],points[0][1]);for(const p of points.slice(1))sh.lineTo(p[0],p[1]);sh.closePath();const o=new T.Mesh(new T.ExtrudeGeometry(sh,{depth,bevelEnabled:false}),m);o.position.z=z;g.add(o)};
- wall([[-.79,.08],[.79,.08],[1.07,.91],[-1.07,.91]],.045,-.52,yellow);
- wall([[-.79,.08],[.79,.08],[1.07,.91],[-1.07,.91]],.045,.475,yellow);
- for(const x of [-1,1]){const sh=new T.Shape();sh.moveTo(-.46,.08);sh.lineTo(.46,.08);sh.lineTo(.53,.91);sh.lineTo(-.53,.91);sh.closePath();const o=new T.Mesh(new T.ExtrudeGeometry(sh,{depth:.045,bevelEnabled:false}),yellow);o.rotation.y=Math.PI/2;o.position.x=x*.79;g.add(o);}
- for(const z of [-.53,.53]){R([-1.07,.92,z],[1.07,.92,z],.027,edge);for(const x of [-.67,0,.67])R([x,.12,z],[x,.84,z],.015,edge);}
- for(const x of [-.93,.93])for(const z of [-.42,.42]){B(.18,.12,.15,x,.79,z,edge);B(.25,.08,.20,x,.16,z,dark);}
- // End tipping pivots and lifting lugs.
- for(const x of [-.96,.96])for(const z of [-.46,.46]){const lug=B(.14,.17,.085,x,.89,z,edge);lug.rotation.z=x>0?-.17:.17;}
+ const body=mat(0xd89a1c,.32,.59),rim=mat(0xb47c19,.48,.54),inside=mat(0x9e741e,.35,.74);
+ // Five separate thin steel panels; no solid extruded box or loose blocks.
+ const panel=(pts:number[][],z:number)=>{const sh=new T.Shape();sh.moveTo(pts[0][0],pts[0][1]);for(const p of pts.slice(1))sh.lineTo(p[0],p[1]);sh.closePath();const mesh=new T.Mesh(new T.ExtrudeGeometry(sh,{depth:.026,bevelEnabled:false}),body);mesh.position.z=z;g.add(mesh);};
+ B(1.54,.045,.90,0,.075,0,inside);
+ const side=[[-.77,.08],[.77,.08],[1.02,.89],[-1.02,.89]];
+ panel(side,-.47);panel(side,.444);
+ // End panels are sloped and fit flush between the long walls.
+ for(const x of [-1,1]){const sh=new T.Shape();sh.moveTo(-.45,.08);sh.lineTo(.45,.08);sh.lineTo(.45,.89);sh.lineTo(-.45,.89);sh.closePath();const mesh=new T.Mesh(new T.ExtrudeGeometry(sh,{depth:.028,bevelEnabled:false}),body);mesh.rotation.y=Math.PI/2;mesh.position.x=x*.76;g.add(mesh);}
+ for(const z of [-.47,.47]){R([-1.02,.895,z],[1.02,.895,z],.014,rim);for(const x of [-.62,0,.62])B(.035,.56,.018,x,.48,z+(z>0?.018:-.018),rim);}
+ // Small welded lifting eyes remain on outer upper corners, not huge protruding blocks.
+ for(const x of [-.78,.78])for(const z of [-.48,.48]){const eye=new T.Mesh(new T.TorusGeometry(.045,.012,8,20),rim);eye.rotation.y=Math.PI/2;eye.position.set(x,.82,z);g.add(eye);}
 }
 if(id==='trafficCone'){
  const reflective=mat(0xf3f3e9,.08,.37),coneH=.69,baseR=.165,topR=.023;
@@ -50,28 +49,33 @@ if(id==='roadBarrier'){
  B(.11,.09,.11,-1.105,.74,0,plastic);
 }
 if(id==='shoppingTrolley'){
- const wire=mat(0xabb3b6,.82,.32),handle=mat(0x252e35,.1,.64);
- // Tapered wire basket, sloping front and continuous chassis.
- const back=-.53,front=.55;
- for(const y of [.40,.83]){const w=y>.6?.34:.27;for(const z of [-w,w])R([back,y,z],[front,y,z],.013,wire);for(const x of [back,front])R([x,y,-w],[x,y,w],.013,wire);}
- for(let i=0;i<=11;i++){const x=back+i*(front-back)/11;for(const z of [-1,1])R([x,.40,z*.27],[x,.83,z*.34],.007,wire);}
- for(let i=0;i<=8;i++){const t=i/8,z=-.34+t*.68;for(const x of [back,front])R([x,.40,z*.27/.34],[x,.83,z],.008,wire);}
- for(let i=0;i<=10;i++){const x=back+i*(front-back)/10;R([x,.40,-.27],[x,.40,.27],.009,wire);}
- for(const z of [-.25,.25]){R([-.42,.40,z],[-.44,.13,z],.026,wire);R([.44,.40,z],[.40,.13,z],.026,wire);R([-.44,.14,z],[.40,.14,z],.024,wire);}
- for(const x of [-.44,.40])R([x,.14,-.25],[x,.14,.25],.023,wire);
- for(const x of [-.44,.40])for(const z of [-.25,.25]){R([x,.14,z],[x,.105,z],.018,wire);const w=C(.073,.035,x,.078,z,handle,24);w.rotation.z=Math.PI/2;}
- R([-.60,.90,-.38],[-.60,.90,.38],.028,handle);for(const z of [-.34,.34])R([-.60,.90,z],[-.53,.83,z],.019,wire);
+ const wire=mat(0xa5afb2,.8,.32),grip=mat(0x29323a,.08,.65),basketBottom=.40,basketTop=.83;
+ // Conventional trolley footprint: 1.06 m long, .60 m wide, .98 m tall.
+ const rear=-.48,front=.56;
+ for(const y of [basketBottom,basketTop]){const half=y===basketTop?.30:.245;for(const z of [-half,half])R([rear,y,z],[front,y,z],.010,wire);for(const x of [rear,front])R([x,y,-half],[x,y,half],.010,wire);}
+ for(let i=0;i<=13;i++){const x=rear+(front-rear)*i/13;for(const side of [-1,1])R([x,basketBottom,side*.245],[x,basketTop,side*.30],.0055,wire);}
+ for(let i=0;i<=9;i++){const t=-1+i*2/9;for(const x of [rear,front])R([x,basketBottom,t*.245],[x,basketTop,t*.30],.0055,wire);}
+ for(let i=0;i<=12;i++){const x=rear+(front-rear)*i/12;R([x,basketBottom,-.245],[x,basketBottom,.245],.007,wire);}
+ for(const z of [-.19,.19]){R([-.39,.40,z],[-.37,.17,z],.019,wire);R([.42,.40,z],[.38,.17,z],.019,wire);R([-.37,.17,z],[.38,.17,z],.017,wire);}
+ for(const x of [-.37,.38])R([x,.17,-.19],[x,.17,.19],.016,wire);
+ // Four visible swivel wheels: axes along Z, wheels tucked directly beneath chassis.
+ for(const x of [-.37,.38])for(const z of [-.19,.19]){R([x,.17,z],[x,.095,z],.012,wire);const w=C(.055,.029,x,.067,z,grip,24);w.rotation.x=Math.PI/2;}
+ R([-.54,.88,-.33],[-.54,.88,.33],.021,grip);
+ for(const z of [-.30,.30])R([-.54,.88,z],[-.48,.83,z],.014,wire);
 }
 if(id==='pubBarrel'){
- const stainless=mat(0xaab6b9,.9,.23),shadow=mat(0x667477,.72,.38);
- C(.285,.72,0,.40,0,stainless,64);
- // Pressed steel rolling hoops, raised chimes and recessed valve.
- for(const y of [.07,.18,.32,.47,.61,.73]){const ring=new T.Mesh(new T.TorusGeometry(.285,.018,10,64),stainless);ring.rotation.x=Math.PI/2;ring.position.y=y;g.add(ring);}
- for(const y of [.075,.755]){const lip=new T.Mesh(new T.TorusGeometry(.263,.025,10,64),shadow);lip.rotation.x=Math.PI/2;lip.position.y=y;g.add(lip);}
- C(.245,.014,0,.767,0,stainless,64);
- C(.050,.015,0,.784,0,shadow,32);C(.025,.019,0,.795,0,black,24);
- // Recessed carry handles near upper rim.
- for(const x of [-.20,.20]){B(.09,.045,.11,x,.695,0,shadow);B(.065,.02,.07,x,.717,0,stainless);}
+ const metal=mat(0xb9c2c4,.88,.24),darkMetal=mat(0x707d82,.77,.37);
+ // Standard stainless pub keg with rolled top/bottom chimes and subtle pressed ribs.
+ C(.275,.63,0,.405,0,metal,64);
+ for(const y of [.19,.33,.47,.61]){const hoop=new T.Mesh(new T.TorusGeometry(.275,.007,8,64),metal);hoop.rotation.x=Math.PI/2;hoop.position.y=y;g.add(hoop);}
+ for(const y of [.082,.725]){const chime=new T.Mesh(new T.TorusGeometry(.271,.018,12,64),metal);chime.rotation.x=Math.PI/2;chime.position.y=y;g.add(chime);}
+ // Rolled upper and lower protective collars, with inset flat lid.
+ C(.275,.065,0,.755,0,metal,64);C(.242,.012,0,.792,0,darkMetal,64);
+ C(.275,.062,0,.045,0,metal,64);
+ // Sankey coupler socket, small and recessed.
+ C(.047,.013,0,.801,0,metal,32);C(.023,.012,0,.809,0,darkMetal,24);
+ // Horizontal oval carry apertures on collar, facing front and rear.
+ for(const z of [-.274,.274]){const handle=B(.125,.033,.005,0,.755,z,darkMetal);handle.rotation.y=0;}
 }
 if(id==='woodenCrate'){
  const plank=mat(0x9b7953),plankAlt=mat(0x866343),nail=mat(0x44494a,.5);
@@ -83,14 +87,7 @@ if(id==='woodenCrate'){
  for(const z of [-.405,.405]){R([-.40,.12,z],[.40,.70,z],.022,plankAlt);R([-.40,.70,z],[.40,.12,z],.022,plankAlt);}
  for(const x of [-.37,.37])for(const z of [-.41,.41])for(const y of [.16,.67])B(.018,.018,.008,x,y,z,nail);
 }
-if(id==='securityCamera'){
- B(.17,.24,.17,0,.83,-.31,steel);
- R([0,.84,-.28],[0,.84,.05],.025,steel);
- B(.31,.19,.49,0,.88,.29,white);
- B(.35,.035,.55,0,.995,.29,steel);
- const lens=C(.065,.025,0,.88,.549,black,32);lens.rotation.x=Math.PI/2;
- C(.018,.018,0,.88,.566,steel,20).rotation.x=Math.PI/2;
-}
+
 if(id==='parkPicnicTable'){
  B(1.72,.08,.72,0,.76,0,wood);
  for(const z of [-.56,.56])B(1.72,.065,.28,0,.46,z,wood);
@@ -98,6 +95,6 @@ if(id==='parkPicnicTable'){
  for(const x of [-.59,.59])R([x,.45,-.65],[x,.45,.65],.027,steel);
  for(let i=0;i<4;i++)B(1.68,.008,.009,0,.807,-.27+i*.18,dark);
 }
-g.userData={collection:'streetassettesting',batch:4,id,units:'metres',status:'review-required',revision:'reference-rebuild-v2'};
+g.userData={collection:'streetassettesting',batch:4,id,units:'metres',status:'review-required',revision:'reference-rebuild-v3'};
 return g;
 }
