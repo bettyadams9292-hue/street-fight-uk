@@ -46,6 +46,11 @@ function sign(g: THREE.Group, text: string, w: number, h: number, x: number, y: 
 }
 export function createStreetAsset(name: StreetAssetName): THREE.Group {
   const g = group(name);
+  if (['pillarPostBox','wallPostBox','busStopPole','busShelter','telephoneBox','litterBin'].includes(name)) {
+    buildReworkedStreetAsset(g, name);
+    g.userData = {collection:'newassetsfromchatgpt', standalone:true, units:'metres', assetName:name, detailVersion:4};
+    return g;
+  }
   switch (name) {
     case 'pillarPostBox':
       cylinder(g, .24, 1.22, 0, .65, 0, C.red);
@@ -389,4 +394,175 @@ function upgradeDepthAndSurfaces(g: THREE.Group, name: StreetAssetName) {
   }
   g.userData.detailVersion=3;
   g.userData.textureType='procedural painted metal/plastic grain, PBR';
+}
+
+/**
+ * V4 complete replacements for the six weakest models.
+ * All six are rebuilt from scratch, avoiding overlapping legacy geometry.
+ * Orientation: +Z is front. Units: metres. Doors are physically modelled.
+ */
+function buildReworkedStreetAsset(g: THREE.Group, name: StreetAssetName) {
+  const red=0xb91f2b, redShadow=0x8d1822, ink=0x1b2025, brass=0xc6a35a;
+  const steel=0x343b42, paper=0xe6e2d5;
+  const add=(w:number,h:number,d:number,x:number,y:number,z:number,c:number)=>box(g,w,h,d,x,y,z,c);
+  const cyl=(r:number,h:number,x:number,y:number,z:number,c:number,top=r)=>cylinder(g,r,h,x,y,z,c,top);
+  const glassMat=new THREE.MeshPhysicalMaterial({color:0xbad7df,metalness:0,roughness:.13,transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide});
+  const glazing=(w:number,h:number,x:number,y:number,z:number,rotation=0)=>{
+    const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,.012),glassMat.clone());
+    m.position.set(x,y,z);m.rotation.y=rotation;g.add(m);return m;
+  };
+  const plaque=(w:number,h:number,x:number,y:number,z:number,c=paper)=>{
+    add(w+.055,h+.055,.045,x,y,z-.01,ink);
+    add(w,h,.05,x,y,z+.02,c);
+  };
+  const makeDoor=(x:number,z:number,width:number,height:number,colour:number)=>{
+    const hinge=new THREE.Group();hinge.name='Door with hinge, handle and glass panes';
+    hinge.position.set(x,0,z);g.add(hinge);
+    const part=(w:number,h:number,d:number,px:number,py:number,pz:number,c:number)=>{
+      const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,.22,.48));
+      m.position.set(px,py,pz);m.castShadow=true;hinge.add(m);return m;
+    };
+    for(const px of [.045,width-.045])part(.085,height,.105,px,height/2,0,colour);
+    for(const py of [.11,.87,1.62,height-.06])part(width,.095,.105,width/2,py,0,colour);
+    for(const py of [.47,1.24,1.93])part(width-.1,.045,.075,width/2,py,.014,colour);
+    for(const py of [1.05,1.42,1.78]) {
+      const gm=new THREE.Mesh(new THREE.BoxGeometry(width-.15,.28,.012),glassMat.clone());
+      gm.position.set(width/2,py,0);hinge.add(gm);
+    }
+    part(.055,.16,.10,width-.15,.98,.09,brass);
+    part(.07,.06,.11,width-.15,.86,.09,ink);
+    hinge.userData={part:'operableDoor',axis:'y',closedRotation:0};
+    return hinge;
+  };
+  if(name==='telephoneBox') {
+    // Distinct iconic red British K6-style kiosk: solid corner posts, glazed
+    // three sides, four-panel door, raised fascia and domed stepped crown.
+    const r=.49;
+    add(1.08,.12,1.08,0,.06,0,redShadow);
+    for(const x of [-r,r])for(const z of [-r,r]) {
+      add(.115,2.23,.115,x,1.17,z,red);
+      add(.14,.14,.14,x,.20,z,redShadow);
+    }
+    for(const y of [2.25,2.40])add(1.10,.11,1.10,0,y,0,red);
+    add(1.12,.08,1.12,0,2.52,0,redShadow);
+    const dome=new THREE.Mesh(new THREE.SphereGeometry(.61,24,12,0,Math.PI*2,0,Math.PI/2),mat(red,.12,.4));
+    dome.scale.set(1,.27,1);dome.position.y=2.52;g.add(dome);
+    // Side and back windows, divided by glazing bars.
+    for(const z of [-.49]){
+      glazing(.83,1.75,0,1.22,z);
+      for(const x of [-.17,.17])add(.045,1.79,.06,x,1.22,z,red);
+      for(const y of [.60,1.02,1.45,1.87])add(.88,.047,.06,0,y,z,red);
+    }
+    for(const x of [-.49,.49]){
+      glazing(.83,1.75,x,1.22,0,Math.PI/2);
+      for(const z of [-.17,.17])add(.06,1.79,.045,x,1.22,z,red);
+      for(const y of [.60,1.02,1.45,1.87])add(.06,.047,.87,x,y,0,red);
+    }
+    const door=makeDoor(-.44,.505,.88,2.18,red);
+    door.name='K6 telephone kiosk front door';
+    plaque(.76,.19,0,2.34,.558,0xf4e9d1);
+    add(.90,.045,.09,0,2.21,.55,redShadow);
+    add(.90,.055,.15,0,.12,.56,steel);
+    // Inner telephone fixture visible through glazing.
+    add(.30,.54,.15,0,1.18,-.38,0x34383c);
+    add(.18,.18,.08,0,1.30,-.27,0xbbbcb6);
+  } else if(name==='litterBin'){
+    // Cast iron heritage UK litter bin: tapering faceted body, separate lid,
+    // pronounced gold trim, deep openings and recessed front plaque.
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(.31,.39,1.04,8),mat(0x202428,.65,.64));
+    body.rotation.y=Math.PI/8;body.position.y=.59;body.castShadow=true;g.add(body);
+    const foot=new THREE.Mesh(new THREE.CylinderGeometry(.39,.41,.11,8),mat(ink,.5,.7));
+    foot.position.y=.06;g.add(foot);
+    for(const y of [.15,.96]){
+      const ring=new THREE.Mesh(new THREE.CylinderGeometry(y>.5?.365:.40,y>.5?.365:.40,.045,8),mat(brass,.65,.4));
+      ring.rotation.y=Math.PI/8;ring.position.y=y;g.add(ring);
+    }
+    const lid=new THREE.Mesh(new THREE.CylinderGeometry(.41,.39,.16,8),mat(ink,.55,.52));
+    lid.rotation.y=Math.PI/8;lid.position.y=1.14;g.add(lid);
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(.23,.34,.15,8),mat(ink,.5,.5));
+    cap.position.y=1.28;g.add(cap);
+    // Real openings: dark inset pockets beneath raised lid, not just stripes.
+    for(const a of [0,Math.PI/2,Math.PI,Math.PI*1.5]){
+      const opening=add(.28,.17,.04,Math.sin(a)*.33,1.06,Math.cos(a)*.33,0x070809);
+      opening.rotation.y=a;
+      const rim=add(.32,.025,.055,Math.sin(a)*.35,1.17,Math.cos(a)*.35,brass);
+      rim.rotation.y=a;
+    }
+    plaque(.34,.23,0,.64,.352,ink);
+    add(.28,.045,.06,0,.69,.408,brass);
+    add(.28,.025,.06,0,.58,.408,brass);
+    for(const x of [-.14,.14])add(.025,.22,.06,x,.64,.409,brass);
+  } else if(name==='pillarPostBox'){
+    cyl(.255,1.14,0,.65,0,red);
+    cyl(.29,.14,0,1.26,0,redShadow);
+    cyl(.32,.075,0,1.35,0,red);
+    cyl(.29,.075,0,.065,0,redShadow);
+    // Octagonal cast finial, inset collection plate and pronounced letter aperture.
+    const finial=new THREE.Mesh(new THREE.CylinderGeometry(.17,.24,.13,8),mat(redShadow));
+    finial.position.y=1.45;g.add(finial);
+    add(.39,.12,.085,0,1.07,.265,ink);
+    add(.32,.035,.095,0,1.09,.29,0x08090a);
+    plaque(.29,.25,0,.72,.273);
+    add(.37,.44,.035,0,.47,.25,redShadow);
+    add(.32,.37,.045,0,.47,.272,red);
+    for(const y of [.14,1.22])cyl(.266,.025,0,y,0,redShadow);
+  } else if(name==='wallPostBox'){
+    add(.51,.78,.32,0,.61,0,redShadow);
+    add(.46,.72,.345,0,.61,.015,red);
+    add(.56,.12,.38,0,1.05,0,redShadow);
+    add(.40,.075,.065,0,.81,.215,ink);
+    add(.34,.025,.085,0,.83,.245,0x050505);
+    plaque(.30,.24,0,.53,.21);
+    add(.34,.20,.04,0,.28,.19,redShadow);
+  } else if(name==='busStopPole'){
+    cyl(.065,2.67,0,1.335,0,steel);
+    cyl(.17,.10,0,.055,0,ink);
+    // Classic red roundel with visible white central plate.
+    const disk=new THREE.Mesh(new THREE.CylinderGeometry(.29,.29,.065,32),mat(red,.15,.5));
+    disk.rotation.x=Math.PI/2;disk.position.set(0,2.57,.06);g.add(disk);
+    add(.52,.16,.08,0,2.57,.115,paper);
+    plaque(.38,.49,0,2.06,.08,paper);
+    add(.35,.06,.05,0,2.28,.12,red);
+    for(let i=0;i<5;i++)add(.27,.022,.055,0,2.15-i*.07,.13,steel);
+    plaque(.37,.34,0,1.51,.08,paper);
+  } else if(name==='busShelter'){
+    // Black powder-coated steel, layered curved canopy, real transparent
+    // panes, red slatted seating and dimensional electronic arrivals board.
+    const width=3.25;
+    for(const x of [-1.53,0,1.53]) {
+      add(.075,2.22,.085,x,1.11,-.46,steel);
+      add(.07,2.22,.08,x,1.11,.45,steel);
+    }
+    for(const y of [.20,1.12,2.15]){
+      add(width,.065,.07,0,y,-.46,steel);
+    }
+    for(const x of [-.76,.76])glazing(1.42,1.82,x,1.17,-.46);
+    for(const x of [-1.53,1.53]) {
+      const pane=new THREE.Mesh(new THREE.BoxGeometry(.015,1.84,.82),glassMat.clone());
+      pane.position.set(x,1.17,0);g.add(pane);
+    }
+    // Roof ribs and curved arch profile: segments with changing elevation.
+    for(let i=0;i<12;i++){
+      const z=-.62+i*.115;
+      const y=2.33+.13*(1-Math.pow(z/.75,2));
+      add(3.45,.055,.13,0,y,z,ink);
+    }
+    add(3.51,.15,.08,0,2.37,.67,ink);
+    add(3.51,.16,.08,0,2.37,-.67,ink);
+    for(const x of [-1.55,1.55])add(.09,.09,1.35,x,2.37,0,ink);
+    // Bench with independent slats, bright red powder-coated steel.
+    for(let i=0;i<3;i++)add(2.35,.035,.12,0,.56,-.22+i*.15,0xb3362f);
+    add(2.35,.17,.055,0,.85,-.40,0xb3362f);
+    for(const x of [-1.0,1.0])add(.07,.57,.43,x,.29,-.19,steel);
+    // Enclosed paper timetable and black-framed LED display.
+    add(.82,1.27,.08,-1.03,1.30,-.37,ink);
+    add(.71,1.14,.085,-1.03,1.30,-.31,paper);
+    for(let i=0;i<9;i++)add(.52,.023,.018,-1.03,1.72-i*.10,-.256,0x72787b);
+    add(1.24,.34,.10,.83,2.05,.48,ink);
+    for(let row=0;row<3;row++)for(let i=0;i<18;i++)
+      add(.029,.017,.012,.49+i*.038,2.15-row*.085,.54,0xf03836);
+  }
+  // Avoid remote dependencies for textures; all model geometry works offline.
+  // Weathered paint/plastic maps can be replaced by authored PBR texture sets.
+  g.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true;}});
 }
