@@ -62,6 +62,8 @@ export interface PropertySave {
   riding: boolean;
   casino: CasinoStats;
   seq: number;
+  /** The house has had its room dressing put out (home.ts dressHouse): once, then it's yours to move or sell. */
+  dressed?: boolean;
 }
 
 /** Spot outside 14 Tanner Road where a bike is left when you take it out. */
@@ -152,6 +154,7 @@ export function sanitiseProperty(raw: unknown, areas: readonly string[]): Proper
     if (Number.isFinite(n) && n >= seq) seq = n + 1;
   }
   out.seq = Math.max(seq, base.seq);
+  if (r.dressed === true) out.dressed = true;
   return out;
 }
 

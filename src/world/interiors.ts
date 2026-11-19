@@ -4,7 +4,8 @@ import { EQUIPMENT } from '../business/catalogue';
 import { GYM_KIT } from '../training/gym';
 import { COMPANION_LIST } from '../companions/companions';
 import type { AreaId } from '../progress/Progress';
-import { deepRoom } from './rooms';
+import { ROOM_EXTRA, deepRoom } from './rooms';
+import { D, addDecor } from './roomDecor';
 
 /**
  * Buildings you can walk into. Same rules as the streets: what you see is
@@ -550,7 +551,7 @@ const wrestlingClub = fightGym('wrestling_club', 'Kev’s Wrestling & Grappling'
 const P = (kind: PropDef['kind'], x: number, z: number, extra: Partial<PropDef> = {}): PropDef => ({ kind, x, z, ...extra });
 /** A table with a chair either side, facing it. */
 const tableFor2 = (x: number, z: number, colour = '#7a1414'): PropDef[] => [
-  P('pub_table', x, z),
+  D('f02_05', x, z, { colour: '#4a2e1a' }),
   F('dining_chair', x - 0.75, z, { rot: 1, colour }),
   F('dining_chair', x + 0.75, z, { rot: 3, colour }),
 ];
@@ -581,10 +582,40 @@ const FRONT: Record<string, PropDef[]> = {
   ],
 };
 
-/** An interior with its front floor filled (see FRONT). */
+/**
+ * Approved models dressing each place, on top of FRONT: pub booths, poseur tables and stools, the dartboard and
+ * the chalkboard; filing cabinets and a waiting sofa at the agents; more room sets in the furniture showroom. Kept
+ * only where they touch nothing (world/roomDecor.ts addDecor).
+ */
+const W = (id: string, x: number, wallY: number): PropDef => D(id, x, -2.0, { wallY });
+const poseur = (x: number, z: number): PropDef[] => [D('highTable', x, z), D('pubStool', x - 0.84, z), D('pubStool', x + 0.84, z)];
+const DECOR: Record<string, PropDef[]> = {
+  pub: [
+    D('chalkboardMenu', 2.4, 2.1), D('pubBooth', 0.6, 2.9, { rot: 3 }), D('pubBooth', 0.6, 4.6, { rot: 3 }),
+    ...poseur(8.4, 5.1), ...poseur(13.0, 5.1), ...poseur(18.6, 5.2), ...poseur(23.8, 2.3), ...poseur(33.0, 5.1),
+    D('kegRack', 36.2, 5.3, { rot: 1 }), D('pottedTree', 36.4, 2.2), D('f03_27', 28.4, 2.1),
+    W('pubDartboard', 24.0, 1.25), W('wallClock', 12.0, 2.25),
+  ],
+  casino: [D('pottedTree', 1.2, 2.4), D('pottedTree', 25.2, 5.1), D('f05_12', 8.4, 5.0), D('f02_13', 10.1, 5.0)],
+  estate_agent: [D('f03_22', 12.7, 2.1), D('f03_22', 13.3, 2.1), D('pottedTree', 13.4, 5.0), D('f01_21', 1.6, 2.6)],
+  car_dealer: [D('waitingSofa', 11.0, 4.8), D('f02_13', 12.4, 4.8), D('pottedTree', 1.2, 2.2)],
+  jeweller: [D('waitingSofa', 6.8, 5.0), D('f05_22', 11.2, 5.0)],
+  furniture_shop: [
+    D('f04_19', 21.0, 2.7), D('f03_08', 1.2, 5.0), D('f05_20', 6.9, 4.95), D('f05_11', 15.6, 2.5),
+    D('f02_06', 15.6, 4.9), D('f04_05', 14.6, 4.9, { rot: 3 }), D('f04_05', 16.6, 4.9, { rot: 1 }), D('f03_28', 20.6, 5.0),
+  ],
+  clothes_shop: [D('f01_19', 15.0, 4.8), D('f06_12', 4.8, 4.8), D('pottedTree', 1.2, 2.2)],
+  pawn_shop: [D('f03_30', 1.6, 2.4), D('arcadeCabinet', 12.8, 2.3), D('f01_07', 6.8, 5.0)],
+  bike_shop: [D('f01_18', 1.6, 2.4), D('cardboardBox', 15.6, 2.4), D('cardboardBox', 16.3, 2.4)],
+  grow_shop: [D('f01_18', 1.6, 2.4), D('cardboardBox', 2.4, 5.0)],
+};
+
+/** An interior with its front floor filled (see FRONT) and dressed (DECOR). */
 export function fitOut<T extends LevelDef>(level: T): T {
   const extra = FRONT[level.id];
-  return extra ? { ...level, props: [...level.props, ...extra.map((p) => ({ ...p }))] } : level;
+  const withFront = extra ? { ...level, props: [...level.props, ...extra.map((p) => ({ ...p }))] } : level;
+  const decor = DECOR[level.id];
+  return decor ? { ...withFront, props: [...withFront.props, ...addDecor(withFront, decor.map((p) => ({ ...p })), withFront.bounds.maxZ + ROOM_EXTRA)] } : withFront;
 }
 
 // Every room at its real depth (world/rooms.ts), its front floor filled.

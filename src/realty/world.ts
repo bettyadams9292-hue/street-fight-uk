@@ -9,6 +9,7 @@ import { deepRoom } from '../world/rooms';
 import type { EntryDef, ExitDef, FacadeDef, LevelDef, LightDef, PropDef, StationDef } from '../world/LevelTypes';
 import { PROP_SIZE } from '../world/LevelTypes';
 import { FURNITURE } from '../property/catalogue';
+import { addDecor, roomDecor, type DecorRoom } from '../world/roomDecor';
 import type { AreaId } from '../progress/Progress';
 import { PROPERTIES, PROPERTY_LIST, QUALITY_LABELS, formatPounds, type PropertyDef, type RoomKind } from './catalogue';
 
@@ -388,6 +389,7 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
   const scale = [0, 0.85, 0.92, 1, 1.08, 1.2][p.quality];
   const fin = FINISH_BY_QUALITY[p.quality];
   const facades: FacadeDef[] = [];
+  const decor: PropDef[] = [];
   const props: PropDef[] = [];
   const walls: NonNullable<LevelDef['walls']> = [];
   const lights: LightDef[] = [];
@@ -443,6 +445,8 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
       }
     }
     props.push(...midRoom(kind, x0, x1, p.quality));
+    const dk = DECOR_FOR[kind];
+    if (dk) decor.push(...roomDecor(dk, x0, x1));
     x = x1;
   });
   const hallMid = 1.0;
@@ -453,7 +457,7 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
     label: as === 'viewing' ? `BROCHURE|${p.type}, ${priceText}: details and buy` : `YOUR PROPERTY|${p.name}: let, sell or manage`,
   });
   if (as === 'owner' && personal && bedX !== null) stations.push({ id: 'prop_rest', x: bedX, z: -0.15, label: 'BED|Rest here' });
-  return deepRoom({
+  const built = deepRoom({
     id: 'property',
     name: p.name,
     district: p.locality,
@@ -471,7 +475,15 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
     weather: 'indoors',
     objective: as === 'viewing' ? `Viewing: ${p.type.toLowerCase()}, ${QUALITY_LABELS[p.quality].toLowerCase()} fit-out. The brochure's in the hall` : personal ? `${p.name}. Yours` : `${p.name}. Yours, on the market to let`,
   });
+  // Each room dressed round its edges with the furniture pack, wherever that touches nothing already there.
+  return { ...built, props: [...built.props, ...addDecor(built, decor, built.bounds.maxZ)] };
 }
+
+/** Which dressing each kind of room gets (world/roomDecor.ts). */
+const DECOR_FOR: Partial<Record<RoomKind, DecorRoom>> = {
+  hall: 'hall', living: 'living', studio: 'living', kitchen: 'kitchen', dining: 'dining', bedroom: 'bedroom', master: 'bedroom',
+  dressing: 'bedroom', bathroom: 'bathroom', ensuite: 'bathroom', study: 'study',
+};
 
 /**
  * The fixed stand-in for the inside of a property (the real one is built from the save when you go in).

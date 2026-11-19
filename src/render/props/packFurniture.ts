@@ -16,7 +16,7 @@ const PALETTE = ['#a77a50', '#77533d', '#c3aa88', '#454b52', '#e5ded0', '#51645b
 const VARIANT = new Map((PACK as readonly { id: string; variant: number }[]).map((a) => [a.id, a.variant]));
 
 /** Catalogue item → pack model, and whether the colour choice is its fabric (upholstery) or its wood. */
-export const PACK_FOR: Readonly<Record<string, { id: string; paint: 'fabric' | 'wood'; frame?: string }>> = {
+export const PACK_FOR: Readonly<Record<string, { id: string; paint: 'fabric' | 'wood' | 'none'; frame?: string }>> = {
   sofa_3: { id: 'f05_02', paint: 'fabric' },
   sofa_2: { id: 'f05_01', paint: 'fabric' },
   armchair: { id: 'f04_15', paint: 'fabric', frame: '#4a2e1a' },
@@ -32,6 +32,22 @@ export const PACK_FOR: Readonly<Record<string, { id: string; paint: 'fabric' | '
   dining_chair: { id: 'f04_01', paint: 'wood' },
   cupboard: { id: 'f03_16', paint: 'wood' },
   trophy_cab: { id: 'f03_10', paint: 'wood' },
+  cube_shelves: { id: 'f01_06', paint: 'wood' },
+  club_chair: { id: 'f04_16', paint: 'fabric', frame: '#4a2e1a' },
+  side_table: { id: 'f02_13', paint: 'wood' },
+  sideboard: { id: 'f03_06', paint: 'wood' },
+  pantry: { id: 'f03_19', paint: 'wood' },
+  round_table: { id: 'f02_01', paint: 'wood' },
+  windsor_chair: { id: 'f04_04', paint: 'wood' },
+  open_shelves: { id: 'f01_17', paint: 'wood' },
+  dressing_table: { id: 'f02_22', paint: 'wood' },
+  dressing_stool: { id: 'f04_21', paint: 'fabric' },
+  storage_bench: { id: 'f06_13', paint: 'fabric' },
+  tallboy: { id: 'f03_14', paint: 'wood' },
+  bath_shelf: { id: 'f01_25', paint: 'wood' },
+  airer: { id: 'clothesAirer', paint: 'none' },
+  coat_stand: { id: 'f06_14', paint: 'wood' },
+  shoe_bench: { id: 'f06_15', paint: 'wood' },
 };
 
 const broken = new Set<string>();
@@ -61,7 +77,7 @@ export function packFurnitureModel(item: string, colour?: string): THREE.Group |
     let geo = part.geometry;
     // The chosen colour goes on the pack's upholstery (a fabric piece) or its wood (a wooden one); a fabric piece's
     // cushions take a lighter shade of it, so it still reads in two tones.
-    if (paint && geo.getAttribute('color')) {
+    if (paint && map.paint !== 'none' && geo.getAttribute('color')) {
       geo = geo.clone();
       const v = VARIANT.get(map.id) ?? 0;
       const at = (k: number) => PALETTE[(v + k) % PALETTE.length];
@@ -79,4 +95,10 @@ export function packFurnitureModel(item: string, colour?: string): THREE.Group |
     g.add(mesh);
   }
   return g;
+}
+
+/** The colour a pack model's wood is authored in (what a decor prop's `colour` repaints); null for other models. */
+export function packWood(id: string): string | null {
+  const v = VARIANT.get(id);
+  return v === undefined ? null : PALETTE[v % PALETTE.length];
 }
