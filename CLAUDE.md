@@ -139,7 +139,6 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 **19 Nov 2026**
 - #31: area banner shows one painted title with the other name as a small line (`Hud.showBanner`), clear of the use prompt; subway stairs are a stairwell in a gap in the frontage (`isSubwayStairs`/`SUBWAY_GAP` in `world/strip.ts`, gap in `city/street.ts`, `LevelView.subwayEntrance`); outdoor barriers are railings; precincts, lanes, yards and the quay get a kerb and road in front (street.ts ground section); kit-street paving by ground kind (`PAVING_BY_GROUND` in `render/materials/streetDetail.ts`). `?shot=subway_stairs`.
 - #32: City Centre and Ring Road Subway dressed with kit street furniture and security-set CCTV posts (`levels.ts`), and the subway gets 4 pedestrians (`civilians.ts`). Keep street furniture against the back wall (z ≤ -1.85) or at the kerb (z ≤ -0.22): `tests/npc.test.ts` limits pedestrian about-turns to 1.8 a minute and dev sits at 1.78, so anything in the walking lanes fails it (a planter at z -1.85 did).
-
 - #33: fixes from the game audit (https://claude.ai/artifact/CyaZtY78EAxrvmF7XMjYpq):
   - portrait: no "turn sideways" hint, unclipped health numbers, a tighter fight camera, red edge arrows for off-screen enemies (`Game.updateEdgeMarkers`);
   - touch buttons in plain words (PUNCH, KICK, HARD, SPECIAL, STYLE); map, bag and crew hide during a fight (`body.fight-on`);
