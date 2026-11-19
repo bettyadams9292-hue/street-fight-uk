@@ -32,6 +32,9 @@ export function createAsset(id:string):THREE.Group {
   if(v===22)b(w*.58,.65,.035,0,h+.34,-d*.45,wood);
  }
 
+ const accent=new THREE.MeshStandardMaterial({color:0xc1a16d,roughness:.48,metalness:.4});
+ const darkGlass=new THREE.MeshPhysicalMaterial({color:0x82969a,transparent:true,opacity:.4,roughness:.12,depthWrite:false});
+ const edge=new THREE.MeshStandardMaterial({color:0x594b3d,roughness:.8});
  // Dedicated second-generation construction for cabinetry, chairs and sofas.
  // Replaces their earlier primitive bodies instead of stacking extra lines on top.
  if(k===2){
@@ -156,9 +159,6 @@ export function createAsset(id:string):THREE.Group {
  // POLISH PASS: category-specific joinery, surface detail, structural fasteners,
  // material differentiation, and true variants. All decoration is attached to
  // the furniture's local coordinate frame; no world-space floating ornaments.
- const accent=new THREE.MeshStandardMaterial({color:0xc1a16d,roughness:.48,metalness:.4});
- const darkGlass=new THREE.MeshPhysicalMaterial({color:0x82969a,transparent:true,opacity:.4,roughness:.12,depthWrite:false});
- const edge=new THREE.MeshStandardMaterial({color:0x594b3d,roughness:.8});
  function bevelBox(w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material=wood,r=.012){
   const sh=new THREE.Shape();const hw=w/2,hh=h/2,rr=Math.min(r,w/5,h/5);
   sh.moveTo(-hw+rr,-hh);sh.lineTo(hw-rr,-hh);sh.quadraticCurveTo(hw,-hh,hw,-hh+rr);
