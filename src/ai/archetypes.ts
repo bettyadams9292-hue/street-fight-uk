@@ -41,7 +41,21 @@ export interface Archetype {
   cashDrop?: number;
   xp?: number;
   look: (rnd: () => number) => Partial<CharacterAppearance>;
+  /**
+   * The grunt's tell: what it shouts as it commits to its signature move, so you learn to read it.
+   * `on` is the move (a grab, a heavy shot, a special); the line goes up as a speech bubble.
+   */
+  tell?: { on: 'grab' | 'heavy' | 'special'; lines: readonly string[] };
 }
+
+/** First names for named grunts (bosses, police and shopkeepers keep their own). */
+export const GRUNT_NAMES = {
+  male: ['Kyle', 'Jordan', 'Callum', 'Dean', 'Liam', 'Connor', 'Ryan', 'Tyler', 'Jamie', 'Reece', 'Lewis', 'Bradley', 'Kieran', 'Shane', 'Darren', 'Wayne', 'Lee', 'Mason', 'Harvey', 'Jayden', 'Aaron', 'Craig', 'Danny', 'Jake', 'Kai', 'Mikey', 'Robbie', 'Stevie', 'Tommo', 'Deano'],
+  female: ['Chelsea', 'Jade', 'Shannon', 'Kayleigh', 'Courtney', 'Leanne', 'Stacey', 'Demi', 'Tasha', 'Kerry', 'Nikki', 'Jodie'],
+} as const;
+
+/** Grunts that get a first name over their type ("Kyle", with "Street Thug" under the bar). */
+export const NAMED_GRUNTS: ReadonlySet<ArchetypeId> = new Set<ArchetypeId>(['thug', 'hothead', 'bruiser', 'defender', 'tooled', 'boxer', 'kickboxer', 'grappler', 'hooded', 'runner', 'knifeman', 'brawler', 'casual', 'gang_enforcer', 'docker', 'bouncer']);
 
 export const ARCHETYPE_IDS = [
   'thug', 'hothead', 'bruiser', 'defender', 'tooled', 'boxer', 'kickboxer', 'grappler', 'elite', 'rival', 'boss',
@@ -59,6 +73,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'street', attributes: attrs(6, 5, 5, 4, 4, 3), level: 1,
     aggression: 0.35, blockChance: 0.15, dodgeChance: 0.05, parryChance: 0, range: 0.95, comboLength: 2,
     grabChance: 0.06, specialChance: 0.05, retreatsWhenTired: false, reactionFrames: 22, cashDrop: 6, xp: 25,
+    tell: { on: 'heavy', lines: ['Have that!', 'Sleep!', 'Night night!'] },
     look: () => ({ top: 'hoodie', bottoms: 'trackies' }),
   },
   hothead: {
@@ -66,6 +81,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'street', secondaryStyle: 'kickboxing', attributes: attrs(5, 9, 6, 8, 3, 4), level: 2,
     aggression: 0.7, blockChance: 0.1, dodgeChance: 0.2, parryChance: 0.02, range: 0.9, comboLength: 3,
     grabChance: 0.03, specialChance: 0.12, retreatsWhenTired: false, reactionFrames: 14, cashDrop: 8, xp: 35,
+    tell: { on: 'special', lines: ['Come here!', 'Get in!', 'Raaah!'] },
     look: () => ({ muscle: 0.3, weight: 0.1, top: 'tracksuit', bottoms: 'trackies' }),
   },
   bruiser: {
@@ -73,6 +89,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'street', attributes: attrs(12, 3, 10, 2, 9, 4), level: 3,
     aggression: 0.45, blockChance: 0.25, dodgeChance: 0, parryChance: 0, range: 0.85, comboLength: 2,
     grabChance: 0.18, specialChance: 0.2, retreatsWhenTired: false, reactionFrames: 26, cashDrop: 12, xp: 50,
+    tell: { on: 'grab', lines: ['C\'mere, you!', 'Got ya!', 'Big hug!'] },
     look: () => ({ muscle: 0.8, weight: 0.9, height: 1.07, top: 'vest', bottoms: 'jeans', hair: 'bald' }),
   },
   defender: {
@@ -80,6 +97,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'kickboxing', attributes: attrs(7, 5, 9, 5, 11, 7), level: 3,
     aggression: 0.3, blockChance: 0.6, dodgeChance: 0.05, parryChance: 0.22, range: 1.0, comboLength: 2,
     grabChance: 0.05, specialChance: 0.1, retreatsWhenTired: true, reactionFrames: 10, cashDrop: 12, xp: 45,
+    tell: { on: 'heavy', lines: ['Wrong move.', 'Out you go.'] },
     look: () => ({ top: 'bomber', topColour: '#1b1d22', bottoms: 'trackies', bottomsColour: '#1b1d22', hair: 'buzz', muscle: 0.7, weight: 0.6 }),
   },
   tooled: {
@@ -87,6 +105,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'street', attributes: attrs(7, 6, 6, 5, 5, 4), level: 2,
     aggression: 0.45, blockChance: 0.15, dodgeChance: 0.1, parryChance: 0, range: 1.05, comboLength: 1,
     grabChance: 0.02, specialChance: 0, retreatsWhenTired: false, reactionFrames: 16, weapon: 'bat', cashDrop: 10, xp: 35,
+    tell: { on: 'heavy', lines: ['Look what I\'ve got!', 'Taste this!'] },
     look: () => ({ top: 'hoodie', topColour: '#4a4d55', bottoms: 'trackies', accessories: ['cap'] }),
   },
   boxer: {
@@ -94,6 +113,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'boxing', attributes: attrs(7, 9, 8, 7, 8, 8), level: 4,
     aggression: 0.6, blockChance: 0.45, dodgeChance: 0.3, parryChance: 0.15, range: 0.85, comboLength: 4,
     grabChance: 0, specialChance: 0.15, retreatsWhenTired: true, reactionFrames: 10, cashDrop: 14, xp: 60,
+    tell: { on: 'heavy', lines: ['Hands up!', 'Right hand coming!'] },
     look: () => ({ top: 'vest', bottoms: 'shorts', accessories: ['wraps'] }),
   },
   kickboxer: {
@@ -101,6 +121,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'kickboxing', attributes: attrs(7, 8, 8, 8, 6, 7), level: 4,
     aggression: 0.6, blockChance: 0.35, dodgeChance: 0.2, parryChance: 0.08, range: 1.15, comboLength: 3,
     grabChance: 0.02, specialChance: 0.15, retreatsWhenTired: true, reactionFrames: 12, cashDrop: 14, xp: 60,
+    tell: { on: 'heavy', lines: ['Head kick!', 'Watch the legs!'] },
     look: () => ({ top: 'none', bottoms: 'shorts', muscle: 0.7, weight: 0.2 }),
   },
   grappler: {
@@ -108,6 +129,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'wrestling', secondaryStyle: 'bjj', attributes: attrs(9, 6, 9, 6, 7, 7), level: 4,
     aggression: 0.55, blockChance: 0.35, dodgeChance: 0.05, parryChance: 0.03, range: 0.95, comboLength: 2,
     grabChance: 0.4, specialChance: 0.1, retreatsWhenTired: true, reactionFrames: 14, cashDrop: 14, xp: 60,
+    tell: { on: 'grab', lines: ['Legs!', 'Taking you down!', 'Floor!'] },
     look: () => ({ top: 'tshirt', bottoms: 'shorts', muscle: 0.75, weight: 0.5, hair: 'buzz' }),
   },
   elite: {
@@ -130,6 +152,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'street', secondaryStyle: 'boxing', attributes: attrs(6, 9, 6, 9, 5, 6), level: 3,
     aggression: 0.55, blockChance: 0.2, dodgeChance: 0.35, parryChance: 0.05, range: 0.95, comboLength: 3,
     grabChance: 0.02, specialChance: 0.1, retreatsWhenTired: true, reactionFrames: 12, cashDrop: 9, xp: 40,
+    tell: { on: 'special', lines: ['Too slow.', 'Behind you.'] },
     look: (r) => ({ top: 'hoodie', topColour: ['#1b1d22', '#2b2e35', '#4a4d55'][Math.floor(r() * 3)], bottoms: 'joggers', bottomsColour: '#1b1d22', accessories: ['snood'], headColour: '#1b1d22', muscle: 0.35, weight: 0.15 }),
   },
   runner: {
@@ -137,6 +160,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'kickboxing', attributes: attrs(5, 11, 6, 11, 4, 6), level: 3,
     aggression: 0.6, blockChance: 0.05, dodgeChance: 0.35, parryChance: 0.02, range: 1.1, comboLength: 2,
     grabChance: 0, specialChance: 0.15, retreatsWhenTired: true, reactionFrames: 10, cashDrop: 8, xp: 40,
+    tell: { on: 'special', lines: ['Catch me!', 'Zoom!'] },
     look: () => ({ top: 'tracksuit', topColour: '#2f6fa8', bottoms: 'joggers', shoes: 'runners', muscle: 0.25, weight: 0.05, height: 0.98 }),
   },
   knifeman: {
@@ -144,6 +168,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'street', attributes: attrs(6, 9, 6, 8, 4, 6), level: 3,
     aggression: 0.5, blockChance: 0.1, dodgeChance: 0.25, parryChance: 0, range: 0.8, comboLength: 1,
     grabChance: 0, specialChance: 0, retreatsWhenTired: true, reactionFrames: 12, weapon: 'knife', cashDrop: 10, xp: 45,
+    tell: { on: 'heavy', lines: ['I\'ll cut ya!', 'Stand still!'] },
     look: () => ({ top: 'puffer', topColour: '#1b1d22', bottoms: 'trackies', accessories: ['beanie'], headColour: '#2b2e35' }),
   },
   brawler: {
@@ -151,6 +176,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'street', attributes: attrs(10, 5, 8, 4, 5, 3), level: 3,
     aggression: 0.8, blockChance: 0.05, dodgeChance: 0, parryChance: 0, range: 0.85, comboLength: 3,
     grabChance: 0.15, specialChance: 0.25, retreatsWhenTired: false, reactionFrames: 18, cashDrop: 10, xp: 45,
+    tell: { on: 'heavy', lines: ['Haymaker!', 'Here it comes!'] },
     look: () => ({ top: 'football', topColour: '#b3121b', bottoms: 'jeans', weight: 0.8, muscle: 0.5, hair: 'buzz' }),
   },
   casual: {
@@ -165,6 +191,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'muay_thai', secondaryStyle: 'wrestling', attributes: attrs(11, 8, 10, 7, 9, 8), level: 6,
     aggression: 0.6, blockChance: 0.4, dodgeChance: 0.15, parryChance: 0.15, range: 0.95, comboLength: 3,
     grabChance: 0.18, specialChance: 0.2, retreatsWhenTired: false, reactionFrames: 10, cashDrop: 28, xp: 100,
+    tell: { on: 'heavy', lines: ['Message from the boss!', 'Lights out!'] },
     look: () => ({ top: 'leather', topColour: '#1a1410', bottoms: 'jeans', bottomsColour: '#1b1d22', muscle: 0.85, weight: 0.5, accessories: ['chain', 'ring'], chainColour: 'gold' }),
   },
   docker: {
@@ -172,6 +199,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'wrestling', attributes: attrs(12, 4, 11, 3, 8, 5), level: 4,
     aggression: 0.45, blockChance: 0.25, dodgeChance: 0, parryChance: 0, range: 0.85, comboLength: 2,
     grabChance: 0.35, specialChance: 0.1, retreatsWhenTired: false, reactionFrames: 20, cashDrop: 12, xp: 55,
+    tell: { on: 'grab', lines: ['Over the side!', 'Lift!'] },
     look: () => ({ top: 'workwear', topColour: '#e8d000', bottoms: 'workwear', shoes: 'boots', accessories: ['beanie'], headColour: '#1f2a44', muscle: 0.85, weight: 0.75 }),
   },
   bouncer: {
@@ -179,6 +207,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     style: 'boxing', secondaryStyle: 'wrestling', attributes: attrs(11, 5, 11, 4, 12, 7), level: 5,
     aggression: 0.35, blockChance: 0.6, dodgeChance: 0, parryChance: 0.2, range: 0.9, comboLength: 2,
     grabChance: 0.25, specialChance: 0.1, retreatsWhenTired: false, reactionFrames: 12, cashDrop: 18, xp: 70,
+    tell: { on: 'grab', lines: ['You\'re barred!', 'Out!'] },
     look: () => ({ top: 'coat', topColour: '#1b1d22', bottoms: 'jeans', bottomsColour: '#1b1d22', hair: 'bald', muscle: 0.9, weight: 0.7, height: 1.06, accessories: ['earring'] }),
   },
   security: {

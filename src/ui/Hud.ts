@@ -480,7 +480,8 @@ export class Hud {
 
     b.name.textContent = f.name.toUpperCase();
     const second = f.secondaryStyle ? ` \u00b7 swap: ${(f.usingSecondary ? f.primaryStyle : f.secondaryStyle).name}` : '';
-    const styleText = f.style.name + second;
+    // Named grunts show what they are ("Street Thug") where everyone else shows their style.
+    const styleText = (f.tag ?? f.style.name) + second;
     if (b.style.textContent !== styleText) b.style.textContent = styleText;
     b.hpFill.style.width = `${hp * 100}%`;
     // The recoverable segment sits just past the current health, on whichever side the bar fills from.

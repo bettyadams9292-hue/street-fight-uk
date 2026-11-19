@@ -1,7 +1,7 @@
 import { doorX } from '../city/doorSpots';
 import { BODY_RADIUS } from '../core/constants';
 import { BOSS_DAMAGE_TAKEN, ENEMY_DAMAGE_TAKEN, fightStrength, SECOND_WIND } from './fightTuning';
-import { ARCHETYPES, archetypeAppearance, type Archetype, type ArchetypeId } from '../ai/archetypes';
+import { ARCHETYPES, GRUNT_NAMES, NAMED_GRUNTS, archetypeAppearance, type Archetype, type ArchetypeId } from '../ai/archetypes';
 import { AttackTokens } from '../ai/AttackTokens';
 import { BOSSES, type BossDef, type BossPhase } from '../ai/bosses';
 import { DummyBrain } from '../ai/DummyBrain';
@@ -1398,9 +1398,13 @@ export class World {
   spawnEnemy(id: ArchetypeId, x: number, z: number, weapon?: WeaponId): Fighter {
     ({ x, z } = this.freeSpot(x, z));
     const a = this.toughened(ARCHETYPES[id], id);
+    // Grunts get a first name (picked from their id, so the same fight names the same lads), with
+    // their type under the bar; bosses and the rest keep the archetype's name.
+    const named = NAMED_GRUNTS.has(id);
+    const first = GRUNT_NAMES.male[(this.nextId * 7 + this.level.id.length * 3) % GRUNT_NAMES.male.length];
     const f = new Fighter({
       id: this.nextId++,
-      name: a.name,
+      name: named ? first : a.name,
       team: 'enemy',
       attributes: { ...a.attributes },
       level: a.level,
@@ -1411,6 +1415,7 @@ export class World {
       appearance: archetypeAppearance(a, this.nextId * 7919 + this.level.id.length),
       weapon: weapon ?? a.weapon ?? null,
     });
+    if (named) f.tag = a.name;
     f.facing = x > this.player.pos.x ? -1 : 1;
     this.sim.add(f);
     this.enemies.push(f);
