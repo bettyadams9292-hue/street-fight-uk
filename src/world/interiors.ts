@@ -12,6 +12,9 @@ import type { AreaId } from '../progress/Progress';
 
 const ROOM = { minZ: -1.6, maxZ: 1.4 };
 
+/** A catalogue furniture piece as dressing (wall pieces go at z -2.0 with their wallY). */
+const F = (item: string, x: number, z: number, extra: Partial<PropDef> = {}): PropDef => ({ kind: 'furniture', item, x, z, size: FURNITURE[item].size, colour: extra.colour ?? FURNITURE[item].colours[0], solid: FURNITURE[item].mount === 'floor', wallY: FURNITURE[item].wallY, ...extra });
+
 // ---- Threads: clothes shop on the High Street -------------------------------------------------
 const clothesShop: LevelDef = {
   id: 'clothes_shop',
@@ -23,14 +26,28 @@ const clothesShop: LevelDef = {
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'clothes', label: 'Back out to the High Street' }],
   facades: [{ kind: 'interior', x0: 0, x1: 16, label: 'THREADS', colour: '#e8e4dc' }],
   props: [
+    // Window display by the door, then rails and stocked shelving down both walls, the till, the changing room.
+    // The middle (z -0.6 to 0.6) stays clear: it's the way from the door to the counter.
+    F('plant_tall', 1.9, -1.85),
     { kind: 'mannequin', x: 2.6, z: -1.35 },
+    { kind: 'mannequin', x: 3.3, z: -1.45 },
+    F('poster_frame', 2.9, -2.0, { wallY: 1.95 }),
     { kind: 'shop_rail', x: 4.6, z: -1.3 },
     { kind: 'shop_rail', x: 4.6, z: 1.0 },
+    { kind: 'shop_rail', x: 6.4, z: 1.0 },
+    { kind: 'shop_shelf', x: 6.3, z: -1.4 },
     { kind: 'shop_shelf', x: 7.6, z: -1.4 },
+    F('neon_sign', 7.0, -2.0, { wallY: 2.3, colour: '#ff3a5a' }),
+    F('rug_long', 8.0, 0.0, { colour: '#2a2a30', solid: false }),
     { kind: 'mannequin', x: 9.2, z: 1.15 },
+    { kind: 'shop_shelf', x: 9.2, z: -1.4 },
     { kind: 'shop_counter', x: 11.4, z: -0.6 },
+    F('wall_clock', 11.4, -2.0, { wallY: 2.2 }),
     { kind: 'shop_rail', x: 13.4, z: 1.0 },
+    { kind: 'shop_rail', x: 13.2, z: -1.3 },
+    F('mirror_stand', 14.0, 1.15),
     { kind: 'changing_booth', x: 15.0, z: -1.0 },
+    F('plant_small', 15.6, 1.2),
   ],
   stations: [
     {
@@ -117,6 +134,21 @@ const pub: LevelDef = {
     { kind: 'pub_table', x: 26.0, z: 0.95 },
     { kind: 'pub_table', x: 30.4, z: 0.95 },
     { kind: 'pub_table', x: 34.8, z: 0.95 },
+    // On the walls: old photos, the clock, a neon sign over the pool table, the trophy cabinet in the snug.
+    F('painting', 2.6, -2.0, { wallY: 1.8 }),
+    F('poster_frame', 4.0, -2.0, { wallY: 1.8 }),
+    F('wall_clock', 6.5, -2.0, { wallY: 2.35 }),
+    F('neon_sign', 14.2, -2.0, { wallY: 2.2, colour: '#ffb030' }),
+    F('canvas_art', 18.8, -2.0, { wallY: 1.9 }),
+    F('wall_light', 9.0, -2.0, { wallY: 2.1 }),
+    F('wall_light', 24.0, -2.0, { wallY: 2.1 }),
+    F('trophy_cab', 28.2, -1.78),
+    F('painting', 31.5, -2.0, { wallY: 1.85 }),
+    F('armchair', 33.0, -1.55, { colour: '#5a1a14' }),
+    F('plant_tall', 36.3, -1.85),
+    F('rug_long', 30.0, 0.2, { colour: '#4a1a14', solid: false }),
+    // Somewhere to sit by the door, and a corner seat in the snug.
+    F('armchair', 1.9, -1.55, { colour: '#3a1a12' }),
   ],
   stations: [
     {
@@ -158,7 +190,6 @@ const pub: LevelDef = {
 };
 
 // ---- Home & Hearth: furniture shop on the High Street ----------------------------------------------
-const F = (item: string, x: number, z: number, extra: Partial<PropDef> = {}): PropDef => ({ kind: 'furniture', item, x, z, size: FURNITURE[item].size, colour: extra.colour ?? FURNITURE[item].colours[0], solid: FURNITURE[item].mount === 'floor', wallY: FURNITURE[item].wallY, ...extra });
 
 const furnitureShop: LevelDef = {
   id: 'furniture_shop',
