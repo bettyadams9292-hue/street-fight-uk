@@ -211,10 +211,10 @@ test('buildings fill the frontage edge to edge without overlapping', () => {
 
 test('a shop you can see into holds what its sign says', () => {
   const MUST: Record<string, RegExp> = {
-    furniture: /sofa_3|bed_double|dining_table/, pub: /back-bar|poseur|wine/, takeaway: /range|counter|menu/, bookies: /wall-display/, clothes: /shop_rail|mannequin/,
-    offlicence: /fridge|wine-bottle/, bikes: /prop:vehicle\/(mx|enduro|trail)/, cars: /car|coupe/, plants: /planter|olive|shrub|basket/, office: /desk|reception/,
+    furniture: /sofa_3|bed_double|dining_table/, pub: /backBarShelves|pubStool/, takeaway: /range|counter|menu|Counter|MenuBoard|bakeryDisplay/, bookies: /wall-display/, clothes: /shop_rail|mannequin/,
+    offlicence: /drinksFridge|wineBottle/, bikes: /prop:vehicle\/(mx|enduro|trail)/, cars: /car|coupe/, plants: /planter|olive|shrub|basket/, office: /desk|reception/,
     gym: /locker/, jeweller: /glass_counter|display_cabinet/, pawn: /glass_counter/, casino: /roulette|blackjack|slot_machine/, salon: /desk2|mirror_stand/,
-    gadgets: /glass_counter|display_cabinet/, general: /shop_shelf/,
+    gadgets: /glass_counter|display_cabinet/, general: /stockedShelves|shop_shelf/,
   };
   // What a shop of each kind must never hold: café and office kit borrowed to fill a shop that sells something else.
   const NEVER: Record<string, RegExp> = {

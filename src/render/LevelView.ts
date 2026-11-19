@@ -22,7 +22,8 @@ import { buildAnyModel, buildEquipmentModel, buildGymKitModel, buildFurnitureMod
 import { EQUIPMENT } from '../business/catalogue';
 import { CARS, FINISHES, FURNITURE } from '../property/catalogue';
 import { themeProfile } from './themes';
-import { kitStreet, planStreet, type ShopGood, type StreetPlan } from '../city/street';
+import { kitStreet, planStreet, type ApprovedPlacement, type ShopGood, type StreetPlan } from '../city/street';
+import { bakeApproved, prototype, type ApprovedCopy } from './approved/prototype';
 import { bakeStatic } from './bakeStatic';
 import { buildKitStreet, hasKitPiece, kitFloor, kitPiece, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
 import { exitLocked, type World } from '../world/World';
@@ -275,6 +276,7 @@ export class LevelView {
       }
       this.kitDoors = this.street.doors;
       this.buildShopGoods(this.street.goods);
+      this.buildApproved(this.street.approved);
     } else this.buildGround();
     // Carry the end facades on past the edges so the camera never sees a gap.
     const fac = this.street ? [] : [...lvl.facades].sort((a, b) => a.x0 - b.x0);
@@ -334,6 +336,37 @@ export class LevelView {
     if (this.lowPoly && themeProfile(lvl.theme).interior) flattenTextures(this.group);
     // Library textures repeat at their real size on whatever they were put on.
     fitUVs(this.group);
+  }
+
+  /**
+   * The owner's approved British models on a kit street (city/street.ts APPROVED_STREET): each at its real size,
+   * shrunk only where the prop's collision box (its slot) is smaller, stood on the ground, baked per 12 m chunk.
+   */
+  private buildApproved(list: readonly ApprovedPlacement[]): void {
+    if (!list.length) return;
+    const copies: ApprovedCopy[] = list.map((a) => {
+      const box = prototype(a.id).box;
+      const w = box.max.x - box.min.x;
+      const d = box.max.z - box.min.z;
+      const turned = Math.abs(Math.sin(a.ry)) > 0.7;
+      const [mw, md] = turned ? [d, w] : [w, d];
+      // Real size beside the player (a bus shelter is 2.5 m tall, a phone box 2.7 m). Only its depth gives way to a
+      // shallow slot (down to half), so a shelter or bench never shrinks to fit the pavement; its length and height
+      // shrink only if the slot is far shorter than it (never under 85%).
+      let s: [number, number, number] = [1, 1, 1];
+      if (a.fit && !a.indoor) {
+        const along = Math.max(0.85, Math.min(1, ((a.fit.hx * 2) / mw) * 1.1));
+        const across = Math.max(0.5, Math.min(along, ((a.fit.hz * 2) / md) * 1.25));
+        s = turned ? [across, along, along] : [along, along, across];
+      }
+      if (a.scale) s = a.scale;
+      return { id: a.id, x: a.x, y: a.y - box.min.y * s[1], z: a.z, ry: a.ry, s, recolour: a.recolour };
+    });
+    const out = copies.filter((_, i) => !list[i].indoor);
+    const inside = copies.filter((_, i) => list[i].indoor);
+    if (out.length) this.group.add(bakeApproved(out, { shadows: true, name: 'approved-street' }));
+    // Behind the glass, under the shop's own light: no sun shadows (as the other shop stock).
+    if (inside.length) this.group.add(bakeApproved(inside, { shadows: false, name: 'approved-shops' }));
   }
 
   /**

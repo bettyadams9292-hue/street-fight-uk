@@ -57,6 +57,8 @@ export interface Block {
   d: number;
   colour: string;
   glow?: boolean;
+  /** Not brick: painted metal or plastic (gutters), left its own colour. */
+  plain?: boolean;
 }
 
 export interface Sign {
@@ -122,6 +124,8 @@ export interface StreetPlan {
   shopfronts: Shopfront[];
   /** Shop stock drawn from the other model sets (see ShopGood). */
   goods: ShopGood[];
+  /** Approved British models standing in for the kit's (see APPROVED_STREET): drawn by LevelView, baked per chunk. */
+  approved: ApprovedPlacement[];
   /** For each of the level's props, in order: true if a kit model stands in for it. */
   propDone: boolean[];
   /** Doorways the kit buildings provide (x positions), so exits don't draw their own frame. */
@@ -245,6 +249,8 @@ interface Item {
   /** A city-kit model, or 'prop:<kind>[/<item>]' for stock from the other model sets (`g`). */
   m: string;
   g?: { kind: PropKind; item?: string; size?: [number, number]; colour?: string };
+  /** An approved model (src/render/approved/registry.ts), drawn by LevelView at real size. */
+  a?: string;
   u: number;
   v: number;
   y?: number;
@@ -259,6 +265,10 @@ const HALF_PI = Math.PI / 2;
 function G(kind: PropKind, u: number, v: number, o: { item?: string; size?: [number, number]; colour?: string; ry?: number; y?: number } = {}): Item {
   return { m: `prop:${kind}${o.item ? `/${o.item}` : ''}`, u, v, y: o.y, ry: o.ry, g: { kind, item: o.item, size: o.size, colour: o.colour } };
 }
+/** An approved model in a shop (A for approved), at real size, on the floor unless `y` says otherwise. */
+function A(id: string, u: number, v: number, o: { ry?: number; y?: number } = {}): Item {
+  return { m: `approved:${id}`, u, v, y: o.y, ry: o.ry, a: id };
+}
 /** Faces into the shop from the left wall (+u), or from the right wall (−u). */
 const FROM_LEFT = HALF_PI;
 const FROM_RIGHT = -HALF_PI;
@@ -268,14 +278,17 @@ const FROM_RIGHT = -HALF_PI;
  * where a café or an office is what the shop is; the goods come from the shop, gym, furniture and vehicle sets.
  */
 const INTERIORS: Record<string, Item[]> = {
+  // A British local: back-bar bottle shelves, the bar with stools along it, booths down the side, the pool table,
+  // a fruit machine, the dartboard on the back wall and the chalkboard by the door (approved pub kit, B02-B07).
   pub: [
-    { m: 'cafe/back-bar-shelf-unit', u: -1, v: 6.4 }, { m: 'cafe/back-bar-shelf-unit', u: 1, v: 6.4 },
+    A('backBarShelves', -1.2, 6.5), A('backBarShelves', 1.2, 6.5),
     { m: 'cafe/service-counter-module', u: -2, v: 4.8 }, { m: 'cafe/service-counter-module', u: 0, v: 4.8 }, { m: 'cafe/service-counter-module', u: 2, v: 4.8 },
-    { m: 'cafe/wine-bottle', u: -1.6, v: 4.8, y: 0.92 }, { m: 'cafe/stemmed-wine-glass', u: 0.4, v: 4.7, y: 0.92 }, { m: 'cafe/water-carafe', u: 2.2, v: 4.8, y: 0.92 },
-    { m: 'cafe/poseur-table', u: -2.4, v: 1.6 }, { m: 'cafe/poseur-table', u: 2.6, v: 1.6 },
-    G('pool_table', 0.3, 2.8, { size: [1.15, 0.65] }),
-    { m: 'cafe/banquette-bench-run', u: -3, v: 3.6, ry: HALF_PI }, { m: 'cars/jukebox', u: 3.1, v: 5.8, ry: -HALF_PI },
-    G('fruit_machine', 3.0, 3.6, { ry: FROM_RIGHT }),
+    A('wineBottle', -1.6, 4.8, { y: 0.92 }), A('wineBottle', -1.45, 4.85, { y: 0.92 }),
+    A('pubStool', -2, 4.0), A('pubStool', -1, 4.0), A('pubStool', 0, 4.0), A('pubStool', 1, 4.0), A('pubStool', 2, 4.0),
+    A('poolTable', 0.4, 2.4),
+    A('pubBooth', -2.85, 1.6, { ry: FROM_LEFT }), A('pubBooth', -2.85, 3.0, { ry: FROM_LEFT }),
+    A('fruitMachine', 3.0, 3.4, { ry: FROM_RIGHT }), A('pubDartboard', 3.1, 6.78), A('chalkboardMenu', 2.7, 0.8),
+    { m: 'cars/jukebox', u: 3.1, v: 5.4, ry: -HALF_PI },
   ],
   club: [
     { m: 'cafe/back-bar-shelf-unit', u: 2, v: 6.4 }, { m: 'cafe/service-counter-module', u: 1.2, v: 5 }, { m: 'cafe/service-counter-module', u: 3, v: 5 },
@@ -290,6 +303,26 @@ const INTERIORS: Record<string, Item[]> = {
     { m: 'cafe/stainless-prep-table', u: 0.8, v: 6.3 }, { m: 'cafe/drinks-fridge', u: 3, v: 6.2 }, { m: 'cafe/chalkboard-menu-board', u: -3, v: 6.6 },
     { m: 'cafe/queue-belt-post', u: -1.2, v: 1.6 }, { m: 'cafe/queue-belt-post', u: 0.8, v: 1.6 }, { m: 'cafe/waste-sorting-station', u: 3, v: 1.4, ry: -HALF_PI },
     { m: 'cafe/pass-heat-lamp', u: 0, v: 3.6 },
+  ],
+  // The chippy: the serving counter and heated display at the front, the fryer range under its canopy behind,
+  // the menu over the range, a queue by the door. Nothing hot where customers stand.
+  takeaway_chippy: [
+    A('takeawayCounter', -1.1, 3.4), { m: 'cafe/service-counter-module', u: 1.2, v: 3.4 }, A('chippyWarmer', 1.2, 3.4, { y: 0.92 }),
+    A('fishChipFryer', -1.2, 6.3), { m: 'cafe/extraction-canopy', u: -1.2, v: 6.3 }, A('takeawayMenuBoard', 1.4, 6.82, { y: 1.35 }),
+    { m: 'cafe/stainless-prep-table', u: 1.4, v: 6.3 }, A('drinksFridge', 3.0, 6.2),
+    A('queueBarrierOpen', -1.0, 1.5), { m: 'cafe/waste-sorting-station', u: 3, v: 1.4, ry: -HALF_PI },
+  ],
+  // Kebab and fried chicken: counter and heated display, the grill under its canopy, menu over it.
+  takeaway_grill: [
+    A('takeawayCounter', -1.1, 3.4), { m: 'cafe/service-counter-module', u: 1.2, v: 3.4 }, A('chippyWarmer', 1.2, 3.4, { y: 0.92 }),
+    { m: 'cafe/commercial-range', u: -1.4, v: 6.3 }, { m: 'cafe/extraction-canopy', u: -1.4, v: 6.3 }, A('takeawayMenuBoard', 1.0, 6.82, { y: 1.35 }),
+    A('drinksFridge', 3.0, 6.2), A('queueBarrierOpen', -1.0, 1.5),
+  ],
+  // The bakery: bread on the display and in trays behind, pastries in the hot cabinet, the counter by the door.
+  takeaway_bakery: [
+    A('bakeryDisplay', -1.7, 3.4), A('takeawayCounter', 0.9, 3.4), A('pastryCabinet', 2.8, 3.4),
+    { m: 'cafe/stainless-prep-table', u: -1.4, v: 6.3 }, A('breadTray', -1.7, 6.3, { y: 0.92 }), A('breadTray', -1.05, 6.3, { y: 0.92 }), A('breadTray', -1.4, 6.3, { y: 1.18 }),
+    A('takeawayMenuBoard', 1.4, 6.82, { y: 1.35 }), A('drinksFridge', 3.0, 6.2),
   ],
   cafe: [
     { m: 'cafe/service-counter-module', u: -2, v: 4.6 }, { m: 'cafe/service-counter-module', u: 0, v: 4.6 }, { m: 'cafe/pastry-display-case', u: 2.2, v: 4.6 },
@@ -371,10 +404,9 @@ const INTERIORS: Record<string, Item[]> = {
     { m: 'office/first-aid-box', u: 2.6, v: 6.9 }, { m: 'office/wall-clock', u: 0.2, v: 6.9 }, G('gym_kit', 3.0, 1.2, { item: 'bag' }),
   ],
   offlicence: [
-    G('shop_shelf', -1.9, 6.6, { size: [1.4, 0.22] }), { m: 'cafe/drinks-fridge', u: 0, v: 6.3 }, { m: 'cafe/drinks-fridge', u: 1, v: 6.3 },
-    { m: 'cafe/drinks-fridge', u: 2, v: 6.3 }, { m: 'cafe/service-counter-module', u: 2.2, v: 2.6 }, { m: 'cafe/pos-terminal', u: 2.2, v: 2.6, y: 0.92 },
-    { m: 'cafe/wine-bottle', u: 1.7, v: 2.6, y: 0.92 }, { m: 'cafe/wine-bottle', u: 2.7, v: 2.6, y: 0.92 }, G('shop_shelf', -2.9, 3.4, { size: [1.0, 0.22], ry: FROM_LEFT }),
-    { m: 'office/delivery-box', u: -1.2, v: 1.2 }, { m: 'office/delivery-box', u: -0.6, v: 1.1 },
+    A('stockedShelves', -1.9, 6.5), A('drinksFridge', 0.1, 6.3), A('drinksFridge', 1.0, 6.3), A('drinksFridge', 1.9, 6.3),
+    A('shopCounterTill', 2.1, 2.6), A('wineBottle', 1.5, 2.45, { y: 1.0 }), A('wineBottle', 1.62, 2.5, { y: 1.0 }),
+    A('stockedShelves', -2.9, 3.6, { ry: FROM_LEFT }), A('cardboardBox', -1.2, 1.2), A('cardboardBox', -0.55, 1.1),
   ],
   bikes: [
     // Motorbikes on the floor (the sign says MOTO), tyres and a workbench at the back.
@@ -408,9 +440,9 @@ const INTERIORS: Record<string, Item[]> = {
   ],
   // Corner shops and pound shops: stocked shelves round the walls and down the middle, the till by the door.
   general: [
-    G('shop_shelf', -1.6, 6.6, { size: [1.8, 0.22] }), G('shop_shelf', -1.0, 3.2, { size: [1.6, 0.22] }), G('shop_shelf', -1.0, 4.4, { size: [1.6, 0.22] }),
-    G('shop_shelf', -2.9, 3.8, { size: [1.0, 0.22], ry: FROM_LEFT }), G('shop_counter', 2.3, 2.2, { size: [0.9, 0.4] }),
-    { m: 'cafe/drinks-fridge', u: 2.0, v: 6.3 }, { m: 'office/delivery-box', u: 2.9, v: 6.4 },
+    A('stockedShelves', -1.6, 6.5), A('stockedShelves', -1.0, 3.4), A('stockedShelves', -1.0, 4.9, { ry: Math.PI }),
+    A('shopCounterTill', 2.1, 2.2), A('drinksFridge', 2.0, 6.3), A('drinksFridge', 2.9, 6.3),
+    A('milkCrate', 3.0, 4.6), A('milkCrate', 3.0, 4.6, { y: 0.3 }), A('shoppingBasket', 0.9, 1.0), A('shoppingBasket', 0.9, 1.0, { y: 0.12 }),
   ],
   general_hardware: [
     G('shop_shelf', -1.6, 6.6, { size: [1.8, 0.22] }), G('shop_shelf', -1.0, 3.6, { size: [1.6, 0.22] }), G('workbench', 2.0, 6.3),
@@ -425,6 +457,7 @@ export function layoutFor(kind: InteriorKind, label: string): string {
   if (kind === 'gym') return /BOXING/.test(t) ? 'gym_boxing' : /WRESTLING|GRAPPLING|KARATE|DOJO|JUDO|MARTIAL/.test(t) ? 'gym_mats' : 'gym';
   if (kind === 'salon') return /HAIR|BARBER/.test(t) ? 'salon_hair' : 'salon';
   if (kind === 'general') return /HARDWARE|DIY/.test(t) ? 'general_hardware' : 'general';
+  if (kind === 'takeaway') return /CHIPPY|CHIP|FISH/.test(t) ? 'takeaway_chippy' : /BAKER/.test(t) ? 'takeaway_bakery' : /KEBAB|CHICKEN|GRILL/.test(t) ? 'takeaway_grill' : 'takeaway';
   return kind;
 }
 
@@ -432,6 +465,9 @@ export function layoutFor(kind: InteriorKind, label: string): string {
 export const INTERIORS_FOR_TEST: Readonly<Record<string, readonly { m: string; u: number; v: number }[]>> = INTERIORS;
 
 /** Sign board colours for each kind of shop: [board, letters]. */
+/** Shops that would have a striped awning over the window (not pubs, clubs, banks, offices, showrooms or jewellers). */
+const AWNING_KINDS: ReadonlySet<InteriorKind> = new Set(['takeaway', 'cafe', 'general', 'offlicence', 'salon', 'plants', 'furniture', 'gadgets', 'pawn', 'bookies']);
+
 const SIGN_STYLE: Record<InteriorKind, [string, string, boolean?]> = {
   pub: ['#3a1512', '#e8c36a'], club: ['#16081f', '#ff5ac8', true], takeaway: ['#b3261e', '#fff3d6'], cafe: ['#3d2a1c', '#f2e2c4'], bookies: ['#12452a', '#ffffff'],
   gadgets: ['#1c2a4a', '#7fd4ff'], clothes: ['#111111', '#ffffff'], furniture: ['#2f4a3a', '#f2e8d0'], pawn: ['#1a1a1a', '#e2b93b'], jeweller: ['#0f1a2a', '#f2e2b0'], casino: ['#3a0d12', '#ffd75a', true],
@@ -537,6 +573,61 @@ const PROP_MODELS: Partial<Record<PropKind, PropModel>> = {
   cardboard: { models: ['office/delivery-box'] },
 };
 
+/**
+ * An approved model in place of a level prop (or as architecture), with the slot it has to fit: the prop's own
+ * collision box (`fit`, half sizes). LevelView draws it at its real size, shrunk only if that slot is too small.
+ */
+export interface ApprovedPlacement {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  ry: number;
+  fit?: { hx: number; hz: number };
+  /** Stock behind shop glass: baked without shadows. */
+  indoor?: boolean;
+  /** Per-axis scale (an awning stretched to its shopfront, a downpipe to its eaves); real size if left out. */
+  scale?: [number, number, number];
+  /** Repaint one colour of the model, e.g. an awning's stripes in the shop's own colour: [from, to] hex. */
+  recolour?: [string, string][];
+}
+
+/**
+ * Street props drawn with the owner's approved British models (src/render/approved/registry.ts) instead of the
+ * city kit's, where the approved one is the better and the right thing (a K6 kiosk, not a US phone booth).
+ * Choices between several are picked per prop, the same every visit. Kept on the kit: the kiosk (the approved
+ * rack is no kiosk), the planter (18k triangles for now), vehicles, fountains, pillars and turnstiles.
+ */
+const APPROVED_STREET: Partial<Record<PropKind, { ids: readonly string[]; repeat?: number }>> = {
+  phonebox: { ids: ['telephoneBox'] },
+  postbox: { ids: ['pillarPostBox'] },
+  busstop: { ids: ['busShelter'] },
+  lamp_post: { ids: ['streetLamp'] },
+  sign_post: { ids: ['roadSign'] },
+  traffic_light: { ids: ['trafficLight'] },
+  bench: { ids: ['parkBench'] },
+  bike_rack: { ids: ['bikeRack'] },
+  bin: { ids: ['wheelieBinBlack', 'wheelieBinGreen', 'wheelieBinBlue', 'wheelieBinBrown'] },
+  bollard: { ids: ['bollard'] },
+  bollard_dock: { ids: ['bollard'] },
+  bollard_row: { ids: ['bollard'], repeat: 4 },
+  atm: { ids: ['cashMachine'] },
+  vending: { ids: ['vendingMachine'] },
+  market_stall: { ids: ['marketStall'] },
+  skip: { ids: ['skipBin'] },
+  dumpster: { ids: ['dumpster'] },
+  cone: { ids: ['trafficCone'] },
+  barrier: { ids: ['roadBarrier'] },
+  trolley: { ids: ['shoppingTrolley'] },
+  drum: { ids: ['oilDrum'] },
+  crates: { ids: ['woodenCrate'] },
+  cardboard: { ids: ['cardboardBox'] },
+  rubbish_bags: { ids: ['rubbishBags'] },
+  pallets: { ids: ['palletStack'] },
+  scrap: { ids: ['scrapHeap'] },
+  container: { ids: ['shippingContainer'] },
+};
+
 /** Street furniture that belongs on paving. Where one stands out in the road, the pavement is built out round it. */
 const PAVEMENT_PROPS: ReadonlySet<PropKind> = new Set([
   'bin', 'bench', 'planter', 'mall_planter', 'bollard', 'bollard_row', 'bollard_dock', 'phonebox', 'vending', 'kiosk', 'market_stall', 'fountain', 'pillar', 'turnstile',
@@ -572,7 +663,7 @@ export function planStreet(level: LevelDef): StreetPlan {
   const hasRoad = kerbFor(level) !== null;
   const plan: StreetPlan = {
     area: level.id, back, kerbZ: hasRoad ? KERB_Z : null, front, x0, x1, ground: d.ground,
-    placements: [], blocks: [], signs: [], surfaces: [], shopfronts: [], goods: [], propDone: level.props.map(() => false), doors: [],
+    placements: [], blocks: [], signs: [], surfaces: [], shopfronts: [], goods: [], approved: [], propDone: level.props.map(() => false), doors: [],
   };
   const rng = new Rng(hash(`street:${level.id}`));
   const put = (model: string, x: number, y: number, z: number, o: Partial<Placement> = {}): void => {
@@ -622,7 +713,8 @@ export function planStreet(level: LevelDef): StreetPlan {
     plan.blocks.push({ x: (x0 + x1) / 2, y: 0.006, z: KERB_Z + KERB_DEPTH + 0.14, w: x1 - x0, h: 0.012, d: 0.07, colour: '#d9b521' });
     plan.blocks.push({ x: (x0 + x1) / 2, y: 0.006, z: KERB_Z + KERB_DEPTH + 0.29, w: x1 - x0, h: 0.012, d: 0.07, colour: '#d9b521' });
     // Drains in the gutter and covers in the road.
-    for (let x = x0 + 9 + rng.next() * 6; x < x1 - 4; x += 22 + rng.next() * 8) put('nyc/prop-manhole-cover', x, -0.24, KERB_Z + KERB_DEPTH + 1.9 + rng.next(), { sy: 0.9 });
+    // UK utility covers (approved), sat into the road with just their rim proud.
+    for (let x = x0 + 9 + rng.next() * 6; x < x1 - 4; x += 22 + rng.next() * 8) plan.approved.push({ id: 'manholeCover', x, y: -0.075, z: KERB_Z + KERB_DEPTH + 1.9 + rng.next(), ry: 0 });
   } else {
     // Districts with no pavement and kerb of their own (a precinct, a lane, a yard, a quay) keep
     // their ground where you walk, then a kerb and the road carry on in front, so the road runs
@@ -666,6 +758,19 @@ export function planStreet(level: LevelDef): StreetPlan {
       put('nyc/curb-strip', bx0 - KERB_DEPTH / 2, 0.012, (KERB_Z + bz1) / 2 + KERB_DEPTH / 2, { ry: HALF_PI, sx: (bz1 - KERB_Z) / s.w, sy: 0.6 });
       put('nyc/curb-strip', bx1 + KERB_DEPTH / 2, 0.012, (KERB_Z + bz1) / 2 + KERB_DEPTH / 2, { ry: HALF_PI, sx: (bz1 - KERB_Z) / s.w, sy: 0.6 });
       plan.surfaces.push({ kind: 'kerb', x0: bx0 - KERB_DEPTH, x1: bx1 + KERB_DEPTH, z0: bz1, z1: bz1 + KERB_DEPTH });
+    }
+    const ap = p.item ? undefined : APPROVED_STREET[p.kind];
+    if (ap) {
+      const prng = new Rng(hash(`${level.id}:prop:${i}:${p.kind}`));
+      const id = pick(prng, ap.ids);
+      const ry = ((p.turned ? 1 : 0) + (p.rot ?? 0)) * HALF_PI;
+      const copies = ap.repeat ?? 1;
+      for (let c = 0; c < copies; c++) {
+        const cx = copies === 1 ? p.x : p.x - hx + ((c + 0.5) * hx * 2) / copies;
+        plan.approved.push({ id, x: cx, y: 0, z: p.z, ry, fit: { hx: hx / copies, hz } });
+      }
+      plan.propDone[i] = true;
+      return;
     }
     const pm = PROP_MODELS[p.kind];
     if (!pm || p.item) return;
@@ -818,6 +923,8 @@ export function planStreet(level: LevelDef): StreetPlan {
 
   /** Shops you can see into: open-fronted units, glazed across, with the right things inside and the name over the door. */
   function shops(f: FacadeDef, label: string, doors: number[], frng: Rng): void {
+    // Its own random stream, so adding awnings leaves every other choice on the street as it was.
+    const awningRng = new Rng(hash(`${level.id}:awning:${Math.round(f.x0 * 10)}`));
     const span = f.x1 - f.x0;
     const kind = interiorFor(f.kind, label);
     // How many units: near 8.6 m each, but pick the count that leaves every door clear of the piers between units.
@@ -850,7 +957,8 @@ export function planStreet(level: LevelDef): StreetPlan {
         const sc = it.s ?? 1;
         const x = cx + it.u * mirror * k;
         const z = back - 0.34 - it.v;
-        if (it.g) plan.goods.push({ prop: { ...it.g, x, z }, ry: (it.ry ?? 0) * mirror, y: 0.15 + (it.y ?? 0) });
+        if (it.a) plan.approved.push({ id: it.a, x, y: 0.15 + (it.y ?? 0), z, ry: (it.ry ?? 0) * mirror, indoor: true });
+        else if (it.g) plan.goods.push({ prop: { ...it.g, x, z }, ry: (it.ry ?? 0) * mirror, y: 0.15 + (it.y ?? 0) });
         else put(it.m, x, 0.15 + (it.y ?? 0), z, { ry: (it.ry ?? 0) * mirror, sx: sc, sy: sc, sz: sc, paint: it.paint });
         contents.push(it.m);
       }
@@ -872,7 +980,15 @@ export function planStreet(level: LevelDef): StreetPlan {
         glass(door + 0.7, open1);
         plan.doors.push(mine!);
       } else glass(open0, open1);
+      // A striped awning (approved) over the glass of shops that would have one, in the shop's own colour: its
+      // back rail fixed to the wall just under the fascia, the valance at 2.7 m, clear of everyone's head.
+      if (AWNING_KINDS.has(kind) && awningRng.chance(0.75)) {
+        const span = open1 - open0 + 0.3;
+        plan.approved.push({ id: 'shopAwning', x: cx, y: 2.55, z: back + 0.72, ry: 0, scale: [span / 2.76, 1, 1], recolour: [['#b12e2a', f.colour ?? SIGN_STYLE[kind][0]]] });
+      }
     }
+    // A pub hangs its sign out: bracketed to the wall at the end of the frontage, under the fascia, in its colour.
+    if (kind === 'pub') plan.approved.push({ id: 'pubHangingSign', x: f.x0 + 0.32, y: 1.0, z: back + 0.05, ry: 0, recolour: [['#36664b', f.colour ?? SIGN_STYLE[kind][0]]] });
     const [bg, fg, neon] = SIGN_STYLE[kind];
     const w = Math.min(span - 0.6, Math.max(3.4, label.length * 0.4));
     plan.signs.push({ x: (f.x0 + f.x1) / 2, y: 3.56, z: back + 0.1, w, h: 0.66, text: label, bg: f.colour ?? bg, fg: f.colour ? readable(f.colour) : fg, neon: !!neon });
@@ -893,7 +1009,15 @@ export function planStreet(level: LevelDef): StreetPlan {
   }
 
   // ---- street lamps and trees ------------------------------------------------------------------
+  // Lit roads and suburbs get the approved British column with its arm out over the pavement (and a glowing lens
+  // under its head, as the kit lamps have); plazas, lanes and yards keep their own lights.
+  const ukLamp = d.ground === 'street' || d.ground === 'suburb';
   for (const l of level.lights) {
+    if (ukLamp) {
+      plan.approved.push({ id: 'streetLamp', x: l.x, y: 0, z: back + 0.18, ry: -HALF_PI });
+      plan.blocks.push({ x: l.x, y: 4.13, z: back + 0.18 + 1.12, w: 0.2, h: 0.05, d: 0.32, colour: '#fff1d0', glow: true });
+      continue;
+    }
     const s = size(d.lamp);
     // The lamp stands on the building line, clear of where anyone walks, with its head out over the pavement.
     const tall = s.h > 6.5;
