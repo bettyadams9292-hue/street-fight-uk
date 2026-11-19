@@ -331,8 +331,19 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
     R([.64,1.33,z],[.72,1.41,z],.027,rubber);
     R([.44,1.45,z],[.34,1.59,z*.80],.025,graphite);
   }
-  const console=B(.26,.15,.09,.43,1.56,0,graphite);console.rotation.z=-.20;
-  B(.19,.085,.012,.455,1.58,.052,display);
+  // Display is landscape and faces the rider (towards -X), not sideways.
+  // Mount screen and bezel together on the same tilted display housing.
+  const monitor=new THREE.Group();monitor.position.set(.39,1.56,0);
+  monitor.rotation.z=.22;
+  const housing=new THREE.Mesh(new THREE.BoxGeometry(.065,.18,.28),graphite);
+  housing.castShadow=true;monitor.add(housing);
+  const screen=new THREE.Mesh(new THREE.PlaneGeometry(.235,.125),display);
+  screen.rotation.y=-Math.PI/2;screen.position.set(-.034,0,0);
+  monitor.add(screen);
+  const screenInset=new THREE.Mesh(new THREE.PlaneGeometry(.19,.085),mat(0x8cb1bb,.05,.18));
+  screenInset.rotation.y=-Math.PI/2;screenInset.position.set(-.035,0,0);
+  monitor.add(screenInset);
+  g.add(monitor);
   B(.055,.05,.05,.20,1.06,.08,red);
  }
  if(id==='boxingRing'){
@@ -487,6 +498,6 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
  const poor='tags' in entry&&entry.tags.includes('poor' as never);
  g.userData={collection:'SFUK_expansion',standalone:true,id,category:entry.category,
   tags:poor?['poor']:[],districtTags:poor?['poor']:[],units:'metres',pivot:'ground-centre',
-  referenceInspired:true,revision:3,quality:'procedural-work-in-progress'};
+  referenceInspired:true,revision:4,quality:'procedural-work-in-progress'};
  return g;
 }
