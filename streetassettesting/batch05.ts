@@ -161,7 +161,7 @@ if(id==='marketStall'){
 
 
 /* Batch 05 geometry rebuild — replace defective prototypes, don't stack patches. */
-if(['bakeryDisplay','takeawayCounter','bikeRack','parkingMeter','cashMachine','gardenShed','shoppingBasket','marketStall'].includes(id)){
+if(['bakeryDisplay','takeawayCounter','bikeRack','vendingMachine','parkingMeter','cashMachine','gardenShed','shoppingBasket','marketStall'].includes(id)){
  g.clear();
  const mat=(c:number,metal=0)=>new T.MeshStandardMaterial({color:c,metalness:metal,roughness:metal?.48:.76,side:T.DoubleSide});
  const oak=mat(0x92724f),pine=mat(0xb99870),cream2=mat(0xe6dfce),charcoal=mat(0x242a2c),chrome=mat(0x9da9ab,.72),paint=mat(0xb51c27),navy=mat(0x294459),display=mat(0x759cb1),crust=mat(0xb77937),gold=mat(0xdba14a),leaf=mat(0x497e38),tomato=mat(0xb73729);
@@ -196,12 +196,35 @@ if(['bakeryDisplay','takeawayCounter','bikeRack','parkingMeter','cashMachine','g
   line(pts,.024,chrome);
   for(const x of [-.37,.37]){box(.16,.014,.13,x,.012,0,chrome);for(const z of [-.045,.045]){const bolt=C(.009,.008,x,.022,z,charcoal,12);}}
  }
+ if(id==='vendingMachine'){
+  // Recessed snack display: stock remains behind the glazing and front fascia.
+  box(.88,1.76,.72,0,.89,0,charcoal);
+  box(.62,1.32,.028,-.095,1.035,.365,navy);
+  box(.565,1.25,.012,-.095,1.035,.384,display);
+  for(let row=0;row<4;row++){
+   const y=.60+row*.275;
+   box(.54,.018,.075,-.095,y-.09,.305,chrome);
+   for(let j=0;j<3;j++){
+    const x=-.29+j*.19;
+    box(.105,.145,.048,x,y,.316,[paint,leaf,gold][j]);
+    box(.075,.027,.008,x,y-.057,.345,cream2);
+   }
+  }
+  // Glazing and surrounding frame remain in front of recessed stock.
+  box(.605,.038,.035,-.095,1.70,.403,charcoal);
+  for(const x of [-.41,.22])box(.035,1.31,.042,x,1.035,.401,charcoal);
+  box(.15,.31,.035,.335,1.11,.381,chrome);
+  box(.105,.055,.018,.335,1.17,.408,charcoal);
+  box(.11,.025,.019,.335,.99,.408,gold);
+  box(.56,.15,.048,-.10,.255,.379,charcoal);
+  box(.41,.024,.023,-.10,.29,.411,chrome);
+ }
  if(id==='parkingMeter'){
   // British pay-and-display terminal with a compact integrated head.
   box(.18,1.17,.16,0,.67,0,navy);box(.34,.055,.30,0,.045,0,charcoal);
   box(.46,.75,.33,0,1.58,0,navy);box(.48,.055,.36,0,1.985,0,charcoal);
-  box(.33,.21,.015,0,1.79,.175,display);box(.37,.045,.018,0,1.93,.174,cream2);
-  box(.28,.12,.018,0,1.55,.175,charcoal);
+  box(.23,.12,.015,0,1.81,.175,display);box(.31,.035,.018,0,1.93,.174,cream2);
+  box(.26,.14,.018,0,1.55,.175,charcoal);
   for(let i=0;i<3;i++)for(let j=0;j<3;j++)box(.045,.024,.009,-.09+j*.09,1.585-i*.039,.189,chrome);
   box(.16,.019,.025,0,1.39,.179,chrome);box(.12,.04,.018,0,1.30,.175,gold);
   box(.30,.09,.018,0,1.19,.172,cream2);
