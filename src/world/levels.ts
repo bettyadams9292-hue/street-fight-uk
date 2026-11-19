@@ -1,6 +1,7 @@
 import type { AreaId } from '../progress/Progress';
 import { DISTRICTS } from './districts';
-import { INTERIORS } from './interiors';
+import { INTERIORS, fitOut } from './interiors';
+import { deepRoom } from './rooms';
 import type { LevelDef } from './LevelTypes';
 import { FRONT_DOOR_X, HOME_BOUNDS, STAIRWELL, buildHomeLevel } from '../property/home';
 import { buildBasementLevel, defaultBasement } from '../business/basement';
@@ -623,8 +624,8 @@ export const LEVELS: Record<AreaId, LevelDef> = {
   ...INTERIORS,
   basement: buildBasementLevel(defaultBasement()),
   // The jeweller, the estate agent, Ashcombe Park, and the inside of whichever property you walk into.
-  jeweller: JEWELLER,
-  estate_agent: ESTATE_AGENT,
+  jeweller: deepRoom(fitOut(JEWELLER)),
+  estate_agent: deepRoom(fitOut(ESTATE_AGENT)),
   ashcombe: ASHCOMBE,
   property: propertyPlaceholder(),
 } as Record<AreaId, LevelDef>;

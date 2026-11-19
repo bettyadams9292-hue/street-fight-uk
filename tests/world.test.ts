@@ -164,8 +164,9 @@ test('the player cannot walk through walls or props', () => {
 
 test('home: you can walk the front of the house end to end without snagging', () => {
   const w = new World(LEVELS.home, freshProgress(), { entry: 'start', seed: 1 });
-  place(w, -19, 1.0);
-  run(w, 60 * 14, () => cmd({ moveX: 1, moveZ: 0.4 }));
+  // Rooms are at their real depth, walled to the front: the way through is the walkway, where the doorways are.
+  place(w, -19, 0.9);
+  run(w, 60 * 14, () => cmd({ moveX: 1 }));
   assert(w.player.pos.x > 10.3, `got stuck at x=${w.player.pos.x.toFixed(2)}, z=${w.player.pos.z.toFixed(2)}`);
 });
 

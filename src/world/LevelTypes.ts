@@ -267,6 +267,8 @@ export interface LevelDef {
   exits: ExitDef[];
   facades: FacadeDef[];
   props: PropDef[];
+  /** A room at its real depth (world/rooms.ts deepRoom): the indoor camera looks down into it, its dividers are drawn. */
+  deep?: boolean;
   /** Extra solid boxes (walls, room dividers). */
   walls?: { minX: number; maxX: number; minZ: number; maxZ: number; visual?: 'wall' | 'none' }[];
   gates?: GateDef[];

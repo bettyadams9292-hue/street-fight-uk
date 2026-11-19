@@ -319,6 +319,7 @@ export class LevelView {
       this.propObjects.set(p, this.group.children.slice(before));
     }
     for (const ex of lvl.exits) this.buildExit(ex);
+    if (lvl.deep) this.buildPartitions();
     for (const g of lvl.gates ?? []) this.buildGate(g.id, g.x, g.z0, g.z1);
     for (const l of lvl.levers ?? []) this.buildLever(l.id, l.x);
     if (!this.street) this.buildGraffiti();
@@ -366,6 +367,30 @@ export class LevelView {
       }
     }
     flush();
+  }
+
+  /**
+   * The walls between rooms in a room at its real depth (world/rooms.ts): plastered partitions from the back wall to
+   * the front edge, the doorway left open where the walkway runs, with a skirting board and a capped top so the
+   * cut edge reads as a wall seen from above.
+   */
+  private buildPartitions(): void {
+    const plaster = this.mat('#ece8e0', 0.92);
+    const cap = this.mat('#d8d2c6', 0.8);
+    const skirting = this.mat('#f4f2ec', 0.6);
+    const H = this.level.theme === 'basement' ? 3.6 : 2.9;
+    for (const w of this.level.walls ?? []) {
+      if (w.visual === 'none') continue;
+      const z0 = Math.max(w.minZ, this.back);
+      const z1 = Math.min(w.maxZ, this.level.bounds.maxZ + 0.3);
+      if (z1 - z0 < 0.2) continue;
+      const cx = (w.minX + w.maxX) / 2;
+      const t = Math.max(0.12, w.maxX - w.minX);
+      const cz = (z0 + z1) / 2;
+      this.box(t, H, z1 - z0, cx, H / 2, cz, plaster);
+      this.box(t + 0.02, 0.04, z1 - z0, cx, H + 0.02, cz, cap, false);
+      for (const side of [-1, 1]) this.box(0.02, 0.12, z1 - z0, cx + side * (t / 2 + 0.01), 0.06, cz, skirting, false);
+    }
   }
 
   /** Put a Kenney furniture model into the prop group, fitted to w × h × d; false if the kit isn't loaded. */
@@ -1456,8 +1481,10 @@ export class LevelView {
     }
     // Joists and a ceiling.
     const joist = this.mat(tier === 0 ? '#5a4632' : '#7a6448', 0.85);
-    for (let x = f.x0 + 1.9; x < f.x1; x += 0.9) this.box(0.1, 0.22, 3.6, x, H - 0.31, this.back + 1.6, joist, false);
-    this.box(w, 0.08, 3.8, cx, H - 0.16, this.back + 1.7, this.mat(tier === 0 ? '#3a3228' : '#d8d4c8', 0.95), false);
+    // Joists and ceiling run back from the wall over the first stretch of the room only, so the camera can see in.
+    const ceilD = 3.6;
+    for (let x = f.x0 + 1.9; x < f.x1; x += 0.9) this.box(0.1, 0.22, ceilD, x, H - 0.31, this.back + ceilD / 2 - 0.2, joist, false);
+    this.box(w, 0.08, ceilD + 0.2, cx, H - 0.16, this.back + ceilD / 2 - 0.1, this.mat(tier === 0 ? '#3a3228' : '#d8d4c8', 0.95), false);
     // Pipes and a cable tray along the wall.
     const pipe = this.mat('#b87333', 0.35, 0.8);
     for (const [y, r] of [[3.0, 0.035], [2.88, 0.025]] as const) {
@@ -2301,6 +2328,27 @@ export class LevelView {
     const kitProp = PROPERTY_PROP_KINDS.has(p.kind) ? propertyProp(p.kind, W, D, { colour: c, label: p.label }) : null;
     if (kitProp) {
       g.add(kitProp);
+      // A pool at its real size gets lane ropes: floats strung end to end, red at the ends, white between.
+      if (p.kind === 'pool_basin' && D > 2.4) {
+        const lanes = Math.max(3, Math.round(D / 1.1));
+        // Float them on the water: just under the top of the pool model (its coping and water sit above the floor).
+        g.updateMatrixWorld(true);
+        const top = new THREE.Box3().setFromObject(kitProp).max.y - g.position.y;
+        const ry = Math.max(0.06, top - 0.05);
+        const red = this.mat('#c81e1e', 0.5);
+        const white = this.mat('#f2f2ee', 0.5);
+        for (let i = 1; i < lanes; i++) {
+          const z = -D / 2 + 0.2 + ((D - 0.4) * i) / lanes;
+          // The model's water starts a fifth of the way along (its near end is a sun deck) and stops short of the far end.
+          const x0 = -W / 2 + W * 0.19;
+          const len = W / 2 - 0.3 - x0;
+          const n = Math.round(len / 0.5);
+          for (let k = 0; k < n; k++) {
+            const x = x0 + (k + 0.5) * (len / n);
+            this.box(len / n - 0.04, 0.07, 0.07, x, ry, z, k < 2 || k >= n - 2 ? red : white, false, g);
+          }
+        }
+      }
       return;
     }
     switch (p.kind) {
@@ -3211,27 +3259,40 @@ export class LevelView {
         break;
       }
       case 'boxing_ring': {
-        B(W, 0.35, D * 2, 0, 0.175, 0, this.mat('#1f3a6a', 0.7));
-        B(W - 0.1, 0.03, D * 2 - 0.1, 0, 0.36, 0, this.mat('#e8e4dc', 0.9), false);
-        for (const dx of [-W / 2 + 0.06, W / 2 - 0.06]) for (const dz of [-D + 0.06, D - 0.06]) C(0.05, 0.05, 1.3, dx, 0.95, dz, this.mat(dx < 0 ? '#c81010' : '#1f4fa8', 0.4), 10);
-        for (const y of [0.7, 1.0, 1.3]) {
-          B(W - 0.12, 0.025, 0.025, 0, y, -D + 0.06, this.mat('#e8e4dc', 0.6), false);
-          for (const dx of [-W / 2 + 0.06, W / 2 - 0.06]) B(0.025, 0.025, D * 2 - 0.12, dx, y, 0, this.mat('#e8e4dc', 0.6), false);
+        // A ring at its footprint: raised canvas with a skirt, four corner posts (red and blue corners, two neutral),
+        // three ropes on every side, padded turnbuckles, and steps up on the near side.
+        const H0 = 0.75;
+        B(W, H0, D, 0, H0 / 2, 0, this.mat('#1f3a6a', 0.7));
+        B(W + 0.3, 0.06, D + 0.3, 0, H0 + 0.03, 0, this.mat('#e8e4dc', 0.9), false);
+        const corner = (dx: number, dz: number) => (dx < 0 && dz < 0 ? '#c81010' : dx > 0 && dz > 0 ? '#1f4fa8' : '#e8e4dc');
+        for (const dx of [-W / 2, W / 2]) for (const dz of [-D / 2, D / 2]) {
+          C(0.06, 0.06, 1.4, dx, H0 + 0.7, dz, this.mat('#2a2a2e', 0.4, 0.6), 10);
+          B(0.16, 0.9, 0.16, dx, H0 + 0.75, dz, this.mat(corner(dx, dz), 0.6), false);
         }
+        const rope = this.mat('#f2f0ea', 0.6);
+        for (const y of [H0 + 0.45, H0 + 0.8, H0 + 1.15]) {
+          for (const dz of [-D / 2, D / 2]) B(W, 0.035, 0.035, 0, y, dz, rope, false);
+          for (const dx of [-W / 2, W / 2]) B(0.035, 0.035, D, dx, y, 0, rope, false);
+        }
+        for (let i = 0; i < 3; i++) B(0.9, 0.25 * (i + 1), 0.3, W / 2 - 0.8, 0.125 * (i + 1), D / 2 + 0.75 - i * 0.3, this.mat('#3a3a3e', 0.7));
         break;
       }
       case 'dojo_mat':
       case 'wrestling_mat': {
         const dojo = p.kind === 'dojo_mat';
-        B(W, 0.05, D * 2, 0, 0.025, 0, this.mat(dojo ? '#c8b070' : '#1f4fa8', 0.9), false);
+        B(W, 0.05, D, 0, 0.025, 0, this.mat(dojo ? '#c8b070' : '#1f4fa8', 0.9), false);
         if (dojo) {
-          for (let x = -W / 2 + 0.9; x < W / 2; x += 0.9) B(0.02, 0.052, D * 2, x, 0.026, 0, this.mat('#9a8450', 0.9), false);
-          B(W, 0.054, 0.08, 0, 0.027, -D + 0.04, this.mat('#7a1414', 0.9), false);
+          for (let x = -W / 2 + 0.9; x < W / 2; x += 0.9) B(0.02, 0.052, D, x, 0.026, 0, this.mat('#9a8450', 0.9), false);
+          B(W, 0.054, 0.08, 0, 0.027, -D / 2 + 0.04, this.mat('#7a1414', 0.9), false);
+          B(W, 0.054, 0.08, 0, 0.027, D / 2 - 0.04, this.mat('#7a1414', 0.9), false);
         } else {
-          const ring = new THREE.Mesh(new THREE.RingGeometry(0.85, 0.95, 40), this.mat('#e8c020', 0.8));
-          ring.rotation.x = -Math.PI / 2;
-          ring.position.y = 0.055;
-          g.add(ring);
+          // The wrestling circle: an inner starting circle and the big outer one, as on a real mat.
+          for (const [r0, r1] of [[0.45, 0.52], [Math.min(W, D) / 2 - 0.4, Math.min(W, D) / 2 - 0.28]] as const) {
+            const ring = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 48), this.mat('#e8c020', 0.8));
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.055;
+            g.add(ring);
+          }
         }
         break;
       }

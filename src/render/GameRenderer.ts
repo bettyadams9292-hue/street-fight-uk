@@ -12,7 +12,7 @@ import { HouseFX } from './HouseFX';
 import { FRAMING, StudioView, type StudioFraming } from './StudioView';
 import type { CharacterAppearance } from '../character/Appearance';
 import type { World } from '../world/World';
-import { LevelView } from './LevelView';
+import { LevelView, backWallZ } from './LevelView';
 import { LEVELS } from '../world/levels';
 import { stripNeighbours } from '../world/strip';
 import { resolveLook, type Look } from './look/looks';
@@ -477,6 +477,9 @@ export class GameRenderer {
         this.hitboxes.update(this.sim.fighters);
         this.arenaView?.update(time);
         if (this.world && focus) {
+          // A room at its real depth gets the camera that looks down into it.
+          const lv = this.world.level;
+          this.cameraRig.room = lv.deep ? { back: backWallZ(lv), front: lv.bounds.maxZ } : null;
           this.cameraRig.updateWorld(dt, focus, focus.target, this.sim.arena.bounds, this.sim.arena.lock, { left: !!this.near.left, right: !!this.near.right });
           this.levelView?.update(dt, time, this.world, this.cameraRig.focusX);
           this.updateLamps();
