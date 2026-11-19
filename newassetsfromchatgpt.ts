@@ -670,7 +670,7 @@ function finishProductionAsset(g:THREE.Group,name:StreetAssetName) {
     addLabel(g,t,w,h,x,y,z,bg,fg,fs);
   switch(name){
     case 'telephoneBox':
-      text('TELEPHONE',.76,.16,0,2.35,.579,'#f8f1de','#8e1a22',53);break;
+      text('TELEPHONE',.76,.16,0,2.35,.585,'#f8f1de','#8e1a22',68);break;
     case 'pillarPostBox':
       text('POST\nCOLLECTION',.23,.18,0,.72,.325,'#e4d7b8','#202329',36);break;
     case 'wallPostBox':
@@ -948,48 +948,61 @@ function buildReplacementV9(g:THREE.Group,name:StreetAssetName){
    for(const y of [.68,.94,1.18])make(.026,.026,.012,x,y,-.43,black);
   }
  }else if(name==='busBench'){
-  // Modern bus-stop bench: slim perforated metal backrest and red individual slats.
-  for(const x of [-.70,.70]){
-   make(.10,.47,.11,x,.235,0,steel,.7);
-   make(.20,.05,.38,x,.025,0,black);
-   make(.065,.42,.065,x,.76,-.22,steel,.7);
+  // Contemporary UK shelter bench: powder-coated steel supports,
+  // five separated red seat planks, five matching backrest planks.
+  const redSeat=0xa83a37,frame=0x343d45;
+  for(const x of [-.68,.68]){
+    make(.085,.46,.085,x,.23,.03,frame,.6);
+    make(.18,.045,.42,x,.025,.02,black,.6);
+    make(.065,.60,.065,x,.79,-.26,frame,.6);
+    // Brackets run BELOW the seat, not across its visible top.
+    make(.075,.045,.51,x,.445,-.01,frame,.6);
   }
   for(let i=0;i<5;i++){
-   make(1.64,.052,.078,0,.50,-.20+i*.10,0xb43b36,.22,.55);
+    const z=-.24+i*.115;
+    make(1.72,.048,.095,0,.515,z,redSeat,.17,.56);
   }
   for(let i=0;i<5;i++){
-   make(1.64,.066,.034,0,.69+i*.087,-.24,0x707d86,.65,.48);
+    const y=.67+i*.105;
+    make(1.72,.084,.042,0,y,-.265,0x7b8992,.55,.52);
   }
-  make(1.72,.032,.055,0,.94,-.25,steel,.6);
-  for(const x of [-.70,.70])make(.065,.065,.42,x,.52,0,steel,.65);
+  for(const x of [-.68,.68]){
+    make(.065,.10,.04,x,.66,-.27,frame,.6);
+    make(.065,.10,.04,x,1.08,-.27,frame,.6);
+  }
  }else if(name==='telephoneBox'){
   const red=0xba2631,trim=0x8c1724,glass=0xb9d5dd;
   make(1.04,.12,1.04,0,.06,0,trim,.3);
   for(const x of [-.46,.46])for(const z of [-.46,.46]){
    make(.11,2.22,.11,x,1.18,z,red,.2,.48);
   }
-  // Four complete glazed elevations, including a recognizable closed front door.
-  const glassMaterial=new THREE.MeshPhysicalMaterial({color:glass,roughness:.10,metalness:0,transparent:true,opacity:.30,depthWrite:false,side:THREE.DoubleSide});
+  // Three glazed walls and one closed glazed door. Use TWO vertical
+  // mullions per elevation; remove the doubled interior bars and pink haze.
+  const glassMaterial=new THREE.MeshPhysicalMaterial({
+    color:0xe1eef2,roughness:.09,metalness:0,transparent:true,
+    opacity:.12,depthWrite:false,side:THREE.DoubleSide
+  });
   for(const side of ['front','back','left','right']){
-   const horizontal=side==='front'||side==='back';
-   const fixed=side==='front'||side==='right'?.462:-.462;
-   const pane=new THREE.Mesh(new THREE.BoxGeometry(.82,1.84,.012),glassMaterial);
-   if(horizontal)pane.position.set(0,1.19,fixed);
-   else{pane.rotation.y=Math.PI/2;pane.position.set(fixed,1.19,0);}
-   g.add(pane);
-   for(const v of [-.25,0,.25]){
-    if(horizontal)make(.036,1.85,.055,v,1.19,fixed,red);
-    else make(.055,1.85,.036,fixed,1.19,v,red);
-   }
-   for(const y of [.51,.94,1.37,1.80]){
-    if(horizontal)make(.84,.047,.06,0,y,fixed,red);
-    else make(.06,.047,.84,fixed,y,0,red);
-   }
-   if(side==='front'){
-    make(.052,2.02,.10,-.38,1.12,.49,trim);
-    make(.052,2.02,.10,.38,1.12,.49,trim);
-    make(.055,.13,.055,.32,1.04,.53,0xc2a05d,.8,.32);
-   }
+    const horizontal=side==='front'||side==='back';
+    const fixed=(side==='front'||side==='right')?.462:-.462;
+    const pane=new THREE.Mesh(new THREE.PlaneGeometry(.80,1.82),glassMaterial);
+    if(horizontal)pane.position.set(0,1.19,fixed);
+    else{pane.rotation.y=Math.PI/2;pane.position.set(fixed,1.19,0);}
+    pane.renderOrder=2;g.add(pane);
+    for(const v of [-.135,.135]){
+      if(horizontal)make(.033,1.83,.047,v,1.19,fixed,red,.2,.52);
+      else make(.047,1.83,.033,fixed,1.19,v,red,.2,.52);
+    }
+    for(const y of [.58,1.04,1.50,1.96]){
+      if(horizontal)make(.81,.048,.055,0,y,fixed,red,.2,.52);
+      else make(.055,.048,.81,fixed,y,0,red,.2,.52);
+    }
+    if(side==='front'){
+      make(.065,1.98,.09,-.395,1.16,.49,trim,.2);
+      make(.065,1.98,.09,.395,1.16,.49,trim,.2);
+      make(.038,.15,.06,.35,1.10,.53,0xbba15e,.75,.3);
+      make(.05,.045,.06,.35,.98,.53,black,.65);
+    }
   }
   // Nameplate is placed proud of the front fascia so it is not occluded.
   make(1.08,.27,1.08,0,2.34,0,red,.2,.5);
@@ -1002,5 +1015,5 @@ function buildReplacementV9(g:THREE.Group,name:StreetAssetName){
   make(.30,.50,.13,0,1.23,-.39,steel,.3);
   make(.16,.16,.045,0,1.34,-.31,0xc6c6c1,.2);
  }
- g.userData.replacementRevision=9;
+ g.userData.replacementRevision=10;
 }
