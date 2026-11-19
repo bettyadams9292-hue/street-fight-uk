@@ -46,6 +46,10 @@ function sign(g: THREE.Group, text: string, w: number, h: number, x: number, y: 
 }
 export function createStreetAsset(name: StreetAssetName): THREE.Group {
   const g = group(name);
+  if (['parkBench','busBench','telephoneBox'].includes(name)) {
+    buildReplacementV9(g,name);
+    return finishProductionAsset(g,name);
+  }
   if (['pillarPostBox','wallPostBox','busStopPole','busShelter','telephoneBox','litterBin'].includes(name)) {
     buildReworkedStreetAsset(g, name);
     g.userData = {collection:'newassetsfromchatgpt', standalone:true, units:'metres', assetName:name, detailVersion:4};
@@ -630,7 +634,7 @@ function addLabel(g:THREE.Group,text:string,w:number,h:number,x:number,y:number,
   g.add(mesh);
 }
 function finishProductionAsset(g:THREE.Group,name:StreetAssetName) {
-  finishEdgesV8(g,name);
+  if(!['parkBench','busBench','telephoneBox'].includes(name))finishEdgesV8(g,name);
   // Existing models use separate geometry per mesh; keep the art untouched,
   // replace bland surface materials and apply text on their visible front.
   // Stable physically-based solid materials. Do not allocate hundreds of
@@ -666,7 +670,7 @@ function finishProductionAsset(g:THREE.Group,name:StreetAssetName) {
     addLabel(g,t,w,h,x,y,z,bg,fg,fs);
   switch(name){
     case 'telephoneBox':
-      text('TELEPHONE',.72,.13,0,2.34,.592,'#f5eed8','#a8212a',48);break;
+      text('TELEPHONE',.76,.16,0,2.35,.579,'#f8f1de','#8e1a22',53);break;
     case 'pillarPostBox':
       text('POST\nCOLLECTION',.23,.18,0,.72,.325,'#e4d7b8','#202329',36);break;
     case 'wallPostBox':
@@ -908,4 +912,95 @@ function finishEdgesV8(g:THREE.Group,name:StreetAssetName){
    break;
  }
  g.userData.finishingRevision=8;
+}
+
+/** V9 replacements from clean geometry: no layered legacy models. */
+function buildReplacementV9(g:THREE.Group,name:StreetAssetName){
+ const make=(w:number,h:number,d:number,x:number,y:number,z:number,c:number,metal=.05,rough=.66)=>{
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:c,metalness:metal,roughness:rough}));
+  m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;
+ };
+ const tube=(a:THREE.Vector3,b:THREE.Vector3,r:number,c:number)=>{
+  const delta=b.clone().sub(a),m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,delta.length(),12),new THREE.MeshStandardMaterial({color:c,metalness:.6,roughness:.43}));
+  m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());g.add(m);return m;
+ };
+ const wood=0x856343,woodLight=0xa4835d,steel=0x333c44,black=0x20262c;
+ if(name==='parkBench'){
+  // 1.8m timber-and-cast-iron park bench, coherent slat count and no floating clips.
+  for(const x of [-.72,.72]){
+   tube(new THREE.Vector3(x,.075,.30),new THREE.Vector3(x,.52,.22),.043,steel);
+   tube(new THREE.Vector3(x,.52,-.27),new THREE.Vector3(x,1.16,-.42),.045,steel);
+   tube(new THREE.Vector3(x,.52,.22),new THREE.Vector3(x,.52,-.27),.037,steel);
+   make(.20,.05,.50,x,.035,.02,black);
+  }
+  for(let i=0;i<5;i++){
+   const z=-.19+i*.108;
+   make(1.82,.055,.091,0,.53,z,i%2?woodLight:wood);
+  }
+  for(let i=0;i<5;i++){
+   const y=.67+i*.127,z=-.285-i*.03;
+   const slat=make(1.82,.106,.052,0,y,z,i%2?woodLight:wood);
+   slat.rotation.x=-.23;
+  }
+  for(const x of [-.72,.72]){
+   tube(new THREE.Vector3(x,.52,-.27),new THREE.Vector3(x,.52,.22),.027,steel);
+   // Subtle dark bolt heads, aligned to the support rather than floating.
+   for(const y of [.68,.94,1.18])make(.026,.026,.012,x,y,-.43,black);
+  }
+ }else if(name==='busBench'){
+  // Modern bus-stop bench: slim perforated metal backrest and red individual slats.
+  for(const x of [-.70,.70]){
+   make(.10,.47,.11,x,.235,0,steel,.7);
+   make(.20,.05,.38,x,.025,0,black);
+   make(.065,.42,.065,x,.76,-.22,steel,.7);
+  }
+  for(let i=0;i<5;i++){
+   make(1.64,.052,.078,0,.50,-.20+i*.10,0xb43b36,.22,.55);
+  }
+  for(let i=0;i<5;i++){
+   make(1.64,.066,.034,0,.69+i*.087,-.24,0x707d86,.65,.48);
+  }
+  make(1.72,.032,.055,0,.94,-.25,steel,.6);
+  for(const x of [-.70,.70])make(.065,.065,.42,x,.52,0,steel,.65);
+ }else if(name==='telephoneBox'){
+  const red=0xba2631,trim=0x8c1724,glass=0xb9d5dd;
+  make(1.04,.12,1.04,0,.06,0,trim,.3);
+  for(const x of [-.46,.46])for(const z of [-.46,.46]){
+   make(.11,2.22,.11,x,1.18,z,red,.2,.48);
+  }
+  // Four complete glazed elevations, including a recognizable closed front door.
+  const glassMaterial=new THREE.MeshPhysicalMaterial({color:glass,roughness:.10,metalness:0,transparent:true,opacity:.30,depthWrite:false,side:THREE.DoubleSide});
+  for(const side of ['front','back','left','right']){
+   const horizontal=side==='front'||side==='back';
+   const fixed=side==='front'||side==='right'?.462:-.462;
+   const pane=new THREE.Mesh(new THREE.BoxGeometry(.82,1.84,.012),glassMaterial);
+   if(horizontal)pane.position.set(0,1.19,fixed);
+   else{pane.rotation.y=Math.PI/2;pane.position.set(fixed,1.19,0);}
+   g.add(pane);
+   for(const v of [-.25,0,.25]){
+    if(horizontal)make(.036,1.85,.055,v,1.19,fixed,red);
+    else make(.055,1.85,.036,fixed,1.19,v,red);
+   }
+   for(const y of [.51,.94,1.37,1.80]){
+    if(horizontal)make(.84,.047,.06,0,y,fixed,red);
+    else make(.06,.047,.84,fixed,y,0,red);
+   }
+   if(side==='front'){
+    make(.052,2.02,.10,-.38,1.12,.49,trim);
+    make(.052,2.02,.10,.38,1.12,.49,trim);
+    make(.055,.13,.055,.32,1.04,.53,0xc2a05d,.8,.32);
+   }
+  }
+  // Nameplate is placed proud of the front fascia so it is not occluded.
+  make(1.08,.27,1.08,0,2.34,0,red,.2,.5);
+  make(.83,.185,.026,0,2.35,.557,0xf8f1de,.05,.7);
+  make(1.12,.075,1.12,0,2.515,0,trim,.2,.45);
+  const roof=new THREE.Mesh(new THREE.SphereGeometry(.56,32,12,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:red,metalness:.15,roughness:.48}));
+  roof.scale.y=.30;roof.position.y=2.52;g.add(roof);
+  make(.85,.04,.10,0,.14,.52,black,.4);
+  // Interior telephone visible through front glazing.
+  make(.30,.50,.13,0,1.23,-.39,steel,.3);
+  make(.16,.16,.045,0,1.34,-.31,0xc6c6c1,.2);
+ }
+ g.userData.replacementRevision=9;
 }
