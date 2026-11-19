@@ -70,7 +70,8 @@ function townStreet(game: Game, g: Internals, area: AreaId): void {
   game.advance(200);
 }
 
-export const SHOTS: Record<ShotName, SceneFn> = {
+// Scenes outside SHOT_NAMES (area, viewing) are for looking by hand, not the visual tests.
+export const SHOTS: Record<ShotName, SceneFn> & Record<string, SceneFn> = {
   menu: (game, g) => {
     g.showMainMenu();
     game.advance(60);
@@ -152,6 +153,15 @@ export const SHOTS: Record<ShotName, SceneFn> = {
   inside_pub: (game, g) => district(game, g, 'pub'),
   inside_shop: (game, g) => district(game, g, 'clothes_shop'),
   inside_pawn: (game, g) => district(game, g, 'pawn_shop'),
+  /** `?shot=area&id=<area id>`: any area from its first entry (an interior, a shop, a district). */
+  area: (game, g) => district(game, g, new URLSearchParams(location.search).get('id') ?? 'home'),
+  /** `?shot=viewing&id=<property id>`: a property's inside, as a viewing. */
+  viewing: (game, g) => {
+    g.progress = new Progress(newSave(hero(g)));
+    g.progress.save.portfolio.inside = new URLSearchParams(location.search).get('id') ?? 'h_hollins_27';
+    g.enterArea('property' as AreaId, (LEVELS as Record<string, { entries: { id: string }[] }>).property.entries[0].id);
+    game.advance(150);
+  },
   industrial: (game, g) => district(game, g, 'industrial'),
   residential: (game, g) => district(game, g, 'residential'),
   precinct: (game, g) => district(game, g, 'precinct'),

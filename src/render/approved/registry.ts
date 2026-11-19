@@ -18,8 +18,9 @@ import { createAsset as b04 } from './sources/batch04';
 import { createAsset as b05 } from './sources/batch05';
 import { createAsset as b07 } from './sources/batch07';
 import { createStreetAsset as lib } from './sources/streetLibrary';
+import { ASSETS as FURNITURE_PACK, createAsset as furn } from './sources/furniture';
 
-export type ApprovedBatch = 'street-library' | 'B01' | 'B02' | 'B03' | 'B04' | 'B05' | 'B07';
+export type ApprovedBatch = 'street-library' | 'B01' | 'B02' | 'B03' | 'B04' | 'B05' | 'B07' | 'FURNITURE';
 export type ApprovedCategory = 'street' | 'architecture' | 'shop' | 'pub' | 'takeaway' | 'domestic' | 'industrial' | 'interior';
 /**
  * Where a model belongs: on the pavement, against or fixed to a building wall, on a roof, on a shop or room
@@ -44,7 +45,7 @@ type Row = [id: string, batch: ApprovedBatch, category: ApprovedCategory, name: 
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const L = (id: string) => () => lib(id as any);
-const F: Record<Exclude<ApprovedBatch, 'street-library' | 'B03'>, (id: any) => THREE.Group> = { B01: b01, B02: b02, B04: b04, B05: b05, B07: b07 };
+const F: Record<Exclude<ApprovedBatch, 'street-library' | 'B03' | 'FURNITURE'>, (id: any) => THREE.Group> = { B01: b01, B02: b02, B04: b04, B05: b05, B07: b07 };
 
 const ROWS: Row[] = [
   // ---- original street furniture library ----
@@ -166,11 +167,22 @@ const ROWS: Row[] = [
   ['gardenWaterButt', 'B07', 'domestic', 'Water butt', 'yard', true],
 ];
 
+/**
+ * The interior furniture pack (150 models: shelving, tables and desks, cabinets, chairs, sofas, beds), added on the
+ * owner's say-so on 19 Nov although its README still lists it as pending visual review. Ids as in the pack (f01_01…).
+ */
+// Eight of the pack's bookcases throw as authored (they read `edge` before it is defined), so they wait for a fixed pack.
+export const FURNITURE_BROKEN = ['f01_01', 'f01_02', 'f01_12', 'f01_13', 'f01_14', 'f01_15', 'f01_22', 'f01_23'];
+const FURNITURE_ROWS: Row[] = (FURNITURE_PACK as readonly { id: string; name: string }[]).filter((a) => !FURNITURE_BROKEN.includes(a.id)).map((a) => [a.id, 'FURNITURE', 'interior', a.name, 'floor', true]);
+
 export const APPROVED: Readonly<Record<string, ApprovedAsset>> = Object.fromEntries(
-  ROWS.map(([id, batch, category, name, place, solid, replaces]) => [
+  [...ROWS, ...FURNITURE_ROWS].map(([id, batch, category, name, place, solid, replaces]) => [
     id,
-    { id, batch, category, name, place, solid, replaces, build: batch === 'street-library' || batch === 'B03' ? L(id) : () => F[batch](id) },
+    {
+      id, batch, category, name, place, solid, replaces,
+      build: batch === 'street-library' || batch === 'B03' ? L(id) : batch === 'FURNITURE' ? () => furn(id) : () => F[batch](id),
+    },
   ]),
 );
 
-export const APPROVED_IDS: readonly string[] = ROWS.map((r) => r[0]);
+export const APPROVED_IDS: readonly string[] = [...ROWS, ...FURNITURE_ROWS].map((r) => r[0]);

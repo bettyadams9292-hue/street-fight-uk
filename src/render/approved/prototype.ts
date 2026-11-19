@@ -24,6 +24,8 @@ export interface Prototype {
   parts: ProtoPart[];
   /** Bounds of the model as authored (metres, y up, its front facing +z). */
   box: THREE.Box3;
+  /** Its plain colours (linear, as hex), the one covering most of it first: what a recolour swaps. */
+  colours: string[];
   triangles: number;
 }
 
@@ -113,7 +115,22 @@ export function prototype(id: string): Prototype {
   }
   const box = new THREE.Box3();
   for (const p of parts) box.union(p.geometry.boundingBox!);
-  const proto = { id, parts, box, triangles };
+  // Plain colours by how much of the model they cover (area), so a caller can repaint the main one.
+  const area = new Map<string, number>();
+  const tmp = new THREE.Color();
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  for (const p of parts) {
+    const col = p.geometry.getAttribute('color');
+    const pos = p.geometry.getAttribute('position');
+    if (!col) continue;
+    for (let i = 0; i + 2 < pos.count; i += 3) {
+      a.fromBufferAttribute(pos, i); b.fromBufferAttribute(pos, i + 1); c.fromBufferAttribute(pos, i + 2);
+      const k = '#' + tmp.setRGB(col.getX(i), col.getY(i), col.getZ(i)).getHexString(THREE.LinearSRGBColorSpace);
+      area.set(k, (area.get(k) ?? 0) + b.sub(a).cross(c.sub(a)).length() / 2);
+    }
+  }
+  const colours = [...area].sort((x, y) => y[1] - x[1]).map(([k]) => k);
+  const proto = { id, parts, box, triangles, colours };
   cache.set(id, proto);
   return proto;
 }
@@ -131,10 +148,12 @@ export interface ApprovedCopy {
   recolour?: readonly (readonly [string, string])[];
 }
 
-function repaint(g: THREE.BufferGeometry, pairs: readonly (readonly [string, string])[]): void {
+export function repaint(g: THREE.BufferGeometry, pairs: readonly (readonly [string, string])[]): void {
   const col = g.getAttribute('color') as THREE.BufferAttribute | undefined;
   if (!col) return;
-  const swaps = pairs.map(([a, b]) => [new THREE.Color(a), new THREE.Color(b)] as const);
+  // A 'from' written as 'linear:#rrggbb' is one of a prototype's own `colours` (already linear).
+  const from = (h: string) => (h.startsWith('linear:') ? new THREE.Color().setHex(parseInt(h.slice(8), 16), THREE.LinearSRGBColorSpace) : new THREE.Color(h));
+  const swaps = pairs.map(([a, b]) => [from(a), new THREE.Color(b)] as const);
   for (let i = 0; i < col.count; i++) {
     for (const [from, to] of swaps) {
       if (Math.abs(col.getX(i) - from.r) + Math.abs(col.getY(i) - from.g) + Math.abs(col.getZ(i) - from.b) < 0.02) {

@@ -7,6 +7,7 @@ import { gymKitPiece } from './props/GymLibrary';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { homeFurnitureModel } from './props/homeFurniture';
+import { packFurnitureModel } from './props/packFurniture';
 import { bikePiece, carPiece } from './props/VehicleLibrary';
 
 /**
@@ -72,7 +73,9 @@ const darker = (hex: string, k: number) => {
 
 /** A furniture piece. Wall pieces hang at their own height with their back on z = -depth/2. */
 export function buildFurnitureModel(id: string, colour?: string): THREE.Group {
-  // Kenney's furniture kit when it's loaded and the piece is mapped; the built-in model otherwise.
+  // The interior furniture pack where it has the piece; Kenney's kit when it's loaded and mapped; the built-in model otherwise.
+  const pack = packFurnitureModel(id, colour);
+  if (pack) return pack;
   const kit = homeFurnitureModel(id, colour);
   if (kit) return kit;
   const def = FURNITURE[id];
