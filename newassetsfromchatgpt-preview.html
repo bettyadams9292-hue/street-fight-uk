@@ -9,19 +9,20 @@ header{padding:22px 5%;border-bottom:1px solid #35404b}h1{font-size:24px;margin:
 .tile canvas{display:block;width:100%;height:250px;touch-action:pan-y}.tile footer{padding:12px 15px;border-top:1px solid #35404b;text-transform:capitalize}
 small{display:block;color:#9eabb9;margin-top:4px}button{background:#303e50;color:white;border:1px solid #5a6d80;padding:8px 12px;border-radius:7px;cursor:pointer}
 </style></head><body>
-<header><h1>Street Fight UK — New Assets from ChatGPT · v3</h1><p>Live 3D previews of the actual standalone procedural models on the dev branch. Drag to rotate; use the controls to zoom.</p><p>No game files are imported or modified by this page.</p></header>
-<div id="status">Loading asset collection v3 (commit 5917ef0)…</div><main class="grid" id="grid"></main>
+<header><h1>Street Fight UK — New Assets from ChatGPT · v4</h1><p>Live 3D previews of the actual standalone procedural models on the dev branch. Drag to rotate; use the controls to zoom.</p><p>No game files are imported or modified by this page.</p></header>
+<div id="status">Loading asset collection v4 (commit 40dae67)…</div><main class="grid" id="grid"></main>
 <script type="module">
 const status=document.getElementById('status');
 try{
  const THREE=await import('https://esm.sh/three@0.180.0');
  const ts=await import('https://esm.sh/typescript@5.9.3');
- const url='https://raw.githubusercontent.com/bettyadams9292-hue/street-fight-uk/5917ef04ca54f5d61823b1fdf8297408ab9a3d19/newassetsfromchatgpt.ts';
+ const url='https://raw.githubusercontent.com/bettyadams9292-hue/street-fight-uk/40dae6753e3817bc4cd83dff6ddb5adfffd17703/newassetsfromchatgpt.ts';
  const response=await fetch(url,{cache:'no-store'});
  if(!response.ok)throw Error('Unable to fetch asset source: '+response.status);
  const source=await response.text();
  const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
  const js=compiled.replace(/from\s*(['"])three\1/g,"from 'https://esm.sh/three@0.180.0'");
+ if(!compiled.includes('createStreetAsset'))throw Error('TypeScript transpilation failed');
  const blob=URL.createObjectURL(new Blob([js],{type:'text/javascript'}));
  const {createStreetAsset,STREET_ASSET_NAMES}=await import(blob);
  URL.revokeObjectURL(blob);
@@ -39,16 +40,16 @@ try{
    renderer.setSize(tile.clientWidth,250,false);
    renderer.outputColorSpace=THREE.SRGBColorSpace;
    const scene=new THREE.Scene();
-   const object=createStreetAsset(name);scene.add(object);
+   let object;try { object=createStreetAsset(name);scene.add(object); } catch(e) { footer.textContent=label(name)+' — ERROR: '+e.message;console.error(name,e);continue; }
    scene.add(new THREE.HemisphereLight(0xffffff,0x586270,2.2));
    const sun=new THREE.DirectionalLight(0xffffff,2.6);sun.position.set(4,8,6);scene.add(sun);
    const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
    const radius=Math.max(size.x,size.y,size.z,1);
    const camera=new THREE.PerspectiveCamera(42,tile.clientWidth/250,.01,100);
-   let yaw=.6,zoom=1.8;
+   let yaw=.6,zoom=2.7;
    const render=()=>{
      const distance=radius*zoom+1;
-     camera.position.set(center.x+Math.sin(yaw)*distance*.7,center.y+distance*.42,center.z+Math.cos(yaw)*distance*.7);
+     camera.position.set(center.x+Math.sin(yaw)*distance*.85,center.y+distance*.45,center.z+Math.cos(yaw)*distance*.85);
      camera.lookAt(center);renderer.render(scene,camera);
    };
    let down=false,last=0;
@@ -59,6 +60,6 @@ try{
    scenes.push({tile,renderer,camera,render});render();
  }
  addEventListener('resize',()=>{for(const s of scenes){const w=s.tile.clientWidth;s.renderer.setSize(w,250,false);s.camera.aspect=w/250;s.camera.updateProjectionMatrix();s.render()}});
- status.textContent=STREET_ASSET_NAMES.length+' models loaded — VERSION 3 · commit 5917ef0 · real 3D models.';
+ status.textContent=STREET_ASSET_NAMES.length+' models loaded — VERSION 4 · commit 40dae67 · real 3D models.';
 }catch(error){status.textContent='Preview could not load: '+error.message;console.error(error)}
 </script></body></html>
