@@ -296,7 +296,7 @@ meal('m_pasta', 'Pasta bake', '#c83a2a', 'Penne in tomato sauce under melted che
 meal('m_burger', 'Homemade cheeseburger', '#a8484a', 'Smash burger, onions, cheese.', 45, { fill: 60, diet: 42, energy: 6 });
 meal('m_curry', 'Chicken curry and rice', '#d88a2a', 'Tikka masala with basmati.', 50, { fill: 70, diet: 70, energy: 10 });
 add({ id: 'plasters', name: 'Plasters', text: 'A box of plasters. Sees to bruising, and works however full you are.', category: 'consumable', rarity: 'common', value: 3, stack: 10, icon: 'medkit', colour: '#e8c8a0', use: { heal: 35, text: '+35 health, treats bruising' } });
-add({ id: 'first_aid', name: 'First aid kit', text: 'Bandages, wipes, the lot. Patches up your worst injury too.', category: 'consumable', rarity: 'uncommon', value: 12, stack: 5, icon: 'medkit', colour: '#d81e1e', use: { healPct: 0.6, text: 'Restores 60% of your health, treats your worst injury' } });
+add({ id: 'first_aid', name: 'First aid kit', text: 'Bandages, wipes, the lot. Patches up your worst injury too.', category: 'consumable', rarity: 'uncommon', value: 10, stack: 5, icon: 'medkit', colour: '#d81e1e', use: { healPct: 0.6, text: 'Restores 60% of your health, treats your worst injury' } });
 
 // ---- valuables (sell at the pawn shop) --------------------------------------------------------
 const val = (id: string, name: string, icon: IconKind, rarity: Rarity, value: number, colour: string, text: string, stack = 1) =>

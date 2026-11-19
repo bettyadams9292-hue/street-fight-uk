@@ -176,7 +176,7 @@ export const BAR_MENU: { id: string; price: number }[] = [
   { id: 'pasty', price: 4 },
   { id: 'fry_up', price: 12 },
   { id: 'plasters', price: 3 },
-  { id: 'first_aid', price: 14 },
+  { id: 'first_aid', price: 12 },
 ];
 
 export function barScreen(progress: Progress, close: () => void, changed: () => void, rob?: () => void): Screen {

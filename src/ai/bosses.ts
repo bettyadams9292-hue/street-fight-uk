@@ -196,7 +196,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.65, name: 'Door staff', line: 'Simone snaps her fingers. The bouncers move in.', summon: [{ archetype: 'bouncer' }] },
       { below: 0.3, name: 'Lights out', line: 'She switches to karate: sharp, fast, precise.', swap: true, speedMult: 1.12, aggression: 0.7 },
     ],
-    reward: { cash: 1500, xp: 1200 }, flag: 'boss_nightclub', drops: ['handbag_designer', 'ring_diamond'],
+    reward: { cash: 1700, xp: 1200 }, flag: 'boss_nightclub', drops: ['handbag_designer', 'ring_diamond'],
   },
   football_firm: {
     id: 'football_firm', name: 'Carl Briggs', title: 'Top Boy of the Firm', district: 'Kirkgate Ground',
