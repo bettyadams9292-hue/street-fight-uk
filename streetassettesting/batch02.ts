@@ -79,7 +79,87 @@ export function createAsset(id:AssetId):THREE.Group{
   for(const x of [-.44,.44]){box(.79,.13,.55,x,.53,.04,blue);box(.78,.49,.13,x,.79,-.18,blue);}
   for(const x of [-.72,.72])for(const z of [-.24,.24])box(.065,.15,.065,x,.10,z,black);
  }
+
+ // Batch 02 polish pass: model-specific structure, fittings, materials and believable UK usage.
+ const nickel=mat(0xa4a9a6,.72,.36),rubber=mat(0x171c1d,.1,.85),paperWhite=mat(0xf2efe4),priceRed=mat(0xb9423e),tan=mat(0xa17c50),leafLight=mat(0x59834d),leafDark=mat(0x294d36),shadow=mat(0x292f2e),warm=mat(0xcaa86b,.35,.55);
+ if(id==='cardTerminal'){
+  // Angled contactless reader and separate receipt-slot/secure keypad zones.
+  const contact=box(.105,.012,.065,0,.196,-.055,paperWhite);contact.rotation.x=-.22;
+  for(let i=0;i<3;i++){const a=i*.024;rod([-.033+a,.206,-.069],[-.033+a,.206,-.048],.002,blue);}
+  box(.16,.012,.035,0,.185,.122,rubber);
+  for(let i=0;i<4;i++)box(.018,.007,.018,-.056+i*.038,.191,.08,i===3?priceRed:nickel);
+  box(.125,.026,.018,0,.07,.172,rubber);
+ }
+ if(id==='backBarShelves'){
+  // Traditional British pub gantry: mirrored rear panels, shelf lips, optics and pint-glass racks.
+  box(2.19,1.89,.009,0,1.18,-.247,glass);
+  for(const y of [.25,.72,1.19,1.66,2.13])box(2.29,.025,.02,0,y+.045,.229,brass);
+  for(let i=0;i<8;i++){const x=-.9+i*.255;rod([x,1.97,.05],[x,1.84,.05],.012,nickel);cyl(.045,.035,x,1.81,.05,brass);}
+  for(let i=0;i<7;i++){const x=-.84+i*.28;cyl(.042,.105,x,1.36,.14,glass,16);cyl(.052,.012,x,1.42,.14,nickel,16);}
+  box(2.34,.09,.49,0,.075,0,darkOak);
+ }
+ if(id==='receptionCounter'){
+  // Recessed front panels, visitor side lower ledge and counter accessories.
+  for(const x of [-.72,0,.72])box(.60,.58,.018,x,.52,.369,darkOak);
+  for(const x of [-.72,0,.72])box(.53,.49,.021,x,.52,.382,oak);
+  box(.58,.045,.22,-.64,.78,.43,oak);
+  box(.30,.02,.19,-.53,1.045,-.10,paperWhite);
+  for(let i=0;i<6;i++)box(.02,.005,.09,-.64+i*.045,1.061,-.10,black);
+  box(.16,.07,.22,.83,1.045,-.03,black);box(.13,.015,.12,.83,1.088,-.03,blue);
+ }
+ if(id==='pottedTree'){
+  // Soil rim, drainage feet and layered asymmetric leaf clusters.
+  cyl(.24,.022,0,.428,0,shadow,12);
+  for(let i=0;i<10;i++){const a=i*2.399,y=1.08+(i%4)*.19,r=.19+(i%3)*.11;const p=sphere(.13,Math.cos(a)*r,y,Math.sin(a)*r,(i%3===0)?leafLight:leafDark);p.scale.set(1.1,.46,1.45);}
+  for(let i=0;i<3;i++){const a=i*Math.PI*2/3;box(.08,.045,.08,Math.cos(a)*.18,.024,Math.sin(a)*.18,rubber);}
+ }
+ if(id==='wineBottle'){
+  // Glass shoulder, neck foil, rear label and cork.
+  cyl(.045,.025,0,.245,0,glass,20);
+  cyl(.019,.043,0,.338,0,priceRed,20);
+  box(.081,.12,.008,0,.125,-.046,paperWhite);
+  box(.063,.017,.009,0,.17,.051,priceRed);
+  box(.063,.008,.009,0,.11,.052,black);
+  cyl(.014,.012,0,.367,0,tan,12);
+ }
+ if(id==='oilDrum'){
+  // Industrial steel drum: ribbed shell, rolled chimes, bung closures and safety stencil.
+  for(const y of [.04,.13,.43,.76,.90])cyl(.322,.017,0,y,0,nickel,40);
+  for(let i=0;i<3;i++)box(.22,.012,.013,0,.48-i*.055,.326,black);
+  box(.29,.12,.014,0,.28,.323,paperWhite);
+  for(let i=0;i<5;i++)box(.013,.07,.014,-.1+i*.045,.28,.335,black);
+  for(const x of [-.17,.17])cyl(.027,.012,x,.95,0,rubber,16);
+ }
+ if(id==='wallClock'){
+  // Black-rimmed UK station/office clock, proper minute divisions and glass ring.
+  const ring=cyl(.298,.018,0,.31,.055,nickel,48);ring.rotation.x=Math.PI/2;
+  for(let i=0;i<60;i++){const a=i*Math.PI/30;const major=i%5===0;const t=box(major?.014:.006,major?.039:.015,.007,Math.sin(a)*.255,.31+Math.cos(a)*.255,.058,black);t.rotation.z=-a;}
+  sphere(.015,0,.31,.084,brass);
+ }
+ if(id==='chalkboardMenu'){
+  // A-frame pub specials board with hinged rear leg and chalk-like price lines.
+  rod([-.37,1.21,-.035],[0,.12,-.43],.027,darkOak);
+  rod([.37,1.21,-.035],[0,.12,-.43],.027,darkOak);
+  rod([-.36,.26,0],[0,.22,-.38],.009,brass);
+  for(let i=0;i<5;i++){box(.14,.007,.012,-.22,.97-i*.15,.065,paperWhite);box(.075,.008,.012,.24,.97-i*.15,.065,paperWhite);}
+  box(.48,.008,.012,0,1.11,.065,warm);
+ }
+ if(id==='pastryCabinet'){
+  // Heated UK bakery display: curved-looking segmented front, trays and product tags.
+  for(const y of [.24,.54,.84]){box(1.08,.018,.42,0,y+.02,0,nickel);for(let i=0;i<5;i++){box(.115,.018,.075,-.4+i*.2,y+.036,.25,paperWhite);}}
+  for(let i=0;i<5;i++)box(.11,.028,.02,-.4+i*.2,.21,.333,paperWhite);
+  for(const x of [-.54,.54])box(.025,1.01,.024,x,.66,-.30,nickel);
+  box(1.12,.065,.022,0,.96,.323,black);
+  box(.70,.03,.07,0,1.18,.12,cream);
+ }
+ if(id==='waitingSofa'){
+  // Two-seat British waiting-room sofa: seams, back cushions and arm caps.
+  for(const x of [-.44,.44]){box(.012,.13,.55,x+.39,.55,.04,black);box(.72,.028,.02,x,.64,.32,steel);}
+  for(const x of [-.81,.81])box(.17,.035,.65,x,.735,0,darkOak);
+  for(const x of [-.42,.42])box(.65,.05,.035,x,.34,.335,black);
+  box(1.46,.045,.04,0,.17,.32,steel);
+ }
  const bounds=new THREE.Box3().setFromObject(g);if(Number.isFinite(bounds.min.y))for(const child of g.children)child.position.y-=bounds.min.y;
- g.userData={collection:'streetassettesting',batch:2,units:'metres',status:'review-required',id,style:'British high street'};
+ g.userData={collection:'streetassettesting',batch:2,units:'metres',status:'review-required',id,style:'British high street',revision:'polish-v2'};
  return g;
 }
