@@ -95,6 +95,9 @@ export class CameraRig {
 
   private deadX = 0;
   private worldReady = false;
+  /** How far ahead of you the camera looks (eased), and where it wanted to be last frame. */
+  private lead = 0;
+  private lastCx = 0;
 
   /** Snap straight to the player (new area). */
   resetWorld(): void {
@@ -112,6 +115,7 @@ export class CameraRig {
    */
   shift(dx: number): void {
     this.deadX += dx;
+    this.lastCx += dx;
     this.focus.x += dx;
     this.camera.position.x += dx;
   }
@@ -127,9 +131,12 @@ export class CameraRig {
     // about 1.7 m either side, so the dead zone and the lead scale with it.
     const seen = () => Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * this.distance * this.camera.aspect;
     const DEAD = Math.min(1.2, seen() * 0.3);
-    // Look ahead the way you're going (most when running), so you see what's coming instead of chasing yourself.
-    const lead = Math.max(-seen() * 0.35, Math.min(seen() * 0.35, player.vel.x * 0.22));
-    const px = player.pos.x + lead;
+    // Look ahead the way you're going (most when running), so you see what's coming instead of chasing yourself:
+    // a sprint puts you about a third of the way back from the middle. The lead itself eases in and out, so
+    // turning round swings the view across smoothly rather than snapping.
+    const wantLead = Math.max(-seen() * 0.65, Math.min(seen() * 0.65, player.vel.x * 0.35));
+    this.lead += (wantLead - this.lead) * (this.worldReady ? 1 - Math.exp(-2.5 * dt) : 1);
+    const px = player.pos.x + this.lead;
     if (px > this.deadX + DEAD) this.deadX = px - DEAD;
     if (px < this.deadX - DEAD) this.deadX = px + DEAD;
     let cx = this.deadX;
@@ -152,6 +159,12 @@ export class CameraRig {
     clampTo(open.left ? -1e6 : bounds.minX, open.right ? 1e6 : bounds.maxX, 1.0);
 
     const k = this.worldReady ? 1 - Math.exp(-6 * dt) : 1;
+    // Move with where the camera wants to be before easing towards it, so a steady run is followed exactly
+    // (easing alone trails a sprinting player by about a metre, which on a phone is most of the screen).
+    // Only small, smooth changes are carried; a jump (new target, area end) is still eased.
+    const moved = cx - this.lastCx;
+    if (this.worldReady && Math.abs(moved) < 0.5) this.focus.x += moved;
+    this.lastCx = cx;
     this.worldReady = true;
     this.focus.x += (cx - this.focus.x) * k;
     this.focus.z += (player.pos.z * 0.3 - this.focus.z) * k;

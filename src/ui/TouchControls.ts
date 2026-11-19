@@ -47,6 +47,9 @@ export class TouchControls {
       btn('KICK', 'lk', () => input.pressFromTouch('lk')),
       // Walking about (no fight on), the pad is just PUNCH, KICK and this JUMP: the rest only appear when a fight starts.
       btn('JUMP', 'jmp', () => input.pressFromTouch('jump')),
+      // USE: doors, pickups, shops, things at home. Only there while something in front of you can be used
+      // (the game sets body.can-use); GRAB never uses things.
+      btn('USE', 'use', () => input.useFromTouch()),
     );
     const side = h(
       'div',
