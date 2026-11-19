@@ -480,6 +480,7 @@ export class GameRenderer {
           // A room at its real depth gets the camera that looks down into it.
           const lv = this.world.level;
           this.cameraRig.room = lv.deep ? { back: backWallZ(lv), front: lv.bounds.maxZ } : null;
+          document.body.classList.toggle('room-on', !!lv.deep);
           this.cameraRig.updateWorld(dt, focus, focus.target, this.sim.arena.bounds, this.sim.arena.lock, { left: !!this.near.left, right: !!this.near.right });
           this.levelView?.update(dt, time, this.world, this.cameraRig.focusX);
           this.updateLamps();

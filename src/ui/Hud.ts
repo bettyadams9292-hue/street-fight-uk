@@ -92,13 +92,23 @@ export class Hud {
   private vs: HTMLElement;
   private needsChips: HTMLElement;
   private needsKey = '';
+  /** What the needs currently say, by need (shown in the tray and when a need's badge is tapped). */
+  private needTips: { key: string; tip: string; urgency: number }[] = [];
+  /** Recent messages (newest last), kept for the notifications tray instead of filling the screen. */
+  private log: { text: string; kind: string }[] = [];
+  private unread = 0;
+  private bellBtn!: HTMLElement;
+  private tray!: HTMLElement;
+  private tip!: HTMLElement;
+  private tipTimer = 0;
+  private zoomBtn!: HTMLElement;
   private activity: HTMLElement;
   private activityTitle: HTMLElement;
   private activityLabel: HTMLElement;
   private activityFill: HTMLElement;
   private sleepShade: HTMLElement;
 
-  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void }) {
+  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void; zoom?: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
       const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, h('span', { class: 'key-hint', text: `${i + 1} \u00b7 ` }), TRAINING_MODE_LABELS[m]) as HTMLButtonElement;
       this.modeButtons.set(m, b);
@@ -179,12 +189,16 @@ export class Hud {
       h(
         'div',
         { class: 'hud-buttons' },
+        (this.zoomBtn = h('button', { class: 'hud-btn room-only zoom-btn', 'aria-label': 'Zoom in', title: 'Zoom (Z)', onclick: () => actions.zoom?.() }, icon('zoom-in'), h('span', { class: 'k', text: 'Z' }))),
+        (this.bellBtn = h('button', { class: 'hud-btn story-only bell-btn', 'aria-label': 'Notifications', title: 'Notifications', onclick: (e: Event) => { e.stopPropagation(); this.toggleTray(); } }, icon('bell'), h('span', { class: 'bell-dot' }))),
         h('button', { class: 'hud-btn story-only', 'aria-label': 'Map', title: 'Map (M / Tab)', onclick: () => actions.map() }, icon('map'), h('span', { class: 'k', text: 'M' })),
         h('button', { class: 'hud-btn story-only', 'aria-label': 'Inventory', title: 'Inventory (I / B)', onclick: () => actions.inventory() }, icon('bag'), h('span', { class: 'k', text: 'I' })),
         h('button', { class: 'hud-btn story-only', 'aria-label': 'Character and crew', title: 'Character & crew (H)', onclick: () => actions.character() }, icon('contact'), h('span', { class: 'k', text: 'H' })),
         h('button', { class: 'hud-btn pause-btn', 'aria-label': 'Pause', title: 'Pause (Esc)', onclick: () => actions.pause() }, '\u275a\u275a'),
       ),
       h('div', { class: 'prompt-wrap' }, this.prompt, this.subBar),
+      (this.tray = h('div', { class: 'notif-tray off', role: 'dialog', 'aria-label': 'Notifications' })),
+      (this.tip = h('div', { class: 'need-tip off', role: 'status' })),
       this.notices,
       this.hurtEdge,
       this.combo,
@@ -304,12 +318,76 @@ export class Hud {
     this.activityFill.style.width = `${Math.round(a.frac * 100)}%`;
   }
 
-  /** Needs that want attention (only those): small chips by the status strip. */
-  setNeeds(list: { key: string; text: string; urgency: number }[]): void {
+  /** Needs that want attention (only those): small badges by the status strip. Tap one to see what's wrong. */
+  setNeeds(list: { key: string; text: string; urgency: number; tip?: string }[]): void {
     const key = list.map((n) => `${n.key}:${n.text}:${n.urgency}`).join('|');
     if (key === this.needsKey) return;
     this.needsKey = key;
-    this.needsChips.replaceChildren(...list.map((n) => h('div', { class: `status-chip need u${n.urgency}`, title: 'Needs (H for details)' }, icon(NEED_ICONS[n.key] ?? 'info'), h('span', { class: 'need-text', text: n.text }))));
+    this.needTips = list.map((n) => ({ key: n.key, tip: n.tip ?? n.text, urgency: n.urgency }));
+    this.needsChips.replaceChildren(
+      ...list.map((n) =>
+        h(
+          'button',
+          { class: `status-chip need u${n.urgency}`, 'aria-label': n.tip ?? n.text, title: n.tip ?? n.text, onclick: (e: Event) => { e.stopPropagation(); this.showTip(n.tip ?? n.text); } },
+          icon(NEED_ICONS[n.key] ?? 'info'),
+          h('span', { class: 'need-text', text: n.text }),
+        ),
+      ),
+    );
+    if (!this.tray.classList.contains('off')) this.fillTray();
+  }
+
+  /** A need's message, briefly, under the badges. */
+  private showTip(text: string): void {
+    this.tip.textContent = text;
+    this.tip.classList.remove('off');
+    clearTimeout(this.tipTimer);
+    this.tipTimer = window.setTimeout(() => this.tip.classList.add('off'), 3200);
+  }
+
+  /** A message for the notifications tray: no pop-up, the bell shows a dot until you look. */
+  remember(text: string, kind = 'info'): void {
+    if (this.log[this.log.length - 1]?.text === text) return;
+    this.log.push({ text, kind });
+    if (this.log.length > 12) this.log.shift();
+    if (this.tray.classList.contains('off')) {
+      this.unread++;
+      this.bellBtn.classList.add('has-new');
+    } else this.fillTray();
+  }
+
+  private toggleTray(): void {
+    const open = this.tray.classList.contains('off');
+    this.tray.classList.toggle('off', !open);
+    if (!open) return;
+    this.unread = 0;
+    this.bellBtn.classList.remove('has-new');
+    this.fillTray();
+    // Any tap outside closes it.
+    const close = (e: Event) => {
+      if (this.tray.contains(e.target as Node)) return;
+      this.tray.classList.add('off');
+      document.removeEventListener('pointerdown', close, true);
+    };
+    setTimeout(() => document.addEventListener('pointerdown', close, true), 0);
+  }
+
+  private fillTray(): void {
+    const needs = this.needTips.map((n) => h('div', { class: `notif need u${n.urgency}` }, icon(NEED_ICONS[n.key] ?? 'info'), h('span', { text: n.tip })));
+    const recent = [...this.log].reverse().map((m) => h('div', { class: `notif ${m.kind}` }, h('span', { text: m.text })));
+    this.tray.replaceChildren(
+      h('div', { class: 'notif-head', text: 'Needs' }),
+      ...(needs.length ? needs : [h('div', { class: 'notif empty', text: 'Nothing needs doing.' })]),
+      h('div', { class: 'notif-head', text: 'Recent' }),
+      ...(recent.length ? recent : [h('div', { class: 'notif empty', text: 'No messages yet.' })]),
+    );
+  }
+
+  /** Indoors: the zoom button shows which way it will go. */
+  setZoomed(on: boolean): void {
+    this.zoomBtn.replaceChildren(icon(on ? 'zoom-out' : 'zoom-in'), h('span', { class: 'k', text: 'Z' }));
+    this.zoomBtn.setAttribute('aria-label', on ? 'Zoom out' : 'Zoom in');
+    this.zoomBtn.classList.toggle('on', on);
   }
 
   /** District name card when you arrive somewhere. */
@@ -335,6 +413,7 @@ export class Hud {
 
   /** Small reward / pickup message at the side. */
   toast(text: string, kind: 'cash' | 'item' | 'info' | 'warn' = 'info', accent?: string): void {
+    this.remember(text, kind);
     const t = h('div', { class: `toast ${kind}`, text });
     if (accent) t.style.borderLeftColor = accent;
     this.toasts.append(t);

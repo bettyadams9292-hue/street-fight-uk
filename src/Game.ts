@@ -12,7 +12,8 @@ import { InputManager, type InputSource, type MenuAction } from './input/InputMa
 import { GameRenderer } from './render/GameRenderer';
 import { SettingsStore, type Settings } from './save/Settings';
 import { Hud } from './ui/Hud';
-import { HouseController } from './home/house';
+import { HouseController, NUDGES } from './home/house';
+import type { NeedKey } from './home/needs';
 import { attention } from './home/needs';
 import type { Screen } from './ui/UIManager';
 import { TouchControls } from './ui/TouchControls';
@@ -151,6 +152,7 @@ export class Game {
       sound: (kind) => this.audio.house(kind),
       loop: (id, on) => this.audio.loop(id, on),
       toast: (text, kind) => this.hud.toast(text, kind ?? 'info'),
+      nudge: (text) => this.hud.remember(text, 'warn'),
       say: (text) => this.world && this.hud.speech(this.world.player, '', text),
       panel: (make, closed) => this.housePanel(make, closed),
       refresh: () => {
@@ -178,6 +180,9 @@ export class Game {
       },
       use: () => {
         if (this.state === 'playing') this.input.useFromTouch();
+      },
+      zoom: () => {
+        if (this.state === 'playing') this.toggleRoomZoom();
       },
     });
     this.hud.el.style.display = 'none';
@@ -704,7 +709,7 @@ export class Game {
       dt,
     );
     this.hud.setActivity(this.house.status);
-    this.hud.setNeeds(attention(s.needs).map((a) => ({ key: a.key, text: a.label.label, urgency: a.label.urgency })));
+    this.hud.setNeeds(attention(s.needs).map((a) => ({ key: a.key, text: a.label.label, urgency: a.label.urgency, tip: NUDGES[a.key as NeedKey] })));
   }
 
   /** A house panel (fridge, recipe book, bed...): the world waits while it's open. */
@@ -2002,6 +2007,14 @@ export class Game {
 
   // ---- input -----------------------------------------------------------------
 
+  /** Indoors: swap between the whole room and a closer view that follows you. Kept for the rest of the session. */
+  private toggleRoomZoom(): void {
+    const rig = this.renderer.cameraRig;
+    if (!this.world?.level.deep) return;
+    rig.roomZoom = !rig.roomZoom;
+    this.hud.setZoomed(rig.roomZoom);
+  }
+
   private onMenuAction(a: MenuAction, src: InputSource, fightKey = false): void {
     this.audio.unlock();
     if (this.ui.isOpen) {
@@ -2015,6 +2028,10 @@ export class Game {
         return;
       }
       if (a === 'inventory' || a === 'map' || a === 'character' || a === 'crew') this.house.abort();
+    }
+    if (a === 'zoom') {
+      if (this.state === 'playing') this.toggleRoomZoom();
+      return;
     }
     if (this.state === 'playing' && a === 'character' && this.world && !this.mode) {
       this.openProfile();

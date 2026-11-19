@@ -19,6 +19,8 @@ export class CameraRig {
    * rises and looks down into the room, backing off just enough to show it all between the HUD and the controls.
    */
   room: { back: number; front: number } | null = null;
+  /** Indoors, zoomed in: closer and following you round the room, instead of the whole room in view. */
+  roomZoom = false;
   /** Indoors: how far down the camera looks (radians): steeper on a tall screen, shallower on a wide one. */
   private get roomPitch(): number {
     return this.camera.aspect < 1 ? 0.62 : 0.46;
@@ -219,6 +221,8 @@ export class CameraRig {
     };
     let d = 5;
     while (d < 26 && (ndc(2.9, r.back, d) > top || ndc(0, r.front, d) < bottom)) d += 0.25;
+    // Zoomed in: a little over half as far, looking where you stand.
+    if (this.roomZoom) return { z: mid + (playerZ - mid) * 0.85, dist: Math.max(4.2, d * 0.58) };
     return { z, dist: d };
   }
 
