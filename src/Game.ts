@@ -2238,17 +2238,17 @@ export class Game {
       const s = p.style;
       if (link.phase === 'ground') {
         text = s.ground
-          ? `${k('J', 'X', 'LP')} ground strikes \u00b7 ${k('I', 'Y', 'HP')} ${s.moves[s.ground.submission].name} \u00b7 ${k('U', 'LB', 'GRAB')} let go`
+          ? `${k('J', 'X', 'PUNCH')} ground strikes \u00b7 ${k('I', 'Y', 'hard PUNCH')} ${s.moves[s.ground.submission].name} \u00b7 ${k('U', 'LB', 'GRAB')} let go`
           : `${k('U', 'LB', 'GRAB')} let go`;
         if (link.submitting) sub = link.subProgress;
       } else {
-        text = `${k('J', 'X', 'LP')} ${s.moves[s.clinch.strike].name} \u00b7 ${k('K', 'A', 'LK')} ${s.moves[s.clinch.throw].name} \u00b7 ${k('L', 'B', 'HK')} ${s.moves[s.clinch.power].name} \u00b7 ${k('U', 'LB', 'GRAB')} let go`;
+        text = `${k('J', 'X', 'PUNCH')} ${s.moves[s.clinch.strike].name} \u00b7 ${k('K', 'A', 'KICK')} ${s.moves[s.clinch.throw].name} \u00b7 ${k('L', 'B', 'hard KICK')} ${s.moves[s.clinch.power].name} \u00b7 ${k('U', 'LB', 'GRAB')} let go`;
       }
     } else if (link?.role === 'held') {
       text = link.submitting ? `SUBMISSION! Hold ${k('Space', 'RT', 'BLOCK')} to resist \u00b7 ${k('U', 'LB', 'GRAB')} to escape` : `${k('U', 'LB', 'GRAB')} to break free`;
       if (link.submitting) sub = link.subProgress;
     } else if (p.canFinish()) {
-      text = `FINISH IT: ${k('O + I', 'RB + Y', 'SP then HP')}`;
+      text = `FINISH IT: ${k('O + I', 'RB + Y', 'SPECIAL, then hard PUNCH')}`;
     } else if (p.state === 'knockdown' && p.stateFrame > 10) {
       text = `Get up: ${k('C', 'L3', 'JUMP')} quick \u00b7 ${k('W/S', 'up/down', 'stick up/down')} roll \u00b7 attack to get up swinging${p.style.defence === 'guard_pull' ? ` \u00b7 ${k('U', 'LB', 'GRAB')} sweep` : ''}`;
     }
@@ -2376,6 +2376,7 @@ export class Game {
       this.hud.update(realDt, player, this.world?.activeBoss && enemy === this.world.activeBoss ? null : enemy);
       this.hud.updateBubbles((x, y, z) => this.renderer.screenOf(x, y, z));
       this.updateEdgeMarkers(player);
+      document.body.classList.toggle('fight-on', !!this.world?.fightOn);
       if (this.world && this.progress) this.updateStoryHud(dt);
       this.updatePrompt();
     }

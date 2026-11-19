@@ -76,7 +76,7 @@ export const STREET: BaseStyle = {
   finisher: 'street_finisher',
   defence: 'shove',
   defenceName: 'Shove',
-  defenceText: 'Special + LP shoves an opponent away to make space.',
+  defenceText: 'Special + punch shoves an opponent away to make space.',
   blockAbsorb: 0.8,
   walkMult: 1,
   grappleSkill: 1,

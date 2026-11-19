@@ -3,7 +3,7 @@ import { h } from './dom';
 
 /**
  * On-screen controls for phones and tablets: a floating stick on the left,
- * four attack buttons in a diamond on the right, plus BLOCK and JUMP.
+ * punches and kicks in a diamond on the right, plus block, dodge, jump, grab, special and style.
  * Multi-touch, so you can move, block and strike at the same time.
  */
 export class TouchControls {
@@ -19,8 +19,9 @@ export class TouchControls {
     this.stickBase = h('div', { class: 'stick-base' }, this.stickKnob);
     const zone = h('div', { class: 'stick-zone' }, this.stickBase);
 
-    const btn = (label: string, cls: string, onDown: () => void, onUp?: () => void) => {
-      const b = h('div', { class: `touch-btn ${cls}`, text: label });
+    // A big word with an optional small one under it ("PUNCH" / "HARD"): plain English, no arcade shorthand.
+    const btn = (label: string, cls: string, onDown: () => void, onUp?: () => void, small?: string) => {
+      const b = h('div', { class: `touch-btn ${cls}${small ? ' two-line' : ''}`, 'aria-label': small ? `${small} ${label}` : label }, h('b', { text: label }), small ? h('small', { text: small }) : '');
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         b.setPointerCapture(e.pointerId);
@@ -40,10 +41,10 @@ export class TouchControls {
     const pad = h(
       'div',
       { class: 'attack-pad' },
-      btn('HP', 'hp', () => input.pressFromTouch('hp')),
-      btn('LP', 'lp', () => input.pressFromTouch('lp')),
-      btn('HK', 'hk', () => input.pressFromTouch('hk')),
-      btn('LK', 'lk', () => input.pressFromTouch('lk')),
+      btn('PUNCH', 'hp', () => input.pressFromTouch('hp'), undefined, 'HARD'),
+      btn('PUNCH', 'lp', () => input.pressFromTouch('lp')),
+      btn('KICK', 'hk', () => input.pressFromTouch('hk'), undefined, 'HARD'),
+      btn('KICK', 'lk', () => input.pressFromTouch('lk')),
     );
     const side = h(
       'div',
@@ -53,17 +54,16 @@ export class TouchControls {
       btn('JUMP', 'jump', () => input.pressFromTouch('jump')),
       btn('GRAB', 'grab', () => input.pressFromTouch('grab')),
     );
-    // Inventory, top right under the pause button.
-    const bag = btn('BAG', 'bag', () => input.menuFromTouch('inventory'));
-    // SP arms the next attack as a special (and SP + HP finishes a beaten opponent).
-    const sp = btn('SP', 'sp', () => {
+    // SPECIAL arms the next attack as a special (and SPECIAL then hard punch finishes a beaten opponent).
+    const sp = btn('SPECIAL', 'sp', () => {
       input.touch.specialArmed = !input.touch.specialArmed;
       sp.classList.toggle('armed', input.touch.specialArmed);
     });
     input.onSpecialUsed = () => sp.classList.remove('armed');
-    const extras = h('div', { class: 'extra-pad' }, sp, btn('SWAP', 'swap', () => input.pressFromTouch('swap')));
+    const extras = h('div', { class: 'extra-pad' }, sp, btn('STYLE', 'swap', () => input.pressFromTouch('swap'), undefined, 'SWAP'));
 
-    this.el = h('div', { class: 'touch-controls' }, zone, side, pad, extras, bag);
+        // (The bag lives in the menu buttons at the top; a second BAG button here only crowded the screen.)
+    this.el = h('div', { class: 'touch-controls' }, zone, side, pad, extras);
 
     // iOS still runs its own tap handling after a touch ends: double-tap zoom on a quick second tap, the text
     // magnifier, and a synthetic mouse click. The pad works on pointer events, so cancelling touchend here changes

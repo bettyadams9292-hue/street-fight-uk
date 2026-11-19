@@ -1063,3 +1063,15 @@ body:has(#ui .screen) .rotate-hint { display: none !important; }
 .edge-marker.left { right: auto; left: calc(4px + var(--safe-l, 0px)); border-left: 0; border-right: 16px solid var(--accent, #e3262f); }
 .edge-marker.near { opacity: 1; animation: edge-pulse 0.6s ease-in-out infinite alternate; }
 @keyframes edge-pulse { from { transform: translateY(-50%) scale(1); } to { transform: translateY(-50%) scale(1.25); } }
+
+/* Touch buttons in plain words: a big word, and a small one under it on the hard versions. */
+.touch-btn b { font: inherit; line-height: 1; pointer-events: none; }
+.touch-btn small { display: block; font-size: 10px; letter-spacing: 0.12em; line-height: 1; opacity: 0.85; color: #ff8a8f; pointer-events: none; }
+.touch-btn.two-line { flex-direction: column; gap: 2px; }
+.attack-pad .touch-btn { font-size: 15px; letter-spacing: 0.02em; }
+.touch-ui .attack-pad .touch-btn { font-size: 14px; }
+.extra-pad .touch-btn { font-size: 14px; }
+.extra-pad .touch-btn.two-line small { color: inherit; }
+.touch-ui .extra-pad .touch-btn { font-size: 13px; }
+/* In a fight the map, bag and crew buttons step aside: the pause menu has all three. */
+body.fight-on .touch-ui .hud-btn.story-only { display: none; }

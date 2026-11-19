@@ -69,7 +69,7 @@ export const MUAY_THAI: BaseStyle = {
   finisher: 'muay_thai_finisher',
   defence: 'teep',
   defenceName: 'Teep',
-  defenceText: 'Special + LK: a push kick that shoves an opponent back out of range.',
+  defenceText: 'Special + kick: a push kick that shoves an opponent back out of range.',
   blockAbsorb: 0.85,
   walkMult: 0.9,
   grappleSkill: 1.3,

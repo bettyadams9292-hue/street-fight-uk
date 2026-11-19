@@ -365,7 +365,7 @@ export class World {
   }
 
   /** Is a fight going on around you? */
-  private get fightOn(): boolean {
+  get fightOn(): boolean {
     const p = this.player;
     return !!this.activeEncounter || this.locked || (!!this.duel && this.duel.kind !== 'spar') || this.police.some((e) => !e.isKO) || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 9);
   }
