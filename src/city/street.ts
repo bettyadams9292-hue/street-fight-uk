@@ -122,6 +122,8 @@ export interface StreetPlan {
   shopfronts: Shopfront[];
   /** Shop stock drawn from the other model sets (see ShopGood). */
   goods: ShopGood[];
+  /** Approved British models standing in for the kit's (see APPROVED_STREET): drawn by LevelView, baked per chunk. */
+  approved: ApprovedPlacement[];
   /** For each of the level's props, in order: true if a kit model stands in for it. */
   propDone: boolean[];
   /** Doorways the kit buildings provide (x positions), so exits don't draw their own frame. */
@@ -537,6 +539,55 @@ const PROP_MODELS: Partial<Record<PropKind, PropModel>> = {
   cardboard: { models: ['office/delivery-box'] },
 };
 
+/**
+ * An approved model in place of a level prop (or as architecture), with the slot it has to fit: the prop's own
+ * collision box (`fit`, half sizes). LevelView draws it at its real size, shrunk only if that slot is too small.
+ */
+export interface ApprovedPlacement {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  ry: number;
+  fit?: { hx: number; hz: number };
+}
+
+/**
+ * Street props drawn with the owner's approved British models (src/render/approved/registry.ts) instead of the
+ * city kit's, where the approved one is the better and the right thing (a K6 kiosk, not a US phone booth).
+ * Choices between several are picked per prop, the same every visit. Kept on the kit: the kiosk (the approved
+ * rack is no kiosk), the planter (18k triangles for now), vehicles, fountains, pillars and turnstiles.
+ */
+const APPROVED_STREET: Partial<Record<PropKind, { ids: readonly string[]; repeat?: number }>> = {
+  phonebox: { ids: ['telephoneBox'] },
+  postbox: { ids: ['pillarPostBox'] },
+  busstop: { ids: ['busShelter'] },
+  lamp_post: { ids: ['streetLamp'] },
+  sign_post: { ids: ['roadSign'] },
+  traffic_light: { ids: ['trafficLight'] },
+  bench: { ids: ['parkBench'] },
+  bike_rack: { ids: ['bikeRack'] },
+  bin: { ids: ['wheelieBinBlack', 'wheelieBinGreen', 'wheelieBinBlue', 'wheelieBinBrown'] },
+  bollard: { ids: ['bollard'] },
+  bollard_dock: { ids: ['bollard'] },
+  bollard_row: { ids: ['bollard'], repeat: 4 },
+  atm: { ids: ['cashMachine'] },
+  vending: { ids: ['vendingMachine'] },
+  market_stall: { ids: ['marketStall'] },
+  skip: { ids: ['skipBin'] },
+  dumpster: { ids: ['dumpster'] },
+  cone: { ids: ['trafficCone'] },
+  barrier: { ids: ['roadBarrier'] },
+  trolley: { ids: ['shoppingTrolley'] },
+  drum: { ids: ['oilDrum'] },
+  crates: { ids: ['woodenCrate'] },
+  cardboard: { ids: ['cardboardBox'] },
+  rubbish_bags: { ids: ['rubbishBags'] },
+  pallets: { ids: ['palletStack'] },
+  scrap: { ids: ['scrapHeap'] },
+  container: { ids: ['shippingContainer'] },
+};
+
 /** Street furniture that belongs on paving. Where one stands out in the road, the pavement is built out round it. */
 const PAVEMENT_PROPS: ReadonlySet<PropKind> = new Set([
   'bin', 'bench', 'planter', 'mall_planter', 'bollard', 'bollard_row', 'bollard_dock', 'phonebox', 'vending', 'kiosk', 'market_stall', 'fountain', 'pillar', 'turnstile',
@@ -572,7 +623,7 @@ export function planStreet(level: LevelDef): StreetPlan {
   const hasRoad = kerbFor(level) !== null;
   const plan: StreetPlan = {
     area: level.id, back, kerbZ: hasRoad ? KERB_Z : null, front, x0, x1, ground: d.ground,
-    placements: [], blocks: [], signs: [], surfaces: [], shopfronts: [], goods: [], propDone: level.props.map(() => false), doors: [],
+    placements: [], blocks: [], signs: [], surfaces: [], shopfronts: [], goods: [], approved: [], propDone: level.props.map(() => false), doors: [],
   };
   const rng = new Rng(hash(`street:${level.id}`));
   const put = (model: string, x: number, y: number, z: number, o: Partial<Placement> = {}): void => {
@@ -622,7 +673,8 @@ export function planStreet(level: LevelDef): StreetPlan {
     plan.blocks.push({ x: (x0 + x1) / 2, y: 0.006, z: KERB_Z + KERB_DEPTH + 0.14, w: x1 - x0, h: 0.012, d: 0.07, colour: '#d9b521' });
     plan.blocks.push({ x: (x0 + x1) / 2, y: 0.006, z: KERB_Z + KERB_DEPTH + 0.29, w: x1 - x0, h: 0.012, d: 0.07, colour: '#d9b521' });
     // Drains in the gutter and covers in the road.
-    for (let x = x0 + 9 + rng.next() * 6; x < x1 - 4; x += 22 + rng.next() * 8) put('nyc/prop-manhole-cover', x, -0.24, KERB_Z + KERB_DEPTH + 1.9 + rng.next(), { sy: 0.9 });
+    // UK utility covers (approved), sat into the road with just their rim proud.
+    for (let x = x0 + 9 + rng.next() * 6; x < x1 - 4; x += 22 + rng.next() * 8) plan.approved.push({ id: 'manholeCover', x, y: -0.075, z: KERB_Z + KERB_DEPTH + 1.9 + rng.next(), ry: 0 });
   } else {
     // Districts with no pavement and kerb of their own (a precinct, a lane, a yard, a quay) keep
     // their ground where you walk, then a kerb and the road carry on in front, so the road runs
@@ -666,6 +718,19 @@ export function planStreet(level: LevelDef): StreetPlan {
       put('nyc/curb-strip', bx0 - KERB_DEPTH / 2, 0.012, (KERB_Z + bz1) / 2 + KERB_DEPTH / 2, { ry: HALF_PI, sx: (bz1 - KERB_Z) / s.w, sy: 0.6 });
       put('nyc/curb-strip', bx1 + KERB_DEPTH / 2, 0.012, (KERB_Z + bz1) / 2 + KERB_DEPTH / 2, { ry: HALF_PI, sx: (bz1 - KERB_Z) / s.w, sy: 0.6 });
       plan.surfaces.push({ kind: 'kerb', x0: bx0 - KERB_DEPTH, x1: bx1 + KERB_DEPTH, z0: bz1, z1: bz1 + KERB_DEPTH });
+    }
+    const ap = p.item ? undefined : APPROVED_STREET[p.kind];
+    if (ap) {
+      const prng = new Rng(hash(`${level.id}:prop:${i}:${p.kind}`));
+      const id = pick(prng, ap.ids);
+      const ry = ((p.turned ? 1 : 0) + (p.rot ?? 0)) * HALF_PI;
+      const copies = ap.repeat ?? 1;
+      for (let c = 0; c < copies; c++) {
+        const cx = copies === 1 ? p.x : p.x - hx + ((c + 0.5) * hx * 2) / copies;
+        plan.approved.push({ id, x: cx, y: 0, z: p.z, ry, fit: { hx: hx / copies, hz } });
+      }
+      plan.propDone[i] = true;
+      return;
     }
     const pm = PROP_MODELS[p.kind];
     if (!pm || p.item) return;
@@ -893,7 +958,15 @@ export function planStreet(level: LevelDef): StreetPlan {
   }
 
   // ---- street lamps and trees ------------------------------------------------------------------
+  // Lit roads and suburbs get the approved British column with its arm out over the pavement (and a glowing lens
+  // under its head, as the kit lamps have); plazas, lanes and yards keep their own lights.
+  const ukLamp = d.ground === 'street' || d.ground === 'suburb';
   for (const l of level.lights) {
+    if (ukLamp) {
+      plan.approved.push({ id: 'streetLamp', x: l.x, y: 0, z: back + 0.18, ry: -HALF_PI });
+      plan.blocks.push({ x: l.x, y: 4.13, z: back + 0.18 + 1.12, w: 0.2, h: 0.05, d: 0.32, colour: '#fff1d0', glow: true });
+      continue;
+    }
     const s = size(d.lamp);
     // The lamp stands on the building line, clear of where anyone walks, with its head out over the pavement.
     const tall = s.h > 6.5;

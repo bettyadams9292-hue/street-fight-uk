@@ -22,7 +22,8 @@ import { buildAnyModel, buildEquipmentModel, buildGymKitModel, buildFurnitureMod
 import { EQUIPMENT } from '../business/catalogue';
 import { CARS, FINISHES, FURNITURE } from '../property/catalogue';
 import { themeProfile } from './themes';
-import { kitStreet, planStreet, type ShopGood, type StreetPlan } from '../city/street';
+import { kitStreet, planStreet, type ApprovedPlacement, type ShopGood, type StreetPlan } from '../city/street';
+import { bakeApproved, prototype, type ApprovedCopy } from './approved/prototype';
 import { bakeStatic } from './bakeStatic';
 import { buildKitStreet, hasKitPiece, kitFloor, kitPiece, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
 import { exitLocked, type World } from '../world/World';
@@ -275,6 +276,7 @@ export class LevelView {
       }
       this.kitDoors = this.street.doors;
       this.buildShopGoods(this.street.goods);
+      this.buildApproved(this.street.approved);
     } else this.buildGround();
     // Carry the end facades on past the edges so the camera never sees a gap.
     const fac = this.street ? [] : [...lvl.facades].sort((a, b) => a.x0 - b.x0);
@@ -334,6 +336,25 @@ export class LevelView {
     if (this.lowPoly && themeProfile(lvl.theme).interior) flattenTextures(this.group);
     // Library textures repeat at their real size on whatever they were put on.
     fitUVs(this.group);
+  }
+
+  /**
+   * The owner's approved British models on a kit street (city/street.ts APPROVED_STREET): each at its real size,
+   * shrunk only where the prop's collision box (its slot) is smaller, stood on the ground, baked per 12 m chunk.
+   */
+  private buildApproved(list: readonly ApprovedPlacement[]): void {
+    if (!list.length) return;
+    const copies: ApprovedCopy[] = list.map((a) => {
+      const box = prototype(a.id).box;
+      const w = box.max.x - box.min.x;
+      const d = box.max.z - box.min.z;
+      const turned = Math.abs(Math.sin(a.ry)) > 0.7;
+      const [mw, md] = turned ? [d, w] : [w, d];
+      // Real size, unless the slot it stands in is clearly smaller (then just as small as needed, never under 70%).
+      const k = a.fit ? Math.max(0.7, Math.min(1, Math.min((a.fit.hx * 2) / mw, (a.fit.hz * 2) / md) * 1.25)) : 1;
+      return { id: a.id, x: a.x, y: a.y - box.min.y * k, z: a.z, ry: a.ry, s: k };
+    });
+    this.group.add(bakeApproved(copies, { shadows: true, name: 'approved-street' }));
   }
 
   /**
