@@ -43,7 +43,7 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 
 **Logo and icons.** `public/art/logo*.webp`, `menu-keyart*.webp`, `public/icons/`, `public/manifest.webmanifest`.
 
-**Sound.** `src/audio/AudioManager.ts` uses the recorded mp3s in `public/audio`. Menu sounds, ambience and household sounds are synthesised in code.
+**Sound.** `src/audio/AudioManager.ts` uses the recorded mp3s in `public/audio`. Menu sounds, ambience and household sounds are synthesised in code. Music: `AudioManager.setMusic('menu' | 'street' | 'boss' | null)`, chosen each frame by `Game.updateMusic` (no music in rooms listed in `INDOOR_THEMES`); the loops come from `tools/audio/make_music.py`.
 
 **Materials and textures.** The owner's texture library (130 ambientCG sets) is in `public/textures/lib`.
 - `src/render/materials/library.ts` loads sets on demand and makes the materials; `assign.ts` decides what gets which; `streetDetail.ts` lays asphalt, concrete and brick on the kit streets.
@@ -73,7 +73,7 @@ The main gaps:
 - Caps and beanies show a flat cap as a stand-in.
 - Hairstyles that borrow another style's model: afro, cornrows, mohawk, quiff, buzz, curly and ponytail.
 - Fight moves: 22 are keyed in code (hook, uppercut and so on).
-- There is no music at all.
+- Music: three synthesised loops exist (`tools/audio/make_music.py`: menu, street, boss). Recorded or commissioned tracks would still be better.
 
 When the owner adds an asset that covers a row, wire it in and tick the row.
 
@@ -138,7 +138,18 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 
 **19 Nov 2026**
 - #31: area banner shows one painted title with the other name as a small line (`Hud.showBanner`), clear of the use prompt; subway stairs are a stairwell in a gap in the frontage (`isSubwayStairs`/`SUBWAY_GAP` in `world/strip.ts`, gap in `city/street.ts`, `LevelView.subwayEntrance`); outdoor barriers are railings; precincts, lanes, yards and the quay get a kerb and road in front (street.ts ground section); kit-street paving by ground kind (`PAVING_BY_GROUND` in `render/materials/streetDetail.ts`). `?shot=subway_stairs`.
-- This PR: City Centre and Ring Road Subway dressed with kit street furniture and security-set CCTV posts (`levels.ts`), and the subway gets 4 pedestrians (`civilians.ts`). Keep street furniture against the back wall (z ≤ -1.85) or at the kerb (z ≤ -0.22): `tests/npc.test.ts` limits pedestrian about-turns to 1.8 a minute and dev sits at 1.78, so anything in the walking lanes fails it (a planter at z -1.85 did).
+- #32: City Centre and Ring Road Subway dressed with kit street furniture and security-set CCTV posts (`levels.ts`), and the subway gets 4 pedestrians (`civilians.ts`). Keep street furniture against the back wall (z ≤ -1.85) or at the kerb (z ≤ -0.22): `tests/npc.test.ts` limits pedestrian about-turns to 1.8 a minute and dev sits at 1.78, so anything in the walking lanes fails it (a planter at z -1.85 did).
+
+- #33: fixes from the game audit (https://claude.ai/artifact/CyaZtY78EAxrvmF7XMjYpq):
+  - portrait: no "turn sideways" hint, unclipped health numbers, a tighter fight camera, red edge arrows for off-screen enemies (`Game.updateEdgeMarkers`);
+  - touch buttons in plain words (PUNCH, KICK, HARD, SPECIAL, STYLE); map, bag and crew hide during a fight (`body.fight-on`);
+  - vibration on hits, blocks and knockdowns (Android; `InputManager.rumble`, Settings → Vibration);
+  - original music (above) with a Music volume slider;
+  - the first fights coach the buttons (`Game.coachText`, flag `coach:done`); Pause → Moves (`src/ui/moveList.ts`);
+  - map labels by on-screen size, touch wording, practice chips without keys, painted creator buttons, no room plates at home, the objective stays readable in a fight;
+  - grunts have first names and a shouted tell (`GRUNT_NAMES`, `Archetype.tell`; never uses the fight's RNG);
+  - Threads and the Red Lion dressed;
+  - boss challenges (Untouchable, No guard, Quick work; `challenge:<boss>:<id>`, £25 each) and a shareable KO photo.
 
 ## Open questions and next steps
 
