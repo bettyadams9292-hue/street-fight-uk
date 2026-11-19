@@ -1113,7 +1113,8 @@ body.roam .touch-ui .attack-pad .lk { left: auto; right: 0; top: 61px; bottom: a
 
 /* Needs are small icon badges on touch screens (the full words are on the character screen). */
 .touch-ui .status-chip.need { width: 30px; height: 30px; padding: 0; justify-content: center; }
-.touch-ui .status-chip.need span { display: none; }
+.touch-ui .status-chip.need .need-text { display: none; }
+.touch-ui .status-chip.need .icon { display: flex; }
 .touch-ui .status-chip.need svg { width: 17px; height: 17px; }
 .touch-ui .needs-chips { gap: 4px; }
 
@@ -1139,3 +1140,9 @@ body.roam .touch-ui .attack-pad .lk { left: auto; right: 0; top: 61px; bottom: a
   .touch-ui .extra-pad .swap { position: fixed; top: calc(10px + var(--safe-t)); right: calc(56px + var(--safe-r)); width: 74px; height: 40px; }
   .touch-ui .side-pad .touch-btn, .touch-ui .extra-pad .touch-btn { font-size: 14px; }
 }
+
+/* Phones: the use plate ("USE  Pick up can of pop") is the button. It sits above the stick zone and takes taps;
+   any other prompt (coaching, grapple options) lets touches through to the controls underneath. */
+.touch-ui .prompt-wrap { z-index: 5; }
+.touch-ui .prompt.interact { pointer-events: auto; cursor: pointer; touch-action: none; padding: 8px 14px; }
+.touch-ui .prompt.interact.down { transform: translateY(2px); filter: brightness(0.9); }

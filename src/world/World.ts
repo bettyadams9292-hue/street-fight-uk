@@ -918,9 +918,10 @@ export class World {
       else if (--this.searching === 0 && this.searchTarget) this.finishSearch(this.searchTarget);
     }
 
-    // Interact: the grab button (or E) uses whatever's in front of you, unless an enemy is in grabbing range.
+    // USE (E, the touch USE button, LB on a pad) uses whatever's in front of you, unless an enemy is in grabbing range.
+    // GRAB on its own never does: it only grabs. (LB sends both, so on a pad the use wins and the grab is dropped.)
     this.interactable = p.isKO || this.enemyInGrabRange() || this.searching > 0 ? null : this.findInteractable();
-    if (cmd.pressed.grab && this.interactable && p.isFree) {
+    if (cmd.use && this.interactable && p.isFree) {
       cmd = { ...cmd, pressed: { ...cmd.pressed, grab: false } };
       this.interact(this.interactable);
     }

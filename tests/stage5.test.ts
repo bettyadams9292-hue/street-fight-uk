@@ -43,6 +43,8 @@ function cmd(press: (keyof CommandFrame['pressed'])[] = [], moveX = 0): CommandF
   const c = emptyCommand();
   c.moveX = moveX;
   for (const p of press) c.pressed[p] = true;
+  // As on a pad, where LB both uses and grabs: these tests press it to use doors, pickups and shops.
+  c.use = c.pressed.grab;
   return c;
 }
 function run(w: World, n: number, c: (i: number) => CommandFrame = () => cmd()): void {

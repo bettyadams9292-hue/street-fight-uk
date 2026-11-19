@@ -26,6 +26,8 @@ export interface CommandFrame {
   special: boolean;
   /** Pressed this frame */
   pressed: Record<PressButton, boolean>;
+  /** Pressed this frame: use what's in front of you (doors, pickups, shops). Never a fight move. */
+  use?: boolean;
 }
 
 export function emptyCommand(): CommandFrame {
