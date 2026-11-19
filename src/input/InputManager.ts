@@ -45,7 +45,7 @@ const FULL_PUSH_MS = 280;
 export class InputManager {
   private held = new Set<string>();
   private pressedQueue = new Set<GameButton>();
-  /** USE (E, the touch USE button, or LB on a pad, which also grabs) queued since the last step. */
+  /** USE (E, the touch USE button, or LB on a pad, which is GRAB in a fight) queued since the last step. */
   private useQueued = false;
   private menuListeners = new Set<(a: MenuAction, source: InputSource, fightKey?: boolean) => void>();
   private padPrev: boolean[] = [];
@@ -174,7 +174,7 @@ export class InputManager {
     const edge = (i: number) => pressed(i) && !this.padPrev[i];
 
     for (const b of PRESS_BUTTONS) if (edge(PAD_BUTTONS[b])) this.pressedQueue.add(b);
-    // A pad has no spare button: LB uses what's in front of you, and grabs when there's nothing to use.
+    // A pad has no spare button: LB is USE out of a fight and GRAB in one (the world decides which counts).
     if (edge(PAD.LB)) this.useQueued = true;
     if (edge(PAD.START)) this.emitMenu('pause', 'gamepad');
     // Right-stick click: I (heavy punch) and RB (special) are fight buttons.
