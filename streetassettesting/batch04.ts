@@ -19,16 +19,19 @@ const C=(r:number,h:number,x:number,y:number,z:number,m:T.Material,n=32)=>{const
 const R=(a:number[],b:number[],r:number,m:T.Material)=>{const p=new T.Vector3(...a),q=new T.Vector3(...b),v=q.clone().sub(p);const o=new T.Mesh(new T.CylinderGeometry(r,r,v.length(),10),m);o.position.copy(p.add(q).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),v.normalize());g.add(o);return o};
 if(id==='skipBin'){
  const body=mat(0xd89a1c,.32,.59),rim=mat(0xb47c19,.48,.54),inside=mat(0x9e741e,.35,.74);
- // Five separate thin steel panels; no solid extruded box or loose blocks.
- const panel=(pts:number[][],z:number)=>{const sh=new T.Shape();sh.moveTo(pts[0][0],pts[0][1]);for(const p of pts.slice(1))sh.lineTo(p[0],p[1]);sh.closePath();const mesh=new T.Mesh(new T.ExtrudeGeometry(sh,{depth:.026,bevelEnabled:false}),body);mesh.position.z=z;g.add(mesh);};
- B(1.54,.045,.90,0,.075,0,inside);
- const side=[[-.77,.08],[.77,.08],[1.02,.89],[-1.02,.89]];
- panel(side,-.47);panel(side,.444);
- // End panels are sloped and fit flush between the long walls.
- for(const x of [-1,1]){const sh=new T.Shape();sh.moveTo(-.45,.08);sh.lineTo(.45,.08);sh.lineTo(.45,.89);sh.lineTo(-.45,.89);sh.closePath();const mesh=new T.Mesh(new T.ExtrudeGeometry(sh,{depth:.028,bevelEnabled:false}),body);mesh.rotation.y=Math.PI/2;mesh.position.x=x*.76;g.add(mesh);}
- for(const z of [-.47,.47]){R([-1.02,.895,z],[1.02,.895,z],.014,rim);for(const x of [-.62,0,.62])B(.035,.56,.018,x,.48,z+(z>0?.018:-.018),rim);}
- // Small welded lifting eyes remain on outer upper corners, not huge protruding blocks.
- for(const x of [-.78,.78])for(const z of [-.48,.48]){const eye=new T.Mesh(new T.TorusGeometry(.045,.012,8,20),rim);eye.rotation.y=Math.PI/2;eye.position.set(x,.82,z);g.add(eye);}
+ // A tapered open skip: every wall leans outward from the smaller floor footprint.
+ const bottomY=.075,topY=.90,lowerX=.72,upperX=1.04,lowerZ=.34,upperZ=.51;
+ const wall=(corners:number[][])=>{const verts=new Float32Array(corners.flat());const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(verts,3));geo.setIndex([0,1,2,0,2,3]);geo.computeVertexNormals();const m=new T.Mesh(geo,new T.MeshStandardMaterial({color:0xd89a1c,metalness:.32,roughness:.59,side:T.DoubleSide}));g.add(m);};
+ const p=(x:number,y:number,z:number)=>[x,y,z];
+ // The four side planes use identical tapered corners, avoiding vertical inner walls.
+ for(const zsign of [-1,1])wall([p(-lowerX,bottomY,zsign*lowerZ),p(lowerX,bottomY,zsign*lowerZ),p(upperX,topY,zsign*upperZ),p(-upperX,topY,zsign*upperZ)]);
+ for(const xsign of [-1,1])wall([p(xsign*lowerX,bottomY,-lowerZ),p(xsign*lowerX,bottomY,lowerZ),p(xsign*upperX,topY,upperZ),p(xsign*upperX,topY,-upperZ)]);
+ B(lowerX*2,.035,lowerZ*2,0,bottomY,0,inside);
+ for(const zsign of [-1,1])R([-upperX,topY,zsign*upperZ],[upperX,topY,zsign*upperZ],.014,rim);
+ for(const xsign of [-1,1])R([xsign*upperX,topY,-upperZ],[xsign*upperX,topY,upperZ],.014,rim);
+ // Stiffeners follow the actual slope of the side sheets.
+ for(const zsign of [-1,1])for(const x of [-.55,0,.55])R([x*.72,bottomY+.10,zsign*(lowerZ+.013)],[x,topY-.12,zsign*(upperZ+.014)],.014,rim);
+ for(const x of [-.76,.76])for(const zsign of [-1,1]){const eye=new T.Mesh(new T.TorusGeometry(.039,.011,8,20),rim);eye.rotation.y=Math.PI/2;eye.position.set(x,.79,zsign*.49);g.add(eye);}
 }
 if(id==='trafficCone'){
  const reflective=mat(0xf3f3e9,.08,.37),coneH=.69,baseR=.165,topR=.023;
@@ -95,6 +98,6 @@ if(id==='parkPicnicTable'){
  for(const x of [-.59,.59])R([x,.45,-.65],[x,.45,.65],.027,steel);
  for(let i=0;i<4;i++)B(1.68,.008,.009,0,.807,-.27+i*.18,dark);
 }
-g.userData={collection:'streetassettesting',batch:4,id,units:'metres',status:'review-required',revision:'reference-rebuild-v3'};
+g.userData={collection:'streetassettesting',batch:4,id,units:'metres',status:'review-required',revision:'reference-rebuild-v4'};
 return g;
 }
