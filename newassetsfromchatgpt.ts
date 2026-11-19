@@ -49,7 +49,7 @@ export function createStreetAsset(name: StreetAssetName): THREE.Group {
   if (['pillarPostBox','wallPostBox','busStopPole','busShelter','telephoneBox','litterBin'].includes(name)) {
     buildReworkedStreetAsset(g, name);
     g.userData = {collection:'newassetsfromchatgpt', standalone:true, units:'metres', assetName:name, detailVersion:4};
-    return g;
+    return finishProductionAsset(g, name);
   }
   switch (name) {
     case 'pillarPostBox':
@@ -154,7 +154,7 @@ export function createStreetAsset(name: StreetAssetName): THREE.Group {
   enhanceReferenceProps(g, name);
   upgradeDepthAndSurfaces(g, name);
   g.userData = { collection: 'newassetsfromchatgpt', standalone: true, units: 'metres', assetName: name };
-  return g;
+  return finishProductionAsset(g, name);
 }
 export const STREET_ASSET_NAMES: readonly StreetAssetName[] = [
   'pillarPostBox', 'wallPostBox', 'busStopPole', 'busShelter', 'busBench',
@@ -565,4 +565,149 @@ function buildReworkedStreetAsset(g: THREE.Group, name: StreetAssetName) {
   // Avoid remote dependencies for textures; all model geometry works offline.
   // Weathered paint/plastic maps can be replaced by authored PBR texture sets.
   g.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true;}});
+}
+
+/* V5 — production preparation: procedural PBR maps, legible labels, model
+   validation, ground alignment, sensible pivot and performance metadata.
+   All maps are authored in code; no network resources or image licensing.
+   No game integration. */
+export type AssetAudit = {name: StreetAssetName; meshes:number; triangles:number;
+  materials:number; drawCallsEstimate:number; width:number;height:number;depth:number;
+  groundOffset:number; issues:string[]; passes:boolean};
+const textureCache=new Map<string, {color:THREE.CanvasTexture;normal:THREE.CanvasTexture;roughness:THREE.CanvasTexture}>();
+function authoredMaps(hex:number,kind:string) {
+  if(typeof document==='undefined')return null;
+  const key=hex+'-'+kind;if(textureCache.has(key))return textureCache.get(key)!;
+  const c=document.createElement('canvas'),n=document.createElement('canvas'),r=document.createElement('canvas');
+  for(const x of [c,n,r]){x.width=256;x.height=256;}
+  const cc=c.getContext('2d'),nc=n.getContext('2d'),rc=r.getContext('2d');
+  if(!cc||!nc||!rc)return null;
+  const base=new THREE.Color(hex);
+  let seed=hex>>>0;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+  cc.fillStyle='#'+base.getHexString();cc.fillRect(0,0,256,256);
+  nc.fillStyle='#8080ff';nc.fillRect(0,0,256,256);
+  rc.fillStyle=kind==='metal'?'#858585':'#b6b6b6';rc.fillRect(0,0,256,256);
+  for(let i=0;i<4500;i++){
+    const x=rand()*256,y=rand()*256,w=.5+rand()*2;
+    const wear=rand();
+    cc.fillStyle=wear>.48?'rgba(255,255,255,.045)':'rgba(0,0,0,.055)';
+    cc.fillRect(x,y,w,w);
+    nc.fillStyle=wear>.5?'rgba(146,132,255,.20)':'rgba(111,126,255,.19)';
+    nc.fillRect(x,y,w,w);
+    rc.fillStyle=wear>.5?'rgba(255,255,255,.12)':'rgba(0,0,0,.10)';
+    rc.fillRect(x,y,w,w);
+  }
+  if(kind==='wood'){
+    for(let i=0;i<70;i++){
+      const y=rand()*256;
+      cc.strokeStyle='rgba(12,9,6,.10)';cc.lineWidth=.5+rand()*2;
+      cc.beginPath();cc.moveTo(0,y);cc.bezierCurveTo(80,y+rand()*8,160,y-rand()*8,256,y+rand()*5);cc.stroke();
+    }
+  }
+  const make=(canvas:HTMLCanvasElement,color:boolean)=>{
+    const t=new THREE.CanvasTexture(canvas);t.wrapS=t.wrapT=THREE.RepeatWrapping;
+    t.anisotropy=4;if(color)t.colorSpace=THREE.SRGBColorSpace;return t;
+  };
+  const out={color:make(c,true),normal:make(n,false),roughness:make(r,false)};
+  textureCache.set(key,out);return out;
+}
+function addLabel(g:THREE.Group,text:string,w:number,h:number,x:number,y:number,z:number,
+  bg='#f5f1e6',fg='#1d252c',fontSize=60) {
+  if(typeof document==='undefined')return;
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;
+  const ctx=canvas.getContext('2d');if(!ctx)return;
+  ctx.fillStyle=bg;ctx.fillRect(0,0,512,256);
+  ctx.fillStyle=fg;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='bold '+fontSize+'px Arial, sans-serif';
+  const lines=text.split('\n');
+  lines.forEach((line,i)=>ctx.fillText(line,256,128+(i-(lines.length-1)/2)*fontSize*1.15,470));
+  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),
+    new THREE.MeshBasicMaterial({map:tex,transparent:false,side:THREE.DoubleSide}));
+  mesh.position.set(x,y,z);mesh.name='Printed sign: '+text.replace(/\n/g,' / ');
+  g.add(mesh);
+}
+function finishProductionAsset(g:THREE.Group,name:StreetAssetName) {
+  // Existing models use separate geometry per mesh; keep the art untouched,
+  // replace bland surface materials and apply text on their visible front.
+  g.traverse(obj=>{
+    if(!(obj instanceof THREE.Mesh))return;
+    obj.castShadow=true;obj.receiveShadow=true;
+    const material=obj.material;
+    if(!(material instanceof THREE.MeshStandardMaterial))return;
+    if(material.transparent||material.opacity<.99)return;
+    const hex=material.color.getHex();
+    const kind=[0x4b4a46,0x55565a,0x8a8276].includes(hex)?'wood':
+      material.metalness>.25?'metal':'paint';
+    const maps=authoredMaps(hex,kind);
+    if(!maps)return;
+    // Avoid compounding existing texture maps from older enhancement passes.
+    if(material.map){material.map=null;}
+    material.map=maps.color;material.normalMap=maps.normal;
+    material.normalScale.set(.12,.12);
+    material.roughnessMap=maps.roughness;
+    material.color.setHex(0xffffff);
+    material.needsUpdate=true;
+  });
+  const text=(t:string,w:number,h:number,x:number,y:number,z:number,bg?:string,fg?:string,fs?:number)=>
+    addLabel(g,t,w,h,x,y,z,bg,fg,fs);
+  switch(name){
+    case 'telephoneBox':
+      text('TELEPHONE',.72,.13,0,2.34,.592,'#f5eed8','#a8212a',48);break;
+    case 'pillarPostBox':
+      text('POST\nCOLLECTION',.23,.18,0,.72,.325,'#e4d7b8','#202329',36);break;
+    case 'wallPostBox':
+      text('POST\nCOLLECTION',.25,.17,0,.53,.255,'#e9dfc6','#272b2e',34);break;
+    case 'busStopPole':
+      text('BUS STOP',.45,.105,0,2.57,.161,'#f5f1e6','#a21d26',50);
+      text('ROUTES\n1  12  36',.30,.36,0,2.05,.139,'#f4f1e9','#20252c',38);break;
+    case 'busShelter':
+      text('NEXT BUSES',1.05,.12,.83,2.08,.548,'#131719','#ef4c44',43);
+      text('BUS TIMES',.58,.13,-1.03,1.73,-.248,'#f5f1e6','#242b30',49);break;
+    case 'litterBin':
+      text('LITTER',.25,.11,0,.64,.446,'#1a1c1e','#d7b765',50);break;
+    case 'streetNameSign':
+      text('HIGH STREET',1.45,.23,0,1.72,.084,'#fafaf7','#242a30',54);break;
+    case 'roadSign':
+      text('TOWN CENTRE',1.06,.33,0,2.10,.090,'#20598b','#ffffff',42);break;
+    case 'timetableBoard':
+      text('TIMETABLE',.49,.14,0,1.81,.113,'#f4f0e6','#22292e',43);break;
+  }
+  // Position origin at ground centre; preserve dimensions, do not rescale.
+  g.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(g);
+  if(Number.isFinite(bounds.min.y)&&Math.abs(bounds.min.y)>.001){
+    for(const child of g.children)child.position.y-=bounds.min.y;
+  }
+  g.updateMatrixWorld(true);
+  const audit=auditStreetAsset(g,name);
+  g.userData={...g.userData,productionPass:5,audit};
+  return g;
+}
+export function auditStreetAsset(g:THREE.Group,name:StreetAssetName):AssetAudit {
+  let meshes=0,triangles=0;
+  const mats=new Set<THREE.Material>();
+  const issues:string[]=[];
+  g.updateMatrixWorld(true);
+  g.traverse(o=>{
+    if(!(o instanceof THREE.Mesh))return;
+    meshes++;
+    const geom=o.geometry;
+    if(!geom||!geom.attributes.position){issues.push('Missing mesh geometry');return;}
+    triangles+=geom.index?geom.index.count/3:geom.attributes.position.count/3;
+    const list=Array.isArray(o.material)?o.material:[o.material];
+    for(const m of list)if(m)mats.add(m);
+    if(![o.position.x,o.position.y,o.position.z].every(Number.isFinite))
+      issues.push('Non-finite mesh position');
+  });
+  const bb=new THREE.Box3().setFromObject(g),size=bb.getSize(new THREE.Vector3());
+  if(bb.isEmpty())issues.push('Empty geometry');
+  if(size.y<.05||size.y>8)issues.push('Suspicious height');
+  if(Math.abs(bb.min.y)>.025)issues.push('Not grounded');
+  if(triangles>25000)issues.push('Exceeds 25k triangle budget');
+  if(meshes>450)issues.push('Exceeds 450 draw-call budget');
+  return {name,meshes,triangles:Math.round(triangles),materials:mats.size,
+    drawCallsEstimate:meshes,width:+size.x.toFixed(3),height:+size.y.toFixed(3),
+    depth:+size.z.toFixed(3),groundOffset:+bb.min.y.toFixed(3),
+    issues,passes:issues.length===0};
 }
