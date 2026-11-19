@@ -152,7 +152,8 @@ export function createStreetAsset(name: StreetAssetName): THREE.Group {
     }
   }
   enhanceReferenceProps(g, name);
-  upgradeDepthAndSurfaces(g, name);
+  // Retired legacy enhancement: it layered geometry and rewrote material colours.
+  // V8 uses stable base colours and explicit dimensional details instead.
   polishEveryRemainingAsset(g, name);
   g.userData = { collection: 'newassetsfromchatgpt', standalone: true, units: 'metres', assetName: name };
   return finishProductionAsset(g, name);
@@ -629,6 +630,7 @@ function addLabel(g:THREE.Group,text:string,w:number,h:number,x:number,y:number,
   g.add(mesh);
 }
 function finishProductionAsset(g:THREE.Group,name:StreetAssetName) {
+  finishEdgesV8(g,name);
   // Existing models use separate geometry per mesh; keep the art untouched,
   // replace bland surface materials and apply text on their visible front.
   // Stable physically-based solid materials. Do not allocate hundreds of
@@ -692,7 +694,7 @@ function finishProductionAsset(g:THREE.Group,name:StreetAssetName) {
   }
   g.updateMatrixWorld(true);
   const audit=auditStreetAsset(g,name);
-  g.userData={...g.userData,productionPass:5,audit};
+  g.userData={...g.userData,productionPass:8,audit};
   return g;
 }
 export function auditStreetAsset(g:THREE.Group,name:StreetAssetName):AssetAudit {
@@ -717,6 +719,7 @@ export function auditStreetAsset(g:THREE.Group,name:StreetAssetName):AssetAudit 
   if(Math.abs(bb.min.y)>.025)issues.push('Not grounded');
   if(triangles>25000)issues.push('Exceeds 25k triangle budget');
   if(meshes>450)issues.push('Exceeds 450 draw-call budget');
+  if(size.x>12||size.z>12)issues.push('Unusually large asset footprint');
   return {name,meshes,triangles:Math.round(triangles),materials:mats.size,
     drawCallsEstimate:meshes,width:+size.x.toFixed(3),height:+size.y.toFixed(3),
     depth:+size.z.toFixed(3),groundOffset:+bb.min.y.toFixed(3),
@@ -832,4 +835,77 @@ function polishEveryRemainingAsset(g:THREE.Group,name:StreetAssetName){
  }
  }
  g.userData.visualRevision=7;
+}
+
+/** V8 finishing details: bevel-like edge highlights, ground feet, and
+ * unmistakable material contrast without fragile generated colour textures.
+ * These are decorative geometry only, not gameplay collision meshes. */
+function finishEdgesV8(g:THREE.Group,name:StreetAssetName){
+ const B=(w:number,h:number,d:number,x:number,y:number,z:number,c:number)=>
+   box(g,w,h,d,x,y,z,c);
+ const dark=0x252a30,chrome=0xb8bec0,amber=0xd5ae55;
+ switch(name){
+ case 'busShelter':
+   for(const x of [-1.55,1.55]){
+     B(.12,.055,1.32,x,.035,0,dark);
+     B(.026,1.7,.03,x,1.2,.48,chrome);
+   }
+   B(3.35,.025,.045,0,2.48,.65,chrome);
+   break;
+ case 'telephoneBox':
+   for(const x of [-.47,.47])B(.028,1.9,.035,x,1.18,.535,0xd34846);
+   B(.90,.03,.06,0,.07,.54,chrome);
+   break;
+ case 'litterBin':
+   B(.25,.035,.055,0,.42,.36,amber);
+   B(.26,.035,.055,0,.83,.36,amber);
+   break;
+ case 'pillarPostBox':
+   B(.32,.025,.055,0,.29,.27,0xd34846);
+   break;
+ case 'wallPostBox':
+   B(.38,.022,.04,0,.29,.24,0xd34846);
+   break;
+ case 'busStopPole':
+   B(.32,.035,.035,0,1.28,.12,chrome);
+   break;
+ case 'busBench':
+   for(const x of [-.72,.72])B(.14,.035,.30,x,.045,0,dark);
+   break;
+ case 'timetableBoard':
+   B(.68,.025,.13,0,1.99,.03,chrome);
+   break;
+ case 'streetLamp':
+   B(.36,.012,.22,1.02,4.175,0,0xfff1bb);
+   break;
+ case 'bollard':
+   B(.24,.028,.24,0,.018,0,dark);
+   break;
+ case 'railings':
+   for(const x of [-1.25,1.25])B(.18,.03,.18,x,.02,0,dark);
+   break;
+ case 'recyclingBin':
+   B(.31,.022,.04,0,.61,.277,chrome);
+   break;
+ case 'electricalCabinet':
+   B(.80,.025,.08,0,1.49,.06,dark);
+   break;
+ case 'streetNameSign':
+   B(1.68,.022,.045,0,1.53,.09,chrome);
+   break;
+ case 'pedestrianCrossing':
+   B(3.0,.009,.03,0,.032,-1.59,0x777d80);
+   break;
+ case 'roadSign':
+   B(1.18,.022,.04,0,1.83,.14,chrome);
+   break;
+ case 'parkBench':
+   for(const x of [-.70,.70])B(.17,.03,.28,x,.018,0,dark);
+   break;
+ case 'wheelieBinBlack':case 'wheelieBinBrown':
+ case 'wheelieBinGreen':case 'wheelieBinBlue':
+   B(.55,.02,.035,0,.35,.388,0x687278);
+   break;
+ }
+ g.userData.finishingRevision=8;
 }
