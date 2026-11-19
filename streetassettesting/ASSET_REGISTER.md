@@ -54,3 +54,11 @@ Bus shelter, bus timetable pole, pillar postbox, red telephone kiosk, pavement b
 **Source:** `streetassettesting/batch06.ts`; **viewer:** `streetassettesting/batch06-viewer.html`.
 
 **Status:** First-pass test models, awaiting visual review. No playable-game integration. No CCTV/security assets.
+
+## Batch 07 — 30 new first-pass models awaiting review
+
+Terraced-house brickwork, door and windows; shop awning, roller shutter and fascia; pub sign, window, stool, booth and keg cradle; chimney pot, roof vent, air-conditioning, downpipe and gutter; coal bunker, milk crate, bread tray, takeaway menu, chip-shop fryer and warmer, butcher counter, greengrocer crate, laundrette folding table, clothes airer, garage door and water butt.
+
+**Source:** `streetassettesting/batch07.ts`; **viewer:** `streetassettesting/batch07-viewer.html`.
+
+**Status:** New procedural first-pass assets awaiting user review; no promotion or game integration. CCTV/security excluded. Batch 06 contains duplicate models and remains unapproved.
