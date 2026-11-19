@@ -19,7 +19,7 @@ export type Temper = 'nervy' | 'nosy' | 'steady';
 
 /** How busy each street is (max pedestrians alive near you). Not listed = nobody about. */
 export const CIVILIAN_DENSITY: Partial<Record<AreaId, number>> = {
-  estate: 5, high_street: 9, city: 9, residential: 6, leisure: 6, stadium: 6, market: 7, mall: 8, precinct: 7, nightlife: 8,
+  estate: 5, high_street: 9, city: 9, subway: 4, residential: 6, leisure: 6, stadium: 6, market: 7, mall: 8, precinct: 7, nightlife: 8,
   ind_estate: 4, docks: 2, car_park: 2, underground: 5, alleys: 2, industrial: 3,
 };
 
