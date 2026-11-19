@@ -293,69 +293,84 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
   for(const y of [.04,2.16])B(2.07,.025,.09,0,y,.05,brushed);
  }
  if(id==='exerciseBike'){
-  // Reference-style spin bike: connected front frame, rear saddle tube,
-  // large flywheel, side-drive housing, handlebars, display and levelling feet.
-  for(const z of [-.40,.43]){
-   R([-.55,.085,z],[.52,.085,z],.036,graphite);
-   for(const x of [-.53,.50])C(.055,.035,x,.025,z,rubber);
+  // Frame runs along X, stabiliser feet span Z. All members meet actual joints.
+  const tyre=mat(0x101317,.12,.8),cast=mat(0x3e444b,.58,.42),display=mat(0x627d89,.16,.22);
+  for(const x of [-.54,.57]){
+    R([x,.085,-.43],[x,.085,.43],.038,graphite);
+    for(const z of [-.43,.43])sphere(x,.085,z,.052,rubber);
   }
-  R([-.34,.13,0],[.12,.55,0],.055,graphite);
-  R([.12,.55,0],[.32,1.19,0],.085,graphite);
-  R([-.37,.12,0],[-.37,1.08,0],.051,graphite);
-  R([-.37,1.08,0],[-.43,1.22,0],.038,brushed);
-  // Saddle: curved silhouette using scaled spheres, no rectangular block.
-  const saddle=sphere(-.46,1.27,0,.20,rubber);saddle.scale.set(1.5,.34,.65);
-  B(.17,.028,.14,-.43,1.18,0,brushed);
-  disc(.30,.52,0,.36,.12,graphite);
-  disc(.37,.52,0,.29,.014,brushed);
-  disc(.386,.52,0,.245,.018,graphite);
-  disc(.404,.52,0,.045,.026,brushed);
-  // Main drivetrain cover, chain casing and realistic crank/pedals.
-  const cover=B(.50,.32,.15,-.08,.40,0,graphite);cover.rotation.z=.14;
-  disc(-.16,.38,0,.16,.17,black);
-  R([-.16,.38,-.14],[-.36,.22,-.14],.019,brushed);
-  R([-.16,.38,.14],[.04,.54,.14],.019,brushed);
-  B(.20,.04,.12,-.36,.22,-.14,rubber);B(.20,.04,.12,.04,.54,.14,rubber);
-  R([.32,1.19,0],[.44,1.45,0],.042,graphite);
-  R([.44,1.45,-.33],[.44,1.45,.33],.032,graphite);
+  // Triangulated central chassis and swept front mast.
+  R([-.43,.13,0],[-.16,.54,0],.064,graphite);
+  R([-.16,.54,0],[.34,.56,0],.080,graphite);
+  R([.34,.56,0],[.57,.13,0],.072,graphite);
+  R([-.16,.54,0],[.28,1.18,0],.095,graphite);
+  R([-.43,.13,0],[-.43,1.12,0],.049,graphite);
+  R([-.43,1.12,0],[-.50,1.26,0],.032,brushed);
+  // Sculpted saddle, stem clamp and its visible mounting rails.
+  const saddle=sphere(-.52,1.31,0,.19,rubber);saddle.scale.set(1.35,.30,.76);
+  for(const z of [-.075,.075])R([-.63,1.25,z],[-.38,1.25,z],.010,brushed);
+  C(.047,.065,-.43,1.11,0,graphite);
+  // Flywheel axis points along Z; circular wheel must face the viewer.
+  const wheel=C(.34,.105,.37,.57,0,tyre,48);wheel.rotation.x=Math.PI/2;
+  const wheelFace=C(.288,.112,.37,.57,0,cast,48);wheelFace.rotation.x=Math.PI/2;
+  for(const z of [-.064,.064]){
+    const trim=C(.235,.008,.37,.57,z,brushed,48);trim.rotation.x=Math.PI/2;
+    const hub=C(.047,.015,.37,.57,z+(z>0?.012:-.012),graphite,24);hub.rotation.x=Math.PI/2;
+  }
+  // Drive cover on right side, cranks and independent pedals.
+  const drive=sphere(-.09,.44,.075,.26,graphite);drive.scale.set(1.36,.70,.42);
+  for(const z of [-.19,.19]){
+    const arm=R([-.12,.44,z],[-.30,.23,z],.022,brushed);
+    B(.21,.045,.13,-.32,.23,z,rubber);
+  }
+  // Forward console and ergonomic curved handlebars.
+  R([.28,1.18,0],[.44,1.45,0],.043,graphite);
+  R([.44,1.45,-.33],[.44,1.45,.33],.031,graphite);
   for(const z of [-.33,.33]){
-   R([.44,1.45,z],[.66,1.32,z],.03,graphite);
-   R([.66,1.32,z],[.73,1.42,z],.029,rubber);
+    R([.44,1.45,z],[.64,1.33,z],.027,graphite);
+    R([.64,1.33,z],[.72,1.41,z],.027,rubber);
+    R([.44,1.45,z],[.34,1.59,z*.80],.025,graphite);
   }
-  const screen=B(.25,.16,.055,.45,1.60,0,graphite);screen.rotation.z=-.20;
-  B(.18,.10,.009,.484,1.61,.031,mat(0x52616a,.1,.25));
+  const console=B(.26,.15,.09,.43,1.56,0,graphite);console.rotation.z=-.20;
+  B(.19,.085,.012,.455,1.58,.052,display);
+  B(.055,.05,.05,.20,1.06,.08,red);
  }
  if(id==='boxingRing'){
-  // 5m raised canvas deck, 4 rows of ropes at each side,
-  // corner cushions, turnbuckles, skirts and an attached stair set.
-  B(5.1,.30,5.1,0,.34,0,graphite);
-  B(5.02,.065,5.02,0,.525,0,mat(0x3e8db9,.05,.85));
-  for(const side of [-1,1]){
-   B(5.10,.29,.045,0,.35,side*2.54,black);
-   B(.045,.29,5.10,side*2.54,.35,0,black);
+  // Regulation-inspired raised deck with inset canvas, four taut ropes,
+  // attached turnbuckles and padded corners; entrance steps are connected.
+  const canvas=mat(0x397fa8,.04,.86),skirt=mat(0x182a3a,.08,.8);
+  B(5.12,.35,5.12,0,.36,0,graphite);
+  B(5.03,.07,5.03,0,.565,0,canvas);
+  for(const sign of [-1,1]){
+    B(5.10,.30,.045,0,.35,sign*2.55,skirt);
+    B(.045,.30,5.10,sign*2.55,.35,0,skirt);
   }
-  for(const x of [-2.37,2.37])for(const z of [-2.37,2.37]){
-   B(.11,1.63,.11,x,1.36,z,graphite);
-   for(const y of [.84,1.10,1.36,1.62]){
-    const colour=x<0?red:blue;
-    B(.21,.14,.22,x,y,z,colour);
-    for(const sign of [-1,1]){
-     R([x,y,z],[x-sign*.24,y,z],.017,brushed);
-     R([x,y,z],[x,y,z-sign*.24],.017,brushed);
+  const corners=[[-2.38,-2.38],[-2.38,2.38],[2.38,-2.38],[2.38,2.38]] as const;
+  for(const [x,z] of corners){
+    B(.12,1.63,.12,x,1.38,z,graphite);
+    const pad=x<0?red:blue;
+    // One vertical upholstered corner pad, not four disconnected blocks.
+    B(.24,.92,.25,x,1.25,z,pad);
+    for(const y of [.83,1.09,1.35,1.61]){
+      // Turnbuckle sleeves bridge between posts and the start of each rope.
+      const sx=x<0?1:-1,sz=z<0?1:-1;
+      R([x,y,z],[x+sx*.21,y,z],.016,brushed);
+      R([x,y,z],[x,y,z+sz*.21],.016,brushed);
+      B(.08,.065,.07,x+sx*.18,y,z,graphite);
+      B(.07,.065,.08,x,y,z+sz*.18,graphite);
     }
-   }
   }
-  for(const y of [.84,1.10,1.36,1.62]){
-   for(const z of [-2.37,2.37])R([-2.17,y,z],[2.17,y,z],.019,white);
-   for(const x of [-2.37,2.37])R([x,y,-2.17],[x,y,2.17],.019,white);
+  for(const y of [.83,1.09,1.35,1.61]){
+    for(const z of [-2.38,2.38])R([-2.18,y,z],[2.18,y,z],.019,white);
+    for(const x of [-2.38,2.38])R([x,y,-2.18],[x,y,2.18],.019,white);
   }
-  // Steps touch the ring rather than floating outside the platform.
+  // Three attached ascending treads, rising to the front deck edge.
   for(let i=0;i<3;i++){
-   const stepH=.12*(i+1),z=2.57+.26*(2-i);
-   B(.84,stepH,.28,0,stepH/2,z,graphite);
-   B(.84,.024,.28,0,stepH,z,brushed);
+    const height=.16*(i+1),z=3.14-i*.29;
+    B(.90,height,.29,0,height/2,z,graphite);
+    B(.90,.022,.29,0,height+.012,z,brushed);
   }
-  decal('SFUK BOXING',1.65,.20,0,.36,2.566,'#151b22','#e9e9e5');
+  decal('STREET FIGHT UK',1.60,.18,0,.35,2.579,'#172736','#edf1f3');
  }
  const palisade=(gate:boolean,poor:boolean)=>{
   const w=gate?1.7:3.05,n=gate?10:18;
@@ -472,6 +487,6 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
  const poor='tags' in entry&&entry.tags.includes('poor' as never);
  g.userData={collection:'SFUK_expansion',standalone:true,id,category:entry.category,
   tags:poor?['poor']:[],districtTags:poor?['poor']:[],units:'metres',pivot:'ground-centre',
-  referenceInspired:true,revision:2,quality:'procedural-work-in-progress'};
+  referenceInspired:true,revision:3,quality:'procedural-work-in-progress'};
  return g;
 }
