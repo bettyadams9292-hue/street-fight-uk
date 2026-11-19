@@ -290,7 +290,36 @@ export function createAsset(id:string):THREE.Group {
   const mattress=new THREE.MeshStandardMaterial({color:0xe9e6df,roughness:1});
   const duvet=new THREE.MeshStandardMaterial({color:palette[(v+4)%palette.length],roughness:.97});
   const pillow=new THREE.MeshStandardMaterial({color:0xf4f0e8,roughness:1});
-  if(v<=9){
+  if(v===5||v===6){
+   // Two real stacked sleeping platforms for bunk bed; elevated single for loft.
+   const bunk=v===5,w=1.03,d=2.08,lower=.49,upper=1.48;
+   const levels=bunk?[lower,upper]:[upper];
+   for(const x of [-w/2+.055,w/2-.055])for(const z of [-d/2+.055,d/2-.055]){
+    b(.085,1.98,.085,x,.99,z,frame);
+   }
+   for(const y of levels){
+    b(w,.10,d,0,y-.12,0,frame);
+    b(w-.09,.14,d-.13,0,y,0,mattress);
+    b(w-.12,.045,d*.55,0,y+.095,d*.17,duvet);
+    bevelBox(w*.64,.075,.32,0,y+.14,-d*.31,pillow,.022);
+    for(const z of [-d/2+.07,d/2-.07])b(w,.065,.065,0,y-.12,z,frame);
+   }
+   // Guardrails on the upper bunk, leaving a ladder entry at the foot.
+   for(const x of [-w/2+.035,w/2-.035]){
+    b(.055,.36,.055,x,upper+.23,-d*.19,frame);
+    b(.045,.055,d*.70,x,upper+.40,-d*.12,frame);
+   }
+   b(w,.065,.065,0,upper+.43,-d/2+.05,frame);
+   b(w,.065,.065,0,upper+.43,d/2-.05,frame);
+   // Ladder attaches to the near side of the frame with usable rungs.
+   const lx=w/2+.045,lz=d*.27;
+   for(const z of [lz-.22,lz+.22])b(.055,1.57,.055,lx,.80,z,frame);
+   for(let j=0;j<5;j++)b(.07,.048,.48,lx,.26+j*.29,lz,frame);
+   if(!bunk){
+    // Loft bed has clear space below, not a second mattress.
+    b(w-.16,.055,d*.60,0,.16,0,frame);
+   }
+  }else if(v<=9){
    const w=v===0?.98:v===1?1.20:v>=4?1.95:1.55,d=v===5?1.95:2.15;
    // One bed frame and one set of bedding, avoiding overlapping colour planes.
    for(const x of [-w/2+.09,w/2-.09])for(const z of [-d/2+.10,d/2-.10])b(.085,.38,.085,x,.19,z,frame);
