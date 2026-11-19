@@ -123,8 +123,8 @@ export const BOSSES: Record<BossId, BossDef> = {
     id: 'estate_king', name: 'Tyrone Fairclough', title: 'The Estate King', district: 'Hollins Estate',
     intro: 'Hollins is mine. Every door, every stairwell. Who let you in?',
     defeat: 'Alright... alright. Hollins is yours. For now.',
-    brain: { ...baseBrain, style: 'street', attributes: attrs(8, 7, 8, 7, 7, 7), level: 3, aggression: 0.55, blockChance: 0.28, dodgeChance: 0.15, comboLength: 3, reactionFrames: 15 },
-    style: 'street', secondaryStyle: 'boxing', attributes: attrs(8, 7, 8, 7, 7, 7), level: 3, bonusHealth: 60,
+    brain: { ...baseBrain, style: 'street', attributes: attrs(8, 7, 8, 7, 7, 7), level: 3, aggression: 0.6, blockChance: 0.32, dodgeChance: 0.15, comboLength: 3, reactionFrames: 15 },
+    style: 'street', secondaryStyle: 'boxing', attributes: attrs(8, 7, 8, 7, 7, 7), level: 3, bonusHealth: 120,
     appearance: { body: 'male', muscle: 0.6, weight: 0.3, height: 1.02, hair: 'cornrows', hairColour: '#0e0b09', facialHair: 'goatee', top: 'puffer', topColour: '#e8e6e1', bottoms: 'joggers', bottomsColour: '#1b1d22', shoes: 'trainers', shoesColour: '#e8e6e1', accessories: ['chain', 'ring', 'earring'], chainColour: 'gold', skinTone: '#5e3b24', faceScar: 'brow' },
     phases: [
       { below: 0.6, name: 'Stairwell crew', line: 'He whistles and his lads come running.', summon: [{ archetype: 'hooded' }] },
@@ -168,7 +168,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     appearance: { body: 'female', muscle: 0.75, weight: 0.2, height: 1.0, hair: 'ponytail', hairColour: '#c99a5b', top: 'vest', topColour: '#1b1d22', bottoms: 'cargos', bottomsColour: '#3a3d2a', shoes: 'boots', accessories: ['wraps'], skinTone: '#f6d7c3', tattoos: { leftUpperArm: 'geometric', rightUpperArm: 'none', leftForearm: 'none', rightForearm: 'geometric', chest: 'none', neck: 'none' } },
     phases: [
       { below: 0.6, name: 'Elbows and knees', line: 'Kasia closes the distance: clinch range!', aggression: 0.75, speedMult: 1.1 },
-      { below: 0.3, name: 'Wrench', line: 'She grabs a pipe wrench off the line!', weapon: 'wrench', summon: [{ archetype: 'gang_enforcer' }] },
+      { below: 0.3, name: 'Wrench', line: 'She grabs a pipe wrench off the line, and a lad from the floor joins in!', weapon: 'wrench', summon: [{ archetype: 'hooded' }] },
     ],
     reward: { cash: 1200, xp: 1100 }, flag: 'boss_factory', drops: ['crypto_wallet'],
   },
@@ -190,7 +190,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     intro: 'You’ve caused a lot of trouble in my clubs. Let’s settle it on the dance floor.',
     defeat: 'Out. Get out of my club.',
     brain: { ...baseBrain, style: 'kickboxing', attributes: attrs(8, 10, 8, 10, 8, 10), level: 7, aggression: 0.55, blockChance: 0.3, dodgeChance: 0.28, parryChance: 0.15, comboLength: 3, reactionFrames: 11 },
-    style: 'kickboxing', secondaryStyle: 'karate', attributes: attrs(8, 10, 8, 10, 8, 10), level: 7, bonusHealth: 115,
+    style: 'kickboxing', secondaryStyle: 'karate', attributes: attrs(8, 10, 8, 10, 8, 10), level: 7, bonusHealth: 100,
     appearance: { body: 'female', muscle: 0.55, weight: 0.15, height: 1.02, hair: 'long', hairColour: '#0e0b09', top: 'leather', topColour: '#4a0e2a', bottoms: 'jeans', bottomsColour: '#1b1d22', shoes: 'boots', accessories: ['earring', 'chain', 'ring'], chainColour: 'silver', skinTone: '#4a2e1c' },
     phases: [
       { below: 0.65, name: 'Door staff', line: 'Simone snaps her fingers. The bouncers move in.', summon: [{ archetype: 'bouncer' }] },
@@ -215,7 +215,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     id: 'underground_king', name: 'Silas Crane', title: 'The Underground King', district: 'Deep Line',
     intro: 'Down here there’s no daylight and no rules. Just me.',
     defeat: 'The tunnels... are yours...',
-    brain: { ...baseBrain, style: 'bjj', attributes: attrs(10, 8, 11, 9, 9, 12), level: 8, aggression: 0.5, blockChance: 0.4, dodgeChance: 0.15, parryChance: 0.2, grabChance: 0.3, comboLength: 3, reactionFrames: 9 },
+    brain: { ...baseBrain, style: 'bjj', attributes: attrs(10, 8, 11, 9, 9, 12), level: 8, aggression: 0.5, blockChance: 0.4, dodgeChance: 0.15, parryChance: 0.2, grabChance: 0.15, comboLength: 3, reactionFrames: 10 },
     style: 'bjj', secondaryStyle: 'muay_thai', attributes: attrs(10, 8, 11, 9, 9, 12), level: 8, bonusHealth: 180,
     appearance: { body: 'male', muscle: 0.65, weight: 0.25, height: 1.04, hair: 'long', hairColour: '#2a1c12', greying: 0.4, facialHair: 'full_beard', top: 'coat', topColour: '#2b2e35', bottoms: 'cargos', bottomsColour: '#1b1d22', shoes: 'boots', accessories: ['chain', 'ring'], chainColour: 'silver', skinTone: '#cf9670' },
     phases: [
@@ -229,7 +229,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     intro: 'Dunc worked for me. They all worked for me. You’ve been fighting my staff.',
     defeat: 'Then it’s yours. All of it. Every street.',
     brain: { ...baseBrain, style: 'boxing', attributes: attrs(12, 10, 12, 9, 11, 12), level: 10, aggression: 0.6, blockChance: 0.45, dodgeChance: 0.2, parryChance: 0.2, grabChance: 0.12, comboLength: 4, reactionFrames: 9 },
-    style: 'boxing', secondaryStyle: 'muay_thai', attributes: attrs(12, 10, 12, 9, 11, 12), level: 10, bonusHealth: 170,
+    style: 'boxing', secondaryStyle: 'muay_thai', attributes: attrs(12, 10, 12, 9, 11, 12), level: 10, bonusHealth: 140,
     appearance: { body: 'male', muscle: 0.75, weight: 0.4, height: 1.05, hair: 'quiff', hairColour: '#4a3020', greying: 0.6, facialHair: 'short_beard', top: 'coat', topColour: '#1b1d22', bottoms: 'jeans', bottomsColour: '#1b1d22', shoes: 'boots', accessories: ['watch', 'ring'], skinTone: '#eac0a2', faceScar: 'chin' },
     phases: [
       { below: 0.75, name: 'The inner circle', line: 'Hale’s inner circle steps out of the shadows.', summon: [{ archetype: 'gang_enforcer' }] },

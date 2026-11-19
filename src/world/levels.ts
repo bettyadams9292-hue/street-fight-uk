@@ -133,7 +133,8 @@ const estate: LevelDef = {
   encounters: [
     {
       id: 'lads', triggerX: 18, lock: [10, 34], optional: false,
-      waves: [{ enemies: [{ archetype: 'thug' }, { archetype: 'thug' }] }, { enemies: [{ archetype: 'hothead' }, { archetype: 'thug' }] }],
+      // The game's first fight, with the coach on: one lad to learn on, then two.
+      waves: [{ enemies: [{ archetype: 'thug' }] }, { enemies: [{ archetype: 'hothead' }, { archetype: 'thug' }] }],
       reward: { cash: 30, xp: 80 }, objective: 'Get past the estate lads',
     },
     { id: 'garage_crew', triggerX: 40, optional: true, waves: [{ enemies: [{ archetype: 'hooded' }, { archetype: 'thug' }] }], reward: { cash: 20, xp: 60 } },

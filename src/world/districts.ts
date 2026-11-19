@@ -657,7 +657,7 @@ const carPark: LevelDef = {
   encounters: [
     {
       id: 'level3', triggerX: 36, lock: [26, 50], optional: false,
-      waves: [{ enemies: [{ archetype: 'runner' }, { archetype: 'hooded' }, { archetype: 'tooled', weapon: 'crowbar' }] }, { enemies: [{ archetype: 'gang_enforcer' }, { archetype: 'knifeman' }] }],
+      waves: [{ enemies: [{ archetype: 'hooded' }, { archetype: 'tooled', weapon: 'crowbar' }] }, { enemies: [{ archetype: 'gang_enforcer' }, { archetype: 'knifeman' }] }],
       reward: { cash: 90, xp: 280 }, objective: 'Someone’s running a chop shop up here',
     },
     { id: 'roof', triggerX: 66, optional: true, waves: [{ enemies: [{ archetype: 'elite' }] }], reward: { cash: 80, xp: 200 } },
@@ -823,7 +823,7 @@ const hq: LevelDef = {
   encounters: [
     {
       id: 'gate', triggerX: 22, lock: [10, 36], optional: false,
-      waves: [{ enemies: [{ archetype: 'bouncer' }, { archetype: 'gang_enforcer' }] }, { enemies: [{ archetype: 'elite' }, { archetype: 'knifeman' }, { archetype: 'tooled', weapon: 'baseball_bat' }] }],
+      waves: [{ enemies: [{ archetype: 'bouncer' }, { archetype: 'gang_enforcer' }] }, { enemies: [{ archetype: 'elite' }, { archetype: 'knifeman' }] }],
       reward: { cash: 150, xp: 450 }, objective: 'Break through the gate',
     },
     {
