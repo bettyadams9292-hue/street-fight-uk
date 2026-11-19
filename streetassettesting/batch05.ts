@@ -159,4 +159,100 @@ if(id==='marketStall'){
  B(1.88,.14,.10,0,.80,.39,wood);
 }
 
+
+/* Batch 05 geometry rebuild — replace defective prototypes, don't stack patches. */
+if(['bakeryDisplay','takeawayCounter','bikeRack','parkingMeter','cashMachine','gardenShed','shoppingBasket','marketStall'].includes(id)){
+ g.clear();
+ const mat=(c:number,metal=0)=>new T.MeshStandardMaterial({color:c,metalness:metal,roughness:metal?.48:.76,side:T.DoubleSide});
+ const oak=mat(0x92724f),pine=mat(0xb99870),cream2=mat(0xe6dfce),charcoal=mat(0x242a2c),chrome=mat(0x9da9ab,.72),paint=mat(0xb51c27),navy=mat(0x294459),display=mat(0x759cb1),crust=mat(0xb77937),gold=mat(0xdba14a),leaf=mat(0x497e38),tomato=mat(0xb73729);
+ const box=(w:number,h:number,d:number,x:number,y:number,z:number,m:T.Material)=>B(w,h,d,x,y,z,m);
+ const rod=(a:number[],b:number[],r:number,m:T.Material)=>R(a,b,r,m);
+ const ball=(r:number,x:number,y:number,z:number,m:T.Material)=>sphere(r,x,y,z,m);
+ const line=(pts:number[][],r:number,m:T.Material)=>{for(let i=1;i<pts.length;i++)rod(pts[i-1],pts[i],r,m);};
+ if(id==='bakeryDisplay'){
+  for(const x of [-.62,.62])for(const z of [-.28,.28])box(.055,1.55,.055,x,.79,z,oak);
+  for(const y of [.18,.64,1.10]){box(1.35,.048,.66,0,y,0,pine);box(1.35,.065,.04,0,y+.045,.33,oak);
+   for(let i=0;i<4;i++){const x=-.45+i*.30;const loaf=new T.Mesh(new T.SphereGeometry(.125,20,12),i%2?gold:crust);loaf.scale.set(1.05,.52,.72);loaf.position.set(x,y+.115,0);g.add(loaf);
+    for(let j=-1;j<=1;j++)rod([x+j*.035,y+.167,.082],[x+j*.035+.025,y+.177,.085],.004,cream2);
+   }
+  }
+  box(1.40,.065,.73,0,1.57,0,oak);box(1.35,.10,.70,0,.07,0,oak);
+ }
+ if(id==='takeawayCounter'){
+  box(1.85,.90,.72,0,.46,0,cream2);box(1.92,.065,.80,0,.94,0,charcoal);
+  box(1.68,.58,.025,0,.48,.375,navy);box(1.70,.065,.045,0,.79,.398,oak);
+  for(const x of [-.78,.78])box(.045,.67,.045,x,.49,.395,chrome);
+  // A complete till sits ON the worktop, not floating above it.
+  box(.48,.22,.30,.45,1.075,-.10,charcoal);
+  const scr=box(.35,.16,.015,.45,1.15,.059,display);scr.rotation.x=-.15;
+  box(.37,.035,.22,.45,.993,.09,chrome);
+  for(let i=0;i<4;i++)for(let j=0;j<3;j++)box(.045,.009,.028,.30+j*.095,1.015,.04+i*.038,cream2);
+  box(.16,.035,.12,-.50,.997,-.10,paint);box(.08,.035,.055,-.50,1.03,-.06,charcoal);
+  box(.32,.025,.25,-.37,.987,.17,chrome);
+ }
+ if(id==='bikeRack'){
+  // Sheffield stand: a SINGLE continuous bent tube, not three tubes and corner rings.
+  const pts=[[-.37,.025,0],[-.37,.66,0],[-.35,.75,0],[-.28,.82,0],[-.18,.85,0],[.18,.85,0],[.28,.82,0],[.35,.75,0],[.37,.66,0],[.37,.025,0]];
+  line(pts,.024,chrome);
+  for(const x of [-.37,.37]){box(.16,.014,.13,x,.012,0,chrome);for(const z of [-.045,.045]){const bolt=C(.009,.008,x,.022,z,charcoal,12);}}
+ }
+ if(id==='parkingMeter'){
+  // British pay-and-display terminal with a compact integrated head.
+  box(.18,1.17,.16,0,.67,0,navy);box(.34,.055,.30,0,.045,0,charcoal);
+  box(.46,.75,.33,0,1.58,0,navy);box(.48,.055,.36,0,1.985,0,charcoal);
+  box(.33,.21,.015,0,1.79,.175,display);box(.37,.045,.018,0,1.93,.174,cream2);
+  box(.28,.12,.018,0,1.55,.175,charcoal);
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++)box(.045,.024,.009,-.09+j*.09,1.585-i*.039,.189,chrome);
+  box(.16,.019,.025,0,1.39,.179,chrome);box(.12,.04,.018,0,1.30,.175,gold);
+  box(.30,.09,.018,0,1.19,.172,cream2);
+ }
+ if(id==='cashMachine'){
+  // Flush recessed ATM fascia, distinct card / note / keypad positions.
+  box(.88,1.85,.52,0,.93,0,chrome);box(.73,1.18,.026,0,1.18,.274,charcoal);
+  box(.56,.40,.016,0,1.48,.294,navy);box(.47,.31,.018,0,1.48,.305,display);
+  box(.29,.038,.018,-.13,1.18,.299,charcoal);box(.22,.018,.02,-.13,1.19,.31,chrome);
+  box(.16,.10,.018,.22,1.17,.30,chrome);box(.09,.012,.025,.22,1.17,.317,charcoal);
+  box(.38,.28,.025,0,.90,.303,navy);
+  for(let i=0;i<4;i++)for(let j=0;j<3;j++)box(.072,.037,.012,-.105+j*.105,1.00-i*.065,.323,chrome);
+  box(.38,.06,.027,0,.62,.305,charcoal);box(.26,.014,.035,0,.63,.328,chrome);
+  box(.68,.06,.055,0,1.80,.29,navy);
+ }
+ if(id==='gardenShed'){
+  // Continuous timber-clad walls and two correctly meeting roof slopes.
+  box(1.72,1.65,1.34,0,.84,0,pine);
+  for(let y=.17;y<1.66;y+=.15){for(const z of [-.683,.683])box(1.73,.018,.024,0,y,z,oak);for(const x of [-.87,.87])box(.024,.018,1.35,x,y,0,oak);}
+  box(.69,1.38,.042,0,.71,.71,oak);box(.59,1.27,.02,0,.71,.74,pine);
+  for(const y of [.26,1.13])box(.13,.045,.025,.25,y,.759,chrome);
+  box(.09,.14,.025,-.20,.72,.765,charcoal);
+  // Gable ends, symmetric pitched roof in Z (ridge runs along X).
+  for(const sign of [-1,1]){
+   const panel=box(1.92,.075,.87,0,1.87,sign*.34,charcoal);
+   panel.rotation.x=sign*.37;
+  }
+  box(1.95,.05,.075,0,2.015,0,charcoal);
+  for(const x of [-.86,.86])box(.05,.09,.06,x,1.67,0,oak);
+ }
+ if(id==='shoppingBasket'){
+  // Open slatted plastic hand basket, tapered profile and two realistic low-profile handles.
+  box(.48,.035,.31,0,.065,0,paint);
+  for(const z of [-.17,.17]){box(.56,.045,.025,0,.39,z,paint);for(let i=0;i<7;i++){const x=-.225+i*.075;rod([x*.87,.09,z*.82],[x,.37,z],.009,paint);}}
+  for(const x of [-.28,.28]){box(.025,.045,.37,x,.39,0,paint);for(let i=0;i<5;i++){const z=-.13+i*.065;rod([x*.85,.09,z],[x,.37,z],.009,paint);}}
+  for(let i=0;i<5;i++)box(.08,.012,.31,-.19+i*.095,.085,0,paint);
+  for(const z of [-.17,.17]){line([[-.23,.405,z],[-.20,.55,z],[0,.63,z],[.20,.55,z],[.23,.405,z]],.014,charcoal);}
+  box(.18,.038,.04,0,.635,-.17,charcoal);box(.18,.038,.04,0,.635,.17,charcoal);
+ }
+ if(id==='marketStall'){
+  for(const x of [-.94,.94])for(const z of [-.55,.55])rod([x,.02,z],[x,2.02,z],.025,chrome);
+  for(const x of [-.94,.94])rod([x,2.02,-.55],[x,2.36,0],.023,chrome);
+  rod([-.94,2.36,0],[.94,2.36,0],.024,chrome);
+  // Two sloping canvas halves with alternating stripes.
+  for(let i=0;i<8;i++){const x=-.82+i*.235;for(const side of [-1,1]){const roof=box(.235,.023,.63,x,2.18,side*.27,i%2?cream2:paint);roof.rotation.x=side*.49;}}
+  for(let i=0;i<8;i++)box(.235,.16,.022,-.82+i*.235,1.94,.57,i%2?cream2:paint);
+  box(1.85,.07,.85,0,.99,0,oak);
+  for(const x of [-.80,.80])for(const z of [-.33,.33])box(.06,.90,.06,x,.49,z,oak);
+  for(let i=0;i<4;i++){const x=-.60+i*.40;box(.34,.13,.35,x,1.09,0,oak);for(let j=0;j<5;j++){const px=x+((j%3)-1)*.085,pz=(Math.floor(j/3)-.5)*.14;ball(.055,px,1.18,pz,i%3===0?tomato:i%3===1?leaf:gold);}}
+  box(1.9,.09,.08,0,.91,.43,oak);
+ }
+}
+
 g.userData={collection:'streetassettesting',batch:5,id,status:'review-required',units:'metres'};return g;}
