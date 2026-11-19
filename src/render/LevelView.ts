@@ -350,9 +350,16 @@ export class LevelView {
       const d = box.max.z - box.min.z;
       const turned = Math.abs(Math.sin(a.ry)) > 0.7;
       const [mw, md] = turned ? [d, w] : [w, d];
-      // Real size, unless the slot it stands in is clearly smaller (then just as small as needed, never under 70%).
-      const k = a.fit && !a.indoor ? Math.max(0.7, Math.min(1, Math.min((a.fit.hx * 2) / mw, (a.fit.hz * 2) / md) * 1.25)) : 1;
-      const s: [number, number, number] = a.scale ?? [k, k, k];
+      // Real size beside the player (a bus shelter is 2.5 m tall, a phone box 2.7 m). Only its depth gives way to a
+      // shallow slot (down to half), so a shelter or bench never shrinks to fit the pavement; its length and height
+      // shrink only if the slot is far shorter than it (never under 85%).
+      let s: [number, number, number] = [1, 1, 1];
+      if (a.fit && !a.indoor) {
+        const along = Math.max(0.85, Math.min(1, ((a.fit.hx * 2) / mw) * 1.1));
+        const across = Math.max(0.5, Math.min(along, ((a.fit.hz * 2) / md) * 1.25));
+        s = turned ? [across, along, along] : [along, along, across];
+      }
+      if (a.scale) s = a.scale;
       return { id: a.id, x: a.x, y: a.y - box.min.y * s[1], z: a.z, ry: a.ry, s, recolour: a.recolour };
     });
     const out = copies.filter((_, i) => !list[i].indoor);

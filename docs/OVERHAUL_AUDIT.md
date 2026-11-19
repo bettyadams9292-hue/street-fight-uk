@@ -67,3 +67,9 @@ city 112 / 379k, Hollins Estate 74 / 240k, Tanner Road Estate 98 / 320k.
   bin bags, pallets, scrap, containers, utility covers. Each stands at its prop's spot with its collision box
   unchanged; real size unless the slot is smaller. Kept on the kit: the newsstand kiosk (the approved rack is no
   kiosk), the planter (until slimmed), vehicles, fountains, pillars, turnstiles. Cost: 0 to 8 more draws per area.
+
+## Update, 19 Nov: shop fronts, furniture pack, street scale
+
+- **Shop windows and fronts:** pubs, chippies, bakeries, kebab shops, corner shops and off-licences show approved stock; awnings over most small shops in the shop's colour; hanging signs on pubs.
+- **Interior furniture pack** (`FURNITURE` batch, 142 of 150 models; the 8 bookcases that throw as authored are left out, `FURNITURE_BROKEN`). Catalogue furniture with a pack equivalent is drawn from it everywhere furniture appears (home, the 20 properties, Home & Hearth, shop goods): `src/render/props/packFurniture.ts`, fitted to the item's footprint so collision and the home editor are unchanged, the chosen colour on its upholstery or wood. TVs, rugs, appliances, bathroom fittings and wall pieces keep their own models.
+- **Street furniture at real size:** placements no longer shrink a whole model to fit a shallow slot (bus shelters were drawn at 70%). Height and length stay real (2.5 m shelter, 2.7 m phone box beside a 1.78 m player); only depth gives way.
