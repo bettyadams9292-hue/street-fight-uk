@@ -1,3 +1,4 @@
+import { deepRoom } from '../world/rooms';
 import type { Progress, PurchaseResult } from '../progress/Progress';
 import type { LevelDef, LightDef, PropDef, StationDef } from '../world/LevelTypes';
 import { propHalf } from '../world/LevelTypes';
@@ -281,14 +282,14 @@ export function buildBasementLevel(b: BasementSave): LevelDef {
     for (let x = 3; x < W; x += 6) lights.push({ x, y: 2.5, z: -0.3, colour: has('led_lighting') ? 0xf4f8ff : 0xfff0d8, intensity: bright, range: 8 });
   }
   const stations: StationDef[] = [{ id: 'terminal', x: 3.0, z: -1.1, label: 'Business terminal: manage the operation' }];
-  return {
+  return deepRoom({
     ...BASEMENT_BASE,
     bounds: { minX: 0, maxX: W, ...BASEMENT_DEPTH },
     facades: [{ kind: 'basement', x0: 0, x1: W, label: TIERS[b.tier].name.toUpperCase(), flags }],
     props,
     stations,
     lights,
-  };
+  });
 }
 
 // ---- buying and installing --------------------------------------------------------------------------

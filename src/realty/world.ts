@@ -5,6 +5,7 @@
  * Park), a front door on the street for every property for sale, and the
  * inside of each property, built from what kind of home it is.
  */
+import { deepRoom } from '../world/rooms';
 import type { EntryDef, ExitDef, FacadeDef, LevelDef, LightDef, PropDef, StationDef } from '../world/LevelTypes';
 import { PROP_SIZE } from '../world/LevelTypes';
 import { FURNITURE } from '../property/catalogue';
@@ -230,7 +231,7 @@ const ROOM_NAMES: Record<RoomKind, string> = {
 };
 const ROOM_WIDTH: Record<RoomKind, number> = {
   hall: 3.4, living: 6.2, kitchen: 4.6, dining: 4.6, bedroom: 4.4, master: 5.6, bathroom: 3.4, ensuite: 3.0, studio: 7.4, study: 4.2,
-  cinema: 6.0, games: 6.6, gym: 5.6, bar: 5.0, pool: 9.0, dressing: 3.8, conservatory: 5.4, terrace: 5.6,
+  cinema: 6.0, games: 6.6, gym: 5.6, bar: 5.0, pool: 12.0, dressing: 3.8, conservatory: 5.4, terrace: 5.6,
 };
 const WET: RoomKind[] = ['kitchen', 'bathroom', 'ensuite', 'pool'];
 
@@ -278,7 +279,7 @@ function furnishing(kind: RoomKind, q: number): (string | PropDef['kind'])[] {
     case 'bar':
       return ['bar', 'wall_shelf', 'neon_sign', 'pub_table'];
     case 'pool':
-      return ['pool_lounger', 'pool_basin', 'pool_lounger', 'plant_tall'];
+      return ['pool_lounger', 'plant_tall', 'pool_lounger', 'plant_tall'];
     case 'dressing':
       return [];
     case 'conservatory':
@@ -291,6 +292,83 @@ function furnishing(kind: RoomKind, q: number): (string | PropDef['kind'])[] {
 const BACK_Z = -2.3;
 
 /**
+ * The middle of each room, now rooms are at their real depth (world/rooms.ts): what stands out on the floor rather
+ * than against the back wall. All of it is in front of the walkway (z 1.6 and on), so it never blocks the way through.
+ */
+function midRoom(kind: RoomKind, x0: number, x1: number, q: number): PropDef[] {
+  const w = x1 - x0;
+  const cx = (x0 + x1) / 2;
+  const posh = q >= 4;
+  const fabric = FABRIC_BY_Q[q] || '#4a4a4e';
+  const wood = WOOD_BY_Q[q] || '#8a5a32';
+  const out: PropDef[] = [];
+  const f = (item: string, x: number, z: number, extra: Partial<PropDef> = {}) => out.push(F(item, x, z, extra));
+  switch (kind) {
+    case 'living':
+    case 'studio':
+      f(posh ? 'rug_long' : 'rug_round', cx, 3.4, { solid: false });
+      f('coffee_table', cx, 3.4, { colour: wood });
+      f('armchair', cx - 1.5, 3.4, { rot: 1, colour: fabric });
+      if (w > 5) f('armchair', cx + 1.5, 3.4, { rot: 3, colour: fabric });
+      break;
+    case 'dining':
+    case 'kitchen':
+      f('dining_table', cx, 3.4, { colour: wood });
+      for (const dx of [-0.45, 0.45]) {
+        f('dining_chair', cx + dx, 2.7, { rot: 2, colour: wood });
+        f('dining_chair', cx + dx, 4.1, { colour: wood });
+      }
+      break;
+    case 'bedroom':
+    case 'master':
+      f('rug_long', cx, 3.0, { solid: false });
+      if (w > 4.6) f('armchair', x1 - 1.0, 4.4, { rot: 3, colour: fabric });
+      f('plant_tall', x0 + 0.6, 4.8);
+      break;
+    case 'study':
+      f('rug_round', cx, 3.2, { solid: false });
+      f('armchair', cx, 3.4, { rot: 2, colour: fabric });
+      break;
+    case 'cinema':
+      // Rows of seats facing the screen on the back wall.
+      for (const z of [2.0, 3.3, 4.6]) out.push({ kind: 'cinema_seats', x: cx, z, size: [Math.min(1.6, w / 2 - 0.6), 0.45] });
+      break;
+    case 'games':
+      out.push({ kind: 'pool_table', x: cx, z: 3.4 });
+      out.push({ kind: 'pub_table', x: x1 - 0.9, z: 4.8 });
+      break;
+    case 'bar':
+      for (const [dx, z] of [[-1.2, 3.0], [1.2, 4.4]] as const) {
+        out.push({ kind: 'pub_table', x: cx + dx, z });
+        f('dining_chair', cx + dx - 0.7, z, { rot: 1 });
+        f('dining_chair', cx + dx + 0.7, z, { rot: 3 });
+      }
+      break;
+    case 'gym':
+      out.push({ kind: 'gym_kit', item: 'mat', x: cx - 0.8, z: 3.4, solid: false });
+      out.push({ kind: 'gym_kit', item: 'bag', x: x1 - 1.0, z: 3.8 });
+      break;
+    case 'pool':
+      // A proper pool: lanes running the length of the room, a deck all round, loungers along the front.
+      out.push({ kind: 'pool_basin', x: cx, z: 2.9, size: [w / 2 - 0.9, 2.0], solid: false });
+      out.push({ kind: 'pool_lounger', x: x0 + 1.4, z: 5.4 });
+      out.push({ kind: 'pool_lounger', x: x1 - 1.4, z: 5.4 });
+      break;
+    case 'conservatory':
+      f('armchair', cx - 1.0, 3.2, { colour: fabric });
+      f('coffee_table', cx, 3.6, { colour: wood });
+      f('plant_tall', x1 - 0.6, 4.6);
+      break;
+    case 'dressing':
+      out.push({ kind: 'dressing_island', x: cx, z: 3.2 });
+      break;
+    default:
+      break;
+  }
+  return out;
+}
+
+/**
  * Fittings built into a room: pieces along the back wall (`span` stretches them to the room's width), the
  * floor, things hung from the ceiling or standing in the middle. `back` is how far the furniture along the
  * back wall moves forward to clear them.
@@ -298,7 +376,7 @@ const BACK_Z = -2.3;
 const ROOM_FIT: Partial<Record<RoomKind, { back: number; pieces: { kind: PropDef['kind']; depth: number; span?: boolean; z?: number; solid?: boolean }[] }>> = {
   cinema: { back: 0.3, pieces: [{ kind: 'cinema_screen', depth: 0.24, solid: false }, { kind: 'projector', depth: 0.3, z: -0.2, solid: false }] },
   conservatory: { back: 0.48, pieces: [{ kind: 'conservatory_glazing', depth: 0.48, span: true }] },
-  terrace: { back: 0.48, pieces: [{ kind: 'terrace_deck', depth: 3.8, span: true, z: -0.4, solid: false }, { kind: 'terrace_balustrade', depth: 0.48, span: true }] },
+  terrace: { back: 0.48, pieces: [{ kind: 'terrace_deck', depth: 7.9, span: true, z: 1.65, solid: false }, { kind: 'terrace_balustrade', depth: 0.48, span: true }] },
   dressing: { back: 0.62, pieces: [{ kind: 'wardrobe_wall', depth: 0.62, span: true }, { kind: 'dressing_island', depth: 0.7, z: -0.75 }] },
 };
 
@@ -364,6 +442,7 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
         cursor += hx * 2 + 0.25;
       }
     }
+    props.push(...midRoom(kind, x0, x1, p.quality));
     x = x1;
   });
   const hallMid = 1.0;
@@ -374,7 +453,7 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
     label: as === 'viewing' ? `BROCHURE|${p.type}, ${priceText}: details and buy` : `YOUR PROPERTY|${p.name}: let, sell or manage`,
   });
   if (as === 'owner' && personal && bedX !== null) stations.push({ id: 'prop_rest', x: bedX, z: -0.15, label: 'BED|Rest here' });
-  return {
+  return deepRoom({
     id: 'property',
     name: p.name,
     district: p.locality,
@@ -391,7 +470,7 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
     lights,
     weather: 'indoors',
     objective: as === 'viewing' ? `Viewing: ${p.type.toLowerCase()}, ${QUALITY_LABELS[p.quality].toLowerCase()} fit-out. The brochure's in the hall` : personal ? `${p.name}. Yours` : `${p.name}. Yours, on the market to let`,
-  };
+  });
 }
 
 /**

@@ -4,6 +4,7 @@ import { EQUIPMENT } from '../business/catalogue';
 import { GYM_KIT } from '../training/gym';
 import { COMPANION_LIST } from '../companions/companions';
 import type { AreaId } from '../progress/Progress';
+import { deepRoom } from './rooms';
 
 /**
  * Buildings you can walk into. Same rules as the streets: what you see is
@@ -508,7 +509,10 @@ function fightGym(
     ],
     facades: [{ kind: 'interior', x0: 0, x1: 20, label: sign, colour: wall }],
     props: [
-      { kind: floor, x: 8.5, z: -1.0 },
+      // The club's floor at full size, out in the room: a 5.2 m ring (solid, steps up the near side), or mats you walk on.
+      floor === 'boxing_ring' ? { kind: floor, x: 9.5, z: 2.9, size: [2.6, 2.6] } : { kind: floor, x: 9.2, z: 2.6, size: [3.6, 2.4], solid: false },
+      { kind: 'bench', x: 3.2, z: 5.2, size: [1.0, 0.25] },
+      { kind: 'bench', x: 16.2, z: 5.2, size: [1.0, 0.25] },
       { kind: 'bag', x: 13.4, z: -1.55 },
       { kind: 'bag', x: 15.0, z: -1.55 },
       { kind: 'gym_rack', x: 17.6, z: -1.85 },
@@ -521,7 +525,7 @@ function fightGym(
         id: 'style_coach', x: 4.6, z: -0.6, label: `Talk to ${coach.name} (learn styles and techniques)`, tab: id,
         npc: { name: coach.name, seed: coach.seed, body: coach.body, top: coach.top, topColour: coach.colour, dz: -0.9 },
       },
-      { id: 'style_drill', x: 8.5, z: 0.45, label: 'Drill combinations on the pads', tab: id },
+      { id: 'style_drill', x: floor === 'boxing_ring' ? 13.2 : 9.2, z: floor === 'boxing_ring' ? 2.9 : 2.6, label: 'Drill combinations on the pads', tab: id },
     ],
     pickups: [],
     encounters: [],
@@ -539,12 +543,57 @@ const boxingGym = fightGym('boxing_gym', 'Del’s Boxing Club', 'Tanner Road Est
 const karateDojo = fightGym('karate_dojo', 'Okafor Karate & Muay Thai', 'Leisure Park', 'leisure', 'dojo', 'dojo_mat', { name: 'Mrs Okafor', seed: 3302, body: 'female', top: 'tshirt', colour: '#f0eee8' }, 'OKAFOR KARATE & MUAY THAI', '#e8e0d0');
 const wrestlingClub = fightGym('wrestling_club', 'Kev’s Wrestling & Grappling', 'Kingsway Precinct', 'precinct', 'wrestling', 'wrestling_mat', { name: 'Big Kev', seed: 3303, body: 'male', top: 'vest', colour: '#1f2a44' }, 'KEV’S WRESTLING & GRAPPLING', '#3a4a5a');
 
+// ---- the floor in front: rooms at their real depth ---------------------------------------------
+// Each room is about 8 m deep now (world/rooms.ts). What it always had stays against the back wall; this is what
+// fills the rest of the floor, the way the place would really be laid out. Everything here stands at z 1.8 or more,
+// clear of the walkway, the doors and every counter you use.
+const P = (kind: PropDef['kind'], x: number, z: number, extra: Partial<PropDef> = {}): PropDef => ({ kind, x, z, ...extra });
+/** A table with a chair either side, facing it. */
+const tableFor2 = (x: number, z: number, colour = '#7a1414'): PropDef[] => [
+  P('pub_table', x, z),
+  F('dining_chair', x - 0.75, z, { rot: 1, colour }),
+  F('dining_chair', x + 0.75, z, { rot: 3, colour }),
+];
+const FRONT: Record<string, PropDef[]> = {
+  pub: [...tableFor2(6, 3.2), ...tableFor2(10.5, 4.4), ...tableFor2(15, 3.0), ...tableFor2(21.5, 3.8), ...tableFor2(26, 4.6), ...tableFor2(30.5, 3.2), P('fruit_machine', 35.6, 2.6), P('jukebox', 35.6, 4.2)],
+  casino: [
+    P('roulette_table', 5.5, 3.2), P('blackjack_table', 11.5, 3.4), P('blackjack_table', 16.8, 3.0),
+    ...[20.6, 21.5, 22.4, 23.3, 24.2].map((x) => P('slot_machine', x, 4.8)), ...[20.6, 21.5, 22.4, 23.3, 24.2].map((x) => P('slot_machine', x, 2.4, { rot: 2 })),
+  ],
+  clothes_shop: [P('shop_rail', 3.4, 2.6), P('shop_rail', 6.6, 3.8), P('shop_rail', 9.8, 2.6), P('mannequin', 12.8, 2.2), P('mannequin', 13.8, 4.2), P('mannequin', 1.4, 4.6), P('shop_shelf', 9.8, 5.0, { size: [1.2, 0.3] })],
+  pawn_shop: [P('glass_counter', 5.0, 3.0), P('display_cabinet', 9.4, 3.8), P('shop_shelf', 12.2, 4.8, { size: [1.0, 0.3] }), P('tv', 2.6, 4.4)],
+  furniture_shop: [
+    F('rug_long', 4.2, 3.4, { solid: false }), F('sofa_3', 4.2, 2.6), F('coffee_table', 4.2, 3.7), F('armchair', 6.6, 3.6, { rot: 3 }), F('floor_lamp', 2.0, 2.4),
+    F('bed_double', 11.0, 3.6), F('bedside', 12.2, 2.9), F('bedside', 9.8, 2.9), F('wardrobe2', 13.8, 4.8),
+    F('dining_table', 18.0, 3.6), F('dining_chair', 17.4, 2.9, { rot: 2 }), F('dining_chair', 18.6, 2.9, { rot: 2 }), F('dining_chair', 17.4, 4.3), F('dining_chair', 18.6, 4.3),
+  ],
+  car_dealer: [F('desk2', 23.5, 3.4), F('dining_chair', 23.5, 4.1), F('dining_chair', 23.5, 2.7, { rot: 2 }), F('sofa_2', 19.0, 4.6), F('coffee_table', 19.0, 3.7), F('plant_tall', 26.8, 4.8), F('plant_tall', 15.4, 4.8)],
+  bike_shop: [P('bike_stand', 5.0, 3.2), P('bike_stand', 9.0, 4.2), P('tyre_stack', 13.0, 3.0), P('tyre_stack', 13.9, 3.2), P('shop_shelf', 17.0, 4.8, { size: [1.2, 0.3] })],
+  gym_store: [
+    P('gym_kit', 4.0, 3.0, { item: 'treadmill' }), P('gym_kit', 7.0, 3.0, { item: 'treadmill' }), P('gym_kit', 10.0, 3.2, { item: 'exercise_bike' }),
+    P('gym_kit', 13.5, 4.4, { item: 'dumbbells' }), P('gym_kit', 17.0, 3.2, { item: 'bag' }), P('gym_kit', 19.6, 4.2, { item: 'mat', solid: false }),
+  ],
+  grow_shop: [P('grow_shelf', 6.0, 3.6), P('grow_shelf', 9.0, 3.6), P('shop_shelf', 13.5, 4.6, { size: [1.2, 0.3] }), P('crates', 17.0, 4.4)],
+  jeweller: [P('glass_counter', 4.8, 3.0, { size: [1.0, 0.4] }), P('glass_counter', 9.0, 3.0, { size: [1.0, 0.4] }), P('glass_counter', 13.2, 3.0, { size: [1.0, 0.4] }), P('jewel_bust', 9.0, 4.6), F('plant_tall', 1.4, 4.8), F('plant_tall', 16.6, 4.8)],
+  estate_agent: [
+    P('computer_desk', 4.0, 3.2), F('dining_chair', 4.0, 3.9), P('computer_desk', 8.0, 3.2), F('dining_chair', 8.0, 3.9),
+    F('sofa_2', 11.6, 4.4), F('coffee_table', 11.6, 3.5), F('plant_tall', 1.2, 4.8),
+  ],
+};
+
+/** An interior with its front floor filled (see FRONT). */
+export function fitOut<T extends LevelDef>(level: T): T {
+  const extra = FRONT[level.id];
+  return extra ? { ...level, props: [...level.props, ...extra.map((p) => ({ ...p }))] } : level;
+}
+
+// Every room at its real depth (world/rooms.ts), its front floor filled.
 export const INTERIORS = {
-  gym_store: gymStore,
-  boxing_gym: boxingGym,
-  karate_dojo: karateDojo,
-  wrestling_club: wrestlingClub,
-  grow_shop: growShop,
-  clothes_shop: clothesShop, pawn_shop: pawnShop, pub,
-  furniture_shop: furnitureShop, car_dealer: carDealer, bike_shop: bikeShop, casino,
+  gym_store: deepRoom(fitOut(gymStore)),
+  boxing_gym: deepRoom(boxingGym),
+  karate_dojo: deepRoom(karateDojo),
+  wrestling_club: deepRoom(wrestlingClub),
+  grow_shop: deepRoom(fitOut(growShop)),
+  clothes_shop: deepRoom(fitOut(clothesShop)), pawn_shop: deepRoom(fitOut(pawnShop)), pub: deepRoom(fitOut(pub)),
+  furniture_shop: deepRoom(fitOut(furnitureShop)), car_dealer: deepRoom(fitOut(carDealer)), bike_shop: deepRoom(fitOut(bikeShop)), casino: deepRoom(fitOut(casino)),
 };

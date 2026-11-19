@@ -430,7 +430,7 @@ test('rooms side by side with no gaps, furniture inside its room, a way out and 
       const room = l.facades.find((f) => pr.x > f.x0 && pr.x < f.x1)!;
       assert(room, `${d.id}: ${pr.kind} outside`);
       if (pr.wallY === undefined && pr.kind !== 'staircase') assert(pr.x - hx >= room.x0 && pr.x + hx <= room.x1 + 1e-6, `${d.id}: ${pr.item ?? pr.kind} through a wall`);
-      if (pr.item) assert(FURNITURE[pr.item], pr.item);
+      if (pr.item && pr.kind === 'furniture') assert(FURNITURE[pr.item], pr.item);
     }
     assert(l.stations?.some((s) => s.id === 'prop_info'), `${d.id} brochure`);
   }

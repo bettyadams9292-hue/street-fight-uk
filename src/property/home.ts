@@ -1,3 +1,4 @@
+import { ROOM_EXTRA, deepRoom } from '../world/rooms';
 import type { ContainerDef, LevelDef, PropDef, StationDef } from '../world/LevelTypes';
 import { propHalf } from '../world/LevelTypes';
 import { BIKE_SIZE, BIKES, FURNITURE, GARAGE_SPACES, ROOMS, ROOM_IDS, allowedRooms, roomAt, type FurnitureDef, type RoomId } from './catalogue';
@@ -15,6 +16,12 @@ import { gymProps, gymStations, type GymSave } from '../training/gym';
 export const BACK_Z = -2.3;
 /** ...and never reaches into the walkway along the front of the house. */
 export const LANE_Z = 0.55;
+/** Rooms are at their real depth now (world/rooms.ts): past the walkway, the rest of the floor is yours to furnish too. */
+export const FRONT_FLOOR_Z = 1.6;
+export const FRONT_FLOOR_END = HOME_FRONT_Z() - 0.35;
+function HOME_FRONT_Z(): number {
+  return 1.4 + ROOM_EXTRA;
+}
 /** Gap kept from the side walls. */
 export const SIDE_MARGIN = 0.15;
 export const FRONT_DOOR_X = -8;
@@ -118,8 +125,8 @@ export function furnitureStations(prop: PropertySave): StationDef[] {
     const add = (id: StationDef['id'], label: string, extra = 0.3) => {
       if (seen.has(id)) return;
       const p = def.mount === 'wall' ? { x: f.at!.x, z: -1.1 } : front(extra);
-      // Keep it on the floor in front of the walkway.
-      out.push({ id, x: p.x, z: Math.min(0.5, p.z), label });
+      // Keep it on the floor in front of the walkway; a piece out on the front floor is used from in front of it.
+      out.push({ id, x: p.x, z: f.at!.z >= FRONT_FLOOR_Z ? p.z : Math.min(0.5, p.z), label });
       seen.add(id);
     };
     if (f.id === 'bed_double' || f.id === 'bed_single') add('bed', 'BED|Sleep or rest', 0.25);
@@ -195,7 +202,10 @@ export function checkPlacement(prop: PropertySave, def: FurnitureDef, at: { x: n
   }
   if (box.minZ < BACK_Z - 0.001) return { ok: false, reason: 'Hits the wall' };
   if (def.tall && box.minZ < BACK_Z + 0.6 && box.minX < r.window + 1.0 && box.maxX > r.window - 1.0) return { ok: false, reason: 'Too tall to stand in front of the window' };
-  if (box.maxZ > LANE_Z + 0.001) return { ok: false, reason: 'Blocks the walkway' };
+  // Either against the back, short of the walkway, or out on the floor in front of it.
+  const inFront = box.minZ >= FRONT_FLOOR_Z - 0.001;
+  if (!inFront && box.maxZ > LANE_Z + 0.001) return { ok: false, reason: 'Blocks the walkway' };
+  if (inFront && box.maxZ > FRONT_FLOOR_END + 0.001) return { ok: false, reason: 'Too near the edge of the room' };
   if (def.mount === 'rug') {
     for (const o of others) {
       const od = FURNITURE[o.id];
@@ -221,7 +231,7 @@ export function suggestSpot(prop: PropertySave, def: FurnitureDef, room: RoomId,
   for (const rot of rots) {
     let [hx, hz] = def.size;
     if (rot % 2 === 1 && def.mount !== 'wall') [hx, hz] = [hz, hx];
-    const zs = def.mount === 'wall' ? [wallZ(def)] : [BACK_Z + hz, BACK_Z + hz + 0.4, LANE_Z - hz];
+    const zs = def.mount === 'wall' ? [wallZ(def)] : [BACK_Z + hz, BACK_Z + hz + 0.4, LANE_Z - hz, FRONT_FLOOR_Z + hz + 0.4, FRONT_FLOOR_Z + hz + 1.6];
     for (const z of zs) {
       for (let x = r.x0 + SIDE_MARGIN + hx + 0.02; x <= r.x1 - SIDE_MARGIN - hx; x += 0.1) {
         const at = { room, x: Math.round(x * 10) / 10, z: Math.round(z * 100) / 100, rot };
@@ -236,7 +246,7 @@ export function suggestSpot(prop: PropertySave, def: FurnitureDef, room: RoomId,
 export function seatStation(prop: PropertySave): StationDef {
   for (const room of ['living', 'bedroom', 'kitchen'] as RoomId[]) {
     const seat = prop.furniture.find((f) => f.at?.room === room && FURNITURE[f.id]?.seat);
-    if (seat) return { id: 'sofa', x: seat.at!.x, z: 0.75, label: `${FURNITURE[seat.id].name}: catch up and save` };
+    if (seat) return { id: 'sofa', x: seat.at!.x, z: seat.at!.z >= FRONT_FLOOR_Z ? seat.at!.z + FURNITURE[seat.id].size[1] + 0.4 : 0.75, label: `${FURNITURE[seat.id].name}: catch up and save` };
   }
   return { id: 'sofa', x: -10.6, z: 0.8, label: 'Floor cushion: catch up and save (buy a sofa!)' };
 }
@@ -266,7 +276,7 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave
     const fin = prop.finishes[room];
     return { ...fac, floor: fin.floor, wall: fin.wall, windowX: ROOMS[room].window };
   });
-  return {
+  return deepRoom({
     ...base,
     bounds: { ...HOME_BOUNDS },
     facades,
@@ -274,5 +284,5 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave
     props,
     stations: [...FIXED_STATIONS, ...HOUSE_SPOTS.map(({ id, x, z, label }) => ({ id, x, z, label })), ...furnitureStations(prop), seatStation(prop), ...gymStations(gym)],
     containers: HOME_CONTAINERS.map((c) => ({ ...c })),
-  };
+  });
 }

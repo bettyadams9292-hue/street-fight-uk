@@ -14,6 +14,15 @@ export class CameraRig {
   private shakeSeed = 0;
   /** Phones sit a little closer so fighters read on a small screen. */
   compact = false;
+  /**
+   * Indoors in a room at its real depth (world/rooms.ts): the back wall and the front edge of the floor. The camera
+   * rises and looks down into the room, backing off just enough to show it all between the HUD and the controls.
+   */
+  room: { back: number; front: number } | null = null;
+  /** Indoors: how far down the camera looks (radians): steeper on a tall screen, shallower on a wide one. */
+  private get roomPitch(): number {
+    return this.camera.aspect < 1 ? 0.62 : 0.46;
+  }
 
   constructor(aspect: number) {
     this.camera = new THREE.PerspectiveCamera(34, aspect, 0.1, 120);
@@ -63,6 +72,14 @@ export class CameraRig {
     const fx = this.focus.x + (this.punchX - this.focus.x) * 0.25 * p + (this.cineAt.x - this.focus.x) * 0.6 * this.cine;
     const fy = this.focus.y + (this.cineAt.y - 0.2 - this.focus.y) * 0.5 * this.cine;
     const dist = this.distance * pull;
+    if (this.room) {
+      // Looking down into the room from above its open front.
+      const th = this.roomPitch;
+      const lookY = 0.9 - 0.3 * this.cine;
+      this.camera.position.set(fx + sx, lookY + dist * Math.sin(th) + sy, this.focus.z + dist * Math.cos(th));
+      this.camera.lookAt(fx + sx * 0.5, lookY, this.focus.z);
+      return;
+    }
     this.camera.position.set(fx + sx, 2.35 + dist * 0.06 - 0.35 * this.cine + sy, this.focus.z + dist);
     this.camera.lookAt(fx + sx * 0.5, fy + 0.15, this.focus.z - 0.4);
   }
@@ -147,7 +164,8 @@ export class CameraRig {
       this.deadX = cx;
     }
     const base = this.compact ? 7.2 : 8.5;
-    const wantDist = Math.min(base + 3, base + Math.max(0, spread - 3) * 0.5);
+    const shot = this.room ? this.roomShot(player.pos.z) : null;
+    const wantDist = shot ? shot.dist + Math.max(0, spread - 3) * 0.4 : Math.min(base + 3, base + Math.max(0, spread - 3) * 0.5);
     // Half the visible width where the fighters stand.
     const halfW = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * wantDist * this.camera.aspect;
     const clampTo = (lo: number, hi: number, slack: number) => {
@@ -167,8 +185,8 @@ export class CameraRig {
     this.lastCx = cx;
     this.worldReady = true;
     this.focus.x += (cx - this.focus.x) * k;
-    this.focus.z += (player.pos.z * 0.3 - this.focus.z) * k;
-    this.distance += (wantDist - this.distance) * (1 - Math.exp(-3 * dt));
+    this.focus.z += ((shot ? shot.z : player.pos.z * 0.3) - this.focus.z) * k;
+    this.distance += (wantDist - this.distance) * (this.worldReady && k < 1 ? 1 - Math.exp(-3 * dt) : 1);
     // Whatever else is going on (a sprint, a far-off target), you never leave the screen: the camera is held
     // so you're at least 0.55 m inside either edge. An enemy that ends up outside gets an edge arrow instead.
     const room = Math.max(0.3, seen() - 0.55);
@@ -176,6 +194,32 @@ export class CameraRig {
     if (this.focus.x - player.pos.x > room) this.focus.x = player.pos.x + room;
 
     this.place(dt);
+  }
+
+  /**
+   * Indoors: where to look (z) and how far back to stand so the top of the back wall and the front edge of the floor
+   * both sit inside the part of the screen the HUD and the controls leave clear.
+   */
+  private roomShot(playerZ: number): { z: number; dist: number } {
+    const r = this.room!;
+    const mid = (r.back + r.front) / 2;
+    const z = mid + (playerZ - mid) * 0.3;
+    const th = this.roomPitch;
+    const lookY = 0.9;
+    const tanHalf = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    const portrait = this.camera.aspect < 1;
+    // Clear band in screen space (-1 bottom .. 1 top): the HUD sits over the top, the touch pad over the bottom.
+    const top = portrait ? 0.5 : 0.42;
+    const bottom = portrait ? -0.42 : -0.9;
+    const ndc = (py: number, pz: number, d: number): number => {
+      const cy = lookY + d * Math.sin(th);
+      const cz = z + d * Math.cos(th);
+      const rel = Math.atan2(py - cy, cz - pz) + th;
+      return Math.tan(rel) / tanHalf;
+    };
+    let d = 5;
+    while (d < 26 && (ndc(2.9, r.back, d) > top || ndc(0, r.front, d) < bottom)) d += 0.25;
+    return { z, dist: d };
   }
 
   get focusX(): number {
