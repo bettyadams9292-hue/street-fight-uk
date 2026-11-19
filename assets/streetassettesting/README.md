@@ -16,3 +16,10 @@ Original `streetassettesting/` sources and viewers are retained for comparison a
 - `batch05.ts`: 20 user-approved British commercial and neighbourhood props, promoted without changing the playable game. Source preserved in `streetassettesting/batch05.ts`.
 
 - `batch07.ts`: 30 user-approved British architecture, shop, pub, takeaway and domestic assets, promoted from testing. **Approved for staging only; not integrated into the playable game.**
+
+## Interior furniture mega pack (pending visual approval)
+
+- `interior-furniture-megapack.ts`: 150 procedural furniture model definitions copied from `streetassettesting/interior-furniture-megapack.ts` at V10.
+- Includes shelving/storage, tables/desks, cabinets, chairs/armchairs, sofas and bedroom/miscellaneous furnishings.
+- **Status: imported into asset folder for availability, NOT final visually approved.** Existing furniture assets and the playable game have not been replaced or modified.
+- Keep the source test viewer and staging file for continued review; fix defects in staging before updating this asset copy.
