@@ -228,43 +228,47 @@ export function createAsset(id:string):THREE.Group {
   if(stool)for(const z of [frontZ,backZ])b(w-.13,.045,.045,0,.28,z,steel);
   if(v===19)for(const x of [-sideX,sideX])rod([x,.10,backZ],[x,.62,frontZ],.018,wood);
  }
+
  if(k===4){
-  const chaiseLeft=v===3||v===5,chaiseRight=v===4||v===6;
-  const isL=chaiseLeft||chaiseRight,isU=v===7,mod=v===8||v===9;
-  const w=isL||isU||mod?2.68:v===0||v===18?1.62:2.12;
-  const d=.88,seat=.42,backY=.89,sections=Math.max(2,Math.round(w/.58));
-  // Structural base and full-width back. Cushions are separate padded solids.
-  b(w,.19,d,0,.32,0,trim);
-  b(w,.52,.18,0,.79,-d/2+.08,cloth);
+  // One coherent upholstery palette per sofa: no contrasting white seat faces.
+  const upholstery=new THREE.MeshStandardMaterial({color:palette[(v+4)%palette.length],roughness:.96});
+  const seams=new THREE.MeshStandardMaterial({color:palette[(v+4)%palette.length],roughness:1});
+  const feet=new THREE.MeshStandardMaterial({color:0x453a32,roughness:.8});
+  const left=v===3||v===5,right=v===4||v===6,u=v===7,sectional=left||right||u;
+  const seats=v===0?2:v===1?3:v===2?4:sectional?3:v===18?2:3;
+  const width=seats*.67+.28,depth=.91,seatY=.47,armW=.17;
+  // Upholstered frame and cushions use the SAME fabric material.
+  b(width,.22,depth,0,.33,0,upholstery);
+  b(width,.48,.18,0,.77,-depth/2+.075,upholstery);
   for(const side of [-1,1]){
-   const x=side*(w/2-.095);
-   b(.19,.52,d,x,.60,0,cloth);
-   b(.14,.045,.60,x,.88,.02,cushion);
+   const x=side*(width/2-armW/2);
+   b(armW,.55,depth,x,.59,0,upholstery);
+   b(armW-.035,.065,depth-.11,x,.90,.025,upholstery);
   }
-  for(let i=0;i<sections;i++){
-   const x=-w/2+(i+.5)*w/sections,sw=w/sections-.035;
-   b(sw,.16,d-.27,x,seat+.09,.095,cushion);
-   b(sw,.40,.15,x,backY,-d/2+.19,cushion);
-   // Fabric piping is recessed against cushion edges, not detached in space.
-   b(sw-.04,.012,d-.32,x,seat+.176,.095,cloth);
-   for(const yy of [.78,.96]){const button=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),edge);button.position.set(x,yy,-d/2+.277);g.add(button)}
+  const inner=width-armW*2,sw=inner/seats;
+  for(let i=0;i<seats;i++){
+   const x=-inner/2+(i+.5)*sw;
+   b(sw-.022,.16,depth-.24,x,seatY+.08,.09,upholstery);
+   const back=b(sw-.026,.43,.15,x,.87,-depth/2+.205,upholstery);
+   back.rotation.x=-.08;
+   // Tight seam inside cushion boundary rather than a bright floating stripe.
+   b(sw-.055,.006,depth-.29,x,seatY+.164,.09,seams);
   }
-  // Chaise extension forms a continuous L with actual matching cushions.
-  function chaise(side:number){
-   const x=side*(w/2-.46),length=1.53;
-   b(.91,.19,length,x,.32,.40,trim);
-   b(.83,.16,length-.12,x,seat+.09,.42,cushion);
-   b(.83,.012,length-.16,x,seat+.176,.42,cloth);
-   b(.18,.52,length,side*(w/2-.09),.60,.40,cloth);
-   b(.14,.045,length-.16,side*(w/2-.09),.88,.41,cushion);
-   // No separate sofa front cushion under the chaise: visually continuous.
+  // Chaise replaces the appropriate outer seat footprint with a continuous
+  // forward extension. No overlapping contrasting upper panels.
+  function extend(side:number){
+   const x=side*(inner/2-sw/2),extension=1.03,front=depth/2;
+   b(sw-.022,.22,extension,x,.33,front+extension/2-.08,upholstery);
+   b(sw-.022,.16,extension,x,seatY+.08,front+extension/2-.08,upholstery);
+   b(armW,.55,extension,side*(width/2-armW/2),.59,front+extension/2-.08,upholstery);
   }
-  if(isL)chaise(-1);
-  if(chaiseRight)chaise(1);
-  if(isU){chaise(-1);chaise(1)}
-  if(mod)for(let i=1;i<sections;i++){const x=-w/2+i*w/sections;b(.014,.015,.69,x,.595,.095,edge)}
-  if([10,11,12].includes(v))for(let i=0;i<sections;i++){const x=-w/2+(i+.5)*w/sections;for(const yy of [.76,.93]){const button=new THREE.Mesh(new THREE.SphereGeometry(.019,10,8),trim);button.position.set(x,yy,-d/2+.28);g.add(button)}}
-  for(const x of [-w/2+.20,w/2-.20])for(const z of [-.28,.28])b(.075,.10,.075,x,.05,z,wood);
+  if(left||u)extend(-1);
+  if(right||u)extend(1);
+  if([10,11,12].includes(v))for(let i=0;i<seats;i++){
+   const x=-inner/2+(i+.5)*sw;
+   for(const y of [.80,.98]){const button=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),feet);button.position.set(x,y,-depth/2+.292);g.add(button)}
+  }
+  for(const x of [-width/2+.22,width/2-.22])for(const zz of [-.27,.27])b(.065,.11,.065,x,.055,zz,feet);
  }
  if(k===5){if(v<=9){const w=v===0?.98:v===1?1.20:v>=4?1.95:1.55,d=v===5?1.95:2.15;legs(w,d,.38);b(w,.19,d,0,.45,0,wood);b(w*.95,.17,d*.89,0,.61,0,cloth);b(w,.78,.10,0,.79,-d/2,wood);b(w*.88,.16,.36,0,.72,-d*.36,cushion);if(v===5){b(w,.14,d*.52,0,1.35,0,wood);for(const x of [-w/2+.07,w/2-.07])b(.08,1.45,.08,x,.75,0,wood)}}
   else if(v===13){cyl(.05,1.75,0,.90,0,wood);for(let i=0;i<6;i++){const a=i*Math.PI/3;rod([0,1.62,0],[Math.sin(a)*.31,1.76,Math.cos(a)*.31],.025,wood)}}
