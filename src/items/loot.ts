@@ -1,6 +1,7 @@
 import type { ArchetypeId } from '../ai/archetypes';
 import { ITEMS } from './items';
 import { pawnOffer } from './shops';
+import { JEWEL_ITEMS, JEWELS, jewelBuyback } from './jewellery';
 
 /**
  * Loot tables: what enemies drop and what you find searching bins, skips,
@@ -125,7 +126,14 @@ export function rollLoot(tableId: string, rng: () => number): LootRoll {
   return out;
 }
 
-/** What a boss's drops would fetch if you sold them all (the pawn shop's offer). Quest items count nothing. */
+/** What one drop would fetch: the jeweller's buyback for a piece of jewellery, else the pawn shop's offer. Quest items: nothing. */
+export function dropSaleValue(id: string): number {
+  const look = JEWEL_ITEMS[id];
+  if (look) return jewelBuyback(JEWELS[look.id], look.finish);
+  return ITEMS[id] ? pawnOffer(ITEMS[id], {}) : 0;
+}
+
+/** What a boss's drops would fetch if you sold them all. */
 export function bossDropValue(drops: readonly string[]): number {
-  return drops.reduce((n, id) => n + (ITEMS[id] ? pawnOffer(ITEMS[id], {}) : 0), 0);
+  return drops.reduce((n, id) => n + dropSaleValue(id), 0);
 }

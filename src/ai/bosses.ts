@@ -76,7 +76,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.55, name: 'Lads!', line: 'Gaz shouts for backup!', summon: [{ archetype: 'thug' }, { archetype: 'thug', weapon: 'bottle' }] },
       { below: 0.25, name: 'Seeing red', line: 'Gaz is seeing red!', aggression: 0.75, damageMult: 1.2 },
     ],
-    reward: { cash: 150, xp: 400 }, flag: 'boss_gaffer', drops: ['gaffer_ledger', 'watch_gold'],
+    reward: { cash: 400, xp: 400 }, flag: 'boss_gaffer', drops: ['gaffer_ledger', 'watch_gold'],
   },
   sully: {
     id: 'sully', name: 'Sully Kane', title: 'Former Champ', district: 'Industrial Quarter',
@@ -89,7 +89,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.6, name: 'Second wind', line: 'Sully finds his rhythm.', speedMult: 1.12, aggression: 0.7 },
       { below: 0.3, name: 'Championship rounds', line: 'Sully goes for the knockout!', damageMult: 1.25, parryBonus: 0.15, aggression: 0.8 },
     ],
-    reward: { cash: 250, xp: 700 }, flag: 'boss_sully', drops: ['headguard', 'old_fiver'],
+    reward: { cash: 550, xp: 700 }, flag: 'boss_sully', drops: ['headguard', 'old_fiver'],
   },
   ratcatcher: {
     id: 'ratcatcher', name: 'Vince Rourke', title: 'The Ratcatcher', district: 'City Centre',
@@ -102,7 +102,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.6, name: 'Rats', line: 'The Ratcatcher calls his crew!', summon: [{ archetype: 'tooled', weapon: 'pipe' }] },
       { below: 0.3, name: 'Ground and pound', line: 'He switches to jiu-jitsu!', swap: true, grabBonus: 0.12, aggression: 0.7 },
     ],
-    reward: { cash: 350, xp: 1000 }, flag: 'boss_ratcatcher', drops: ['chain_rope', 'phone_flagship'],
+    reward: { cash: 750, xp: 1000 }, flag: 'boss_ratcatcher', drops: ['chain_rope', 'phone_flagship'],
   },
   dunc: {
     id: 'dunc', name: 'Big Dunc', title: 'Runs The Pit', district: 'The Pit',
@@ -116,7 +116,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.45, name: 'The Pit', line: 'The crowd pours in to help Dunc!', summon: [{ archetype: 'elite' }], swap: true },
       { below: 0.2, name: 'Berserk', line: 'Big Dunc goes berserk!', damageMult: 1.2, speedMult: 1.1, aggression: 0.85 },
     ],
-    reward: { cash: 600, xp: 1800 }, flag: 'boss_dunc', drops: ['dunc_phone', 'chain_cuban'],
+    reward: { cash: 1800, xp: 1800 }, flag: 'boss_dunc', drops: ['dunc_phone', 'chain_cuban'],
   },
   // ---- Stage 5 bosses -----------------------------------------------------------------------
   estate_king: {
@@ -130,7 +130,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.6, name: 'Stairwell crew', line: 'He whistles and his lads come running.', summon: [{ archetype: 'hooded' }] },
       { below: 0.25, name: 'Out comes the blade', line: 'The King pulls a machete from his coat!', weapon: 'machete', aggression: 0.7 },
     ],
-    reward: { cash: 120, xp: 300 }, flag: 'boss_estate_king', drops: ['chain_gold', 'lockup_key'],
+    reward: { cash: 250, xp: 300 }, flag: 'boss_estate_king', drops: ['chain_gold', 'lockup_key'],
   },
   market_boss: {
     id: 'market_boss', name: 'Maureen Doyle', title: 'The Market Boss', district: 'Old Market',
@@ -143,7 +143,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.65, name: 'Market traders', line: 'The traders down tools and pile in!', summon: [{ archetype: 'brawler' }, { archetype: 'tooled', weapon: 'shovel' }] },
       { below: 0.35, name: 'Iron fist', line: 'Maureen drops into a proper karate stance.', parryBonus: 0.15, damageMult: 1.15, speedMult: 1.08 },
     ],
-    reward: { cash: 220, xp: 600 }, flag: 'boss_market', drops: ['stadium_key', 'pocket_watch'],
+    reward: { cash: 800, xp: 600 }, flag: 'boss_market', drops: ['stadium_key', 'pocket_watch'],
   },
   dock_bruiser: {
     id: 'dock_bruiser', name: 'Big Lenny Shaw', title: 'The Dockyard Bruiser', district: 'Canal Docks',
@@ -157,7 +157,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.7, name: 'Shift change', line: 'The night shift turns up with hooks and bars!', summon: [{ archetype: 'docker' }, { archetype: 'docker', weapon: 'metal_bar' }] },
       { below: 0.4, name: 'Hands on', line: 'Lenny drops the chain and goes for a hold!', swap: true, grabBonus: 0.2, aggression: 0.65 },
     ],
-    reward: { cash: 300, xp: 800 }, flag: 'boss_docks', drops: ['camera', 'watch_diver'],
+    reward: { cash: 1100, xp: 800 }, flag: 'boss_docks', drops: ['camera', 'watch_diver'],
   },
   industrial_enforcer: {
     id: 'industrial_enforcer', name: 'Kasia Nowak', title: 'The Industrial Enforcer', district: 'Abandoned Factory',
@@ -170,7 +170,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.6, name: 'Elbows and knees', line: 'Kasia closes the distance: clinch range!', aggression: 0.75, speedMult: 1.1 },
       { below: 0.3, name: 'Wrench', line: 'She grabs a pipe wrench off the line!', weapon: 'wrench', summon: [{ archetype: 'gang_enforcer' }] },
     ],
-    reward: { cash: 380, xp: 1100 }, flag: 'boss_factory', drops: ['crypto_wallet'],
+    reward: { cash: 1200, xp: 1100 }, flag: 'boss_factory', drops: ['crypto_wallet'],
   },
   precinct_enforcer: {
     id: 'precinct_enforcer', name: 'Dean "Ledger" Pryce', title: 'The Precinct Enforcer', district: 'Kingsway Precinct',
@@ -183,7 +183,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.6, name: 'Security on his payroll', line: 'Precinct security comes running — for him.', summon: [{ archetype: 'security' }, { archetype: 'security' }] },
       { below: 0.3, name: 'Knuckle up', line: 'Pryce slips the sunglasses off. He’s serious now.', damageMult: 1.2, parryBonus: 0.1 },
     ],
-    reward: { cash: 320, xp: 900 }, flag: 'boss_precinct', drops: ['vip_pass', 'earrings_diamond'],
+    reward: { cash: 1200, xp: 900 }, flag: 'boss_precinct', drops: ['vip_pass', 'earrings_diamond'],
   },
   nightclub_owner: {
     id: 'nightclub_owner', name: 'Simone Achebe', title: 'Owner of Velvet', district: 'Neon Mile',
@@ -196,7 +196,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.65, name: 'Door staff', line: 'Simone snaps her fingers. The bouncers move in.', summon: [{ archetype: 'bouncer' }] },
       { below: 0.3, name: 'Lights out', line: 'She switches to karate: sharp, fast, precise.', swap: true, speedMult: 1.12, aggression: 0.7 },
     ],
-    reward: { cash: 450, xp: 1200 }, flag: 'boss_nightclub', drops: ['handbag_designer', 'ring_diamond'],
+    reward: { cash: 1500, xp: 1200 }, flag: 'boss_nightclub', drops: ['handbag_designer', 'ring_diamond'],
   },
   football_firm: {
     id: 'football_firm', name: 'Carl Briggs', title: 'Top Boy of the Firm', district: 'Kirkgate Ground',
@@ -209,7 +209,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.7, name: 'The firm', line: 'The rest of the firm pours out of the stand!', summon: [{ archetype: 'casual' }, { archetype: 'casual' }, { archetype: 'brawler' }] },
       { below: 0.35, name: 'Flare up', line: 'Briggs grabs a corner flag pole!', weapon: 'pole', aggression: 0.75 },
     ],
-    reward: { cash: 400, xp: 1100 }, flag: 'boss_stadium', drops: ['signed_shirt', 'programme_1966'],
+    reward: { cash: 1500, xp: 1100 }, flag: 'boss_stadium', drops: ['signed_shirt', 'programme_1966'],
   },
   underground_king: {
     id: 'underground_king', name: 'Silas Crane', title: 'The Underground King', district: 'Deep Line',
@@ -222,7 +222,7 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.65, name: 'Tunnel rats', line: 'Figures drop out of the service hatches!', summon: [{ archetype: 'hooded' }, { archetype: 'knifeman' }] },
       { below: 0.35, name: 'The king stands', line: 'Crane switches to Muay Thai and stops grappling.', swap: true, damageMult: 1.15, aggression: 0.7 },
     ],
-    reward: { cash: 500, xp: 1500 }, flag: 'boss_underground', drops: ['coin_sovereign', 'trainers_boxed'],
+    reward: { cash: 1600, xp: 1500 }, flag: 'boss_underground', drops: ['coin_sovereign', 'trainers_boxed'],
   },
   the_boss: {
     id: 'the_boss', name: 'Victor Hale', title: 'The Boss', district: 'Hale House',
@@ -236,6 +236,6 @@ export const BOSSES: Record<BossId, BossDef> = {
       { below: 0.5, name: 'Coat off', line: 'Hale takes his coat off. Muay Thai.', swap: true, speedMult: 1.08 },
       { below: 0.25, name: 'Everything he’s got', line: 'Hale picks up a crowbar. No more rules.', weapon: 'crowbar', damageMult: 1.15, aggression: 0.8 },
     ],
-    reward: { cash: 1000, xp: 3000 }, flag: 'boss_final', drops: ['watch_diver', 'chain_cuban'],
+    reward: { cash: 3000, xp: 3000 }, flag: 'boss_final', drops: ['watch_diver', 'chain_cuban'],
   },
 };
