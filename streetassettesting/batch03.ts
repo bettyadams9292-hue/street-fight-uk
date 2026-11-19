@@ -22,16 +22,36 @@ export function createAsset(id:AssetId):THREE.Group{
  const S=(r:number,x:number,y:number,z:number,mat:T.Material)=>{const o=new T.Mesh(new T.IcosahedronGeometry(r,2),mat);o.position.set(x,y,z);o.castShadow=true;g.add(o);return o};
  const R=(a:number[],b:number[],r:number,mat:T.Material)=>{const p=new T.Vector3(...a),q=new T.Vector3(...b),v=q.clone().sub(p);const o=new T.Mesh(new T.CylinderGeometry(r,r,v.length(),10),mat);o.position.copy(p.add(q).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),v.normalize());g.add(o);return o};
  if(id==='palletStack'){
-  for(let k=0;k<3;k++){const y=k*.16;for(const z of [-.39,0,.39])B(1.17,.035,.17,0,y+.13,z,wood);
-   for(const x of [-.46,0,.46])for(const z of [-.36,.36])B(.16,.09,.17,x,y+.065,z,woodDark);
-   for(const z of [-.35,.35])B(1.15,.028,.17,0,y+.018,z,woodDark);
-   for(let i=0;i<5;i++)B(.15,.014,.018,-.48+i*.24,y+.15,.48,steel);
+
+  // Three separate complete UK/EUR-style timber pallets, staggered but not exploded.
+  const plank=[m(0x8b7359),m(0x76614b),m(0x9a8060),m(0x695441)];
+  for(let k=0;k<3;k++){
+   const ox=k===1?.028:k===2?-.024:0,oz=k===1?-.018:k===2?.022:0,base=k*.155;
+   for(let j=0;j<5;j++) B(.18,.024,.79,ox-.40+j*.20,base+.132,oz,plank[(j+k)%4]);
+   for(const x of [-.39,0,.39])for(const z of [-.30,.30])B(.16,.088,.17,ox+x,base+.072,oz+z,woodDark);
+   for(const x of [-.39,0,.39])B(.16,.023,.79,ox+x,base+.018,oz,plank[(k+1)%4]);
+   for(const z of [-.32,.32])B(1.0,.025,.12,ox,base+.114,oz+z,woodDark);
   }
+
  }
  if(id==='scrapHeap'){
-  B(2.2,.06,1.4,0,.03,0,dark);
-  for(let i=0;i<18;i++){const x=Math.sin(i*2.4)*.8,z=Math.cos(i*1.9)*.5,y=.12+(i%5)*.14;const o=B(.24+(i%4)*.13,.035,.08,x,y,z,i%4===0?rust:steel);o.rotation.y=i*.43;o.rotation.z=(i%3-1)*.18;}
-  for(let i=0;i<4;i++){const x=-.65+i*.43;const o=C(.16,.05,x,.18,.35,rubber,20);o.rotation.z=Math.PI/2;}
+
+  // A compact, overlapping heap of discarded British domestic electronics.
+  const plastic=[m(0xb3a99a),m(0x4c5355),m(0x7c766c),m(0x8b624a),m(0x34434b)];
+  const device=(x:number,y:number,z:number,w:number,h:number,d:number,angle:number,kind:number)=>{
+   const body=B(w,h,d,x,y,z,plastic[kind%plastic.length]);body.rotation.z=angle;
+   const screen=B(w*.72,h*.57,.009,x,y+.02,z+d*.505,kind%3===0?glass:dark);screen.rotation.z=angle;
+   B(w*.22,.015,.013,x,y-h*.35,z+d*.52,steel).rotation.z=angle;
+   for(let t=0;t<3;t++) C(.014,.008,x+w*.30,y+h*(t-1)*.18,z+d*.53,black,12).rotation.x=Math.PI/2;
+  };
+  device(-.43,.28,.05,.77,.43,.35,-.16,0);
+  device(.31,.34,-.18,.66,.49,.30,.13,1);
+  device(-.15,.73,-.12,.55,.38,.30,.19,2);
+  device(.42,.73,.13,.49,.34,.26,-.18,3);
+  device(-.46,.67,-.30,.35,.24,.28,.22,4);
+  for(let i=0;i<5;i++){const x=-.7+i*.35;const box=B(.29,.13,.29,x,.12,.42,plastic[(i+2)%5]);box.rotation.y=i*.27;}
+  for(let i=0;i<7;i++){const x=-.64+i*.19,z=.3+Math.sin(i*2)*.19;R([x,.20,z],[x+.12,.38,z+.09],.008,black);}
+
  }
  if(id==='storageRack'){
   for(const x of [-1.08,1.08])for(const z of [-.38,.38])B(.065,2.22,.065,x,1.11,z,blue);
@@ -39,24 +59,67 @@ export function createAsset(id:AssetId):THREE.Group{
   for(let i=0;i<6;i++){const x=-.83+(i%3)*.80,y=.23+Math.floor(i/3)*.7;B(.53,.37,.58,x,y+.185,0,i%2?woodDark:wood);B(.32,.08,.008,x,y+.2,.298,white);}
  }
  if(id==='chestTrunk'){
-  B(1.18,.56,.65,0,.32,0,woodDark);B(1.14,.48,.63,0,.33,0,wood);
-  B(1.24,.15,.70,0,.67,0,woodDark);
-  for(const x of [-.46,.46]){B(.045,.66,.69,x,.38,0,steel);B(.13,.07,.035,x,.69,-.34,brass);}
-  B(.15,.14,.035,0,.42,.344,brass);B(.06,.07,.04,0,.41,.365,dark);
-  for(const z of [-.27,.27])B(1.20,.045,.055,0,.14,z,woodDark);
+
+  // Traditional wooden trunk with raised framed panels and working-looking hinges.
+  B(1.17,.53,.66,0,.33,0,woodDark);
+  B(1.11,.47,.62,0,.34,0,wood);
+  for(const x of [-.51,.51])B(.065,.48,.68,x,.34,0,woodDark);
+  for(const y of [.13,.56])B(1.17,.045,.68,0,y,0,woodDark);
+  for(const x of [-.32,.32])B(.39,.32,.014,x,.34,.322,woodDark);
+  for(const x of [-.32,.32])B(.34,.27,.018,x,.34,.336,wood);
+  B(1.22,.11,.72,0,.67,0,woodDark);
+  B(1.16,.033,.66,0,.73,0,wood);
+  for(const x of [-.46,.46]){B(.095,.045,.055,x,.64,-.35,brass);B(.065,.16,.018,x,.57,-.345,steel);}
+  B(.14,.15,.025,0,.46,.352,brass);B(.042,.058,.028,0,.44,.372,black);
+  for(const x of [-.52,.52])B(.045,.52,.70,x,.35,0,steel);
+
  }
  if(id==='rubbishBags'){
-  for(let i=0;i<5;i++){const x=(i%3-1)*.45,z=Math.floor(i/3)*.43-.15;const r=.21+(i%2)*.045;const o=S(r,x,r,z,rubber);o.scale.set(1,1.22,.88);C(.075,.06,x,r*2.05,z,black,12);R([x-.05,r*2.08,z],[x+.055,r*2.15,z],.019,black);}
+
+  // Irregular soft sacks: tapered, wrinkled silhouettes and gathered twisted necks.
+  const bagMat=m(0x1c2024,.02,.31),crease=m(0x30343a,.02,.40);
+  for(let i=0;i<5;i++){
+   const x=(i%3-1)*.39,z=Math.floor(i/3)*.40-.20,r=.19+(i%2)*.03,h=.44+(i%3)*.045;
+   const profile=[new T.Vector2(0,0),new T.Vector2(r*.80,.012),new T.Vector2(r*1.05,.08),new T.Vector2(r*.97,h*.35),new T.Vector2(r*.89,h*.66),new T.Vector2(r*.61,h*.86),new T.Vector2(.042,h*.95),new T.Vector2(.025,h*1.03),new T.Vector2(0,h*1.05)];
+   const mesh=new T.Mesh(new T.LatheGeometry(profile,13),bagMat);mesh.position.set(x,0,z);mesh.scale.x=1.04;mesh.scale.z=.84;mesh.rotation.y=i*.8;g.add(mesh);
+   const knot=S(.047,x,h*1.035,z,bagMat);knot.scale.set(.8,.45,.65);
+   for(let k=0;k<7;k++){const a=k*Math.PI*2/7;R([x+Math.cos(a)*r*.81,.09,z+Math.sin(a)*r*.69],[x+Math.cos(a)*r*.56,h*.77,z+Math.sin(a)*r*.48],.004,crease);}
+   R([x-.038,h*1.04,z],[x+.048,h*1.08,z+.016],.015,bagMat);
+  }
+
  }
  if(id==='shippingContainer'){
-  B(3.3,2.22,1.35,0,1.13,0,blue);
-  for(const side of [-1,1])for(let i=0;i<17;i++)B(.038,2.04,.014,-1.52+i*.19,1.12,side*.686,i%5===0?steel:blue);
-  for(const x of [-1.62,1.62])for(const z of [-.67,.67])B(.11,2.26,.10,x,1.13,z,steel);
-  for(const x of [-.81,.81]){B(.035,2.02,.022,x,1.12,.71,steel);for(const y of [.38,1.75])B(.11,.12,.04,x,y,.735,brass);}
-  B(3.25,.085,1.40,0,2.27,0,dark);
+
+  // Corrugated 20-foot-style shipping container, door at its short end.
+  const faded=m(0x547687,.42,.72),edge=m(0x465158,.7,.46),mark=m(0xb4b9ad);
+  B(3.35,2.23,1.42,0,1.15,0,faded);
+  for(const z of [-.715,.715])for(let i=0;i<23;i++)B(.034,2.09,.028,-1.59+i*.144,1.15,z,edge);
+  for(const x of [-1.67,1.67])for(let i=0;i<9;i++)B(.025,2.09,.11,x,1.15,-.59+i*.147,edge);
+  for(const x of [-1.67,1.67])for(const z of [-.71,.71])B(.10,2.29,.105,x,1.145,z,edge);
+  B(3.36,.085,1.44,0,2.29,0,edge);
+  B(3.36,.075,1.44,0,.04,0,edge);
+  // Two proper hinged doors, seam, vertical locking bars, hinges and handles.
+  for(const x of [-.355,.355]){
+   B(.69,2.12,.032,1.698,1.15,x,faded);
+   for(const z of [x-.24,x+.24])R([1.75,.22,z],[1.75,2.08,z],.019,steel);
+   for(const y of [.32,1.88])B(.11,.11,.055,1.75,y,x-.29,edge);
+   B(.075,.13,.10,1.79,1.12,x+.21,brass);
+  }
+  B(.04,2.17,.09,1.72,1.15,0,edge);
+  for(let i=0;i<4;i++)B(.28,.018,.012,-.75+i*.23,1.38,.737,mark);
+
  }
  if(id==='tyreStack'){
-  for(let j=0;j<2;j++)for(let i=0;i<4;i++){const x=j*.55-.275,y=.13+i*.24;const t=new T.Mesh(new T.TorusGeometry(.22,.09,12,32),rubber);t.rotation.x=Math.PI/2;t.position.set(x,y,0);g.add(t);C(.105,.012,x,y,0,steel,24);}
+
+  // Stacked tyres with open centres, deep sidewalls and repeated tread blocks.
+  for(let j=0;j<2;j++)for(let i=0;i<4;i++){
+   const x=j*.58-.29,y=.115+i*.225,z=j===0?-.035:.045;
+   const tyre=new T.Mesh(new T.TorusGeometry(.225,.095,14,40),rubber);
+   tyre.rotation.x=Math.PI/2;tyre.position.set(x,y,z);g.add(tyre);
+   const side=new T.Mesh(new T.TorusGeometry(.155,.024,10,40),dark);side.rotation.x=Math.PI/2;side.position.set(x,y+.081,z);g.add(side);
+   for(let k=0;k<24;k++){const a=k*Math.PI/12;const o=B(.058,.032,.085,x+Math.cos(a)*.288,y,z+Math.sin(a)*.288,rubber);o.rotation.y=-a;}
+  }
+
  }
  if(id==='poolTable'){
   B(2.15,.22,1.18,0,.82,0,woodDark);B(1.95,.025,.98,0,.945,0,felt);
@@ -67,23 +130,46 @@ export function createAsset(id:AssetId):THREE.Group{
   for(let i=0;i<8;i++)S(.034,-.43+(i%4)*.19,.997,-.13+Math.floor(i/4)*.17,i===0?white:i%2?red:brass);
  }
  if(id==='fruitMachine'){
-  B(.72,1.61,.50,0,.88,0,black);B(.76,.18,.54,0,1.72,0,red);
-  B(.65,.37,.025,0,1.40,.267,blue);
-  for(let i=0;i<3;i++){B(.16,.23,.028,-.20+i*.20,1.39,.285,white);C(.035,.014,-.20+i*.20,1.40,.305,red,12).rotation.x=Math.PI/2;}
-  B(.62,.24,.024,0,1.06,.27,brass);
-  for(let i=0;i<5;i++)C(.033,.019,-.22+i*.11,.90,.27,red,16).rotation.x=Math.PI/2;
-  B(.47,.05,.09,0,.65,.29,dark);B(.62,.30,.035,0,.34,.275,blue);
-  for(const x of [-.26,.26])B(.09,.11,.07,x,.07,0,dark);
+
+  // UK pub fruit machine: tall illuminated header, slanted play deck and detailed reel window.
+  const magenta=m(0xc03787,.05,.32),gold=m(0xe6aa3c,.3,.3),navy=m(0x1b2635),lime=m(0x72b653);
+  B(.73,1.55,.52,0,.81,0,black);
+  B(.76,.62,.55,0,1.53,-.015,magenta);
+  B(.66,.48,.018,0,1.54,.273,navy);
+  for(let i=0;i<9;i++){const x=-.25+(i%3)*.25,y=1.70-Math.floor(i/3)*.135;
+   B(.17,.09,.021,x,y,.288,i%3===0?gold:i%3===1?lime:magenta);}
+  B(.70,.52,.52,0,1.00,0,navy);
+  const deck=B(.68,.29,.38,0,.93,.295,magenta);deck.rotation.x=-.58;
+  for(let i=0;i<3;i++){const x=-.205+i*.205;
+   B(.17,.17,.026,x,1.05,.474,white);
+   B(.10,.09,.029,x,1.05,.491,i===0?red:i===1?gold:lime);
+  }
+  for(let i=0;i<8;i++){const x=-.25+(i%4)*.17,y=.87-Math.floor(i/4)*.09;B(.11,.045,.025,x,y,.483,i%2?lime:gold);}
+  B(.62,.13,.05,0,.63,.285,black);
+  B(.50,.03,.055,0,.61,.32,steel);
+  B(.63,.27,.027,0,.28,.275,magenta);
+  for(let i=0;i<6;i++)B(.075,.025,.02,-.25+i*.10,.28,.297,i%2?gold:lime);
+  B(.72,.065,.55,0,.065,0,dark);
+
  }
  if(id==='washBasin'){
-  B(.79,.12,.46,0,.82,0,white);
-  const bowl=new T.Mesh(new T.TorusGeometry(.24,.048,12,36),white);bowl.rotation.x=Math.PI/2;bowl.scale.set(1.38,.77,1);bowl.position.set(0,.895,.02);g.add(bowl);
-  C(.038,.012,0,.84,.03,steel,20);
-  B(.14,.24,.08,0,.69,-.15,white);C(.045,.20,0,.99,-.17,steel,20);
-  R([0,1.08,-.17],[0,1.08,-.045],.022,steel);
-  for(const x of [-.13,.13])C(.028,.02,x,.93,-.17,brass,16);
-  B(.11,.37,.11,0,.46,-.14,white);B(.58,.055,.16,0,.27,-.24,white);
+  // Wall-hung ceramic basin with visible recessed bowl and realistic plumbing.
+  const porcelain=m(0xe5e7e2,.03,.22);
+  B(.73,.095,.47,0,.88,0,porcelain);
+  const rim=new T.Mesh(new T.TorusGeometry(.205,.036,12,40),porcelain);
+  rim.rotation.x=Math.PI/2;rim.scale.set(1.42,.83,1);rim.position.set(0,.935,.05);g.add(rim);
+  const inner=new T.Mesh(new T.SphereGeometry(.205,32,14,0,Math.PI*2,Math.PI*.48,Math.PI*.48),porcelain);
+  inner.scale.set(1.42,.48,.83);inner.position.set(0,.933,.05);g.add(inner);
+  C(.027,.009,0,.823,.05,steel,24);
+  B(.71,.13,.07,0,.91,-.26,porcelain);
+  C(.035,.15,0,1.02,-.20,steel,24);
+  R([0,1.08,-.20],[0,1.08,-.04],.019,steel);
+  R([0,1.08,-.04],[0,1.015,-.025],.018,steel);
+  for(const x of [-.12,.12]){C(.032,.022,x,.987,-.20,steel,20);B(.08,.014,.025,x,1.003,-.20,steel);}
+  C(.055,.15,0,.69,-.12,white,24);
+  R([0,.62,-.12],[0,.44,-.12],.033,white);
+  R([0,.44,-.12],[0,.44,-.30],.033,white);
  }
- g.userData={collection:'streetassettesting',batch:3,id,units:'metres',status:'review-required',style:'British streets and interiors'};
+ g.userData={collection:'streetassettesting',batch:3,id,units:'metres',status:'review-required',revision:'structural-rebuild-v2',style:'British streets and interiors'};
  return g;
 }
