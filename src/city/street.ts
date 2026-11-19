@@ -83,8 +83,18 @@ export interface Surface {
 }
 
 export type InteriorKind =
-  | 'pub' | 'club' | 'takeaway' | 'cafe' | 'bookies' | 'gadgets' | 'clothes' | 'furniture' | 'pawn' | 'casino' | 'office' | 'gym'
+  | 'pub' | 'club' | 'takeaway' | 'cafe' | 'bookies' | 'gadgets' | 'clothes' | 'furniture' | 'pawn' | 'jeweller' | 'casino' | 'office' | 'gym'
   | 'offlicence' | 'bikes' | 'cars' | 'plants' | 'salon' | 'general';
+
+/**
+ * Stock that isn't a city-kit piece: a level prop (clothes rail, mannequin, gym kit, motorbike, sofa…) drawn by
+ * LevelView.buildProp like any other, turned by `ry` and lifted onto the shop floor by `y`.
+ */
+export interface ShopGood {
+  prop: { kind: PropKind; x: number; z: number; item?: string; size?: [number, number]; colour?: string; label?: string };
+  ry: number;
+  y: number;
+}
 
 /** A shop you can see into: where it is, what kind, and what is inside it. */
 export interface Shopfront {
@@ -110,6 +120,8 @@ export interface StreetPlan {
   signs: Sign[];
   surfaces: Surface[];
   shopfronts: Shopfront[];
+  /** Shop stock drawn from the other model sets (see ShopGood). */
+  goods: ShopGood[];
   /** For each of the level's props, in order: true if a kit model stands in for it. */
   propDone: boolean[];
   /** Doorways the kit buildings provide (x positions), so exits don't draw their own frame. */
@@ -212,7 +224,9 @@ export function interiorFor(kind: FacadeKind, label: string): InteriorKind {
   if (/MOTO/.test(t)) return 'bikes';
   if (/GREEN FINGERS|GARDEN|HYDRO/.test(t)) return 'plants';
   if (/HEARTH|FURNITURE|CARPET/.test(t)) return 'furniture';
-  if (/PAWN|JEWEL|GOLD/.test(t)) return 'pawn';
+  if (/PAWN/.test(t)) return 'pawn';
+  if (/JEWEL|HALDEN|GOLDSMITH/.test(t)) return 'jeweller';
+  if (/GOLD\b/.test(t)) return 'pawn';
   if (kind === 'club' || /VELVET|PULSE|ELECTRIC/.test(t)) return 'club';
   if (kind === 'pub' || /LION|ARMS|CASTLE|TAVERN/.test(t)) return 'pub';
   if (/CHIPPY|KEBAB|CHICKEN|FOOD COURT|BAKERY/.test(t)) return 'takeaway';
@@ -228,7 +242,9 @@ export function interiorFor(kind: FacadeKind, label: string): InteriorKind {
 
 /** One thing in a shop: u across the unit (-3.4 to 3.4), v back from the glass (0 to 7), in metres. */
 interface Item {
+  /** A city-kit model, or 'prop:<kind>[/<item>]' for stock from the other model sets (`g`). */
   m: string;
+  g?: { kind: PropKind; item?: string; size?: [number, number]; colour?: string };
   u: number;
   v: number;
   y?: number;
@@ -239,22 +255,34 @@ interface Item {
 
 const HALF_PI = Math.PI / 2;
 
-/** What stands in each kind of shop. Every list is built only from pieces that belong in that kind of shop. */
-const INTERIORS: Record<InteriorKind, Item[]> = {
+/** Stock from the other model sets (clothes rails, mannequins, gym kit, motorbikes, furniture…), placed like any other item. */
+function G(kind: PropKind, u: number, v: number, o: { item?: string; size?: [number, number]; colour?: string; ry?: number; y?: number } = {}): Item {
+  return { m: `prop:${kind}${o.item ? `/${o.item}` : ''}`, u, v, y: o.y, ry: o.ry, g: { kind, item: o.item, size: o.size, colour: o.colour } };
+}
+/** Faces into the shop from the left wall (+u), or from the right wall (−u). */
+const FROM_LEFT = HALF_PI;
+const FROM_RIGHT = -HALF_PI;
+
+/**
+ * What stands in each kind of shop: what that shop really sells, where you'd expect it. Café and office kit only
+ * where a café or an office is what the shop is; the goods come from the shop, gym, furniture and vehicle sets.
+ */
+const INTERIORS: Record<string, Item[]> = {
   pub: [
     { m: 'cafe/back-bar-shelf-unit', u: -1, v: 6.4 }, { m: 'cafe/back-bar-shelf-unit', u: 1, v: 6.4 },
     { m: 'cafe/service-counter-module', u: -2, v: 4.8 }, { m: 'cafe/service-counter-module', u: 0, v: 4.8 }, { m: 'cafe/service-counter-module', u: 2, v: 4.8 },
     { m: 'cafe/wine-bottle', u: -1.6, v: 4.8, y: 0.92 }, { m: 'cafe/stemmed-wine-glass', u: 0.4, v: 4.7, y: 0.92 }, { m: 'cafe/water-carafe', u: 2.2, v: 4.8, y: 0.92 },
-    { m: 'cafe/poseur-table', u: -2.4, v: 1.8 }, { m: 'cafe/poseur-table', u: 2.5, v: 2.2 },
-    { m: 'cafe/bistro-table', u: 0.2, v: 2.4 }, { m: 'cafe/bistro-chair', u: -0.6, v: 2.4, ry: HALF_PI }, { m: 'cafe/bistro-chair', u: 1, v: 2.4, ry: -HALF_PI },
-    { m: 'cafe/banquette-bench-run', u: -3, v: 3.6, ry: HALF_PI }, { m: 'cars/jukebox', u: 3.1, v: 5.6, ry: -HALF_PI },
-    { m: 'cafe/neon-window-sign', u: -2.6, v: 0.5 },
+    { m: 'cafe/poseur-table', u: -2.4, v: 1.6 }, { m: 'cafe/poseur-table', u: 2.6, v: 1.6 },
+    G('pool_table', 0.3, 2.8, { size: [1.15, 0.65] }),
+    { m: 'cafe/banquette-bench-run', u: -3, v: 3.6, ry: HALF_PI }, { m: 'cars/jukebox', u: 3.1, v: 5.8, ry: -HALF_PI },
+    G('fruit_machine', 3.0, 3.6, { ry: FROM_RIGHT }),
   ],
   club: [
     { m: 'cafe/back-bar-shelf-unit', u: 2, v: 6.4 }, { m: 'cafe/service-counter-module', u: 1.2, v: 5 }, { m: 'cafe/service-counter-module', u: 3, v: 5 },
     { m: 'cafe/poseur-table', u: -2.6, v: 1.6 }, { m: 'cafe/poseur-table', u: -0.6, v: 2.8 }, { m: 'cafe/poseur-table', u: 1.6, v: 1.8 },
-    { m: 'cars/jukebox', u: -3, v: 5.8, ry: HALF_PI }, { m: 'cars/boombox', u: -1.6, v: 6.2 }, { m: 'cafe/queue-belt-post', u: -1, v: 0.7 }, { m: 'cafe/queue-belt-post', u: 1, v: 0.7 },
-    { m: 'cafe/neon-window-sign', u: 2.4, v: 0.5 }, { m: 'cafe/banquette-bench-run', u: -3, v: 3.4, ry: HALF_PI },
+    { m: 'cafe/queue-belt-post', u: -1, v: 0.7 }, { m: 'cafe/queue-belt-post', u: 1, v: 0.7 },
+    { m: 'cafe/banquette-bench-run', u: -3, v: 3.4, ry: HALF_PI }, { m: 'cafe/festoon-light-run', u: 0, v: 3.6, y: 2.4 },
+    G('dj_booth', -1.6, 6.2, { size: [1.0, 0.45] }),
   ],
   takeaway: [
     { m: 'cafe/service-counter-module', u: -2, v: 3.6 }, { m: 'cafe/service-counter-module', u: 0, v: 3.6 }, { m: 'cafe/pastry-display-case', u: 2.2, v: 3.6 },
@@ -269,44 +297,54 @@ const INTERIORS: Record<InteriorKind, Item[]> = {
     { m: 'cafe/back-bar-shelf-unit', u: -1, v: 6.4 }, { m: 'cafe/shop-coffee-roaster', u: 2.8, v: 6.2 },
     { m: 'cafe/bistro-table', u: -2.2, v: 1.8 }, { m: 'cafe/bistro-chair', u: -3, v: 1.8, ry: HALF_PI }, { m: 'cafe/bistro-chair', u: -1.4, v: 1.8, ry: -HALF_PI },
     { m: 'cafe/bistro-table', u: 1.8, v: 2.2 }, { m: 'cafe/bistro-chair', u: 1, v: 2.2, ry: HALF_PI }, { m: 'cafe/bistro-chair', u: 2.6, v: 2.2, ry: -HALF_PI },
-    { m: 'cafe/chalkboard-menu-board', u: 3.1, v: 3.6, ry: -HALF_PI },
+    { m: 'cafe/chalkboard-menu-board', u: 3.1, v: 3.6, ry: -HALF_PI }, { m: 'cafe/neon-window-sign', u: -2.6, v: 0.5 },
   ],
   bookies: [
+    // Racing on the screens, betting machines down the wall, stands to fill in your slip, and the counter.
     { m: 'office/wall-display', u: -2.2, v: 6.9 }, { m: 'office/wall-display', u: 0, v: 6.9 }, { m: 'office/wall-display', u: 2.2, v: 6.9 },
     { m: 'office/reception-counter', u: 2.2, v: 4.6 }, { m: 'cafe/pos-terminal', u: 2.2, v: 4.6, y: 1.05 },
-    { m: 'office/bench-desk', u: -1.6, v: 2.6 }, { m: 'office/meeting-chair', u: -2.2, v: 3.6, ry: Math.PI }, { m: 'office/meeting-chair', u: -1, v: 3.6, ry: Math.PI },
-    { m: 'office/paper-stack', u: -1.6, v: 2.6, y: 0.74 }, { m: 'office/wastepaper-bin', u: -3, v: 1.4 }, { m: 'office/wall-clock', u: 3.3, v: 6.9 },
+    G('slot_machine', -3.0, 2.6, { ry: FROM_LEFT }), G('slot_machine', -3.0, 3.5, { ry: FROM_LEFT }), G('slot_machine', -3.0, 4.4, { ry: FROM_LEFT }),
+    { m: 'cafe/poseur-table', u: -0.6, v: 2.6 }, { m: 'cafe/poseur-table', u: -0.6, v: 4.6 }, { m: 'office/paper-stack', u: -0.6, v: 2.6, y: 1.05 },
+    { m: 'office/wastepaper-bin', u: 0.6, v: 1.4 }, { m: 'office/wall-clock', u: 3.3, v: 6.9 },
   ],
   gadgets: [
-    { m: 'cafe/pastry-display-case', u: -1.6, v: 3.4 }, { m: 'cafe/pastry-display-case', u: 0.2, v: 3.4 }, { m: 'cafe/pos-terminal', u: 1.6, v: 3.4, y: 0.92 },
-    { m: 'cafe/service-counter-module', u: 1.9, v: 3.4 }, { m: 'office/wall-display', u: -2, v: 6.9 }, { m: 'office/wall-display', u: 1, v: 6.9 },
-    { m: 'office/laptop', u: 2.2, v: 3.4, y: 0.92 }, { m: 'office/tambour-cupboard', u: -3, v: 6.2 }, { m: 'office/pedestal-unit', u: 3, v: 6.2 },
-    { m: 'cars/boombox', u: -3, v: 1.2 }, { m: 'office/speakerphone-puck', u: -1.6, v: 3.4, y: 1.25 },
+    // Phones and vapes in the glass counter and the cabinet, the till on its own counter, ads on the wall.
+    G('glass_counter', -1.0, 3.4, { size: [1.4, 0.4] }), G('shop_counter', 2.0, 3.6, { size: [1.0, 0.4] }),
+    { m: 'office/laptop', u: 1.6, v: 3.6, y: 1.0 }, G('display_cabinet', -3.0, 5.6, { ry: FROM_LEFT }), G('shop_shelf', 1.4, 6.6, { size: [1.2, 0.22] }),
+    { m: 'office/wall-display', u: -1, v: 6.9 }, { m: 'office/wall-display', u: 2.6, v: 6.9 },
   ],
   clothes: [
-    { m: 'office/coat-rack', u: -2.8, v: 1.6 }, { m: 'office/coat-rack', u: -1.2, v: 2.6 }, { m: 'office/coat-rack', u: 0.6, v: 1.6 }, { m: 'office/coat-rack', u: 2.2, v: 2.8 },
-    { m: 'office/coat-rack', u: -2.4, v: 4.4 }, { m: 'office/coat-rack', u: 0, v: 4.6 },
-    { m: 'office/reception-counter', u: 2.3, v: 5.4 }, { m: 'cafe/pos-terminal', u: 2.3, v: 5.4, y: 1.05 },
-    { m: 'office/locker-bank', u: -2.6, v: 6.5 }, { m: 'office/tambour-cupboard', u: -1, v: 6.5 }, { m: 'cars/suitcase', u: 3, v: 1.2 },
+    // Dressed mannequins in the window, rails of clothes on the floor, folded stock on the back wall, a fitting room.
+    G('mannequin', -2.8, 0.9), G('mannequin', 2.8, 0.9),
+    G('shop_rail', -1.8, 2.2, { size: [0.8, 0.3] }), G('shop_rail', 0.8, 2.6, { size: [0.8, 0.3] }), G('shop_rail', -1.2, 4.4, { size: [0.8, 0.3] }),
+    G('shop_shelf', 0.6, 6.6, { size: [1.2, 0.22] }), G('changing_booth', -2.8, 6.3), G('shop_counter', 2.3, 5.2, { size: [0.9, 0.4] }),
   ],
   furniture: [
-    { m: 'office/breakout-sofa', u: -2.2, v: 2 }, { m: 'cafe/bistro-table', u: -0.6, v: 2.1, s: 0.8 }, { m: 'office/breakout-sofa', u: 2, v: 4.6, ry: -HALF_PI },
-    { m: 'office/boardroom-table', u: 0, v: 4.8 }, { m: 'office/meeting-chair', u: -0.7, v: 4 }, { m: 'office/meeting-chair', u: 0.7, v: 4 },
-    { m: 'office/meeting-chair', u: -0.7, v: 5.6, ry: Math.PI }, { m: 'office/meeting-chair', u: 0.7, v: 5.6, ry: Math.PI },
-    { m: 'cafe/banquette-bench-run', u: -2.8, v: 5.2, ry: HALF_PI }, { m: 'office/tambour-cupboard', u: 2.6, v: 6.5 }, { m: 'office/task-chair', u: 2.6, v: 1.6, ry: -0.6 },
-    { m: 'cafe/potted-olive-tree', u: -3.1, v: 0.9 }, { m: 'office/sit-stand-desk', u: -1, v: 6.4 },
+    // Room sets: a living room at the front, a bedroom at the back, a dining set between.
+    G('furniture', -1.8, 1.8, { item: 'rug_long', size: [1.2, 0.7] }), G('furniture', -1.8, 2.4, { item: 'sofa_3' }), G('furniture', -1.8, 1.4, { item: 'coffee_table' }),
+    G('furniture', 0.4, 1.8, { item: 'armchair', ry: FROM_RIGHT }), G('furniture', -3.1, 2.4, { item: 'floor_lamp' }),
+    G('furniture', 1.8, 3.6, { item: 'dining_table' }), G('furniture', 1.4, 3.0, { item: 'dining_chair', ry: Math.PI }), G('furniture', 2.2, 3.0, { item: 'dining_chair', ry: Math.PI }),
+    G('furniture', 1.4, 4.2, { item: 'dining_chair' }), G('furniture', 2.2, 4.2, { item: 'dining_chair' }),
+    G('furniture', -1.4, 5.6, { item: 'bed_double' }), G('furniture', -2.6, 6.4, { item: 'bedside' }), G('furniture', 1.2, 6.5, { item: 'wardrobe2' }),
+    G('furniture', 2.9, 6.5, { item: 'plant_tall' }),
   ],
   pawn: [
-    { m: 'cafe/pastry-display-case', u: -2, v: 3.8 }, { m: 'cafe/pastry-display-case', u: -0.2, v: 3.8 }, { m: 'cafe/gelato-display-freezer', u: 1.9, v: 3.8 },
-    { m: 'cars/boombox', u: -2.6, v: 1.2 }, { m: 'cars/suitcase', u: -1.6, v: 1.3 }, { m: 'cars/jukebox', u: 3, v: 1.6, ry: -HALF_PI },
-    { m: 'office/wall-clock', u: -2, v: 6.9 }, { m: 'office/wall-clock', u: -0.6, v: 6.9 }, { m: 'office/wall-display', u: 1.6, v: 6.9 },
-    { m: 'office/tambour-cupboard', u: 3, v: 6.4 }, { m: 'cafe/pos-terminal', u: 1.9, v: 3.8, y: 1.15 },
+    // Rings and watches in the glass counter, gadgets in the cabinet, second-hand tellies and stereos.
+    G('glass_counter', -1.2, 3.8, { size: [1.4, 0.4] }), G('shop_counter', 2.0, 3.8, { size: [1.0, 0.4] }),
+    G('display_cabinet', -3.0, 5.6, { ry: FROM_LEFT }), G('tv', 1.4, 6.5), G('shop_shelf', -0.6, 6.6, { size: [1.0, 0.22] }),
+    { m: 'cars/boombox', u: -2.6, v: 1.2 }, { m: 'cars/suitcase', u: -1.6, v: 1.3 }, { m: 'office/wall-clock', u: -2, v: 6.9 }, { m: 'office/wall-clock', u: -0.6, v: 6.9 },
+  ],
+  jeweller: [
+    // Glass cases of rings and watches, tall cabinets either side, a necklace on its bust.
+    G('glass_counter', -1.6, 2.6, { size: [1.0, 0.4] }), G('glass_counter', 1.6, 2.6, { size: [1.0, 0.4] }), G('glass_counter', 0, 4.8, { size: [1.6, 0.4] }),
+    G('display_cabinet', -3.0, 5.4, { ry: FROM_LEFT }), G('display_cabinet', 3.0, 5.4, { ry: FROM_RIGHT }), G('jewel_bust', 0, 4.8, { y: 1.1 }),
+    { m: 'cafe/potted-olive-tree', u: -3.1, v: 1.0 }, { m: 'cafe/potted-olive-tree', u: 3.1, v: 1.0 }, { m: 'office/wall-clock', u: 0, v: 6.9 },
   ],
   casino: [
-    { m: 'cafe/poseur-table', u: -2.4, v: 2 }, { m: 'cafe/poseur-table', u: 0, v: 3 }, { m: 'cafe/poseur-table', u: 2.4, v: 2 },
-    { m: 'cars/jukebox', u: -3, v: 5.4, ry: HALF_PI }, { m: 'cars/jukebox', u: -3, v: 4.2, ry: HALF_PI }, { m: 'cars/jukebox', u: 3, v: 5.4, ry: -HALF_PI },
-    { m: 'office/reception-counter', u: 0, v: 5.8 }, { m: 'cafe/back-bar-shelf-unit', u: 0, v: 6.6 }, { m: 'cafe/queue-belt-post', u: -1.2, v: 0.8 }, { m: 'cafe/queue-belt-post', u: 1.2, v: 0.8 },
-    { m: 'cafe/neon-window-sign', u: 2.6, v: 0.5 },
+    // Roulette and blackjack at the front, slots down the wall, the cashier's cage at the back.
+    G('roulette_table', -1.5, 2.6, { size: [1.15, 0.6] }), G('blackjack_table', 1.7, 2.7),
+    G('slot_machine', -3.0, 4.4, { ry: FROM_LEFT }), G('slot_machine', -3.0, 5.2, { ry: FROM_LEFT }), G('slot_machine', -3.0, 6.0, { ry: FROM_LEFT }),
+    G('casino_cage', 1.6, 6.3, { size: [1.4, 0.4] }), { m: 'cafe/queue-belt-post', u: -1.2, v: 0.8 }, { m: 'cafe/queue-belt-post', u: 1.2, v: 0.8 },
   ],
   office: [
     { m: 'office/reception-counter', u: 0, v: 3.2 }, { m: 'office/directory-totem', u: -2.8, v: 1.2 }, { m: 'office/planter-divider', u: 2.8, v: 1.4 },
@@ -314,21 +352,35 @@ const INTERIORS: Record<InteriorKind, Item[]> = {
     { m: 'office/sit-stand-desk', u: 1.8, v: 5.6 }, { m: 'office/task-chair', u: 1.8, v: 6.3, ry: Math.PI }, { m: 'office/laptop', u: 1.8, v: 5.6, y: 0.74 },
     { m: 'office/breakout-sofa', u: -2.6, v: 3, ry: HALF_PI }, { m: 'office/whiteboard', u: 0, v: 6.9 }, { m: 'office/multifunction-printer', u: 3.1, v: 3.6, ry: -HALF_PI },
   ],
+  // Gyms: what the sign says goes on. A boxing club has a ring and bags, a wrestling or martial arts club its mats,
+  // a gym its machines and weights. All of them have lockers and somewhere to sign in.
   gym: [
-    { m: 'office/locker-bank', u: -2.8, v: 6.5 }, { m: 'office/locker-bank', u: -1.2, v: 6.5 }, { m: 'office/reception-counter', u: 2.2, v: 2.4 },
-    { m: 'cafe/banquette-bench-run', u: 0.6, v: 6.3 }, { m: 'cars/tire', u: -2.6, v: 2 }, { m: 'cars/tire', u: -2.4, v: 2.1, y: 0.25 },
-    { m: 'cafe/drinks-fridge', u: 3, v: 6.2 }, { m: 'office/first-aid-box', u: 1.8, v: 6.9 }, { m: 'office/wall-clock', u: 0, v: 6.9 }, { m: 'cars/boombox', u: 2.4, v: 2.4, y: 1.05 },
+    G('gym_kit', -2.4, 2.0, { item: 'treadmill' }), G('gym_kit', -0.4, 2.0, { item: 'treadmill' }), G('gym_kit', 1.8, 2.0, { item: 'exercise_bike' }),
+    G('gym_kit', -1.0, 4.4, { item: 'barbell' }), G('gym_kit', 1.4, 4.4, { item: 'dumbbells' }), G('gym_kit', 2.9, 4.6, { item: 'bag' }),
+    { m: 'office/locker-bank', u: -2.8, v: 6.5 }, { m: 'office/locker-bank', u: -1.2, v: 6.5 }, { m: 'cafe/drinks-fridge', u: 3, v: 6.2 },
+    { m: 'office/wall-clock', u: 0, v: 6.9 },
+  ],
+  gym_boxing: [
+    G('boxing_ring', 0.8, 3.6, { size: [1.9, 1.3] }), G('gym_kit', -2.6, 2.0, { item: 'bag' }), G('gym_kit', -2.6, 4.0, { item: 'bag' }),
+    { m: 'office/locker-bank', u: -2.8, v: 6.5 }, { m: 'office/locker-bank', u: -1.2, v: 6.5 }, { m: 'cafe/banquette-bench-run', u: 1.2, v: 6.4 },
+    { m: 'office/first-aid-box', u: 2.6, v: 6.9 }, { m: 'office/wall-clock', u: 0.2, v: 6.9 },
+  ],
+  gym_mats: [
+    G('wrestling_mat', 0, 3.4, { size: [2.6, 1.6] }),
+    { m: 'office/locker-bank', u: -2.8, v: 6.5 }, { m: 'office/locker-bank', u: -1.2, v: 6.5 }, { m: 'cafe/banquette-bench-run', u: 1.2, v: 6.4 },
+    { m: 'office/first-aid-box', u: 2.6, v: 6.9 }, { m: 'office/wall-clock', u: 0.2, v: 6.9 }, G('gym_kit', 3.0, 1.2, { item: 'bag' }),
   ],
   offlicence: [
-    { m: 'cafe/wire-shelving-rack', u: -2.8, v: 6.5 }, { m: 'cafe/wire-shelving-rack', u: -1.6, v: 6.5 }, { m: 'cafe/drinks-fridge', u: 0, v: 6.3 }, { m: 'cafe/drinks-fridge', u: 1, v: 6.3 },
+    G('shop_shelf', -1.9, 6.6, { size: [1.4, 0.22] }), { m: 'cafe/drinks-fridge', u: 0, v: 6.3 }, { m: 'cafe/drinks-fridge', u: 1, v: 6.3 },
     { m: 'cafe/drinks-fridge', u: 2, v: 6.3 }, { m: 'cafe/service-counter-module', u: 2.2, v: 2.6 }, { m: 'cafe/pos-terminal', u: 2.2, v: 2.6, y: 0.92 },
-    { m: 'cafe/wine-bottle', u: 1.7, v: 2.6, y: 0.92 }, { m: 'cafe/wine-bottle', u: 2.7, v: 2.6, y: 0.92 }, { m: 'cafe/wire-shelving-rack', u: -2.2, v: 2.8, ry: HALF_PI },
-    { m: 'office/delivery-box', u: -3, v: 1 }, { m: 'office/delivery-box', u: -2.3, v: 1.1 },
+    { m: 'cafe/wine-bottle', u: 1.7, v: 2.6, y: 0.92 }, { m: 'cafe/wine-bottle', u: 2.7, v: 2.6, y: 0.92 }, G('shop_shelf', -2.9, 3.4, { size: [1.0, 0.22], ry: FROM_LEFT }),
+    { m: 'office/delivery-box', u: -1.2, v: 1.2 }, { m: 'office/delivery-box', u: -0.6, v: 1.1 },
   ],
   bikes: [
-    { m: 'hood/kids-bmx-bike', u: -2.4, v: 1.8, ry: 0.5 }, { m: 'hood/kids-bmx-bike', u: -0.4, v: 2.2, ry: 0.5, paint: '#c0392b' }, { m: 'hood/kids-bmx-bike', u: 1.6, v: 1.8, ry: 0.5, paint: '#2e8b57' },
-    { m: 'cars/tire', u: 3, v: 6.2 }, { m: 'cars/tire', u: 3, v: 6.2, y: 0.25 }, { m: 'cars/tire', u: 2.3, v: 6.4 }, { m: 'office/reception-counter', u: -1.8, v: 5.2 },
-    { m: 'cafe/wire-shelving-rack', u: 0.6, v: 6.5 }, { m: 'cars/oil-drum', u: -3.1, v: 6.3 }, { m: 'office/locker-bank', u: -1.2, v: 6.6 },
+    // Motorbikes on the floor (the sign says MOTO), tyres and a workbench at the back.
+    G('vehicle', -2.1, 1.8, { item: 'mx250', colour: '#c0392b' }), G('vehicle', 0.7, 1.8, { item: 'enduro300', colour: '#1f6fb2' }),
+    G('vehicle', -1.0, 3.6, { item: 'trail125', colour: '#2e8b57' }), G('vehicle', 1.8, 3.8, { item: 'mx450f', colour: '#e0a020' }),
+    G('tyre_stack', 3.0, 6.2), G('workbench', 0.6, 6.4), G('shop_counter', -2.2, 5.4, { size: [0.9, 0.4] }), { m: 'cars/oil-drum', u: -3.1, v: 6.4 },
   ],
   cars: [
     { m: 'cars/muscle-car-60s', u: -1.2, v: 2.6, ry: HALF_PI + 0.25, paint: '#b3261e' }, { m: 'cars/wedge-coupe-80s', u: 1, v: 5.2, ry: HALF_PI - 0.2, paint: '#d8dde0' },
@@ -340,25 +392,49 @@ const INTERIORS: Record<InteriorKind, Item[]> = {
     { m: 'cafe/wire-shelving-rack', u: -1.4, v: 6.5 }, { m: 'cafe/table-herb-pot', u: 1.9, v: 4.8, y: 0.92 }, { m: 'cafe/service-counter-module', u: 2.2, v: 4.8 },
     { m: 'cafe/pos-terminal', u: 2.6, v: 4.8, y: 0.92 }, { m: 'hood/trimmed-foundation-shrub', u: 0.2, v: 5.8 }, { m: 'hood/columnar-evergreen-shrub', u: 3.1, v: 6.3, s: 0.8 },
   ],
+  // Nail bars: little tables with a chair each side, polish on the shelves.
   salon: [
-    { m: 'office/reception-counter', u: 2.2, v: 1.8 }, { m: 'office/task-chair', u: -2.4, v: 3 }, { m: 'office/task-chair', u: -0.8, v: 3 }, { m: 'office/task-chair', u: 0.8, v: 3 },
-    { m: 'office/whiteboard', u: -1.6, v: 6.9 }, { m: 'office/whiteboard', u: 0.6, v: 6.9 }, { m: 'cafe/potted-olive-tree', u: 3.1, v: 6.3 },
-    { m: 'office/tambour-cupboard', u: 2.6, v: 6.5 }, { m: 'office/breakout-sofa', u: -2.9, v: 5.4, ry: HALF_PI },
+    G('furniture', -1.6, 2.4, { item: 'desk2' }), G('furniture', -1.6, 1.8, { item: 'dining_chair', ry: Math.PI }), G('furniture', -1.6, 3.0, { item: 'dining_chair' }),
+    G('furniture', 1.2, 2.4, { item: 'desk2' }), G('furniture', 1.2, 1.8, { item: 'dining_chair', ry: Math.PI }), G('furniture', 1.2, 3.0, { item: 'dining_chair' }),
+    G('shop_shelf', -1.4, 6.6, { size: [1.4, 0.2] }), G('shop_counter', 2.3, 5.2, { size: [0.9, 0.4] }),
+    { m: 'office/breakout-sofa', u: -2.9, v: 4.8, ry: HALF_PI }, { m: 'cafe/potted-olive-tree', u: 3.1, v: 6.3 },
   ],
+  // Hairdressers: chairs facing the mirrors, a basin to wash at, somewhere to wait.
+  salon_hair: [
+    G('furniture', -2.0, 6.5, { item: 'mirror_stand' }), G('furniture', 0, 6.5, { item: 'mirror_stand' }),
+    { m: 'office/task-chair', u: -2.0, v: 5.6, ry: Math.PI }, { m: 'office/task-chair', u: 0, v: 5.6, ry: Math.PI },
+    G('basin', 2.2, 6.5), G('shop_counter', 2.3, 2.4, { size: [0.9, 0.4] }),
+    { m: 'office/breakout-sofa', u: -2.9, v: 2.6, ry: HALF_PI }, { m: 'cafe/potted-olive-tree', u: 3.1, v: 1.0 },
+  ],
+  // Corner shops and pound shops: stocked shelves round the walls and down the middle, the till by the door.
   general: [
-    { m: 'cafe/wire-shelving-rack', u: -2.8, v: 6.5 }, { m: 'cafe/wire-shelving-rack', u: -1.6, v: 6.5 }, { m: 'cafe/wire-shelving-rack', u: -0.4, v: 6.5 },
-    { m: 'cafe/wire-shelving-rack', u: -1.4, v: 2.8, ry: HALF_PI }, { m: 'cafe/wire-shelving-rack', u: 0.4, v: 2.8, ry: HALF_PI },
-    { m: 'cafe/service-counter-module', u: 2.4, v: 2.2 }, { m: 'cafe/pos-terminal', u: 2.4, v: 2.2, y: 0.92 }, { m: 'office/delivery-box', u: 2.8, v: 6.3 }, { m: 'office/delivery-box', u: 2.1, v: 6.4 },
+    G('shop_shelf', -1.6, 6.6, { size: [1.8, 0.22] }), G('shop_shelf', -1.0, 3.2, { size: [1.6, 0.22] }), G('shop_shelf', -1.0, 4.4, { size: [1.6, 0.22] }),
+    G('shop_shelf', -2.9, 3.8, { size: [1.0, 0.22], ry: FROM_LEFT }), G('shop_counter', 2.3, 2.2, { size: [0.9, 0.4] }),
+    { m: 'cafe/drinks-fridge', u: 2.0, v: 6.3 }, { m: 'office/delivery-box', u: 2.9, v: 6.4 },
+  ],
+  general_hardware: [
+    G('shop_shelf', -1.6, 6.6, { size: [1.8, 0.22] }), G('shop_shelf', -1.0, 3.6, { size: [1.6, 0.22] }), G('workbench', 2.0, 6.3),
+    G('shop_counter', 2.3, 2.2, { size: [0.9, 0.4] }), { m: 'cars/oil-drum', u: -3.0, v: 1.2 }, { m: 'cars/tire', u: 0.8, v: 1.3 },
+    { m: 'office/delivery-box', u: -2.4, v: 1.2 },
   ],
 };
 
+/** Which layout a shop gets: its kind, and for some kinds what the sign says it does. */
+export function layoutFor(kind: InteriorKind, label: string): string {
+  const t = label.toUpperCase();
+  if (kind === 'gym') return /BOXING/.test(t) ? 'gym_boxing' : /WRESTLING|GRAPPLING|KARATE|DOJO|JUDO|MARTIAL/.test(t) ? 'gym_mats' : 'gym';
+  if (kind === 'salon') return /HAIR|BARBER/.test(t) ? 'salon_hair' : 'salon';
+  if (kind === 'general') return /HARDWARE|DIY/.test(t) ? 'general_hardware' : 'general';
+  return kind;
+}
+
 /** The shop layouts, for the tests to check nothing stands outside its unit. */
-export const INTERIORS_FOR_TEST: Readonly<Record<InteriorKind, readonly { m: string; u: number; v: number }[]>> = INTERIORS;
+export const INTERIORS_FOR_TEST: Readonly<Record<string, readonly { m: string; u: number; v: number }[]>> = INTERIORS;
 
 /** Sign board colours for each kind of shop: [board, letters]. */
 const SIGN_STYLE: Record<InteriorKind, [string, string, boolean?]> = {
   pub: ['#3a1512', '#e8c36a'], club: ['#16081f', '#ff5ac8', true], takeaway: ['#b3261e', '#fff3d6'], cafe: ['#3d2a1c', '#f2e2c4'], bookies: ['#12452a', '#ffffff'],
-  gadgets: ['#1c2a4a', '#7fd4ff'], clothes: ['#111111', '#ffffff'], furniture: ['#2f4a3a', '#f2e8d0'], pawn: ['#1a1a1a', '#e2b93b'], casino: ['#3a0d12', '#ffd75a', true],
+  gadgets: ['#1c2a4a', '#7fd4ff'], clothes: ['#111111', '#ffffff'], furniture: ['#2f4a3a', '#f2e8d0'], pawn: ['#1a1a1a', '#e2b93b'], jeweller: ['#0f1a2a', '#f2e2b0'], casino: ['#3a0d12', '#ffd75a', true],
   office: ['#2a3340', '#dfe6ee'], gym: ['#16171a', '#e03a2f'], offlicence: ['#5a1a6a', '#ffe94a'], bikes: ['#1d3a1d', '#c8f06a'], cars: ['#10203a', '#ffffff'],
   plants: ['#1f4a2b', '#e6f2d0'], salon: ['#7a2a5a', '#ffe6f2'], general: ['#c0262a', '#ffe94a'],
 };
@@ -367,7 +443,7 @@ const SIGN_STYLE: Record<InteriorKind, [string, string, boolean?]> = {
 const SHOP_FLOOR: Record<InteriorKind, { model: string; scale: number; tint?: string }> = {
   pub: { model: 'cafe/timber-deck-tile', scale: 5 }, club: { model: 'office/carpet-tile', scale: 2.5, tint: '#6a4a7a' }, takeaway: { model: 'cafe/kitchen-resin-floor-tile', scale: 1 },
   cafe: { model: 'cafe/cafe-encaustic-floor-tile', scale: 1 }, bookies: { model: 'office/carpet-tile', scale: 2.5, tint: '#7a9a80' }, gadgets: { model: 'office/access-floor-tile', scale: 2.5 },
-  clothes: { model: 'cafe/timber-deck-tile', scale: 5, tint: '#e6e0d6' }, furniture: { model: 'cafe/timber-deck-tile', scale: 5 }, pawn: { model: 'office/carpet-tile', scale: 2.5, tint: '#9a6a5a' },
+  clothes: { model: 'cafe/timber-deck-tile', scale: 5, tint: '#e6e0d6' }, furniture: { model: 'cafe/timber-deck-tile', scale: 5 }, pawn: { model: 'office/carpet-tile', scale: 2.5, tint: '#9a6a5a' }, jeweller: { model: 'office/carpet-tile', scale: 2.5, tint: '#2a3550' },
   casino: { model: 'office/carpet-tile', scale: 2.5, tint: '#a04048' }, office: { model: 'office/carpet-tile', scale: 2.5 }, gym: { model: 'cafe/kitchen-resin-floor-tile', scale: 1, tint: '#7a8088' },
   offlicence: { model: 'cafe/kitchen-resin-floor-tile', scale: 1 }, bikes: { model: 'cafe/kitchen-resin-floor-tile', scale: 1, tint: '#9aa0a4' }, cars: { model: 'office/access-floor-tile', scale: 2.5 },
   plants: { model: 'cafe/kitchen-resin-floor-tile', scale: 1, tint: '#a8b89a' }, salon: { model: 'cafe/cafe-encaustic-floor-tile', scale: 1, tint: '#e8d0dc' }, general: { model: 'cafe/kitchen-resin-floor-tile', scale: 1 },
@@ -496,7 +572,7 @@ export function planStreet(level: LevelDef): StreetPlan {
   const hasRoad = kerbFor(level) !== null;
   const plan: StreetPlan = {
     area: level.id, back, kerbZ: hasRoad ? KERB_Z : null, front, x0, x1, ground: d.ground,
-    placements: [], blocks: [], signs: [], surfaces: [], shopfronts: [], propDone: level.props.map(() => false), doors: [],
+    placements: [], blocks: [], signs: [], surfaces: [], shopfronts: [], goods: [], propDone: level.props.map(() => false), doors: [],
   };
   const rng = new Rng(hash(`street:${level.id}`));
   const put = (model: string, x: number, y: number, z: number, o: Partial<Placement> = {}): void => {
@@ -770,9 +846,12 @@ export function planStreet(level: LevelDef): StreetPlan {
       tile('shopfloor', floor.model, cx - 3.62 * k, cx + 3.62 * k, back - 7.3, back - 0.34, { y: 0.1, scale: floor.scale, tint: floor.tint });
       // What is inside. A wide shop repeats its layout, mirrored in alternate units so it doesn't look stamped.
       const mirror = c % 2 === 1 ? -1 : 1;
-      for (const it of INTERIORS[kind]) {
+      for (const it of INTERIORS[layoutFor(kind, label)]) {
         const sc = it.s ?? 1;
-        put(it.m, cx + it.u * mirror * k, 0.15 + (it.y ?? 0), back - 0.34 - it.v, { ry: (it.ry ?? 0) * mirror, sx: sc, sy: sc, sz: sc, paint: it.paint });
+        const x = cx + it.u * mirror * k;
+        const z = back - 0.34 - it.v;
+        if (it.g) plan.goods.push({ prop: { ...it.g, x, z }, ry: (it.ry ?? 0) * mirror, y: 0.15 + (it.y ?? 0) });
+        else put(it.m, x, 0.15 + (it.y ?? 0), z, { ry: (it.ry ?? 0) * mirror, sx: sc, sy: sc, sz: sc, paint: it.paint });
         contents.push(it.m);
       }
       // Glass across the front, with a gap where the door is.

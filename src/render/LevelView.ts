@@ -22,7 +22,8 @@ import { buildAnyModel, buildEquipmentModel, buildGymKitModel, buildFurnitureMod
 import { EQUIPMENT } from '../business/catalogue';
 import { CARS, FINISHES, FURNITURE } from '../property/catalogue';
 import { themeProfile } from './themes';
-import { kitStreet, planStreet, type StreetPlan } from '../city/street';
+import { kitStreet, planStreet, type ShopGood, type StreetPlan } from '../city/street';
+import { bakeStatic } from './bakeStatic';
 import { buildKitStreet, hasKitPiece, kitFloor, kitPiece, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
 import { exitLocked, type World } from '../world/World';
 import { isSubwayStairs, SUBWAY_GAP } from '../world/strip';
@@ -273,6 +274,7 @@ export class LevelView {
         for (const f of this.kitView.faders) this.foreCars.push({ car: f.group, x: f.x, z: f.z, hx: f.hx, hz: f.hz });
       }
       this.kitDoors = this.street.doors;
+      this.buildShopGoods(this.street.goods);
     } else this.buildGround();
     // Carry the end facades on past the edges so the camera never sees a gap.
     const fac = this.street ? [] : [...lvl.facades].sort((a, b) => a.x0 - b.x0);
@@ -331,6 +333,39 @@ export class LevelView {
     if (this.lowPoly && themeProfile(lvl.theme).interior) flattenTextures(this.group);
     // Library textures repeat at their real size on whatever they were put on.
     fitUVs(this.group);
+  }
+
+  /**
+   * What the shops on a kit street sell (clothes rails, gym kit, motorbikes, sofas…): level props built like any
+   * other, turned and stood on the shop floor, then baked into a few meshes per shop so a street full of stocked
+   * windows costs a handful of draws, not thousands.
+   */
+  private buildShopGoods(goods: readonly ShopGood[]): void {
+    if (!goods.length) return;
+    // Goods are grouped by the shop they're in (every shop's goods arrive together, left to right).
+    let batch: THREE.Object3D[] = [];
+    let lastX = goods[0].prop.x;
+    const flush = () => {
+      if (!batch.length) return;
+      const shop = new THREE.Group();
+      shop.name = 'shop-goods';
+      for (const o of batch) shop.add(o);
+      // Behind the glass, under the shop's own light: the goods needn't cast sun shadows.
+      this.group.add(bakeStatic(shop, false));
+      batch = [];
+    };
+    for (const g of goods) {
+      if (Math.abs(g.prop.x - lastX) > 9) flush();
+      lastX = g.prop.x;
+      const before = this.group.children.length;
+      this.buildProp({ ...g.prop, solid: false } as PropDef);
+      for (const o of this.group.children.slice(before)) {
+        o.rotation.y += g.ry;
+        o.position.y += g.y;
+        batch.push(o);
+      }
+    }
+    flush();
   }
 
   /** Put a Kenney furniture model into the prop group, fitted to w × h × d; false if the kit isn't loaded. */

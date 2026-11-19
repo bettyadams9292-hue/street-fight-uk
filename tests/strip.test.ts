@@ -211,10 +211,18 @@ test('buildings fill the frontage edge to edge without overlapping', () => {
 
 test('a shop you can see into holds what its sign says', () => {
   const MUST: Record<string, RegExp> = {
-    furniture: /sofa|table|chair/, pub: /back-bar|poseur|wine/, takeaway: /range|counter|menu/, bookies: /wall-display/, clothes: /coat-rack/,
-    offlicence: /fridge|wine-bottle/, bikes: /bmx-bike/, cars: /car|coupe/, plants: /planter|olive|shrub|basket/, office: /desk|reception/, gym: /locker/,
+    furniture: /sofa_3|bed_double|dining_table/, pub: /back-bar|poseur|wine/, takeaway: /range|counter|menu/, bookies: /wall-display/, clothes: /shop_rail|mannequin/,
+    offlicence: /fridge|wine-bottle/, bikes: /prop:vehicle\/(mx|enduro|trail)/, cars: /car|coupe/, plants: /planter|olive|shrub|basket/, office: /desk|reception/,
+    gym: /locker/, jeweller: /glass_counter|display_cabinet/, pawn: /glass_counter/, casino: /roulette|blackjack|slot_machine/, salon: /desk2|mirror_stand/,
+    gadgets: /glass_counter|display_cabinet/, general: /shop_shelf/,
   };
-  const NEVER: Record<string, RegExp> = { furniture: /range|fridge|espresso|bmx/, clothes: /range|espresso|wine/, bookies: /range|sofa|bmx/, pub: /printer|server-rack|bmx/, bikes: /espresso|sofa|wine/ };
+  // What a shop of each kind must never hold: café and office kit borrowed to fill a shop that sells something else.
+  const NEVER: Record<string, RegExp> = {
+    furniture: /range|fridge|espresso|bmx|boardroom|meeting-chair|sit-stand/, clothes: /range|espresso|wine|coat-rack|locker|tambour|suitcase/,
+    bookies: /range|sofa|bmx|bench-desk|meeting-chair/, pub: /printer|server-rack|bmx|neon-window-sign/, club: /neon-window-sign|jukebox/,
+    casino: /neon-window-sign|jukebox|poseur/, bikes: /espresso|sofa|wine|bmx/, gadgets: /pastry|boombox/, pawn: /pastry|gelato|jukebox/,
+    jeweller: /pastry|gelato|jukebox|boombox/, salon: /whiteboard|task-chair.*desk/, gym: /reception-counter\b.*boombox/,
+  };
   let shops = 0;
   for (const [id, plan] of plans) {
     for (const s of plan.shopfronts) {
@@ -226,6 +234,7 @@ test('a shop you can see into holds what its sign says', () => {
   }
   assert(shops >= 30, `only ${shops} shops you can see into`);
   assert(interiorFor('shop', 'HOME & HEARTH') === 'furniture' && interiorFor('pub', 'THE RED LION') === 'pub' && interiorFor('casino', 'GOLDEN LION') === 'casino', 'a sign names the wrong kind of shop');
+  assert(interiorFor('shop', 'HALDEN & CRANE') === 'jeweller' && interiorFor('shop', 'STATION JEWELLERS') === 'jeweller' && interiorFor('shop', 'PAWN & GOLD') === 'pawn', 'jewellers and pawn shops mixed up');
   for (const [kind, items] of Object.entries(INTERIORS_FOR_TEST)) {
     for (const it of items) assert(Math.abs(it.u) <= 3.4 && it.v >= 0.3 && it.v <= 7, `${kind}: ${it.m} stands outside the unit`);
   }
