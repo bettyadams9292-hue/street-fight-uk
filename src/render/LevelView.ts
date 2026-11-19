@@ -159,8 +159,10 @@ export class LevelView {
     const classic = new URLSearchParams(window.location.search).get('world') === 'classic';
     this.street = !classic && kitStreet(level) && polyKitReady() ? planStreet(level) : null;
     this.lowPoly = !classic && polyKitReady();
-    this.X0 = this.street ? this.street.x0 : level.bounds.minX - LEVEL_EXTENT;
-    this.X1 = this.street ? this.street.x1 : level.bounds.maxX + LEVEL_EXTENT;
+    // Inside a building the scenery stops at its end walls: past them is black, not more floor and the next room.
+    const extent = level.deep ? 0 : LEVEL_EXTENT;
+    this.X0 = this.street ? this.street.x0 : level.bounds.minX - extent;
+    this.X1 = this.street ? this.street.x1 : level.bounds.maxX + extent;
     this.group.add(this.lightRig);
     this.rnd = seeded(hash(level.id));
     this.highlight = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.035, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd23d, transparent: true, opacity: 0.85 }));
