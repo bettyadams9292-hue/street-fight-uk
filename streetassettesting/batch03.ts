@@ -35,29 +35,24 @@ export function createAsset(id:AssetId):THREE.Group{
 
  }
  if(id==='scrapHeap'){
-
-  const shell=[m(0xbbb7a8),m(0x4d585b),m(0x7a7770),m(0x836f59),m(0x39444a)];
-  const screen=m(0x222e32,.15,.35),copper=m(0x987453,.6,.65);
-  // Uneven underlying scrap pile: no rectangular floor and no repeated display grid.
-  for(let i=0;i<13;i++){const x=Math.sin(i*2.17)*.67,z=Math.cos(i*2.91)*.42;
-   const y=.13+(i%4)*.115;const o=B(.22+(i%3)*.12,.11+(i%4)*.045,.19+(i%2)*.13,x,y,z,shell[i%5]);o.rotation.set((i%3-1)*.15,i*.74,(i%5-2)*.18);}
-  // Distinct appliances: television, microwave, washing-machine face, PC tower and stereo.
-  const tv=B(.71,.47,.33,-.39,.56,-.16,shell[0]);tv.rotation.z=-.17;
-  const tvGlass=B(.53,.31,.013,-.39,.58,.014,screen);tvGlass.rotation.z=-.17;
-  const microwave=B(.56,.32,.34,.35,.48,.08,shell[1]);microwave.rotation.z=.16;
-  B(.36,.22,.015,.30,.49,.257,screen).rotation.z=.16;
-  for(let i=0;i<2;i++){const knob=C(.028,.016,.57,.54-i*.10,.26,steel,16);knob.rotation.x=Math.PI/2;}
-  const washer=B(.51,.49,.43,.05,.84,-.28,shell[0]);washer.rotation.z=-.13;
-  const glassDoor=C(.16,.025,.06,.85,-.047,screen,32);glassDoor.rotation.x=Math.PI/2;
-  const ring=new T.Mesh(new T.TorusGeometry(.165,.018,8,32),steel);ring.position.set(.06,.85,-.023);g.add(ring);
-  const tower=B(.25,.59,.33,-.66,.34,.31,shell[2]);tower.rotation.z=.38;
-  B(.12,.017,.013,-.61,.47,.485,screen);
-  const radio=B(.53,.19,.20,.41,.89,.20,shell[3]);radio.rotation.z=-.21;
-  for(let i=0;i<2;i++){const speaker=C(.067,.012,.24+i*.31,.89,.306,dark,24);speaker.rotation.x=Math.PI/2;}
-  // Loose cables and rusted metal lengths are partly buried, not floating.
-  // No floating wire segments: cables removed until a connected cable mesh is available.
-  for(let i=0;i<4;i++){const x=-.52+i*.33;const p=B(.31,.022,.06,x,.14,.47,i%2?rust:steel);p.rotation.y=i*.53;}
-
+  // Distinct salvaged objects in a stable heap; no interpenetrating appliances.
+  const enamel=m(0xb6b4a9,.12,.74),grey=m(0x657078,.32,.68),screen=m(0x202b32,.16,.32),rusted=m(0x775d4d,.34,.82);
+  // Large washing machine at the back, front face toward +Z.
+  B(.62,.69,.52,-.48,.38,-.31,enamel);
+  B(.56,.12,.03,-.48,.65,-.028,grey);
+  const washerDoor=C(.225,.025,-.48,.33,-.024,screen,48);washerDoor.rotation.x=Math.PI/2;
+  const ring=new T.Mesh(new T.TorusGeometry(.225,.019,10,48),steel);ring.position.set(-.48,.33,-.004);g.add(ring);
+  // CRT television on its own footprint at the right.
+  B(.62,.49,.47,.40,.31,-.29,grey);
+  B(.51,.36,.024,.38,.34,-.039,screen);
+  for(let i=0;i<2;i++){const knob=C(.025,.016,.67,.36-i*.095,-.019,dark,20);knob.rotation.x=Math.PI/2;}
+  // Radio and dismantled metal pieces at ground level in front.
+  B(.54,.20,.22,-.38,.15,.34,rusted);
+  for(const x of [-.57,-.20]){const speaker=C(.065,.014,x,.16,.46,dark,24);speaker.rotation.x=Math.PI/2;}
+  B(.46,.12,.25,.37,.105,.34,grey);
+  B(.32,.045,.17,.24,.19,.42,rusted).rotation.y=.16;
+  B(.25,.038,.12,.63,.18,.34,steel).rotation.y=-.28;
+  B(.34,.035,.13,-.04,.075,.59,grey).rotation.y=.27;
  }
  if(id==='storageRack'){
   for(const x of [-1.08,1.08])for(const z of [-.38,.38])B(.065,2.22,.065,x,1.11,z,blue);
@@ -116,34 +111,24 @@ export function createAsset(id:AssetId):THREE.Group{
    B(.055,.085,.12,1.76,1.03,z+.30,steel);
   }
   B(.055,2.14,.035,1.72,1.13,0,frame);
-  for(let i=0;i<4;i++)B(.21,.012,.013,-.95+i*.25,1.47,1.17,whiteMark);
+  // No floating white side marks.
 
  }
  if(id==='tyreStack'){
-
-  // Car tyres with squared shoulders, real hollow centre and recessed tread.
-  const sidewall=m(0x242528,.02,.95),tread=m(0x191b1d,.01,.99),groove=m(0x333437);
+  const rubber=m(0x242527,.01,.94),groove=m(0x202123,.01,.98);
   for(let j=0;j<2;j++)for(let i=0;i<4;i++){
    const x=j*.61-.305,z=j===0?-.035:.05,y=.105+i*.205;
-   // Lathe cross-section defines a broad flat tread and hollow central aperture.
    const p=[[.135,-.083],[.17,-.085],[.22,-.083],[.265,-.069],[.272,-.038],[.272,.038],[.265,.069],[.22,.083],[.17,.085],[.135,.083],[.125,.052],[.125,-.052]].map(v=>new T.Vector2(v[0],v[1]+y));
-   const tyre=new T.Mesh(new T.LatheGeometry(p,48),sidewall);tyre.position.set(x,0,z);g.add(tyre);
-   // Directional chevron tread across the tyre's actual circumference.
-   // Tread blocks sit on the radial surface, not as disconnected horizontal hoops.
-   for(let k=0;k<48;k++){
-    const a=k*Math.PI/24;
-    for(const off of [-.041,.041]){
-     const block=B(.067,.078,.018,x+Math.sin(a)*.272,y+off,z+Math.cos(a)*.272,tread);
-     block.rotation.y=a;block.rotation.x=off<0?-.28:.28;
+   const tyre=new T.Mesh(new T.LatheGeometry(p,64),rubber);tyre.position.set(x,0,z);g.add(tyre);
+   // Thin inset chevrons in near-identical rubber tone, rather than raised block belts.
+   for(let k=0;k<40;k++){const a=k*Math.PI/20;
+    for(const off of [-.034,.034]){
+     const mark=B(.026,.049,.003,x+Math.sin(a)*.273,y+off,z+Math.cos(a)*.273,groove);
+     mark.rotation.y=a;mark.rotation.z=off<0?-.43:.43;
     }
    }
-   for(const off of [-.036,.036]){
-    const grooveRing=new T.Mesh(new T.TorusGeometry(.272,.003,6,64),groove);
-    grooveRing.rotation.x=Math.PI/2;grooveRing.position.set(x,y+off,z);g.add(grooveRing);
-   }
-   const rim=new T.Mesh(new T.TorusGeometry(.143,.012,8,40),dark);rim.rotation.x=Math.PI/2;rim.position.set(x,y+.087,z);g.add(rim);
+   const rim=new T.Mesh(new T.TorusGeometry(.143,.012,8,40),rubber);rim.rotation.x=Math.PI/2;rim.position.set(x,y+.087,z);g.add(rim);
   }
-
  }
  if(id==='poolTable'){
   B(2.15,.22,1.18,0,.82,0,woodDark);B(1.95,.025,.98,0,.945,0,felt);
@@ -169,9 +154,13 @@ export function createAsset(id:AssetId):THREE.Group{
    if(kind===4){S(scale,x,y,z,green);B(scale*.55,scale*.18,.012,x,y+scale*.18,z+.014,white);}
   };
   B(.65,.065,.032,0,1.65,.29,gold);
-  for(let i=0;i<20;i++){const x=-.264+(i%5)*.132,y=1.57-Math.floor(i/5)*.088;
-   B(.105,.066,.017,x,y,.29,navy);symbol(x,y,.304,i%5,.029);
+  // Single main reel window below; upper panel is decorative prize information.
+  B(.60,.34,.014,0,1.44,.287,mag);
+  for(let i=0;i<7;i++){const x=-.25+i*.083;
+   B(.061,.025,.014,x,1.53,.30,i%2?gold:lit);
+   B(.061,.025,.014,x,1.44,.30,i%2?lit:gold);
   }
+  B(.51,.044,.015,0,1.33,.301,gold);
   for(const x of [-.346,.346])B(.016,.44,.024,x,1.44,.289,mag);
   // Slanted play deck, with matching reel windows and staggered push buttons.
   const deck=B(.72,.24,.36,0,.93,.285,mag);deck.rotation.x=-.49;
@@ -186,8 +175,9 @@ export function createAsset(id:AssetId):THREE.Group{
   B(.44,.013,.017,0,.659,.333,steel);
   B(.67,.34,.023,0,.32,.264,mag);
   B(.57,.25,.025,0,.33,.282,navy);
-  for(let i=0;i<12;i++){const x=-.23+(i%4)*.155,y=.405-Math.floor(i/4)*.07;
-   B(.105,.041,.017,x,y,.299,navy);symbol(x,y,.315,i%5,.020);}
+  // Lower cabinet is a payout access panel, not another symbol display.
+  B(.46,.15,.014,0,.34,.299,mag);
+  B(.29,.013,.019,0,.34,.312,steel);
   B(.76,.07,.53,0,.045,0,dark);
 
  }
@@ -209,6 +199,6 @@ export function createAsset(id:AssetId):THREE.Group{
   R([0,.62,-.12],[0,.44,-.12],.033,white);
   R([0,.44,-.12],[0,.44,-.30],.033,white);
  }
- g.userData={collection:'streetassettesting',batch:3,id,units:'metres',status:'review-required',revision:'polish-v4',style:'British streets and interiors'};
+ g.userData={collection:'streetassettesting',batch:3,id,units:'metres',status:'review-required',revision:'polish-v5',style:'British streets and interiors'};
  return g;
 }
