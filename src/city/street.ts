@@ -187,6 +187,8 @@ export const DISTRICTS: Partial<Record<AreaId, District>> = {
 export const STREET_EXTENT = 16;
 /** The kerb line on streets with a road: paving behind it, tarmac in front. */
 export const KERB_Z = -0.1;
+/** Street lamps stand just behind the kerb, on the pavement's road edge. */
+export const LAMP_Z = KERB_Z - 0.16;
 const KERB_DEPTH = 0.3;
 const SHELL = 'cafe/cafe-storefront-unit';
 const SHELL_W = 8;
@@ -1009,13 +1011,14 @@ export function planStreet(level: LevelDef): StreetPlan {
   }
 
   // ---- street lamps and trees ------------------------------------------------------------------
-  // Lit roads and suburbs get the approved British column with its arm out over the pavement (and a glowing lens
-  // under its head, as the kit lamps have); plazas, lanes and yards keep their own lights.
+  // Lit roads and suburbs get the approved British column at the kerb, its arm out over the road (and a glowing
+  // lens under its head, as the kit lamps have). Never on the building line: shopfronts stand forward of it, so a
+  // column there ended up inside the shop. Plazas, lanes and yards keep their own lights.
   const ukLamp = d.ground === 'street' || d.ground === 'suburb';
   for (const l of level.lights) {
     if (ukLamp) {
-      plan.approved.push({ id: 'streetLamp', x: l.x, y: 0, z: back + 0.18, ry: -HALF_PI });
-      plan.blocks.push({ x: l.x, y: 4.13, z: back + 0.18 + 1.12, w: 0.2, h: 0.05, d: 0.32, colour: '#fff1d0', glow: true });
+      plan.approved.push({ id: 'streetLamp', x: l.x, y: 0, z: LAMP_Z, ry: -HALF_PI });
+      plan.blocks.push({ x: l.x, y: 4.13, z: LAMP_Z + 1.12, w: 0.2, h: 0.05, d: 0.32, colour: '#fff1d0', glow: true });
       continue;
     }
     const s = size(d.lamp);
