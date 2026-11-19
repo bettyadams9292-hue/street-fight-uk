@@ -55,8 +55,7 @@ export function createAsset(id:AssetId):THREE.Group{
   const radio=B(.53,.19,.20,.41,.89,.20,shell[3]);radio.rotation.z=-.21;
   for(let i=0;i<2;i++){const speaker=C(.067,.012,.24+i*.31,.89,.306,dark,24);speaker.rotation.x=Math.PI/2;}
   // Loose cables and rusted metal lengths are partly buried, not floating.
-  for(let i=0;i<9;i++){const x=Math.sin(i*1.8)*.61,z=Math.cos(i*1.3)*.37;
-   R([x,.11,z],[x+.16,.20+(i%3)*.07,z+.09],.007,i%3?black:copper);}
+  // No floating wire segments: cables removed until a connected cable mesh is available.
   for(let i=0;i<4;i++){const x=-.52+i*.33;const p=B(.31,.022,.06,x,.14,.47,i%2?rust:steel);p.rotation.y=i*.53;}
 
  }
@@ -99,25 +98,25 @@ export function createAsset(id:AssetId):THREE.Group{
 
   // Closed, flush, structurally connected ISO-style container. X axis is its length.
   const paint=m(0x4c7482,.46,.7),frame=m(0x35434b,.7,.48),ridge=m(0x355967,.45,.73),whiteMark=m(0xb8b9a8);
-  B(3.28,2.15,1.36,0,1.13,0,paint);
+  B(3.28,2.15,2.28,0,1.13,0,paint);
   // Narrow corrugation strips are bonded to each side, not detached.
-  for(const z of [-.689,.689])for(let i=0;i<24;i++)B(.038,2.03,.028,-1.57+i*.136,1.14,z,ridge);
-  for(const x of [-1.64,1.64])for(let i=0;i<9;i++)B(.022,2.04,.095,x,1.14,-.55+i*.137,ridge);
-  for(const x of [-1.64,1.64])for(const z of [-.68,.68])B(.092,2.25,.09,x,1.125,z,frame);
-  for(const y of [.048,2.245])B(3.38,.085,1.45,0,y,0,frame);
+  for(const z of [-1.149,1.149])for(let i=0;i<24;i++)B(.038,2.03,.028,-1.57+i*.136,1.14,z,ridge);
+  for(const x of [-1.64,1.64])for(let i=0;i<9;i++)B(.022,2.04,.095,x,1.14,-.99+i*.247,ridge);
+  for(const x of [-1.64,1.64])for(const z of [-1.14,1.14])B(.092,2.25,.09,x,1.125,z,frame);
+  for(const y of [.048,2.245])B(3.38,.085,2.37,0,y,0,frame);
   // The end face is divided along Z, not along the length of the container.
-  for(const z of [-.342,.342]){
-   B(.045,2.06,.664,1.674,1.13,z,paint);
-   for(let i=0;i<4;i++)B(.014,1.94,.025,1.702,1.13,z-.245+i*.163,ridge);
-   for(const rodZ of [z-.21,z+.21]){
+  for(const z of [-.552,.552]){
+   B(.045,2.06,.108,1.674,1.13,z,paint);
+   for(let i=0;i<4;i++)B(.014,1.94,.025,1.702,1.13,z-.405+i*.27,ridge);
+   for(const rodZ of [z-.39,z+.39]){
     R([1.724,.19,rodZ],[1.724,2.05,rodZ],.014,steel);
     for(const y of [.27,1.98])B(.075,.07,.06,1.725,y,rodZ,frame);
    }
-   for(const y of [.35,.94,1.55,1.96])B(.07,.065,.055,1.72,y,z+(z>0?.30:-.30),frame);
-   B(.055,.085,.12,1.76,1.03,z+.16,steel);
+   for(const y of [.35,.94,1.55,1.96])B(.07,.065,.055,1.72,y,z+(z>0?.50:-.50),frame);
+   B(.055,.085,.12,1.76,1.03,z+.30,steel);
   }
   B(.055,2.14,.035,1.72,1.13,0,frame);
-  for(let i=0;i<4;i++)B(.21,.012,.013,-.95+i*.25,1.47,.71,whiteMark);
+  for(let i=0;i<4;i++)B(.21,.012,.013,-.95+i*.25,1.47,1.17,whiteMark);
 
  }
  if(id==='tyreStack'){
@@ -129,10 +128,19 @@ export function createAsset(id:AssetId):THREE.Group{
    // Lathe cross-section defines a broad flat tread and hollow central aperture.
    const p=[[.135,-.083],[.17,-.085],[.22,-.083],[.265,-.069],[.272,-.038],[.272,.038],[.265,.069],[.22,.083],[.17,.085],[.135,.083],[.125,.052],[.125,-.052]].map(v=>new T.Vector2(v[0],v[1]+y));
    const tyre=new T.Mesh(new T.LatheGeometry(p,48),sidewall);tyre.position.set(x,0,z);g.add(tyre);
-   for(let k=0;k<36;k++){const a=k*Math.PI/18;
-    for(const off of [-.043,.043]){const block=B(.065,.042,.047,x+Math.cos(a)*.269,y+off,z+Math.sin(a)*.269,tread);block.rotation.y=-a;}
+   // Directional chevron tread across the tyre's actual circumference.
+   // Tread blocks sit on the radial surface, not as disconnected horizontal hoops.
+   for(let k=0;k<48;k++){
+    const a=k*Math.PI/24;
+    for(const off of [-.041,.041]){
+     const block=B(.067,.078,.018,x+Math.sin(a)*.272,y+off,z+Math.cos(a)*.272,tread);
+     block.rotation.y=a;block.rotation.x=off<0?-.28:.28;
+    }
    }
-   for(const off of [-.037,.037]){const band=new T.Mesh(new T.TorusGeometry(.268,.004,6,48),groove);band.rotation.x=Math.PI/2;band.position.set(x,y+off,z);g.add(band);}
+   for(const off of [-.036,.036]){
+    const grooveRing=new T.Mesh(new T.TorusGeometry(.272,.003,6,64),groove);
+    grooveRing.rotation.x=Math.PI/2;grooveRing.position.set(x,y+off,z);g.add(grooveRing);
+   }
    const rim=new T.Mesh(new T.TorusGeometry(.143,.012,8,40),dark);rim.rotation.x=Math.PI/2;rim.position.set(x,y+.087,z);g.add(rim);
   }
 
@@ -152,27 +160,34 @@ export function createAsset(id:AssetId):THREE.Group{
   B(.75,1.64,.50,0,.84,0,black);
   B(.76,.11,.53,0,1.71,0,mag);
   B(.71,.48,.024,0,1.43,.265,navy);
-  // Illuminated jackpot/feature trail, smaller symbols and illuminated perimeter.
+  // Actual fruit-symbol shapes: cherries, lemon slices, sevens and stars.
+  const symbol=(x:number,y:number,z:number,kind:number,scale=.032)=>{
+   if(kind===0){for(const dx of [-scale*.5,scale*.5])S(scale*.55,x+dx,y-scale*.25,z,red);R([x,y,z],[x+scale*.3,y+scale*1.25,z],.003,green);}
+   if(kind===1){const o=C(scale,.009,x,y,z,gold,20);o.rotation.x=Math.PI/2;for(let q=0;q<4;q++){const a=q*Math.PI/2;R([x,y,z+.008],[x+Math.cos(a)*scale*.75,y+Math.sin(a)*scale*.75,z+.008],.002,white);}}
+   if(kind===2){B(scale*.3,scale*1.5,.012,x+scale*.30,y,z,red);B(scale,scale*.3,.012,x,y+scale*.6,z,red);}
+   if(kind===3){const star=new T.Mesh(new T.OctahedronGeometry(scale),gold);star.position.set(x,y,z);g.add(star);}
+   if(kind===4){S(scale,x,y,z,green);B(scale*.55,scale*.18,.012,x,y+scale*.18,z+.014,white);}
+  };
   B(.65,.065,.032,0,1.65,.29,gold);
   for(let i=0;i<20;i++){const x=-.264+(i%5)*.132,y=1.57-Math.floor(i/5)*.088;
-   B(.104,.062,.016,x,y,.29,i%5===0?orange:i%4===0?lime:i%3===0?gold:mag);
-   B(.038,.023,.018,x,y,.301,lit);}
+   B(.105,.066,.017,x,y,.29,navy);symbol(x,y,.304,i%5,.029);
+  }
   for(const x of [-.346,.346])B(.016,.44,.024,x,1.44,.289,mag);
   // Slanted play deck, with matching reel windows and staggered push buttons.
   const deck=B(.72,.24,.36,0,.93,.285,mag);deck.rotation.x=-.49;
   B(.62,.19,.026,0,1.035,.458,navy);
   for(let i=0;i<3;i++){const x=-.204+i*.204;
    B(.17,.14,.028,x,1.044,.478,lit);
-   B(.075,.072,.03,x,1.046,.497,i===0?orange:i===1?lime:gold);
+   symbol(x,1.046,.504,i,.049);
   }
   for(let i=0;i<10;i++){const x=-.255+(i%5)*.127,y=.86-Math.floor(i/5)*.063;
-   B(.092,.036,.03,x,y,.457,i%4===0?orange:i%3===0?lime:gold);}
+   const btn=B(.081,.028,.027,x,y,.457,i%4===0?orange:i%3===0?lime:gold);btn.rotation.x=-.49;}
   B(.56,.06,.06,0,.65,.294,navy);
   B(.44,.013,.017,0,.659,.333,steel);
   B(.67,.34,.023,0,.32,.264,mag);
   B(.57,.25,.025,0,.33,.282,navy);
   for(let i=0;i<12;i++){const x=-.23+(i%4)*.155,y=.405-Math.floor(i/4)*.07;
-   B(.105,.041,.017,x,y,.299,i%3===0?gold:i%3===1?mag:lime);}
+   B(.105,.041,.017,x,y,.299,navy);symbol(x,y,.315,i%5,.020);}
   B(.76,.07,.53,0,.045,0,dark);
 
  }
@@ -194,6 +209,6 @@ export function createAsset(id:AssetId):THREE.Group{
   R([0,.62,-.12],[0,.44,-.12],.033,white);
   R([0,.44,-.12],[0,.44,-.30],.033,white);
  }
- g.userData={collection:'streetassettesting',batch:3,id,units:'metres',status:'review-required',revision:'polish-v3',style:'British streets and interiors'};
+ g.userData={collection:'streetassettesting',batch:3,id,units:'metres',status:'review-required',revision:'polish-v4',style:'British streets and interiors'};
  return g;
 }
