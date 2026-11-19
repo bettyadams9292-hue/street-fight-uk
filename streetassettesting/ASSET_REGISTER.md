@@ -62,3 +62,7 @@ Terraced-house brickwork, door and windows; shop awning, roller shutter and fasc
 **Source:** `streetassettesting/batch07.ts`; **viewer:** `streetassettesting/batch07-viewer.html`.
 
 **Status:** New procedural first-pass assets awaiting user review; no promotion or game integration. CCTV/security excluded. Batch 06 contains duplicate models and remains unapproved.
+
+## Batch 07 — APPROVED (30 models)
+
+User approved all 30 polished models and they were promoted to `assets/streetassettesting/batch07.ts`. Original test source and viewer retained. Not integrated into playable game. Original 1,348-row asset checklist updated separately with MADE, VARIANT and TO MAKE flags.
