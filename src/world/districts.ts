@@ -50,7 +50,7 @@ const residential: LevelDef = {
     { kind: 'rubbish_bags', x: 38, z: -1.5 },
     { kind: 'trolley', x: 42, z: -0.46 },
     { kind: 'lamp_post', x: 50, z: -1.85 },
-    { kind: 'bike_rack', x: 56, z: -1.7 },
+    { kind: 'bike_rack', x: 53.6, z: -1.7 },
     { kind: 'cardboard', x: 66, z: -0.51 },
     { kind: 'dumpster', x: 72, z: -1.3 },
     { kind: 'car', x: 80, z: 1.4, colour: '#7d1a1a' },
