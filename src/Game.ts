@@ -832,9 +832,9 @@ export class Game {
         this.audio.coins();
         this.hud.toast(`+\u00a3${amount}`, 'cash');
       }),
-      ev.on('item:picked', ({ name, qty, rarity, stolen }) => {
+      ev.on('item:picked', ({ name, qty, rarity, stolen, jewel }) => {
         this.audio.uiConfirm();
-        this.hud.toast(`${name}${qty > 1 ? ` \u00d7${qty}` : ''}${stolen ? ' (stolen)' : ''}`, 'item', RARITY_COLOURS[rarity as keyof typeof RARITY_COLOURS]);
+        this.hud.toast(`${name}${qty > 1 ? ` \u00d7${qty}` : ''}${stolen ? ' (stolen)' : ''}${jewel ? ': in your jewellery box' : ''}`, 'item', RARITY_COLOURS[rarity as keyof typeof RARITY_COLOURS]);
         this.saveGame();
       }),
       ev.on('item:held', ({ name }) => {

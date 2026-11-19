@@ -189,6 +189,24 @@ export function lookOk(l: unknown): l is JewelLook {
 }
 
 /**
+ * Jewellery that turns up as loot (boss drops, things found): each one is a real piece from the jeweller's
+ * range, so it goes in the jewellery box where you can wear it, and sells back like anything bought there.
+ * Only stolen pieces stay in your pockets as hot goods for the pawn shop. The item's value in items.ts is
+ * the piece's price, so both routes agree (tests/economy.test.ts checks).
+ */
+export const JEWEL_ITEMS: Readonly<Record<string, JewelLook>> = {
+  watch_diver: { id: 'w_diamond_bezel', finish: 'steel' },
+  watch_gold: { id: 'w_dress_leather', finish: 'gold9' },
+  watch_silver: { id: 'w_silver_bracelet', finish: 'steel' },
+  watch_cheap: { id: 'w_digital', finish: 'black' },
+  chain_cuban: { id: 'n_cuban_8', finish: 'gold9' },
+  chain_rope: { id: 'n_rope_3', finish: 'gold9' },
+  chain_cheap: { id: 'n_box', finish: 'steel' },
+  ring_gold: { id: 'r_flat_gold', finish: 'gold9' },
+  ring_diamond: { id: 'r_solitaire', finish: 'white' },
+};
+
+/**
  * The plain pieces sold elsewhere (Threads, the pawn shop) drawn the same way when worn,
  * so a gold chain from Threads shows on the new characters too.
  */

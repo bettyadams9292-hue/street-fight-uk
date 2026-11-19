@@ -128,7 +128,7 @@ export const BASE_SUPPLY = 4;
 /** One-off cost to start the business (supplies and setup). */
 export const STARTUP_FEE = 200;
 /** What one unit of stock sells for, £ (before level bonus). */
-export const UNIT_VALUE = 10;
+export const UNIT_VALUE = 14;
 /** Seconds of play per production cycle with no automation. */
 export const BASE_CYCLE = 480;
 /** Stock storage before shelving. */

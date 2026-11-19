@@ -213,7 +213,7 @@ acc('glasses', 'Glasses', 'face', 'glasses', 30, 'glasses', '#2a2420', 'Clear le
 acc('snood', 'Face covering', 'face', 'snood', 12, 'snood', '#1b1d22', 'Neck snood pulled up over the face.');
 acc('lucky_chain', 'Lucky gold chain', 'neck', 'chain', 120, 'chain', '#d4af37', 'Your nan’s. You fight smarter wearing it.', 'rare', [{ attr: 'technique', add: 3, text: '+3 Technique' }], 'gold');
 acc('chain_silver', 'Silver chain', 'neck', 'chain', 60, 'chain', '#c9ccd2', 'Fine silver curb chain.', 'common', undefined, 'silver');
-acc('chain_gold', 'Gold chain', 'neck', 'chain', 180, 'chain', '#d4af37', '9ct gold rope chain.', 'uncommon', undefined, 'gold');
+acc('chain_gold', 'Gold chain', 'neck', 'chain', 180, 'chain', '#d4af37', 'Thin 9ct gold chain from Threads.', 'uncommon', undefined, 'gold');
 acc('watch_basic', 'Digital watch', 'wrist', 'watch', 20, 'watch', '#1b1d22', 'Does the job.');
 acc('earring_silver', 'Silver earring', 'ears', 'earring', 25, 'earring', '#c9ccd2', 'Small hoop.');
 acc('ring_signet', 'Signet ring', 'finger', 'ring', 90, 'ring', '#d4af37', 'Heavy gold signet. Adds weight to a punch.', 'uncommon', [{ stat: 'damageMult', mul: 1.03, text: '+3% damage' }]);
@@ -302,17 +302,17 @@ add({ id: 'first_aid', name: 'First aid kit', text: 'Bandages, wipes, the lot.',
 const val = (id: string, name: string, icon: IconKind, rarity: Rarity, value: number, colour: string, text: string, stack = 1) =>
   add({ id, name, text, category: 'valuable', rarity, value, stack, icon, colour });
 // jewellery
-val('watch_diver', 'Prestige diver watch', 'watch', 'epic', 1800, '#c9ccd2', 'Swiss-made steel diver’s watch. Heavy, ticking smoothly. Probably real.');
-val('watch_gold', 'Gold dress watch', 'watch', 'rare', 650, '#d4af37', 'Slim gold case, leather strap.');
-val('watch_silver', 'Silver watch', 'watch', 'uncommon', 140, '#c9ccd2', 'Steel bracelet, quartz movement.');
-val('watch_cheap', 'Fashion watch', 'watch', 'common', 25, '#a07850', 'Big face, small value.', 3);
-val('chain_cuban', 'Cuban-link chain', 'chain', 'epic', 1200, '#d4af37', 'Thick gold Cuban links. Weighs a ton.');
-val('chain_rope', 'Gold rope chain', 'chain', 'rare', 380, '#d4af37', '9ct gold rope chain.');
-val('chain_cheap', 'Plated chain', 'chain', 'common', 15, '#c9a22a', 'Gold-plated. The plating is coming off.', 3);
+val('watch_diver', 'Marchetti Diamond Bezel (steel)', 'watch', 'epic', 1920, '#c9ccd2', 'Steel case, a ring of diamonds round the dial. Goes straight in your jewellery box, unless it’s stolen.');
+val('watch_gold', 'Kingsley Dress Watch (9ct gold)', 'watch', 'rare', 540, '#d4af37', 'Slim gold case, leather strap. Goes straight in your jewellery box, unless it’s stolen.');
+val('watch_silver', 'Crane Oyster-style (steel)', 'watch', 'uncommon', 260, '#c9ccd2', 'Steel bracelet, black dial. Goes straight in your jewellery box, unless it’s stolen.');
+val('watch_cheap', 'Kasio Digital (black)', 'watch', 'common', 30, '#2c2c31', 'Alarm, stopwatch, backlight. Goes straight in your jewellery box, unless it’s stolen.', 3);
+val('chain_cuban', 'Cuban Link 8 mm (9ct gold)', 'chain', 'epic', 1600, '#d4af37', 'Thick gold Cuban links. Weighs a ton. Goes straight in your jewellery box, unless it’s stolen.');
+val('chain_rope', 'Fine Rope Chain (9ct gold)', 'chain', 'rare', 260, '#d4af37', 'Twisted 3 mm rope that catches the light. Goes straight in your jewellery box, unless it’s stolen.');
+val('chain_cheap', 'Box Chain (steel)', 'chain', 'common', 45, '#b9bdc4', 'Neat square links. Goes straight in your jewellery box, unless it’s stolen.', 3);
 val('bracelet_gold', 'Gold bracelet', 'bracelet', 'rare', 320, '#d4af37', 'Curb-link bracelet.');
 val('bracelet_silver', 'Silver bracelet', 'bracelet', 'uncommon', 70, '#c9ccd2', 'Chunky silver links.', 3);
-val('ring_gold', 'Gold ring', 'ring', 'uncommon', 120, '#d4af37', 'Plain gold band.', 3);
-val('ring_diamond', 'Diamond-style ring', 'ring', 'epic', 900, '#e8f4ff', 'Big sparkly stone on white gold.');
+val('ring_gold', 'Kingsley Flat Band (9ct gold)', 'ring', 'uncommon', 220, '#d4af37', 'A wide flat gold band. Goes straight in your jewellery box, unless it’s stolen.', 3);
+val('ring_diamond', 'Velloni Solitaire (white gold)', 'ring', 'epic', 2800, '#e8f4ff', 'One proper diamond on white gold. Goes straight in your jewellery box, unless it’s stolen.');
 val('earrings_diamond', 'Diamond studs', 'earring', 'rare', 420, '#e8f4ff', 'A pair of diamond-look studs.');
 // electronics
 val('phone_flagship', 'Flagship smartphone', 'phone', 'rare', 380, '#2a2d33', 'This year’s model, barely a scratch.');

@@ -1,6 +1,7 @@
 import { doorX } from '../city/doorSpots';
 import { BODY_RADIUS } from '../core/constants';
 import { BOSS_DAMAGE_TAKEN, ENEMY_DAMAGE_TAKEN, fightStrength, SECOND_WIND } from './fightTuning';
+import { JEWEL_ITEMS } from '../items/jewellery';
 import { ARCHETYPES, GRUNT_NAMES, NAMED_GRUNTS, archetypeAppearance, type Archetype, type ArchetypeId } from '../ai/archetypes';
 import { AttackTokens } from '../ai/AttackTokens';
 import { BOSSES, type BossDef, type BossPhase } from '../ai/bosses';
@@ -70,7 +71,7 @@ export interface WorldEvents {
   'boss:phase': { boss: BossDef; phase: BossPhase };
   'boss:defeated': { boss: BossDef; first: boolean; cash: number; xp: number; items: string[]; left: string[] };
   cash: { amount: number };
-  'item:picked': { name: string; qty: number; rarity: string; stolen: boolean };
+  'item:picked': { name: string; qty: number; rarity: string; stolen: boolean; jewel?: boolean };
   'item:full': { name: string };
   'item:held': { name: string };
   searched: { label: string; found: string[] };
@@ -1664,7 +1665,7 @@ export class World {
     if (left) this.items.splice(idx, 0, { ...g, stack: left });
     if (g.kept) this.keptTaken(uid, left);
     this.markPickupTaken(g);
-    this.events.emit('item:picked', { name: d.name, qty: qty - (left?.qty ?? 0), rarity: d.rarity, stolen: !!stack.stolen });
+    this.events.emit('item:picked', { name: d.name, qty: qty - (left?.qty ?? 0), rarity: d.rarity, stolen: !!stack.stolen, jewel: !!JEWEL_ITEMS[d.id] && !stack.stolen });
     if (left) this.events.emit('item:full', { name: d.name });
     return true;
   }

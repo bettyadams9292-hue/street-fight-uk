@@ -170,16 +170,16 @@ test('wearing clothes changes the look and stats, swaps back cleanly, never dupl
 
 test('storage: deposit and withdraw move items (no copies), capacity and upgrades', () => {
   const p = fresh();
-  p.giveItem('watch_gold');
+  p.giveItem('camera');
   p.giveItem('chips', 4);
-  const w = p.save.inventory.find((s) => s.id === 'watch_gold')!;
+  const w = p.save.inventory.find((s) => s.id === 'camera')!;
   assert(p.deposit(w.uid).ok, 'deposit');
-  assert(count(p, 'watch_gold') === 1 && p.save.storage.some((s) => s.id === 'watch_gold') && !p.save.inventory.some((s) => s.id === 'watch_gold'), 'watch duplicated or lost');
+  assert(count(p, 'camera') === 1 && p.save.storage.some((s) => s.id === 'camera') && !p.save.inventory.some((s) => s.id === 'camera'), 'watch duplicated or lost');
   const chips = p.save.inventory.find((s) => s.id === 'chips')!;
   p.deposit(chips.uid, 2);
   assert(count(p, 'chips') === 4, `chips now ${count(p, 'chips')}`);
-  const st = p.save.storage.find((s) => s.id === 'watch_gold')!;
-  assert(p.withdraw(st.uid).ok && count(p, 'watch_gold') === 1 && p.save.inventory.some((s) => s.id === 'watch_gold'), 'withdraw');
+  const st = p.save.storage.find((s) => s.id === 'camera')!;
+  assert(p.withdraw(st.uid).ok && count(p, 'camera') === 1 && p.save.inventory.some((s) => s.id === 'camera'), 'withdraw');
   assert(uidsUnique(p), 'uids repeated');
   // Capacity.
   p.save.storage = [];
@@ -233,7 +233,7 @@ test('clothes shop: buying costs money, fails cleanly when broke, full pockets d
 
 test('pawn shop: offers by category, less for stolen, sells one or many, never quest items', () => {
   const p = fresh();
-  const watch = ITEMS.watch_gold;
+  const watch = ITEMS.camera;
   const offer = pawnOffer(watch, {});
   assert(offer > 0 && offer < watch.value, `offer ${offer}`);
   assert(pawnOffer(watch, { stolen: true }) < offer, 'stolen not discounted');
@@ -322,14 +322,14 @@ test('the Red Lion can be robbed: takings grabbed, Ray fights, the pub shuts', (
 test('arrest: stolen goods seized (pockets, worn, hands), fine paid, heat wiped', () => {
   const p = fresh();
   p.giveItem('puffer_red', 1, { stolen: true });
-  p.giveItem('watch_gold');
+  p.giveItem('camera');
   p.wear(p.save.inventory.find((s) => s.id === 'puffer_red')!.uid);
   p.giveItem('runners', 1, { stolen: true });
   p.save.cash.pocket = 100;
   p.save.cash.bank = 100;
   p.save.heat = 90;
   const r = arrest(p);
-  assert(r.seized === 2 && !p.owns('puffer_red') && !p.owns('runners') && p.owns('watch_gold'), `seized ${r.seized}`);
+  assert(r.seized === 2 && !p.owns('puffer_red') && !p.owns('runners') && p.owns('camera'), `seized ${r.seized}`);
   assert(r.fine === 30 && p.save.cash.pocket + p.save.cash.bank === 170, `fine ${r.fine}`);
   assert(p.save.heat === 0 && p.save.stats.arrests === 1, 'heat or stats');
   assert(ARREST_HEAT > 0, '');
@@ -464,7 +464,7 @@ test('save v3 round trip keeps every item, worn and held, with no duplicates', (
   const kv = memoryKV();
   const store = new SaveStore(kv);
   const p = fresh();
-  p.giveItem('watch_gold');
+  p.giveItem('camera');
   p.stashNew('chain_gold');
   p.giveItem('w_crowbar');
   p.hold(p.save.inventory.find((s) => s.id === 'w_crowbar')!.uid);
@@ -473,7 +473,7 @@ test('save v3 round trip keeps every item, worn and held, with no duplicates', (
   store.write(p.save);
   assert(kv.m.has('sfuk.save.v3'), 'not saved under the v3 key');
   const back = new Progress(store.load()!.save);
-  for (const id of ['watch_gold', 'chain_gold', 'w_crowbar', 'puffer_black', 'wraps']) assert(count(back, id) === count(p, id), `${id}: ${count(back, id)} vs ${count(p, id)}`);
+  for (const id of ['camera', 'chain_gold', 'w_crowbar', 'puffer_black', 'wraps']) assert(count(back, id) === count(p, id), `${id}: ${count(back, id)} vs ${count(p, id)}`);
   assert(back.save.held?.id === 'w_crowbar' && back.save.worn.top?.id === 'puffer_black', 'held/worn lost');
   assert(uidsUnique(back), 'duplicate uids after load');
   // New items after loading never reuse a uid.
@@ -483,13 +483,13 @@ test('save v3 round trip keeps every item, worn and held, with no duplicates', (
 
 test('a doctored save with the same item twice is de-duplicated', () => {
   const p = fresh();
-  p.giveItem('watch_gold');
-  const st = p.save.inventory.find((s) => s.id === 'watch_gold')!;
+  p.giveItem('camera');
+  const st = p.save.inventory.find((s) => s.id === 'camera')!;
   const raw = JSON.parse(JSON.stringify(p.save));
   raw.storage.push({ ...st });
   raw.inventory.push({ ...st });
   const fixed = new Progress(sanitiseSave(raw)!);
-  assert(count(fixed, 'watch_gold') === 1 && uidsUnique(fixed), `watch count ${count(fixed, 'watch_gold')}`);
+  assert(count(fixed, 'camera') === 1 && uidsUnique(fixed), `watch count ${count(fixed, 'camera')}`);
 });
 
 test('a Stage 4 (v2) save migrates: money, flags, gear, weapons and cosmetics all kept', () => {

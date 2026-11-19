@@ -404,7 +404,7 @@ function townBoss(index: number, seed: BossSeed, townName: string): BossDef {
     id: townBossId(index), name: seed.name, title: seed.title, district: townName, intro: seed.intro, defeat: seed.defeat,
     brain, style: seed.style, secondaryStyle: seed.second, attributes, level, bonusHealth: 170 + index * 45,
     appearance: { body: seed.body, muscle: 0.5 + seed.lean[0] * 0.1, weight: 0.35 + seed.lean[2] * 0.08, height: 1 + seed.lean[0] * 0.015, topColour: seed.colour, bottomsColour: '#1b1d22' },
-    phases, reward: { cash: 1000 + index * 400, xp: 3000 + index * 1200 }, flag: townBossFlag(index),
+    phases, reward: { cash: 2500 + index * 1000, xp: 3000 + index * 1200 }, flag: townBossFlag(index),
   };
 }
 
@@ -433,13 +433,13 @@ function generateTown(index: number): GeneratedTown {
     const tier = di;
     const size = Math.min(4, 2 + Math.floor((index + 1) / 2));
     const encounters: EncounterDef[] = [
-      { id: 'main', triggerX: mainX, lock: [mainX - 11, mainX + 11], optional: false, waves: waves(rng, town, tier, 2, size), reward: { cash: 120 + index * 40 + di * 20, xp: 400 + index * 150 + di * 50 }, objective: `Fight your way along ${name}` },
+      { id: 'main', triggerX: mainX, lock: [mainX - 11, mainX + 11], optional: false, waves: waves(rng, town, tier, 2, size), reward: { cash: 250 + index * 80 + di * 40, xp: 400 + index * 150 + di * 50 }, objective: `Fight your way along ${name}` },
     ];
     const bossZone: [number, number] | null = last ? [length - 28, length - 2] : null;
     if (last) {
       encounters.push({ id: 'boss', triggerX: length - 16, lock: bossZone!, optional: false, boss: townBossId(index), waves: [{ enemies: [{ archetype: town.enemies[town.enemies.length - 1] }] }], reward: { cash: 0, xp: 0 }, objective: `${town.boss.name} runs ${town.name} from the far end` });
     } else {
-      encounters.push({ id: 'side', triggerX: sideX, optional: true, waves: waves(rng, town, tier, 1, Math.min(4, size + 1)), reward: { cash: 80 + index * 30, xp: 260 + index * 90 }, objective: `Fight your way along ${name}` });
+      encounters.push({ id: 'side', triggerX: sideX, optional: true, waves: waves(rng, town, tier, 1, Math.min(4, size + 1)), reward: { cash: 160 + index * 60, xp: 260 + index * 90 }, objective: `Fight your way along ${name}` });
     }
     const facades = frontages(rng, recipe, length, bossZone);
     const keepClear: [number, number][] = [[mainX - 11, mainX + 11], ...(bossZone ? [bossZone] : [])];

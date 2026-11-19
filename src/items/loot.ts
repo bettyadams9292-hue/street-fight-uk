@@ -1,5 +1,6 @@
 import type { ArchetypeId } from '../ai/archetypes';
 import { ITEMS } from './items';
+import { pawnOffer } from './shops';
 
 /**
  * Loot tables: what enemies drop and what you find searching bins, skips,
@@ -122,4 +123,9 @@ export function rollLoot(tableId: string, rng: () => number): LootRoll {
     }
   }
   return out;
+}
+
+/** What a boss's drops would fetch if you sold them all (the pawn shop's offer). Quest items count nothing. */
+export function bossDropValue(drops: readonly string[]): number {
+  return drops.reduce((n, id) => n + (ITEMS[id] ? pawnOffer(ITEMS[id], {}) : 0), 0);
 }
