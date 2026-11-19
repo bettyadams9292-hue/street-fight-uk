@@ -1129,7 +1129,7 @@ body.roam .touch-ui .attack-pad .lk { left: auto; right: 0; top: 61px; bottom: a
   /* Walking about: no bottom row, so the stick gets the whole lower left and the pad sits lower. */
   body.roam .touch-ui .attack-pad .jmp { left: 50px; top: 0; }
   body.roam .touch-ui .attack-pad .lk { left: auto; right: 0; top: 50px; }
-  body.roam .touch-ui .attack-pad { bottom: calc(-36px + var(--safe-b)); }
+  body.roam .touch-ui .attack-pad { bottom: calc(10px + var(--safe-b)); }
   body.roam .touch-ui .stick-zone { bottom: calc(10px + var(--safe-b)); height: calc(var(--deck-pad) + 70px + var(--deck-row)); }
   body.roam .touch-ui .stick-base { top: 62%; }
 
@@ -1146,3 +1146,14 @@ body.roam .touch-ui .attack-pad .lk { left: auto; right: 0; top: 61px; bottom: a
 .touch-ui .prompt-wrap { z-index: 5; }
 .touch-ui .prompt.interact { pointer-events: auto; cursor: pointer; touch-action: none; padding: 8px 14px; }
 .touch-ui .prompt.interact.down { transform: translateY(2px); filter: brightness(0.9); }
+
+/* The USE button: red, in the attack pad, only while there's something in front of you to use.
+   Walking about it sits at the bottom of the pad, between PUNCH and KICK; in a fight, in the pad's top-left corner. */
+.attack-pad .use { display: none; left: 0; top: 0; width: 56px; height: 56px; background: var(--no-entry); color: #fff; box-shadow: inset 0 0 0 2px #fff, 0 3px 0 rgba(0, 0, 0, 0.45); }
+body.can-use .touch-ui .attack-pad .use { display: flex; }
+body.roam .touch-ui .attack-pad .use { left: 61px; top: auto; bottom: 0; width: 68px; height: 68px; }
+.attack-pad .use.down { background: #fff; color: var(--no-entry); }
+@media (orientation: portrait) and (max-width: 700px) {
+  .touch-ui .attack-pad .use { left: -4px; top: -4px; width: 50px; height: 50px; font-size: 15px; }
+  body.roam .touch-ui .attack-pad .use { left: 50px; top: auto; bottom: 0; width: 58px; height: 58px; font-size: 17px; }
+}

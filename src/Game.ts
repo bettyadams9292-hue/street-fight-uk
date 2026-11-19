@@ -2359,6 +2359,7 @@ export class Game {
       }
     }
     this.hud.setPrompt(text, sub, interact);
+    document.body.classList.toggle('can-use', interact);
   }
 
   // ---- the first fight teaches the buttons ------------------------------------------
