@@ -1075,3 +1075,19 @@ body:has(#ui .screen) .rotate-hint { display: none !important; }
 .touch-ui .extra-pad .touch-btn { font-size: 13px; }
 /* In a fight the map, bag and crew buttons step aside: the pause menu has all three. */
 body.fight-on .touch-ui .hud-btn.story-only { display: none; }
+
+/* Move list (pause → Moves). */
+.move-list .move-style { margin: 0 0 18px; }
+.move-list h3 { margin: 6px 0 2px; }
+.move-list h4 { margin: 12px 0 4px; font-family: var(--head); font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.move-table { width: 100%; border-collapse: collapse; }
+.move-table td { padding: 5px 6px; border-bottom: 1px solid rgba(242, 240, 232, 0.08); vertical-align: middle; }
+.move-table .ml-input { white-space: nowrap; width: 1%; }
+.move-table .ml-name small { display: block; opacity: 0.7; font-size: 12px; }
+.move-table .ml-kind { opacity: 0.75; font-size: 13px; width: 1%; white-space: nowrap; }
+.move-table .ml-dmg { text-align: right; width: 1%; font-variant-numeric: tabular-nums; }
+.move-list kbd { display: inline-block; color: var(--sign-white, #f2f0e8); white-space: nowrap; padding: 1px 6px; border: 1px solid rgba(242, 240, 232, 0.35); font-family: var(--head); font-size: 13px; background: rgba(0, 0, 0, 0.35); }
+.combo-routes { list-style: none; padding: 0; margin: 0; }
+.combo-routes li { padding: 5px 0; border-bottom: 1px solid rgba(242, 240, 232, 0.08); }
+.combo-routes .route-keys { display: block; }
+.combo-routes .route-names { display: block; font-size: 13px; opacity: 0.75; margin-top: 2px; }

@@ -182,7 +182,7 @@ export function controlsScreen(ui: UIManager): Screen {
 
 // ---------------------------------------------------------------- pause ------
 
-export function pauseMenu(actions: { resume: () => void; settings: () => void; controls: () => void; practice: () => void; quit: () => void }): Screen {
+export function pauseMenu(actions: { resume: () => void; settings: () => void; controls: () => void; moves: () => void; practice: () => void; quit: () => void }): Screen {
   const el = h(
     'div',
     { class: 'screen pause-menu' },
@@ -192,6 +192,7 @@ export function pauseMenu(actions: { resume: () => void; settings: () => void; c
       'nav',
       { class: 'menu-list' },
       menuButton('Resume', actions.resume, undefined, '', undefined, undefined, 'resume'),
+      menuButton('Moves', actions.moves, 'Every move and combo you know', '', undefined, undefined, 'moves'),
       menuButton('Practice styles', actions.practice, 'Try any fighting style', '', undefined, undefined, 'practice-styles'),
       menuButton('Settings', actions.settings, undefined, '', undefined, undefined, 'settings'),
       menuButton('Controls', actions.controls, undefined, '', undefined, undefined, 'controls'),

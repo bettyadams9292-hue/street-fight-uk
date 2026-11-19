@@ -1,6 +1,7 @@
 import { setHumansEnabled } from './render/human/HumanRig';
 import { slugify } from './ui/titles';
 import { AudioManager, type MusicTrack } from './audio/AudioManager';
+import { moveListScreen, type Device } from './ui/moveList';
 import { DT } from './core/constants';
 import { TrainingMode } from './core/TrainingMode';
 import { ARCHETYPE_IDS, type ArchetypeId } from './ai/archetypes';
@@ -432,6 +433,7 @@ export class Game {
           },
           settings: () => this.ui.push(settingsScreen(this.settings, this.ui)),
           controls: () => this.ui.push(controlsScreen(this.ui)),
+          moves: () => this.openMoves(),
           quit: () => {
             this.saveGame();
             this.showMainMenu();
@@ -445,6 +447,7 @@ export class Game {
         resume: () => this.resume(),
         settings: () => this.ui.push(settingsScreen(this.settings, this.ui)),
         controls: () => this.ui.push(controlsScreen(this.ui)),
+        moves: () => this.openMoves(),
         practice: () =>
           this.ui.push(
             practiceScreen(this.training.primary, this.training.secondary, this.ui, (primary, secondary) => {
@@ -456,6 +459,15 @@ export class Game {
         quit: () => this.quitToMenu(),
       }),
     );
+  }
+
+  /** Pause → Moves: the player's style (and second style), named for the controller in hand. */
+  private openMoves(): void {
+    const p = this.activePlayer;
+    if (!p) return;
+    const styles = [p.primaryStyle, ...(p.secondaryStyle ? [p.secondaryStyle] : [])];
+    const device: Device = this.input.lastDevice === 'gamepad' ? 'gamepad' : this.touchWanted() ? 'touch' : 'keyboard';
+    this.ui.push(moveListScreen(styles, device, () => this.ui.pop()));
   }
 
   private resume(): void {
@@ -2105,6 +2117,7 @@ export class Game {
     this.unsubscribe.push(
       bus.on('move:started', ({ fighter, move }) => {
         this.audio.swing(move.kind === 'heavy');
+        if (isPlayer(fighter)) this.coachSaw.add(move.button);
         // An enemy loading up a big, slow shot at you: a red flash on the fist or foot, early enough to block,
         // dodge or step out. Quick shots get none; reading those is down to you.
         const big = move.kind === 'heavy' || move.kind === 'special' || move.kind === 'finisher';
@@ -2252,6 +2265,7 @@ export class Game {
     } else if (p.state === 'knockdown' && p.stateFrame > 10) {
       text = `Get up: ${k('C', 'L3', 'JUMP')} quick \u00b7 ${k('W/S', 'up/down', 'stick up/down')} roll \u00b7 attack to get up swinging${p.style.defence === 'guard_pull' ? ` \u00b7 ${k('U', 'LB', 'GRAB')} sweep` : ''}`;
     }
+    if (!text) text = this.coachText(p, k);
     let interact = false;
     const it = this.world?.interactable;
     if (this.house.active) text = '';
@@ -2267,6 +2281,49 @@ export class Game {
       }
     }
     this.hud.setPrompt(text, sub, interact);
+  }
+
+  // ---- the first fight teaches the buttons ------------------------------------------
+
+  /** Buttons and actions the player has used since the coach started (moves add their button). */
+  private coachSaw = new Set<string>();
+  private coachStep = 0;
+  private coachShown = 0;
+
+  /**
+   * Story mode's first fights walk you through the basics, one prompt at a time: each step waits until
+   * you've done it (and has been up long enough to read). Done once per save ('coach:done').
+   */
+  private coachText(p: Fighter, k: (key: string, pad: string, t: string) => string): string {
+    const prog = this.progress;
+    if (!this.world || !prog || prog.has('coach:done') || !this.world.fightOn || this.state !== 'playing') return '';
+    // Saves from before the coach existed, past the first level, already know the buttons.
+    if (prog.save.level > 1) {
+      prog.set('coach:done');
+      return '';
+    }
+    if (p.state === 'block' || p.state === 'blockstun') this.coachSaw.add('block');
+    if (p.state === 'dodge') this.coachSaw.add('dodge');
+    const steps: { text: string; done: () => boolean; min?: number }[] = [
+      { text: `${k('J', 'X', 'PUNCH')} Throw a punch`, done: () => this.coachSaw.has('lp') },
+      { text: `${k('K', 'A', 'KICK')} Now a kick: it reaches further`, done: () => this.coachSaw.has('lk') },
+      { text: `${k('I', 'Y', 'hard PUNCH')} or ${k('L', 'B', 'hard KICK')} Hard shots hit harder but are slower`, done: () => this.coachSaw.has('hp') || this.coachSaw.has('hk') },
+      { text: `Hold ${k('Space', 'RT', 'BLOCK')} when they swing. Tap it just before a hit to parry`, done: () => this.coachSaw.has('block') },
+      { text: `${k('Shift', 'LT', 'DODGE')} Slip out of the way`, done: () => this.coachSaw.has('dodge') },
+      { text: `Chain them: ${k('J', 'X', 'PUNCH')} ${k('J', 'X', 'PUNCH')} ${k('J', 'X', 'PUNCH')} ${k('I', 'Y', 'hard PUNCH')}. Every combo is in Pause → Moves`, done: () => false, min: 6 },
+    ];
+    const step = steps[this.coachStep];
+    if (!step) return '';
+    if (this.coachShown === 0) this.coachShown = this.time;
+    const up = this.time - this.coachShown;
+    if (up > (step.min ?? 1.5) && (step.done() || step.min !== undefined)) {
+      this.coachStep++;
+      this.coachShown = 0;
+      this.coachSaw.clear();
+      if (this.coachStep >= steps.length) prog.set('coach:done');
+      return this.coachStep < steps.length ? steps[this.coachStep].text : '';
+    }
+    return step.text;
   }
 
   private unwire(): void {
