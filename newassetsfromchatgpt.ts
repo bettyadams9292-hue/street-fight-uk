@@ -976,26 +976,37 @@ function buildReplacementV9(g:THREE.Group,name:StreetAssetName){
   for(const x of [-.46,.46])for(const z of [-.46,.46]){
    make(.11,2.22,.11,x,1.18,z,red,.2,.48);
   }
-  // Three glazed walls and one closed glazed door. Use TWO vertical
-  // mullions per elevation; remove the doubled interior bars and pink haze.
+  // Each elevation is individually glazed in every opening, including the
+  // very top and bottom rows of the front door. Separate panes avoid a
+  // single sheet intersecting the red muntins or appearing absent at edges.
   const glassMaterial=new THREE.MeshPhysicalMaterial({
-    color:0xe1eef2,roughness:.09,metalness:0,transparent:true,
-    opacity:.12,depthWrite:false,side:THREE.DoubleSide
+    color:0xd9eaf0,metalness:0,roughness:.085,
+    transparent:true,opacity:.32,depthWrite:false,side:THREE.DoubleSide
   });
+  const columns=[[-.39,-.15],[-.12,.12],[.15,.39]] as const;
+  const rows=[[.245,.555],[.605,1.015],[1.065,1.475],[1.525,1.935],[1.985,2.075]] as const;
   for(const side of ['front','back','left','right']){
     const horizontal=side==='front'||side==='back';
-    const fixed=(side==='front'||side==='right')?.462:-.462;
-    const pane=new THREE.Mesh(new THREE.PlaneGeometry(.80,1.82),glassMaterial);
-    if(horizontal)pane.position.set(0,1.19,fixed);
-    else{pane.rotation.y=Math.PI/2;pane.position.set(fixed,1.19,0);}
-    pane.renderOrder=2;g.add(pane);
+    const fixed=(side==='front'||side==='right')?.478:-.478;
+    for(const [lo,hi] of columns)for(const [bottom,top] of rows){
+      const pane=new THREE.Mesh(
+        new THREE.PlaneGeometry(hi-lo-.008,top-bottom-.008),glassMaterial
+      );
+      if(horizontal)pane.position.set((lo+hi)/2,(bottom+top)/2,fixed);
+      else{
+        pane.rotation.y=Math.PI/2;
+        pane.position.set(fixed,(bottom+top)/2,(lo+hi)/2);
+      }
+      pane.name=side+' glazed opening '+bottom.toFixed(2)+'-'+top.toFixed(2);
+      pane.renderOrder=3;g.add(pane);
+    }
     for(const v of [-.135,.135]){
-      if(horizontal)make(.033,1.83,.047,v,1.19,fixed,red,.2,.52);
-      else make(.047,1.83,.033,fixed,1.19,v,red,.2,.52);
+      if(horizontal)make(.033,1.85,.047,v,1.16,fixed-.018,red,.2,.52);
+      else make(.047,1.85,.033,fixed-.018,1.16,v,red,.2,.52);
     }
     for(const y of [.58,1.04,1.50,1.96]){
-      if(horizontal)make(.81,.048,.055,0,y,fixed,red,.2,.52);
-      else make(.055,.048,.81,fixed,y,0,red,.2,.52);
+      if(horizontal)make(.81,.048,.055,0,y,fixed-.018,red,.2,.52);
+      else make(.055,.048,.81,fixed-.018,y,0,red,.2,.52);
     }
     if(side==='front'){
       make(.065,1.98,.09,-.395,1.16,.49,trim,.2);
@@ -1015,5 +1026,5 @@ function buildReplacementV9(g:THREE.Group,name:StreetAssetName){
   make(.30,.50,.13,0,1.23,-.39,steel,.3);
   make(.16,.16,.045,0,1.34,-.31,0xc6c6c1,.2);
  }
- g.userData.replacementRevision=10;
+ g.userData.replacementRevision=11;
 }
