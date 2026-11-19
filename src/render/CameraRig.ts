@@ -118,14 +118,20 @@ export class CameraRig {
 
   /** `open`: ends of the area where the street carries on into the next district, so the camera is not held back there. */
   updateWorld(dt: number, player: Fighter, target: Fighter | null, bounds: ArenaBounds, lock: { minX: number; maxX: number } | null, open: { left: boolean; right: boolean } = { left: false, right: false }): void {
-    const DEAD = 1.2;
     if (!this.worldReady) {
       this.deadX = player.pos.x;
       this.focus.set(player.pos.x, 1.05, player.pos.z * 0.3);
       this.distance = this.compact ? 7.2 : 8.5;
     }
-    if (player.pos.x > this.deadX + DEAD) this.deadX = player.pos.x - DEAD;
-    if (player.pos.x < this.deadX - DEAD) this.deadX = player.pos.x + DEAD;
+    // Half the width you can see where people stand, at the current distance. A portrait phone sees only
+    // about 1.7 m either side, so the dead zone and the lead scale with it.
+    const seen = () => Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * this.distance * this.camera.aspect;
+    const DEAD = Math.min(1.2, seen() * 0.3);
+    // Look ahead the way you're going (most when running), so you see what's coming instead of chasing yourself.
+    const lead = Math.max(-seen() * 0.35, Math.min(seen() * 0.35, player.vel.x * 0.22));
+    const px = player.pos.x + lead;
+    if (px > this.deadX + DEAD) this.deadX = px - DEAD;
+    if (px < this.deadX - DEAD) this.deadX = px + DEAD;
     let cx = this.deadX;
     let spread = 0;
     if (target && !target.isKO && Math.abs(target.pos.x - player.pos.x) < 8) {
@@ -150,6 +156,11 @@ export class CameraRig {
     this.focus.x += (cx - this.focus.x) * k;
     this.focus.z += (player.pos.z * 0.3 - this.focus.z) * k;
     this.distance += (wantDist - this.distance) * (1 - Math.exp(-3 * dt));
+    // Whatever else is going on (a sprint, a far-off target), you never leave the screen: the camera is held
+    // so you're at least 0.55 m inside either edge. An enemy that ends up outside gets an edge arrow instead.
+    const room = Math.max(0.3, seen() - 0.55);
+    if (player.pos.x - this.focus.x > room) this.focus.x = player.pos.x - room;
+    if (this.focus.x - player.pos.x > room) this.focus.x = player.pos.x + room;
 
     this.place(dt);
   }

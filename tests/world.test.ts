@@ -156,7 +156,10 @@ test('the player cannot walk through walls or props', () => {
   place(s, 2.5, 1.4);
   run(s, 200, () => cmd({ moveX: 1 }));
   const car = propBox({ kind: 'car', x: 6, z: 1.4 })!;
-  assert(s.player.pos.x <= car.minX - BODY_RADIUS + 0.05 || s.player.pos.z > car.maxZ, `walked into the car: ${s.player.pos.x.toFixed(2)},${s.player.pos.z.toFixed(2)}`);
+  // Stepping round the car is fine (that's what you do now); ending up inside it isn't.
+  const q = s.player.pos;
+  const inside = q.x > car.minX - BODY_RADIUS + 0.05 && q.x < car.maxX + BODY_RADIUS - 0.05 && q.z > car.minZ - BODY_RADIUS + 0.05 && q.z < car.maxZ + BODY_RADIUS - 0.05;
+  assert(!inside, `walked into the car: ${q.x.toFixed(2)},${q.z.toFixed(2)}`);
 });
 
 test('home: you can walk the front of the house end to end without snagging', () => {
@@ -487,3 +490,31 @@ test('soak: AI groups in every area for 40 s without errors or escapes', () => {
 
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);
+
+test('walking straight into a bin steps round it instead of stopping dead', () => {
+  const w = new World(LEVELS.estate, freshProgress(), { entry: 'home', seed: 1 });
+  const p = w.player;
+  p.pos.z = 0;
+  const x0 = p.pos.x;
+  // A bin-sized box right in front, with plenty of pavement either side of it.
+  w.arena.obstacles.push({ minX: x0 + 1, maxX: x0 + 1.6, minZ: -0.3, maxZ: 0.3 });
+  run(w, 240, () => cmd({ moveX: 1 }));
+  assert(p.pos.x > x0 + 2.2, `still stuck behind the bin at x ${(p.pos.x - x0).toFixed(2)}`);
+  // And backing into one works the same way.
+  const x1 = p.pos.x;
+  w.arena.obstacles.push({ minX: x1 - 1.6, maxX: x1 - 1, minZ: p.pos.z - 0.3, maxZ: p.pos.z + 0.3 });
+  run(w, 240, () => cmd({ moveX: -1 }));
+  assert(p.pos.x < x1 - 2.2, `stuck backing into the bin at x ${(p.pos.x - x1).toFixed(2)}`);
+});
+
+test('a passer-by and the player never stand inside each other', () => {
+  const w = new World(LEVELS.estate, freshProgress(), { entry: 'home', seed: 1 });
+  const civ = w.sim.fighters.find((f) => f.team === 'neutral');
+  if (!civ) return;
+  const p = w.player;
+  civ.pos.x = p.pos.x + 0.2;
+  civ.pos.z = p.pos.z + 0.15;
+  run(w, 30, () => cmd());
+  const d = Math.hypot(civ.pos.x - p.pos.x, civ.pos.z - p.pos.z);
+  assert(d > 0.5, `passer-by still inside the player (${d.toFixed(2)} m apart)`);
+});
