@@ -7,6 +7,14 @@ export const EXPANSION_ASSETS = [
 {id:'hexDumbbell10',label:'10 kg hex dumbbell',category:'gym'},
 {id:'hexDumbbell20',label:'20 kg hex dumbbell',category:'gym'},
 {id:'dumbbellRack',label:'Commercial dumbbell rack',category:'gym'},
+{id:'olympicBar20kg',label:'20 kg Olympic bar — shop item',category:'gym',weightKg:20,storeItem:true},
+{id:'plate2_5kg',label:'2.5 kg Olympic plate — shop item',category:'gym',weightKg:2.5,storeItem:true},
+{id:'plate5kg',label:'5 kg Olympic plate — shop item',category:'gym',weightKg:5,storeItem:true},
+{id:'plate10kg',label:'10 kg Olympic plate — shop item',category:'gym',weightKg:10,storeItem:true},
+{id:'plate15kg',label:'15 kg Olympic plate — shop item',category:'gym',weightKg:15,storeItem:true},
+{id:'plate20kg',label:'20 kg Olympic plate — shop item',category:'gym',weightKg:20,storeItem:true},
+{id:'plate25kg',label:'25 kg Olympic plate — shop item',category:'gym',weightKg:25,storeItem:true},
+{id:'olympicCollar',label:'Olympic bar collar — shop item',category:'gym',storeItem:true},
 {id:'olympicBarbell',label:'Olympic barbell',category:'gym'},
 {id:'loadedBarbell',label:'Loaded bumper-plate barbell',category:'gym'},
 {id:'barbell40kg',label:'Olympic barbell — 40 kg',category:'gym',weightKg:40,minStrengthLevel:1},
@@ -283,6 +291,29 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
    disc(sign*(Math.min(offset+.025,1.075)),barY,0,.051,.035,graphite);
   }
  };
+ // Shop inventory: each weight plate and bar is independently selectable and saleable.
+ if(id==='olympicBar20kg')barbell(20);
+ if(id==='olympicCollar'){
+  const body=C(.055,.065,0,.065,0,graphite,32);
+  const inner=C(.029,.068,0,.065,0,brushed,32);
+  R([.045,.075,0],[.11,.075,0],.012,graphite);
+ }
+ if(/^plate(2_5|5|10|15|20|25)kg$/.test(id)){
+  const kg=Number(id.match(/plate(.*?)kg/)?.[1].replace('_','.')||5);
+  const radius=kg>=20?.225:kg===15?.20:kg===10?.18:kg===5?.14:.115;
+  const colour=kg===25?red:kg===20?blue:kg===15?mat(0xd2b93e,.12,.6):kg===10?mat(0x3e9857,.12,.65):kg===5?white:graphite;
+  const plate=C(radius,.055,0,radius,0,colour,48);plate.rotation.x=Math.PI/2;
+  // Real through-bore: annular shape extruded, not a coloured disk painted over the centre.
+  g.remove(plate);plate.geometry.dispose();
+  const ring=new THREE.Shape();ring.absarc(0,0,radius,0,Math.PI*2,false);
+  const bore=new THREE.Path();bore.absarc(0,0,.027,0,Math.PI*2,true);ring.holes.push(bore);
+  const geom=new THREE.ExtrudeGeometry(ring,{depth:.052,bevelEnabled:true,bevelSize:.004,bevelThickness:.003,bevelSegments:2,curveSegments:48});
+  const mesh=new THREE.Mesh(geom,colour);mesh.rotation.x=-Math.PI/2;mesh.position.y=radius;mesh.castShadow=true;g.add(mesh);
+  const hub=C(.043,.06,0,radius,0,brushed,32);hub.rotation.x=Math.PI/2;
+  g.remove(hub);hub.geometry.dispose();
+  // Label printed onto the flat face.
+  decal(kg+' KG',radius*.95,radius*.22,0,radius*.55,.064,'#1e242b','#ffffff');
+ }
  if(id==='hexDumbbell10'||id==='hexDumbbell20')dumbbell(0,id==='hexDumbbell20'?.13:.11,0,id==='hexDumbbell20'?20:10);
  if(id==='dumbbellRack'){
   for(const x of [-.85,.85])for(const z of [-.27,.27])R([x,.03,z],[x,.95,z*.55],.035,graphite);
@@ -529,6 +560,6 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
  const poor='tags' in entry&&entry.tags.includes('poor' as never);
  g.userData={collection:'SFUK_expansion',standalone:true,id,category:entry.category,
   tags:poor?['poor']:[],districtTags:poor?['poor']:[],units:'metres',pivot:'ground-centre',
-  referenceInspired:true,weightKg:'weightKg' in entry?entry.weightKg:(id==='olympicBarbell'?20:id==='loadedBarbell'?100:undefined),minStrengthLevel:'minStrengthLevel' in entry?entry.minStrengthLevel:undefined,revision:5,quality:'procedural-work-in-progress'};
+  referenceInspired:true,storeItem:'storeItem' in entry?entry.storeItem:false,weightKg:'weightKg' in entry?entry.weightKg:(id==='olympicBarbell'?20:id==='loadedBarbell'?100:undefined),minStrengthLevel:'minStrengthLevel' in entry?entry.minStrengthLevel:undefined,revision:6,quality:'procedural-work-in-progress'};
  return g;
 }
