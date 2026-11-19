@@ -435,75 +435,71 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
   decal('STREET FIGHT UK',1.60,.18,0,.35,2.579,'#172736','#edf1f3');
  }
  const palisade=(gate:boolean,poor:boolean)=>{
-  const w=gate?1.7:3.05,n=gate?10:18;
-  const metal=poor?rust:zinc;
+  const w=gate?1.7:3.05,n=gate?13:23,finish=poor?rust:zinc;
   for(const x of [-w/2,w/2]){
-   B(.095,2.12,.10,x,1.06,0,metal);
-   B(.15,.05,.15,x,2.14,0,graphite);
+    B(.095,2.12,.10,x,1.06,0,finish);
+    B(.12,.045,.12,x,2.14,0,graphite);
   }
-  for(const y of [.34,1.76])B(w-.13,.055,.075,0,y,-.055,metal);
+  for(const y of [.34,1.76])B(w-.13,.06,.085,0,y,-.055,finish);
   for(let i=0;i<n;i++){
-   if(poor&&i===3)continue;
-   const x=-w/2+.12+i*(w-.24)/(n-1);
-   // Vertical folded V-section picket: raised spine and flanking lips.
-   const pick=B(.057,1.75,.035,x,1.05,.012,poor&&i%4===0?rust:zinc);
-   B(.020,1.73,.025,x-.026,1.05,-.009,metal);
-   B(.020,1.73,.025,x+.026,1.05,-.009,metal);
-   if(poor&&i===n-2)pick.rotation.z=.12;
-   // Two-pronged pointed head, closer to real UK palisade than cone spikes.
-   for(const dx of [-.023,.023]){
-    const tip=new THREE.Mesh(new THREE.ConeGeometry(.022,.12,4),metal);
-    tip.position.set(x+dx,1.99,.012);tip.rotation.y=Math.PI/4;g.add(tip);
-   }
-   for(const y of [.34,1.76])sphere(x,y,.064,.018,brushed);
+    if(poor&&i===4)continue;
+    const x=-w/2+.105+i*(w-.21)/(n-1);
+    const height=poor&&i===n-3?1.49:1.75;
+    const y=.175+height/2;
+    const pick=B(.056,height,.04,x,y,.012,finish);
+    B(.016,height-.02,.026,x-.026,y,-.012,finish);
+    B(.016,height-.02,.026,x+.026,y,-.012,finish);
+    if(height>1.6)for(const dx of [-.021,.021]){
+      const tip=new THREE.Mesh(new THREE.ConeGeometry(.020,.105,4),finish);
+      tip.position.set(x+dx,.175+height+.045,.012);tip.rotation.y=Math.PI/4;g.add(tip);
+    }
+    for(const boltY of [.34,1.76])if(boltY<.175+height)
+      sphere(x,boltY,.064,.014,brushed);
   }
   if(gate){
-   for(const y of [.32,1.72]){
-    B(.16,.065,.17,-w/2,y,.08,graphite);
-    C(.04,.16,-w/2,y,.11,brushed);
-   }
-   B(.16,.12,.11,w/2-.12,1.10,.13,graphite);
-   R([w/2-.12,1.10,.13],[w/2+.02,1.10,.13],.016,brushed);
-   B(.12,.15,.13,w/2+.04,1.10,.10,metal);
+    for(const y of [.32,1.72]){
+      B(.16,.065,.17,-w/2,y,.08,graphite);
+      C(.04,.16,-w/2,y,.11,brushed);
+    }
+    B(.16,.12,.11,w/2-.12,1.10,.13,graphite);
+    R([w/2-.12,1.10,.13],[w/2+.02,1.10,.13],.016,brushed);
+    B(.12,.15,.13,w/2+.04,1.10,.10,finish);
   }
  };
  const chain=(gate:boolean,poor:boolean)=>{
   const w=gate?1.5:3.05,h=1.9;
-  const x0=-w/2+.045,x1=w/2-.045,y0=.205,y1=h-.025;
+  const x0=-w/2+.05,x1=w/2-.05,y0=.21,y1=h-.03;
   for(const x of [-w/2,w/2]){
-   R([x,.03,0],[x,h+.14,0],.043,zinc);
-   sphere(x,h+.14,0,.049,brushed);
+    R([x,.03,0],[x,h+.14,0],.043,zinc);
+    sphere(x,h+.14,0,.049,brushed);
   }
   for(const y of [.18,h])R([-w/2,y,0],[w/2,y,0],.024,zinc);
-  // Clip every diagonal to the inside of the rectangular frame.
-  // This produces complete diamond links without overshooting or free-floating lines.
-  const pitch=.145;
+  // Parametric clipping gives a full uniform diamond lattice over the entire frame.
+  // Each line uses y=slope*(x-x0)+t and is clipped analytically to all four edges.
+  const pitch=.145,wire=poor?mat(0x807c73,.56,.68):zinc;
   for(const slope of [-1,1]){
-   for(let t=y0-(x1-x0);t<=y1+(x1-x0);t+=pitch){
-    const hits:[number,number][]=[];
-    const test=(x:number,y:number)=>{
-     if(x>=x0-1e-6&&x<=x1+1e-6&&y>=y0-1e-6&&y<=y1+1e-6)hits.push([x,y]);
-    };
-    test(x0,t);test(x1,t+slope*(x1-x0));
-    if(slope!==0){test(x0+(y0-t)/slope,y0);test(x0+(y1-t)/slope,y1);}
-    const unique=hits.filter((p,i)=>hits.findIndex(q=>Math.hypot(p[0]-q[0],p[1]-q[1])<1e-5)===i);
-    if(unique.length<2)continue;
-    const p=unique[0],q=unique[1];
-    if(poor){
-     // Only the explicitly poor variant has small, localised missing links.
-     const mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;
-     if(mx>.15&&mx<.65&&my>.65&&my<1.10)continue;
+    for(let t=y0-(x1-x0);t<=y1+(x1-x0);t+=pitch){
+      const xa=Math.max(x0,Math.min(x0+(y0-t)/slope,x0+(y1-t)/slope));
+      const xb=Math.min(x1,Math.max(x0+(y0-t)/slope,x0+(y1-t)/slope));
+      if(xb-xa<.004)continue;
+      const make=(left:number,right:number)=>{
+        if(right-left<.006)return;
+        R([left,t+slope*(left-x0),0],[right,t+slope*(right-x0),0],.004,wire);
+      };
+      if(poor){
+        // Small local tear, not whole diagonal wires removed across the panel.
+        const left=Math.max(xa,.12),right=Math.min(xb,.43);
+        const tearY=t+slope*(.275-x0);
+        if(right>left&&tearY>.72&&tearY<1.03){make(xa,left);make(right,xb);continue;}
+      }
+      make(xa,xb);
     }
-    R([p[0],p[1],0],[q[0],q[1],0],.0045,poor?rust:zinc);
-   }
   }
-  // Tension bars bind the wire mesh to the gate/fence posts.
-  for(const x of [x0,x1])R([x,y0,0],[x,y1,0],.012,poor?rust:brushed);
+  for(const x of [x0,x1])R([x,y0,0],[x,y1,0],.012,brushed);
   if(gate){
-   B(.10,.12,.10,w/2-.13,1.05,.09,graphite);
-   for(const y of [.33,1.68])B(.12,.07,.17,-w/2,y,.09,brushed);
+    B(.10,.12,.10,w/2-.13,1.05,.09,graphite);
+    for(const y of [.33,1.68])B(.12,.07,.17,-w/2,y,.09,brushed);
   }
-  if(poor)R([-.9,.16,.06],[.15,.07,.08],.012,rust);
  };
  const timber=(poor:boolean,gate:boolean)=>{
   const w=gate?1.1:2.75,n=gate?10:22;
@@ -511,16 +507,18 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
   for(const y of [.36,1.40])B(w,.095,.09,0,y,-.09,poor?oldWood:wood);
   if(gate)R([-w/2,.32,-.16],[w/2,1.5,-.16],.026,graphite);
   for(let i=0;i<n;i++){
-   if(poor&&[2,5,6,12,17].includes(i))continue;
-   const x=-w/2+(i+.5)*w/n;
-   const h=poor&&i%5===0?1.25:poor&&i%7===0?1.5:1.79;
-   const plank=B(w/n-.009,h,.046,x,h/2,.04,poor&&i%3===0?oldWood:wood);
-   if(poor&&i%4===0)plank.rotation.z=.06;
-   for(const y of [.36,1.4])if(y<h-.08)sphere(x,y,.073,.008,graphite);
+    // Poor gates retain all slats; damage is confined to chipped/shortened boards.
+    // Poor fences have isolated missing boards, not accidental giant openings.
+    if(poor&&!gate&&[5,15].includes(i))continue;
+    const x=-w/2+(i+.5)*w/n;
+    const h=poor&&i%5===0?1.52:poor&&i%7===0?1.65:1.79;
+    const plank=B(w/n-.007,h,.046,x,h/2,.04,poor&&i%3===0?oldWood:wood);
+    if(poor&&i%6===0)plank.rotation.z=.025;
+    for(const y of [.36,1.4])if(y<h-.08)sphere(x,y,.073,.008,graphite);
   }
   if(gate){
-   B(.11,.11,.10,w/2-.13,1.02,.11,graphite);
-   for(const y of [.35,1.43])B(.12,.055,.15,-w/2,y,.07,brushed);
+    B(.11,.11,.10,w/2-.13,1.02,.11,graphite);
+    for(const y of [.35,1.43])B(.12,.055,.15,-w/2,y,.07,brushed);
   }
  };
  if(id==='palisadeFence')palisade(false,false);
@@ -560,6 +558,6 @@ function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSI
  const poor='tags' in entry&&entry.tags.includes('poor' as never);
  g.userData={collection:'SFUK_expansion',standalone:true,id,category:entry.category,
   tags:poor?['poor']:[],districtTags:poor?['poor']:[],units:'metres',pivot:'ground-centre',
-  referenceInspired:true,storeItem:'storeItem' in entry?entry.storeItem:false,weightKg:'weightKg' in entry?entry.weightKg:(id==='olympicBarbell'?20:id==='loadedBarbell'?100:undefined),minStrengthLevel:'minStrengthLevel' in entry?entry.minStrengthLevel:undefined,revision:7,quality:'procedural-work-in-progress'};
+  referenceInspired:true,storeItem:'storeItem' in entry?entry.storeItem:false,weightKg:'weightKg' in entry?entry.weightKg:(id==='olympicBarbell'?20:id==='loadedBarbell'?100:undefined),minStrengthLevel:'minStrengthLevel' in entry?entry.minStrengthLevel:undefined,revision:8,quality:'procedural-work-in-progress'};
  return g;
 }
