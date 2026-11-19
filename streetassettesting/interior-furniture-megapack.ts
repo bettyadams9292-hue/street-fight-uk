@@ -270,11 +270,6 @@ export function createAsset(id:string):THREE.Group {
   }
   for(const x of [-width/2+.22,width/2-.22])for(const zz of [-.27,.27])b(.065,.11,.065,x,.055,zz,feet);
  }
- if(k===5){if(v<=9){const w=v===0?.98:v===1?1.20:v>=4?1.95:1.55,d=v===5?1.95:2.15;legs(w,d,.38);b(w,.19,d,0,.45,0,wood);b(w*.95,.17,d*.89,0,.61,0,cloth);b(w,.78,.10,0,.79,-d/2,wood);b(w*.88,.16,.36,0,.72,-d*.36,cushion);if(v===5){b(w,.14,d*.52,0,1.35,0,wood);for(const x of [-w/2+.07,w/2-.07])b(.08,1.45,.08,x,.75,0,wood)}}
-  else if(v===13){cyl(.05,1.75,0,.90,0,wood);for(let i=0;i<6;i++){const a=i*Math.PI/3;rod([0,1.62,0],[Math.sin(a)*.31,1.76,Math.cos(a)*.31],.025,wood)}}
-  else{b(1.1,.50,.45,0,.36,0,wood);b(1.05,.10,.42,0,.65,0,cloth);for(const x of [-.42,.42])b(.065,.65,.07,x,.35,.15,trim)}
- }
-
  // POLISH PASS: category-specific joinery, surface detail, structural fasteners,
  // material differentiation, and true variants. All decoration is attached to
  // the furniture's local coordinate frame; no world-space floating ornaments.
@@ -289,15 +284,32 @@ export function createAsset(id:string):THREE.Group {
   const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;g.add(o);return o;
  }
  function nail(x:number,y:number,z:number){const m=new THREE.Mesh(new THREE.SphereGeometry(.012,8,6),accent);m.position.set(x,y,z);g.add(m)}
+
  if(k===5){
-  if(v<=9){const w=v===0?.98:v===1?1.20:v>=4?1.95:1.55,d=v===5?1.95:2.15;
-   // Mattress piping, fitted duvet, and a pair of independent pillows.
-   bevelBox(w*.91,.045,d*.82,0,.72,.02,cloth,.018);
-   bevelBox(w*.86,.08,d*.52,0,.76,.25,cushion,.022);
-   for(const x of [-w*.23,w*.23])bevelBox(w*.40,.10,.33,x,.77,-d*.31,cloth,.035);
-   if(v===5){for(const x of [-w/2+.08,w/2-.08])rod([x,.84,-d*.48],[x,1.34,-d*.48],.022,steel)}
-  }else if(v===13){for(let i=0;i<4;i++){const a=i*Math.PI/2;rod([0,.13,0],[Math.sin(a)*.38,.04,Math.cos(a)*.38],.026,wood)}}
-  else{for(const x of [-.38,.38])b(.06,.33,.05,x,.22,.21,wood);bevelBox(.95,.04,.38,0,.72,0,cloth,.02)}
+  const frame=new THREE.MeshStandardMaterial({color:palette[v%palette.length],roughness:.78});
+  const mattress=new THREE.MeshStandardMaterial({color:0xe9e6df,roughness:1});
+  const duvet=new THREE.MeshStandardMaterial({color:palette[(v+4)%palette.length],roughness:.97});
+  const pillow=new THREE.MeshStandardMaterial({color:0xf4f0e8,roughness:1});
+  if(v<=9){
+   const w=v===0?.98:v===1?1.20:v>=4?1.95:1.55,d=v===5?1.95:2.15;
+   // One bed frame and one set of bedding, avoiding overlapping colour planes.
+   for(const x of [-w/2+.09,w/2-.09])for(const z of [-d/2+.10,d/2-.10])b(.085,.38,.085,x,.19,z,frame);
+   b(w,.16,d,0,.43,0,frame);
+   b(w*.95,.18,d*.92,0,.59,0,mattress);
+   b(w*.93,.055,d*.59,0,.708,d*.16,duvet);
+   b(w*.93,.035,d*.06,0,.738,-d*.13,duvet);
+   const n=w<1.3?1:2;
+   for(let i=0;i<n;i++){const x=n===1?0:(i-.5)*w*.46;bevelBox(w*(n===1?.72:.41),.10,.34,x,.75,-d*.32,pillow,.025)}
+   b(w,.76,.09,0,.77,-d/2-.02,frame);
+   if(v===5){for(const x of [-w/2+.06,w/2-.06])b(.07,1.45,.07,x,.725,-d*.48,frame);b(w,.10,.08,0,1.38,-d*.48,frame)}
+  }else if(v===13){
+   cyl(.055,1.75,0,.88,0,frame);
+   for(let i=0;i<6;i++){const t=i*Math.PI/3;rod([0,1.64,0],[Math.sin(t)*.31,1.77,Math.cos(t)*.31],.025,frame)}
+  }else{
+   b(1.1,.52,.46,0,.34,0,frame);
+   bevelBox(1.04,.075,.40,0,.65,0,duvet,.015);
+   for(const x of [-.43,.43])b(.07,.65,.07,x,.34,.15,frame);
+  }
  }
  g.userData={id:spec.id,name:spec.name,category:spec.category,batch:'Interior Furniture Mega Pack',approved:false,reviewOnly:true,units:'metres'};
  return g;
