@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { furniture, produceHeap, type FurnitureId, type ProduceId } from './props/KenneyLibrary';
 import { gymPiece, type GymModelId } from './props/GymLibrary';
 import { shopPiece, type ShopModelId } from './props/ShopLibrary';
+import { packWood } from './props/packFurniture';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { doorPiece, type DoorStyle } from './props/DoorLibrary';
@@ -312,16 +313,23 @@ export class LevelView {
     }
     if (!this.street && themeProfile(lvl.theme).skyline !== 'none') this.buildSkyline();
     for (const w of lvl.walls ?? []) this.buildWall(w);
+    const decor: ApprovedPlacement[] = [];
     for (let i = 0; i < lvl.props.length; i++) {
       const p = lvl.props[i];
       // A kit model already stands in for this one.
       if (this.street?.propDone[i]) continue;
+      // Approved models (room dressing) are baked together below.
+      if (p.kind === 'decor' && p.item) {
+        decor.push({ id: p.item, x: p.x, y: p.wallY ?? 0, z: p.z, ry: -(p.rot ?? 0) * (Math.PI / 2), ...(p.colour && packWood(p.item) ? { recolour: [[packWood(p.item)!, p.colour]] as [string, string][] } : {}) });
+        continue;
+      }
       const before = this.group.children.length;
       this.building = p.kind;
       this.buildProp(p);
       this.building = '';
       this.propObjects.set(p, this.group.children.slice(before));
     }
+    if (decor.length) this.buildApproved(decor);
     for (const ex of lvl.exits) this.buildExit(ex);
     if (lvl.deep) this.buildPartitions();
     for (const g of lvl.gates ?? []) this.buildGate(g.id, g.x, g.z0, g.z1);

@@ -2363,7 +2363,8 @@ export class Game {
     if (!text) text = this.coachText(p, k);
     let interact = false;
     const it = this.world?.interactable;
-    if (this.house.active) text = '';
+    // Nothing to use while a panel (the fridge, a shop, the map) is open over the game.
+    if (this.house.active || this.ui.isOpen) text = '';
     else if (!text && it && p.isFree) {
       const locked = it.kind === 'exit' && it.locked;
       const done = it.kind === 'lever' && it.done;

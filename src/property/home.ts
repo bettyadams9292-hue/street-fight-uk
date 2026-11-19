@@ -1,4 +1,5 @@
 import { ROOM_EXTRA, deepRoom } from '../world/rooms';
+import { addDecor, roomDecor } from '../world/roomDecor';
 import type { ContainerDef, LevelDef, PropDef, StationDef } from '../world/LevelTypes';
 import { propHalf } from '../world/LevelTypes';
 import { BIKE_SIZE, BIKES, FURNITURE, GARAGE_SPACES, ROOMS, ROOM_IDS, allowedRooms, roomAt, type FurnitureDef, type RoomId } from './catalogue';
@@ -276,7 +277,7 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave
     const fin = prop.finishes[room];
     return { ...fac, floor: fin.floor, wall: fin.wall, windowX: ROOMS[room].window };
   });
-  return deepRoom({
+  const built = deepRoom({
     ...base,
     bounds: { ...HOME_BOUNDS },
     facades,
@@ -285,4 +286,45 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave
     stations: [...FIXED_STATIONS, ...HOUSE_SPOTS.map(({ id, x, z, label }) => ({ id, x, z, label })), ...furnitureStations(prop), seatStation(prop), ...gymStations(gym)],
     containers: HOME_CONTAINERS.map((c) => ({ ...c })),
   });
+  // Each room dressed round its edges with the furniture pack. Anything you've bought or placed comes first: a
+  // piece of dressing in its way just isn't put out.
+  return { ...built, props: [...built.props, ...addDecor(built, HOME_DECOR, FRONT_FLOOR_END + 0.35)] };
+}
+
+/** The garage's dressing (racks, cupboard, boxes): fixed, as the garage isn't furnished from the computer. */
+const HOME_DECOR: PropDef[] = roomDecor('garage', 12.1, 22);
+
+/**
+ * What furnishes the house's rooms beyond the starter pieces: put out once, as furniture you own, so it can be
+ * moved, turned or sold from the computer like anything you buy. A spot that's taken (by something you'd already
+ * placed) is skipped.
+ */
+const HOUSE_DRESSING: { id: string; colour: string; at: PlacedAt }[] = [
+  { id: 'bath_shelf', colour: '#e8e4dc', at: { room: 'bathroom', x: -20.75, z: 1.95, rot: 0 } },
+  { id: 'airer', colour: '#c8c8c8', at: { room: 'bathroom', x: -25.1, z: 4.6, rot: 0 } },
+  { id: 'tallboy', colour: '#8a5a32', at: { room: 'bedroom', x: -19.35, z: 2.0, rot: 0 } },
+  { id: 'dressing_table', colour: '#e8e4dc', at: { room: 'bedroom', x: -14.1, z: 2.1, rot: 0 } },
+  { id: 'dressing_stool', colour: '#3a4a6a', at: { room: 'bedroom', x: -14.1, z: 2.95, rot: 0 } },
+  { id: 'storage_bench', colour: '#3a4a6a', at: { room: 'bedroom', x: -16.6, z: 4.9, rot: 0 } },
+  { id: 'cube_shelves', colour: '#c8a070', at: { room: 'living', x: -11.95, z: 1.95, rot: 0 } },
+  { id: 'sideboard', colour: '#4a2e1a', at: { room: 'living', x: -5.2, z: 1.95, rot: 0 } },
+  { id: 'club_chair', colour: '#7a2a2a', at: { room: 'living', x: -11.9, z: 4.4, rot: 0 } },
+  { id: 'side_table', colour: '#8a5a32', at: { room: 'living', x: -10.85, z: 4.95, rot: 0 } },
+  { id: 'coat_stand', colour: '#4a2e1a', at: { room: 'living', x: -4.75, z: 4.9, rot: 0 } },
+  { id: 'pantry', colour: '#e8e4dc', at: { room: 'kitchen', x: -3.15, z: 1.95, rot: 0 } },
+  { id: 'open_shelves', colour: '#c8a070', at: { room: 'kitchen', x: 0.95, z: 1.9, rot: 0 } },
+  { id: 'round_table', colour: '#c8a070', at: { room: 'kitchen', x: -0.9, z: 3.9, rot: 0 } },
+  { id: 'windsor_chair', colour: '#8a5a32', at: { room: 'kitchen', x: -1.75, z: 3.9, rot: 3 } },
+  { id: 'windsor_chair', colour: '#8a5a32', at: { room: 'kitchen', x: -0.05, z: 3.9, rot: 1 } },
+];
+
+/** Put the house's dressing out, once per save (new games and old saves alike). */
+export function dressHouse(prop: PropertySave): void {
+  if (prop.dressed) return;
+  for (const d of HOUSE_DRESSING) {
+    const def = FURNITURE[d.id];
+    if (!def || !checkPlacement(prop, def, d.at).ok) continue;
+    prop.furniture.push({ uid: `f${prop.seq++}`, id: d.id, colour: d.colour, at: { ...d.at } });
+  }
+  prop.dressed = true;
 }

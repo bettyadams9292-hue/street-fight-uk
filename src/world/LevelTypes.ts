@@ -33,6 +33,8 @@ export type PropKind =
   | 'bar' | 'pool_table' | 'pub_table' | 'fruit_machine' | 'jukebox' | 'dj_booth'
   // Stage 6: furniture and vehicles (sized per item), bathroom, casino and showrooms
   | 'furniture' | 'vehicle' | 'bath' | 'toilet' | 'basin'
+  // An approved model by id (item), sized to it (world/roomDecor.ts)
+  | 'decor'
   | 'slot_machine' | 'roulette_table' | 'blackjack_table' | 'casino_cage' | 'prize_podium' | 'tyre_stack' | 'bike_stand'
   // Stage 7: basement business and the grow shop
   | 'equipment' | 'basement_stairs' | 'terminal_desk' | 'junk' | 'grow_shelf'
@@ -304,7 +306,7 @@ export const PROP_SIZE: Record<PropKind, [number, number]> = {
   escalator: [2.4, 0.6], mall_planter: [1.0, 0.5], atm: [0.35, 0.25], vending: [0.45, 0.35],
   shop_rail: [0.9, 0.3], mannequin: [0.25, 0.25], display_cabinet: [0.8, 0.35], glass_counter: [1.2, 0.4], shop_counter: [1.3, 0.4], shop_shelf: [1.0, 0.25],
   changing_booth: [0.6, 0.6], bar: [2.5, 0.45], pool_table: [1.3, 0.75], pub_table: [0.45, 0.45], fruit_machine: [0.35, 0.3], jukebox: [0.45, 0.3], dj_booth: [1.2, 0.5],
-  furniture: [0.5, 0.5], vehicle: [1.0, 0.5], bath: [0.85, 0.4], toilet: [0.22, 0.3], basin: [0.3, 0.22],
+  furniture: [0.5, 0.5], decor: [0.3, 0.3], vehicle: [1.0, 0.5], bath: [0.85, 0.4], toilet: [0.22, 0.3], basin: [0.3, 0.22],
   slot_machine: [0.38, 0.32], roulette_table: [1.2, 0.6], blackjack_table: [1.1, 0.55], casino_cage: [1.4, 0.4], prize_podium: [2.6, 1.15], tyre_stack: [0.4, 0.4], bike_stand: [1.0, 0.35],
   equipment: [0.5, 0.5], basement_stairs: [0.75, 0.75], terminal_desk: [0.7, 0.32], junk: [0.6, 0.5], grow_shelf: [1.0, 0.25],
   computer_desk: [0.6, 0.32], coach_board: [0.4, 0.06], stairwell: [0.85, 0.9], gym_kit: [0.5, 0.5], boxing_ring: [2.2, 1.0], dojo_mat: [2.4, 1.1], wrestling_mat: [2.4, 1.1], gym_rack: [0.9, 0.3], gym_prop: [0.4, 0.3], hydro_prop: [0.3, 0.3], security_post: [0.12, 0.12],
