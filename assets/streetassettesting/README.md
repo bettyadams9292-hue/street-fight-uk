@@ -12,3 +12,5 @@ Original `streetassettesting/` sources and viewers are retained for comparison a
 **Integration:** These are source assets in the repository, not automatically imported into game scenes. No gameplay or runtime asset registration has been changed. Review import paths and the existing scene-loading architecture before activating them.
 
 **Status:** User-approved; moved to assets folder.
+
+- `batch05.ts`: 20 user-approved British commercial and neighbourhood props, promoted without changing the playable game. Source preserved in `streetassettesting/batch05.ts`.
