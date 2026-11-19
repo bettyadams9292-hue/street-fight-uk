@@ -594,3 +594,19 @@ Property listing photos,Ashcombe Manor,m_ashcombe_manor,Exterior photo / render 
 Property listing photos,The Glasshouse,m_glasshouse,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
 Property listing photos,Heathfield House,m_heathfield,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
 Property listing photos,Kensington Lodge,m_kensington_lodge,Exterior photo / render for the listing,Picture painted in code (ui/propertyPhoto.ts),TRUE
+Jewellery: Bracelets,Curb Bracelet,b_curb,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Bracelets,Plain Bangle,b_bangle,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Bracelets,Figaro Bracelet,b_figaro,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Bracelets,Cuban Bracelet,b_cuban,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Bracelets,Rope Bracelet,b_rope,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Bracelets,Snake Bracelet,b_snake,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Bracelets,Tennis Bracelet,b_tennis,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Bracelets,Iced Cuban Bracelet,b_cuban_iced,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Earrings,Plain Studs,e_stud_plain,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Earrings,Sleeper Hoops,e_hoop_small,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Earrings,Big Hoops,e_hoop_large,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Earrings,Huggies,e_huggie,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Earrings,Bar Drops,e_drop_plain,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Earrings,Diamond Studs,e_stud_diamond,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Earrings,Marchetti Drops,e_drop_diamond,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE
+Jewellery: Earrings,Iced Hoops,e_hoop_iced,"3D model (worn on the body, in each metal) + shop icon","Built in code (render/jewellery.ts); the shop shows it on a 3D turntable, no icon",FALSE

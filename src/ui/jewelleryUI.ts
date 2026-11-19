@@ -100,7 +100,7 @@ export function jewellerScreen(progress: Progress, close: () => void, saved: () 
       h('button', { class: `prop-tab${tab === 'box' ? ' on' : ''}`, 'data-nav': true, onclick: () => ((tab = 'box'), rebuild()) },
         `Your jewellery box (${s.jewellery.owned.length})`));
     const rows: HTMLElement[] = [
-      h('p', { class: 'hint jw-intro', text: 'Everything you buy goes in your jewellery box for good: it never takes a pocket and you can’t lose it in a fight. Wear one of each: a ring, a watch, a chain and a grill.' }),
+      h('p', { class: 'hint jw-intro', text: 'Everything you buy goes in your jewellery box for good: it never takes a pocket and you can’t lose it in a fight. Wear one of each: a ring, a watch, a chain, a bracelet, earrings and a grill.' }),
       wornStrip(progress, off),
       tabs,
     ];

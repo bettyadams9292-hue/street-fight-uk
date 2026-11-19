@@ -16,8 +16,8 @@ export const SHOP_STOCK: string[] = [
   'cargos_khaki', 'cargo_shorts', 'denim_shorts', 'shorts_black',
   'trainers_white', 'trainers_black', 'trainers_navy', 'runners', 'runners_red', 'hitops_black', 'hitops_white', 'boots_work', 'steel_toecaps',
   'cap_black', 'cap_red', 'cap_navy', 'cap_white', 'beanie', 'beanie_red', 'beanie_grey', 'bucket_hat', 'bucket_hat_black', 'flat_cap',
-  // Chains, watches and rings are the jeweller's (Halden & Crane, Riverside Centre), not Threads'.
-  'sunglasses', 'glasses', 'snood', 'earring_silver', 'belt_leather',
+  // Chains, watches, rings, bracelets and earrings are the jeweller's (Halden & Crane, Riverside Centre), not Threads'.
+  'sunglasses', 'glasses', 'snood', 'belt_leather',
   'wraps', 'mouthguard', 'headguard', 'bag_bumbag', 'bag_rucksack', 'bag_holdall',
 ];
 

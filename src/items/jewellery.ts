@@ -1,5 +1,5 @@
 /**
- * The jeweller's stock: rings, watches, necklaces and teeth grills, as data.
+ * The jeweller's stock: rings, watches, necklaces, bracelets, earrings and teeth grills, as data.
  *
  * A product is a design (its shape, stones and character); a finish is the
  * metal it's made in, which sets the colour and the price. Every piece you buy
@@ -10,12 +10,12 @@
  */
 import type { Rarity, WearSlot } from './items';
 
-export type JewelCat = 'ring' | 'watch' | 'necklace' | 'grill';
-export const JEWEL_CATS: JewelCat[] = ['ring', 'watch', 'necklace', 'grill'];
-export const JEWEL_CAT_LABELS: Record<JewelCat, string> = { ring: 'Rings', watch: 'Watches', necklace: 'Necklaces', grill: 'Grills' };
-export const JEWEL_CAT_ONE: Record<JewelCat, string> = { ring: 'Ring', watch: 'Watch', necklace: 'Necklace', grill: 'Grill' };
+export type JewelCat = 'ring' | 'watch' | 'necklace' | 'grill' | 'earring' | 'bracelet';
+export const JEWEL_CATS: JewelCat[] = ['ring', 'watch', 'necklace', 'bracelet', 'earring', 'grill'];
+export const JEWEL_CAT_LABELS: Record<JewelCat, string> = { ring: 'Rings', watch: 'Watches', necklace: 'Necklaces', grill: 'Grills', earring: 'Earrings', bracelet: 'Bracelets' };
+export const JEWEL_CAT_ONE: Record<JewelCat, string> = { ring: 'Ring', watch: 'Watch', necklace: 'Necklace', grill: 'Grill', earring: 'Earrings', bracelet: 'Bracelet' };
 /** Where each kind is worn (the same slots as the rest of your kit, so two things never share a finger). */
-export const JEWEL_SLOT: Record<JewelCat, WearSlot> = { ring: 'finger', watch: 'wrist', necklace: 'neck', grill: 'mouth' };
+export const JEWEL_SLOT: Record<JewelCat, WearSlot> = { ring: 'finger', watch: 'wrist', necklace: 'neck', grill: 'mouth', earring: 'ears', bracelet: 'bracelet' };
 
 export type FinishId = 'gold9' | 'gold18' | 'white' | 'rose' | 'silver' | 'platinum' | 'black' | 'steel' | 'titanium' | 'twotone';
 
@@ -64,13 +64,18 @@ export type ChainLength = 'choker' | 'collar' | 'chest' | 'long';
 export type Pendant = 'cross' | 'crucifix' | 'medallion' | 'heart' | 'diamond' | 'dogtag' | 'initial' | 'boxing_glove';
 export type GrillCover = 'single' | 'fangs' | 'top6' | 'top8' | 'full';
 export type GrillStyle = 'plain' | 'diamond' | 'outline' | 'twotone' | 'cutout';
+export type EarringKind = 'stud' | 'hoop' | 'drop';
 
 /** Shape of each kind of piece, read by the 3D builder (render/jewellery.ts). */
 export type JewelShape =
   | { cat: 'ring'; style: RingStyle; /** Band width, mm. */ width: number }
   | { cat: 'watch'; face: WatchFace; strap: WatchStrap; /** Case diameter, mm. */ size: number; dial: string; bezel: 'plain' | 'diamond' | 'coloured' | 'tachy'; bezelColour?: string }
   | { cat: 'necklace'; link: ChainLink; /** Chain thickness, mm. */ gauge: number; length: ChainLength; pendant?: Pendant }
-  | { cat: 'grill'; cover: GrillCover; style: GrillStyle };
+  | { cat: 'grill'; cover: GrillCover; style: GrillStyle }
+  /** A pair: `size` is the stud's width or the hoop's diameter, mm. */
+  | { cat: 'earring'; kind: EarringKind; size: number }
+  /** On the other wrist from the watch. `link` 'bangle' is a solid band. */
+  | { cat: 'bracelet'; link: ChainLink | 'bangle'; /** Thickness, mm. */ gauge: number };
 
 export interface JewelDef {
   id: string;
@@ -95,6 +100,10 @@ const watch = (id: string, name: string, base: number, rarity: Rarity, face: Wat
   LIST.push({ id, name, cat: 'watch', base, rarity, finishes, stone, shape: { cat: 'watch', face, strap, size, dial, bezel, bezelColour }, spec, blurb });
 const chain = (id: string, name: string, base: number, rarity: Rarity, link: ChainLink, gauge: number, length: ChainLength, finishes: FinishId[], spec: string, blurb: string, pendant?: Pendant, stone?: StoneKind) =>
   LIST.push({ id, name, cat: 'necklace', base, rarity, finishes, stone, shape: { cat: 'necklace', link, gauge, length, pendant }, spec, blurb });
+const earring = (id: string, name: string, base: number, rarity: Rarity, kind: EarringKind, size: number, finishes: FinishId[], spec: string, blurb: string, stone?: StoneKind) =>
+  LIST.push({ id, name, cat: 'earring', base, rarity, finishes, stone, shape: { cat: 'earring', kind, size }, spec, blurb });
+const bracelet = (id: string, name: string, base: number, rarity: Rarity, link: ChainLink | 'bangle', gauge: number, finishes: FinishId[], spec: string, blurb: string, stone?: StoneKind) =>
+  LIST.push({ id, name, cat: 'bracelet', base, rarity, finishes, stone, shape: { cat: 'bracelet', link, gauge }, spec, blurb });
 const grill = (id: string, name: string, base: number, rarity: Rarity, cover: GrillCover, style: GrillStyle, finishes: FinishId[], spec: string, blurb: string, stone?: StoneKind) =>
   LIST.push({ id, name, cat: 'grill', base, rarity, finishes, stone, shape: { cat: 'grill', cover, style }, spec, blurb });
 
@@ -150,6 +159,26 @@ chain('n_dogtag', 'Dog Tag', 120, 'common', 'ball', 2, 'chest', ['steel', 'silve
 chain('n_glove', 'Gold Boxing Glove', 1100, 'rare', 'rope', 4, 'chest', ['gold9', 'gold18', 'white'], 'Glove pendant, 4 mm rope', 'A pair of tiny gold gloves. Every fighter wants one.', 'boxing_glove');
 chain('n_initial', 'Initial Pendant', 460, 'uncommon', 'figaro', 3, 'chest', ['gold9', 'silver', 'rose'], 'Letter pendant, figaro chain', 'Your initial, in solid metal.', 'initial');
 
+// ---- bracelets ---------------------------------------------------------------------------------
+bracelet('b_curb', 'Curb Bracelet', 200, 'common', 'curb', 5, ['silver', 'gold9', 'white'], '5 mm curb, 8"', 'Chunky curb links on the other wrist from your watch.');
+bracelet('b_bangle', 'Plain Bangle', 260, 'uncommon', 'bangle', 4, ['gold9', 'silver', 'rose'], 'Solid oval bangle', 'One smooth band. Clinks when you shadowbox.');
+bracelet('b_figaro', 'Figaro Bracelet', 300, 'uncommon', 'figaro', 4, ['gold9', 'silver', 'rose'], '4 mm figaro, 8"', 'Matches the figaro chain.');
+bracelet('b_cuban', 'Cuban Bracelet', 1100, 'rare', 'cuban', 8, ['gold9', 'gold18', 'white'], '8 mm Miami Cuban, 8"', 'The Cuban chain’s little brother.');
+bracelet('b_rope', 'Rope Bracelet', 240, 'uncommon', 'rope', 4, ['gold9', 'silver', 'rose'], '4 mm rope, 8"', 'Twisted rope to match the rope chain.');
+bracelet('b_snake', 'Snake Bracelet', 180, 'common', 'snake', 3, ['silver', 'gold9', 'white'], '3 mm snake, 7.5"', 'Smooth and flat, catches the light.');
+bracelet('b_tennis', 'Tennis Bracelet', 2400, 'epic', 'tennis', 4, ['white', 'platinum', 'gold18'], '4 mm, 5 ct diamonds', 'A single line of diamonds round the wrist.', 'diamond');
+bracelet('b_cuban_iced', 'Iced Cuban Bracelet', 6200, 'legendary', 'cuban', 10, ['white', 'gold18', 'rose'], '10 mm Cuban, fully set', 'Every link set with stones.', 'diamond');
+
+// ---- earrings (a pair) ------------------------------------------------------------------------
+earring('e_stud_plain', 'Plain Studs', 60, 'common', 'stud', 4, ['silver', 'gold9', 'white'], '4 mm ball studs', 'Small, neat, goes with anything.');
+earring('e_hoop_small', 'Sleeper Hoops', 90, 'common', 'hoop', 12, ['silver', 'gold9', 'rose'], '12 mm sleepers', 'Thin hoops that hug the lobe.');
+earring('e_hoop_large', 'Big Hoops', 220, 'uncommon', 'hoop', 30, ['gold9', 'silver', 'gold18'], '30 mm hoops', 'Big gold hoops. Loud.');
+earring('e_huggie', 'Huggies', 140, 'common', 'hoop', 9, ['gold9', 'white', 'rose'], '9 mm huggie hoops', 'Chunky little hoops that sit tight on the lobe.');
+earring('e_drop_plain', 'Bar Drops', 260, 'uncommon', 'drop', 5, ['gold9', 'silver', 'white'], 'Polished drop on a stud', 'A small polished drop under each stud.');
+earring('e_stud_diamond', 'Diamond Studs', 420, 'rare', 'stud', 5, ['white', 'gold18', 'platinum'], '0.5 ct each, claw set', 'A proper diamond in each ear.', 'diamond');
+earring('e_drop_diamond', 'Marchetti Drops', 1600, 'epic', 'drop', 6, ['white', 'platinum', 'rose'], 'Diamond drops, 1 ct each', 'A diamond hanging under each stud.', 'diamond');
+earring('e_hoop_iced', 'Iced Hoops', 3800, 'legendary', 'hoop', 22, ['white', 'gold18'], '22 mm hoops, pavé set', 'Hoops covered in tiny diamonds.', 'diamond');
+
 // ---- grills -----------------------------------------------------------------------------------
 grill('g_single', 'Single Cap', 120, 'common', 'single', 'plain', ['gold9', 'silver', 'gold18'], 'One canine cap', 'One gold tooth. Subtle. Ish.');
 grill('g_fangs', 'Fang Caps', 260, 'uncommon', 'fangs', 'plain', ['gold9', 'silver', 'white'], 'Two canine caps', 'A cap on each canine.');
@@ -204,6 +233,9 @@ export const JEWEL_ITEMS: Readonly<Record<string, JewelLook>> = {
   chain_cheap: { id: 'n_box', finish: 'steel' },
   ring_gold: { id: 'r_flat_gold', finish: 'gold9' },
   ring_diamond: { id: 'r_solitaire', finish: 'white' },
+  earrings_diamond: { id: 'e_stud_diamond', finish: 'white' },
+  bracelet_gold: { id: 'b_curb', finish: 'gold9' },
+  bracelet_silver: { id: 'b_curb', finish: 'silver' },
 };
 
 /**
@@ -216,4 +248,5 @@ export const LEGACY_LOOKS: Readonly<Record<string, JewelLook>> = {
   lucky_chain: { id: 'n_curb_gold', finish: 'gold9' },
   watch_basic: { id: 'w_digital', finish: 'black' },
   ring_signet: { id: 'r_signet_oval', finish: 'gold9' },
+  earring_silver: { id: 'e_hoop_small', finish: 'silver' },
 };

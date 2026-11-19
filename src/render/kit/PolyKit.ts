@@ -385,7 +385,7 @@ function roomLight(mat: THREE.MeshStandardMaterial): void {
       .replace(
         'void main() {',
         `varying vec3 rlWorld;
-float rlHash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float rlHash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 void main() {`,
       )
       .replace(

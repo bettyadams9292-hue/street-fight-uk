@@ -49,8 +49,8 @@ Maps: C colour, N normal, R roughness, M metalness, AO ambient occlusion, D disp
 |---|---|---|---|---|---|
 | PavingStones036 | grey block paving with moss | side streets, driveways | 1024×1024 | AO C D N R | 1.6 m |
 | PavingStones083 | dark wet herringbone setts | alleys, the old market, pub yards | 1024×1024 | AO C D N R | 1.6 m |
-| PavingStones092 | red and grey block paving | estate pavements, precinct | 1024×1024 | AO C D N R | 1.6 m |
-| PavingStones102 | grey and white chevron paving | the shopping centre, plazas | 1024×1024 | AO C D N R | 1.6 m |
+| PavingStones092 | red and grey block paving | estate pavements, precincts and the market | 1024×1024 | AO C D N R | 1.6 m |
+| PavingStones102 | grey and white chevron paving | spare (read as a checkerboard on the precincts) | 1024×1024 | AO C D N R | 1.6 m |
 | PavingStones109 | grey small-block paving | high-street pavements | 1024×1024 | AO C D N R | 1.6 m |
 | PavingStones123 | red-brown herringbone brick | driveways, mansion paths, market square | 1024×1024 | AO C D N R | 1.6 m |
 

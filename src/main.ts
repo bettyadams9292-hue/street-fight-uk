@@ -49,7 +49,7 @@ const start = (): void => {
     // ?debug exposes the game to the console for testing.
     if (query.has('debug') || shot) (window as unknown as { sfuk: Game }).sfuk = game;
     // ?debug also offers the end-of-fight screens, for checking them without playing a fight out.
-    if (query.has('debug')) void import('./ui/hub').then((m) => ((window as unknown as { sfukUi: unknown }).sfukUi = { rewardScreen: m.rewardScreen }));
+    if (query.has('debug')) void Promise.all([import('./ui/hub'), import('./ui/jewelleryUI')]).then(([m, j]) => ((window as unknown as { sfukUi: unknown }).sfukUi = { rewardScreen: m.rewardScreen, jewellerScreen: j.jewellerScreen }));
     hideBoot();
     // Set before the browser draws its first frame, so not one frame runs on the real clock.
     if (shot) game.manualClock = true;

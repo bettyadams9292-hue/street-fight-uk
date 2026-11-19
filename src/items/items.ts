@@ -25,10 +25,10 @@ export const RARITY_COLOURS: Record<Rarity, string> = { common: '#b8b8b0', uncom
 export const RARITY_LABELS: Record<Rarity, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 
 /** Where worn things go. One item per slot. */
-export type WearSlot = 'top' | 'bottoms' | 'shoes' | 'head' | 'face' | 'neck' | 'wrist' | 'ears' | 'hands' | 'finger' | 'waist' | 'mouth';
-export const WEAR_SLOTS: WearSlot[] = ['top', 'bottoms', 'shoes', 'head', 'face', 'neck', 'wrist', 'ears', 'hands', 'finger', 'waist', 'mouth'];
+export type WearSlot = 'top' | 'bottoms' | 'shoes' | 'head' | 'face' | 'neck' | 'wrist' | 'bracelet' | 'ears' | 'hands' | 'finger' | 'waist' | 'mouth';
+export const WEAR_SLOTS: WearSlot[] = ['top', 'bottoms', 'shoes', 'head', 'face', 'neck', 'wrist', 'bracelet', 'ears', 'hands', 'finger', 'waist', 'mouth'];
 export const WEAR_SLOT_LABELS: Record<WearSlot, string> = {
-  top: 'Top', bottoms: 'Bottoms', shoes: 'Footwear', head: 'Head', face: 'Face', neck: 'Neck', wrist: 'Wrist', ears: 'Ears', hands: 'Hands', finger: 'Ring', waist: 'Belt', mouth: 'Gumshield',
+  top: 'Top', bottoms: 'Bottoms', shoes: 'Footwear', head: 'Head', face: 'Face', neck: 'Neck', wrist: 'Wrist', bracelet: 'Bracelet', ears: 'Ears', hands: 'Hands', finger: 'Ring', waist: 'Belt', mouth: 'Gumshield',
 };
 
 export interface ItemStat {
@@ -309,11 +309,11 @@ val('watch_cheap', 'Kasio Digital (black)', 'watch', 'common', 30, '#2c2c31', 'A
 val('chain_cuban', 'Cuban Link 8 mm (9ct gold)', 'chain', 'epic', 1600, '#d4af37', 'Thick gold Cuban links. Weighs a ton. Goes straight in your jewellery box, unless it’s stolen.');
 val('chain_rope', 'Fine Rope Chain (9ct gold)', 'chain', 'rare', 260, '#d4af37', 'Twisted 3 mm rope that catches the light. Goes straight in your jewellery box, unless it’s stolen.');
 val('chain_cheap', 'Box Chain (steel)', 'chain', 'common', 45, '#b9bdc4', 'Neat square links. Goes straight in your jewellery box, unless it’s stolen.', 3);
-val('bracelet_gold', 'Gold bracelet', 'bracelet', 'rare', 320, '#d4af37', 'Curb-link bracelet.');
-val('bracelet_silver', 'Silver bracelet', 'bracelet', 'uncommon', 70, '#c9ccd2', 'Chunky silver links.', 3);
+val('bracelet_gold', 'Curb Bracelet (9ct gold)', 'bracelet', 'rare', 200, '#d4af37', 'Chunky curb links. Goes straight in your jewellery box, unless it’s stolen.');
+val('bracelet_silver', 'Curb Bracelet (silver)', 'bracelet', 'uncommon', 70, '#c9ccd2', 'Chunky silver links. Goes straight in your jewellery box, unless it’s stolen.', 3);
 val('ring_gold', 'Kingsley Flat Band (9ct gold)', 'ring', 'uncommon', 220, '#d4af37', 'A wide flat gold band. Goes straight in your jewellery box, unless it’s stolen.', 3);
 val('ring_diamond', 'Velloni Solitaire (white gold)', 'ring', 'epic', 2800, '#e8f4ff', 'One proper diamond on white gold. Goes straight in your jewellery box, unless it’s stolen.');
-val('earrings_diamond', 'Diamond studs', 'earring', 'rare', 420, '#e8f4ff', 'A pair of diamond-look studs.');
+val('earrings_diamond', 'Diamond Studs (white gold)', 'earring', 'rare', 840, '#e8f4ff', 'A proper diamond in each ear. Goes straight in your jewellery box, unless it’s stolen.');
 // electronics
 val('phone_flagship', 'Flagship smartphone', 'phone', 'rare', 380, '#2a2d33', 'This year’s model, barely a scratch.');
 val('phone_cheap', 'Budget smartphone', 'phone', 'common', 35, '#3a3d44', 'Cracked screen. Still turns on.', 3);

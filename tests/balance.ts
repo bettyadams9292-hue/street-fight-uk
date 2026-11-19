@@ -110,7 +110,10 @@ export function playEncounter(cp: Checkpoint, encId: string, who: keyof typeof P
   let frames = 0;
   const LIMIT = 60 * 240;
   while (frames < LIMIT) {
-    const cmd = frames < 20 ? { ...brain.think(w.sim.frame), moveX: 1 } : brain.think(w.sim.frame);
+    // Walk in until the fight starts (the bot has nobody to fight before then, and could drift back out of
+    // the trigger: that used to count as a 240 s loss at full health).
+    const waiting = enc.status === 'waiting';
+    const cmd = waiting ? { ...brain.think(w.sim.frame), moveX: w.player.pos.x < enc.def.triggerX + 1 ? 1 : 0 } : brain.think(w.sim.frame);
     w.step(cmd);
     frames++;
     if (enc.status === 'cleared') return { won: true, seconds: frames / 60, hpLeft: w.player.vitals.health / w.player.vitals.maxHealth };
