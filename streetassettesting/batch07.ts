@@ -43,6 +43,131 @@ export function createAsset(id:AssetId):THREE.Group{
  case 'estateGarageDoor':B(2.55,2.02,.13,0,1.04,0,cream);for(const y of [.28,.70,1.12,1.54])B(2.37,.035,.03,0,y,.085,steel);for(const x of [-1.26,1.26])B(.09,2.12,.20,x,1.07,0,white);B(.26,.04,.04,0,.92,.11,dark);break;
  case 'gardenWaterButt':C(.39,1.02,0,.56,0,green,40);C(.42,.08,0,1.10,0,dark,40);C(.07,.06,0,.20,.40,steel);R([0,.20,.40],[0,.12,.50],.035,black);for(const x of [-.25,.25])B(.12,.10,.52,x,.05,0,black);break;
  }
- g.userData={collection:'streetassettesting',batch:7,approved:false,reviewOnly:true,units:'metres'};
+
+ // PASS ONE: construction, material layering, realistic fixtures and British character.
+ const slate=M(0x4b5258,.18),aged=M(0x6b5448),brass=M(0xa98b54,.7),rubber=M(0x24282a),paper=M(0xe7ddc6),veg=M(0x5a823e),tomato=M(0xb83d32),ceramic=M(0xd8d6ce),enamel=M(0xced3d1,.1);
+ const sphere=(r:number,x:number,y:number,z:number,m:THREE.Material,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o)};
+ const tor=(r:number,t:number,x:number,y:number,z:number,m:THREE.Material,rx=0)=>{const o=new THREE.Mesh(new THREE.TorusGeometry(r,t,8,36),m);o.position.set(x,y,z);o.rotation.x=rx;g.add(o)};
+ const plank=(w:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>B(w,.024,d,x,y,z,m);
+ switch(id){
+ case 'brickWallSection':case 'brickGatePier':{
+  const w=id==='brickWallSection'?2.4:.46,h=id==='brickWallSection'?1.35:1.7;
+  for(let row=0;row<Math.floor(h/.15);row++)for(let j=0;j<Math.ceil(w/.30);j++){const x=-w/2+.15+j*.30+(row%2?.15:0);if(x>w/2-.10)continue;B(.26,.012,.015,x,.145+row*.15,id==='brickWallSection'?.116:.246,aged)}
+  break}
+ case 'terracedDoor':{
+  B(.60,.33,.024,0,1.84,.152,glass);B(.66,.038,.03,0,1.66,.166,white);
+  for(const x of [-.24,.24])B(.035,.34,.03,x,1.84,.17,white);
+  B(.09,.11,.035,-.29,1.05,.173,brass);B(.33,.065,.04,0,.55,.18,brass);
+  B(.94,.11,.18,0,2.22,.02,stone);B(.86,.11,.025,0,.10,.14,stone);break}
+ case 'bayWindow':{
+  for(const x of [-.54,0,.54]){B(.045,1.04,.045,x,0.74,.254,white);B(.46,.045,.045,x,.75,.255,white)}
+  for(const y of [.27,1.17])B(1.65,.045,.42,0,y,0,stone);
+  B(1.67,.08,.43,0,1.39,0,slate);break}
+ case 'sashWindow':{
+  B(1.08,.075,.045,0,.79,.155,white);B(1.07,.035,.05,0,1.45,.145,white);
+  for(const x of [-.48,.48])B(.04,1.43,.055,x,.79,.15,white);
+  for(const y of [.40,1.14])B(1.03,.025,.04,0,y,.15,white);break}
+ case 'shopAwning':{
+  for(const x of [-1.15,1.15]){R([x,2.20,-.60],[x,2.07,.55],.023,steel);R([x,2.2,-.60],[x,2.20,.55],.012,steel)}
+  B(2.72,.12,.16,0,2.31,-.62,dark);break}
+ case 'rollerShutter':{
+  for(let y=.20;y<2.18;y+=.105)B(2.23,.015,.025,0,y,.105,slate);
+  B(.25,.07,.024,0,.25,.115,black);B(.12,.035,.022,0,.25,.13,steel);break}
+ case 'shopFascia':{
+  B(2.55,.05,.22,0,2.38,0,white);
+  B(2.58,.05,.22,0,1.91,0,white);
+  for(const x of [-1.20,.58])B(.07,1.75,.09,x,.96,.16,wood);
+  B(.48,.025,.05,1.0,.93,.17,brass);break}
+ case 'pubHangingSign':{
+  B(.84,.56,.03,.72,1.39,.07,dark);
+  B(.62,.045,.035,.72,1.52,.094,brass);B(.44,.03,.036,.72,1.38,.096,brass);
+  tor(.065,.009,.72,1.14,.09,brass);
+  for(const y of [1.69,1.79])tor(.025,.009,.72,y,0,black);break}
+ case 'pubWindow':{
+  B(1.53,.07,.06,0,1.45,.13,wood);
+  for(const x of [-.72,.72])B(.06,1.38,.08,x,.75,.12,wood);
+  for(let j=0;j<4;j++)for(let i=0;i<3;i++)B(.015,.015,.012,-.56+j*.37,.30+i*.35,.155,brass);break}
+ case 'chimneyPot':{
+  tor(.195,.022,0,.63,0,brick,Math.PI/2);
+  for(const y of [.18,.48])C(.215,.027,0,y,0,aged,32);break}
+ case 'roofVent':{
+  for(let i=0;i<9;i++){const a=i*Math.PI*2/9;R([Math.cos(a)*.30,.81,Math.sin(a)*.30],[Math.cos(a)*.32,.88,Math.sin(a)*.32],.012,steel)}
+  C(.37,.027,0,.92,0,slate);break}
+ case 'airConUnit':{
+  for(const x of [-.43,.43])B(.035,.56,.045,x,.51,.20,steel);
+  tor(.20,.013,0,.52,.225,steel);
+  for(let i=0;i<6;i++){const a=i*Math.PI/3;R([0,.52,.229],[Math.cos(a)*.18,.52+Math.sin(a)*.18,.229],.009,dark)}
+  B(.17,.06,.015,-.29,.28,.211,blue);break}
+ case 'downpipe':{
+  for(const y of [.45,1.75]){B(.16,.05,.12,0,y,.075,steel);B(.045,.08,.045,0,y,.15,slate)}
+  C(.07,.065,0,.10,0,dark);break}
+ case 'gutterCorner':{
+  for(let i=0;i<5;i++)B(.025,.09,.13,-.85+i*.20,1.47,.03,steel);
+  for(let i=0;i<4;i++)B(.13,.09,.025,.16,1.47,.12+i*.19,steel);break}
+ case 'coalBunker':{
+  for(const x of [-.47,.47])B(.045,.58,.025,x,.39,.43,steel);
+  B(.86,.04,.04,0,.67,.43,steel);B(.17,.025,.03,0,.50,.44,brass);
+  for(let i=0;i<7;i++)B(.03,.50,.022,-.40+i*.13,.38,.435,aged);break}
+ case 'milkCrate':{
+  for(const z of [-.18,.18])for(let i=0;i<5;i++)B(.025,.22,.012,-.16+i*.08,.19,z,blue);
+  for(const x of [-.24,.24])for(let i=0;i<4;i++)B(.012,.20,.025,x,.19,-.12+i*.08,blue);
+  for(const x of [-.12,0,.12])C(.045,.025,x,.30,0,white);break}
+ case 'breadTray':{
+  for(const z of [-.19,.19])for(let i=0;i<5;i++)B(.026,.09,.018,-.26+i*.13,.12,z,wood);
+  for(let x=-.24;x<=.24;x+=.24)for(const z of [-.11,.11]){sphere(.09,x,.22,z,food,1.3,.65,.75);for(let j=-1;j<=1;j++)B(.006,.006,.09,x+j*.03,.28,z,cream)}
+  break}
+ case 'kegRack':{
+  for(const x of [-.23,.23]){for(const dx of [-.14,0,.14]){const hoop=C(.205,.022,x+dx,.40,0,slate);hoop.rotation.z=Math.PI/2}
+   B(.15,.045,.12,x,.17,.22,wood)}
+  for(const y of [.15,.63])B(1.08,.03,.07,0,y,.32,steel);break}
+ case 'pubStool':{
+  tor(.29,.018,0,.79,0,brass,Math.PI/2);
+  for(const x of [-.19,.19])for(const z of [-.19,.19])C(.028,.045,x,.07,z,black);
+  B(.37,.035,.04,0,.32,.17,wood);break}
+ case 'pubBooth':{
+  for(const x of [-.46,0,.46])for(const y of [.73,1.03,1.32])sphere(.016,x,y,-.115,brass);
+  for(const x of [-.70,.70])B(.10,.11,.60,x,.71,.08,wood);
+  B(1.55,.04,.12,0,1.46,-.25,wood);break}
+ case 'takeawayMenuBoard':{
+  for(let i=0;i<5;i++){B(.38,.015,.012,-.38,1.01-i*.16,.09,black);B(.18,.015,.013,.44,1.01-i*.16,.09,red)}
+  B(1.46,.04,.14,0,.08,0,steel);break}
+ case 'fishChipFryer':{
+  for(const x of [-.45,0,.45]){B(.35,.025,.43,x,.995,0,slate);B(.23,.08,.22,x,1.04,.02,steel);R([x-.10,1.05,.26],[x+.10,1.05,.26],.012,black)}
+  for(const x of [-.45,0,.45]){B(.26,.24,.015,x,.42,.36,slate);C(.026,.025,x,.78,.43,red)}
+  B(1.52,.06,.78,0,.90,0,steel);break}
+ case 'chippyWarmer':{
+  for(const x of [-.35,0,.35]){B(.32,.022,.34,x,.30,.07,steel);for(let i=0;i<5;i++)B(.03,.025,.24,x-.12+i*.06,.33,.07,food)}
+  for(const y of [.42,.64])B(1.09,.025,.02,0,y,.302,steel);
+  B(.85,.035,.035,0,.77,.28,gold);break}
+ case 'butcherCounter':{
+  for(const x of [-.48,0,.48]){B(.35,.025,.30,x,.75,.13,white);sphere(.13,x,.81,.14,red,1.15,.36,.75)}
+  for(const x of [-.76,.76])B(.04,.45,.05,x,.87,.37,steel);
+  B(1.55,.05,.05,0,1.07,.40,steel);break}
+ case 'marketProduceCrate':{
+  for(let i=0;i<4;i++)B(.045,.18,.045,-.34+i*.22,.16,-.22,wood);
+  for(let x=-.27;x<=.27;x+=.18)for(const z of [-.12,.08]){sphere(.072,x,.23,z,veg);sphere(.018,x,.30,z,green)}
+  break}
+ case 'laundretteFoldingTable':{
+  B(1.53,.025,.80,0,.90,0,steel);for(const z of [-.25,.25])B(1.25,.025,.025,0,.50,z,steel);
+  for(let i=0;i<3;i++)B(.52,.022,.32,-.25,.99+i*.045,0,i%2?white:blue);break}
+ case 'clothesAirer':{
+  for(const z of [-.32,.32])R([-.60,.50,z],[.60,.50,z],.015,steel);
+  for(const x of [-.55,.55])R([x,.06,-.37],[x,.06,.37],.025,steel);
+  for(let i=0;i<7;i++){const z=-.28+i*.095;R([-.58,1.20,z],[.58,1.20,z],.012,steel)}
+  break}
+ case 'estateGarageDoor':{
+  for(let i=0;i<4;i++){B(2.40,.028,.035,0,.27+i*.44,.095,stone);for(const x of [-1.1,1.1])B(.028,.33,.025,x,.27+i*.44,.10,white)}
+  B(.28,.06,.025,0,.91,.12,steel);break}
+ case 'gardenWaterButt':{
+  for(const y of [.22,.82])tor(.39,.015,0,y,0,green,Math.PI/2);
+  B(.12,.08,.08,0,.20,.41,black);C(.07,.05,0,.17,.45,brass);
+  B(.07,.08,.09,0,.12,.50,black);break}
+ }
+ // PASS TWO: restrained wear, finish details, and geometry sanity metadata.
+ if(['brickWallSection','brickGatePier','shopFascia','rollerShutter','estateGarageDoor'].includes(id)){
+  g.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true}});
+ }
+ g.userData={collection:'streetassettesting',batch:7,approved:false,reviewOnly:true,units:'metres',detailPasses:2,referenceStudy:'UK architecture, retail, hospitality and domestic objects'};
+
  return g;
 }
