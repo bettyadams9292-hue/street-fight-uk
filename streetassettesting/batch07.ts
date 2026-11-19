@@ -8,7 +8,7 @@ export function createAsset(id:AssetId):THREE.Group{
  const brick=M(0x9c5545),mortar=M(0xc3b5a2),stone=M(0xa9a69d),wood=M(0x866044),dark=M(0x27313a),steel=M(0x8b999f,.65),white=M(0xe4dfd1),glass=M(0x8ab6c2,.2),red=M(0xb12e2a),green=M(0x36664b),gold=M(0xcaa35b,.5),blue=M(0x3c6b8d),black=M(0x181d20),cream=M(0xd8c6a5),food=M(0xc8943c),cloth=M(0x713d40);
  const B=(w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g.add(o);return o};
  const C=(r:number,h:number,x:number,y:number,z:number,m:THREE.Material,n=24)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,n),m);o.position.set(x,y,z);g.add(o);return o};
- const R=(a:number[],b:number[],r:number,m:THREE.Material)=>{const p=new THREE.Vector3(...a),q=new THREE.Vector3(...b),v=q.clone().sub(p);const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,v.length(),12),m);o.position.copy(p).add(q).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());g.add(o);return o};
+ const R=(a:number[],b:number[],r:number,m:THREE.Material)=>{const p=new THREE.Vector3(a[0],a[1],a[2]),q=new THREE.Vector3(b[0],b[1],b[2]),v=q.clone().sub(p);const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,v.length(),12),m);o.position.copy(p).add(q).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());g.add(o);return o};
  const frame=(w:number,h:number,z:number,m:THREE.Material)=>{for(const x of [-w/2,w/2])B(.075,h,.07,x,h/2,z,m);for(const y of [.045,h-.045])B(w,.075,.07,0,y,z,m)};
  const brickwork=(w:number,h:number,d:number)=>{B(w,h,d,0,h/2,0,mortar);for(let row=0;row<Math.floor(h/.15);row++){const y=.08+row*.15;for(let i=0;i<Math.ceil(w/.30)+1;i++){const x=-w/2+.15+i*.30+(row%2?.15:0);if(x>w/2-.07)continue;B(.275,.132,d+.006,x,y,0,brick)}}};
  switch(id){
@@ -53,30 +53,36 @@ export function createAsset(id:AssetId):THREE.Group{
   const trim=(w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>B(w,h,d,x,y,z,m);
   switch(id){
    case 'terracedDoor':{
-    // A solid four-panel Victorian door; the fanlight is a SEPARATE aperture above it.
-    const leaf=M(0x244c40,.12),recess=M(0x173a32),mould=M(0x426b5b);
-    B(.94,.10,.20,0,.08,.03,stone);
-    B(.10,2.30,.19,-.50,1.23,0,white);B(.10,2.30,.19,.50,1.23,0,white);
-    B(1.10,.12,.20,0,2.42,0,stone);
-    B(.90,2.02,.075,0,1.10,.06,leaf);
-    // Inset four-panel arrangement, moulding set just proud of the face.
-    for(const y of [.58,1.44])for(const x of [-.218,.218]){
-      const h=y>1?.52:.55;
-      B(.34,h,.008,x,y,.105,recess);
-      for(const xx of [x-.175,x+.175])B(.019,h+.025,.021,xx,y,.116,mould);
-      for(const yy of [y-h/2,y+h/2])B(.37,.020,.021,x,yy,.116,mould);
-      B(.28,h-.10,.006,x,y,.113,leaf);
+    // Traditional partly glazed four-panel Victorian leaf, independent rectangular fanlight.
+    const leaf=M(0x244a3f,.13),recess=M(0x15342d),bead=M(0x467262,.08);
+    B(1.13,.13,.24,0,.075,.04,stone);
+    for(const x of [-.53,.53])B(.105,2.42,.20,x,1.24,0,white);
+    B(1.18,.11,.24,0,2.48,0,stone);
+    // Door leaf stops at 2.10 m. Fanlight sits ABOVE the structural transom.
+    B(.94,2.03,.08,0,1.085,.035,leaf);
+    for(const x of [-.225,.225]){
+      // Glazed top lights are transparent rather than painted over a solid door panel.
+      B(.34,.71,.012,x,1.61,.082,recess);
+      B(.292,.65,.012,x,1.61,.096,clearGlass);
+      // Lower fielded timber panels.
+      B(.34,.66,.011,x,.65,.082,recess);
+      B(.285,.59,.014,x,.65,.100,leaf);
+      for(const xx of [x-.171,x+.171]){B(.018,.71,.023,xx,1.61,.115,bead);B(.018,.66,.023,xx,.65,.115,bead)}
+      for(const yy of [1.255,1.965])B(.35,.019,.022,x,yy,.115,bead);
+      for(const yy of [.32,.98])B(.35,.019,.022,x,yy,.115,bead);
     }
-    // Door handle, knocker and letterbox all attached to the outer door plane.
-    B(.075,.10,.028,.32,1.04,.123,brass);
-    B(.15,.022,.05,.32,1.04,.147,brass);
-    B(.30,.07,.028,0,.41,.124,brass);
-    B(.21,.014,.030,0,.41,.144,black);
-    // Real fanlight above, separated by a timber transom, not floating in the door.
-    B(.90,.22,.015,0,2.24,.045,clearGlass);
-    B(.95,.055,.10,0,2.10,.10,white);
-    B(.035,.21,.035,0,2.24,.075,white);
-    B(.38,.025,.025,0,2.35,.082,white);
+    B(.09,1.87,.02,0,1.10,.116,bead);
+    B(.88,.075,.025,0,1.12,.12,bead);
+    B(.88,.075,.025,0,2.055,.12,bead);
+    // Brass letter plate and handle remain attached to the door face.
+    B(.28,.065,.035,0,1.075,.15,brass);B(.20,.013,.039,0,1.075,.172,black);
+    B(.065,.12,.040,.36,1.03,.16,brass);B(.13,.025,.065,.31,1.04,.19,brass);
+    // Fanlight opening with clear glazing, thin glazing bar and continuous surround.
+    B(.93,.22,.015,0,2.295,.035,clearGlass);
+    B(.96,.065,.09,0,2.14,.10,white);
+    B(.96,.055,.09,0,2.435,.10,white);
+    B(.034,.23,.065,0,2.29,.09,white);
+    for(const x of [-.46,.46])B(.042,.23,.065,x,2.29,.09,white);
     break;
    }
    case 'bayWindow':{
@@ -178,7 +184,7 @@ export function createAsset(id:AssetId):THREE.Group{
  const sphere=(r:number,x:number,y:number,z:number,m:THREE.Material,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o)};
  const tor=(r:number,t:number,x:number,y:number,z:number,m:THREE.Material,rx=0)=>{const o=new THREE.Mesh(new THREE.TorusGeometry(r,t,8,36),m);o.position.set(x,y,z);o.rotation.x=rx;g.add(o)};
  const plank=(w:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>B(w,.024,d,x,y,z,m);
- switch(id){
+ if(!['terracedDoor','bayWindow','sashWindow','shopFascia','pubWindow','shopAwning','butcherCounter','chippyWarmer','fishChipFryer'].includes(id))switch(id){
  case 'brickWallSection':case 'brickGatePier':{
   const w=id==='brickWallSection'?2.4:.46,h=id==='brickWallSection'?1.35:1.7;
   for(let row=0;row<Math.floor(h/.15);row++)for(let j=0;j<Math.ceil(w/.30);j++){const x=-w/2+.15+j*.30+(row%2?.15:0);if(x>w/2-.10)continue;B(.26,.012,.015,x,.145+row*.15,id==='brickWallSection'?.116:.246,aged)}
@@ -296,7 +302,7 @@ export function createAsset(id:AssetId):THREE.Group{
  if(['brickWallSection','brickGatePier','shopFascia','rollerShutter','estateGarageDoor'].includes(id)){
   g.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true}});
  }
- g.userData={collection:'streetassettesting',batch:7,approved:false,reviewOnly:true,units:'metres',detailPasses:2,referenceStudy:'UK architecture, retail, hospitality and domestic objects'};
+ g.userData={collection:'streetassettesting',batch:7,approved:false,reviewOnly:true,units:'metres',detailPasses:2,referenceStudy:'UK heritage door and sash construction',structuralRebuild:true,legacyOverlayRemoved:true};
 
  return g;
 }
