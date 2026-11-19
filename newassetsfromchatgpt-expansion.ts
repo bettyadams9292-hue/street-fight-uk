@@ -33,6 +33,7 @@ const graphite=0x292d32,steel=0x596168,silver=0xaab0b4,rubber=0x16191d,wood=0x8c
 export function createExpansionAsset(id:ExpansionAssetId):THREE.Group{
  const entry=EXPANSION_ASSETS.find(a=>a.id===id);if(!entry)throw Error('Unknown asset '+id);
  const g=new THREE.Group();g.name='SFUK_EXP_'+id;
+ return buildExpansionV2(g,id,entry);
  const box=(w:number,h:number,d:number,x:number,y:number,z:number,c:number,metal=0)=>{
    const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(c,metal));o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;g.add(o);return o;};
  const cyl=(radius:number,h:number,x:number,y:number,z:number,c:number,segments=24,metal=.35)=>{
@@ -211,4 +212,266 @@ export function auditExpansionAsset(g:THREE.Group){
  let meshes=0,triangles=0;g.traverse(o=>{if(o instanceof THREE.Mesh){meshes++;const a=o.geometry;triangles+=a.index?a.index.count/3:a.attributes.position.count/3;}});
  const size=new THREE.Box3().setFromObject(g).getSize(new THREE.Vector3());
  return {meshes,triangles:Math.round(triangles),width:+size.x.toFixed(2),height:+size.y.toFixed(2),depth:+size.z.toFixed(2)};
+}
+
+/** Expansion V2: clean replacement geometry. Deliberately bypasses V1 builders.
+ * Each part is physically connected and shares a restrained PBR palette.
+ */
+function buildExpansionV2(g:THREE.Group,id:ExpansionAssetId,entry:typeof EXPANSION_ASSETS[number]):THREE.Group{
+ const mat=(c:number,metal=.1,rough=.58)=>new THREE.MeshStandardMaterial({color:c,metalness:metal,roughness:rough});
+ const graphite=mat(0x252a30,.65,.38),black=mat(0x121619,.12,.8),rubber=mat(0x1d2024,.04,.9),
+  brushed=mat(0x8e969a,.75,.34),zinc=mat(0x9fa8aa,.8,.48),red=mat(0xb52e32,.28,.47),
+  blue=mat(0x2467a5,.2,.6),wood=mat(0x87684b,.03,.85),oldWood=mat(0x6a5b4b,.04,.96),
+  rust=mat(0x765242,.3,.9),white=mat(0xe2e5e3,.04,.7);
+ const B=(w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>{
+  const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;g.add(o);return o;};
+ const C=(r:number,h:number,x:number,y:number,z:number,m:THREE.Material,seg=24)=>{
+  const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),m);o.position.set(x,y,z);o.castShadow=true;g.add(o);return o;};
+ const R=(a:[number,number,number],b:[number,number,number],r:number,m:THREE.Material)=>{
+  const p=new THREE.Vector3(...a),q=new THREE.Vector3(...b),v=q.clone().sub(p);
+  const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,v.length(),12),m);
+  o.position.copy(p.add(q).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());o.castShadow=true;g.add(o);return o;};
+ const disc=(x:number,y:number,z:number,r:number,t:number,m:THREE.Material)=>{
+  const o=C(r,t,x,y,z,m,40);o.rotation.z=Math.PI/2;return o;};
+ const sphere=(x:number,y:number,z:number,r:number,m:THREE.Material)=>{
+  const o=new THREE.Mesh(new THREE.SphereGeometry(r,16,10),m);o.position.set(x,y,z);g.add(o);return o;};
+ const decal=(txt:string,w:number,h:number,x:number,y:number,z:number,bg:string,fg:string,rot=0)=>{
+  if(typeof document==='undefined')return;
+  const can=document.createElement('canvas');can.width=512;can.height=128;
+  const ctx=can.getContext('2d');if(!ctx)return;
+  ctx.fillStyle=bg;ctx.fillRect(0,0,512,128);ctx.fillStyle=fg;ctx.textAlign='center';
+  ctx.textBaseline='middle';ctx.font='bold 65px Arial';ctx.fillText(txt,256,64,490);
+  const tex=new THREE.CanvasTexture(can);tex.colorSpace=THREE.SRGBColorSpace;
+  const o=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
+  o.position.set(x,y,z);o.rotation.y=rot;g.add(o);
+ };
+ const dumbbell=(x:number,y:number,z:number,kg:number)=>{
+  R([x-.19,y,z],[x+.19,y,z],.018,brushed);
+  for(const dx of [-.135,.135]){
+   const o=C(kg===20?.11:.082,.105,x+dx,y,z,rubber,6);o.rotation.z=Math.PI/2;
+   const cap=disc(x+dx+(dx>0?.055:-.055),y,z,.038,.008,brushed);
+  }
+ };
+ const barbell=(loaded:boolean)=>{
+  R([-1.12,.26,0],[1.12,.26,0],.014,brushed);
+  for(const sign of [-1,1]){
+   const sleeve=disc(sign*.89,.26,0,.025,.43,brushed);
+   if(loaded)for(const [j,r,m] of [[0,.22,red],[1,.19,blue],[2,.155,mat(0x3e9857,.15,.65)]] as const){
+    disc(sign*(.76+j*.08),.26,0,r,.07,m);
+    disc(sign*(.76+j*.08),.26,0,.037,.075,black);
+   }
+   disc(sign*1.05,.26,0,.052,.055,graphite);
+  }
+ };
+ if(id==='hexDumbbell10'||id==='hexDumbbell20')dumbbell(0,id==='hexDumbbell20'?.13:.11,0,id==='hexDumbbell20'?20:10);
+ if(id==='dumbbellRack'){
+  for(const x of [-.85,.85])for(const z of [-.27,.27])R([x,.03,z],[x,.95,z*.55],.035,graphite);
+  for(const y of [.42,.84]){
+   for(const z of [-.17,.17])B(1.9,.05,.09,0,y,z,graphite);
+   for(let i=0;i<5;i++)dumbbell(-.66+i*.33,y+.105,.02,i>2?20:10);
+  }
+ }
+ if(id==='olympicBarbell'||id==='loadedBarbell')barbell(id==='loadedBarbell');
+ if(id==='squatRack'){
+  for(const x of [-.90,.90]){
+   B(.11,2.3,.12,x,1.15,0,graphite);B(.15,.075,1.3,x,.038,.1,graphite);
+   B(.13,.06,.12,x,2.28,0,brushed);
+   for(let i=0;i<18;i++)B(.016,.016,.014,x+(x>0?-.062:.062),.42+i*.1,.065,black);
+   B(.24,.10,.32,x,1.35,.14,brushed);
+   B(.11,.07,.44,x,1.02,.18,graphite);
+  }
+  R([-.90,2.25,-.42],[.90,2.25,-.42],.029,graphite);
+  R([-.90,2.25,-.42],[-.90,2.25,.0],.028,graphite);
+  R([.90,2.25,-.42],[.90,2.25,.0],.028,graphite);
+  R([-.9,1.38,.15],[.9,1.38,.15],.019,brushed);
+  for(const x of [-.90,.90])for(const z of [-.38,.55])B(.17,.025,.15,x,.015,z,black);
+ }
+ if(id==='gymMirror'){
+  B(2.12,2.18,.08,0,1.10,0,graphite);
+  B(1.98,2.04,.02,0,1.10,.05,mat(0xaabdc9,.85,.08));
+  for(const x of [-1.025,1.025])B(.025,2.12,.09,x,1.10,.05,brushed);
+  for(const y of [.04,2.16])B(2.07,.025,.09,0,y,.05,brushed);
+ }
+ if(id==='exerciseBike'){
+  // Reference-style spin bike: connected front frame, rear saddle tube,
+  // large flywheel, side-drive housing, handlebars, display and levelling feet.
+  for(const z of [-.40,.43]){
+   R([-.55,.085,z],[.52,.085,z],.036,graphite);
+   for(const x of [-.53,.50])C(.055,.035,x,.025,z,rubber);
+  }
+  R([-.34,.13,0],[.12,.55,0],.055,graphite);
+  R([.12,.55,0],[.32,1.19,0],.085,graphite);
+  R([-.37,.12,0],[-.37,1.08,0],.051,graphite);
+  R([-.37,1.08,0],[-.43,1.22,0],.038,brushed);
+  // Saddle: curved silhouette using scaled spheres, no rectangular block.
+  const saddle=sphere(-.46,1.27,0,.20,rubber);saddle.scale.set(1.5,.34,.65);
+  B(.17,.028,.14,-.43,1.18,0,brushed);
+  disc(.30,.52,0,.36,.12,graphite);
+  disc(.37,.52,0,.29,.014,brushed);
+  disc(.386,.52,0,.245,.018,graphite);
+  disc(.404,.52,0,.045,.026,brushed);
+  // Main drivetrain cover, chain casing and realistic crank/pedals.
+  const cover=B(.50,.32,.15,-.08,.40,0,graphite);cover.rotation.z=.14;
+  disc(-.16,.38,0,.16,.17,black);
+  R([-.16,.38,-.14],[-.36,.22,-.14],.019,brushed);
+  R([-.16,.38,.14],[.04,.54,.14],.019,brushed);
+  B(.20,.04,.12,-.36,.22,-.14,rubber);B(.20,.04,.12,.04,.54,.14,rubber);
+  R([.32,1.19,0],[.44,1.45,0],.042,graphite);
+  R([.44,1.45,-.33],[.44,1.45,.33],.032,graphite);
+  for(const z of [-.33,.33]){
+   R([.44,1.45,z],[.66,1.32,z],.03,graphite);
+   R([.66,1.32,z],[.73,1.42,z],.029,rubber);
+  }
+  const screen=B(.25,.16,.055,.45,1.60,0,graphite);screen.rotation.z=-.20;
+  B(.18,.10,.009,.484,1.61,.031,mat(0x52616a,.1,.25));
+ }
+ if(id==='boxingRing'){
+  // 5m raised canvas deck, 4 rows of ropes at each side,
+  // corner cushions, turnbuckles, skirts and an attached stair set.
+  B(5.1,.30,5.1,0,.34,0,graphite);
+  B(5.02,.065,5.02,0,.525,0,mat(0x3e8db9,.05,.85));
+  for(const side of [-1,1]){
+   B(5.10,.29,.045,0,.35,side*2.54,black);
+   B(.045,.29,5.10,side*2.54,.35,0,black);
+  }
+  for(const x of [-2.37,2.37])for(const z of [-2.37,2.37]){
+   B(.11,1.63,.11,x,1.36,z,graphite);
+   for(const y of [.84,1.10,1.36,1.62]){
+    const colour=x<0?red:blue;
+    B(.21,.14,.22,x,y,z,colour);
+    for(const sign of [-1,1]){
+     R([x,y,z],[x-sign*.24,y,z],.017,brushed);
+     R([x,y,z],[x,y,z-sign*.24],.017,brushed);
+    }
+   }
+  }
+  for(const y of [.84,1.10,1.36,1.62]){
+   for(const z of [-2.37,2.37])R([-2.17,y,z],[2.17,y,z],.019,white);
+   for(const x of [-2.37,2.37])R([x,y,-2.17],[x,y,2.17],.019,white);
+  }
+  // Steps touch the ring rather than floating outside the platform.
+  for(let i=0;i<3;i++){
+   const stepH=.12*(i+1),z=2.57+.26*(2-i);
+   B(.84,stepH,.28,0,stepH/2,z,graphite);
+   B(.84,.024,.28,0,stepH,z,brushed);
+  }
+  decal('SFUK BOXING',1.65,.20,0,.36,2.566,'#151b22','#e9e9e5');
+ }
+ const palisade=(gate:boolean,poor:boolean)=>{
+  const w=gate?1.7:3.05,n=gate?10:18;
+  const metal=poor?rust:zinc;
+  for(const x of [-w/2,w/2]){
+   B(.095,2.12,.10,x,1.06,0,metal);
+   B(.15,.05,.15,x,2.14,0,graphite);
+  }
+  for(const y of [.34,1.76])B(w-.13,.055,.075,0,y,-.055,metal);
+  for(let i=0;i<n;i++){
+   if(poor&&i===3)continue;
+   const x=-w/2+.12+i*(w-.24)/(n-1);
+   // Vertical folded V-section picket: raised spine and flanking lips.
+   const pick=B(.057,1.75,.035,x,1.05,.012,poor&&i%4===0?rust:zinc);
+   B(.020,1.73,.025,x-.026,1.05,-.009,metal);
+   B(.020,1.73,.025,x+.026,1.05,-.009,metal);
+   if(poor&&i===n-2)pick.rotation.z=.12;
+   // Two-pronged pointed head, closer to real UK palisade than cone spikes.
+   for(const dx of [-.023,.023]){
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(.022,.12,4),metal);
+    tip.position.set(x+dx,1.99,.012);tip.rotation.y=Math.PI/4;g.add(tip);
+   }
+   for(const y of [.34,1.76])sphere(x,y,.064,.018,brushed);
+  }
+  if(gate){
+   for(const y of [.32,1.72]){
+    B(.16,.065,.17,-w/2,y,.08,graphite);
+    C(.04,.16,-w/2,y,.11,brushed);
+   }
+   B(.16,.12,.11,w/2-.12,1.10,.13,graphite);
+   R([w/2-.12,1.10,.13],[w/2+.02,1.10,.13],.016,brushed);
+   B(.12,.15,.13,w/2+.04,1.10,.10,metal);
+  }
+ };
+ const chain=(gate:boolean,poor:boolean)=>{
+  const w=gate?1.5:3.05,h=1.9;
+  for(const x of [-w/2,w/2]){
+   R([x,.03,0],[x,h+.14,0],.043,zinc);
+   sphere(x,h+.14,0,.049,brushed);
+  }
+  for(const y of [.18,h])R([-w/2,y,0],[w/2,y,0],.024,zinc);
+  const pitch=.17;
+  for(let t=-h;t<w+h;t+=pitch){
+   for(const slope of [-1,1]){
+    let first:[number,number,number]|null=null,last:[number,number,number]|null=null;
+    for(let x=-w/2;x<=w/2;x+=.025){
+     const y=slope*(x+w/2)+t;
+     if(y>.18&&y<h){
+      const point:[number,number,number]=[x,poor?y-.035*Math.sin(x*8):y,.012];
+      if(!first)first=point;last=point;
+     }
+    }
+    if(first&&last)R(first,last,.004,poor?rust:zinc);
+   }
+  }
+  if(gate){
+   B(.10,.12,.10,w/2-.13,1.05,.09,graphite);
+   for(const y of [.33,1.68])B(.12,.07,.17,-w/2,y,.09,brushed);
+  }
+  if(poor)R([-.9,.16,.06],[.15,.07,.08],.012,rust);
+ };
+ const timber=(poor:boolean,gate:boolean)=>{
+  const w=gate?1.1:2.75,n=gate?10:22;
+  for(const x of [-w/2,w/2])B(.12,1.87,.14,x,.935,-.09,poor?oldWood:wood);
+  for(const y of [.36,1.40])B(w,.095,.09,0,y,-.09,poor?oldWood:wood);
+  if(gate)R([-w/2,.32,-.16],[w/2,1.5,-.16],.026,graphite);
+  for(let i=0;i<n;i++){
+   if(poor&&[2,5,6,12,17].includes(i))continue;
+   const x=-w/2+(i+.5)*w/n;
+   const h=poor&&i%5===0?1.25:poor&&i%7===0?1.5:1.79;
+   const plank=B(w/n-.009,h,.046,x,h/2,.04,poor&&i%3===0?oldWood:wood);
+   if(poor&&i%4===0)plank.rotation.z=.06;
+   for(const y of [.36,1.4])if(y<h-.08)sphere(x,y,.073,.008,graphite);
+  }
+  if(gate){
+   B(.11,.11,.10,w/2-.13,1.02,.11,graphite);
+   for(const y of [.35,1.43])B(.12,.055,.15,-w/2,y,.07,brushed);
+  }
+ };
+ if(id==='palisadeFence')palisade(false,false);
+ if(id==='palisadeGate')palisade(true,false);
+ if(id==='poorPalisadeGate')palisade(true,true);
+ if(id==='chainLinkFence')chain(false,false);
+ if(id==='chainLinkGate')chain(true,false);
+ if(id==='poorChainLinkFence')chain(false,true);
+ if(id==='timberFence')timber(false,false);
+ if(id==='poorTimberFence')timber(true,false);
+ if(id==='poorTimberGate')timber(true,true);
+ if(id.startsWith('safe')||id==='poorSafe'){
+  const scale=id==='safeSmall'?.55:id==='safeMedium'?.85:id==='safeLarge'?1.35:.90;
+  const bad=id==='poorSafe',body=bad?oldWood:mat(0x9ba1a4,.55,.42);
+  B(scale,scale*1.05,scale*.82,0,scale*.525,0,body);
+  B(scale*.87,scale*.91,.04,0,scale*.54,scale*.425,graphite);
+  B(scale*.81,scale*.85,.035,0,scale*.54,scale*.452,bad?rust:brushed);
+  for(const y of [.27,.53,.79]){
+   const bolt=C(.03*scale,.04*scale,scale*.32,y*scale,scale*.48,brushed,16);
+   bolt.rotation.x=Math.PI/2;
+  }
+  const keypad=B(.24*scale,.29*scale,.035,scale*.13,scale*.69,scale*.48,graphite);
+  for(let i=0;i<12;i++){
+   const x=scale*(.05+(i%3)*.075),y=scale*(.78-Math.floor(i/3)*.065);
+   B(.04*scale,.032*scale,.015,x,y,scale*.505,brushed);
+  }
+  const hub=C(.075*scale,.04*scale,-scale*.18,scale*.52,scale*.48,brushed,32);hub.rotation.x=Math.PI/2;
+  R([-scale*.18,scale*.52,scale*.50],[0,scale*.52,scale*.50],.022*scale,brushed);
+  for(const x of [-.38,.38])for(const y of [.12,.94])B(.045*scale,.025*scale,.05*scale,x*scale,y*scale,scale*.46,graphite);
+  if(bad)for(let i=0;i<8;i++)B(.09*scale,.014*scale,.012*scale,(i%4-.9)*.20*scale,(.18+Math.floor(i/4)*.58)*scale,scale*.478,rust);
+  decal(id==='safeLarge'?'SECURE':id==='safeSmall'?'HOME':'SAFE',scale*.26,scale*.07,-scale*.18,scale*.87,scale*.483,'#b6babb','#1b2328');
+ }
+ // Ground the entire assembly as a single group, preserving relative positions.
+ g.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(g);
+ if(Number.isFinite(bounds.min.y)&&Math.abs(bounds.min.y)>.001)
+   for(const o of g.children)o.position.y-=bounds.min.y;
+ const poor='tags' in entry&&entry.tags.includes('poor' as never);
+ g.userData={collection:'SFUK_expansion',standalone:true,id,category:entry.category,
+  tags:poor?['poor']:[],districtTags:poor?['poor']:[],units:'metres',pivot:'ground-centre',
+  referenceInspired:true,revision:2,quality:'procedural-work-in-progress'};
+ return g;
 }
