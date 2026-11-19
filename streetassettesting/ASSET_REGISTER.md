@@ -34,3 +34,15 @@ The original street lamp is **excluded** because `newassetsfromchatgpt.ts` alrea
 **Source:** `batch02.ts`; **viewer:** `batch02-viewer.html`
 
 **Status:** First-pass test models, pending user review. No game integration.
+
+## Batch 04 — 7 approved models
+
+Approved by user and promoted to `assets/streetassettesting/batch04.ts`. CCTV/security model excluded entirely. No playable-game integration.
+
+## Batch 05 — 20 models awaiting visual review
+
+Bus shelter, bus bench, pillar postbox, telephone kiosk, pavement bollard, bicycle stand, wheelie bin, trade waste bin, shipping pallet, traffic lights, roadside sign, parking meter, bus stop timetable pole, notice board, park bench, litter bin, flower bed, shopping basket, delivery sack truck and market stall.
+
+**Source:** `streetassettesting/batch05.ts`; **viewer:** `streetassettesting/batch05-viewer.html`.
+
+**Status:** First-pass procedural geometry. Not approved, not promoted, not integrated. CCTV and security-related assets excluded.
