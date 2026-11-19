@@ -170,6 +170,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - fight balance: the harness walks the bot into each fight (drifting out of the trigger counted as a loss), the first fight is one lad then two, a few bosses and fights tuned (`docs/BALANCE.md`); `tools/economy/farming.ts` measures repeat-fight income (best about £3,700 an hour);
   - bracelets (other wrist, new wear slot `bracelet`) and earrings (a pair on the lobes) at Halden & Crane, 8 of each; loot diamond studs and bracelets go in the jewellery box; Threads' silver earring is drawn as sleeper hoops and no longer sold.
   - simpler phone screen: walking about, the touch pad is just the stick, PUNCH, KICK and JUMP (`body.roam`); block, dodge, grab, special, style and the hard hits appear in a fight. In portrait STYLE SWAP sits beside pause in a fight, needs are small icon badges right of LVL and money (the strip was half off-screen), and the stick ring stays inside its zone.
+- #37: USE is its own action, not GRAB: on phones tap the "USE …" plate (`Hud` prompt, `InputManager.useFromTouch`, `CommandFrame.use`); E uses and U grabs on a keyboard; LB on a pad does both (use wins when there's something to use). Needs badges show their icons again (`.need-text`).
 
 ## Open questions and next steps
 
