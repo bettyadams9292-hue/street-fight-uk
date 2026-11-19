@@ -14,3 +14,5 @@ Original `streetassettesting/` sources and viewers are retained for comparison a
 **Status:** User-approved; moved to assets folder.
 
 - `batch05.ts`: 20 user-approved British commercial and neighbourhood props, promoted without changing the playable game. Source preserved in `streetassettesting/batch05.ts`.
+
+- `batch07.ts`: 30 user-approved British architecture, shop, pub, takeaway and domestic assets, promoted from testing. **Approved for staging only; not integrated into the playable game.**
