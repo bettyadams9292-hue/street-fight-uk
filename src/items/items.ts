@@ -229,15 +229,15 @@ const drink = (id: string, name: string, stamina: number, value: number, text: s
   const n = needs ?? { fill: 3, diet: 40, bladder: 15 };
   add({ id, name, text, category: 'consumable', rarity: 'common', value, stack: 5, icon: 'drink', colour, store: 'fridge', use: { stamina, heal, needs: n, text: `+${stamina} stamina${heal ? `, +${heal} health` : ''}` } });
 };
-food('chips', 'Chips', 25, 3, 'Salt and vinegar, wrapped in paper.', '#e8c060', 0, { fill: 25, diet: 20 });
-food('kebab', 'Kebab', 40, 7, 'Doner with everything.', '#c88a4a', 0, { fill: 45, diet: 25 });
-food('pasty', 'Pasty', 30, 3, 'Steak and potato, still warm.', '#d8a050', 0, { fill: 35, diet: 30 });
-food('sausage_roll', 'Sausage roll', 30, 2, 'Flaky pastry, greasy bag.', '#d8a860', 0, { fill: 25, diet: 25 });
-food('meal_deal', 'Meal deal', 35, 4, 'Sandwich, crisps and a drink.', '#4a9a5a', 10, { fill: 35, diet: 45, bladder: 8 });
-food('bacon_butty', 'Bacon butty', 35, 3, 'Brown sauce, obviously.', '#c86040', 0, { fill: 30, diet: 35 });
-food('curry', 'Curry', 45, 9, 'Chicken tikka and rice from the takeaway.', '#d88a2a', 0, { fill: 50, diet: 45 });
-food('fry_up', 'Full English', 60, 10, 'Everything on one plate.', '#e8a040', 20, { fill: 60, diet: 45, energy: 10 });
-food('protein_bar', 'Protein bar', 15, 2, 'Chewy. Tastes of chalk.', '#5a3a2a', 15, { fill: 12, diet: 60, energy: 5 });
+food('chips', 'Chips', 15, 3, 'Salt and vinegar, wrapped in paper.', '#e8c060', 0, { fill: 25, diet: 20 });
+food('kebab', 'Kebab', 28, 7, 'Doner with everything.', '#c88a4a', 0, { fill: 45, diet: 25 });
+food('pasty', 'Pasty', 20, 3, 'Steak and potato, still warm.', '#d8a050', 0, { fill: 35, diet: 30 });
+food('sausage_roll', 'Sausage roll', 15, 2, 'Flaky pastry, greasy bag.', '#d8a860', 0, { fill: 25, diet: 25 });
+food('meal_deal', 'Meal deal', 22, 4, 'Sandwich, crisps and a drink.', '#4a9a5a', 10, { fill: 35, diet: 45, bladder: 8 });
+food('bacon_butty', 'Bacon butty', 20, 3, 'Brown sauce, obviously.', '#c86040', 0, { fill: 30, diet: 35 });
+food('curry', 'Curry', 30, 9, 'Chicken tikka and rice from the takeaway.', '#d88a2a', 0, { fill: 50, diet: 45 });
+food('fry_up', 'Full English', 40, 10, 'Everything on one plate.', '#e8a040', 20, { fill: 60, diet: 45, energy: 10 });
+food('protein_bar', 'Protein bar', 10, 2, 'Chewy. Tastes of chalk.', '#5a3a2a', 15, { fill: 12, diet: 60, energy: 5 });
 drink('energy_drink', 'Energy drink', 60, 2, 'Can of something fizzy and bright.', '#3ad84a', 0, { fill: 0, diet: 10, energy: 15, bladder: 18 });
 drink('can_of_pop', 'Can of pop', 30, 1, 'Fizzy and cold.', '#d82a2a', 5, { fill: 2, diet: 10, bladder: 15 });
 drink('water', 'Bottle of water', 40, 1, 'Fresh and cold.', '#8ac8ff', 0, { fill: 0, diet: 70, bladder: 15 });
@@ -295,8 +295,8 @@ meal('m_steak', 'Steak and potatoes', '#a8303a', 'Sirloin, roast potatoes, mushr
 meal('m_pasta', 'Pasta bake', '#c83a2a', 'Penne in tomato sauce under melted cheddar.', 40, { fill: 60, diet: 65, energy: 6 });
 meal('m_burger', 'Homemade cheeseburger', '#a8484a', 'Smash burger, onions, cheese.', 45, { fill: 60, diet: 42, energy: 6 });
 meal('m_curry', 'Chicken curry and rice', '#d88a2a', 'Tikka masala with basmati.', 50, { fill: 70, diet: 70, energy: 10 });
-add({ id: 'plasters', name: 'Plasters', text: 'A box of plasters.', category: 'consumable', rarity: 'common', value: 2, stack: 5, icon: 'medkit', colour: '#e8c8a0', use: { heal: 20, text: '+20 health' } });
-add({ id: 'first_aid', name: 'First aid kit', text: 'Bandages, wipes, the lot.', category: 'consumable', rarity: 'uncommon', value: 15, stack: 3, icon: 'medkit', colour: '#d81e1e', use: { healPct: 0.6, text: 'Restores 60% of your health' } });
+add({ id: 'plasters', name: 'Plasters', text: 'A box of plasters. Sees to bruising, and works however full you are.', category: 'consumable', rarity: 'common', value: 3, stack: 10, icon: 'medkit', colour: '#e8c8a0', use: { heal: 35, text: '+35 health, treats bruising' } });
+add({ id: 'first_aid', name: 'First aid kit', text: 'Bandages, wipes, the lot. Patches up your worst injury too.', category: 'consumable', rarity: 'uncommon', value: 12, stack: 5, icon: 'medkit', colour: '#d81e1e', use: { healPct: 0.6, text: 'Restores 60% of your health, treats your worst injury' } });
 
 // ---- valuables (sell at the pawn shop) --------------------------------------------------------
 const val = (id: string, name: string, icon: IconKind, rarity: Rarity, value: number, colour: string, text: string, stack = 1) =>
@@ -369,9 +369,9 @@ add({ id: 'lighter', name: 'Zippo lighter', text: 'Engraved steel lighter. Sells
 add({ id: 'bus_pass', name: 'Bus pass', text: 'Somebody’s. Dave’s Cabs take it as a free ride.', category: 'misc', rarity: 'common', value: 0, stack: 5, icon: 'card', colour: '#2f6fa8', unsellable: true });
 
 // ---- backpacks (carry capacity) ----------------------------------------------------------------
-add({ id: 'bag_bumbag', name: 'Bum bag', text: '+4 inventory slots while you have it.', category: 'misc', rarity: 'common', value: 40, icon: 'bag', colour: '#1b1d22', unsellable: false });
-add({ id: 'bag_rucksack', name: 'Rucksack', text: '+8 inventory slots while you have it.', category: 'misc', rarity: 'uncommon', value: 120, icon: 'bag', colour: '#2f4a2d' });
-add({ id: 'bag_holdall', name: 'Gym holdall', text: '+12 inventory slots while you have it.', category: 'misc', rarity: 'rare', value: 260, icon: 'bag', colour: '#1f2a44' });
+add({ id: 'bag_bumbag', name: 'Bum bag', text: '+4 inventory slots while you carry it. Only your biggest bag counts.', category: 'misc', rarity: 'common', value: 40, icon: 'bag', colour: '#1b1d22', unsellable: false });
+add({ id: 'bag_rucksack', name: 'Rucksack', text: '+8 inventory slots while you carry it. Only your biggest bag counts.', category: 'misc', rarity: 'uncommon', value: 120, icon: 'bag', colour: '#2f4a2d' });
+add({ id: 'bag_holdall', name: 'Gym holdall', text: '+12 inventory slots while you carry it. Only your biggest bag counts.', category: 'misc', rarity: 'rare', value: 260, icon: 'bag', colour: '#1f2a44' });
 
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(defs.map((d) => [d.id, d]));
 export const ITEM_LIST: readonly ItemDef[] = defs;

@@ -16,7 +16,7 @@ import { buyItem, pawnOffer, SHOP_STOCK, shopPrice } from '../src/items/shops';
 import { AREA_IDS, BASE_INVENTORY_SLOTS, BASE_STORAGE_SLOTS, newSave, Progress, sanitiseSave, STORAGE_UPGRADE } from '../src/progress/Progress';
 import { SaveStore } from '../src/save/SaveStore';
 import { LEVELS } from '../src/world/levels';
-import { arrest, ARREST_HEAT, robShop, ROBBERY_CLOSED_TRIPS } from '../src/world/robbery';
+import { arrest, arrestFine, ARREST_HEAT, robShop, ROBBERY_CLOSED_TRIPS } from '../src/world/robbery';
 import { exitLocked, World } from '../src/world/World';
 import { TOWN_AREA_IDS } from '../src/world/townIds';
 
@@ -145,6 +145,13 @@ test('consumables heal and are used up one at a time', () => {
   const r = p.use(p.save.inventory.find((s) => s.id === 'meal_deal')!.uid);
   assert(r.ok && r.heal > 0, 'meal deal did nothing');
   assert((p.save.inventory.find((s) => s.id === 'meal_deal')?.qty ?? 0) === before - 1, 'not used up');
+  // Stuffed: no more food, but plasters still work.
+  p.save.needs.hunger = 100;
+  const full = p.use(p.save.inventory.find((s) => s.id === 'meal_deal')!.uid);
+  assert(!full.ok, 'ate when stuffed');
+  p.giveItem('plasters');
+  assert(p.use(p.save.inventory.find((s) => s.id === 'plasters')!.uid).ok, 'plasters refused when full');
+  p.save.needs.hunger = 30;
   const w = new World(LEVELS.estate, p, { entry: 'home', seed: 1 });
   w.player.vitals.health = 10;
   w.useItem(p.save.inventory.find((s) => s.id === 'meal_deal')!.uid);
@@ -330,7 +337,9 @@ test('arrest: stolen goods seized (pockets, worn, hands), fine paid, heat wiped'
   p.save.heat = 90;
   const r = arrest(p);
   assert(r.seized === 2 && !p.owns('puffer_red') && !p.owns('runners') && p.owns('camera'), `seized ${r.seized}`);
-  assert(r.fine === 30 && p.save.cash.pocket + p.save.cash.bank === 170, `fine ${r.fine}`);
+  assert(r.fine === 25 && p.save.cash.pocket + p.save.cash.bank === 175, `fine ${r.fine}`);
+  // Rich: capped by level, not a share of everything.
+  assert(arrestFine(2000, 500000, 10) === 1500 && arrestFine(40, 0, 1) === 25 && arrestFine(10, 0, 1) === 10, 'fine rules');
   assert(p.save.heat === 0 && p.save.stats.arrests === 1, 'heat or stats');
   assert(ARREST_HEAT > 0, '');
 });

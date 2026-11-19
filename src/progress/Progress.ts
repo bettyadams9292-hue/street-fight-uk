@@ -351,6 +351,9 @@ export type PurchaseResult = { ok: true } | { ok: false; reason: string };
  * The one place progress changes. Rewards go through `claim` so a one-time
  * reward (boss, secret, encounter) can never be paid twice.
  */
+/** Hunger at or above this and you can't face any more food (drinks and medicine still work). */
+export const STUFFED = 95;
+
 export class Progress {
   constructor(public save: GameSave) {
     this.adoptLooseJewellery();
@@ -664,6 +667,8 @@ export class Progress {
     const st = this.findCarried(uid);
     const use = st ? ITEMS[st.id].use : undefined;
     if (!st || !use) return { ok: false, reason: 'You can\u2019t use that' };
+    // Food heals a little and fills you up; you can't eat when you're stuffed. Medicine works whenever.
+    if (use.needs && use.needs.fill >= 10 && this.save.needs.hunger >= STUFFED) return { ok: false, reason: 'You\u2019re stuffed. Plasters or a first aid kit will still work.' };
     takeStack(this.save.inventory, uid, 1, () => this.newUid());
     // First aid patches up your worst injury by a level; plasters see to bruising.
     let treated: string | null = null;
