@@ -224,13 +224,27 @@ if(['bakeryDisplay','takeawayCounter','bikeRack','parkingMeter','cashMachine','g
   box(.69,1.38,.042,0,.71,.71,oak);box(.59,1.27,.02,0,.71,.74,pine);
   for(const y of [.26,1.13])box(.13,.045,.025,.25,y,.759,chrome);
   box(.09,.14,.025,-.20,.72,.765,charcoal);
-  // Gable ends, symmetric pitched roof in Z (ridge runs along X).
+  // Pitched gable roof: ridge runs front-to-back along Z, slopes left/right in X.
+  // Each half is a single continuous sheet; the two upper edges meet at x=0.
+  const halfRun=.94, rise=.37, pitch=Math.atan2(rise,halfRun);
+  const slopeLength=Math.hypot(halfRun,rise);
+  const ridgeY=2.075, eaveY=ridgeY-rise;
   for(const sign of [-1,1]){
-   const panel=box(1.92,.075,.87,0,1.87,sign*.34,charcoal);
-   panel.rotation.x=sign*.37;
+   const panel=box(slopeLength+.035,.065,1.57,sign*halfRun/2,(ridgeY+eaveY)/2,0,charcoal);
+   panel.rotation.z=-sign*pitch;
+   // Fascia follows the actual eave, rather than crossing the roof.
+   box(.055,.10,1.60,sign*halfRun,eaveY-.025,0,charcoal);
   }
-  box(1.95,.05,.075,0,2.015,0,charcoal);
-  for(const x of [-.86,.86])box(.05,.09,.06,x,1.67,0,oak);
+  box(.085,.065,1.63,0,ridgeY+.012,0,charcoal);
+  // Simple front/back triangular gable infill below the roof.
+  for(const z of [-.685,.685]){
+   const triangle=new T.Shape();
+   triangle.moveTo(-.86,1.66);triangle.lineTo(.86,1.66);triangle.lineTo(0,ridgeY-.055);triangle.closePath();
+   const mesh=new T.Mesh(new T.ShapeGeometry(triangle),pine);
+   mesh.position.z=z+(z>0?.008:-.008);
+   if(z<0)mesh.rotation.y=Math.PI;
+   g.add(mesh);
+  }
  }
  if(id==='shoppingBasket'){
   // Open slatted plastic hand basket, tapered profile and two realistic low-profile handles.
