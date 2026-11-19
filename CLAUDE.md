@@ -172,7 +172,11 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 
 ## Open questions and next steps
 
-- **Performance, still to do:** characters are about 36–40k triangles each (body about 27k). A lower-detail body for background people would be the next big win. Profiling: in `?shot=` pages `window.__realNow` is the real clock (`performance.now` is frozen there), and `renderer.info` with `autoReset = false` gives triangles per frame.
+- **Performance, still to do:** characters are about 36–40k triangles each (body about 27k). Agreed plan (19 Nov, not started), all from the models we already have, no new art:
+  1. merge each person's ~10 skinned parts (body, clothes, hair, shoes) into one skinned mesh with material groups in `HumanBuilder.ts`: same look, one draw instead of ten;
+  2. auto-decimate a lighter copy of the body and garments (about 27k → 8k) for people who aren't fighting; fighters and anyone close up keep the full model;
+  3. only if still needed: pre-rendered impostors for the far crowd. Not for everyone: outfits are random (so they'd be baked at load), and lamps, rain and night would need relightable impostors.
+  Expected: people cost half to two-thirds less. Profiling: in `?shot=` pages `window.__realNow` is the real clock (`performance.now` is frozen there), and `renderer.info` with `autoReset = false` gives triangles per frame.
 - **Balance:** `docs/BALANCE.md`. A few late fights (underground platform, Hale House courtyard and gate) sit a little under target; the Estate King is easy.
 
 - PR #20's own "not done" list:
