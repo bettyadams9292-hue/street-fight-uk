@@ -1040,3 +1040,19 @@ body:has(#ui .screen) .rotate-hint { display: none !important; }
 @media (orientation: portrait) and (max-width: 700px) {
   .screen.pause-menu:has(.reward-list) .menu-list { bottom: calc(-1 * (20px + var(--safe-b))); }
 }
+
+/* Area banner: one painted title with a small line under it (no two paintings stacked). */
+.area-banner .place-title { font-family: var(--display); font-size: clamp(30px, 5vw, 58px); line-height: 1; color: var(--sign-white); background: var(--flag-blue); padding: 6px 22px 4px; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45); }
+.area-banner .place-title.has-art { background: none; box-shadow: none; padding: 0; }
+.area-banner .place-title.has-art img.title-art { height: clamp(64px, 10vw, 120px); width: auto; display: block; }
+.area-banner .place-sub { margin-top: 4px; font-family: var(--display); font-size: clamp(14px, 1.8vw, 20px); letter-spacing: 0.06em; color: var(--sign-white); background: var(--accent); padding: 2px 12px; }
+/* Phones on their side: the use prompt sits at the top, so the banner goes below it. */
+.touch-ui .hud.story .area-banner { top: calc(158px + var(--safe-t)); }
+@media (max-height: 520px) {
+  .area-banner .place-title.has-art img.title-art { height: 58px; }
+  .area-banner .place-title { font-size: 28px; }
+}
+@media (orientation: portrait) and (max-width: 700px) {
+  .touch-ui .hud.story .area-banner { top: calc(150px + var(--safe-t)); }
+  .area-banner .place-title.has-art img.title-art { height: 62px; }
+}

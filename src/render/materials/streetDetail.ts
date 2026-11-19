@@ -18,6 +18,15 @@ import { loadSet, pick } from './library';
 const ROADS: LibraryName[] = ['Road012A', 'Road012B', 'Road012C', 'Road014B', 'Road014C', 'Road015A'];
 const STREET_BRICKS: LibraryName[] = ['Bricks005', 'Bricks097', 'Bricks007', 'Bricks070'];
 const PAVES: LibraryName[] = ['Concrete034'];
+/** Paving with real joints, chosen by the kind of ground the district has (see GroundKind in city/street.ts). */
+const PAVING_BY_GROUND: Record<string, LibraryName> = {
+  street: 'PavingStones109', // grey small-block high-street pavement
+  suburb: 'PavingStones036', // grey block paving
+  plaza: 'PavingStones102', // chevron precinct paving
+  lane: 'PavingStones083', // wet herringbone setts
+  yard: 'PavingStones036',
+  quay: 'PavingStones036',
+};
 
 let blank: { colour: THREE.Texture; normal: THREE.Texture } | null = null;
 function blanks(): { colour: THREE.Texture; normal: THREE.Texture } {
@@ -33,8 +42,8 @@ function blanks(): { colour: THREE.Texture; normal: THREE.Texture } {
 }
 
 /** Give a kit street's solid material its world-laid surfaces. `seed` chooses the district's asphalt and brick. */
-export function streetDetail(mat: THREE.MeshStandardMaterial, seed: number): void {
-  const sets = [pick(ROADS, seed), pick(PAVES, seed >> 3), pick(STREET_BRICKS, seed >> 5)];
+export function streetDetail(mat: THREE.MeshStandardMaterial, seed: number, ground?: string): void {
+  const sets = [pick(ROADS, seed), (ground && PAVING_BY_GROUND[ground]) || pick(PAVES, seed >> 3), pick(STREET_BRICKS, seed >> 5)];
   const b = blanks();
   const u = {
     sdC: { value: [b.colour, b.colour, b.colour] as THREE.Texture[] },
@@ -95,7 +104,7 @@ void main() {
     if (n.y > 0.7 && sdWorld.y < 0.4) {
       // Flat ground: the dark carriageway is asphalt, the rest concrete.
       if (lum < 0.05) { d = road; sdTn = roadN; sdK = 0.9; }
-      else { d = pave; sdTn = paveN; sdK = 0.55; }
+      else { d = pave; sdTn = paveN; sdK = 0.8; }
     } else if (abs(n.y) < 0.3) {
       // Building walls the colour of brick are brick. Awnings, signs and shop panels (props) never are,
       // however red they are.

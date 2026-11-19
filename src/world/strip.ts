@@ -53,6 +53,16 @@ export const SEAM_LOCKS: Partial<Record<AreaId, SeamLock>> = {
 /** Doors between two streets that stay as doors: the subway steps are a short cut, not the way through. */
 const KEPT_STREET_DOORS = new Set(['subway_steps', 'estate_stairs']);
 
+/** A door that is the stairs down to the subway (or back up out of it): drawn as a stairwell, not a door in a building. */
+export function isSubwayStairs(level: LevelDef, e: ExitDef): boolean {
+  if (e.kind !== 'door') return false;
+  if (e.to === 'subway' || e.to === 'underground') return true;
+  return (level.id === 'subway' || level.id === 'underground') && /stair|steps/i.test(`${e.id} ${e.label}`);
+}
+
+/** Half the width of the gap in the buildings left for a subway stairwell. */
+export const SUBWAY_GAP = 1.9;
+
 export function onStrip(id: AreaId): boolean {
   return STRIP.includes(id);
 }

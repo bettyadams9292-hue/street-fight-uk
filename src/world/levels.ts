@@ -388,7 +388,7 @@ const subway: LevelDef = {
   exits: [
     { id: 'to_industrial', kind: 'edge', side: 'left', x: 0, z: 0, to: 'industrial', toEntry: 'right', label: 'Industrial Quarter' },
     { id: 'to_city', kind: 'edge', side: 'right', x: 72, z: 0, to: 'city', toEntry: 'left', label: 'City Centre' },
-    { id: 'estate_stairs', kind: 'door', x: 66, z: -1.5, to: 'estate', toEntry: 'subway', label: 'Stairs up to the estate' },
+    { id: 'estate_stairs', kind: 'door', x: 66, z: -1.5, to: 'estate', toEntry: 'subway', label: 'Subway steps to the estate' },
     { id: 'deep_line', kind: 'door', x: 8, z: -1.5, to: 'underground', toEntry: 'left', label: 'Down to the Deep Line platforms', requires: 'boss_ratcatcher', lockedText: 'Shuttered. The Ratcatcher\u2019s crew controls the old lines.' },
   ],
   facades: [
