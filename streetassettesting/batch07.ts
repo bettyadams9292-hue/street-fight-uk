@@ -45,6 +45,7 @@ export function createAsset(id:AssetId):THREE.Group{
  }
 
 
+ const slate=M(0x4b5258,.18),aged=M(0x6b5448),brass=M(0xa98b54,.7),rubber=M(0x24282a),paper=M(0xe7ddc6),veg=M(0x5a823e),tomato=M(0xb83d32),ceramic=M(0xd8d6ce),enamel=M(0xced3d1,.1);
  // STRUCTURAL REBUILD: remove obstructing prototype geometry instead of stacking decorative patches.
  if(['terracedDoor','bayWindow','sashWindow','shopFascia','pubWindow','shopAwning','butcherCounter','chippyWarmer','fishChipFryer'].includes(id)){
   g.clear();
@@ -173,7 +174,7 @@ export function createAsset(id:AssetId):THREE.Group{
  }
 
  // PASS ONE: construction, material layering, realistic fixtures and British character.
- const slate=M(0x4b5258,.18),aged=M(0x6b5448),brass=M(0xa98b54,.7),rubber=M(0x24282a),paper=M(0xe7ddc6),veg=M(0x5a823e),tomato=M(0xb83d32),ceramic=M(0xd8d6ce),enamel=M(0xced3d1,.1);
+
  const sphere=(r:number,x:number,y:number,z:number,m:THREE.Material,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o)};
  const tor=(r:number,t:number,x:number,y:number,z:number,m:THREE.Material,rx=0)=>{const o=new THREE.Mesh(new THREE.TorusGeometry(r,t,8,36),m);o.position.set(x,y,z);o.rotation.x=rx;g.add(o)};
  const plank=(w:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>B(w,.024,d,x,y,z,m);
