@@ -15,7 +15,7 @@ export function practiceScreen(primary: StyleId, secondary: StyleId | null, ui: 
   const render = () => {
     const st = STYLES[p];
     const moves = (['lp', 'hp', 'lk', 'hk'] as const).map((b) => `${b.toUpperCase()} ${st.moves[st.starters[b]].name}`).join(' · ');
-    const specials = Object.entries(st.specials).map(([b, id]) => `SP+${b.toUpperCase()} ${st.moves[id!].name}`).join(' · ');
+    const specials = Object.entries(st.specials).map(([b, id]) => `Special + ${({ lp: 'punch', hp: 'hard punch', lk: 'kick', hk: 'hard kick' } as Record<string, string>)[b]}: ${st.moves[id!].name}`).join(' · ');
     info.replaceChildren(
       h('p', { class: 'blurb', text: st.blurb }),
       h('p', {}, h('b', { text: 'Strengths: ' }), st.strengths.join(', ')),

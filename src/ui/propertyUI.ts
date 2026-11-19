@@ -38,7 +38,7 @@ import {
   takeOutBike,
 } from '../property/state';
 import {
-  COMP_ODDS,
+  compOdds,
   COMP_TICKET,
   DRAW_PRIZES,
   DRAW_TICKET,
@@ -540,7 +540,7 @@ export function cashierScreen(progress: Progress, close: () => void, saved: () =
       h('p', { class: 'hint', text: RESPONSIBLY }),
       h('div', { class: 'prop-detail' }, previewCanvas(prize.id, prize.colour)),
       h('h3', { text: `Win the ${prizeName(prize)}` }),
-      h('p', { class: 'hint', text: `${money(COMP_TICKET)} a ticket, 1 in ${COMP_ODDS} wins. ${prize.kind === 'car' ? 'Cars are parked on your drive.' : 'Bikes go in your garage.'} The motor on the podium changes every few trips.` }),
+      h('p', { class: 'hint', text: `${money(COMP_TICKET)} a ticket, 1 in ${compOdds(prize).toLocaleString('en-GB')} wins. ${prize.kind === 'car' ? 'Cars are parked on your drive.' : 'Bikes go in your garage.'} The motor on the podium changes every few trips.` }),
       h('p', { class: 'casino-result', text: last }),
       menuButton(`Competition ticket (${money(COMP_TICKET)})`, () => {
         const r = playCompetition(progress);

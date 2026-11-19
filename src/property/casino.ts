@@ -34,7 +34,7 @@ function payout(p: Progress, amount: number): void {
 export const SLOT_SYMBOLS = ['🍒', '🍋', '🔔', '⭐', '7', '💎'] as const;
 export type SlotSymbol = (typeof SLOT_SYMBOLS)[number];
 /** How often each symbol lands (out of the total). */
-const SLOT_WEIGHTS: Record<SlotSymbol, number> = { '🍒': 30, '🍋': 26, '🔔': 18, '⭐': 13, '7': 8, '💎': 5 };
+export const SLOT_WEIGHTS: Record<SlotSymbol, number> = { '🍒': 30, '🍋': 26, '🔔': 18, '⭐': 13, '7': 8, '💎': 5 };
 /** Three of a kind pays this many times the bet. */
 export const SLOT_PAYS: Record<SlotSymbol, number> = { '🍒': 5, '🍋': 8, '🔔': 12, '⭐': 20, '7': 50, '💎': 100 };
 
@@ -226,15 +226,25 @@ function settle(p: Progress, hand: BlackjackHand): void {
 
 export const DRAW_TICKET = 10;
 export const COMP_TICKET = 50;
-/** One in this many competition tickets wins the motor. */
-export const COMP_ODDS = 40;
+/**
+ * What the house keeps on the draw and the competition: tickets pay back this share on average. Every game
+ * here returns less than it takes (tests/economy.test.ts checks), so the casino is somewhere to spend money,
+ * never a way to make it. The competition used to be 1 in 40 for any motor: a £50 ticket was worth £4,625 on
+ * a Phantom week, and with a full garage it paid out the car's value in cash.
+ */
+export const HOUSE_RETURN = 0.75;
 
-/** Cash prizes in the prize draw (weights out of 100; the rest is "no prize"). */
+/** One in this many competition tickets wins this motor, set so a ticket is worth HOUSE_RETURN of its price. */
+export function compOdds(pr: { kind: 'car' | 'bike'; id: string }): number {
+  return Math.max(2, Math.round(prizeValue(pr) / (COMP_TICKET * HOUSE_RETURN)));
+}
+
+/** Cash prizes in the prize draw (weights out of 100; the rest is "no prize"). Pays back about 78%. */
 export const DRAW_PRIZES = [
-  { cash: 250, weight: 2 },
-  { cash: 100, weight: 5 },
-  { cash: 50, weight: 9 },
-  { cash: 20, weight: 18 },
+  { cash: 250, weight: 0.5 },
+  { cash: 100, weight: 1.5 },
+  { cash: 50, weight: 3 },
+  { cash: 20, weight: 8 },
   { cash: 10, weight: 20 },
 ];
 
@@ -282,7 +292,7 @@ export function prizeValue(pr: { kind: 'car' | 'bike'; id: string }): number {
 export function playCompetition(p: Progress, rng: Rng = Math.random): GameResult<{ won: boolean; prize: string; cashInstead: boolean }> {
   const prize = compPrize(p.save.trips);
   if (!stake(p, COMP_TICKET)) return { ok: false, reason: `Need £${COMP_TICKET}` };
-  const won = Math.floor(rng() * COMP_ODDS) === 0;
+  const won = Math.floor(rng() * compOdds(prize)) === 0;
   if (!won) return { ok: true, win: 0, detail: { won: false, prize: prizeName(prize), cashInstead: false } };
   const prop = p.save.property;
   const full = prize.kind === 'car' ? prop.cars.length >= MAX_CARS : prop.bikes.length >= GARAGE_SPACES;

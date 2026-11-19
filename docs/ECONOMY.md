@@ -22,6 +22,7 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 - **Mansions cost £650k–£1.25m** and the penthouse £480k. That's what a gated house costs in a northern town, and it's reachable on the income above.
 - **Medicine is the fighter's heal; food is for hunger.** Food heals about 0.6 health per point of hunger it fills, and you can't eat at hunger 95 or more. Plasters (£3, +35, treats bruising) and first aid (£10, 60%, treats your worst injury) work whenever, and heal more per pound than any food.
 - **Being nicked costs, but it can't ruin you.** The fine is 15% of the cash on you plus 5% of the bank, at least £25. It's capped at £500 + £100 a level, and never more than you have.
+- **The casino is a place to spend money, never to make it.** Every game pays back less than it takes (`tests/economy.test.ts` works out each one). Slots return about 81%, roulette 97%, the prize draw about 78%, and the motor competition 75% (`HOUSE_RETURN`): its odds are set by the prize's value, so the Phantom is 1 in about 4,900.
 - **Only your biggest bag counts.** Shops won't sell you a bag no bigger than one you already own.
 
 ## Where the numbers live
@@ -37,3 +38,4 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 | Business | `src/business/catalogue.ts`, `src/business/production.ts` |
 | Property market and rent | `src/realty/catalogue.ts`, `src/realty/portfolio.ts` |
 | Fines | `arrestFine` in `src/world/robbery.ts` |
+| Casino | `src/property/casino.ts` |

@@ -843,7 +843,7 @@ export class Game {
         this.hud.toast(`Holding: ${name}. Light/heavy to swing, Grab to throw or drop.`, 'item');
         this.saveGame();
       }),
-      ev.on('item:full', ({ name }) => this.hud.toast(`Pockets full: no room for the ${name.toLowerCase()}. Open the inventory (I / RB / BAG) to make space.`, 'warn')),
+      ev.on('item:full', ({ name }) => this.hud.toast(`Pockets full: no room for the ${name.toLowerCase()}. Open the inventory (I, RB, or the bag button) to make space.`, 'warn')),
       ev.on('searched', ({ label, found }) => {
         if (found.length) this.audio.uiConfirm();
         this.hud.toast(found.length ? `${label}: ${found.join(', ')}` : `${label}: nothing`, found.length ? 'item' : 'info');

@@ -158,7 +158,8 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - towns pay about double; the grow business £14 a unit; rent yields 1–1.5% a month (pays back in 11–17 h);
   - house prices settle towards a long-run level instead of compounding (index 0.75–1.8); mansions £650k–£1.25m, penthouse £480k;
   - arrest fine capped (`arrestFine`); food heals less and not when stuffed; plasters on the Red Lion menu; no smaller bags than one you own;
-  - the jewellery box stacks in portrait.
+  - the jewellery box stacks in portrait;
+  - the casino's prize draw (paid back 201%) and motor competition (1 in 40 for any car: a money machine) now return under 100%, like every other game (`HOUSE_RETURN`, `compOdds`).
   - Target: first mansion about 28 hours after the towns, every property about 51.
 
 ## Open questions and next steps

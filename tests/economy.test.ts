@@ -11,6 +11,7 @@ import { SHOP_STOCK } from '../src/items/shops';
 import { arrestFine, FINE_CAP_BASE, FINE_CAP_PER_LEVEL } from '../src/world/robbery';
 import { LEVEL_CAP } from '../src/progress/catalogue';
 import { marketIndex } from '../src/realty/catalogue';
+import { COMP_PRIZES, COMP_TICKET, DRAW_PRIZES, DRAW_TICKET, SLOT_PAYS, SLOT_SYMBOLS, SLOT_WEIGHTS, compOdds, prizeValue, rouletteReturn } from '../src/property/casino';
 
 let failed = 0;
 function test(name: string, fn: () => void): void {
@@ -86,6 +87,25 @@ test('medicine heals more per pound than any food, so it is worth buying', () =>
   const perPound = (id: string) => ((ITEMS[id].use?.heal ?? 0) + (ITEMS[id].use?.healPct ?? 0) * 150) / ITEMS[id].value;
   const meds = Math.min(perPound('plasters'), perPound('first_aid'));
   for (const d of Object.values(ITEMS)) if (d.use?.needs && d.value > 0) assert(perPound(d.id) < meds, `${d.name} heals £${perPound(d.id).toFixed(1)}/£ against medicine's ${meds.toFixed(1)}`);
+});
+
+test('the casino never pays back more than it takes, on any game', () => {
+  const total = Object.values(SLOT_WEIGHTS).reduce((a, b) => a + b, 0);
+  const pr = (k: keyof typeof SLOT_WEIGHTS) => SLOT_WEIGHTS[k] / total;
+  let slots = SLOT_SYMBOLS.reduce((n, k) => n + pr(k) ** 3 * SLOT_PAYS[k], 0);
+  slots += 3 * pr('🍒') ** 2 * (1 - pr('🍒')) * 2;
+  assert(slots < 1, `slots return ${(slots * 100).toFixed(0)}%`);
+  for (const bet of [{ kind: 'red' }, { kind: 'even' }, { kind: 'low' }, { kind: 'dozen', dozen: 1 }, { kind: 'number', number: 7 }] as const) {
+    let ret = 0;
+    for (let n = 0; n <= 36; n++) ret += rouletteReturn(bet, n, 1) / 37;
+    assert(ret < 1, `roulette ${bet.kind} returns ${(ret * 100).toFixed(1)}%`);
+  }
+  const draw = DRAW_PRIZES.reduce((n, d) => n + (d.weight / 100) * d.cash, 0) / DRAW_TICKET;
+  assert(draw < 1, `prize draw returns ${(draw * 100).toFixed(0)}%`);
+  for (const p of COMP_PRIZES) {
+    const ev = prizeValue(p) / compOdds(p) / COMP_TICKET;
+    assert(ev < 1, `competition on ${p.id} returns ${(ev * 100).toFixed(0)}%`);
+  }
 });
 
 console.log(failed ? `\n${failed} failed` : '\nall passed');
