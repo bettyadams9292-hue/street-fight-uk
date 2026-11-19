@@ -198,13 +198,23 @@ function buildBatch02V3(id:AssetId):THREE.Group{
   for(let i=0;i<6;i++){const x=-.75+i*.30;R([x,2.07,.13],[x,1.88,.13],.006,steel);C(.047,.012,x,1.875,.13,glass);}
  }
  if(id==='cardTerminal'){
-  // Actual countertop card reader, screen, numeric keypad and tilted body.
-  B(.105,.055,.12,0,.055,.035,black);
-  const body=B(.13,.045,.22,0,.12,-.015,black);body.rotation.x=-.16;
-  const screen=B(.108,.008,.082,0,.154,-.07,blue);screen.rotation.x=-.16;
-  B(.065,.008,.006,0,.158,-.109,cream);
-  for(let i=0;i<12;i++){const x=-.038+(i%3)*.038,z=.008+Math.floor(i/3)*.037;B(.024,.009,.023,x,.158,z,i===11?green:i===9?red:steel);}
-  B(.12,.013,.012,0,.132,.102,black);
+  // Single connected payment terminal shell. Keypad and screen are recessed into one sloped face.
+  const shell=new T.Group();g.add(shell);
+  const shellBox=(w:number,h:number,d:number,x:number,y:number,z:number,m:T.Material)=>{
+   const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;shell.add(o);return o;
+  };
+  // Face is built horizontally then the entire unit rotates together, preventing floating keys.
+  shellBox(.152,.065,.255,0,0,0,black);
+  shellBox(.139,.005,.100,0,.035,-.065,mat(0x171c20));
+  shellBox(.119,.003,.079,0,.039,-.067,blue);
+  shellBox(.085,.003,.009,0,.042,-.097,cream);
+  for(let i=0;i<12;i++){
+   const x=-.044+(i%3)*.044,z=.015+Math.floor(i/3)*.040;
+   shellBox(.031,.009,.026,x,.038,z,i===9?red:i===11?green:steel);
+  }
+  shellBox(.13,.006,.010,0,.035,.122,steel);
+  shell.rotation.x=-.19;shell.position.y=.155;
+  B(.12,.12,.13,0,.067,.018,black);
  }
  if(id==='receptionCounter'){
   // Flush, inset joinery: no panels sticking through the counter or levitating accessories.
@@ -222,9 +232,19 @@ function buildBatch02V3(id:AssetId):THREE.Group{
   B(.18,.045,.16,-.31,.995,-.03,black);
  }
  if(id==='wineBottle'){
-  bottle(0,0,0,1);
-  // Thin neck band and cork; no large square plate protruding from the bottle.
-  C(.017,.022,0,.392,0,amber,18);
+  // Wine bottle with a smooth continuous silhouette and a label wrapped around its front.
+  const wineGlass=mat(0x344f3c,.15,.22),foil=mat(0x8e252b,.32,.38);
+  C(.044,.205,0,.105,0,wineGlass,48);
+  const shoulder=new T.Mesh(new T.CylinderGeometry(.017,.044,.065,48),wineGlass);
+  shoulder.position.y=.24;g.add(shoulder);
+  C(.017,.074,0,.3095,0,wineGlass,48);
+  C(.018,.038,0,.351,0,foil,48);
+  C(.013,.008,0,.374,0,cream,32);
+  // Cylindrical label surface follows the curvature instead of protruding as a square plaque.
+  const label=new T.Mesh(new T.CylinderGeometry(.0448,.0448,.105,48,1,true,-Math.PI*.39,Math.PI*.78),paper);
+  label.position.y=.125;g.add(label);
+  const band=new T.Mesh(new T.CylinderGeometry(.045,.045,.012,48,1,true,-Math.PI*.39,Math.PI*.78),black);
+  band.position.y=.155;g.add(band);
  }
  if(id==='oilDrum'){
   // 200-litre-style steel drum: three pressed ribs, realistic rim and bungs.
@@ -291,6 +311,6 @@ function buildBatch02V3(id:AssetId):THREE.Group{
   B(.5,.035,.06,0,.12,-.22,walnut);
  }
  const bounds=new T.Box3().setFromObject(g);if(Number.isFinite(bounds.min.y)&&Math.abs(bounds.min.y)>.001)for(const child of g.children)child.position.y-=bounds.min.y;
- g.userData={collection:'streetassettesting',batch:2,id,units:'metres',revision:'geometry-rebuild-v3',status:'review-required'};
+ g.userData={collection:'streetassettesting',batch:2,id,units:'metres',revision:'terminal-and-wine-v4',status:'review-required'};
  return g;
 }
