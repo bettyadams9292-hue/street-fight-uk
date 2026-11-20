@@ -183,8 +183,8 @@ function finishesBlock(progress: Progress, room: RoomId, pickRoom: (r: RoomId) =
  * Everything you own for the house, room by room. `place` starts the
  * placement editor for a piece (moving it if it's already placed).
  */
-export function plannerBody(progress: Progress, saved: () => void, place: (uid: string, room: RoomId) => void) {
-  let room: RoomId = 'living';
+export function plannerBody(progress: Progress, saved: () => void, place: (uid: string, room: RoomId) => void, startRoom: RoomId = 'living') {
+  let room: RoomId = startRoom;
   let recolour: string | null = null;
   let tab: 'furniture' | 'decor' = 'furniture';
   return (msg: (t: string, bad?: boolean) => void, rebuild: () => void): HTMLElement[] => {
@@ -199,7 +199,7 @@ export function plannerBody(progress: Progress, saved: () => void, place: (uid: 
     }
     const here = prop.furniture.filter((f) => f.at?.room === room);
     const boxed = prop.furniture.filter((f) => !f.at && allowedRooms(FURNITURE[f.id]).includes(room));
-    rows.push(h('p', { class: 'hint', text: 'Place puts the piece in the room; then move it with the arrow keys or WASD, turn it with Q and E, Enter to set it down, Esc to cancel.' }));
+    rows.push(h('p', { class: 'hint', text: 'Move picks a piece up: slide it with the arrows, turn it, then Place to set it down. Colour repaints it; Store boxes it up.' }));
     rows.push(h('h3', { text: `In the ${ROOMS[room].name.toLowerCase()} (${here.length})` }));
     if (!here.length) rows.push(h('p', { class: 'hint', text: 'Nothing here yet.' }));
     for (const f of here) {
@@ -243,8 +243,8 @@ export function plannerBody(progress: Progress, saved: () => void, place: (uid: 
   };
 }
 
-export function plannerScreen(progress: Progress, close: () => void, saved: () => void, place: (uid: string, room: RoomId) => void): Screen {
-  return panelScreen('Home planner', progress, plannerBody(progress, saved, place), close);
+export function plannerScreen(progress: Progress, close: () => void, saved: () => void, place: (uid: string, room: RoomId) => void, startRoom: RoomId = 'living', title = 'Home planner'): Screen {
+  return panelScreen(title, progress, plannerBody(progress, saved, place, startRoom), close);
 }
 
 // ---- car dealer ------------------------------------------------------------------------------------

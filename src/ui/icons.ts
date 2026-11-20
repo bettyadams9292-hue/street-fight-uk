@@ -12,7 +12,7 @@ export type IconName =
   | 'property' | 'contact' | 'street' | 'parked' | 'lock' | 'map' | 'bag' | 'close' | 'play' | 'save' | 'settings'
   | 'controls' | 'quit' | 'phone' | 'pin' | 'you' | 'plus' | 'minus' | 'target' | 'route' | 'cab' | 'walk' | 'weapon'
   | 'consumable' | 'material' | 'valuable' | 'misc' | 'equipment' | 'all' | 'check' | 'coin' | 'back' | 'info'
-  | 'food' | 'sleep' | 'shower' | 'tooth' | 'toilet' | 'gem' | 'key' | 'bell' | 'zoom-in' | 'zoom-out';
+  | 'food' | 'sleep' | 'shower' | 'tooth' | 'toilet' | 'gem' | 'key' | 'bell' | 'zoom-in' | 'zoom-out' | 'edit';
 
 const P: Record<IconName, string> = ICON_ART;
 
