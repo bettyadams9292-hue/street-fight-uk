@@ -188,9 +188,18 @@ export class Game {
         if (this.state === 'playing') this.openEditHome();
       },
       phone: () => this.togglePhone(),
+      bail: () => this.pussyOut(),
     });
     this.hud.setZoomed(0);
     this.phone = new Phone({
+      wiki: {
+        device: () => (this.input.lastDevice === 'gamepad' ? 'gamepad' : this.touchWanted() ? 'touch' : 'keyboard'),
+        styles: () => {
+          const p = this.activePlayer;
+          return p ? [p.primaryStyle, ...(p.secondaryStyle ? [p.secondaryStyle] : [])] : [];
+        },
+        tech: (id) => this.activePlayer?.techLevel(id) ?? 5,
+      },
       progress: () => this.progress,
       here: () => (this.world ? { area: this.world.level.id as AreaId, calm: this.calm(), x: this.world.player.pos.x } : null),
       setDestination: (area) => {
@@ -506,8 +515,9 @@ export class Game {
             this.resume();
           },
           settings: () => this.ui.push(settingsScreen(this.settings, this.ui)),
-          controls: () => this.ui.push(controlsScreen(this.ui)),
-          moves: () => this.openMoves(),
+          // Controls and Moves are GraftWiki articles on the phone: the pause menu goes, the phone comes up on them.
+          controls: () => this.wikiFromPause('controls'),
+          moves: () => this.wikiFromPause('moves'),
           quit: () => {
             this.saveGame();
             this.showMainMenu();
@@ -535,13 +545,24 @@ export class Game {
     );
   }
 
+  /** From the pause menu to a GraftWiki article on the phone (the training ground, with no save, keeps the old screens). */
+  private wikiFromPause(page: 'controls' | 'moves'): void {
+    if (!this.progress) {
+      if (page === 'controls') this.ui.push(controlsScreen(this.ui));
+      else this.openMoves();
+      return;
+    }
+    this.ui.replaceAll(null);
+    this.phone.openWiki(page);
+  }
+
   /** Pause → Moves: the player's style (and second style), named for the controller in hand. */
   private openMoves(): void {
     const p = this.activePlayer;
     if (!p) return;
     const styles = [p.primaryStyle, ...(p.secondaryStyle ? [p.secondaryStyle] : [])];
     const device: Device = this.input.lastDevice === 'gamepad' ? 'gamepad' : this.touchWanted() ? 'touch' : 'keyboard';
-    this.ui.push(moveListScreen(styles, device, () => this.ui.pop()));
+    this.ui.push(moveListScreen(styles, device, () => this.ui.pop(), (id) => p.techLevel(id)));
   }
 
   /** Back to the game from a station that opened nothing (or handed over to something else): controls back too. */
@@ -791,8 +812,29 @@ export class Game {
       },
       dt,
     );
+    this.hud.setBail(this.state === 'playing' ? w.canBail() : null);
     this.hud.setActivity(this.house.status);
     this.hud.setNeeds(attention(s.needs).map((a) => ({ key: a.key, text: a.label.label, urgency: a.label.urgency, tip: NUDGES[a.key as NeedKey] })));
+  }
+
+  /** Pussy out of a fight (X, or the button): throw down some cash and leg it (World.bailOut). */
+  private pussyOut(): void {
+    const w = this.world;
+    if (!w || this.state !== 'playing') return;
+    const r = w.bailOut();
+    if (!r.ok) {
+      this.hud.toast(r.reason, 'warn');
+      return;
+    }
+    if (r.dropped > 0) this.audio.coins();
+    this.audio.swing(false);
+    const lines = ['YOU FUCKING PUSSY!', 'BOTTLED IT!', 'RUN, YOU PUSSY!', 'LEGGED IT!'];
+    const title = lines[Math.floor(Math.random() * lines.length)];
+    this.hud.shame(title, r.grudge ? 'Skint and legged it, you gimp. They’ll remember your face.' : `You dropped £${r.dropped}, you gimp.`);
+    this.hud.remember(
+      r.grudge ? 'Legged it with nothing on you: the next fight round here comes at you twice as hard.' : `Legged it: threw down £${r.dropped} and they went for that instead.`,
+      r.grudge ? 'warn' : 'cash',
+    );
   }
 
   /** A house panel (fridge, recipe book, bed...): the world waits while it's open. */
@@ -1604,7 +1646,7 @@ export class Game {
     const r = ROOMS[room];
     const at: PlacedAt =
       prev ?? suggestSpot(p.save.property, def, room, uid) ?? { room, x: Math.round(((r.x0 + r.x1) / 2) * 10) / 10, z: def.mount === 'wall' ? wallZ(def) : -1.2, rot: 0 };
-    this.openEditor('home', uid, piece.id, piece.colour, def.name, def.mount === 'wall', Math.floor(def.price / 2), at, prev);
+    this.openEditor('home', uid, piece.id, piece.colour, def.name, def.mount === 'wall', piece.free ? 0 : Math.floor(def.price / 2), at, prev);
   }
 
   /** Same for a piece of basement equipment. */
@@ -1648,7 +1690,7 @@ export class Game {
         btn(space === 'home' ? 'Place' : 'Install', () => this.confirmPlacing(), 'ok'),
         btn('Cancel', () => this.endPlacing('cancel'), 'quiet'),
         btn('Store', () => this.endPlacing('store')),
-        btn(`Sell £${resale}`, () => this.endPlacing('sell'), 'bad'),
+        btn(resale > 0 ? `Sell £${resale}` : 'Get rid', () => this.endPlacing('sell'), 'bad'),
       ),
       h('div', { class: 'editor-keys', text: 'Arrows/WASD move · Q/E turn · Shift = bigger steps · Enter place · Esc cancel · Delete store' }),
     );
@@ -1727,8 +1769,9 @@ export class Game {
       if (how === 'cancel' && piece && ed.prev) piece.at = { ...ed.prev, room: ed.prev.room ?? 'living' };
       if (how === 'store') storeFurniture(p, ed.uid);
       if (how === 'sell') {
+        const free = !!piece?.free;
         const r = sellFurniture(p, ed.uid);
-        if (r.ok) this.hud.toast(`Sold for £${r.refund}`, 'cash');
+        if (r.ok) this.hud.toast(free ? 'Got rid of it: it came with the house, so there’s nothing for it' : `Sold for £${r.refund}`, free ? 'info' : 'cash');
       }
     } else {
       const piece = p.save.basement.equipment.find((e) => e.uid === ed.uid);
@@ -2192,6 +2235,10 @@ export class Game {
       this.togglePhone();
       return;
     }
+    if (a === 'bail') {
+      if (!this.ui.isOpen) this.pussyOut();
+      return;
+    }
     if (this.ui.isOpen) {
       this.ui.handle(a, src);
       return;
@@ -2537,6 +2584,8 @@ export class Game {
       if (link.submitting) sub = link.subProgress;
     } else if (p.canFinish()) {
       text = `FINISH IT: ${k('O + I', 'RB + Y', 'SPECIAL, then hard PUNCH')}`;
+    } else if (p.couldFinish()) {
+      text = `Finisher recharging: ${p.finisherSeconds()}s. Keep hitting.`;
     } else if (p.state === 'knockdown' && p.stateFrame > 10) {
       text = `Get up: ${k('C', 'L3', 'JUMP')} quick \u00b7 ${k('W/S', 'up/down', 'stick up/down')} roll \u00b7 attack to get up swinging${p.style.defence === 'guard_pull' ? ` \u00b7 ${k('U', 'LB', 'GRAB')} sweep` : ''}`;
     }

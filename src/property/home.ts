@@ -56,9 +56,9 @@ export const HOME_FIXTURES: PropDef[] = [
   // bedroom
   { kind: 'wardrobe', x: -15.4, z: -1.45 },
   { kind: 'desk', x: -13.9, z: -1.45 },
-  { kind: 'furniture', item: 'bedside', x: -17.55, z: -2.08, size: [0.25, 0.22], colour: '#8a5a32' },
-  // living room: the hall table with the phone, and the computer desk
-  { kind: 'table', x: -6.4, z: -1.3 },
+  { kind: 'furniture', item: 'bedside', x: -17.3, z: -2.08, size: [0.25, 0.22], colour: '#8a5a32' },
+  // living room: the hall table with the phone just inside the front door, and the computer desk
+  { kind: 'table', x: -6.6, z: -1.9 },
   { kind: 'computer_desk', x: -5.0, z: -1.95, size: [0.6, 0.32] },
   // kitchen
   { kind: 'counter', x: -1.2, z: -1.45 },
@@ -76,7 +76,7 @@ export const HOME_FIXTURES: PropDef[] = [
 const FIXED_STATIONS: StationDef[] = [
   { id: 'wardrobe', x: -15.4, z: -0.8, label: 'Wardrobe: change your look' },
   { id: 'mirror', x: -16.9, z: -1.15, label: 'Mirror: check yourself' },
-  { id: 'contacts', x: -6.4, z: -0.75, label: 'Phone: ring a cab or your contacts' },
+  { id: 'contacts', x: -6.6, z: -1.2, label: 'Phone: ring a cab or your contacts' },
   { id: 'computer', x: -5.0, z: -1.25, label: 'Computer: shop for furniture, arrange the house, decorate' },
   { id: 'tin', x: -13.9, z: -0.9, label: 'Biscuit tin: your savings' },
   { id: 'kitchen', x: -1.2, z: -0.85, label: 'WORKTOP|Prepare food' },
@@ -87,7 +87,7 @@ const FIXED_STATIONS: StationDef[] = [
 ];
 
 export const HOME_CONTAINERS: ContainerDef[] = [
-  { id: 'bedside', kind: 'drawers', x: -17.55, z: -1.6, label: 'Search the bedside drawers', fixed: [{ id: 'coin_silver', qty: 2 }, { id: 'plasters', qty: 2 }] },
+  { id: 'bedside', kind: 'drawers', x: -17.3, z: -1.6, label: 'Search the bedside drawers', fixed: [{ id: 'coin_silver', qty: 2 }, { id: 'plasters', qty: 2 }] },
 ];
 
 /**
@@ -127,7 +127,8 @@ export function furnitureStations(prop: PropertySave): StationDef[] {
   for (const f of prop.furniture) {
     const def = FURNITURE[f.id];
     if (!def || !f.at) continue;
-    const front = (extra: number) => pieceLocal(f.at!, 0, (f.at!.rot % 2 === 1 ? def.size[0] : def.size[1]) + extra);
+    // In the piece's own space its front is always its depth away (pieceLocal turns it), however it's turned.
+    const front = (extra: number) => pieceLocal(f.at!, 0, def.size[1] + extra);
     const add = (id: StationDef['id'], label: string, extra = 0.3) => {
       if (seen.has(id)) return;
       const p = def.mount === 'wall' ? { x: f.at!.x, z: -1.1 } : front(extra);
@@ -135,9 +136,16 @@ export function furnitureStations(prop: PropertySave): StationDef[] {
       out.push({ id, x: p.x, z: f.at!.z >= FRONT_FLOOR_Z ? p.z : Math.min(0.5, p.z), label });
       seen.add(id);
     };
-    if (f.id === 'bed_double' || f.id === 'bed_single') add('bed', 'BED|Sleep or rest', 0.25);
+    if (f.id === 'bed_double' || f.id === 'bed_single') {
+      // You get into bed from the side (the bench is at its foot): its left, about level with the pillows' end.
+      if (!seen.has('bed')) {
+        const p = pieceLocal(f.at!, -(def.size[0] + 0.25), 0.3);
+        out.push({ id: 'bed', x: p.x, z: f.at!.z >= FRONT_FLOOR_Z ? p.z : Math.min(0.5, p.z), label: 'BED|Sleep or rest' });
+        seen.add('bed');
+      }
+    }
     else if (f.id === 'dining_table' || f.id === 'island') add('dining', `${def.name.toUpperCase()}|Sit and eat`, 0.3);
-    else if (f.id === 'tv_43' || f.id === 'tv_65') add('tv', 'TV|Watch telly', 0.5);
+    else if (f.id === 'tv_43' || f.id === 'tv_65') add('tv', 'TV|Watch telly', 0.35);
     else if (f.id === 'bath_cabinet') add('bath_cabinet', 'CABINET|Freshen up');
   }
   return out;
@@ -153,7 +161,8 @@ const overlap = (a: Box, b: Box, gap = 0) => a.minX < b.maxX + gap && a.maxX > b
 function clearZones(): Box[] {
   const z: Box[] = [];
   for (const s of FIXED_STATIONS) z.push({ minX: s.x - 0.4, maxX: s.x + 0.4, minZ: s.z - 0.3, maxZ: 1.4 });
-  for (const c of HOME_CONTAINERS) z.push({ minX: c.x - 0.4, maxX: c.x + 0.4, minZ: c.z - 0.3, maxZ: 1.4 });
+  // In front of the drawers, as wide as they are: a bed can stand right beside its bedside table.
+  for (const c of HOME_CONTAINERS) z.push({ minX: c.x - 0.25, maxX: c.x + 0.25, minZ: c.z - 0.3, maxZ: 1.4 });
   z.push({ minX: FRONT_DOOR_X - 0.8, maxX: FRONT_DOOR_X + 0.8, minZ: -2.4, maxZ: 1.4 });
   return z;
 }
@@ -344,24 +353,85 @@ const HOME_DECOR: PropDef[] = roomDecor('garage', 12.1, 22);
  * moved, turned or sold from the computer like anything you buy. A spot that's taken (by something you'd already
  * placed) is skipped.
  */
-const HOUSE_DRESSING: { id: string; colour: string; at: PlacedAt }[] = [
+/*
+ * Laid out the way people furnish rooms (big pieces first, then what goes with them; tall things against walls;
+ * the walkway along the front of the house and each doorway kept clear; seats facing what they're for):
+ * - bathroom: bath, loo and basin along the back; a shelf by the door, the clothes airer out on the floor;
+ * - bedroom: the bed under the window, headboard to the wall, a bedside table each side and a bench at its foot;
+ *   wardrobe and desk along the back; the tallboy against one side wall and the dressing table with its stool
+ *   against the other;
+ * - living room: the sofa against the side wall facing the telly across the room, the coffee table between
+ *   (about 40 cm from the seat); the coat stand and the phone table either side of the front door, the computer
+ *   desk on the back wall; out front a reading corner (armchair, side table, the shelves) and the sideboard;
+ * - kitchen: cooker, worktop and fridge along the back; the pantry and open shelves on the side walls, and the
+ *   round table with a chair each side in the middle of the floor.
+ * Rot 1 faces -x and rot 3 faces +x (pieces are built facing the front, +z).
+ */
+const HOUSE_DRESSING: { id: string; colour: string; at: PlacedAt; was?: PlacedAt }[] = [
   { id: 'bath_shelf', colour: '#e8e4dc', at: { room: 'bathroom', x: -20.75, z: 1.95, rot: 0 } },
-  { id: 'airer', colour: '#c8c8c8', at: { room: 'bathroom', x: -25.1, z: 4.6, rot: 0 } },
-  { id: 'tallboy', colour: '#8a5a32', at: { room: 'bedroom', x: -19.35, z: 2.0, rot: 0 } },
-  { id: 'dressing_table', colour: '#e8e4dc', at: { room: 'bedroom', x: -14.1, z: 2.1, rot: 0 } },
-  { id: 'dressing_stool', colour: '#3a4a6a', at: { room: 'bedroom', x: -14.1, z: 2.95, rot: 0 } },
-  { id: 'storage_bench', colour: '#3a4a6a', at: { room: 'bedroom', x: -16.6, z: 4.9, rot: 0 } },
-  { id: 'cube_shelves', colour: '#c8a070', at: { room: 'living', x: -11.95, z: 1.95, rot: 0 } },
-  { id: 'sideboard', colour: '#4a2e1a', at: { room: 'living', x: -5.2, z: 1.95, rot: 0 } },
-  { id: 'club_chair', colour: '#7a2a2a', at: { room: 'living', x: -11.9, z: 4.4, rot: 0 } },
-  { id: 'side_table', colour: '#8a5a32', at: { room: 'living', x: -10.85, z: 4.95, rot: 0 } },
-  { id: 'coat_stand', colour: '#4a2e1a', at: { room: 'living', x: -4.75, z: 4.9, rot: 0 } },
-  { id: 'pantry', colour: '#e8e4dc', at: { room: 'kitchen', x: -3.15, z: 1.95, rot: 0 } },
-  { id: 'open_shelves', colour: '#c8a070', at: { room: 'kitchen', x: 0.95, z: 1.9, rot: 0 } },
-  { id: 'round_table', colour: '#c8a070', at: { room: 'kitchen', x: -0.9, z: 3.9, rot: 0 } },
-  { id: 'windsor_chair', colour: '#8a5a32', at: { room: 'kitchen', x: -1.75, z: 3.9, rot: 3 } },
-  { id: 'windsor_chair', colour: '#8a5a32', at: { room: 'kitchen', x: -0.05, z: 3.9, rot: 1 } },
+  { id: 'airer', colour: '#c8c8c8', at: { room: 'bathroom', x: -24.6, z: 3.6, rot: 0 }, was: { room: 'bathroom', x: -25.1, z: 4.6, rot: 0 } },
+  { id: 'bedside', colour: '#8a5a32', at: { room: 'bedroom', x: -19.5, z: -2.1, rot: 0 } },
+  { id: 'storage_bench', colour: '#3a4a6a', at: { room: 'bedroom', x: -18.4, z: -0.05, rot: 0 }, was: { room: 'bedroom', x: -16.6, z: 4.9, rot: 0 } },
+  { id: 'tallboy', colour: '#8a5a32', at: { room: 'bedroom', x: -19.58, z: 2.4, rot: 3 }, was: { room: 'bedroom', x: -19.35, z: 2.0, rot: 0 } },
+  { id: 'dressing_table', colour: '#e8e4dc', at: { room: 'bedroom', x: -13.52, z: 2.6, rot: 1 }, was: { room: 'bedroom', x: -14.1, z: 2.1, rot: 0 } },
+  { id: 'dressing_stool', colour: '#3a4a6a', at: { room: 'bedroom', x: -14.25, z: 2.6, rot: 3 }, was: { room: 'bedroom', x: -14.1, z: 2.95, rot: 0 } },
+  { id: 'coat_stand', colour: '#4a2e1a', at: { room: 'living', x: -9.15, z: -1.95, rot: 0 }, was: { room: 'living', x: -4.75, z: 4.9, rot: 0 } },
+  { id: 'club_chair', colour: '#7a2a2a', at: { room: 'living', x: -12.45, z: 2.1, rot: 3 }, was: { room: 'living', x: -11.9, z: 4.4, rot: 0 } },
+  { id: 'side_table', colour: '#8a5a32', at: { room: 'living', x: -11.74, z: 2.1, rot: 0 }, was: { room: 'living', x: -10.85, z: 4.95, rot: 0 } },
+  { id: 'cube_shelves', colour: '#c8a070', at: { room: 'living', x: -4.34, z: 4.45, rot: 1 }, was: { room: 'living', x: -11.95, z: 1.95, rot: 0 } },
+  { id: 'sideboard', colour: '#4a2e1a', at: { room: 'living', x: -4.44, z: 2.5, rot: 1 }, was: { room: 'living', x: -5.2, z: 1.95, rot: 0 } },
+  { id: 'pantry', colour: '#e8e4dc', at: { room: 'kitchen', x: -3.52, z: 2.3, rot: 3 }, was: { room: 'kitchen', x: -3.15, z: 1.95, rot: 0 } },
+  { id: 'open_shelves', colour: '#c8a070', at: { room: 'kitchen', x: 1.67, z: 2.4, rot: 1 }, was: { room: 'kitchen', x: 0.95, z: 1.9, rot: 0 } },
+  { id: 'round_table', colour: '#c8a070', at: { room: 'kitchen', x: -0.9, z: 3.8, rot: 0 }, was: { room: 'kitchen', x: -0.9, z: 3.9, rot: 0 } },
+  { id: 'windsor_chair', colour: '#8a5a32', at: { room: 'kitchen', x: -1.75, z: 3.8, rot: 3 }, was: { room: 'kitchen', x: -1.75, z: 3.9, rot: 3 } },
+  { id: 'windsor_chair', colour: '#8a5a32', at: { room: 'kitchen', x: -0.05, z: 3.8, rot: 1 }, was: { room: 'kitchen', x: -0.05, z: 3.9, rot: 1 } },
 ];
+
+/** The pieces that came with the house, where they used to stand (for relayHouse) and where they stand now. */
+const STARTER_MOVES: { uid: string; id: string; was: PlacedAt; at: PlacedAt }[] = [
+  { uid: 'f1', id: 'bed_double', was: { room: 'bedroom', x: -18.8, z: -1.3, rot: 0 }, at: { room: 'bedroom', x: -18.4, z: -1.3, rot: 0 } },
+  { uid: 'f2', id: 'sofa_3', was: { room: 'living', x: -11.3, z: -1.85, rot: 0 }, at: { room: 'living', x: -12.38, z: -1.2, rot: 3 } },
+  { uid: 'f3', id: 'coffee_table', was: { room: 'living', x: -11.3, z: -0.8, rot: 0 }, at: { room: 'living', x: -10.95, z: -1.2, rot: 1 } },
+  { uid: 'f4', id: 'tv_43', was: { room: 'living', x: -9.4, z: -2.1, rot: 0 }, at: { room: 'living', x: -9.7, z: -1.2, rot: 1 } },
+];
+
+const sameSpot = (a: PlacedAt | null, b: PlacedAt) => !!a && a.room === b.room && Math.abs(a.x - b.x) < 0.01 && Math.abs(a.z - b.z) < 0.01 && a.rot === b.rot;
+
+/**
+ * An old save's free pieces, laid out again once: what came with the house (and still stands where it was put
+ * out) moves to the new layout, and is marked free so it sells for nothing. Anything you've moved stays put. All
+ * the moving pieces come up first, then go down in order, so a new spot taken by another piece's old one is fine.
+ */
+export function relayHouse(prop: PropertySave): void {
+  if ((prop.laid ?? 1) >= 2) return;
+  const moves: { piece: PropertySave['furniture'][number]; at: PlacedAt }[] = [];
+  for (const m of STARTER_MOVES) {
+    const f = prop.furniture.find((x) => x.uid === m.uid && x.id === m.id);
+    if (!f) continue;
+    f.free = true;
+    if (sameSpot(f.at, m.was)) moves.push({ piece: f, at: m.at });
+  }
+  const used = new Set<string>();
+  for (const d of HOUSE_DRESSING) {
+    const f = prop.furniture.find((x) => x.id === d.id && !used.has(x.uid) && (sameSpot(x.at, d.was ?? d.at) || sameSpot(x.at, d.at)));
+    if (!f) continue;
+    used.add(f.uid);
+    f.free = true;
+    if (d.was && sameSpot(f.at, d.was)) moves.push({ piece: f, at: d.at });
+  }
+  const old = moves.map((m) => m.piece.at);
+  for (const m of moves) m.piece.at = null;
+  moves.forEach((m, i) => {
+    const def = FURNITURE[m.piece.id];
+    m.piece.at = checkPlacement(prop, def, m.at).ok ? { ...m.at } : checkPlacement(prop, def, old[i]!).ok ? old[i] : null;
+  });
+  // The second bedside table, if there's room for it.
+  if (prop.dressed) {
+    const d = HOUSE_DRESSING.find((x) => x.id === 'bedside')!;
+    if (checkPlacement(prop, FURNITURE.bedside, d.at).ok) prop.furniture.push({ uid: `f${prop.seq++}`, id: d.id, colour: d.colour, at: { ...d.at }, free: true });
+  }
+  prop.laid = 2;
+}
 
 /** Put the house's dressing out, once per save (new games and old saves alike). */
 export function dressHouse(prop: PropertySave): void {
@@ -369,7 +439,8 @@ export function dressHouse(prop: PropertySave): void {
   for (const d of HOUSE_DRESSING) {
     const def = FURNITURE[d.id];
     if (!def || !checkPlacement(prop, def, d.at).ok) continue;
-    prop.furniture.push({ uid: `f${prop.seq++}`, id: d.id, colour: d.colour, at: { ...d.at } });
+    prop.furniture.push({ uid: `f${prop.seq++}`, id: d.id, colour: d.colour, at: { ...d.at }, free: true });
   }
   prop.dressed = true;
+  prop.laid = 2;
 }

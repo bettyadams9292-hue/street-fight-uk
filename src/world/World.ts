@@ -29,7 +29,7 @@ import { Rng } from '../core/Rng';
 import { Simulation } from '../core/Simulation';
 import { getStyle } from '../data/styles';
 import { Fighter } from '../fighter/Fighter';
-import type { CommandFrame } from '../input/Commands';
+import { emptyCommand, type CommandFrame } from '../input/Commands';
 import type { ItemStack } from '../items/Inventory';
 import { ITEMS, weaponItemId } from '../items/items';
 import { bossDropValue, lootTableFor, rollLoot } from '../items/loot';
@@ -66,6 +66,10 @@ export interface WorldEvents {
   'area:exit': { to: AreaId; entry: string; seam?: boolean };
   'area:locked': { text: string };
   'encounter:start': { id: string; boss: BossDef | null };
+  /** You pussied out: `dropped` thrown down (0 = none on you, so they'll remember you). */
+  bail: { dropped: number; grudge: boolean };
+  /** A district you ran from with nothing on you: this fight comes at you twice as hard. */
+  grudge: { district: string };
   'encounter:wave': { id: string; wave: number; of: number };
   'encounter:cleared': { id: string; cash: number; xp: number; optional: boolean; secondWind?: boolean };
   'boss:phase': { boss: BossDef; phase: BossPhase };
@@ -100,6 +104,8 @@ export interface WorldEvents {
 
 interface EncounterState {
   def: EncounterDef;
+  /** After you pussy out, it doesn't start again until this frame (they're busy with your money). */
+  retryAt?: number;
   status: 'waiting' | 'active' | 'cleared';
   wave: number;
   enemies: Fighter[];
@@ -130,7 +136,14 @@ export interface CashPickup {
   amount: number;
   /** Level pickup id, for one-time cash. */
   def: PickupDef | null;
+  /** Thrown down when you pussied out: it's theirs now, you can't pick it back up. */
+  bait?: boolean;
 }
+
+/** Pussying out of a fight (World.bailOut): what it cost you. */
+export type BailResult = { ok: true; dropped: number; grudge: boolean } | { ok: false; reason: string };
+/** Share of the cash on you that you throw down to get away. */
+export const BAIL_SHARE = 0.4;
 
 export interface SecretSpot {
   key: string;
@@ -268,7 +281,7 @@ export class World {
     const rng = () => this.crewRng.next();
     const brain = new CompanionBrain(f, def, p, fight, this.arena, {
       ignore: () => this.duel?.f ?? this.sparPartner,
-      engaged: () => !!this.activeEncounter || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 9) || this.police.some((e) => !e.isKO),
+      engaged: () => !!this.activeEncounter || this.enemies.some((e) => !e.isKO && !this.bail?.crew.has(e) && Math.abs(e.pos.x - p.pos.x) < 9) || this.police.some((e) => !e.isKO),
       enemies: () => [...this.enemies, ...this.police],
       crew: () => this.crew.map((m) => m.f),
       weaponNear: (x, z, r) => {
@@ -369,7 +382,7 @@ export class World {
   /** Is a fight going on around you? */
   get fightOn(): boolean {
     const p = this.player;
-    return !!this.activeEncounter || this.locked || (!!this.duel && this.duel.kind !== 'spar') || this.police.some((e) => !e.isKO) || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 9);
+    return !!this.activeEncounter || this.locked || (!!this.duel && this.duel.kind !== 'spar') || this.police.some((e) => !e.isKO) || this.enemies.some((e) => !e.isKO && !this.bail?.crew.has(e) && Math.abs(e.pos.x - p.pos.x) < 9);
   }
 
   /** The fight's over (or you went down): turn hits taken into injuries. */
@@ -406,7 +419,7 @@ export class World {
   /** Back on their feet once the fight's over; walk in from the edge if left far behind; pick weapons up. */
   private updateCompanion(): void {
     const p = this.player;
-    const fightOn = !!this.activeEncounter || this.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 9);
+    const fightOn = !!this.activeEncounter || this.enemies.some((e) => !e.isKO && !this.bail?.crew.has(e) && Math.abs(e.pos.x - p.pos.x) < 9);
     if (this.homeLife) this.homeLife.update(1 / SIM_HZ, this.crew.map((m) => m.brain.home!).filter(Boolean));
     for (const m of this.crew) {
       const f = m.f;
@@ -568,7 +581,7 @@ export class World {
     if (!this.civCap) return;
     const p = this.player;
     const frame = this.sim.frame;
-    const calm = !this.activeEncounter && !this.locked && !this.enemies.some((e) => !e.isKO);
+    const calm = !this.activeEncounter && !this.locked && !this.enemies.some((e) => !e.isKO && !this.bail?.crew.has(e));
     for (const c of this.civilians) {
       if (calm) c.brain.calm(frame);
       c.f.ambientPose = c.brain.pose;
@@ -986,9 +999,19 @@ export class World {
     }
 
     const commands = new Map<number, CommandFrame>();
+    // Pussied out: you're off, flat out, whatever you press.
+    if (this.bail && frame < this.bail.until) cmd = { ...emptyCommand(), moveX: this.bail.dir, run: true };
+    else if (this.bail && this.bail.until > 0) {
+      this.player.stats.removeModifier('bail_run');
+      this.bail.until = 0;
+    }
     commands.set(PLAYER_ID, this.steerAround(p, cmd, frame));
     // Passers-by find their own way round things (CivilianBrain); everyone else gets the same help as you.
-    for (const [f, brain] of this.brains) commands.set(f.id, f.team === 'neutral' ? brain.think(frame) : this.steerAround(f, brain.think(frame), frame));
+    for (const [f, brain] of this.brains) {
+      const grab = this.scrambleCommand(f, frame);
+      commands.set(f.id, grab ?? (f.team === 'neutral' ? brain.think(frame) : this.steerAround(f, brain.think(frame), frame)));
+    }
+    this.endScramble(frame);
     this.sim.step(commands);
 
     this.syncHeld();
@@ -1179,6 +1202,7 @@ export class World {
     if (p.isKO) return;
     for (let i = this.cash.length - 1; i >= 0; i--) {
       const c = this.cash[i];
+      if (c.bait) continue;
       if (Math.hypot(c.x - p.pos.x, (c.z - p.pos.z) * 1.4) > CASH_RANGE) continue;
       this.cash.splice(i, 1);
       if (c.def) {
@@ -1218,6 +1242,118 @@ export class World {
 
   // ---- encounters and bosses ------------------------------------------------------
 
+  /** Pussying out: you sprint off, they go for the money you threw down, then drift off. */
+  bail: { dir: number; until: number; crew: Set<Fighter>; doneAt: number } | null = null;
+
+  /** Can you pussy out right now? Not from a boss, the police, a duel or a spar; not on the floor or held. */
+  canBail(): { ok: true; cost: number } | { ok: false; reason: string } {
+    const p = this.player;
+    if (!this.inFight) return { ok: false, reason: 'There’s nobody to run from' };
+    if (this.activeBoss || this.encounters.some((e) => e.status === 'active' && e.boss)) return { ok: false, reason: 'No running from a boss. Stand and fight.' };
+    if (this.duel) return { ok: false, reason: 'You agreed to this one: see it through' };
+    if (this.police.some((e) => !e.isKO)) return { ok: false, reason: 'You can’t pay off the police' };
+    if (p.isKO || !p.isFree) return { ok: false, reason: 'Get up first' };
+    const pocket = this.progress.save.cash.pocket;
+    return { ok: true, cost: pocket > 0 ? Math.max(1, Math.round(pocket * BAIL_SHARE)) : 0 };
+  }
+
+  get inFight(): boolean {
+    const p = this.player;
+    return !!this.activeEncounter || this.enemies.some((e) => !e.isKO && !this.bail?.crew.has(e) && Math.abs(e.pos.x - p.pos.x) < 9);
+  }
+
+  /**
+   * Pussy out: throw down a share of the cash on you (BAIL_SHARE) and leg it. They go for the money instead of
+   * you, and you sprint off the screen. With nothing on you they let you go, but the district remembers: its next
+   * fight comes at you twice as hard (grudgeKey). The fight is called off and starts again when you come back.
+   */
+  bailOut(): BailResult {
+    const can = this.canBail();
+    if (!can.ok) return can;
+    const p = this.player;
+    const frame = this.sim.frame;
+    const e = this.activeEncounter;
+    const crew = new Set<Fighter>(this.enemies.filter((f) => !f.isKO && (e?.enemies.includes(f) || Math.abs(f.pos.x - p.pos.x) < 9)));
+    // Run away from them: from the middle of the crowd, or towards the open side if they're all one way.
+    const mid = [...crew].reduce((a, f) => a + f.pos.x, 0) / Math.max(1, crew.size);
+    const b = this.arena.bounds;
+    let dir = p.pos.x >= mid ? 1 : -1;
+    if ((dir > 0 && b.maxX - p.pos.x < 3) || (dir < 0 && p.pos.x - b.minX < 3)) dir = -dir;
+    const dropped = can.cost;
+    if (dropped > 0) {
+      this.progress.save.cash.pocket -= dropped;
+      // Scattered behind you, between you and them: notes and coins, out of your reach.
+      const piles = Math.min(6, Math.max(2, Math.ceil(dropped / 15)));
+      let left = dropped;
+      for (let i = 0; i < piles; i++) {
+        const amount = i === piles - 1 ? left : Math.max(1, Math.round(dropped / piles));
+        left -= amount;
+        if (amount <= 0) continue;
+        const x = Math.max(b.minX + 0.3, Math.min(b.maxX - 0.3, p.pos.x - dir * (1.1 + i * 0.35) + (this.lootRng.next() - 0.5) * 0.4));
+        const z = Math.max(b.minZ + 0.2, Math.min(b.maxZ - 0.2, p.pos.z + (this.lootRng.next() - 0.5) * 1.2));
+        this.cash.push({ key: `c${this.itemSeq++}`, x, z, amount, def: null, bait: true });
+      }
+    } else this.progress.set(this.grudgeKey);
+    // The fight's off; it'll be waiting when you come back (after they've finished with your money).
+    if (e) {
+      e.status = 'waiting';
+      e.wave = 0;
+      e.enemies = [];
+      e.retryAt = frame + 8 * SIM_HZ;
+    }
+    this.arena.lock = null;
+    for (const f of crew) this.tokens.release(f);
+    p.stats.removeModifier('bail_run');
+    p.stats.addModifier({ id: 'bail_run', source: 'bail', stat: 'moveSpeedMult', mul: 1.7 });
+    this.bail = { dir, until: frame + Math.round(2.6 * SIM_HZ), crew, doneAt: frame + 7 * SIM_HZ };
+    this.events.emit('bail', { dropped, grudge: dropped === 0 });
+    return { ok: true, dropped, grudge: dropped === 0 };
+  }
+
+  /** One of the crew you ran from: after the nearest of your money, then wandering off the other way. */
+  private scrambleCommand(f: Fighter, frame: number): CommandFrame | null {
+    if (!this.bail || !this.bail.crew.has(f) || f.isKO) return null;
+    let best: CashPickup | null = null;
+    let bd = Infinity;
+    for (const c of this.cash) {
+      if (!c.bait) continue;
+      const d = Math.hypot(c.x - f.pos.x, c.z - f.pos.z);
+      if (d < bd) {
+        bd = d;
+        best = c;
+      }
+    }
+    if (best && bd < 0.45) {
+      // Pocketed: gone.
+      this.cash.splice(this.cash.indexOf(best), 1);
+      return emptyCommand();
+    }
+    if (best) {
+      const dx = best.x - f.pos.x;
+      const dz = best.z - f.pos.z;
+      const n = Math.max(1e-6, Math.hypot(dx, dz));
+      return { ...emptyCommand(), moveX: dx / n, moveZ: dz / n, run: bd > 1.2 };
+    }
+    // Money's gone: off they go, away from where you ran.
+    return frame < this.bail.doneAt ? { ...emptyCommand(), moveX: -this.bail.dir } : emptyCommand();
+  }
+
+  /** Once they've had the money and wandered off, they're gone (no loot: you didn't beat them). */
+  private endScramble(frame: number): void {
+    const b = this.bail;
+    if (!b || frame < b.doneAt) return;
+    for (const f of b.crew) {
+      this.sim.remove(f);
+      this.brains.delete(f);
+      this.tokens.release(f);
+      this.enemies = this.enemies.filter((x) => x !== f);
+    }
+    // Whatever they didn't get to is swept up with them.
+    for (let i = this.cash.length - 1; i >= 0; i--) if (this.cash[i].bait) this.cash.splice(i, 1);
+    this.player.stats.removeModifier('bail_run');
+    this.bail = null;
+  }
+
   private updateEncounters(): void {
     const p = this.player;
     const x0 = this.lastX;
@@ -1230,7 +1366,7 @@ export class World {
       // Side fights are street-corner trouble you only meet on foot: ride past and they don't
       // start (they're still there when you come back walking). Story fights start either way.
       const ridingPast = e.def.optional && this.progress.save.property.riding;
-      if (e.status === 'waiting' && crossed && !ridingPast && !this.activeEncounter && !p.isKO) this.startEncounter(e);
+      if (e.status === 'waiting' && crossed && !ridingPast && !this.activeEncounter && !p.isKO && this.sim.frame >= (e.retryAt ?? 0)) this.startEncounter(e);
       if (e.status !== 'active') continue;
       if (e.boss) this.updateBossPhases(e);
       const alive = e.enemies.filter((f) => !f.isKO);
@@ -1259,14 +1395,26 @@ export class World {
     }
     this.spawnWave(e);
     this.events.emit('encounter:start', { id: e.def.id, boss: e.bossDef });
+    if (this.progress.has(this.grudgeKey)) this.events.emit('grudge', { district: this.level.district });
+  }
+
+  /** The district remembers you ran with nothing to give them (bailOut). */
+  get grudgeKey(): string {
+    return `grudge:${this.level.district}`;
   }
 
   private spawnWave(e: EncounterState): void {
     const wave = e.def.waves[e.wave];
     if (!wave) return;
+    const grudge = this.progress.has(this.grudgeKey);
     wave.enemies.forEach((spec, i) => {
       const f = this.spawnEnemy(spec.archetype, this.spawnX(e, i), this.spawnZ(i), spec.weapon);
       this.tune(f, e, false);
+      // They remember you legging it with nothing for them: twice as hard (hit twice as hard, take half).
+      if (grudge) {
+        f.stats.addModifier({ id: 'grudge_dealt', source: 'grudge', stat: 'damageMult', mul: 2 });
+        f.stats.addModifier({ id: 'grudge_taken', source: 'grudge', stat: 'damageTakenMult', mul: 0.5 });
+      }
       e.enemies.push(f);
     });
   }
@@ -1300,6 +1448,8 @@ export class World {
   private finishEncounter(e: EncounterState): void {
     e.status = 'cleared';
     this.arena.lock = null;
+    // Beat them: the grudge is settled.
+    if (this.progress.has(this.grudgeKey)) delete this.progress.save.flags[this.grudgeKey];
     const def = e.def;
     let cash = def.reward.cash;
     let xp = def.reward.xp;

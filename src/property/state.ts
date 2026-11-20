@@ -29,6 +29,8 @@ export interface OwnedFurniture {
   colour: string;
   /** Null = delivered but not placed yet (in the furniture inventory). */
   at: PlacedAt | null;
+  /** Came with the house: it cost nothing, so it sells for nothing. */
+  free?: boolean;
 }
 
 export interface OwnedVehicle {
@@ -66,6 +68,8 @@ export interface PropertySave {
   seq: number;
   /** The house has had its room dressing put out (home.ts dressHouse): once, then it's yours to move or sell. */
   dressed?: boolean;
+  /** Which version of the starting layout the free pieces were last laid out to (home.ts relayHouse). */
+  laid?: number;
   /** Which of the ornate biscuit tins holds your savings (render/props/biscuitTin.ts). */
   tin?: string;
 }
@@ -79,11 +83,14 @@ export const DRIVEWAY = { x: -9.3, z: -1.15 };
 export function defaultProperty(): PropertySave {
   return {
     furniture: [
-      { uid: 'f1', id: 'bed_double', colour: '#3a4a6a', at: { room: 'bedroom', x: -18.8, z: -1.3, rot: 0 } },
-      { uid: 'f2', id: 'sofa_3', colour: '#4a5a3a', at: { room: 'living', x: -11.3, z: -1.85, rot: 0 } },
-      { uid: 'f3', id: 'coffee_table', colour: '#8a5a32', at: { room: 'living', x: -11.3, z: -0.8, rot: 0 } },
-      { uid: 'f4', id: 'tv_43', colour: '#1a1a1a', at: { room: 'living', x: -9.4, z: -2.1, rot: 0 } },
+      // The bed under the window, headboard to the wall; the sofa against the side wall facing the telly across
+      // the room, the coffee table in front of it (see home.ts HOUSE_DRESSING for the rest).
+      { uid: 'f1', id: 'bed_double', colour: '#3a4a6a', at: { room: 'bedroom', x: -18.4, z: -1.3, rot: 0 }, free: true },
+      { uid: 'f2', id: 'sofa_3', colour: '#4a5a3a', at: { room: 'living', x: -12.38, z: -1.2, rot: 3 }, free: true },
+      { uid: 'f3', id: 'coffee_table', colour: '#8a5a32', at: { room: 'living', x: -10.95, z: -1.2, rot: 1 }, free: true },
+      { uid: 'f4', id: 'tv_43', colour: '#1a1a1a', at: { room: 'living', x: -9.7, z: -1.2, rot: 1 }, free: true },
     ],
+    laid: 2,
     finishes: Object.fromEntries(ROOM_IDS.map((r) => [r, { ...DEFAULT_FINISHES[r] }])) as PropertySave['finishes'],
     cars: [],
     activeCar: null,
@@ -112,9 +119,11 @@ export function sanitiseProperty(raw: unknown, areas: readonly string[]): Proper
       if (!f || !FURNITURE[f.id] || !uidOk(f.uid)) continue;
       const def = FURNITURE[f.id];
       const piece: OwnedFurniture = { uid: f.uid, id: f.id, colour: colourOk(f.colour, def.colours[0]), at: null };
+      if (f.free === true) piece.free = true;
       const a = f.at;
       if (a && ROOM_IDS.includes(a.room) && typeof a.x === 'number' && typeof a.z === 'number') {
-        const at = { room: a.room, x: num(a.x, 0, -30, 20), z: num(a.z, 0, -3, 2), rot: Math.floor(num(a.rot, 0, 0, 3)) };
+        // z reaches the front of the room's floor (it's at its real depth since #44: was clamped to 2).
+        const at = { room: a.room, x: num(a.x, 0, -30, 20), z: num(a.z, 0, -3, 7), rot: Math.floor(num(a.rot, 0, 0, 3)) };
         // Anything that no longer fits (rules changed, hand-edited save) goes back in the inventory, never lost.
         if (checkPlacement(out, def, at).ok) piece.at = at;
       }
@@ -161,6 +170,8 @@ export function sanitiseProperty(raw: unknown, areas: readonly string[]): Proper
   }
   out.seq = Math.max(seq, base.seq);
   if (r.dressed === true) out.dressed = true;
+  // An old save (furniture but no layout version) gets its free pieces laid out again once (home.ts relayHouse).
+  out.laid = typeof r.laid === 'number' ? r.laid : Array.isArray(r.furniture) ? 1 : 2;
   if (typeof r.tin === 'string' && /^biscuitTin[A-Za-z]+$/.test(r.tin)) out.tin = r.tin;
   return out;
 }
@@ -202,10 +213,15 @@ export function storeFurniture(p: Progress, uid: string): PurchaseResult {
 }
 
 /** Sell it back for half. */
+/** What a piece sells for: half what it cost, and nothing for what came with the house. */
+export function furnitureValue(f: OwnedFurniture): number {
+  return f.free ? 0 : resale(FURNITURE[f.id].price);
+}
+
 export function sellFurniture(p: Progress, uid: string): { ok: true; refund: number } | { ok: false; reason: string } {
   const i = P(p).furniture.findIndex((f) => f.uid === uid);
   if (i < 0) return { ok: false, reason: 'You don’t own that' };
-  const refund = resale(FURNITURE[P(p).furniture[i].id].price);
+  const refund = furnitureValue(P(p).furniture[i]);
   P(p).furniture.splice(i, 1);
   p.save.cash.pocket += refund;
   return { ok: true, refund };

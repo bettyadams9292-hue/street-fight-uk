@@ -94,6 +94,8 @@ const SWAP_COOLDOWN = 120;
 export const PARRY_WINDOW = 6;
 export const COUNTER_WINDOW = 30;
 export const FINISH_HEALTH = 0.15;
+/** After a finisher, the next one is this long away (so it can't be thrown at every lad in a crowd). */
+export const FINISHER_COOLDOWN = 25 * SIM_HZ;
 
 /**
  * The one fighter class shared by the player and every enemy. It owns
@@ -170,6 +172,9 @@ export class Fighter {
   pendingTell: 'parry' | null = null;
   /** Counter hits are possible until this frame (after a parry). */
   counterUntil = -1;
+  /** The frame this fighter last updated on, and when their next finisher is ready. */
+  now = 0;
+  finisherReadyAt = 0;
   /** Movement slowed by leg kicks until this frame. */
   slowUntil = -1;
   swapReadyAt = 0;
@@ -309,8 +314,13 @@ export class Fighter {
     return 1 + 0.05 * Math.max(0, (this.styleRanks[style] ?? 1) - 1);
   }
 
-  /** A finisher is available: opponent below 15% health, reeling, close and in front. */
+  /** A finisher is available: opponent below 15% health, reeling, close and in front, and yours has recharged. */
   canFinish(t: Fighter | null = this.target): boolean {
+    return this.finisherSeconds() === 0 && this.couldFinish(t);
+  }
+
+  /** Everything about the opening is right (the finisher may still be recharging). */
+  couldFinish(t: Fighter | null = this.target): boolean {
     if (!t || t.isKO || t.grapple || !this.isFree || !this.unlocks.finishers || this.weapon) return false;
     return (
       t.vitals.health / t.vitals.maxHealth < FINISH_HEALTH &&
@@ -319,6 +329,11 @@ export class Fighter {
       Math.abs(t.pos.z - this.pos.z) < 0.6 &&
       this.isFacing(t)
     );
+  }
+
+  /** Seconds until the next finisher is ready (0 = ready). */
+  finisherSeconds(): number {
+    return Math.max(0, Math.ceil((this.finisherReadyAt - this.now) / SIM_HZ));
   }
 
   get isFree(): boolean {
@@ -347,6 +362,7 @@ export class Fighter {
     this.droppedWeapon = null;
     this.counterUntil = -1;
     this.slowUntil = -1;
+    this.finisherReadyAt = 0;
     this.stats.removeModifier('leg_slow');
     this.vitals.reset();
     this.poise = this.stats.maxPoise;
@@ -409,6 +425,7 @@ export class Fighter {
       this.pendingTell = null;
     }
     this.wasBlockHeld = cmd.block;
+    this.now = frame;
 
     if (frame > this.slowUntil && this.stats.hasModifier('leg_slow')) this.stats.removeModifier('leg_slow');
 

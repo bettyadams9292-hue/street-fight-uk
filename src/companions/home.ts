@@ -374,7 +374,7 @@ export class HomeBrain {
       this.state = 'following';
       me.activity = null;
       me.yawOverride = null;
-      return this.follow(frame);
+      return this.outToLane(this.follow(frame));
     }
     if (this.state === 'following') this.state = 'idle';
     this.laughT = Math.max(0, this.laughT - dt);
@@ -483,6 +483,32 @@ export class HomeBrain {
     this.state = 'walking';
     this.stuckT = 0;
     this.walkT = 0;
+  }
+
+  /**
+   * Following you out of a room from the front of its floor: rooms only join along the walkway, so if you're off
+   * sideways and the way down to the walkway is blocked (a chair in the corner), step along to a clear line first.
+   */
+  private outToLane(cmd: CommandFrame): CommandFrame {
+    const me = this.self;
+    if (me.pos.z < LANE_Z + 0.5 || Math.abs(cmd.moveX) < 0.3) return cmd;
+    const down = (x: number) => this.clearLine(x, me.pos.z, x, LANE_Z);
+    let to: number | null = down(me.pos.x) ? me.pos.x : null;
+    for (let d = 0.4; to === null && d <= 3.2; d += 0.4) {
+      for (const x of [me.pos.x + d * Math.sign(cmd.moveX || 1), me.pos.x - d * Math.sign(cmd.moveX || 1)]) {
+        if (this.clearLine(me.pos.x, me.pos.z, x, me.pos.z) && down(x)) {
+          to = x;
+          break;
+        }
+      }
+    }
+    if (to === null) return cmd;
+    const out = emptyCommand();
+    const dx = to - me.pos.x;
+    if (Math.abs(dx) > 0.1) out.moveX = Math.sign(dx);
+    else out.moveZ = -1;
+    out.run = cmd.run;
+    return out;
   }
 
   private clearLine(x0: number, z0: number, x1: number, z1: number): boolean {

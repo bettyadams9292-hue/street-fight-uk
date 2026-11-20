@@ -13,6 +13,8 @@ import { TAXI_COST, moHint } from '../hub';
 import { LEVELS } from '../../world/levels';
 import { embedPortraitRules } from './embedCss';
 import { mapApp } from './mapApp';
+import { wikiApp, type WikiDeps, type WikiPage } from './wikiApp';
+import type { Device } from '../moveList';
 
 export interface PhoneMessage {
   text: string;
@@ -20,6 +22,8 @@ export interface PhoneMessage {
 }
 
 export interface PhoneDeps {
+  /** GraftWiki: the controller in hand and your styles, for its Controls and Moves pages. */
+  wiki: WikiDeps;
   progress(): Progress | null;
   /** Where you are, and whether it's calm enough to leave (no fight, no police). */
   here(): { area: AreaId; calm: boolean; x: number } | null;
@@ -49,7 +53,7 @@ export interface PhoneDeps {
   sound(kind: 'open' | 'close' | 'tap'): void;
 }
 
-type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'jobs' | 'house' | 'embed' | 'map';
+type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'jobs' | 'house' | 'embed' | 'map' | 'wiki';
 
 interface AppDef {
   id: string;
@@ -67,6 +71,8 @@ export class Phone {
   private screen: HTMLElement;
   private clock: HTMLElement;
   private app: AppId = 'home';
+  private wikiPage: WikiPage = 'index';
+  private wikiState: { device?: Device; q?: string } = {};
   private openNow = false;
   private clockTimer = 0;
 
@@ -205,9 +211,44 @@ export class Phone {
   private render(): void {
     if (this.app === 'embed') return;
     if (this.app === 'map') return this.renderMap();
+    if (this.app === 'wiki') return this.renderWiki();
     const view = this.app === 'home' ? this.homeScreen() : this.appScreen(this.app);
     this.screen.replaceChildren(view);
     this.screen.dataset.app = this.app;
+  }
+
+  /** Open the phone straight on a GraftWiki article (the pause menu's Controls and Moves). */
+  openWiki(page: WikiPage): void {
+    this.wikiPage = page;
+    this.wikiState = {};
+    if (this.openNow) this.go('wiki');
+    else this.open('wiki');
+  }
+
+  /** GraftWiki: articles under the phone's bar; Back goes to the contents, then home. */
+  private renderWiki(): void {
+    const page = this.wikiPage;
+    const view = h(
+      'div',
+      { class: 'ph-appview view-wiki' },
+      h('div', { class: 'ph-bar' },
+        h('button', { class: 'ph-back', 'aria-label': 'Back', onclick: () => (page === 'index' ? this.go('home') : this.wikiGo('index')) }, h('img', { src: ICON('arrow_left'), alt: '' })),
+        h('b', { text: 'GraftWiki' }),
+      ),
+      h('div', { class: 'ph-body wk-body' }, wikiApp(this.d.wiki, page, (p) => this.wikiGo(p), this.wikiState)),
+    );
+    this.screen.replaceChildren(view);
+    this.screen.dataset.app = 'wiki';
+  }
+
+  private wikiGo(p: WikiPage): void {
+    this.d.sound('tap');
+    const keepScroll = p === this.wikiPage;
+    const y = (this.screen.querySelector('.wk-body') as HTMLElement | null)?.scrollTop ?? 0;
+    this.wikiPage = p;
+    this.renderWiki();
+    const body = this.screen.querySelector('.wk-body') as HTMLElement | null;
+    if (body) body.scrollTop = keepScroll ? y : 0;
   }
 
   /** Maps: full-bleed, its own sheet and buttons; a small back button over the map. */
@@ -239,6 +280,7 @@ export class Phone {
       { id: 'crew', name: 'Crew', icon: 'crew', open: () => this.launch(() => this.d.openMe('crew'), 'Crew') },
       { id: 'me', name: 'Me', icon: 'fist', open: () => this.launch(() => this.d.openMe('character'), 'Me') },
       { id: 'house', name: 'Home', icon: 'house', open: () => this.go('house') },
+      { id: 'wiki', name: 'GraftWiki', icon: 'info', open: () => ((this.wikiPage = 'index'), this.go('wiki')) },
       { id: 'settings', name: 'Settings', icon: 'gear', open: () => this.launch(() => this.d.openSettings(), 'Settings') },
     ];
   }
@@ -270,7 +312,7 @@ export class Phone {
   // ---- apps --------------------------------------------------------------------------------------
 
   private appScreen(app: AppId): HTMLElement {
-    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Dave’s Cabs', bank: 'CaliBank', jobs: 'Jobs', house: 'Home', embed: '', map: 'Maps' };
+    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Dave’s Cabs', bank: 'CaliBank', jobs: 'Jobs', house: 'Home', embed: '', map: 'Maps', wiki: 'GraftWiki' };
     const body = app === 'messages' ? this.messages() : app === 'cabs' ? this.cabs() : app === 'bank' ? this.bank() : app === 'jobs' ? this.jobs() : this.house();
     return h(
       'div',

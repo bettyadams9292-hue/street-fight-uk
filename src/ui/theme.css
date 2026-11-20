@@ -1821,3 +1821,135 @@ body:has(#ui .screen) .hud { visibility: hidden; }
   .jb-lead.w { display: inline; }
 }
 .jb-body > .jb-crease { fill: none; stroke: rgba(255, 255, 255, 0.16); stroke-width: 1.2; stroke-linecap: round; pointer-events: none; }
+
+/* ---- Pussy out: a red button under the top-right buttons, only in a fight you're allowed to run from ---- */
+.hud-btn.bail-btn {
+  position: absolute; top: calc(100% + 8px); right: 0; width: auto !important; min-width: 0; height: auto !important; padding: 6px 12px 5px;
+  display: flex; flex-direction: column; align-items: center; gap: 0; line-height: 1;
+  background: linear-gradient(180deg, #d81c24, #9a0f15) !important; color: #fff; border: 2px solid rgba(255, 255, 255, 0.85);
+  clip-path: none !important; border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.hud-btn.bail-btn b { font-family: var(--head); font-weight: 900; font-size: 17px; letter-spacing: 0.03em; white-space: nowrap; }
+.hud-btn.bail-btn small { font-family: var(--head); font-weight: 700; font-size: 11.5px; opacity: 0.9; white-space: nowrap; }
+.hud-btn.bail-btn.off, .hud:not(.fighting) .hud-btn.bail-btn { display: none !important; }
+
+/* ---- Moves list: every number and word explained ---- */
+.move-list .ml-key { background: rgba(255, 255, 255, 0.04); border-left: 3px solid var(--accent); padding: 8px 12px; margin-bottom: 10px; }
+.move-list .ml-key p { margin: 2px 0; font-size: 14px; line-height: 1.4; }
+.move-list .ml-what { margin: 0 0 6px; font-size: 13.5px; line-height: 1.4; color: var(--muted); }
+.move-table thead th { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 2px 6px 4px; font-weight: 600; }
+.move-table thead th.r { text-align: right; }
+.ml-speed { display: inline-block; padding: 1px 7px; border-radius: 4px; font-family: var(--head); font-weight: 700; font-size: 13px; line-height: 1.4; background: rgba(255, 255, 255, 0.08); }
+.ml-speed.fast { color: #6fd88a; }
+.ml-speed.mid { color: #f2c94c; }
+.ml-speed.slow { color: #ff7a6a; }
+.ml-speed.fin { color: #fff; background: var(--accent); }
+.ml-speed.clinch { color: #8fb8ff; }
+.move-table .ml-dmg { white-space: nowrap; }
+.move-table .ml-dmg b { display: inline-block; min-width: 22px; text-align: right; font-family: var(--head); font-size: 17px; }
+.ml-bar { display: inline-block; width: 46px; height: 6px; margin-right: 6px; vertical-align: middle; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; }
+.ml-bar > i { display: block; height: 100%; background: var(--accent); }
+.combo-routes .route-keys { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.combo-routes .route-keys .arrow { opacity: 0.5; font-weight: 700; }
+.combo-routes kbd.locked { opacity: 0.35; text-decoration: line-through; }
+.combo-routes .route-sum { font-size: 13px; margin-top: 2px; }
+.combo-routes .route-sum b { color: #f2f0ea; }
+.combo-routes .route-sum span, .combo-routes .route-sum em { color: var(--muted); }
+@media (orientation: portrait) and (max-width: 700px) {
+  .ml-bar { width: 28px; }
+  .move-table .ml-input kbd { font-size: 13px; }
+}
+/* An upright phone: each move is two lines (what to press, then the move, its speed and damage). */
+@media (orientation: portrait) and (max-width: 700px) {
+  .move-table thead { display: none; }
+  .move-table tr { display: grid; grid-template-columns: 1fr auto auto; align-items: center; column-gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(242, 240, 232, 0.08); }
+  .move-table td { border: 0; padding: 2px 0; width: auto !important; }
+  .move-table .ml-input { grid-column: 1 / -1; white-space: normal; }
+  .move-table .ml-name b { font-size: 17px; }
+  .ml-bar { display: none; }
+}
+
+/* ---- Pussying out: slammed across the middle of the screen in the game's lettering ---- */
+.hud .shame {
+  position: absolute; left: 50%; top: 38%; z-index: 30; transform: translate(-50%, -50%) rotate(-4deg);
+  display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; width: max-content; max-width: 94vw;
+  animation: shame-in 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.hud .shame b {
+  font-family: var(--head); font-weight: 900; font-style: italic; text-transform: uppercase; text-align: center; line-height: 0.92;
+  font-size: clamp(40px, 9vmin + 14px, 96px); color: #fff; letter-spacing: 0.01em;
+  -webkit-text-stroke: 2px #111; paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--accent, #e8333a), 7px 7px 0 #111, 0 0 30px rgba(232, 51, 58, 0.45);
+}
+.hud .shame span {
+  font-family: var(--head); font-weight: 800; font-size: clamp(17px, 2.4vmin + 9px, 28px); color: #111; text-align: center;
+  background: var(--sign-white, #f4f2ea); padding: 4px 14px; transform: rotate(2deg); box-shadow: 4px 4px 0 #111;
+}
+.hud .shame.out { animation: shame-out 0.45s ease-in both; }
+@keyframes shame-in {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-12deg) scale(2.4); }
+  60% { opacity: 1; transform: translate(-50%, -50%) rotate(-3deg) scale(0.94); }
+  100% { opacity: 1; transform: translate(-50%, -50%) rotate(-4deg) scale(1); }
+}
+@keyframes shame-out { to { opacity: 0; transform: translate(-50%, -62%) rotate(-4deg) scale(0.9); } }
+@media (prefers-reduced-motion: reduce) { .hud .shame, .hud .shame.out { animation: none; } }
+
+/* ---- GraftWiki (phone app): an encyclopedia page — white paper, serif titles under a rule, blue links ---- */
+.view-wiki .ph-body.wk-body { background: #fff; padding: 0; color: #202122; }
+.wk { padding: 10px 14px 24px; font-family: var(--ui); font-size: 14px; line-height: 1.5; color: #202122; }
+.wk-mast { display: flex; align-items: center; padding-bottom: 8px; border-bottom: 1px solid #c8ccd1; margin-bottom: 10px; }
+.wk-logo { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 0; cursor: pointer; color: #202122; text-align: left; }
+.wk-logo > b { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; border: 2px solid #202122; font-family: Georgia, 'Times New Roman', serif; font-size: 18px; }
+.wk-logo span { display: flex; flex-direction: column; line-height: 1.1; }
+.wk-logo span b { font-family: Georgia, 'Times New Roman', serif; font-size: 16px; font-weight: 400; letter-spacing: 0.02em; }
+.wk-logo span small { font-size: 10.5px; color: #54595d; }
+.wk h1 { font-family: Georgia, 'Linux Libertine', 'Times New Roman', serif; font-weight: 400; font-size: 26px; line-height: 1.2; margin: 6px 0 2px; padding-bottom: 4px; border-bottom: 1px solid #a2a9b1; color: #000; }
+.wk-from { margin: 4px 0 8px; font-size: 12px; color: #54595d; font-style: italic; }
+.wk-lead { margin: 0 0 10px; }
+.wk p { margin: 0 0 8px; }
+.wk-h2 { font-family: Georgia, 'Linux Libertine', 'Times New Roman', serif; font-weight: 400; font-size: 20px; margin: 16px 0 6px; padding-bottom: 2px; border-bottom: 1px solid #a2a9b1; color: #000; }
+.wk-link { color: #3366cc; text-decoration: none; }
+.wk-link:hover, .wk-link:focus-visible { text-decoration: underline; }
+.wk-foot { margin-top: 18px; padding-top: 8px; border-top: 1px solid #eaecf0; font-size: 13px; }
+.wk-searchbar { margin-bottom: 8px; }
+.wk-search { width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid #a2a9b1; border-radius: 2px; font: inherit; font-size: 15px; color: #202122; background: #fff; }
+.wk-list { list-style: none; padding: 0; margin: 0; }
+.wk-list li { padding: 9px 0; border-bottom: 1px solid #eaecf0; display: flex; flex-direction: column; }
+.wk-list .wk-link { font-size: 17px; }
+.wk-list span { font-size: 13px; color: #54595d; }
+.wk-tabs { display: flex; gap: 0; border-bottom: 1px solid #a2a9b1; margin: 4px 0 2px; }
+.wk-tab { flex: 1; background: #f8f9fa; border: 1px solid #a2a9b1; border-bottom: 0; margin-right: -1px; padding: 6px 4px; font: inherit; font-size: 13px; color: #3366cc; cursor: pointer; }
+.wk-tab.on { background: #fff; color: #202122; font-weight: 700; position: relative; top: 1px; }
+.wk-table { width: 100%; border-collapse: collapse; margin: 4px 0 6px; font-size: 13.5px; }
+.wk-table td { border: 1px solid #a2a9b1; padding: 5px 8px; vertical-align: middle; }
+.wk-table td:first-child { background: #f8f9fa; }
+.wk-table td:last-child { width: 1%; white-space: nowrap; }
+.wk kbd { display: inline-block; padding: 1px 6px; border: 1px solid #a2a9b1; border-bottom-width: 2px; border-radius: 3px; background: #f8f9fa; color: #202122; font-family: var(--head); font-size: 14px; line-height: 1.35; box-shadow: none; }
+.wk-none { color: #72777d; font-size: 12px; font-style: italic; }
+.wk-info { width: 100%; margin: 4px 0 10px; border: 1px solid #a2a9b1; background: #f8f9fa; border-collapse: collapse; font-size: 12px; line-height: 1.35; }
+.wk-info caption { font-weight: 700; font-size: 13px; padding: 4px; background: #eaecf0; border: 1px solid #a2a9b1; border-bottom: 0; }
+.wk-info th, .wk-info td { padding: 3px 6px; text-align: left; vertical-align: top; border-top: 1px solid #eaecf0; }
+.wk-info th { width: 42%; }
+/* The moves tables, in the wiki's colours. */
+.wk .move-style h3 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: 22px; color: #000; margin: 14px 0 2px; border-bottom: 1px solid #a2a9b1; }
+.wk .move-style h4 { font-family: Georgia, 'Times New Roman', serif; font-weight: 700; font-size: 16px; color: #000; text-transform: none; letter-spacing: 0; margin: 12px 0 4px; }
+.wk .move-style .hint, .wk .ml-what, .wk .move-table small, .wk .combo-routes .route-names, .wk .combo-routes .route-sum span, .wk .combo-routes .route-sum em { color: #54595d; opacity: 1; }
+.wk .move-table td, .wk .combo-routes li, .wk .move-table tr { border-color: #eaecf0 !important; }
+.wk .move-table .ml-name b, .wk .move-table .ml-dmg b, .wk .combo-routes .route-sum b { color: #202122; }
+.wk .ml-key { background: #f8f9fa; border: 1px solid #a2a9b1; border-left: 3px solid #3366cc; }
+.wk .ml-speed { background: #eaecf0; }
+.wk .ml-speed.fast { color: #14866d; }
+.wk .ml-speed.mid { color: #ac6600; }
+.wk .ml-speed.slow { color: #d33; }
+.wk .ml-speed.fin { color: #fff; background: #d33; }
+.wk .ml-speed.clinch { color: #3366cc; }
+.wk .move-table thead th { color: #54595d; }
+.wk .ml-bar { background: #eaecf0; }
+.wk .ml-bar > i { background: #d33; }
+/* The phone is narrow: moves as two lines, as on an upright phone. */
+.wk .move-table thead { display: none; }
+.wk .move-table tr { display: grid; grid-template-columns: 1fr auto auto; align-items: center; column-gap: 10px; padding: 6px 0; border-bottom: 1px solid #eaecf0; }
+.wk .move-table td { border: 0; padding: 2px 0; width: auto !important; }
+.wk .move-table .ml-input { grid-column: 1 / -1; white-space: normal; }
+.wk .ml-bar { display: none; }
+.wk { max-width: 680px; margin: 0 auto; }
