@@ -49,6 +49,8 @@ export interface FurnitureDef {
   rooms?: RoomId[];
   /** Somewhere to sit and save (sofas, armchairs). */
   seat?: boolean;
+  /** A chair or stool slides partly under a table or desk ('chair'), which leaves room for it ('table'). */
+  tuck?: 'chair' | 'table';
   /** Taller than a window sill: can't stand in front of a window. */
   tall?: boolean;
   blurb: string;
@@ -68,8 +70,8 @@ export const FURNITURE_LIST: FurnitureDef[] = [
   F({ id: 'sofa_3', name: 'Kensal 3-seat sofa', cat: 'living', price: 420, size: [1.1, 0.45], mount: 'floor', colours: FABRIC, seat: true, blurb: 'Deep cushions, proper arms. Seats three, or one after a long day.' }),
   F({ id: 'sofa_2', name: 'Brixton 2-seat sofa', cat: 'living', price: 290, size: [0.8, 0.42], mount: 'floor', colours: FABRIC, seat: true, blurb: 'Compact two-seater for smaller rooms.' }),
   F({ id: 'armchair', name: 'Wingback armchair', cat: 'living', price: 180, size: [0.45, 0.42], mount: 'floor', colours: FABRIC, seat: true, blurb: 'High back, button detail. Your nan would approve.' }),
-  F({ id: 'coffee_table', name: 'Oak coffee table', cat: 'living', price: 95, size: [0.6, 0.3], mount: 'floor', colours: WOOD, blurb: 'Low, solid, with a shelf for the remotes.' }),
-  F({ id: 'tv_unit', name: 'Media unit', cat: 'living', price: 140, size: [0.8, 0.22], mount: 'floor', colours: WOOD, blurb: 'Long low unit with cable tidy and two cupboards.' }),
+  F({ id: 'coffee_table', name: 'Oak coffee table', cat: 'living', price: 95, size: [0.55, 0.38], mount: 'floor', colours: WOOD, blurb: 'Low, solid, with a shelf for the remotes.' }),
+  F({ id: 'tv_unit', name: 'Media unit', cat: 'living', price: 140, size: [0.8, 0.28], mount: 'floor', colours: WOOD, blurb: 'Long low unit with cable tidy and two cupboards.' }),
   F({ id: 'tv_43', name: '43" TV on stand', cat: 'living', price: 260, size: [0.55, 0.2], mount: 'floor', colours: ['#1a1a1a', '#c8c8c8'], blurb: 'A decent telly on its own little stand.' }),
   F({ id: 'tv_65', name: '65" wall TV', cat: 'living', price: 640, size: [0.75, 0.05], mount: 'wall', wallY: 1.45, colours: ['#1a1a1a'], blurb: 'Wall-mounted, edge to edge. The football will never look better.' }),
   F({ id: 'bookcase', name: 'Tall bookcase', cat: 'living', price: 120, size: [0.45, 0.18], mount: 'floor', tall: true, colours: WOOD, blurb: 'Five shelves of books you’ll get round to reading.' }),
@@ -80,15 +82,15 @@ export const FURNITURE_LIST: FurnitureDef[] = [
   F({ id: 'bed_double', name: 'Double bed', cat: 'bedroom', price: 380, size: [0.8, 1.0], mount: 'floor', colours: FABRIC, blurb: 'Upholstered headboard, memory foam mattress.' }),
   F({ id: 'bed_single', name: 'Single bed', cat: 'bedroom', price: 190, size: [0.5, 1.0], mount: 'floor', colours: FABRIC, blurb: 'Sturdy single with a pine frame.' }),
   F({ id: 'wardrobe2', name: 'Double wardrobe', cat: 'bedroom', price: 230, size: [0.6, 0.32], mount: 'floor', tall: true, colours: WOOD, blurb: 'Hanging rail, hat shelf, mirror on the inside.' }),
-  F({ id: 'bedside', name: 'Bedside table', cat: 'bedroom', price: 45, size: [0.25, 0.22], mount: 'floor', colours: WOOD, blurb: 'One drawer, perfect for a phone charger.' }),
-  F({ id: 'drawers', name: 'Chest of drawers', cat: 'bedroom', price: 140, size: [0.5, 0.25], mount: 'floor', colours: WOOD, blurb: 'Four deep drawers.' }),
+  F({ id: 'bedside', name: 'Bedside table', cat: 'bedroom', price: 45, size: [0.27, 0.19], mount: 'floor', colours: WOOD, blurb: 'One drawer, perfect for a phone charger.' }),
+  F({ id: 'drawers', name: 'Chest of drawers', cat: 'bedroom', price: 140, size: [0.6, 0.21], mount: 'floor', colours: WOOD, blurb: 'Four deep drawers.' }),
   F({ id: 'mirror_stand', name: 'Standing mirror', cat: 'bedroom', price: 70, size: [0.3, 0.15], mount: 'floor', tall: true, colours: METAL, blurb: 'Full length, on a tilting frame.' }),
-  F({ id: 'desk2', name: 'Writing desk', cat: 'bedroom', price: 130, size: [0.6, 0.3], mount: 'floor', colours: WOOD, blurb: 'Room for a laptop and a stack of letters.' }),
+  F({ id: 'desk2', name: 'Writing desk', cat: 'bedroom', price: 130, size: [0.6, 0.3], mount: 'floor', tuck: 'table', colours: WOOD, blurb: 'Room for a laptop and a stack of letters.' }),
   // ---- kitchen
-  F({ id: 'dining_table', name: 'Dining table', cat: 'kitchen', price: 160, size: [0.7, 0.42], mount: 'floor', colours: WOOD, blurb: 'Seats four. Scratches add character.' }),
-  F({ id: 'dining_chair', name: 'Dining chair', cat: 'kitchen', price: 35, size: [0.22, 0.22], mount: 'floor', colours: WOOD, blurb: 'Bentwood café chair.' }),
+  F({ id: 'dining_table', name: 'Dining table', cat: 'kitchen', price: 160, size: [0.7, 0.31], mount: 'floor', tuck: 'table', colours: WOOD, blurb: 'Seats four. Scratches add character.' }),
+  F({ id: 'dining_chair', name: 'Dining chair', cat: 'kitchen', price: 35, size: [0.23, 0.26], mount: 'floor', tuck: 'chair', colours: WOOD, blurb: 'Bentwood café chair.' }),
   F({ id: 'fridge2', name: 'American fridge freezer', cat: 'kitchen', price: 520, size: [0.45, 0.35], mount: 'floor', tall: true, colours: ['#c8c8c8', '#1a1a1a', '#e8e4dc'], blurb: 'Side by side with an ice dispenser.' }),
-  F({ id: 'cupboard', name: 'Base cupboard', cat: 'kitchen', price: 90, size: [0.4, 0.3], mount: 'floor', colours: PAINT, blurb: 'Kitchen base unit with a worktop.' }),
+  F({ id: 'cupboard', name: 'Base cupboard', cat: 'kitchen', price: 90, size: [0.4, 0.24], mount: 'floor', colours: PAINT, blurb: 'Kitchen base unit with a worktop.' }),
   F({ id: 'worktop', name: 'Worktop run', cat: 'kitchen', price: 170, size: [0.8, 0.3], mount: 'floor', colours: PAINT, blurb: 'Two units with a long laminate worktop.' }),
   F({ id: 'washer', name: 'Washing machine', cat: 'kitchen', price: 240, size: [0.3, 0.3], mount: 'floor', colours: ['#e8e4dc', '#2a2a2e'], blurb: '9kg drum, 1400 spin.' }),
   F({ id: 'island', name: 'Kitchen island', cat: 'kitchen', price: 300, size: [0.7, 0.35], mount: 'floor', colours: PAINT, blurb: 'Breakfast bar with stools tucked under.' }),
@@ -109,18 +111,18 @@ export const FURNITURE_LIST: FurnitureDef[] = [
   F({ id: 'plant_tall', name: 'Tall plant', cat: 'decor', price: 50, size: [0.25, 0.25], mount: 'floor', tall: true, colours: ['#c8b89a', '#2a2a2e', '#e8e4dc'], rooms: WET, blurb: 'Fiddle-leaf fig in a ceramic pot.' }),
   F({ id: 'plant_small', name: 'Pot plant', cat: 'decor', price: 20, size: [0.15, 0.15], mount: 'floor', colours: ['#a85a3a', '#e8e4dc', '#2a2a2e'], rooms: WET, blurb: 'A little snake plant. Hard to kill.' }),
   F({ id: 'vase', name: 'Floor vase', cat: 'decor', price: 40, size: [0.16, 0.16], mount: 'floor', colours: ['#1f2a44', '#e8e4dc', '#a85a3a'], rooms: WET, blurb: 'Tall glazed vase with dried grasses.' }),
-  F({ id: 'trophy_cab', name: 'Trophy cabinet', cat: 'decor', price: 210, size: [0.45, 0.2], mount: 'floor', tall: true, colours: WOOD, blurb: 'Glass-fronted, lit, for belts and medals.' }),
+  F({ id: 'trophy_cab', name: 'Trophy cabinet', cat: 'decor', price: 210, size: [0.45, 0.22], mount: 'floor', tall: true, colours: WOOD, blurb: 'Glass-fronted, lit, for belts and medals.' }),
   // ---- the furniture pack (approved models): the pieces that dress a room, sold at Home & Hearth too
   F({ id: 'cube_shelves', name: 'Cube shelving', cat: 'living', price: 95, size: [0.72, 0.17], mount: 'floor', tall: true, colours: WOOD, blurb: 'Nine cubes for books, records and the stuff with nowhere else to go.' }),
   F({ id: 'club_chair', name: 'Club armchair', cat: 'living', price: 210, size: [0.43, 0.37], mount: 'floor', colours: FABRIC, seat: true, blurb: 'Low and wide, built for sinking into.' }),
   F({ id: 'side_table', name: 'Side table', cat: 'living', price: 55, size: [0.3, 0.3], mount: 'floor', colours: WOOD, blurb: 'For a brew and the remote.' }),
   F({ id: 'sideboard', name: 'Low sideboard', cat: 'living', price: 230, size: [0.78, 0.27], mount: 'floor', colours: WOOD, blurb: 'Two doors and a drawer: the good plates live here.' }),
   F({ id: 'pantry', name: 'Pantry cupboard', cat: 'kitchen', price: 260, size: [0.57, 0.31], mount: 'floor', tall: true, colours: WOOD, blurb: 'Floor-to-ceiling tins, cereal and the big bag of rice.' }),
-  F({ id: 'round_table', name: 'Round kitchen table', cat: 'kitchen', price: 160, size: [0.5, 0.5], mount: 'floor', colours: WOOD, blurb: 'Seats two for breakfast, four at a push.' }),
-  F({ id: 'windsor_chair', name: 'Windsor chair', cat: 'kitchen', price: 60, size: [0.23, 0.26], mount: 'floor', colours: WOOD, blurb: 'Spindle back, solid seat.' }),
+  F({ id: 'round_table', name: 'Round kitchen table', cat: 'kitchen', price: 160, size: [0.5, 0.5], mount: 'floor', tuck: 'table', colours: WOOD, blurb: 'Seats two for breakfast, four at a push.' }),
+  F({ id: 'windsor_chair', name: 'Windsor chair', cat: 'kitchen', price: 60, size: [0.23, 0.26], mount: 'floor', tuck: 'chair', colours: WOOD, blurb: 'Spindle back, solid seat.' }),
   F({ id: 'open_shelves', name: 'Open kitchen shelving', cat: 'kitchen', price: 75, size: [0.7, 0.16], mount: 'floor', tall: true, colours: WOOD, blurb: 'Jars, pans and the good mugs on show.' }),
-  F({ id: 'dressing_table', name: 'Dressing table', cat: 'bedroom', price: 190, size: [0.71, 0.36], mount: 'floor', colours: WOOD, blurb: 'Mirror, drawers and a home for the aftershave.' }),
-  F({ id: 'dressing_stool', name: 'Dressing stool', cat: 'bedroom', price: 45, size: [0.2, 0.25], mount: 'floor', colours: FABRIC, blurb: 'Padded top, fits under the dressing table.' }),
+  F({ id: 'dressing_table', name: 'Dressing table', cat: 'bedroom', price: 190, size: [0.71, 0.36], mount: 'floor', tuck: 'table', colours: WOOD, blurb: 'Mirror, drawers and a home for the aftershave.' }),
+  F({ id: 'dressing_stool', name: 'Dressing stool', cat: 'bedroom', price: 45, size: [0.2, 0.25], mount: 'floor', tuck: 'chair', colours: FABRIC, blurb: 'Padded top, fits under the dressing table.' }),
   F({ id: 'storage_bench', name: 'Storage bench', cat: 'bedroom', price: 120, size: [0.55, 0.23], mount: 'floor', colours: FABRIC, blurb: 'End-of-bed bench with room for the spare duvet.' }),
   F({ id: 'tallboy', name: 'Tallboy drawers', cat: 'bedroom', price: 170, size: [0.38, 0.27], mount: 'floor', tall: true, colours: WOOD, blurb: 'Six drawers stacked high.' }),
   F({ id: 'bath_shelf', name: 'Bathroom shelf unit', cat: 'bathroom', price: 50, size: [0.37, 0.13], mount: 'floor', colours: WOOD, blurb: 'Towels, loo roll and the good shampoo.' }),
