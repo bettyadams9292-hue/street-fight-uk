@@ -1,0 +1,48 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Street Asset Testing — Black Desk Telephone · 3D Review</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#121a23;color:#eef2f5;font:15px system-ui,sans-serif}main{max-width:900px;margin:auto;padding:16px}h1{font-size:23px}p,#status{color:#b7c6d2}canvas{width:100%;height:450px;display:block;touch-action:none;background:#303b46;border-radius:12px}.controls{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}button,select{padding:12px;background:#2d4559;color:white;border:1px solid #748a9a;border-radius:8px;font:inherit}select{flex:1;min-width:180px}#facts{padding:12px;border:1px solid #54636f;border-radius:8px}#notes{width:100%;background:#202f3d;color:#fff;padding:12px;border:1px solid #748a9a;border-radius:8px;font:inherit}button{cursor:pointer}</style></head><body><main><h1>Street Fight UK · Black Desk Telephone · 3D Review</h1><p>Reference-inspired black corded office telephone, pending visual approval. Swipe to rotate, pinch to zoom. Not in approved assets yet. No gameplay changes. Swipe to rotate, pinch to zoom.</p><div id="status">Loading models…</div><div class="controls"><select id="category" aria-label="Furniture category"><option value="all">All models</option></select><button id="prev">Previous</button><select id="asset" aria-label="Furniture model"></select><button id="next">Next</button></div><canvas id="stage"></canvas><div class="controls"><button id="left">↶ Rotate</button><button id="right">Rotate ↷</button><button id="near">Zoom +</button><button id="far">Zoom −</button><button id="reset">Reset</button></div><div id="facts"></div><div class="controls"><button id="approve">Approve</button><button id="reject">Reject</button><button id="clear">Clear decision</button></div><p id="decision">Not yet reviewed</p><textarea id="notes" rows="2" placeholder="Review notes or changes needed"></textarea><button id="copyReview">Copy review result</button><p>Decisions stay on this device until copied and shared. They do not update GitHub automatically.</p></main><script type="module">
+const status=document.getElementById('status'),canvas=document.getElementById('stage'),facts=document.getElementById('facts'),selector=document.getElementById('asset');
+try{
+ const THREE=await import('https://esm.sh/three@0.180.0');
+ const ts=await import('https://esm.sh/typescript@5.9.3');
+ const response=await fetch('https://raw.githubusercontent.com/bettyadams9292-hue/street-fight-uk/a1acd4f6a0e7a2236648524a74c07ca0431bdbe5/streetassettesting/black-desk-telephone.ts',{cache:'no-store'});
+ if(!response.ok)throw Error('Asset source HTTP '+response.status);
+ const source=await response.text();
+ const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from\s*(['"])three\1/g,"from 'https://esm.sh/three@0.180.0'");
+ const blob=URL.createObjectURL(new Blob([js],{type:'text/javascript'}));
+ const {TELEPHONE_ASSETS,createTelephoneAsset}=await import(blob);URL.revokeObjectURL(blob);const ASSETS=TELEPHONE_ASSETS.map(a=>({...a,name:a.label}));const createAsset=createTelephoneAsset;
+ let review={status:'pending',notes:''};try{review=JSON.parse(localStorage.getItem('sfuk-black-phone-review')||'null')||review}catch(e){}
+ const decision=document.getElementById('decision'),notes=document.getElementById('notes');
+ function refreshDecision(){decision.textContent='Review: '+review.status;notes.value=review.notes||''}
+ function saveDecision(status){review={status,notes:notes.value};try{localStorage.setItem('sfuk-black-phone-review',JSON.stringify(review))}catch(e){}refreshDecision()}
+ document.getElementById('approve').onclick=()=>saveDecision('approved');
+ document.getElementById('reject').onclick=()=>saveDecision('rejected');
+ document.getElementById('clear').onclick=()=>saveDecision('pending');
+ notes.oninput=()=>{review.notes=notes.value;try{localStorage.setItem('sfuk-black-phone-review',JSON.stringify(review))}catch(e){}};
+ document.getElementById('copyReview').onclick=async()=>{const result={id:'blackDeskTelephone',branch:'pr-dev',...review};try{await navigator.clipboard.writeText(JSON.stringify(result,null,2));decision.textContent='Review copied: '+review.status}catch(e){decision.textContent='Clipboard unavailable: '+JSON.stringify(result)}};
+ refreshDecision();
+ const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'low-power'});
+ renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;renderer.setClearColor(0x303b46);
+ const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xffffff,0x8194a3,2.5));
+ const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(4,7,8);scene.add(light);
+ const fill=new THREE.DirectionalLight(0xd3e4ff,1.2);fill.position.set(-4,5,-5);scene.add(fill);
+ const camera=new THREE.PerspectiveCamera(40,1,.01,100);
+ const category=document.getElementById('category');const categories=[...new Set(ASSETS.map(a=>a.category))];categories.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;category.append(o)});ASSETS.forEach((a,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+a.name;selector.append(o)});category.onchange=()=>{const choices=ASSETS.map((a,i)=>a.category===category.value||category.value==='all'?i:-1).filter(i=>i>=0);select(choices[0]??0)};
+ let active=null,index=0,yaw=.55,pitch=.26,zoom=1,center=new THREE.Vector3(),radius=1;
+ function render(){if(!active)return;const distance=Math.max(.65,radius*3.0)*zoom;camera.position.set(center.x+Math.sin(yaw)*Math.cos(pitch)*distance,center.y+Math.sin(pitch)*distance,center.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.lookAt(center);renderer.render(scene,camera)}
+ function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();render()}
+ function select(i){index=(i+ASSETS.length)%ASSETS.length;selector.value=String(index);category.value=ASSETS[index].category;
+ try{if(active){scene.remove(active);const geos=new Set(),mats=new Set();active.traverse(o=>{if(o.isMesh){geos.add(o.geometry);(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>mats.add(m))}});geos.forEach(x=>x.dispose());mats.forEach(x=>x.dispose())}
+ active=createAsset(ASSETS[index].id);scene.add(active);
+ const bb=new THREE.Box3().setFromObject(active);center=bb.getCenter(new THREE.Vector3());const size=bb.getSize(new THREE.Vector3());radius=Math.max(size.length()*.72,.35);yaw=.55;pitch=.26;zoom=1;
+ facts.textContent=ASSETS[index].name+' · '+ASSETS[index].id+' · '+size.x.toFixed(2)+' × '+size.y.toFixed(2)+' × '+size.z.toFixed(2)+' m · review required';
+ status.textContent='Black Desk Telephone · 3D Review · model '+(index+1)+' of '+ASSETS.length;render();
+ }catch(e){status.textContent='Model '+(index+1)+' failed: '+e.message;facts.textContent=String(e);console.error('Asset failure',ASSETS[index],e)}}
+ selector.onchange=()=>select(Number(selector.value));function step(dir){const choices=ASSETS.map((a,i)=>category.value==='all'||a.category===category.value?i:-1).filter(i=>i>=0);const pos=choices.indexOf(index);select(choices[(pos+dir+choices.length)%choices.length])}document.getElementById('prev').onclick=()=>step(-1);document.getElementById('next').onclick=()=>step(1);
+ document.getElementById('left').onclick=()=>{yaw-=.35;render()};document.getElementById('right').onclick=()=>{yaw+=.35;render()};
+ document.getElementById('near').onclick=()=>{zoom=Math.max(.4,zoom*.8);render()};document.getElementById('far').onclick=()=>{zoom=Math.min(5,zoom*1.25);render()};document.getElementById('reset').onclick=()=>select(index);
+ const pointers=new Map();let lastX=0,lastY=0,lastPinch=0;
+ canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});lastX=e.clientX;lastY=e.clientY});
+ canvas.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const p=[...pointers.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(lastPinch)zoom=Math.max(.4,Math.min(5,zoom*lastPinch/d));lastPinch=d}else{yaw+=(e.clientX-lastX)*.012;pitch=Math.max(-.2,Math.min(1.1,pitch+(lastY-e.clientY)*.006));lastX=e.clientX;lastY=e.clientY}render()});
+ const release=e=>{pointers.delete(e.pointerId);lastPinch=0};canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
+ window.addEventListener('resize',resize);resize();select(0);
+}catch(e){status.textContent='Startup error: '+e.message;facts.textContent='Please report this exact error';console.error(e)}
+</script></body></html>
