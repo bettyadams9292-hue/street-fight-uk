@@ -26,21 +26,46 @@ export function createTelephoneAsset(id:string):THREE.Group {
    // Raised outer lips retain the receiver in the hook.
    for(const x of [.012,.068])box(.008,.015,.033,x,.081,z,plastic);
  }
- // Speaker grill (small dark slits).
- for(let row=0;row<3;row++)for(let col=0;col<8;col++)box(.0024,.0015,.008,.075+col*.006,.052,-.018+row*.007,dark);
- // LCD at upper rear right with black inset.
- box(.093,.003,.039,.192,.058,-.050,edge,-.12);
- box(.083,.004,.030,.192,.060,-.050,display,-.12);
- // Number keypad: 3 columns, 4 rows, visibly separated rounded dark keys.
- for(let row=0;row<4;row++)for(let col=0;col<3;col++){
- const x=.157+col*.033,z=.018+row*.028;
- const k=box(.024,.006,.014,x,.061+row*.001,z,button,-.12);
- k.geometry.dispose();k.geometry=new THREE.BoxGeometry(.024,.006,.015);
+ // Controls laid out to match the supplied desk-phone reference:
+ // display at upper rear, speaker grille to its lower-left, function keys
+ // between display and numeric keypad, and a 3 x 4 keypad on the right-front.
+ // Buttons are shallow and have bevelled edges rather than tall rectangular blocks.
+ const key=(w:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>{
+   const shape=new THREE.Shape();
+   const r=Math.min(w,d)*.28;
+   shape.moveTo(-w/2+r,-d/2);shape.lineTo(w/2-r,-d/2);
+   shape.quadraticCurveTo(w/2,-d/2,w/2,-d/2+r);
+   shape.lineTo(w/2,d/2-r);shape.quadraticCurveTo(w/2,d/2,w/2-r,d/2);
+   shape.lineTo(-w/2+r,d/2);shape.quadraticCurveTo(-w/2,d/2,-w/2,d/2-r);
+   shape.lineTo(-w/2,-d/2+r);shape.quadraticCurveTo(-w/2,-d/2,-w/2+r,-d/2);
+   const geometry=new THREE.ExtrudeGeometry(shape,{depth:.003,bevelEnabled:true,bevelThickness:.001,bevelSize:.0008,bevelSegments:2,curveSegments:4});
+   const mesh=new THREE.Mesh(geometry,m);mesh.rotation.x=-Math.PI/2;
+   mesh.position.set(x,y,z);g.add(mesh);return mesh;
+ };
+ // Screen housing at rear of right-hand console.
+ box(.100,.003,.045,.200,.056,-.045,edge,-.12);
+ box(.088,.0035,.033,.200,.059,-.045,display,-.12);
+ // Compact grille just below and to the left of the display.
+ for(let row=0;row<4;row++)for(let col=0;col<8;col++){
+   box(.0017,.001,.004,.091+col*.006,.055,.006+row*.006,dark);
  }
- // Function buttons, right-side volume rocker and dial.
- for(let i=0;i<4;i++)box(.017,.005,.011,.113+i*.026,.061,-.003,button);
- const dial=cyl(.012,.005,.260,.061,-.011,button);dial.rotation.x=Math.PI/2;
- box(.036,.006,.014,.261,.062,.110,button);
+ // Upper call/menu buttons, separate from the twelve number keys.
+ for(let col=0;col<3;col++)key(.017,.009,.169+col*.028,.063,.002,button);
+ for(let col=0;col<2;col++)key(.018,.009,.186+col*.036,.064,.023,button);
+ // Circular navigation control at the upper-right, with inset centre.
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.012,.003,8,24),button);
+ ring.rotation.x=Math.PI/2;ring.position.set(.259,.064,-.010);g.add(ring);
+ const navCentre=new THREE.Mesh(new THREE.CylinderGeometry(.005,.005,.002,20),face);
+ navCentre.position.set(.259,.065,-.010);g.add(navCentre);
+ // Number keys: three columns and four rows, grouped on the right-front
+ // of the console, in the conventional 1-9, star-0-hash arrangement.
+ const numericLabels=['1','2','3','4','5','6','7','8','9','*','0','#'];
+ for(let row=0;row<4;row++)for(let col=0;col<3;col++){
+   const x=.171+col*.035,z=.050+row*.024;
+   key(.025,.015,x,.065,z,button);
+ }
+ // Dedicated lower-right function button.
+ key(.018,.013,.267,.065,.128,button);
  // Slim ergonomic office handset seated lengthwise on the two cradle hooks.
  // No cylinders or oversized round end caps: continuous tapered telephone silhouette.
  const receiver=new THREE.Group();receiver.name='Handset seated on hook';
