@@ -830,9 +830,9 @@ export class Game {
     this.audio.swing(false);
     const lines = ['YOU FUCKING PUSSY!', 'BOTTLED IT!', 'RUN, YOU PUSSY!', 'LEGGED IT!'];
     const title = lines[Math.floor(Math.random() * lines.length)];
-    this.hud.shame(title, r.grudge ? 'Skint and legged it, you gimp. They’ll remember your face.' : `You dropped £${r.dropped}, you gimp.`);
+    this.hud.shame(title, r.grudge ? 'Skint and legged it, you gimp. They’ll remember your face.' : `You dropped £${r.dropped} (${Math.round(r.share * 100)}% of it), you gimp.`);
     this.hud.remember(
-      r.grudge ? 'Legged it with nothing on you: the next fight round here comes at you twice as hard.' : `Legged it: threw down £${r.dropped} and they went for that instead.`,
+      r.grudge ? 'Legged it with nothing on you: the next fight round here comes at you twice as hard.' : `Legged it: threw down £${r.dropped} (${Math.round(r.share * 100)}%) and they went for that instead.`,
       r.grudge ? 'warn' : 'cash',
     );
   }
@@ -985,6 +985,16 @@ export class Game {
       ev.on('broken', ({ label }) => {
         this.audio.impact(0.8, false);
         this.hud.toast(label, 'info');
+      }),
+      ev.on('mug', ({ resisted, items, cash, heat }) => {
+        if (resisted) {
+          this.audio.swing(true);
+          this.hud.toast(`They’re having none of it. Put them down and it’s yours. Heat +${heat}.`, 'warn');
+        } else {
+          this.audio.coins();
+          const what = items.map((id) => ITEMS[id]?.name.toLowerCase()).filter(Boolean);
+          this.hud.toast(`Handed over: £${cash}${what.length ? `, ${what.join(', ')}` : ''}. It’s on the floor, hot. Heat +${heat}.`, 'item');
+        }
       }),
       ev.on('alarm', () => {
         this.hud.notify('ALARM!', 'warn');

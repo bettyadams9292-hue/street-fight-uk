@@ -1,7 +1,7 @@
 import type { StyleData } from '../../styles/StyleData';
 import { h } from '../dom';
 import { movesKey, styleSection, type Device } from '../moveList';
-import { BAIL_SHARE } from '../../world/World';
+import { BAIL_MAX, BAIL_MIN, MUG_HEAT } from '../../world/World';
 import { BASE_INVENTORY_SLOTS } from '../../progress/Progress';
 import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
 
@@ -126,15 +126,18 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
     return article('Fighting', 'Most fights are won by blocking more than you get hit, and hitting back when they miss.',
       infobox('Fighting', [
         ['Finisher', `under 15% health and staggered · ${Math.round(FINISHER_COOLDOWN / 60)} s to recharge`],
-        ['Pussying out', `drops ${Math.round(BAIL_SHARE * 100)}% of the cash on you`],
+        ['Pussying out', `drops ${Math.round(BAIL_MIN * 100)}–${Math.round(BAIL_MAX * 100)}% of the cash on you (the button says how much)`],
         ['No running from', 'bosses, the police, a duel'],
+        ['Mugging', `+${MUG_HEAT} heat · they hand it over or fight for it`],
       ]),
       sec('Blocking and parrying'),
       p('Hold BLOCK to guard. Tap it just before a hit lands to parry: they’re left open, and a quick hit back lands as a counter.'),
       sec('Staggers and finishers'),
       p(`Heavy hits stagger. When someone is nearly out (under 15% health) and staggered right in front of you, SPECIAL + HARD punch finishes them in one go, and it can’t be blocked. Then it needs ${Math.round(FINISHER_COOLDOWN / 60)} seconds to recharge, so you can’t finish a whole crowd with it.`),
       sec('Pussying out'),
-      p(`In a fight that’s going wrong, PUSSY OUT throws down ${Math.round(BAIL_SHARE * 100)}% of the cash on you and you leg it off the screen. They go for the money instead of you. With nothing on you they let you go, but the district remembers your face: its next fight comes at you twice as hard (hit twice as hard, take half the damage) until you beat it. You can’t pussy out of a boss fight, from the police or from a duel.`),
+      p(`In a fight that’s going wrong, PUSSY OUT throws down some of the cash on you (somewhere between ${Math.round(BAIL_MIN * 100)}% and ${Math.round(BAIL_MAX * 100)}%, different every fight; the button tells you how much before you press it) and you leg it off the screen. They go for the money instead of you. With nothing on you they let you go, but the district remembers your face: its next fight comes at you twice as hard (hit twice as hard, take half the damage) until you beat it. You can’t pussy out of a boss fight, from the police or from a duel.`),
+      sec('Mugging'),
+      p(`Walk up to anyone on the street and USE says MUG: what you can see they’re wearing (a chain, a watch, a ring) is what you’re after, plus their wallet and maybe a phone. The nervy hand it all over and leg it, and it lands at their feet. Others square up and fight for it: put them down and it’s on the floor. Either way it’s stolen (the pawn shop pays less, the police take it if they nick you) and +${MUG_HEAT} heat, and everyone about sees it. The bigger the prize, the more likely they fight for it; the more of a name you are, the more likely they just hand it over.`),
       sec('Weapons'),
       p('Pick a weapon up with GRAB when nobody’s in reach. It wears out with every hit; the workbench at home mends it.'),
     );

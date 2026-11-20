@@ -144,6 +144,7 @@ export function controlsScreen(ui: UIManager): Screen {
     ['Pause', 'Esc', 'Start', '\u275a\u275a'],
     ['Pockets and bag (story)', 'B', '—', 'Bag button'],
     ['Pussy out of a fight (drops some of your cash)', 'X', '—', 'PUSSY OUT'],
+    ['Mug a passer-by (walk up to them)', 'E', 'LB', 'USE'],
     ['Character & crew (stats, injuries, companions)', 'H', 'Phone → Me / Crew', 'Phone → Me / Crew'],
     ['Crew orders: follow / wait here / get ready (at home: come with me / relax)', 'G', '—', 'Crew tab'],
     ['Use doors, shops, pickups and things at home (walk up to it)', 'E', 'LB', 'USE (shows when there is something to use)'],

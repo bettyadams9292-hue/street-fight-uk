@@ -205,6 +205,8 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - finishers recharge for 25 s (`FINISHER_COOLDOWN`, `Fighter.finisherSeconds`), with "Finisher recharging" in the prompt;
   - the moves list explains itself: speed in words (Fast / Medium / Slow from each move's wind-up), damage as a number and bar, what each effect does, combo totals and the hits that unlock at rank 3; on an upright phone each move is two lines;
   - GraftWiki, a phone app (`ui/phone/wikiApp.ts`): a wiki-looking encyclopedia with Controls (tabs for touch, keyboard and controller), Moves, Fighting and Pockets and bags; the pause menu's Controls and Moves open the phone on it (`Phone.openWiki`).
+  - pussying out costs a random share of the cash on you (`BAIL_MIN`–`BAIL_MAX`, 25–60%), rolled once per fight (own `bailRng`, never within 5% of the last) so the button shows the real price;
+  - mugging: walk up to any passer-by out of a fight and USE says "Mug him: gold chain" (`World.findMuggable`, only when there's nothing else to use; a red marker at their feet). What they're seen wearing (`valuablesOf`: chain, watch, ring, earring), a wallet of £5–45 and maybe a phone. They hand it over and bolt (`CivilianBrain.bolt`; dropped at their feet, stolen) or square up (`turnHostile`, thug or brawler, a first name; `mugLoot` drops it all when they're down), by `mugResistChance` (temper, sex, worth, your level). +8 heat (`MUG_HEAT`) either way; nobody can be mugged twice. `tests/mugging.test.ts`.
 ## Open questions and next steps
 
 - **Performance, still to do:** characters are about 36–40k triangles each (body about 27k). Agreed plan (19 Nov, not started), all from the models we already have, no new art:

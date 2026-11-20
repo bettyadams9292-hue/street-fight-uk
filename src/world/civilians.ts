@@ -147,6 +147,13 @@ export class CivilianBrain {
     this.hurry(1.9);
   }
 
+  /** Mugged: off at a sprint, and they don't calm down for a good while (calm waits on reactedAt). */
+  bolt(fromX: number, frame: number): void {
+    this.flee(fromX);
+    this.reactedAt = frame + 600;
+    this.hurry(2.3);
+  }
+
   private hurry(mul: number): void {
     if (this.self.stats.hasModifier('civ_hurry')) this.self.stats.removeModifier('civ_hurry');
     this.self.stats.addModifier({ id: 'civ_hurry', source: 'civilian', stat: 'moveSpeedMult', mul });

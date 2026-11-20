@@ -98,6 +98,8 @@ export interface WorldEvents {
   'crew:say': { fighter: Fighter; name: string; text: string };
   /** An enemy shouts: a taunt, or the warning before jumping in. */
   'enemy:say': { fighter: Fighter; text: string; kind: 'taunt' | 'warn' };
+  /** You mugged a passer-by: they handed it over and ran, or squared up. */
+  mug: { name: string; resisted: boolean; items: string[]; cash: number; heat: number };
   'duel:start': { kind: 'spar' | 'challenge'; name: string };
   'duel:end': { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
 }
@@ -141,9 +143,36 @@ export interface CashPickup {
 }
 
 /** Pussying out of a fight (World.bailOut): what it cost you. */
-export type BailResult = { ok: true; dropped: number; grudge: boolean } | { ok: false; reason: string };
-/** Share of the cash on you that you throw down to get away. */
-export const BAIL_SHARE = 0.4;
+export type BailResult = { ok: true; dropped: number; grudge: boolean; share: number } | { ok: false; reason: string };
+/**
+ * Share of the cash on you that you throw down to get away: rolled once per fight between these (so the button
+ * can tell you what it'll cost), never the same twice in a row.
+ */
+export const BAIL_MIN = 0.25;
+export const BAIL_MAX = 0.6;
+
+/** Heat for mugging someone in the street (handed over or not). */
+export const MUG_HEAT = 8;
+
+/** What a passer-by has on them that's worth taking: what you can see they're wearing, then their pockets. */
+export function valuablesOf(a: CharacterAppearance): string[] {
+  const out: string[] = [];
+  if (a.accessories.includes('chain')) out.push(a.chainColour === 'gold' ? 'chain_gold' : 'chain_silver');
+  if (a.accessories.includes('watch')) out.push('watch_basic');
+  if (a.accessories.includes('ring')) out.push('ring_signet');
+  if (a.accessories.includes('earring')) out.push('earring_silver');
+  return out;
+}
+
+/**
+ * Whether someone you're mugging fights for it, 0–1: by temper (the nervy hand it over, the steady won't), a bit
+ * more for a man, more for something worth fighting for, less once you're a known face (your level).
+ */
+export function mugResistChance(temper: 'nervy' | 'nosy' | 'steady', male: boolean, worth: number, level: number): number {
+  const base = temper === 'nervy' ? 0.12 : temper === 'nosy' ? 0.38 : 0.6;
+  const v = base + (male ? 0.1 : -0.12) + Math.min(0.15, worth / 1200) - Math.min(0.2, Math.max(0, level - 3) * 0.02);
+  return Math.max(0.05, Math.min(0.85, v));
+}
 
 export interface SecretSpot {
   key: string;
@@ -179,7 +208,8 @@ export type Interactable =
   | { kind: 'lever'; x: number; z: number; label: string; lever: LeverDef; done: boolean }
   | { kind: 'station'; x: number; z: number; label: string; station: StationDef; closed: boolean }
   | { kind: 'item'; x: number; z: number; label: string; item: GroundItem }
-  | { kind: 'container'; x: number; z: number; label: string; container: ContainerDef; empty: boolean };
+  | { kind: 'container'; x: number; z: number; label: string; container: ContainerDef; empty: boolean }
+  | { kind: 'mug'; x: number; z: number; label: string; target: Fighter };
 
 /**
  * One area of the world running live: the level's collision, the player,
@@ -1246,16 +1276,33 @@ export class World {
   bail: { dir: number; until: number; crew: Set<Fighter>; doneAt: number } | null = null;
 
   /** Can you pussy out right now? Not from a boss, the police, a duel or a spar; not on the floor or held. */
-  canBail(): { ok: true; cost: number } | { ok: false; reason: string } {
+  canBail(): { ok: true; cost: number; share: number } | { ok: false; reason: string } {
     const p = this.player;
-    if (!this.inFight) return { ok: false, reason: 'There’s nobody to run from' };
+    if (!this.inFight) {
+      // A new fight rolls a new price for running from it.
+      this.bailShare = null;
+      return { ok: false, reason: 'There’s nobody to run from' };
+    }
     if (this.activeBoss || this.encounters.some((e) => e.status === 'active' && e.boss)) return { ok: false, reason: 'No running from a boss. Stand and fight.' };
     if (this.duel) return { ok: false, reason: 'You agreed to this one: see it through' };
     if (this.police.some((e) => !e.isKO)) return { ok: false, reason: 'You can’t pay off the police' };
     if (p.isKO || !p.isFree) return { ok: false, reason: 'Get up first' };
     const pocket = this.progress.save.cash.pocket;
-    return { ok: true, cost: pocket > 0 ? Math.max(1, Math.round(pocket * BAIL_SHARE)) : 0 };
+    if (this.bailShare === null) {
+      let share = this.lastBailShare;
+      // Never the same as last time (to the nearest 5%), so it's a gamble every time.
+      for (let i = 0; i < 6 && Math.abs(share - this.lastBailShare) < 0.05; i++) share = Math.round((BAIL_MIN + this.bailRng.next() * (BAIL_MAX - BAIL_MIN)) * 100) / 100;
+      this.bailShare = this.lastBailShare = share;
+    }
+    const share = this.bailShare;
+    return { ok: true, share, cost: pocket > 0 ? Math.max(1, Math.round(pocket * share)) : 0 };
   }
+
+  /** This fight's price for running (a share of the cash on you), rolled the first time it's asked for. */
+  private bailShare: number | null = null;
+  private lastBailShare = 0;
+  /** Its own dice, so running away never changes what fights drop. */
+  private readonly bailRng = new Rng(0x5eed);
 
   get inFight(): boolean {
     const p = this.player;
@@ -1263,7 +1310,7 @@ export class World {
   }
 
   /**
-   * Pussy out: throw down a share of the cash on you (BAIL_SHARE) and leg it. They go for the money instead of
+   * Pussy out: throw down a share of the cash on you (BAIL_MIN–BAIL_MAX, rolled per fight) and leg it. They go for the money instead of
    * you, and you sprint off the screen. With nothing on you they let you go, but the district remembers: its next
    * fight comes at you twice as hard (grudgeKey). The fight is called off and starts again when you come back.
    */
@@ -1307,7 +1354,9 @@ export class World {
     p.stats.addModifier({ id: 'bail_run', source: 'bail', stat: 'moveSpeedMult', mul: 1.7 });
     this.bail = { dir, until: frame + Math.round(2.6 * SIM_HZ), crew, doneAt: frame + 7 * SIM_HZ };
     this.events.emit('bail', { dropped, grudge: dropped === 0 });
-    return { ok: true, dropped, grudge: dropped === 0 };
+    const share = can.share;
+    this.bailShare = null;
+    return { ok: true, dropped, grudge: dropped === 0, share };
   }
 
   /** One of the crew you ran from: after the nearest of your money, then wandering off the other way. */
@@ -1343,6 +1392,7 @@ export class World {
     const b = this.bail;
     if (!b || frame < b.doneAt) return;
     for (const f of b.crew) {
+      this.mugLoot.delete(f);
       this.sim.remove(f);
       this.brains.delete(f);
       this.tokens.release(f);
@@ -1739,7 +1789,13 @@ export class World {
       if (this.encounters.some((e) => e.boss === f)) continue;
       const arch = brain instanceof FighterAI ? brain.archetype : null;
       const kind = this.archetypeOf.get(f) ?? 'thug';
-      if (kind !== 'shopkeeper') this.spillLoot(lootTableFor(kind), f.pos.x, f.pos.z);
+      const mugged = this.mugLoot.get(f);
+      if (mugged) {
+        // Whoever you mugged fought for it and lost: it's all on the floor, hot.
+        this.mugLoot.delete(f);
+        mugged.items.forEach((id, k) => this.dropOnGround(this.progress.newStack(id, 1, { stolen: true }), f.pos.x + (k - mugged.items.length / 2) * 0.35, f.pos.z + 0.15 * (k % 2)));
+        if (mugged.cash > 0) this.cash.push({ key: `c${this.itemSeq++}`, x: f.pos.x, z: f.pos.z - 0.15, amount: mugged.cash, def: null });
+      } else if (kind !== 'shopkeeper') this.spillLoot(lootTableFor(kind), f.pos.x, f.pos.z);
       if (arch?.xp) this.pay(0, arch.xp);
       this.sim.remove(f);
       this.brains.delete(f);
@@ -1792,7 +1848,83 @@ export class World {
       best = o;
       bestD = d;
     }
-    return best;
+    return best ?? this.findMuggable();
+  }
+
+  /** People you've already mugged (they're running, or they've had their go). */
+  private mugged = new WeakSet<Fighter>();
+  /** What a passer-by who fought back had on them: dropped when you put them down. */
+  private mugLoot = new Map<Fighter, { items: string[]; cash: number }>();
+
+  /**
+   * Someone close enough to mug, when there's nothing else to use: out of a fight, on foot, and only people
+   * walking about or stood (not anyone already running from trouble).
+   */
+  private findMuggable(): Interactable | null {
+    const p = this.player;
+    if (this.inFight || this.duel || this.locked || this.progress.save.property.riding) return null;
+    let best: Fighter | null = null;
+    let bd = 1.05;
+    for (const c of this.civilians) {
+      if (this.mugged.has(c.f) || c.brain.activity === 'flee' || c.f.isKO) continue;
+      const d = Math.hypot(c.f.pos.x - p.pos.x, (c.f.pos.z - p.pos.z) * 1.2);
+      if (d >= bd || this.arena.lineBlocked(p.pos.x, p.pos.z, c.f.pos.x, c.f.pos.z)) continue;
+      best = c.f;
+      bd = d;
+    }
+    if (!best) return null;
+    const a = best.appearance;
+    const him = a.body === 'female' ? 'her' : 'him';
+    const v = valuablesOf(a)[0];
+    const label = `Mug ${him}${v ? `: ${ITEMS[v].name.toLowerCase()}` : ''}`;
+    return { kind: 'mug', x: best.pos.x, z: best.pos.z, label, target: best };
+  }
+
+  /**
+   * Mug a passer-by. They either hand it all over and leg it (what they're wearing and their wallet, dropped at
+   * their feet, marked stolen), or square up and fight for it, and you get it off them when they're down. Either
+   * way it's heat (MUG_HEAT), and everyone about sees it.
+   */
+  mug(target: Fighter): { resisted: boolean; items: string[]; cash: number } | null {
+    const i = this.civilians.findIndex((c) => c.f === target);
+    if (i < 0 || this.mugged.has(target)) return null;
+    const c = this.civilians[i];
+    const p = this.player;
+    const rng = this.lootRng;
+    const a = target.appearance;
+    const male = a.body !== 'female';
+    const items = valuablesOf(a);
+    if (rng.next() < 0.55) items.push('phone_cheap');
+    const cash = Math.round(5 + rng.next() * 40);
+    const worth = items.reduce((t, id) => t + (ITEMS[id]?.value ?? 0), 0) + cash;
+    const resisted = rng.next() < mugResistChance(c.brain.temper, male, worth, this.progress.save.level);
+    this.mugged.add(target);
+    this.progress.addHeat(MUG_HEAT);
+    target.facing = p.pos.x < target.pos.x ? -1 : 1;
+    const say = (lines: string[]) => this.events.emit('enemy:say', { fighter: target, text: lines[Math.floor(rng.next() * lines.length)], kind: 'taunt' });
+    if (resisted) {
+      // Off the street and into the fight: their own walk speed goes, they fight at full pace.
+      c.brain.release();
+      this.civilians.splice(i, 1);
+      target.stats.removeModifier('stroll');
+      target.stats.removeModifier('civ_hurry');
+      const arch: ArchetypeId = c.brain.temper === 'steady' && male ? 'brawler' : 'thug';
+      this.turnHostile(target, arch);
+      this.archetypeOf.set(target, 'mugged');
+      this.mugLoot.set(target, { items, cash });
+      (target as { name: string }).name = (male ? GRUNT_NAMES.male : GRUNT_NAMES.female)[target.id % (male ? GRUNT_NAMES.male : GRUNT_NAMES.female).length];
+      say(male ? ['You what? Come on then!', 'Try it, pal.', 'Not a chance. Come on!', 'You picked the wrong one.'] : ['Get your hands off me!', 'Try it. Go on.', 'Not a chance!']);
+    } else {
+      // Handed over: dropped at their feet, and they're off.
+      const dir = target.pos.x >= p.pos.x ? 1 : -1;
+      items.forEach((id, k) => this.dropOnGround(this.progress.newStack(id, 1, { stolen: true }), target.pos.x - dir * 0.35 + (k - items.length / 2) * 0.3, target.pos.z + 0.12 * (k % 2)));
+      this.cash.push({ key: `c${this.itemSeq++}`, x: target.pos.x - dir * 0.2, z: target.pos.z - 0.1, amount: cash, def: null });
+      c.brain.bolt(p.pos.x, this.sim.frame);
+      say(['Alright! Take it, take it!', 'Don’t hurt me, here!', 'Have it! Just have it!', 'Fine! It’s yours!']);
+    }
+    for (const o of this.civilians) if (Math.abs(o.f.pos.x - target.pos.x) < 9) o.brain.react(target.pos.x, this.sim.frame);
+    this.events.emit('mug', { name: target.name, resisted, items, cash, heat: MUG_HEAT });
+    return { resisted, items, cash };
   }
 
   private interact(it: Interactable): void {
@@ -1824,6 +1956,9 @@ export class World {
         return;
       case 'item':
         this.pickUp(it.item);
+        return;
+      case 'mug':
+        this.mug(it.target);
         return;
       case 'container':
         if (it.container.requires && !this.progress.has(it.container.requires)) {

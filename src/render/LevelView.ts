@@ -4223,6 +4223,8 @@ export class LevelView {
       const bad = (it.kind === 'exit' && it.locked) || (it.kind === 'lever' && it.done) || (it.kind === 'container' && it.empty);
       if (it.kind === 'exit') this.marker.show(it.x, this.back + 0.3, 0.5, 0.24, bad);
       else if (it.kind === 'item') this.marker.hide();
+      // Someone you could mug: a ring round their feet, red (it's a crime).
+      else if (it.kind === 'mug') this.marker.show(it.x, it.z, 0.32, 0.26, true);
       else {
         const p = this.nearestProp(it.x, it.z);
         if (p) {
