@@ -1,3 +1,4 @@
+import { SIM_HZ } from '../../core/constants';
 import { groundLift } from './ground';
 import { araMocapPose, araPose, mocapClip, mocapStride } from './araPose';
 import { REACTIONS, clipDuration, guardPose, pickClip, reactionPose, strikeClip, strikePose } from './rokoko';
@@ -133,6 +134,8 @@ export class FighterAnimator {
   readonly feet: Record<Side, Foot>;
 
   private lastX: number;
+  /** Render time since the body last moved: the game steps at a fixed 60 Hz, so some frames see no step at all. */
+  private sinceMove = 0;
   private lastZ: number;
   private vx = 0;
   private vz = 0;
@@ -229,15 +232,26 @@ export class FighterAnimator {
     const f = this.f;
     dt = Math.min(0.05, Math.max(1e-4, dt));
 
-    // How fast the body is really moving (walking, lunging, being knocked back).
-    const rawX = (f.pos.x - this.lastX) / dt;
-    const rawZ = (f.pos.z - this.lastZ) / dt;
-    const jumped = Math.hypot(f.pos.x - this.lastX, f.pos.z - this.lastZ) > 1.2;
-    this.lastX = f.pos.x;
-    this.lastZ = f.pos.z;
-    const k = 1 - Math.exp(-28 * dt);
-    this.vx += ((jumped ? 0 : rawX) - this.vx) * k;
-    this.vz += ((jumped ? 0 : rawZ) - this.vz) * k;
+    // How fast the body is really moving (walking, lunging, being knocked back). The game moves people in fixed
+    // 60 Hz steps and a frame can land on none (or two) of them, so speed is measured over the time since the body
+    // last moved, not per frame: measured per frame it dropped to zero and back, and the walk flickered with idle.
+    this.sinceMove += dt;
+    const dx = f.pos.x - this.lastX;
+    const dz = f.pos.z - this.lastZ;
+    const moved = dx !== 0 || dz !== 0;
+    if (moved || this.sinceMove > 2.5 / SIM_HZ) {
+      const span = Math.max(dt, Math.min(this.sinceMove, 0.1));
+      const jumped = Math.hypot(dx, dz) > 1.2;
+      const rawX = jumped ? 0 : dx / span;
+      const rawZ = jumped ? 0 : dz / span;
+      const k = 1 - Math.exp(-28 * span);
+      this.vx += (rawX - this.vx) * k;
+      this.vz += (rawZ - this.vz) * k;
+      this.lastX = f.pos.x;
+      this.lastZ = f.pos.z;
+      this.sinceMove = 0;
+    }
+    const jumped = Math.hypot(dx, dz) > 1.2;
     const speed = Math.hypot(this.vx, this.vz) / this.scale;
 
     // Fighting or just stood about?
