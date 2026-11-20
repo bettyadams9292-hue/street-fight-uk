@@ -224,8 +224,8 @@ export function createBikeAsset(id:string):THREE.Group{
      block(.095,.016,.055,-.025,.36,side*.10,dark);
    }
    // Bowden brake and gear cables arc from the bar to the fork and frame.
-   curved([[.35,1.19,.03],[.51,1.16,.045],[.54,.97,.045],[frontX,r+.08,.045]],.0035,dark);
-   curved([[.31,1.19,-.03],[.18,1.05,-.045],[-.12,.92,-.045],[-.31,.66,-.045]],.003,dark);
+   // Superseded by routed brake assembly in V4.
+   // Superseded by routed brake assembly in V4.
    // Rear derailleur and chain tensioner on geared bikes.
    if(!['roadster','step','rental','bmx','fold'].includes(s.kind)){
      line([rearX,r,.084],[rearX-.05,r-.11,.084],.009,dark);
@@ -389,7 +389,7 @@ export function createBikeAsset(id:string):THREE.Group{
    // Stand-up e-scooter gets a properly narrow deck, cable, brake and display.
    block(.88,.014,.15,-.02,.209,0,tyreGroove);
    block(.22,.10,.17,-.29,.15,0,dark);
-   curved([[frontX,1.14,.02],[frontX-.06,1.07,.04],[frontX-.03,.73,.04],[frontX,.47,.04]],.004,dark);
+   // Superseded by routed brake assembly in V4.
    block(.10,.025,.07,frontX,1.21,0,dark);
    block(.045,.004,.025,frontX,1.226,0,glass);
    disk(.035,.025,frontX,1.08,.015,lamp);
@@ -419,8 +419,9 @@ export function createBikeAsset(id:string):THREE.Group{
  const batteryBetween=(corners:number[][],width:number)=>{
    // Side-profile extruded across Z: no vertical floating battery boxes.
    const body=panel(corners,width,dark);
-   const inset=corners.map(([x,y])=>[x*.86,y*.94+.045]);
-   panel(inset,.008,paint).position.z=width/2+.002;
+   const centreX=corners.reduce((v,p)=>v+p[0],0)/corners.length,centreY=corners.reduce((v,p)=>v+p[1],0)/corners.length;
+   const inset=corners.map(([x,y])=>[centreX+(x-centreX)*.87,centreY+(y-centreY)*.87]);
+   const cover=panel(inset,.009,paint);cover.position.z=width/2+.002;
    return body;
  };
  const wire=(points:number[][],radius=.0028)=>{
@@ -445,7 +446,7 @@ export function createBikeAsset(id:string):THREE.Group{
      disk(.013,.009,.04,.77,.10,steel);
    }
    // Keep brake lines near the steering head and fork.
-   wire([[.42,1.17,-.035],[.49,1.12,-.035],[.45,.94,-.035],[frontX,r+.17,-.035]]);
+   // Superseded by routed brake assembly in V4.
    // Saddle under-rails and seat clamp.
    for(const z of [-.045,.045])line([-.32,1.126,z],[-.19,1.127,z],.005,steel);
    block(.06,.018,.09,-.23,1.115,0,dark);
@@ -498,18 +499,62 @@ export function createBikeAsset(id:string):THREE.Group{
      panel([[-.36,.40],[.24,.40],[.29,.47],[-.32,.48]],.22,dark);
    }
    // Cable loops are constrained to the handlebar and fork, not free-floating.
-   wire([[.43,1.08,-.11],[.53,1.03,-.10],[.51,.89,-.10],[frontX,r+.12,-.10]],.0035);
-   wire([[.41,1.08,.10],[.35,.96,.10],[.17,.87,.10]],.003);
+   // Superseded by routed brake assembly in V4.
+   // Superseded by routed brake assembly in V4.
  }
  if(kick){
    // Battery is fully inside deck, not attached to the steering pole.
    block(.72,.035,.14,-.02,.164,0,dark);
-   wire([[frontX,1.16,.04],[frontX+.025,1.07,.045],[frontX,.79,.045],[frontX,.43,.04]],.003);
+   // Superseded by routed brake assembly in V4.
+ }
+
+
+ // V4 mechanical review: one brake-hose system per vehicle, with actual endpoints.
+ // All paths use the side of the frame (Z) and terminate at their respective calipers.
+ const brakeCable=(pts:number[][],r=.0032)=>{
+   const p=pts.map(v=>new THREE.Vector3(v[0],v[1],v[2]));
+   const curve=new THREE.CatmullRomCurve3(p,false,'centripetal',.35);
+   const mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(20,p.length*12),r,7,false),rubber);
+   g.add(mesh);
+ };
+ if(kick){
+   // Rear drum/disc brake routed from the left lever down the stem then along the deck.
+   brakeCable([[frontX-.12,1.20,-.09],[frontX-.02,1.14,-.08],[frontX+.025,.95,-.06],[frontX+.02,.36,-.06],[.43,.20,-.07],[-.31,.19,-.08],[rearX+.05,r+.035,-.07]],.0027);
+   block(.06,.025,.05,rearX+.05,r+.04,-.07,dark);
+ }else if(moto){
+   // Hydraulic front brake: master cylinder -> slack loop -> fork guide -> caliper.
+   brakeCable([[.46,1.085,-.22],[.55,1.12,-.18],[.59,1.01,-.13],[.54,.88,-.13],[.60,.70,-.12],[frontX-.065,r+.12,-.10]],.004);
+   // Rear brake line follows the swingarm rather than crossing the engine or fairings.
+   brakeCable([[-.17,.54,-.12],[-.30,.49,-.13],[-.48,.43,-.12],[rearX+.07,r+.07,-.10]],.0033);
+   block(.065,.065,.046,frontX-.07,r+.11,-.10,dark);
+   block(.065,.05,.042,rearX+.07,r+.07,-.10,dark);
+   // Clutch/throttle wiring follows the headstock and top of the engine.
+   brakeCable([[.41,1.08,.19],[.36,1.13,.14],[.28,1.01,.11],[.20,.85,.12],[.03,.78,.12]],.0025);
+ }else{
+   // Front brake Bowden cable with a steering slack loop and secured fork route.
+   brakeCable([[.43,1.19,-.13],[.51,1.23,-.11],[.54,1.13,-.09],[.47,.98,-.075],[.50,.80,-.068],[frontX-.04,r+.18,-.063]],.0025);
+   // Rear brake follows the top tube and seat stay. It never cuts across the wheel.
+   const rearPath=s.kind==='step'||s.kind==='rental'?
+     [[.23,1.17,.09],[.14,1.11,.08],[-.03,.85,.075],[-.24,.75,.068],[-.40,.56,.063],[rearX+.06,r+.16,.062]]:
+     [[.23,1.17,.09],[.12,1.17,.075],[-.16,1.00,.07],[-.27,.86,.065],[-.41,.62,.063],[rearX+.06,r+.16,.062]];
+   brakeCable(rearPath,.0023);
+   block(.05,.04,.034,frontX-.04,r+.18,-.063,dark);
+   block(.05,.04,.034,rearX+.06,r+.16,.062,dark);
+   // Clip hardware keeps cables against the frame and fork.
+   for(const p of [[.47,.98,-.075],[-.27,.86,.065]])sphere(.008,p[0],p[1],p[2],steel);
+ }
+ // Brake calipers now share the same wheel-side plane as the cables.
+ // Frame-side battery connector has a short wire run into the controller.
+ if(s.electric&&!kick){
+   const z=moto?.14:.105;
+   const batteryPort=moto?[-.02,.67,z]:[.04,.76,z];
+   const controller=moto?[-.16,.56,z]:[-.12,.54,z];
+   brakeCable([batteryPort,[batteryPort[0]-.05,batteryPort[1]-.09,z],controller],.003);
  }
 
  // Ground alignment and stable metadata for later asset placement.
  g.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(g);
  for(const child of g.children)child.position.y-=bounds.min.y;
- g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,polishVersion:3,gameplayIntegrated:false};
+ g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,polishVersion:4,gameplayIntegrated:false};
  return g;
 }
