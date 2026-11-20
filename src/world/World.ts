@@ -26,6 +26,8 @@ import type { WeaponData, WeaponId } from '../combat/Weapons';
 import { SIM_HZ } from '../core/constants';
 import { EventBus } from '../core/EventBus';
 import { Rng } from '../core/Rng';
+import { gangMods, HEAT, huntChance, KNOWN_FACE_HEAT } from '../progress/heat';
+import { ARREST_HEAT } from './robbery';
 import { Simulation } from '../core/Simulation';
 import { getStyle } from '../data/styles';
 import { Fighter } from '../fighter/Fighter';
@@ -99,7 +101,15 @@ export interface WorldEvents {
   /** An enemy shouts: a taunt, or the warning before jumping in. */
   'enemy:say': { fighter: Fighter; text: string; kind: 'taunt' | 'warn' };
   /** You mugged a passer-by: they handed it over and ran, or squared up. */
-  mug: { name: string; resisted: boolean; items: string[]; cash: number; heat: number };
+  mug: { name: string; resisted: boolean; items: string[]; cash: number; heat: number; witnesses: number; hero: string | null; police: number | null; known: boolean };
+  /** You put down someone who was only defending themselves or someone else. */
+  assault: { name: string; heat: number };
+  /** The district's crew have come looking for you (gang heat). */
+  'gang:hunt': { district: string; count: number; gang: number };
+  /** You put down the lads they sent. */
+  'gang:beaten': { district: string; gang: number };
+  /** You walked into a district where people know your face from muggings. */
+  'known:face': { district: string };
   'duel:start': { kind: 'spar' | 'challenge'; name: string };
   'duel:end': { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
 }
@@ -151,8 +161,26 @@ export type BailResult = { ok: true; dropped: number; grudge: boolean; share: nu
 export const BAIL_MIN = 0.25;
 export const BAIL_MAX = 0.6;
 
-/** Heat for mugging someone in the street (handed over or not). */
-export const MUG_HEAT = 8;
+/** Police heat for mugging someone in the street (handed over or not); street heat is HEAT.mug.street. */
+export const MUG_HEAT = HEAT.mug.police;
+/** More police heat for each person who saw it (they'll describe you). */
+export const MUG_WITNESS_HEAT = HEAT.witness.police;
+/** Putting down someone who only fought for their own stuff, or stepped in to help: assault. */
+export const ASSAULT_HEAT = HEAT.assault.police;
+
+/**
+ * The chance someone rings the police: more witnesses, and the worse the locals think of you (street heat), the
+ * likelier; once the police already want you here (ARREST_HEAT) it's certain.
+ */
+export function policeCallChance(witnesses: number, street: number, police: number): number {
+  if (police >= ARREST_HEAT) return 1;
+  return Math.min(0.9, (witnesses > 0 ? 0.12 + witnesses * 0.14 : 0.04) + street / 250);
+}
+
+/** Someone steady on the street stepping in to help: likelier the worse the locals think of you. */
+export function heroChance(street: number): number {
+  return Math.min(0.65, 0.3 + street / 250);
+}
 
 /** What a passer-by has on them that's worth taking: what you can see they're wearing, then their pockets. */
 export function valuablesOf(a: CharacterAppearance): string[] {
@@ -612,8 +640,15 @@ export class World {
     const p = this.player;
     const frame = this.sim.frame;
     const calm = !this.activeEncounter && !this.locked && !this.enemies.some((e) => !e.isKO && !this.bail?.crew.has(e));
+    // A known face round here: the nervy and the nosy cross the road when you get close (the steady don't).
+    const known = this.progress.heatIn().street >= KNOWN_FACE_HEAT;
+    if (known && !this.knownSaid && this.civilians.length) {
+      this.knownSaid = true;
+      this.events.emit('known:face', { district: this.level.district });
+    }
     for (const c of this.civilians) {
       if (calm) c.brain.calm(frame);
+      if (known && calm && frame % 15 === c.f.id % 15 && c.brain.temper !== 'steady' && c.brain.activity !== 'flee' && Math.abs(c.f.pos.x - p.pos.x) < 2.4 && Math.abs(c.f.pos.z - p.pos.z) < 1.6) c.brain.react(p.pos.x, frame);
       c.f.ambientPose = c.brain.pose;
       // Walkers passing a free hotspot sometimes stop there.
       if (c.brain.activity === 'walk' && frame % 20 === c.f.id % 20) {
@@ -728,6 +763,7 @@ export class World {
       civilians?: boolean;
     },
   ) {
+    progress.enterDistrict(level.district);
     this.stations = [...(level.stations ?? [])];
     const obstacles: Obstacle[] = [];
     for (const p of level.props) {
@@ -852,6 +888,11 @@ export class World {
         }
       }
       if (fighter === this.player) return;
+      if (this.mugLoot.has(fighter) && !this.assaulted.has(fighter)) {
+        this.assaulted.add(fighter);
+        progress.addHeatOf(HEAT.assault);
+        this.events.emit('assault', { name: fighter.name, heat: ASSAULT_HEAT });
+      }
       this.koAt.set(fighter, this.sim.frame);
       this.tokens.release(fighter);
       if (fighter.team === 'enemy' && this.brains.get(fighter) instanceof FighterAI) progress.save.stats.kos++;
@@ -862,6 +903,54 @@ export class World {
     if (street && progress.save.heat >= 40 && this.lootRng.next() < progress.save.heat / 120) {
       this.policeDue = { at: SIM_HZ * 6, count: progress.save.heat >= 75 ? 3 : 2 };
     }
+    // Gang heat: their crew may come looking for you a few seconds after you walk in (once a visit).
+    const gang = progress.heatIn().gang;
+    if (street && !level.deep && level.encounters.length && huntChance(gang) > 0 && this.lootRng.next() < huntChance(gang)) this.huntDue = SIM_HZ * (6 + this.lootRng.next() * 6);
+  }
+
+  /** Frame the district's crew turn up looking for you (gang heat), or null. */
+  private huntDue: number | null = null;
+  /** The lads they sent: put them all down and their grudge eases (HEAT.beatHunters). */
+  private hunters: Fighter[] = [];
+
+  /** Their crew's grudge on one of their lads (progress/heat.ts gangMods). */
+  private applyGrudge(f: Fighter, g: { dealt: number; taken: number }): void {
+    f.stats.addModifier({ id: 'grudge_dealt', source: 'grudge', stat: 'damageMult', mul: g.dealt });
+    f.stats.addModifier({ id: 'grudge_taken', source: 'grudge', stat: 'damageTakenMult', mul: g.taken });
+  }
+
+  private updateHunt(): void {
+    const frame = this.sim.frame;
+    if (this.hunters.length && this.hunters.every((f) => f.isKO || !this.enemies.includes(f))) {
+      if (this.hunters.some((f) => f.isKO)) {
+        this.progress.addHeatOf(HEAT.beatHunters);
+        this.events.emit('gang:beaten', { district: this.level.district, gang: this.progress.heatIn().gang });
+      }
+      this.hunters = [];
+    }
+    if (this.huntDue === null || frame < this.huntDue) return;
+    // Not into the middle of something else: they wait.
+    if (this.activeEncounter || this.locked || this.duel || this.player.isKO || this.progress.save.property.riding) {
+      this.huntDue = frame + SIM_HZ * 3;
+      return;
+    }
+    this.huntDue = null;
+    const gang = this.progress.heatIn().gang;
+    const n = gang >= 80 ? 3 : 2;
+    const g = gangMods(gang);
+    const p = this.player;
+    const side = this.lootRng.next() < 0.5 ? -1 : 1;
+    const ids: ArchetypeId[] = ['hothead', 'thug', 'brawler'];
+    for (let i = 0; i < n; i++) {
+      const f = this.spawnEnemy(ids[i % ids.length], this.spawnX(null, i) , this.spawnZ(i));
+      // From off-screen, one side or both.
+      f.pos.x = Math.max(this.arena.bounds.minX + 0.5, Math.min(this.arena.bounds.maxX - 0.5, p.pos.x + (i % 2 ? -side : side) * (9 + i)));
+      if (g) this.applyGrudge(f, g);
+      this.hunters.push(f);
+    }
+    this.events.emit('enemy:say', { fighter: this.hunters[0], text: ['There he is!', 'That’s him. Get him!', 'You’ve got some front coming back here.', 'Remember us?'][Math.floor(this.lootRng.next() * 4)], kind: 'taunt' });
+    for (const c of this.civilians) c.brain.react(p.pos.x, frame);
+    this.events.emit('gang:hunt', { district: this.level.district, count: n, gang });
   }
 
   private clearedKey(def: EncounterDef): string {
@@ -1053,6 +1142,7 @@ export class World {
     this.checkSecrets();
     this.updateEncounters();
     this.updatePolice();
+    this.updateHunt();
     this.cleanUpKOs();
     this.updateCompanion();
     this.updateInjuries();
@@ -1340,7 +1430,9 @@ export class World {
         const z = Math.max(b.minZ + 0.2, Math.min(b.maxZ - 0.2, p.pos.z + (this.lootRng.next() - 0.5) * 1.2));
         this.cash.push({ key: `c${this.itemSeq++}`, x, z, amount, def: null, bait: true });
       }
-    } else this.progress.set(this.grudgeKey);
+    }
+    // Their crew don't forget it: a bit for running, a lot for running with nothing for them.
+    this.progress.addHeatOf(dropped > 0 ? HEAT.bail : HEAT.bailBroke);
     // The fight's off; it'll be waiting when you come back (after they've finished with your money).
     if (e) {
       e.status = 'waiting';
@@ -1440,31 +1532,24 @@ export class World {
       const def = BOSSES[e.def.boss];
       e.bossDef = def;
       e.boss = this.spawnBoss(def, e);
+      // You've taken on their boss: their crew are involved now (gang heat can rise) until you beat them.
+      if (!this.progress.has(def.flag)) this.progress.gangProvoked();
       this.tune(e.boss, e, true);
       e.enemies.push(e.boss);
     }
     this.spawnWave(e);
     this.events.emit('encounter:start', { id: e.def.id, boss: e.bossDef });
-    if (this.progress.has(this.grudgeKey)) this.events.emit('grudge', { district: this.level.district });
-  }
-
-  /** The district remembers you ran with nothing to give them (bailOut). */
-  get grudgeKey(): string {
-    return `grudge:${this.level.district}`;
+    if (gangMods(this.progress.heatIn().gang)) this.events.emit('grudge', { district: this.level.district });
   }
 
   private spawnWave(e: EncounterState): void {
     const wave = e.def.waves[e.wave];
     if (!wave) return;
-    const grudge = this.progress.has(this.grudgeKey);
+    const grudge = gangMods(this.progress.heatIn().gang);
     wave.enemies.forEach((spec, i) => {
       const f = this.spawnEnemy(spec.archetype, this.spawnX(e, i), this.spawnZ(i), spec.weapon);
       this.tune(f, e, false);
-      // They remember you legging it with nothing for them: twice as hard (hit twice as hard, take half).
-      if (grudge) {
-        f.stats.addModifier({ id: 'grudge_dealt', source: 'grudge', stat: 'damageMult', mul: 2 });
-        f.stats.addModifier({ id: 'grudge_taken', source: 'grudge', stat: 'damageTakenMult', mul: 0.5 });
-      }
+      if (grudge) this.applyGrudge(f, grudge);
       e.enemies.push(f);
     });
   }
@@ -1498,8 +1583,10 @@ export class World {
   private finishEncounter(e: EncounterState): void {
     e.status = 'cleared';
     this.arena.lock = null;
-    // Beat them: the grudge is settled.
-    if (this.progress.has(this.grudgeKey)) delete this.progress.save.flags[this.grudgeKey];
+    // Their crew: beat their boss and they're finished with you; beat them while they're after you and some of
+    // that settles; pick fights when they weren't bothered and they start to be.
+    if (e.bossDef) this.progress.gangDone();
+    else this.progress.addHeatOf(gangMods(this.progress.heatIn().gang) ? { gang: -15 } : HEAT.beatCrew);
     const def = e.def;
     let cash = def.reward.cash;
     let xp = def.reward.xp;
@@ -1855,6 +1942,8 @@ export class World {
   private mugged = new WeakSet<Fighter>();
   /** What a passer-by who fought back had on them: dropped when you put them down. */
   private mugLoot = new Map<Fighter, { items: string[]; cash: number }>();
+  private assaulted = new WeakSet<Fighter>();
+  private knownSaid = false;
 
   /**
    * Someone close enough to mug, when there's nothing else to use: out of a fight, on foot, and only people
@@ -1899,32 +1988,59 @@ export class World {
     const worth = items.reduce((t, id) => t + (ITEMS[id]?.value ?? 0), 0) + cash;
     const resisted = rng.next() < mugResistChance(c.brain.temper, male, worth, this.progress.save.level);
     this.mugged.add(target);
-    this.progress.addHeat(MUG_HEAT);
+    // Who saw it (before they scatter): each one is someone who'll describe you.
+    const witnesses = this.civilians.filter((o) => o !== c && !o.f.isKO && Math.abs(o.f.pos.x - target.pos.x) < 9);
+    const wasKnown = this.progress.heatIn().street >= KNOWN_FACE_HEAT;
+    const heat = HEAT.mug.police + witnesses.length * HEAT.witness.police;
+    const h = this.progress.addHeatOf({ police: heat, street: HEAT.mug.street + witnesses.length * HEAT.witness.street });
     target.facing = p.pos.x < target.pos.x ? -1 : 1;
-    const say = (lines: string[]) => this.events.emit('enemy:say', { fighter: target, text: lines[Math.floor(rng.next() * lines.length)], kind: 'taunt' });
+    const say = (f: Fighter, lines: string[]) => this.events.emit('enemy:say', { fighter: f, text: lines[Math.floor(rng.next() * lines.length)], kind: 'taunt' });
     if (resisted) {
-      // Off the street and into the fight: their own walk speed goes, they fight at full pace.
-      c.brain.release();
-      this.civilians.splice(i, 1);
-      target.stats.removeModifier('stroll');
-      target.stats.removeModifier('civ_hurry');
-      const arch: ArchetypeId = c.brain.temper === 'steady' && male ? 'brawler' : 'thug';
-      this.turnHostile(target, arch);
-      this.archetypeOf.set(target, 'mugged');
-      this.mugLoot.set(target, { items, cash });
-      (target as { name: string }).name = (male ? GRUNT_NAMES.male : GRUNT_NAMES.female)[target.id % (male ? GRUNT_NAMES.male : GRUNT_NAMES.female).length];
-      say(male ? ['You what? Come on then!', 'Try it, pal.', 'Not a chance. Come on!', 'You picked the wrong one.'] : ['Get your hands off me!', 'Try it. Go on.', 'Not a chance!']);
+      this.squareUp(c, c.brain.temper === 'steady' && male ? 'brawler' : 'thug', { items, cash });
+      say(target, male ? ['You what? Come on then!', 'Try it, pal.', 'Not a chance. Come on!', 'You picked the wrong one.'] : ['Get your hands off me!', 'Try it. Go on.', 'Not a chance!']);
     } else {
       // Handed over: dropped at their feet, and they're off.
       const dir = target.pos.x >= p.pos.x ? 1 : -1;
       items.forEach((id, k) => this.dropOnGround(this.progress.newStack(id, 1, { stolen: true }), target.pos.x - dir * 0.35 + (k - items.length / 2) * 0.3, target.pos.z + 0.12 * (k % 2)));
       this.cash.push({ key: `c${this.itemSeq++}`, x: target.pos.x - dir * 0.2, z: target.pos.z - 0.1, amount: cash, def: null });
       c.brain.bolt(p.pos.x, this.sim.frame);
-      say(['Alright! Take it, take it!', 'Don’t hurt me, here!', 'Have it! Just have it!', 'Fine! It’s yours!']);
+      say(target, ['Alright! Take it, take it!', 'Don’t hurt me, here!', 'Have it! Just have it!', 'Fine! It’s yours!']);
+    }
+    // A have-a-go hero: someone steady and close by won't just stand and watch.
+    const hero = witnesses.find((o) => o.brain.temper === 'steady' && o.f.appearance.body !== 'female' && !this.mugged.has(o.f) && Math.abs(o.f.pos.x - p.pos.x) < 7);
+    let stepped: Fighter | null = null;
+    if (hero && rng.next() < heroChance(h.street)) {
+      stepped = hero.f;
+      this.mugged.add(hero.f);
+      this.squareUp(hero, 'brawler', { items: [], cash: Math.round(5 + rng.next() * 20) });
+      say(hero.f, ['Oi! Leave them alone!', 'Pick on someone your own size!', 'Not on my street, pal.', 'Right, you. Come here.']);
+    }
+    // Someone rings the police.
+    let police: number | null = null;
+    if (!this.policeDue && rng.next() < policeCallChance(witnesses.length, h.street, h.police)) {
+      const wanted = h.police >= ARREST_HEAT;
+      police = Math.round(wanted ? 12 : 20 + rng.next() * 15);
+      this.policeDue = { at: this.sim.frame + police * SIM_HZ, count: wanted ? 3 : 2 };
+      this.policeSpawned = false;
     }
     for (const o of this.civilians) if (Math.abs(o.f.pos.x - target.pos.x) < 9) o.brain.react(target.pos.x, this.sim.frame);
-    this.events.emit('mug', { name: target.name, resisted, items, cash, heat: MUG_HEAT });
+    this.events.emit('mug', { name: target.name, resisted, items, cash, heat, witnesses: witnesses.length, hero: stepped?.name ?? null, police, known: !wasKnown && h.street >= KNOWN_FACE_HEAT });
     return { resisted, items, cash };
+  }
+
+  /** A passer-by off the street and into a fight: their walking pace goes, they fight at full speed, with a name. */
+  private squareUp(c: { f: Fighter; brain: CivilianBrain }, arch: ArchetypeId, loot: { items: string[]; cash: number }): void {
+    const f = c.f;
+    c.brain.release();
+    const i = this.civilians.indexOf(c);
+    if (i >= 0) this.civilians.splice(i, 1);
+    f.stats.removeModifier('stroll');
+    f.stats.removeModifier('civ_hurry');
+    this.turnHostile(f, arch);
+    this.archetypeOf.set(f, 'mugged');
+    this.mugLoot.set(f, loot);
+    const names = f.appearance.body === 'female' ? GRUNT_NAMES.female : GRUNT_NAMES.male;
+    (f as { name: string }).name = names[f.id % names.length];
   }
 
   private interact(it: Interactable): void {

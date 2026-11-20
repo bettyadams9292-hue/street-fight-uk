@@ -13,12 +13,25 @@ import { TAXI_COST, moHint } from '../hub';
 import { LEVELS } from '../../world/levels';
 import { embedPortraitRules } from './embedCss';
 import { mapApp } from './mapApp';
+import { GANG_GRUDGE, GANG_HUNT, HEAT_KINDS, heatWord, KNOWN_FACE_HEAT, type HeatKind } from '../../progress/heat';
+import { ARREST_HEAT } from '../../world/robbery';
 import { wikiApp, type WikiDeps, type WikiPage } from './wikiApp';
 import type { Device } from '../moveList';
 
 export interface PhoneMessage {
   text: string;
   kind: string;
+  /** When it last came in (Date.now()). */
+  at?: number;
+  /** How many times it's come in. */
+  count?: number;
+}
+
+/** "now", "4m", "2h": how long ago, the way a phone says it. */
+export function ago(at: number | undefined, now = Date.now()): string {
+  if (!at) return '';
+  const s = Math.max(0, Math.round((now - at) / 1000));
+  return s < 45 ? 'now' : s < 3600 ? `${Math.max(1, Math.round(s / 60))}m` : s < 86400 ? `${Math.round(s / 3600)}h` : `${Math.round(s / 86400)}d`;
 }
 
 export interface PhoneDeps {
@@ -53,7 +66,7 @@ export interface PhoneDeps {
   sound(kind: 'open' | 'close' | 'tap'): void;
 }
 
-type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'jobs' | 'house' | 'embed' | 'map' | 'wiki';
+type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'jobs' | 'heat' | 'house' | 'embed' | 'map' | 'wiki';
 
 interface AppDef {
   id: string;
@@ -277,6 +290,7 @@ export class Phone {
       { id: 'cabs', name: 'Cabs', icon: 'car_hatch', open: () => this.go('cabs') },
       { id: 'bank', name: 'CaliBank', icon: 'coins', open: () => this.go('bank') },
       { id: 'jobs', name: 'Jobs', icon: 'target_skull', open: () => this.go('jobs') },
+      { id: 'heat', name: 'Heat', icon: 'police', open: () => this.go('heat') },
       { id: 'crew', name: 'Crew', icon: 'crew', open: () => this.launch(() => this.d.openMe('crew'), 'Crew') },
       { id: 'me', name: 'Me', icon: 'fist', open: () => this.launch(() => this.d.openMe('character'), 'Me') },
       { id: 'house', name: 'Home', icon: 'house', open: () => this.go('house') },
@@ -312,8 +326,8 @@ export class Phone {
   // ---- apps --------------------------------------------------------------------------------------
 
   private appScreen(app: AppId): HTMLElement {
-    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Dave’s Cabs', bank: 'CaliBank', jobs: 'Jobs', house: 'Home', embed: '', map: 'Maps', wiki: 'GraftWiki' };
-    const body = app === 'messages' ? this.messages() : app === 'cabs' ? this.cabs() : app === 'bank' ? this.bank() : app === 'jobs' ? this.jobs() : this.house();
+    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Dave’s Cabs', bank: 'CaliBank', jobs: 'Jobs', heat: 'Heat', house: 'Home', embed: '', map: 'Maps', wiki: 'GraftWiki' };
+    const body = app === 'messages' ? this.messages() : app === 'cabs' ? this.cabs() : app === 'bank' ? this.bank() : app === 'jobs' ? this.jobs() : app === 'heat' ? this.heat() : this.house();
     return h(
       'div',
       { class: `ph-appview view-${app}` },
@@ -341,7 +355,10 @@ export class Phone {
     }
     out.push(h('div', { class: 'ph-sec', text: 'Recent' }));
     if (!log.length) out.push(h('p', { class: 'ph-empty', text: 'Nothing new.' }));
-    for (const m of [...log].reverse()) out.push(h('div', { class: `ph-note ${m.kind}` }, h('span', { text: m.text })));
+    // Newest first, each with how long ago it came in.
+    const recent = [...log].reverse().sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
+    for (const m of recent)
+      out.push(h('div', { class: `ph-note ${m.kind}` }, h('span', { text: m.text }), h('small', { class: 'ph-ago', text: `${(m.count ?? 1) > 1 ? `×${m.count}  ` : ''}${ago(m.at)}` })));
     return out;
   }
 
@@ -371,6 +388,40 @@ export class Phone {
       h('div', { class: 'ph-what' }, h('b', { text: name }), h('span', { text: opt.ok ? where : opt.why ?? where })),
       h('button', { class: 'ph-btn', disabled: !opt.ok, onclick: () => this.leave(() => this.d.travel(area, opt)) }, opt.kind === 'home' ? 'Go' : `£${opt.cost}`),
     );
+  }
+
+  /** Heat, district by district: where you are first, then the hottest. */
+  private heat(): HTMLElement[] {
+    const p = this.d.progress()!;
+    const map = p.save.districtHeat;
+    const here = p.here;
+    const total = (d: string) => HEAT_KINDS.reduce((t, k) => t + p.heatIn(d)[k], 0);
+    const names = [...new Set([here, ...Object.keys(map)].filter(Boolean))].sort((a, b) => (a === here ? -1 : b === here ? 1 : total(b) - total(a)));
+    const LABEL: Record<HeatKind, string> = { police: 'Police', street: 'Locals', gang: 'Gang' };
+    const card = (d: string) => {
+      const h0 = p.heatIn(d);
+      const notes: string[] = [];
+      if (h0.police >= ARREST_HEAT) notes.push('Wanted: lose a fight here and you’re nicked.');
+      else if (h0.police >= 40) notes.push('The police may be waiting when you arrive.');
+      if (h0.street >= KNOWN_FACE_HEAT) notes.push('People know your face.');
+      if (p.gangOn(d) && h0.gang < GANG_GRUDGE) notes.push('You’ve taken on their boss: their crew are watching you.');
+      if (h0.gang >= GANG_HUNT) notes.push('Their crew are looking for you.');
+      else if (h0.gang >= GANG_GRUDGE) notes.push('Their crew come at you harder.');
+      return h('div', { class: `ph-heat${d === here ? ' here' : ''}` },
+        h('div', { class: 'ph-heat-head' }, h('b', { text: d }), d === here ? h('span', { class: 'ph-heat-here', text: 'You’re here' }) : null),
+        ...HEAT_KINDS.map((k) => h('div', { class: `ph-heat-row k-${k}` },
+          h('span', { class: 'ph-heat-k', text: LABEL[k] }),
+          h('span', { class: 'ph-heat-bar' }, h('i', { style: `width:${h0[k]}%` })),
+          h('span', { class: 'ph-heat-w', text: k === 'gang' && !p.gangOn(d) && !h0.gang ? 'Not involved' : heatWord(h0[k]) }),
+        )),
+        notes.length ? h('p', { class: 'ph-heat-note', text: notes.join(' ') }) : null,
+      );
+    };
+    const out: HTMLElement[] = [h('p', { class: 'ph-heat-intro', text: 'What the police, the locals and the gangs think of you. It all cools off as you move about.' })];
+    if (!names.length) out.push(h('p', { class: 'ph-empty', text: 'Nobody’s looking for you. Yet.' }));
+    for (const d of names) out.push(card(d));
+    out.push(h('button', { class: 'ph-link', onclick: () => ((this.wikiPage = 'heat'), this.go('wiki')) , text: 'How heat works' }));
+    return out;
   }
 
   private bank(): HTMLElement[] {

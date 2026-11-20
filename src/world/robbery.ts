@@ -10,6 +10,7 @@ import { ITEMS } from '../items/items';
 import { SHOP_STOCK } from '../items/shops';
 import type { Progress } from '../progress/Progress';
 import type { World } from './World';
+import { HEAT } from '../progress/heat';
 
 /** Trips the shop stays shut after a robbery. */
 export const ROBBERY_CLOSED_TRIPS = 8;
@@ -68,6 +69,7 @@ export function robShop(p: Progress, w: World, shopId: string, keeper: Fighter |
   p.save.stats.robberies++;
   const heat = 45 + times * 15;
   p.addHeat(heat);
+  p.addHeatOf(HEAT.robbery);
   // Grab what's on display: fewer each time (they've moved the good stuff), all marked stolen.
   const pool = ROBBABLE[shopId]?.grab ?? [];
   const grabbed: string[] = [];
@@ -117,6 +119,8 @@ export function arrest(p: Progress): { fine: number; seized: number } {
   const seized = p.confiscateStolen();
   const fine = arrestFine(p.save.cash.pocket, p.save.cash.bank, p.save.level);
   p.pay(fine);
+  // The police where you were nicked have had their man; elsewhere they still remember.
+  p.setHeat('police', 0);
   p.save.heat = 0;
   p.save.stats.arrests++;
   return { fine, seized };
