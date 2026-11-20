@@ -192,7 +192,12 @@ export class Game {
     this.hud.setZoomed(0);
     this.phone = new Phone({
       progress: () => this.progress,
-      here: () => (this.world ? { area: this.world.level.id as AreaId, calm: this.calm() } : null),
+      here: () => (this.world ? { area: this.world.level.id as AreaId, calm: this.calm(), x: this.world.player.pos.x } : null),
+      setDestination: (area) => {
+        if (!this.progress) return;
+        this.progress.save.destination = area;
+        this.saveGame();
+      },
       objective: () => this.hud.objectiveText(),
       messages: () => this.hud.messages(),
       markRead: () => this.hud.markRead(),
@@ -213,23 +218,19 @@ export class Game {
         this.backToPlay();
         this.openEditHome();
       },
-      openMap: () => {
-        this.backToPlay();
-        this.openMap();
-      },
-      openBag: () => {
-        this.backToPlay();
-        this.openInventory();
-      },
-      openMe: (tab) => {
-        this.backToPlay();
-        this.openProfile(tab);
-      },
-      openSettings: () => {
-        // Settings over the pause menu, so Back lands somewhere you can resume from.
-        this.backToPlay();
-        this.pause();
-        this.ui.push(settingsScreen(this.settings, this.ui));
+      // These open their screens inside the phone (the UI manager's host is the phone's app view).
+      openMap: () => this.openMap(),
+      openBag: () => this.openInventory(),
+      openMe: (tab) => this.openProfile(tab),
+      openSettings: () => this.ui.replaceAll(settingsScreen(this.settings, this.ui)),
+      host: (el) => this.ui.setHost(el),
+      hosting: () => this.ui.hosted && this.ui.isOpen,
+      closeHosted: () => {
+        const top = this.ui.top;
+        if (top?.onBack) top.onBack();
+        else this.ui.replaceAll(null);
+        // Whatever it left open (a confirm), it all goes.
+        if (this.ui.isOpen && this.ui.hosted) this.ui.replaceAll(null);
       },
       shown: (open, launching) => {
         if (open) {
@@ -255,6 +256,7 @@ export class Game {
 
     this.input.onMenu((a, src, fightKey) => this.onMenuAction(a, src, fightKey));
     uiRoot.append(this.phone.el);
+    this.ui.onHostEmpty = () => this.phone.hostEmptied();
     window.addEventListener('keydown', (e) => this.onKey(e));
 
     // Audio can only start after a user gesture.
@@ -541,6 +543,8 @@ export class Game {
 
   /** Back to the game from a station that opened nothing (or handed over to something else): controls back too. */
   private backToPlay(): void {
+    // With the phone up, play stays stopped: closing an app inside it goes back to its home screen.
+    if (this.phone?.isOpen) return;
     this.state = 'playing';
     this.accumulator = 0;
     this.input.flush();
@@ -550,6 +554,7 @@ export class Game {
   private resume(): void {
     if (this.state !== 'paused') return;
     this.ui.replaceAll(null);
+    if (this.phone?.isOpen) return;
     this.state = 'playing';
     this.accumulator = 0;
     this.input.flush();
@@ -616,6 +621,12 @@ export class Game {
 
   /** Build an area and drop the player in. Saves where you are so a closed tab resumes here. */
   private enterArea(area: AreaId, entry: string, opts: { carry?: { health: number; stamina: number } | null; at?: { x: number; z: number } } = {}): void {
+    // Reloading the area (new clothes, a crew change, a cab): the phone goes away first, no animation.
+    if (this.phone?.isOpen) {
+      this.ui.setHost(null);
+      this.ui.replaceAll(null);
+      this.phone.dismiss();
+    }
     const p = this.progress!;
     this.house.abort();
     this.audio.stopLoops();
@@ -1858,6 +1869,12 @@ export class Game {
     const w = this.world;
     const p = this.progress;
     if (!w || !p) return;
+    // Off in a cab (from the map inside the phone): put the phone away first.
+    if (this.phone.isOpen) {
+      this.ui.setHost(null);
+      this.ui.replaceAll(null);
+      this.phone.dismiss();
+    }
     if (opt.kind === 'home') {
       this.ui.replaceAll(null);
       this.state = 'playing';
@@ -2162,6 +2179,8 @@ export class Game {
     this.audio.unlock();
     if (this.phone.isOpen) {
       if (a === 'phone') this.phone.close();
+      // An app's screen inside the phone takes its own keys (Back closes it, back to the phone's home).
+      else if (this.ui.isOpen && this.ui.hosted) this.ui.handle(a, src);
       else if (a === 'back' || a === 'pause') this.phone.back();
       return;
     }

@@ -11,6 +11,8 @@ import type { AreaId, Progress } from '../../progress/Progress';
 import { cabStop, onMap, place, places, travelOptions, unlocked, type TravelOption } from '../../map/worldMap';
 import { TAXI_COST, moHint } from '../hub';
 import { LEVELS } from '../../world/levels';
+import { embedPortraitRules } from './embedCss';
+import { mapApp } from './mapApp';
 
 export interface PhoneMessage {
   text: string;
@@ -20,7 +22,9 @@ export interface PhoneMessage {
 export interface PhoneDeps {
   progress(): Progress | null;
   /** Where you are, and whether it's calm enough to leave (no fight, no police). */
-  here(): { area: AreaId; calm: boolean } | null;
+  here(): { area: AreaId; calm: boolean; x: number } | null;
+  /** The route on the map (null: none). */
+  setDestination(area: AreaId | null): void;
   objective(): string;
   messages(): { needs: { key: string; tip: string; urgency: number }[]; log: PhoneMessage[] };
   markRead(): void;
@@ -34,12 +38,18 @@ export interface PhoneDeps {
   openBag(): void;
   openMe(tab: 'character' | 'crew'): void;
   openSettings(): void;
+  /** Screens go inside this element while an app shows them (null: back over the game). */
+  host(el: HTMLElement | null): void;
+  /** Is a screen showing inside the phone? */
+  hosting(): boolean;
+  /** Close the screen showing inside the phone, as its own Back would. */
+  closeHosted(): void;
   /** The phone opened or closed: stop and start play (`launching`: an app opens full screen next). */
   shown(open: boolean, launching?: boolean): void;
   sound(kind: 'open' | 'close' | 'tap'): void;
 }
 
-type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'jobs' | 'house';
+type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'jobs' | 'house' | 'embed' | 'map';
 
 interface AppDef {
   id: string;
@@ -99,9 +109,11 @@ export class Phone {
     this.clockTimer = window.setInterval(() => this.tick(), 15000);
   }
 
-  /** Put it away. `then` runs once it's down (an app that opens full screen). */
+  /** Put it away. `then` runs once it's down. */
   close(then?: () => void): void {
     if (!this.openNow) return;
+    if (this.d.hosting()) this.d.closeHosted();
+    this.d.host(null);
     this.openNow = false;
     clearInterval(this.clockTimer);
     this.el.classList.remove('up');
@@ -125,8 +137,28 @@ export class Phone {
 
   /** Back: an app goes back to the home screen; the home screen puts the phone away. */
   back(): void {
-    if (this.app !== 'home') this.go('home');
+    if (this.app === 'embed' && this.d.hosting()) this.d.closeHosted();
+    else if (this.app !== 'home') this.go('home');
     else this.close();
+  }
+
+  /** Put the phone away at once, no animation (the area is reloading under it). */
+  dismiss(): void {
+    if (!this.openNow) return;
+    this.openNow = false;
+    clearInterval(this.clockTimer);
+    this.d.host(null);
+    this.el.classList.remove('up', 'leaving');
+    this.el.classList.add('off');
+    this.el.setAttribute('aria-hidden', 'true');
+    this.d.shown(false, true);
+  }
+
+  /** The screen inside the phone closed: back to the home screen, unless another took its place. */
+  hostEmptied(): void {
+    window.setTimeout(() => {
+      if (this.openNow && this.app === 'embed' && !this.d.hosting()) this.go('home');
+    }, 0);
   }
 
   /** Something new came in: refresh what's showing. */
@@ -136,12 +168,31 @@ export class Phone {
 
   private go(app: AppId): void {
     this.d.sound('tap');
+    if (app !== 'embed') this.d.host(null);
     this.app = app;
     this.render();
   }
 
-  /** Close the phone and open a full-screen app. */
-  private launch(fn: () => void): void {
+  /** A bigger app (Map, Bag, Me, Crew, Settings): its screen opens inside the phone, under the phone's own bar. */
+  private launch(fn: () => void, title = ''): void {
+    this.d.sound('tap');
+    this.app = 'embed';
+    const box = h('div', { class: 'ph-embed' });
+    this.screen.replaceChildren(h('div', { class: 'ph-appview view-embed' },
+      h('div', { class: 'ph-bar' },
+        h('button', { class: 'ph-back', 'aria-label': 'Back', onclick: () => this.back() }, h('img', { src: ICON('arrow_left'), alt: '' })),
+        h('b', { text: title }),
+      ),
+      box,
+    ));
+    this.screen.dataset.app = 'embed';
+    embedPortraitRules();
+    this.d.host(box);
+    fn();
+  }
+
+  /** Put the phone away and then do something in the world (a cab ride, editing the house). */
+  private leave(fn: () => void): void {
     this.d.sound('tap');
     this.close(fn);
   }
@@ -152,9 +203,27 @@ export class Phone {
   }
 
   private render(): void {
+    if (this.app === 'embed') return;
+    if (this.app === 'map') return this.renderMap();
     const view = this.app === 'home' ? this.homeScreen() : this.appScreen(this.app);
     this.screen.replaceChildren(view);
     this.screen.dataset.app = this.app;
+  }
+
+  /** Maps: full-bleed, its own sheet and buttons; a small back button over the map. */
+  private renderMap(): void {
+    const p = this.d.progress();
+    const here = this.d.here();
+    if (!p || !here) return;
+    const view = mapApp({
+      progress: p,
+      here: { area: here.area, x: here.x },
+      calm: here.calm,
+      travel: (area, opt) => this.leave(() => this.d.travel(area, opt)),
+      setDestination: (area) => this.d.setDestination(area),
+    });
+    this.screen.replaceChildren(h('div', { class: 'ph-appview view-map' }, view, h('button', { class: 'pm-back', 'aria-label': 'Back', onclick: () => this.go('home') }, h('img', { src: ICON('arrow_left'), alt: '' }))));
+    this.screen.dataset.app = 'map';
   }
 
   // ---- home screen ---------------------------------------------------------------------------
@@ -163,15 +232,15 @@ export class Phone {
     const unread = () => this.d.unread();
     return [
       { id: 'messages', name: 'Messages', icon: 'bell', open: () => this.go('messages'), badge: unread },
-      { id: 'map', name: 'Map', icon: 'map', open: () => this.launch(() => this.d.openMap()) },
+      { id: 'map', name: 'Maps', icon: 'map', open: () => this.go('map') },
       { id: 'cabs', name: 'Cabs', icon: 'car_hatch', open: () => this.go('cabs') },
       { id: 'bank', name: 'CaliBank', icon: 'coins', open: () => this.go('bank') },
-      { id: 'bag', name: 'Bag', icon: 'backpack', open: () => this.launch(() => this.d.openBag()) },
+      { id: 'bag', name: 'Bag', icon: 'backpack', open: () => this.launch(() => this.d.openBag(), 'Bag') },
       { id: 'jobs', name: 'Jobs', icon: 'target_skull', open: () => this.go('jobs') },
-      { id: 'crew', name: 'Crew', icon: 'crew', open: () => this.launch(() => this.d.openMe('crew')) },
-      { id: 'me', name: 'Me', icon: 'fist', open: () => this.launch(() => this.d.openMe('character')) },
+      { id: 'crew', name: 'Crew', icon: 'crew', open: () => this.launch(() => this.d.openMe('crew'), 'Crew') },
+      { id: 'me', name: 'Me', icon: 'fist', open: () => this.launch(() => this.d.openMe('character'), 'Me') },
       { id: 'house', name: 'Home', icon: 'house', open: () => this.go('house') },
-      { id: 'settings', name: 'Settings', icon: 'gear', open: () => this.launch(() => this.d.openSettings()) },
+      { id: 'settings', name: 'Settings', icon: 'gear', open: () => this.launch(() => this.d.openSettings(), 'Settings') },
     ];
   }
 
@@ -202,7 +271,7 @@ export class Phone {
   // ---- apps --------------------------------------------------------------------------------------
 
   private appScreen(app: AppId): HTMLElement {
-    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Dave’s Cabs', bank: 'CaliBank', jobs: 'Jobs', house: 'Home' };
+    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Dave’s Cabs', bank: 'CaliBank', jobs: 'Jobs', house: 'Home', embed: '', map: 'Maps' };
     const body = app === 'messages' ? this.messages() : app === 'cabs' ? this.cabs() : app === 'bank' ? this.bank() : app === 'jobs' ? this.jobs() : this.house();
     return h(
       'div',
@@ -259,7 +328,7 @@ export class Phone {
   private ride(name: string, where: string, opt: TravelOption, area: AreaId): HTMLElement {
     return h('div', { class: 'ph-row' },
       h('div', { class: 'ph-what' }, h('b', { text: name }), h('span', { text: opt.ok ? where : opt.why ?? where })),
-      h('button', { class: 'ph-btn', disabled: !opt.ok, onclick: () => this.launch(() => this.d.travel(area, opt)) }, opt.kind === 'home' ? 'Go' : `£${opt.cost}`),
+      h('button', { class: 'ph-btn', disabled: !opt.ok, onclick: () => this.leave(() => this.d.travel(area, opt)) }, opt.kind === 'home' ? 'Go' : `£${opt.cost}`),
     );
   }
 
@@ -306,7 +375,7 @@ export class Phone {
     if (dest && LEVELS[dest]) {
       out.push(h('div', { class: 'ph-sec', text: 'Heading to' }), h('div', { class: 'ph-row' },
         h('div', { class: 'ph-what' }, h('b', { text: place(dest).name }), h('span', { text: place(dest).district })),
-        h('button', { class: 'ph-btn', onclick: () => this.launch(() => this.d.openMap()) }, 'Map'),
+        h('button', { class: 'ph-btn', onclick: () => this.go('map') }, 'Map'),
       ));
     }
     return out;
@@ -324,7 +393,7 @@ export class Phone {
     }
     return [
       h('div', { class: 'ph-hero' }, h('img', { src: ICON('house'), alt: '' }), h('div', {}, h('b', { text: '14 Tanner Road' }), h('span', { text: 'Move, turn, recolour, store or sell your furniture.' }))),
-      h('button', { class: 'ph-btn wide', onclick: () => this.launch(() => this.d.editHome()) }, 'Edit home'),
+      h('button', { class: 'ph-btn wide', onclick: () => this.leave(() => this.d.editHome()) }, 'Edit home'),
     ];
   }
 }

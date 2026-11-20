@@ -1474,3 +1474,124 @@ body.phone-on .hud-buttons { opacity: 0.35; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   .ph-device, .phone.leaving .ph-device { transition: opacity 0.2s; transform: none; }
 }
+
+/* An app's screen inside the phone (Map, Bag, Me, Crew, Settings): it fills the phone under the bar, and lays out
+   as on an upright phone (ui/phone/embedCss.ts). The transform keeps its fixed parts inside the phone. */
+.ph-embed { position: relative; flex: 1; min-height: 0; overflow: hidden; container: phone / size; transform: translateZ(0); --safe-t: 0px; --safe-b: 14px; --safe-l: 0px; --safe-r: 0px; }
+.ph-embed > .screen { position: absolute; inset: 0; display: flex; padding: 10px 10px 24px; background: #0f1015; }
+.ph-embed .screen-logo, .ph-embed .panel-head .close-x, .ph-embed .screen > .close-x { display: none; }
+.view-embed .ph-bar { border-bottom-color: rgba(232, 51, 58, 0.5); }
+/* The phone has its own Back: the screens' own close buttons go, and nothing is wider than the phone. */
+.ph-embed .icon-btn.close, .ph-embed button.icon-btn[aria-label='Close'], .ph-embed button.icon-btn[aria-label^='Close '] { display: none; }
+.ph-embed .panel, .ph-embed .pf-col, .ph-embed .pf-tabs, .ph-embed .setting-row { max-width: 100%; min-width: 0; box-sizing: border-box; }
+.ph-embed .panel { width: 100%; }
+.ph-embed .pf-tabs { overflow-x: auto; scrollbar-width: none; }
+.ph-embed .pf-tab { flex: 1 1 0; min-width: 0; }
+.ph-embed .pf-tab img.title-art { max-width: 100%; height: auto; max-height: 34px; }
+.ph-embed .setting-row .name.has-art img.title-art { max-width: 100%; }
+@container phone (max-width: 560px) { .pf-tab .icon { display: none; } }
+
+/* Inside the phone, each screen loses what the phone already gives it: its own title, tabs (Me and Crew are their
+   own apps), key hints and close buttons. */
+.ph-embed .inv-title, .ph-embed .pf-head, .ph-embed .panel-screen > h2, .ph-embed .pf-keys { display: none !important; }
+.ph-embed .inv-top { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; margin: 0 0 8px; padding: 0; min-height: 0; }
+.ph-embed .inv-top .wallet { flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ph-embed .inv-top .cap { flex: 0 0 auto; }
+.ph-embed .inv-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; scrollbar-width: none; margin-bottom: 8px; }
+.ph-embed .inv-tabs::-webkit-scrollbar { display: none; }
+.ph-embed .inv-tab { flex: 0 0 auto; padding: 6px 10px; font-size: 14px; }
+.ph-embed .inv-tab .icon.hg { width: 22px; height: 22px; }
+.ph-embed .inv-screen, .ph-embed .profile-screen, .ph-embed .panel-screen { justify-content: flex-start; }
+.ph-embed .pf-grid { margin-top: 0; }
+.ph-embed .panel { padding: 10px 12px; }
+.ph-embed .panel h3 img.title-art { height: 30px; }
+.ph-embed .setting-row .name.has-art img.title-art { height: 24px; }
+.ph-embed .cycle.has-art img.cycle-art { height: 26px; }
+.ph-embed .panel-actions img.title-art { height: 40px; }
+
+/* ----------------------------------------------------------------------------
+   Maps (ui/phone/mapApp.ts): a phone maps app in dark mode. Full bleed, chips and
+   a locate button floating over it, and a sheet at the bottom.
+   ---------------------------------------------------------------------------- */
+.view-map { padding: 0; }
+.pm-app { position: absolute; inset: 0; overflow: hidden; font-family: -apple-system, 'SF Pro Text', var(--ui); color: #f2f2f7; }
+.pm-mapwrap { position: absolute; inset: 0; }
+.pm-svg { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; background: #1c1c1e; }
+.pm-land { fill: #232326; }
+.pm-water { fill: none; stroke: #1b3a57; stroke-width: 70; stroke-linecap: round; }
+.pm-water.river { stroke-width: 110; }
+.pm-park { fill: #1f3324; }
+.pm-lockzone { fill: none; stroke: rgba(0, 0, 0, 0.35); stroke-width: 150; stroke-linecap: round; stroke-linejoin: round; }
+.pm-casing { fill: none; stroke: #121214; stroke-width: 30; stroke-linecap: round; stroke-linejoin: round; }
+.pm-casing.main { stroke-width: 40; }
+.pm-road { fill: none; stroke: #48484c; stroke-width: 22; stroke-linecap: round; stroke-linejoin: round; }
+.pm-road.main { stroke: #6b6457; stroke-width: 32; }
+.pm-rbt { fill: #48484c; stroke: #121214; stroke-width: 5; }
+.pm-district { fill: rgba(235, 235, 245, 0.4); font: 700 21px/1 -apple-system, var(--ui); letter-spacing: 0.12em; text-anchor: middle; paint-order: stroke; stroke: #232326; stroke-width: 6; }
+.pm-street { fill: #d1d1d6; font: 600 15px/1 -apple-system, var(--ui); text-anchor: middle; paint-order: stroke; stroke: #121214; stroke-width: 4; }
+.pm-water-label { fill: #5e8fbf; font: italic 600 22px/1 -apple-system, var(--ui); text-anchor: middle; }
+.pm-route { fill: none; stroke: #0a84ff; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
+.pm-dest { fill: #ff3b30; stroke: #fff; stroke-width: 6; }
+.pm-you { fill: #0a84ff; stroke: #fff; stroke-width: 4; }
+.pm-you-ring { fill: #fff; }
+.pm-you-halo { fill: rgba(10, 132, 255, 0.18); }
+.pm-pin { cursor: pointer; }
+.pm-pin-body { stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); }
+.pm-pin.locked { opacity: 0.6; }
+.pm-chips { position: absolute; top: 46px; left: 52px; right: 8px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; z-index: 2; }
+.pm-chips::-webkit-scrollbar { display: none; }
+.pm-chip { flex: 0 0 auto; padding: 6px 12px; border-radius: 16px; border: 0; background: rgba(44, 44, 46, 0.92); color: #f2f2f7; font: 600 13px/1 -apple-system, var(--ui); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); cursor: pointer; }
+.pm-chip.on { background: #0a84ff; color: #fff; }
+.pm-back { position: absolute; top: 44px; left: 8px; z-index: 3; width: 36px; height: 34px; border-radius: 17px; border: 0; background: rgba(44, 44, 46, 0.92); display: grid; place-items: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+.pm-back img { width: 24px; height: 24px; object-fit: contain; }
+.pm-locate { position: absolute; right: 10px; bottom: calc(40% + 14px); z-index: 2; width: 42px; height: 42px; border-radius: 10px; border: 0; background: rgba(44, 44, 46, 0.95); display: grid; place-items: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); transition: bottom 0.25s ease; }
+.pm-arrow { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 18px solid #0a84ff; transform: rotate(40deg); }
+.pm-sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 40%; z-index: 3; background: rgba(28, 28, 30, 0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px 16px 0 0; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45); display: flex; flex-direction: column; padding: 0 12px 26px; transition: height 0.28s cubic-bezier(0.2, 0.9, 0.25, 1); }
+.pm-app.sheet-up .pm-sheet { height: 82%; }
+.pm-app.sheet-up .pm-locate { bottom: calc(82% + 14px); opacity: 0; pointer-events: none; }
+.pm-grab { flex: none; align-self: center; width: 60px; height: 22px; border: 0; background: none; position: relative; cursor: pointer; }
+.pm-grab::after { content: ''; position: absolute; left: 12px; right: 12px; top: 8px; height: 5px; border-radius: 3px; background: #5a5a5e; }
+.pm-searchrow { flex: none; }
+.pm-search { width: 100%; box-sizing: border-box; height: 36px; border-radius: 10px; border: 0; padding: 0 12px 0 32px; background: #3a3a3c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238e8e93' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M11 11l4 4'/%3E%3C/svg%3E") 10px 50% no-repeat; color: #f2f2f7; font: 400 16px/1 -apple-system, var(--ui); outline: none; }
+.pm-search::placeholder { color: #8e8e93; }
+.pm-list { flex: 1; overflow-y: auto; margin-top: 8px; scrollbar-width: none; }
+.pm-head { font: 700 13px/1 -apple-system, var(--ui); color: #8e8e93; text-transform: uppercase; letter-spacing: 0.04em; margin: 6px 2px 6px; }
+.pm-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 2px; border: 0; border-bottom: 1px solid rgba(84, 84, 88, 0.45); background: none; color: inherit; text-align: left; cursor: pointer; }
+.pm-row.locked { opacity: 0.55; }
+.pm-dot { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; }
+.pm-dot img { width: 24px; height: 24px; object-fit: contain; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)); }
+.pm-dot.big { width: 44px; height: 44px; }
+.pm-dot.big img { width: 32px; height: 32px; }
+.pm-rowtext { min-width: 0; display: flex; flex-direction: column; }
+.pm-rowtext b { font: 600 15px/1.25 -apple-system, var(--ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-rowtext span { font: 400 12px/1.3 -apple-system, var(--ui); color: #8e8e93; }
+.pm-empty { color: #8e8e93; text-align: center; margin-top: 18px; }
+.pm-place { overflow-y: auto; flex: 1; }
+.pm-placehead { display: flex; align-items: center; gap: 10px; margin: 2px 0 12px; }
+.pm-placehead > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pm-placehead b { font: 700 18px/1.2 -apple-system, var(--ui); }
+.pm-placehead span { font: 400 13px/1.3 -apple-system, var(--ui); color: #8e8e93; }
+.pm-x { flex: none; width: 30px; height: 30px; border-radius: 50%; border: 0; background: #3a3a3c; color: #aeaeb2; font: 600 20px/1 -apple-system, var(--ui); cursor: pointer; }
+.pm-acts { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.pm-act { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 4px; border-radius: 12px; border: 0; background: #2c2c2e; color: #0a84ff; font: 600 15px/1.1 -apple-system, var(--ui); cursor: pointer; }
+.pm-act small { color: #8e8e93; font-size: 11px; font-weight: 400; }
+.pm-act.primary { background: #0a84ff; color: #fff; }
+.pm-act.primary small { color: rgba(255, 255, 255, 0.8); }
+.pm-act.primary.on { background: #ff453a; }
+.pm-act:disabled { color: #636366; background: #1c1c1e; cursor: default; }
+.pm-lock { margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 69, 58, 0.12); color: #ff8a80; font: 500 13px/1.35 -apple-system, var(--ui); }
+.pm-blurb { margin: 0; color: #d1d1d6; font: 400 14px/1.45 -apple-system, var(--ui); }
+@media (max-height: 520px) and (orientation: landscape) {
+  .pm-sheet { left: auto; top: 40px; bottom: 8px; right: 8px; width: 46%; height: auto; border-radius: 14px; padding-bottom: 10px; }
+  .pm-app.sheet-up .pm-sheet { height: auto; }
+  .pm-grab { display: none; }
+  .pm-locate { bottom: 14px; right: calc(46% + 18px); }
+  .pm-app.sheet-up .pm-locate { bottom: 14px; opacity: 1; pointer-events: auto; }
+  .pm-chips { right: calc(46% + 16px); top: 40px; }
+  .pm-app .pm-svg { cursor: grab; }
+  .pm-back { top: 38px; }
+}
+.ph-embed .inv-top { flex-wrap: wrap; }
+.ph-embed .inv-top .wallet { flex: 1 1 100%; }
+.ph-embed .inv-top .cap { flex: 1 1 auto; }
