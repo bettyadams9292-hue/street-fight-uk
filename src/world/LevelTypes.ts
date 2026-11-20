@@ -218,7 +218,7 @@ export interface EncounterDef {
 
 export type StationId =
   | 'wardrobe' | 'mirror' | 'gym' | 'sparring' | 'kitchen' | 'garage' | 'sofa' | 'contacts' | 'tin' | 'storage'
-  | 'clothes_counter' | 'changing' | 'pawn_counter' | 'cash_hatch' | 'bar'
+  | 'clothes_counter' | 'changing' | 'pawn_counter' | 'cash_hatch' | 'front_desk' | 'bar'
   | 'planner' | 'bike_rack' | 'car' | 'bike' | 'furniture_counter' | 'car_counter' | 'bike_counter'
   | 'casino_slots' | 'casino_roulette' | 'casino_blackjack' | 'casino_cashier'
   | 'terminal' | 'grow_counter' | 'grow_display'

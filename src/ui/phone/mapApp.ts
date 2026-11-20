@@ -26,12 +26,12 @@ const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 const KIND_ICON: Record<MarkerKind, IconName> = {
   home: 'home', mission: 'mission', boss: 'check', side: 'side', shop: 'shop', clothes: 'clothes', pawn: 'pawn', gym: 'gym', pub: 'pub',
-  casino: 'casino', cars: 'cars', bikes: 'bikes', property: 'property', contact: 'contact', street: 'street', parked: 'parked',
+  casino: 'casino', cars: 'cars', bikes: 'bikes', property: 'property', contact: 'contact', street: 'street', parked: 'parked', police: 'police',
 };
 /** Pin colours, as a maps app does by kind of place. */
 const KIND_COLOUR: Record<MarkerKind, string> = {
   home: '#34c759', mission: '#ff3b30', boss: '#8e8e93', side: '#ff9500', shop: '#0a84ff', clothes: '#ff2d55', pawn: '#ffcc00', gym: '#ff453a',
-  pub: '#a2845e', casino: '#bf5af2', cars: '#64d2ff', bikes: '#30d158', property: '#34c759', contact: '#ffd60a', street: '#8e8e93', parked: '#34c759',
+  pub: '#a2845e', casino: '#bf5af2', cars: '#64d2ff', bikes: '#30d158', property: '#34c759', contact: '#ffd60a', street: '#8e8e93', parked: '#34c759', police: '#0a3d91',
 };
 type Chip = 'all' | 'story' | 'shops' | 'gyms' | 'pubs' | 'yours';
 const CHIPS: { id: Chip; label: string; kinds: MarkerKind[] }[] = [

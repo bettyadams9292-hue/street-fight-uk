@@ -48,13 +48,13 @@ export interface MapOptions {
 
 const KIND_ICON: Record<MarkerKind, IconName> = {
   home: 'home', mission: 'mission', boss: 'check', side: 'side', shop: 'shop', clothes: 'clothes', pawn: 'pawn', gym: 'gym', pub: 'pub',
-  casino: 'casino', cars: 'cars', bikes: 'bikes', property: 'property', contact: 'contact', street: 'street', parked: 'parked',
+  casino: 'casino', cars: 'cars', bikes: 'bikes', property: 'property', contact: 'contact', street: 'street', parked: 'parked', police: 'police',
 };
 
 const KIND_COLOUR: Record<MarkerKind, string> = {
   home: '#2f9e5b', mission: '#e0302a', boss: '#6d6a64', side: '#e08a1e', shop: '#3d7fd1', clothes: '#c0508a', pawn: '#b98c2c',
   gym: '#d24b2a', pub: '#8a5a2b', casino: '#7a3fb0', cars: '#2b8a8a', bikes: '#4f8a2b', property: '#2f9e5b', contact: '#d6a51f',
-  street: '#e9e6df', parked: '#2f9e5b',
+  street: '#e9e6df', parked: '#2f9e5b', police: '#2f5fb0',
 };
 
 type FilterId = 'story' | 'shops' | 'gyms' | 'pubs' | 'yours' | 'streets';

@@ -1,3 +1,4 @@
+import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
 import type { StyleData } from '../../styles/StyleData';
 import { h } from '../dom';
 import { movesKey, styleSection, type Device } from '../moveList';
@@ -11,7 +12,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'pockets';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets';
 
 export interface WikiDeps {
   device: () => Device;
@@ -24,6 +25,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'moves', title: 'Moves', blurb: 'Your styles: single hits, specials, combos, the finisher.' },
   { id: 'fighting', title: 'Fighting', blurb: 'Blocking, parries, staggers, finishers and pussying out.' },
   { id: 'heat', title: 'Heat', blurb: 'How much trouble you’re in with the police, the locals and the gangs, and how to cool off.' },
+  { id: 'police', title: 'Getting nicked', blurb: 'Your record, the charge sheet, bail, a night in the cells, and the front counter.' },
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
 ];
 
@@ -159,7 +161,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       list([
         'Once the bar is Warm, the police may already be waiting for you when you arrive.',
         'Mug someone with people watching and somebody may ring 999. Officers turn up about half a minute later, quicker if you’re already wanted. Leave the area before they get there and you’re away.',
-        'Once it’s Hot, lose any fight here, not just against the police, and you’re nicked. They take anything stolen you’re carrying and fine you. The police there wipe the slate clean, but the rest of town still remembers you.',
+        'Once it’s Hot, lose any fight here, not just against the police, and you’re nicked: see Getting nicked. The police there wipe the slate clean, but the rest of town still remembers you.',
       ]),
       sec('The locals'),
       p('What the people on the street think of you. Mugging them, battering them and robbing their shops all make it worse.'),
@@ -178,6 +180,35 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       sec('Cooling off'),
       p('Heat dies down a little every time you move from one area to another. The police forget quickest and the gangs slowest. It fades twice as fast in the parts of town you’re not in, so the quickest way out is to lie low somewhere else. If the police are Hot on you somewhere, keep away for about eight trips and they’ll cool off.'),
       p('Your basement grow is raided more often the hotter the police are anywhere in town.'),
+    );
+  }
+
+  if (page === 'police') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('Getting nicked', 'Lose to the police, or lose any fight while the police are Hot on you, and you’re nicked. You’re booked in at Central Police Station in the City Centre, on Market Square.',
+      infobox('Bail', [
+        ['Mugging', `£${BAIL_BASE[1]}`],
+        ['Assault', `£${BAIL_BASE[2]}`],
+        ['Robbing a shop', `£${BAIL_BASE[3]}`],
+        ['Putting a copper down', `£${BAIL_BASE[4]}`],
+        ['Night in the cells', `${Math.round(COURT_FINE_SHARE * 100)}% of bail, as a fine`],
+      ]),
+      sec('Your record'),
+      p('Every mugging, assault and robbery goes on your record, along with any copper you put down. They’re forgotten after a while, so a crime from long ago won’t be held against you.'),
+      sec('The charge sheet'),
+      list([
+        'They charge you with what you did where they caught you. If you did nothing there, they use the worst things you’ve done anywhere.',
+        'Anything stolen on you is taken.',
+        'The worst charge sets the bail. Every other charge adds half again, every time you’ve been nicked before makes it dearer, and stolen goods add a bit on top.',
+      ]),
+      sec('Bail or the cells'),
+      list([
+        'Pay bail from the cash on you and the tin, and you walk out of the station.',
+        'Or spend the night in the cells: keep the bail money, but the court fines you in the morning, and time passes. The police cool off a bit everywhere while you’re inside.',
+        'Either way, those charges are dealt with and the police where you were caught forget you.',
+      ]),
+      sec('The front counter'),
+      p('Walk into the station any time and Sgt Hollis will pull up your file. You can settle up a part of town early: pay the fines and its police heat and record are wiped.'),
     );
   }
 

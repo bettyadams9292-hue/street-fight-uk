@@ -15,6 +15,7 @@ import { sanitiseStyleTraining, type StyleTraining } from '../training/styleGyms
 import { defaultCompanions, sanitiseCompanions, type CompanionSave } from '../companions/companions';
 import { TOWN_AREA_IDS, type TownAreaId } from '../world/townIds';
 import { DISTRICT_ORDER } from '../world/levels';
+import { ageRecord, logCrime, sanitiseRecord, type Crime, type CrimeEntry } from './record';
 import { coolHeat, emptyHeat, HEAT, HEAT_COOL, HEAT_KINDS, sanitiseHeatMap, type DistrictHeat, type HeatKind, type HeatMap } from './heat';
 import { defaultNeeds, eat, needsModifiers, sanitiseNeeds, type NeedsSave } from '../home/needs';
 import { putInto, sanitisePantry, STARTER_GROCERIES, type PantrySave } from '../home/recipes';
@@ -44,7 +45,7 @@ import {
 export const CORE_AREA_IDS = [
   'home', 'estate', 'high_street', 'alleys', 'industrial', 'subway', 'city', 'territory',
   // Stage 5: interiors
-  'clothes_shop', 'pawn_shop', 'pub',
+  'clothes_shop', 'pawn_shop', 'pub', 'police_station',
   // Stage 6: furniture shop, car dealer, bike shop, casino
   'furniture_shop', 'car_dealer', 'bike_shop', 'casino',
   // Stage 7: the basement and the grow shop
@@ -99,6 +100,8 @@ export interface GameSave {
   heat: number;
   /** Police, street and gang heat, district by district (progress/heat.ts). */
   districtHeat: HeatMap;
+  /** What the police have on you, newest last (`progress/record.ts`). */
+  record: CrimeEntry[];
   /** Counts area changes: the game's clock for shop closures and heat. */
   trips: number;
   shops: Record<string, ShopState>;
@@ -178,6 +181,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     discovered: [],
     heat: 0,
     districtHeat: {},
+    record: [],
     trips: 0,
     shops: {},
     pawn: { itemsSold: 0, earned: 0 },
@@ -258,6 +262,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     discovered: Array.isArray(r.discovered) ? [...new Set(r.discovered.filter((x): x is string => typeof x === 'string' && !!ITEMS[x]))] : [],
     heat: num(r.heat, 0, 0, 100),
     districtHeat: sanitiseHeatMap(r.districtHeat),
+    record: sanitiseRecord(r.record),
     trips: num(r.trips, 0),
     shops: sanitiseShops(r.shops),
     pawn: { itemsSold: num(r.pawn?.itemsSold, 0), earned: num(r.pawn?.earned, 0) },
@@ -842,6 +847,11 @@ export class Progress {
     this.addHeatOf({ [kind]: n - (kind === 'police' && district === this.here ? this.save.heat : h[kind]) }, district);
   }
 
+  /** Put a crime on your record, in the district you're in (or `district`). */
+  logCrime(crime: Crime, district?: string): void {
+    logCrime(this.save.record, crime, district ?? this.here ?? 'High Street', this.save.trips);
+  }
+
   /** The highest police heat anywhere: how much the law knows about you (the basement's raid risk). */
   get wanted(): number {
     return Math.max(this.save.heat, ...Object.values(this.save.districtHeat).map((h) => h.police));
@@ -854,6 +864,7 @@ export class Progress {
       const h = this.save.districtHeat[this.here];
       if (h) h.police = this.save.heat;
       coolHeat(this.save.districtHeat, this.here);
+      ageRecord(this.save.record, this.save.trips);
       this.save.heat = this.heatIn(this.here).police;
     } else if (this.save.heat > 0) this.save.heat = Math.max(0, this.save.heat - HEAT_COOL.police);
     // Forget searched-container and restock marks from past windows so the save doesn't grow forever.

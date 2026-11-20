@@ -3,6 +3,36 @@
 Hand-over from Leeko's Claude (20 Nov 2026), for whoever picks this up next. Leeko wants the game to go
 this way. Read CLAUDE.md first; this builds on #66 (mugging) and #67 (district heat).
 
+## Status (20 Nov 2026)
+
+**Step 1 is built** (record, custody, bail, the station, the front counter). Numbers used are the plan's
+starting points, all in `src/progress/record.ts`, for Leeko to check:
+
+- Bail by worst charge: mugging £150, assault £300, robbery £600, assaulting an officer £1,200; +50% per
+  extra charge, +25% per past arrest, +10% of seized goods, capped at £900 + £150 a level. Wanted with no
+  record: £100.
+- Night in the cells: a court fine of 40% of bail, 4 trips pass, police heat -15 everywhere else.
+- Crimes are spent after 60 trips; the record keeps the last 30.
+- Front counter, settling a district: £8 per point of its police heat + £60 per severity point on file.
+
+What's built:
+- `save.record` (`progress/record.ts`): `Progress.logCrime`, called on a mugging (`World.mug`), an assault
+  (the `assault` KO), a shop robbery (`Game.robShop`) and an officer put down (`World`'s `fighter:ko`).
+- Getting nicked (`Game`, `player:defeated`): `book()` in `world/custody.ts` seizes stolen goods, reads the
+  charges (`chargesFor`), prices bail; the charge sheet (`Game.chargeSheet`) offers Pay bail or Night in the
+  cells, then you're in the Central Police Station (entry `door` after bail, `cell` after a night).
+- Central Police Station (`police_station` in `world/interiors.ts`): on Market Square at x 25.5 (the old
+  bakery frontage, now POLICE), the front counter with Sgt Hollis (`Game.frontDesk`), a map pin (`police`
+  marker and icon), a cab stop, and GraftWiki's "Getting nicked" article.
+- `tests/police.test.ts`.
+
+**Still to do:**
+- Step 2: good cops and bent cops, bungs, the bent desk sergeant as a contact (below).
+- Ring someone from custody (a crew member pays).
+- Models: cell door and bars, custody desk, station front and blue lamp, an officer's uniform. There's no
+  cell drawn yet (the casino cage looked like a cashier's booth); add the rows to `docs/ASSETS_NEEDED.*`.
+- New buttons (Pay bail, Night in the cells, Settle up, Leave) use plain lettering, not painted titles.
+
 ## What's there already
 
 - **Heat** (`src/progress/heat.ts`, #67): police, locals and gang heat per district, 0–100, cooling each

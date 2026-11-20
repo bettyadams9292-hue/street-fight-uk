@@ -460,6 +460,7 @@ const city: LevelDef = {
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 90, z: 0, facing: -1 },
     { id: 'pawn', x: 67, z: -1.0, facing: -1 },
+    { id: 'police', x: 25.5, z: -1.0, facing: 1 },
     { id: 'casino', x: 54, z: -1.0, facing: 1 },
     { id: 'precinct', x: 10, z: -1.0, facing: 1 },
     { id: 'neon', x: 38, z: -1.0, facing: 1 },
@@ -467,6 +468,7 @@ const city: LevelDef = {
   exits: [
     { id: 'to_subway', kind: 'edge', side: 'left', x: 0, z: 0, to: 'subway', toEntry: 'right', label: 'Subway' },
     { id: 'pawn_door', kind: 'door', x: 67, z: -1.6, to: 'pawn_shop', toEntry: 'door', shop: 'pawn', label: 'Into Pawn & Gold' },
+    { id: 'police_door', kind: 'door', x: 25.5, z: -1.6, to: 'police_station', toEntry: 'door', label: 'Into Central Police Station' },
     { id: 'casino_door', kind: 'door', x: 54, z: -1.6, to: 'casino', toEntry: 'door', label: 'Into the Golden Lion Casino' },
     { id: 'precinct_walk', kind: 'door', x: 10, z: -1.6, to: 'precinct', toEntry: 'left', label: 'Walkway to Kingsway Precinct' },
     { id: 'neon_mile', kind: 'door', x: 38, z: -1.6, to: 'nightlife', toEntry: 'left', label: 'Through to the Neon Mile', requires: 'has_vip_pass', lockedText: 'The doormen want to see a VIP pass. Whoever runs the precinct hands them out.' },
@@ -474,7 +476,7 @@ const city: LevelDef = {
   ],
   facades: [
     { kind: 'office', x0: 0, x1: 18, label: 'MERIDIAN HOUSE' },
-    { kind: 'shop', x0: 18, x1: 30, label: 'GREGGS-ISH BAKERY', colour: '#1b3d6e' },
+    { kind: 'office', x0: 18, x1: 30, label: 'POLICE', colour: '#16243f' },
     { kind: 'club', x0: 30, x1: 46, label: 'VELVET' },
     { kind: 'casino', x0: 46, x1: 62, label: 'GOLDEN LION' },
     { kind: 'shop', x0: 62, x1: 72, label: 'PAWN & GOLD', colour: '#c9a227' },
