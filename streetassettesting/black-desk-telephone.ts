@@ -41,26 +41,45 @@ export function createTelephoneAsset(id:string):THREE.Group {
  for(let i=0;i<4;i++)box(.017,.005,.011,.113+i*.026,.061,-.003,button);
  const dial=cyl(.012,.005,.260,.061,-.011,button);dial.rotation.x=Math.PI/2;
  box(.036,.006,.014,.261,.062,.110,button);
- // Handset resting on the cradle, oriented front-to-back.
- // The underside touches both cradle supports; nothing floats in space.
+ // Slim ergonomic office handset seated lengthwise on the two cradle hooks.
+ // No cylinders or oversized round end caps: continuous tapered telephone silhouette.
  const receiver=new THREE.Group();receiver.name='Handset seated on hook';
- const handsetBox=(w:number,h:number,depth:number,x:number,y:number,z:number,m:THREE.Material)=>{
-   const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,depth),m);
-   mesh.position.set(x,y,z);receiver.add(mesh);return mesh;
+ const handsetShape=new THREE.Shape();
+ // Shape coordinates are X (width) and Z (length); ends are softly squared.
+ handsetShape.moveTo(-.018,-.079);
+ handsetShape.quadraticCurveTo(-.025,-.079,-.026,-.065);
+ handsetShape.lineTo(-.023,-.045);
+ handsetShape.quadraticCurveTo(-.018,-.027,-.015,-.015);
+ handsetShape.lineTo(-.012,.055);
+ handsetShape.quadraticCurveTo(-.019,.073,-.024,.088);
+ handsetShape.lineTo(-.026,.112);
+ handsetShape.quadraticCurveTo(-.026,.128,-.014,.130);
+ handsetShape.lineTo(.014,.130);
+ handsetShape.quadraticCurveTo(.026,.128,.026,.112);
+ handsetShape.lineTo(.024,.088);
+ handsetShape.quadraticCurveTo(.019,.073,.012,.055);
+ handsetShape.lineTo(.015,-.015);
+ handsetShape.quadraticCurveTo(.018,-.027,.023,-.045);
+ handsetShape.lineTo(.026,-.065);
+ handsetShape.quadraticCurveTo(.025,-.079,.018,-.079);
+ handsetShape.closePath();
+ // Extrude along local Z, then rotate to place the long axis front-to-back.
+ const shellGeometry=new THREE.ExtrudeGeometry(handsetShape,{depth:.017,steps:1,bevelEnabled:true,bevelThickness:.004,bevelSize:.003,bevelSegments:3,curveSegments:8});
+ const shell=new THREE.Mesh(shellGeometry,plastic);
+ shell.rotation.x=Math.PI/2;
+ // After rotation, original shape Y maps to world Z; extrude depth maps to -Y.
+ shell.position.set(.040,.105,.026);
+ receiver.add(shell);
+ const detail=(w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>{
+   const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);receiver.add(mesh);return mesh;
  };
- const handsetCylinder=(radius:number,depth:number,z:number,m:THREE.Material)=>{
-   const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,depth,24),m);
-   mesh.rotation.x=Math.PI/2;mesh.position.set(.040,.103,z);receiver.add(mesh);return mesh;
- };
- handsetBox(.038,.026,.159,.040,.102,.031,plastic);
- handsetCylinder(.026,.037,-.057,plastic);
- handsetCylinder(.026,.037,.119,plastic);
- handsetBox(.044,.022,.037,.040,.105,-.057,face);
- handsetBox(.044,.022,.037,.040,.105,.119,face);
- // Visible earpiece grille on top of the rear end.
- for(let i=0;i<5;i++)handsetBox(.002,.001,.014,.026+i*.007,.119,-.057,dark);
- // Microphone slot at the front end.
- handsetBox(.024,.001,.007,.040,.119,.119,dark);
+ // Flat recessed speaker and microphone apertures on the handset's upper face.
+ detail(.032,.002,.026,.040,.111,-.044,face);
+ detail(.029,.002,.022,.040,.111,.132,face);
+ for(let i=0;i<5;i++)detail(.002,.001,.012,.028+i*.006,.113,-.044,dark);
+ for(let i=0;i<4;i++)detail(.002,.001,.008,.031+i*.006,.113,.132,dark);
+ // Small hook-contact pads beneath the handset.
+ for(const z of [-.050,.111])detail(.032,.004,.019,.040,.084,z,edge);
  g.add(receiver);
  // Cable, including distinct visible tightly wound coil between handset and console.
  const pathPts:THREE.Vector3[]=[];
