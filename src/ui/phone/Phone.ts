@@ -4,7 +4,7 @@
  *
  * Apps that live on the phone: Messages (Mo, your needs, what's happened), Cabs (Dave's Cabs and walking home),
  * CaliBank (your money and where it went), Jobs (what to do next) and Home (edit your house, when you're in it).
- * Map, Bag, Me and Crew and Settings open full screen from it, like the bigger apps on a real phone.
+ * Map, Me and Crew and Settings open inside it (your pockets and bag are on you, not on the phone), like the bigger apps on a real phone.
  */
 import { h } from '../dom';
 import type { AreaId, Progress } from '../../progress/Progress';
@@ -173,7 +173,7 @@ export class Phone {
     this.render();
   }
 
-  /** A bigger app (Map, Bag, Me, Crew, Settings): its screen opens inside the phone, under the phone's own bar. */
+  /** A bigger app (Map, Me, Crew, Settings): its screen opens inside the phone, under the phone's own bar. */
   private launch(fn: () => void, title = ''): void {
     this.d.sound('tap');
     this.app = 'embed';
@@ -235,7 +235,6 @@ export class Phone {
       { id: 'map', name: 'Maps', icon: 'map', open: () => this.go('map') },
       { id: 'cabs', name: 'Cabs', icon: 'car_hatch', open: () => this.go('cabs') },
       { id: 'bank', name: 'CaliBank', icon: 'coins', open: () => this.go('bank') },
-      { id: 'bag', name: 'Bag', icon: 'backpack', open: () => this.launch(() => this.d.openBag(), 'Bag') },
       { id: 'jobs', name: 'Jobs', icon: 'target_skull', open: () => this.go('jobs') },
       { id: 'crew', name: 'Crew', icon: 'crew', open: () => this.launch(() => this.d.openMe('crew'), 'Crew') },
       { id: 'me', name: 'Me', icon: 'fist', open: () => this.launch(() => this.d.openMe('character'), 'Me') },
