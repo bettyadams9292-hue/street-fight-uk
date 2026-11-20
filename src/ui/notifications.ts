@@ -37,6 +37,12 @@ export class Notifications {
       same.el.classList.remove('bump');
       void same.el.offsetWidth;
       same.el.classList.add('bump');
+      // It just happened again, so it's the newest: back to the top of the stack.
+      if (this.live[0] !== same) {
+        this.live.splice(this.live.indexOf(same), 1);
+        this.live.unshift(same);
+        this.el.prepend(same.el);
+      }
       this.arm(same, text);
       return;
     }

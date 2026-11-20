@@ -101,7 +101,7 @@ export class Hud {
   /** What the needs currently say, by need (shown in the tray and when a need's badge is tapped). */
   private needTips: { key: string; tip: string; urgency: number }[] = [];
   /** Recent messages (newest last), kept for the notifications tray instead of filling the screen. */
-  private log: { text: string; kind: string }[] = [];
+  private log: { text: string; kind: string; at: number; count?: number }[] = [];
   private unread = 0;
   private bellBtn!: HTMLElement;
   private tray!: HTMLElement;
@@ -406,7 +406,7 @@ export class Hud {
   }
 
   /** What the phone's Messages app shows: what each need says, and recent messages. */
-  messages(): { needs: { key: string; tip: string; urgency: number }[]; log: { text: string; kind: string }[] } {
+  messages(): { needs: { key: string; tip: string; urgency: number }[]; log: { text: string; kind: string; at: number; count?: number }[] } {
     return { needs: this.needTips, log: this.log };
   }
 
@@ -428,8 +428,11 @@ export class Hud {
 
   /** A message for the phone: no pop-up, the phone button shows a dot until you look. */
   remember(text: string, kind = 'info'): void {
-    if (this.log[this.log.length - 1]?.text === text) return;
-    this.log.push({ text, kind });
+    // Newest last in the log (shown newest first): a repeat moves to the end with a count, not a second line.
+    const old = this.log.findIndex((m) => m.text === text);
+    const count = old >= 0 ? (this.log[old].count ?? 1) + 1 : 1;
+    if (old >= 0) this.log.splice(old, 1);
+    this.log.push({ text, kind, at: Date.now(), count });
     if (this.log.length > 12) this.log.shift();
     if (this.tray.classList.contains('off')) {
       this.unread++;

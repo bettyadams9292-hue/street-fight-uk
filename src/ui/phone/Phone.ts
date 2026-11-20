@@ -19,6 +19,17 @@ import type { Device } from '../moveList';
 export interface PhoneMessage {
   text: string;
   kind: string;
+  /** When it last came in (Date.now()). */
+  at?: number;
+  /** How many times it's come in. */
+  count?: number;
+}
+
+/** "now", "4m", "2h": how long ago, the way a phone says it. */
+export function ago(at: number | undefined, now = Date.now()): string {
+  if (!at) return '';
+  const s = Math.max(0, Math.round((now - at) / 1000));
+  return s < 45 ? 'now' : s < 3600 ? `${Math.max(1, Math.round(s / 60))}m` : s < 86400 ? `${Math.round(s / 3600)}h` : `${Math.round(s / 86400)}d`;
 }
 
 export interface PhoneDeps {
@@ -341,7 +352,10 @@ export class Phone {
     }
     out.push(h('div', { class: 'ph-sec', text: 'Recent' }));
     if (!log.length) out.push(h('p', { class: 'ph-empty', text: 'Nothing new.' }));
-    for (const m of [...log].reverse()) out.push(h('div', { class: `ph-note ${m.kind}` }, h('span', { text: m.text })));
+    // Newest first, each with how long ago it came in.
+    const recent = [...log].reverse().sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
+    for (const m of recent)
+      out.push(h('div', { class: `ph-note ${m.kind}` }, h('span', { text: m.text }), h('small', { class: 'ph-ago', text: `${(m.count ?? 1) > 1 ? `×${m.count}  ` : ''}${ago(m.at)}` })));
     return out;
   }
 

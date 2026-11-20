@@ -986,16 +986,22 @@ export class Game {
         this.audio.impact(0.8, false);
         this.hud.toast(label, 'info');
       }),
-      ev.on('mug', ({ resisted, items, cash, heat }) => {
+      ev.on('mug', ({ resisted, items, cash, heat, witnesses, hero, police, known }) => {
+        const seen = witnesses ? ` ${witnesses} saw it.` : ' Nobody saw.';
         if (resisted) {
           this.audio.swing(true);
-          this.hud.toast(`They’re having none of it. Put them down and it’s yours. Heat +${heat}.`, 'warn');
+          this.hud.toast(`Mugging: they’re having none of it. Put them down and it’s yours.${seen} Heat +${heat}.`, 'warn');
         } else {
           this.audio.coins();
           const what = items.map((id) => ITEMS[id]?.name.toLowerCase()).filter(Boolean);
-          this.hud.toast(`Handed over: £${cash}${what.length ? `, ${what.join(', ')}` : ''}. It’s on the floor, hot. Heat +${heat}.`, 'item');
+          this.hud.toast(`Mugging: £${cash}${what.length ? `, ${what.join(', ')}` : ''} on the floor, hot.${seen} Heat +${heat}.`, 'item');
         }
+        if (hero) this.hud.toast(`Have-a-go hero: ${hero}’s stepping in.`, 'warn');
+        if (police) this.hud.toast(`999: someone’s rung the police. About ${police}s: get gone or get ready.`, 'warn');
+        if (known) this.hud.toast('Known face: people round here have started to recognise you. They’ll cross the road.', 'warn');
       }),
+      ev.on('assault', ({ name, heat }) => this.hud.toast(`Assault: ${name} was only defending themselves. Heat +${heat}.`, 'warn')),
+      ev.on('known:face', () => this.hud.toast('Known face: people round here know you for muggings. The nervy ones keep their distance.', 'warn')),
       ev.on('alarm', () => {
         this.hud.notify('ALARM!', 'warn');
         this.hud.toast('The alarm\u2019s going. Police on their way: get out or get ready.', 'warn');

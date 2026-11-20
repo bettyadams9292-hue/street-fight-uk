@@ -7,7 +7,9 @@ import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { emptyCommand } from '../src/input/Commands';
 import { newSave, Progress } from '../src/progress/Progress';
 import { LEVELS } from '../src/world/levels';
-import { BAIL_MAX, BAIL_MIN, MUG_HEAT, mugResistChance, valuablesOf, World } from '../src/world/World';
+import { ASSAULT_HEAT, BAIL_MAX, BAIL_MIN, heroChance, KNOWN_FACE, MUG_HEAT, MUG_WITNESS_HEAT, mugResistChance, policeCallChance, valuablesOf, World } from '../src/world/World';
+import { ARREST_HEAT } from '../src/world/robbery';
+import { ago } from '../src/ui/phone/Phone';
 
 let passed = 0;
 let failed = 0;
@@ -83,16 +85,23 @@ test('mugging: they hand it over and run, or fight for it and drop it when theyâ
     if (it?.kind !== 'mug' || it.target !== c.f) continue;
     assert(/^Mug (him|her): gold chain$/.test(it.label), it.label);
     const heat = p.save.heat;
+    let ev: { witnesses: number; heat: number } | null = null;
+    w.events.on('mug', (e) => (ev = e));
     const use = { ...emptyCommand(), use: true, pressed: { ...emptyCommand().pressed, use: true } };
     w.step(use as never);
-    assert(p.save.heat === heat + MUG_HEAT, `heat +${MUG_HEAT}`);
+    assert(ev, 'mug event');
+    const e = ev as unknown as { witnesses: number; heat: number };
+    assert(e.heat === MUG_HEAT + e.witnesses * MUG_WITNESS_HEAT && p.save.heat === heat + e.heat, `heat +${MUG_HEAT} and +${MUG_WITNESS_HEAT} a witness (${e.witnesses}): ${p.save.heat - heat}`);
+    assert(w.mugCount === 1, 'the district remembers');
     const chain = () => w.items.find((g) => g.stack.id === 'chain_gold');
     if (c.f.team === 'enemy') {
       fought++;
       assert(w.enemies.includes(c.f) && !w.civilians.some((x) => x.f === c.f), 'off the street and into the fight');
       assert(!chain(), 'nothing dropped yet');
       c.f.knockOut();
+      const before = p.save.heat;
       w.sim.bus.emit('fighter:ko', { fighter: c.f, by: w.player });
+      assert(p.save.heat === Math.min(100, before + ASSAULT_HEAT), 'putting them down is assault');
       for (let f = 0; f < 200; f++) w.step(emptyCommand());
       assert(chain()?.stack.stolen, 'down: the chainâ€™s on the floor, hot');
     } else {
@@ -108,6 +117,38 @@ test('mugging: they hand it over and run, or fight for it and drop it when theyâ
     }
   }
   assert(handed > 0 && fought > 0, `saw both: handed ${handed}, fought ${fought}`);
+});
+
+test('consequences scale: witnesses and a reputation bring the police and heroes', () => {
+  assert(policeCallChance(0, 0, 0) < policeCallChance(3, 0, 0), 'witnesses ring it in');
+  assert(policeCallChance(1, 3, 0) > policeCallChance(1, 0, 0), 'a known mugger gets reported more');
+  assert(policeCallChance(0, 0, ARREST_HEAT) === 1, 'once wanted, every time');
+  assert(heroChance(3) > heroChance(0) && heroChance(9) <= 0.65, 'heroes likelier, never certain');
+});
+
+test('a known face: after enough muggings the nervy cross the road when you come near', () => {
+  const p = progress();
+  for (let n = 1; n <= KNOWN_FACE; n++) p.set(`mugged:${street.district}:${n}`);
+  let checked = 0;
+  for (let seed = 1; seed < 40 && checked < 3; seed++) {
+    const w = new World(street, p, { entry: street.entries[0].id, seed });
+    for (const e of w.encounters) e.status = 'cleared';
+    let said = false;
+    w.events.on('known:face', () => (said = true));
+    const c = w.civilians.find((x) => x.brain.temper === 'nervy' && x.brain.activity === 'walk');
+    if (!c) continue;
+    w.player.pos.x = c.f.pos.x - 1.2;
+    w.player.pos.z = c.f.pos.z;
+    for (let f = 0; f < 20; f++) w.step(emptyCommand());
+    assert(said, 'told once you walk in');
+    assert(c.brain.activity === 'flee', `a nervy one runs (${c.brain.activity})`);
+    checked++;
+  }
+  assert(checked > 0, 'found a nervy walker');
+});
+
+test('phone times read like a phone', () => {
+  assert(ago(1000, 1000 + 10_000) === 'now' && ago(0, 5) === '' && ago(1, 1 + 4 * 60_000) === '4m' && ago(1, 1 + 2 * 3_600_000) === '2h', 'now, 4m, 2h');
 });
 
 test('no mugging in a fight', () => {

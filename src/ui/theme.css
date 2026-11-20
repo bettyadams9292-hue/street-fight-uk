@@ -1431,6 +1431,8 @@ body.fight-on .home-only { display: none !important; }
 .ph-bubble.solo { border-radius: 16px; }
 .ph-note { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #1b1c22; }
 .ph-note img { width: 26px; height: 26px; object-fit: contain; flex: none; }
+.ph-note > span { flex: 1; min-width: 0; }
+.ph-ago { flex: none; align-self: flex-start; white-space: pre; color: #8d8e96; font-size: 12px; font-variant-numeric: tabular-nums; }
 .ph-note.need.u2, .ph-note.need.u3 { box-shadow: inset 3px 0 0 #e8333a; }
 .ph-note.warn { box-shadow: inset 3px 0 0 #e8a33a; }
 .ph-note.cash { box-shadow: inset 3px 0 0 #3ab86b; }

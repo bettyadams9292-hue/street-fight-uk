@@ -1,7 +1,8 @@
 import type { StyleData } from '../../styles/StyleData';
 import { h } from '../dom';
 import { movesKey, styleSection, type Device } from '../moveList';
-import { BAIL_MAX, BAIL_MIN, MUG_HEAT } from '../../world/World';
+import { ASSAULT_HEAT, BAIL_MAX, BAIL_MIN, KNOWN_FACE, MUG_HEAT, MUG_WITNESS_HEAT } from '../../world/World';
+import { ARREST_HEAT } from '../../world/robbery';
 import { BASE_INVENTORY_SLOTS } from '../../progress/Progress';
 import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
 
@@ -128,7 +129,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
         ['Finisher', `under 15% health and staggered · ${Math.round(FINISHER_COOLDOWN / 60)} s to recharge`],
         ['Pussying out', `drops ${Math.round(BAIL_MIN * 100)}–${Math.round(BAIL_MAX * 100)}% of the cash on you (the button says how much)`],
         ['No running from', 'bosses, the police, a duel'],
-        ['Mugging', `+${MUG_HEAT} heat · they hand it over or fight for it`],
+        ['Mugging', `+${MUG_HEAT} heat, more with witnesses; police, heroes, a known face`],
       ]),
       sec('Blocking and parrying'),
       p('Hold BLOCK to guard. Tap it just before a hit lands to parry: they’re left open, and a quick hit back lands as a counter.'),
@@ -137,7 +138,12 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       sec('Pussying out'),
       p(`In a fight that’s going wrong, PUSSY OUT throws down some of the cash on you (somewhere between ${Math.round(BAIL_MIN * 100)}% and ${Math.round(BAIL_MAX * 100)}%, different every fight; the button tells you how much before you press it) and you leg it off the screen. They go for the money instead of you. With nothing on you they let you go, but the district remembers your face: its next fight comes at you twice as hard (hit twice as hard, take half the damage) until you beat it. You can’t pussy out of a boss fight, from the police or from a duel.`),
       sec('Mugging'),
-      p(`Walk up to anyone on the street and USE says MUG: what you can see they’re wearing (a chain, a watch, a ring) is what you’re after, plus their wallet and maybe a phone. The nervy hand it all over and leg it, and it lands at their feet. Others square up and fight for it: put them down and it’s on the floor. Either way it’s stolen (the pawn shop pays less, the police take it if they nick you) and +${MUG_HEAT} heat, and everyone about sees it. The bigger the prize, the more likely they fight for it; the more of a name you are, the more likely they just hand it over.`),
+      p(`Walk up to anyone on the street and USE says MUG: what you can see they’re wearing (a chain, a watch, a ring) is what you’re after, plus their wallet and maybe a phone. The nervy hand it all over and leg it, and it lands at their feet. Others square up and fight for it: put them down and it’s on the floor. Either way it’s stolen (the pawn shop pays less, the police take it if they nick you). The bigger the prize, the more likely they fight for it; the more of a name you are, the more likely they just hand it over.`),
+      sec('What mugging costs you'),
+      p(`Heat: +${MUG_HEAT} for the mugging and +${MUG_WITNESS_HEAT} for everyone who saw it. Put down someone who fought for their own stuff and it’s assault: +${ASSAULT_HEAT} more. Heat dies down as you move between areas; at ${ARREST_HEAT} or more, losing any street fight gets you nicked.`),
+      p('The police: with witnesses about, someone may ring 999 and officers turn up in 20–35 seconds (12 if you’re already wanted). Leave the area before they arrive and they’ve missed you.'),
+      p('Have-a-go heroes: someone steady nearby may step in and fight you too.'),
+      p(`Your face: after ${KNOWN_FACE} muggings in one district, people there know you. The nervy ones cross the road when you come near, so the only ones left to mug are the ones likely to fight back, and heroes and 999 calls get likelier with every one.`),
       sec('Weapons'),
       p('Pick a weapon up with GRAB when nobody’s in reach. It wears out with every hit; the workbench at home mends it.'),
     );
