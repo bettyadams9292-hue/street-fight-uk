@@ -8,9 +8,9 @@ import type { Screen, UIManager } from './UIManager';
 
 export const VERSION = '0.4.0';
 
-/** The Street Fight UK logo, for screens that should carry the brand (pause, loading). */
+/** The Hard Graft logo, for screens that should carry the brand (pause, loading). */
 export function screenLogo(): HTMLImageElement {
-  return h('img', { class: 'screen-logo', src: '/art/logo-small.webp', alt: 'Street Fight UK', draggable: 'false' });
+  return h('img', { class: 'screen-logo', src: '/icons/hg/logo.webp', alt: 'Hard Graft', draggable: 'false' });
 }
 
 // ---------------------------------------------------------------- main menu --
@@ -26,7 +26,7 @@ export function mainMenu(
     // A slow loop of the streets with a fighter in front (ui/menuScene.ts), the logo over it.
     menuScene(),
     h('div', { class: 'menu-shade', 'aria-hidden': 'true' }),
-    h('h1', { class: 'menu-logo' }, h('img', { src: '/art/menu/logo-hard-graft.webp', alt: 'Hard Graft', draggable: 'false' })),
+    h('h1', { class: 'menu-logo' }, h('img', { src: '/icons/hg/logo.webp', alt: 'Hard Graft', draggable: 'false' })),
     h(
       'nav',
       { class: 'menu-list' },

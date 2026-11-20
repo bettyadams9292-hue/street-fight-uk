@@ -2212,7 +2212,7 @@ export class Game {
       g.font = `italic 900 ${Math.round(u * 1.2)}px "Big Shoulders Display", Impact, sans-serif`;
       g.fillStyle = '#ffffff';
       g.textBaseline = 'middle';
-      g.fillText('STREET FIGHT UK', u * 0.8, c.height - u * 1.1);
+      g.fillText('HARD GRAFT', u * 0.8, c.height - u * 1.1);
       const name = this.progress?.save.character.name ?? '';
       g.textAlign = 'right';
       g.fillStyle = '#e8333a';
@@ -2631,7 +2631,7 @@ async function shareKoPhoto(dataUrl: string, bossName: string): Promise<void> {
     const file = new File([blob], fileName, { type: 'image/jpeg' });
     const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean };
     if (nav.share && nav.canShare?.({ files: [file] })) {
-      await nav.share({ files: [file], title: `Knocked out ${bossName}`, text: `Just put ${bossName} down in Street Fight UK` });
+      await nav.share({ files: [file], title: `Knocked out ${bossName}`, text: `Just put ${bossName} down in Hard Graft` });
       return;
     }
   } catch {

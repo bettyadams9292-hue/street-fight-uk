@@ -16,6 +16,13 @@ export function menuButton(label: string, onClick: () => void, sub?: string, ext
   // Every Back button gets the painted BACK.
   if (art === undefined && label === 'Back') art = 'back';
   const painted = hasTitle(art);
+  // Every painted title is a Hard Graft brush button now (public/art/titles), plate and all.
+  const b = makeMenuButton(label, onClick, sub, extraClass, ic, key, art, painted);
+  if (painted) b.classList.add('hg-btn');
+  return b;
+}
+
+function makeMenuButton(label: string, onClick: () => void, sub: string | undefined, extraClass: string, ic: IconName | undefined, key: string | undefined, art: string | undefined, painted: boolean): HTMLButtonElement {
   return h(
     'button',
     // A painted button is just its graphic: no plate, icon or subtitle (the subtitle becomes the tooltip).
