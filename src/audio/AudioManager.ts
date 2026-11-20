@@ -345,26 +345,31 @@ export class AudioManager {
   }
 
   /** Play a recorded loop between its pads, fading in; returns how to fade it out and stop. */
-  private recordedLoop(buf: AudioBuffer, dest: AudioNode, vol: number, fadeIn: number): { stop: () => void } {
+  private recordedLoop(buf: AudioBuffer, dest: AudioNode, vol: number, fadeIn: number, song?: { loopStart: number; loopEnd: number; from: number }): { stop: () => number } {
     const ctx = this.ctx!;
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.loop = true;
-    src.loopStart = LOOP_PAD;
-    src.loopEnd = buf.duration - LOOP_PAD;
+    src.loopStart = song ? song.loopStart : LOOP_PAD;
+    src.loopEnd = song ? Math.min(song.loopEnd, buf.duration) : buf.duration - LOOP_PAD;
     const g = ctx.createGain();
     const t = ctx.currentTime;
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(vol, t + fadeIn);
     src.connect(g).connect(dest);
-    src.start(t, LOOP_PAD);
+    const from = song ? song.from : LOOP_PAD;
+    src.start(t, from);
     return {
+      // Fades out and stops; says where in the buffer it had got to (so a song can carry on from there).
       stop: () => {
         const now = ctx.currentTime;
+        let at = from + (now - t);
+        if (at > src.loopEnd) at = src.loopStart + ((at - src.loopStart) % (src.loopEnd - src.loopStart));
         g.gain.cancelScheduledValues(now);
         g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), now);
         g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
         src.stop(now + 0.4);
+        return at;
       },
     };
   }
@@ -479,7 +484,9 @@ export class AudioManager {
   // ---- music -----------------------------------------------------------------
 
   private musicWant: MusicTrack | null = null;
-  private musicNow: { track: MusicTrack; stop: () => void } | null = null;
+  private musicNow: { track: MusicTrack; stop: () => number } | null = null;
+  /** Where each song had got to when it last stopped, and when: back on the street within a few minutes, it carries on. */
+  private musicLeft = new Map<MusicTrack, { at: number; when: number }>();
 
   /**
    * Play a music loop (public/audio/music_*.mp3, made by tools/audio/make_music.py), crossfading from
@@ -496,13 +503,32 @@ export class AudioManager {
     if (this.musicNow?.track === this.musicWant) return;
     const buf = this.musicWant ? this.decoded.get(`sfx_music_${this.musicWant}`) : null;
     if (this.musicWant && !buf) return; // not loaded yet: decode() calls back here
-    this.musicNow?.stop();
+    if (this.musicNow) this.musicLeft.set(this.musicNow.track, { at: this.musicNow.stop(), when: this.ctx.currentTime });
     this.musicNow = null;
     if (this.musicWant && buf) {
-      const loop = this.recordedLoop(buf, this.music, 1, this.musicWant === 'boss' ? 0.6 : 2.5);
+      const song = MUSIC_LOOPS[this.musicWant];
+      let play: { loopStart: number; loopEnd: number; from: number } | undefined;
+      if (song) {
+        // The intro plays once from the top; back within five minutes, it picks up where it was.
+        const left = this.musicLeft.get(this.musicWant);
+        play = { ...song, from: left && this.ctx.currentTime - left.when < 300 ? left.at : 0 };
+      }
+      const loop = this.recordedLoop(buf, this.music, song?.vol ?? 1, this.musicWant === 'boss' ? 0.6 : play?.from ? 1.2 : 2.5, play);
       this.musicNow = { track: this.musicWant, stop: loop.stop };
     }
   }
 }
 
 export type MusicTrack = 'menu' | 'street' | 'boss';
+
+/**
+ * Leeko's songs (Suno), made into loops by tools/audio/loop_music.py: each plays from the top once, then loops
+ * loopStart..loopEnd for ever (a whole number of bars, the seam blended so it can't be heard). The times are the
+ * ones the script prints. vol brings them up to the level the game's other music played at.
+ */
+const MUSIC_LOOPS: Partial<Record<MusicTrack, { loopStart: number; loopEnd: number; vol: number }>> = {
+  // "Hard Graft Pays Off": the title screen (142 bpm, a 90-bar loop).
+  menu: { loopStart: 7.76, loopEnd: 159.86933, vol: 1.7 },
+  // "Backstreet Mood": out on the streets (134 bpm, a 68-bar loop).
+  street: { loopStart: 43.84, loopEnd: 165.62931, vol: 1.7 },
+};
