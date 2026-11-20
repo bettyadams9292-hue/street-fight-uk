@@ -2,7 +2,7 @@ import { emptyCommand, type CommandFrame, type PressButton } from './Commands';
 
 export type GameButton = PressButton;
 const PRESS_BUTTONS: readonly GameButton[] = ['lp', 'hp', 'lk', 'hk', 'jump', 'dodge', 'grab', 'swap'];
-export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory' | 'map' | 'character' | 'crew' | 'zoom';
+export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory' | 'map' | 'character' | 'crew' | 'zoom' | 'phone';
 export type InputSource = 'keyboard' | 'gamepad' | 'touch';
 
 /** Keyboard layout. Kept in one place so a rebinding screen can edit it later. */
@@ -132,7 +132,7 @@ export class InputManager {
       if ((KEY_BINDINGS.use as readonly string[]).includes(code)) this.useQueued = true;
       }
       if (code === 'Escape') this.emitMenu('back');
-      else if (code === 'KeyP') this.emitMenu('pause');
+      else if (code === 'KeyP') this.emitMenu('phone');
       else if (code === 'KeyB') this.emitMenu('inventory');
       else if (code === 'KeyM') this.emitMenu('map');
       else if (code === 'KeyH') this.emitMenu('character');
@@ -178,7 +178,7 @@ export class InputManager {
     if (edge(PAD.LB)) this.useQueued = true;
     if (edge(PAD.START)) this.emitMenu('pause', 'gamepad');
     // Right-stick click: I (heavy punch) and RB (special) are fight buttons.
-    if (edge(PAD.RS)) this.emitMenu('inventory', 'gamepad');
+    if (edge(PAD.RS)) this.emitMenu('phone', 'gamepad');
     if (edge(PAD.A)) this.emitMenu('confirm', 'gamepad');
     if (edge(PAD.B)) this.emitMenu('back', 'gamepad');
     if (edge(PAD.UP)) this.emitMenu('up', 'gamepad');
