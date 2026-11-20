@@ -74,3 +74,11 @@ All 39 models in `newassetsfromchatgpt-expansion.ts` were confirmed by the user 
 **Approved asset copy:** `assets/streetassettesting/gym-security-neighbourhood-expansion.ts` on `pr-dev`.
 
 **Status:** User-approved for the asset library. No game integration. The 3D review viewer is optional inspection only and does not supersede this approval.
+
+## Black corded office desk telephone — APPROVED (1 model)
+
+- `blackDeskTelephone`: black office telephone with seated handset, coiled cable, corrected display and button layout.
+- **Approved by user:** 20 November 2026.
+- **Approved asset file:** `assets/streetassettesting/black-desk-telephone.ts` on `pr-dev`.
+- **Original review source:** `streetassettesting/black-desk-telephone.ts`; **viewer:** `streetassettesting/black-desk-telephone-viewer.html`.
+- **Integration:** Asset-library approval only; not wired into playable scenes.
