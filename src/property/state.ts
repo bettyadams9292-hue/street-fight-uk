@@ -66,6 +66,8 @@ export interface PropertySave {
   seq: number;
   /** The house has had its room dressing put out (home.ts dressHouse): once, then it's yours to move or sell. */
   dressed?: boolean;
+  /** Which of the ornate biscuit tins holds your savings (render/props/biscuitTin.ts). */
+  tin?: string;
 }
 
 /** Spot outside 14 Tanner Road where a bike is left when you take it out. */
@@ -159,6 +161,7 @@ export function sanitiseProperty(raw: unknown, areas: readonly string[]): Proper
   }
   out.seq = Math.max(seq, base.seq);
   if (r.dressed === true) out.dressed = true;
+  if (typeof r.tin === 'string' && /^biscuitTin[A-Za-z]+$/.test(r.tin)) out.tin = r.tin;
   return out;
 }
 

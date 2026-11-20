@@ -305,7 +305,8 @@ export function stashSafe(cap: number): { id: string; scale: number; size: [numb
 export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave, stashCap = 60): LevelDef {
   // The stash's chest is drawn as its safe, standing against the garage's back wall at the safe's own size.
   const safe = stashSafe(stashCap);
-  const fixtures = HOME_FIXTURES.map((p) => (p.kind === 'chest' ? { ...p, item: safe.id, scale: safe.scale, size: safe.size, z: -2.02 + safe.size[1] } : p));
+  // The bedroom desk carries the biscuit tin in the style you chose.
+  const fixtures = HOME_FIXTURES.map((p) => (p.kind === 'chest' ? { ...p, item: safe.id, scale: safe.scale, size: safe.size, z: -2.02 + safe.size[1] } : p.kind === 'desk' ? { ...p, item: prop.tin } : p));
   const props: PropDef[] = [...fixtures, ...garageBikes(prop), ...(gym ? gymProps(gym) : [])];
   for (const f of prop.furniture) {
     const def = FURNITURE[f.id];
