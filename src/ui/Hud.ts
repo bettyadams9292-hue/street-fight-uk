@@ -4,6 +4,7 @@ import type { Fighter } from '../fighter/Fighter';
 import { hasTitle, titleArt, titleFor } from './titles';
 import { h } from './dom';
 import { icon, type IconName } from './icons';
+import { Notifications } from './notifications';
 
 const NEED_ICONS: Record<string, IconName> = { hunger: 'food', energy: 'sleep', hygiene: 'shower', oral: 'tooth', bladder: 'toilet', nutrition: 'food' };
 
@@ -82,8 +83,11 @@ export class Hud {
   private bossTrail: HTMLElement;
   private bossTrailV = 1;
   private weaponText: HTMLElement;
-  private toasts: HTMLElement;
-  private bagChip: HTMLElement;
+  private notes = new Notifications();
+  private bagBtn!: HTMLElement;
+  private bagCount!: HTMLElement;
+  private flow!: HTMLElement;
+  private head!: HTMLElement;
   private weaponChip: HTMLElement;
   private weaponBar: HTMLElement;
   private heatChip: HTMLElement;
@@ -99,8 +103,6 @@ export class Hud {
   private unread = 0;
   private bellBtn!: HTMLElement;
   private tray!: HTMLElement;
-  private tip!: HTMLElement;
-  private tipTimer = 0;
   private zoomBtn!: HTMLElement;
   private activity: HTMLElement;
   private activityTitle: HTMLElement;
@@ -142,11 +144,18 @@ export class Hud {
     this.weaponText = h('span', { class: 'weapon-held' });
     this.routeText = h('span');
     this.route = h('div', { class: 'route-line off' }, icon('route'), this.routeText);
+    this.needsChips = h('div', { class: 'needs-chips' });
+    this.weaponBar = h('span');
+    this.weaponChip = h('div', { class: 'status-chip weapon off' }, h('span', { class: 'wname' }), h('span', { class: 'bar' }, this.weaponBar));
+    this.heatChip = h('div', { class: 'status-chip heat off' });
+    // Tap the objective to read all of it; it's one line otherwise.
+    this.objective.addEventListener('click', () => this.objective.classList.toggle('open'));
     this.story = h(
       'div',
       { class: 'story-info' },
-      h('div', { class: 'story-row' }, this.levelText, this.money, this.weaponText),
+      h('div', { class: 'story-row' }, this.levelText, this.money, this.weaponText, h('span', { class: 'story-gap' }), this.needsChips),
       h('div', { class: 'xp-bar' }, this.xpFill),
+      h('div', { class: 'status-strip' }, this.weaponChip, this.heatChip),
       this.objective,
       this.route,
     );
@@ -156,12 +165,9 @@ export class Hud {
     this.bossFill = h('div', { class: 'fill hp' });
     this.bossTrail = h('div', { class: 'fill trail' });
     this.bossBar = h('div', { class: 'boss-bar' }, this.bossName, h('div', { class: 'bar health' }, this.bossTrail, this.bossFill));
-    this.toasts = h('div', { class: 'toasts' });
-    this.bagChip = h('div', { class: 'status-chip bag' });
-    this.weaponBar = h('span');
-    this.weaponChip = h('div', { class: 'status-chip weapon off' }, h('span', { class: 'wname' }), h('span', { class: 'bar' }, this.weaponBar));
-    this.heatChip = h('div', { class: 'status-chip heat off' });
-    this.needsChips = h('div', { class: 'needs-chips' });
+    // Everything under the top bars flows down in one column: your level, money and needs, the objective,
+    // then notifications. Its top follows the bars and buttons above it (measured, so it fits any screen).
+    this.flow = h('div', { class: 'hud-flow' }, this.story, this.notes.el);
     this.activityTitle = h('b');
     this.activityLabel = h('span');
     this.activityFill = h('div', { class: 'act-fill' });
@@ -170,14 +176,12 @@ export class Hud {
     this.el = h(
       'div',
       { class: 'hud' },
-      this.story,
       this.sleepShade,
-      h('div', { class: 'status-strip' }, this.bagChip, this.weaponChip, this.heatChip, this.needsChips),
       this.activity,
       this.banner,
       this.bossBar,
-      this.toasts,
-      h('div', { class: 'hud-top' }, this.player.root, this.vs, this.enemy.root),
+      (this.head = h('div', { class: 'hud-top' }, this.player.root, this.vs, this.enemy.root)),
+      this.flow,
       h(
         'div',
         { class: 'training-bar' },
@@ -191,20 +195,49 @@ export class Hud {
         { class: 'hud-buttons' },
         (this.zoomBtn = h('button', { class: 'hud-btn room-only zoom-btn', 'aria-label': 'Zoom in', title: 'Zoom (Z)', onclick: () => actions.zoom?.() }, icon('zoom-in'), h('span', { class: 'k', text: 'Z' }))),
         // What you carry is on you, not on the phone: pockets and the bag on your back.
-        h('button', { class: 'hud-btn story-only bag-btn', 'aria-label': 'Pockets and bag', title: 'Pockets & bag (I)', onclick: () => actions.inventory() }, icon('bag'), h('span', { class: 'k', text: 'I' })),
+        (this.bagBtn = h('button', { class: 'hud-btn story-only bag-btn', 'aria-label': 'Pockets and bag', title: 'Pockets & bag (I)', onclick: () => actions.inventory() }, icon('bag'), (this.bagCount = h('span', { class: 'slot-count' })), h('span', { class: 'k', text: 'I' }))),
         // Everything else (messages, map, crew, cabs, money, editing the house) is on the phone.
         (this.bellBtn = h('button', { class: 'hud-btn story-only phone-btn', 'aria-label': 'Phone', title: 'Phone (P)', onclick: () => actions.phone?.() }, icon('phone'), h('span', { class: 'bell-dot' }), h('span', { class: 'k', text: 'P' }))),
         h('button', { class: 'hud-btn pause-btn', 'aria-label': 'Pause', title: 'Pause (Esc)', onclick: () => actions.pause() }, '\u275a\u275a'),
       ),
       h('div', { class: 'prompt-wrap' }, this.prompt, this.subBar),
       (this.tray = h('div', { class: 'notif-tray off', role: 'dialog', 'aria-label': 'Notifications' })),
-      (this.tip = h('div', { class: 'need-tip off', role: 'status' })),
       this.notices,
       this.hurtEdge,
       this.combo,
       this.floaters,
       this.fps,
     );
+  }
+
+  /**
+   * Keep the column under the top bars just below them, whatever the screen: the bars and buttons change size
+   * with the screen, a fight (two panels), the boss bar and the phone's own scaling.
+   */
+  private layoutObserver: ResizeObserver | null = null;
+  private layout = (): void => {
+    const top = this.el.getBoundingClientRect().top;
+    let b = 0;
+    const fighting = this.enemy.root.style.visibility === 'visible';
+    // The enemy's panel keeps its space while hidden: measure only what's shown.
+    for (const el of [fighting ? this.head : this.player.root, this.el.querySelector('.hud-buttons') as HTMLElement | null, this.bossBar]) {
+      if (!el || !el.offsetParent || getComputedStyle(el).visibility === 'hidden') continue;
+      const r = el.getBoundingClientRect();
+      if (r.height > 0) b = Math.max(b, r.bottom - top);
+    }
+    this.el.style.setProperty('--head-b', `${Math.round(b)}px`);
+  };
+  /** Start keeping the layout (call once the HUD is in the page). */
+  attach(): void {
+    if (this.layoutObserver || typeof ResizeObserver === 'undefined') return;
+    this.layoutObserver = new ResizeObserver(() => this.layout());
+    this.layoutObserver.observe(this.head);
+    this.layoutObserver.observe(this.player.root);
+    const btns = this.el.querySelector('.hud-buttons');
+    if (btns) this.layoutObserver.observe(btns);
+    this.layoutObserver.observe(this.bossBar);
+    window.addEventListener('resize', this.layout);
+    this.layout();
   }
 
   setMode(mode: TrainingOpponent, archetype: ArchetypeId): void {
@@ -261,11 +294,11 @@ export class Hud {
   ): void {
     this.el.classList.toggle('fighting', !!info.fighting);
     if (info.slots) {
-      // Only worth showing when your pockets are nearly full.
-      const t = info.slots.used >= info.slots.cap ? 'POCKETS FULL' : `POCKETS ${info.slots.used}/${info.slots.cap}`;
-      if (this.bagChip.textContent !== t) this.bagChip.textContent = t;
-      this.bagChip.classList.toggle('full', info.slots.used >= info.slots.cap);
-      this.bagChip.classList.toggle('off', info.slots.used < info.slots.cap - 1);
+      // How full you are, on the bag button: red when there's no room left.
+      const t = `${info.slots.used}/${info.slots.cap}`;
+      if (this.bagCount.textContent !== t) this.bagCount.textContent = t;
+      this.bagBtn.classList.toggle('full', info.slots.used >= info.slots.cap);
+      this.bagBtn.setAttribute('aria-label', `Pockets and bag: ${info.slots.used} of ${info.slots.cap} slots used`);
     }
     const r = info.route ?? '';
     this.route.classList.toggle('off', !r);
@@ -328,7 +361,7 @@ export class Hud {
       ...list.map((n) =>
         h(
           'button',
-          { class: `status-chip need u${n.urgency}`, 'aria-label': n.tip ?? n.text, title: n.tip ?? n.text, onclick: (e: Event) => { e.stopPropagation(); this.showTip(n.tip ?? n.text); } },
+          { class: `status-chip need u${n.urgency}`, 'aria-label': n.tip ?? n.text, title: n.tip ?? n.text, onclick: (e: Event) => { e.stopPropagation(); this.showTip(n.tip ?? n.text, n.key); } },
           icon(NEED_ICONS[n.key] ?? 'info'),
           h('span', { class: 'need-text', text: n.text }),
         ),
@@ -338,11 +371,8 @@ export class Hud {
   }
 
   /** A need's message, briefly, under the badges. */
-  private showTip(text: string): void {
-    this.tip.textContent = text;
-    this.tip.classList.remove('off');
-    clearTimeout(this.tipTimer);
-    this.tipTimer = window.setTimeout(() => this.tip.classList.add('off'), 3200);
+  private showTip(text: string, key?: string): void {
+    this.notes.show(text, 'need', { icon: NEED_ICONS[key ?? ''] ?? 'info', id: 'need-tip' });
   }
 
   /** What the phone's Messages app shows: what each need says, and recent messages. */
@@ -420,11 +450,7 @@ export class Hud {
   /** Small reward / pickup message at the side. */
   toast(text: string, kind: 'cash' | 'item' | 'info' | 'warn' = 'info', accent?: string): void {
     this.remember(text, kind);
-    const t = h('div', { class: `toast ${kind}`, text });
-    if (accent) t.style.borderLeftColor = accent;
-    this.toasts.append(t);
-    while (this.toasts.children.length > 5) this.toasts.firstElementChild?.remove();
-    setTimeout(() => t.remove(), 2600);
+    this.notes.show(text, kind, { accent });
   }
 
   setFpsVisible(v: boolean): void {
@@ -433,6 +459,11 @@ export class Hud {
 
   /** Big centre-screen call-out. */
   notify(text: string, kind: 'big' | 'warn' | 'info' = 'info', art: string[] = []): void {
+    // Anything longer than a call-out ("Save restored from backup") is a notification, not a shout.
+    if (text.length > 22 && !art.length) {
+      this.toast(text, kind === 'warn' ? 'warn' : 'info');
+      return;
+    }
     // Painted call-outs (FIGHT!, a boss's name and title) where there are graphics for them.
     const painted = art.filter((a) => hasTitle(a));
     const n = painted.length
@@ -542,7 +573,9 @@ export class Hud {
     const low = !player.isKO && v.health < v.maxHealth * 0.25 ? 0.22 + 0.12 * Math.sin(this.clock * 4) : 0;
     this.hurtEdge.style.opacity = Math.max(this.hurtFlash, low).toFixed(3);
     this.updateBars(this.player, player, dt);
+    const was = this.enemy.root.style.visibility;
     this.enemy.root.style.visibility = enemy ? 'visible' : 'hidden';
+    if (was !== this.enemy.root.style.visibility) this.layout();
     this.vs.style.visibility = enemy ? 'visible' : 'hidden';
     if (enemy) this.updateBars(this.enemy, enemy, dt);
 

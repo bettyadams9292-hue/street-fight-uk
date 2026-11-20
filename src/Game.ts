@@ -248,6 +248,7 @@ export class Game {
     });
     this.hud.el.style.display = 'none';
     uiRoot.append(this.hud.el);
+    this.hud.attach();
 
     this.touch = new TouchControls(this.input);
     uiRoot.append(this.touch.el);
