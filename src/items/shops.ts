@@ -25,6 +25,9 @@ export function shopPrice(d: ItemDef, mult: number): number {
   return Math.round(d.value * mult);
 }
 
+/** Cash 4 U on the High Street pays this share of Pawn & Gold's offer: the worst rates in the game. */
+export const PAWN_HATCH_RATE = 0.6;
+
 /** What the pawnbroker pays for one. Stolen goods fetch less; quest items and rubbish nothing. */
 export function pawnOffer(d: ItemDef, st: Pick<ItemStack, 'stolen'>): number {
   if (d.unsellable || d.questFlag || d.value <= 0) return 0;
