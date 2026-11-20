@@ -19,7 +19,34 @@ export function renderedIconUrl(id: string): string | null {
   return RENDERED.has(id) ? `/icons/items/${id}.webp` : null;
 }
 
+/**
+ * Items drawn by a Hard Graft painted icon (public/icons/hg, cut from the owner's icon sheets). These win over the
+ * rendered and painted-in-code icons. Kinds go by the start of the id; a few ids are named on their own.
+ */
+const HG_BY_ID: Record<string, string> = {
+  w_bat: 'bat', w_baseball_bat: 'bat', w_crowbar: 'crowbar', w_knife: 'knife', w_cone: 'cone', w_dustbin_lid: 'dustbin',
+  designer_hoodie: 'hoodie_red', vest_white: 'vest', work_trousers: 'cargo_trousers', cargos_khaki: 'cargos',
+  wraps: 'wraps_roll', mouthguard: 'gumshield_red', headguard: 'headguard', sunglasses: 'sunglasses', sunglasses_designer: 'aviators',
+  lucky_chain: 'gold_chain', watch_basic: 'watch', first_aid: 'first_aid_case', bag_rucksack: 'backpack_2', bag_holdall: 'holdall_hg',
+  headphones: 'headphones', cash_bundle: 'cash_fifties', old_fiver: 'cash_twenties', coin_sovereign: 'coins', coin_silver: 'coins_2',
+  coin_rare: 'coins', trainers_boxed: 'trainers', lockup_key: 'keys_2', stadium_key: 'keys', dunc_phone: 'phone', protein_bar: 'whey',
+};
+const HG_BY_PREFIX: [string, string][] = [
+  ['hoodie_', 'hoodie_plain'], ['tracksuit_top', 'tracksuit_top'], ['tshirt_', 'tshirt'], ['puffer_', 'puffer'],
+  ['trackies_', 'joggers'], ['joggers_', 'joggers'], ['trainers_', 'trainers'], ['runners', 'trainers'], ['hitops_', 'trainers'],
+  ['rare_trainers', 'trainers'], ['cap_', 'cap_hg'], ['beanie', 'beanie'], ['chain_', 'gold_chain'], ['watch_', 'watch'],
+  ['phone_', 'phone'],
+];
+
+/** The Hard Graft painted icon for an item, or null. */
+export function hgItemIcon(id: string): string | null {
+  const f = HG_BY_ID[id] ?? HG_BY_PREFIX.find(([p]) => id.startsWith(p))?.[1];
+  return f ? `/icons/hg/${f}.webp` : null;
+}
+
 export function itemIconUrl(id: string, colourOverride?: string): string {
+  const hg = hgItemIcon(id);
+  if (hg) return hg;
   // A rendered icon shows the model's own colours, so a recoloured item keeps the painted one.
   const file = renderedIconUrl(id);
   if (file && (!colourOverride || colourOverride.toLowerCase() === ITEMS[id]?.colour?.toLowerCase())) return file;

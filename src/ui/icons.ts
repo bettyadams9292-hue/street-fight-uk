@@ -26,10 +26,38 @@ export function iconPaths(name: IconName): string {
   return P[name];
 }
 
-/** A span holding the icon, for HTML. */
+/** The Hard Graft painted icons (public/icons/hg) that stand in for the line icons: every icon has one now. */
+export const PAINTED: Partial<Record<IconName, string>> = {
+  home: 'house', mission: 'rosette', boss: 'target_skull', side: 'fist', shop: 'shopping_bag', clothes: 'hoodie_hg',
+  pawn: 'pawn_shop', gym: 'gloves_hanging', cars: 'car_saloon', bikes: 'dirt_bike', property: 'house_semi', contact: 'crew',
+  street: 'street_lamp', parked: 'car_key', lock: 'lock', map: 'map', bag: 'backpack', close: 'cross', play: 'arrow_right',
+  save: 'save', settings: 'gear', controls: 'gamepad', quit: 'power', phone: 'phone', pin: 'pin', plus: 'plus', minus: 'minus',
+  target: 'target_skull', route: 'signpost', cab: 'car_hatch', walk: 'speed', weapon: 'bat', consumable: 'whey',
+  material: 'toolbox', valuable: 'cash_twenties', misc: 'parcel', equipment: 'dumbbell', all: 'hg_crown', check: 'tick',
+  coin: 'coins', back: 'arrow_left', info: 'info', gem: 'gold_chain', key: 'keys', edit: 'spanners', 'zoom-in': 'search',
+  // Painted to match for the ones the sheets don't have (tools/icons/paint_icon.py).
+  food: 'food', shower: 'shower', toilet: 'toilet', tooth: 'tooth', sleep: 'sleep', bell: 'bell', pub: 'pub', casino: 'casino',
+  you: 'you', 'zoom-out': 'zoom_out',
+};
+
+/** The painted icon's file, if this icon has one. */
+export function paintedIconUrl(name: IconName): string | null {
+  const f = PAINTED[name];
+  return f ? `/icons/hg/${f}.webp` : null;
+}
+
+/** A span holding the icon, for HTML: the painted icon where there is one, else the line drawing. */
 export function icon(name: IconName, cls = ''): HTMLElement {
   const s = document.createElement('span');
-  s.className = `icon ${cls}`.trim();
-  s.innerHTML = iconSvg(name);
+  const url = paintedIconUrl(name);
+  s.className = `icon ${url ? 'hg ' : ''}${cls}`.trim();
+  if (url) {
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = '';
+    img.draggable = false;
+    img.decoding = 'async';
+    s.append(img);
+  } else s.innerHTML = iconSvg(name);
   return s;
 }

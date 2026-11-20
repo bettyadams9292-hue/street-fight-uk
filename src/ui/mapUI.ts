@@ -21,7 +21,7 @@ import {
   type TravelOption,
 } from '../map/worldMap';
 import { h } from './dom';
-import { icon, iconPaths, type IconName } from './icons';
+import { icon, iconPaths, paintedIconUrl, type IconName } from './icons';
 import type { Screen } from './UIManager';
 
 /**
@@ -219,8 +219,11 @@ export function mapScreen(o: MapOptions): Screen {
     g.innerHTML = street
       ? `<circle class="pin" r="7" fill="#0d0f13" stroke="${open ? col : '#5b5852'}" stroke-width="3"/>`
       : `<circle class="halo" r="19"/><circle class="pin" r="13.5" fill="${open ? col : '#3a3936'}" stroke="#0d0f13" stroke-width="2.5"/>` +
-        `<g transform="translate(-8 -8) scale(.667)" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${iconPaths(KIND_ICON[m.kind])}</g>` +
-        (open ? '' : `<g transform="translate(6 -17) scale(.45)"><circle cx="12" cy="12" r="12" fill="#0d0f13"/><g fill="none" stroke="#e8333a" stroke-width="2.6" stroke-linecap="round">${iconPaths('lock')}</g></g>`);
+        // The painted Hard Graft icon on the pin where there is one, else the line drawing.
+        (paintedIconUrl(KIND_ICON[m.kind])
+          ? `<image href="${paintedIconUrl(KIND_ICON[m.kind])}" x="-12" y="-12" width="24" height="24" preserveAspectRatio="xMidYMid meet"${open ? '' : ' opacity=".55"'}/>`
+          : `<g transform="translate(-8 -8) scale(.667)" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${iconPaths(KIND_ICON[m.kind])}</g>`) +
+        (open ? '' : `<image href="${paintedIconUrl('lock')}" x="4" y="-21" width="13" height="13"/>`);
     g.addEventListener('pointerenter', (e) => showTip(m, e as PointerEvent));
     g.addEventListener('pointerleave', () => tip.classList.remove('on'));
     g.setAttribute('data-key', m.key);

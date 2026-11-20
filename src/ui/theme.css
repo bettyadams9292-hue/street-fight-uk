@@ -1322,3 +1322,17 @@ body.fight-on .home-only { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .menu-street, .menu-fighter, .menu-logo, .main-menu.scene .menu-list { animation: none; }
 }
+
+/* ----------------------------------------------------------------------------
+   Hard Graft painted icons (public/icons/hg): bigger than the line icons they
+   replace, since they're pictures, and never tinted.
+   ---------------------------------------------------------------------------- */
+.icon.hg { width: 1.6em; height: 1.6em; }
+.icon.hg img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6)); pointer-events: none; }
+.icon-btn .icon.hg, .hud-btn .icon.hg { width: 30px; height: 30px; }
+.notif .icon.hg { width: 20px; height: 20px; }
+/* A painted Hard Graft button is the whole button (brush plate and lettering): a little taller than a title. */
+.menu-btn.hg-btn .label img.title-art { height: 60px; }
+.main-menu.keyart .menu-btn.hg-btn .label img.title-art { height: 74px; }
+.panel-actions .menu-btn.hg-btn .label img.title-art { height: 50px; }
+@media (max-height: 520px) and (orientation: landscape) { .main-menu.keyart .menu-btn.hg-btn .label img.title-art { height: 50px; } }
