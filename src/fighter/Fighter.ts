@@ -155,6 +155,17 @@ export class Fighter {
   lastBlockPressFrame = -9999;
   /** Sprinting this frame (faces the way it's going, not the target). */
   running = false;
+  /**
+   * On a bike or scooter: how it handles (catalogue bikeHandling). The ride has momentum: the stick is throttle and
+   * brake along the way you face, you only turn round once stopped, and how fast you can move across the street
+   * grows with speed. Null on foot.
+   */
+  vehicle: { top: number; accel: number; brake: number; lane: number; coast: number } | null = null;
+  /** Speed along the way you face on a bike (m/s, never below 0). */
+  rideSpeed = 0;
+  /** Frames left in a getting-on or getting-off move: you're held still. */
+  holdFrames = 0;
+  private rideLastX = NaN;
   /** A readable warning to show the other fighter next update (set by the AI). */
   pendingTell: 'parry' | null = null;
   /** Counter hits are possible until this frame (after a parry). */
@@ -344,7 +355,44 @@ export class Fighter {
 
   // ---- per-frame update -----------------------------------------------------
 
+  /**
+   * One step of riding: throttle, brake, coast and steer. Pushing the way you face accelerates (harder the further you
+   * push); pulling back brakes, and once you're nearly stopped turns you round; letting go rolls you to a stop. Running
+   * into something takes your speed off.
+   */
+  private ride(cmd: CommandFrame, dt: number): { x: number; z: number } {
+    const h = this.vehicle!;
+    // Bumped into something last step: you're going as fast as you actually went.
+    const went = ((this.pos.x - this.rideLastX) / dt) * this.facing;
+    if (Number.isFinite(went) && this.rideSpeed > 0.6 && went < this.rideSpeed * 0.5) this.rideSpeed = Math.max(0, went);
+    const throttle = cmd.moveX * this.facing;
+    let v = this.rideSpeed;
+    if (throttle > 0.15) {
+      const want = h.top * Math.min(1, throttle) * (cmd.run ? 1.08 : 1);
+      // Pulls hardest from low down; tails off near the top.
+      const pull = h.accel * (1 - 0.6 * Math.min(1, v / Math.max(0.1, want)));
+      v = v < want ? Math.min(want, v + pull * dt) : Math.max(want, v - h.coast * dt);
+    } else if (throttle < -0.15) {
+      if (v > 0.35) v = Math.max(0, v - h.brake * dt);
+      else {
+        // Stopped: turn round to go the other way.
+        this.facing = this.facing > 0 ? -1 : 1;
+        v = 0;
+      }
+    } else v = Math.max(0, v - h.coast * dt);
+    this.rideSpeed = v;
+    this.rideLastX = this.pos.x;
+    // Across the street: a shuffle when stopped, a proper line change at speed.
+    const lane = h.lane * (0.35 + 0.65 * Math.min(1, v / (h.top * 0.4)));
+    return { x: v * this.facing, z: cmd.moveZ * lane };
+  }
+
   update(cmd: CommandFrame, frame: number, bus: EventBus<GameEvents>): void {
+    if (!this.vehicle) this.rideLastX = NaN;
+    if (this.holdFrames > 0) {
+      this.holdFrames--;
+      cmd = { ...cmd, moveX: 0, moveZ: 0, run: false, block: false, special: false, pressed: {} as CommandFrame['pressed'] };
+    }
     const held = this.grapple?.role === 'held';
     if (this.wasHeld && !held && this.grabProtectFrames) this.grabProtectUntil = frame + this.grabProtectFrames;
     this.wasHeld = held;
@@ -448,6 +496,14 @@ export class Fighter {
       case 'idle':
       case 'walk':
       case 'block': {
+        if (this.vehicle) {
+          const v = this.ride(cmd, dt);
+          wantVX = v.x;
+          wantVZ = v.z;
+          const next = this.rideSpeed > 0.08 || Math.abs(v.z) > 0.08 ? 'walk' : 'idle';
+          if (this.state !== next) this.setState(next);
+          break;
+        }
         if (cmd.pressed.swap && this.trySwap(frame, bus)) break;
         if (cmd.pressed.grab && this.weapon) {
           if (!this.throwWeapon(frame, bus)) this.dropWeapon();
@@ -483,7 +539,7 @@ export class Fighter {
     }
 
     // Facing: turn toward the soft-locked target, or the way you're walking.
-    if (this.isFree || (this.state === 'jump' && this.stateFrame === 1)) {
+    if (!this.vehicle && (this.isFree || (this.state === 'jump' && this.stateFrame === 1))) {
       if (this.running) {
         this.facing = cmd.moveX > 0 ? 1 : -1;
       } else if (this.target && !this.target.isKO) {
@@ -496,7 +552,11 @@ export class Fighter {
 
     // Integrate movement. On your feet you have weight: a few frames to get going, a few to stop
     // (quick enough to stay sharp). Everything else (air control, dodges) is immediate.
-    if ((this.state === 'idle' || this.state === 'walk') && this.grounded) {
+    if (this.vehicle && (this.state === 'idle' || this.state === 'walk')) {
+      // The ride integrates its own speed (momentum is in rideSpeed); across the street it eases.
+      this.vel.x = wantVX;
+      this.vel.z = approach(this.vel.z, wantVZ, 6 * dt);
+    } else if ((this.state === 'idle' || this.state === 'walk') && this.grounded) {
       this.vel.x = approach(this.vel.x, wantVX, (Math.abs(wantVX) > Math.abs(this.vel.x) || wantVX * this.vel.x < 0 ? WALK_ACCEL : WALK_DECEL) * dt);
       this.vel.z = approach(this.vel.z, wantVZ, (Math.abs(wantVZ) > Math.abs(this.vel.z) || wantVZ * this.vel.z < 0 ? WALK_ACCEL : WALK_DECEL) * dt);
     } else {

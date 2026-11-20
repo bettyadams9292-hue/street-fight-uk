@@ -266,9 +266,9 @@ export function playPrizeDraw(p: Progress, rng: Rng = Math.random): GameResult<{
 /** The motor on the podium this week: changes every few trips. Alternates cars and bikes. */
 export const COMP_PRIZES: { kind: 'car' | 'bike'; id: string; colour: string }[] = [
   { kind: 'car', id: 'vixen', colour: '#c82a2a' },
-  { kind: 'bike', id: 'mx450f', colour: '#c82a2a' },
+  { kind: 'bike', id: 'b26_sportbike', colour: '#c82a2a' },
   { kind: 'car', id: 'sovereign', colour: '#1a1a1a' },
-  { kind: 'bike', id: 'factory450', colour: '#e86a10' },
+  { kind: 'bike', id: 'b25_supermoto', colour: '#e86a10' },
   { kind: 'car', id: 'hornet', colour: '#1f4fa8' },
   { kind: 'car', id: 'phantom', colour: '#e8c020' },
 ];

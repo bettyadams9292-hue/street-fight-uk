@@ -412,8 +412,8 @@ const INTERIORS: Record<string, Item[]> = {
   ],
   bikes: [
     // Motorbikes on the floor (the sign says MOTO), tyres and a workbench at the back.
-    G('vehicle', -2.1, 1.8, { item: 'mx250', colour: '#c0392b' }), G('vehicle', 0.7, 1.8, { item: 'enduro300', colour: '#1f6fb2' }),
-    G('vehicle', -1.0, 3.6, { item: 'trail125', colour: '#2e8b57' }), G('vehicle', 1.8, 3.8, { item: 'mx450f', colour: '#e0a020' }),
+    G('vehicle', -2.1, 1.8, { item: 'b24_petrol_mx', colour: '#c0392b' }), G('vehicle', 0.7, 1.8, { item: 'b28_delivery_moped' }),
+    G('vehicle', -1.0, 3.6, { item: 'b17_city_ebike' }), G('vehicle', 1.8, 3.8, { item: 'b26_sportbike', colour: '#e0a020' }),
     G('tyre_stack', 3.0, 6.2), G('workbench', 0.6, 6.4), G('shop_counter', -2.2, 5.4, { size: [0.9, 0.4] }), { m: 'cars/oil-drum', u: -3.1, v: 6.4 },
   ],
   cars: [

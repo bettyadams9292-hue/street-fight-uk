@@ -50,10 +50,9 @@ import { barScreen, contactsScreen, rewardScreen, sofaScreen, storyPauseMenu, ti
 import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
 import { resolveLevel } from './property/levels';
-import { BIKES, FURNITURE, ROOMS, bikeSpeedMult, type RoomId } from './property/catalogue';
+import { BIKES, FURNITURE, ROOMS, bikeHandling, type RoomId } from './property/catalogue';
 import { STAIRWELL, checkPlacement, suggestSpot, wallZ } from './property/home';
 import { mountBike, parkBike, placeFurniture, ridingBike, sellFurniture, storeBike, storeFurniture, type PlacedAt } from './property/state';
-import { buildBikeModel } from './render/propModels';
 import { EQUIPMENT, equipmentResale } from './business/catalogue';
 import { checkEquipmentPlacement, equipmentWallZ, installEquipment, sellEquipment, suggestEquipmentSpot, uninstallEquipment } from './business/basement';
 import { tickBusiness } from './business/production';
@@ -87,7 +86,6 @@ import {
   rouletteScreen,
   slotsScreen,
 } from './ui/propertyUI';
-import * as THREE from 'three';
 
 type GameState = 'menu' | 'studio' | 'playing' | 'paused' | 'transition' | 'editing' | 'training';
 const MAX_STEPS_PER_FRAME = 5;
@@ -1403,27 +1401,29 @@ export class Game {
     } else prop.bikeOut.area = area;
   }
 
-  /** Put the player on the bike if they're riding: faster, no fighting. */
-  private applyRiding(): void {
+  /**
+   * Put the player on the bike if they're riding: it handles as itself (momentum, braking, turning round when
+   * stopped), and the rider is fitted to it. `getOn`: they've just got on here, so play the leg swing.
+   */
+  private applyRiding(getOn = false): void {
     const w = this.world;
     const p = this.progress;
     if (!w || !p) return;
     const ride = ridingBike(p);
     const view = this.renderer.viewOf(w.player);
+    w.player.stats.removeModifier('riding');
     if (!ride) {
+      w.player.vehicle = null;
+      w.player.rideSpeed = 0;
       view?.setMount(null);
       return;
     }
-    w.player.stats.addModifier({ id: 'riding', source: 'bike', stat: 'moveSpeedMult', mul: bikeSpeedMult(ride.def) });
-    if (view) {
-      // The model's nose is +x; the rider faces local +z. Sit the seat under the hips.
-      const holder = new THREE.Group();
-      const bike = buildBikeModel(ride.owned.id, ride.owned.colour);
-      bike.position.x = 0.3 * (ride.def.wheel / 0.37);
-      holder.add(bike);
-      holder.rotation.y = -Math.PI / 2;
-      view.setMount(holder);
-    }
+    w.player.vehicle = bikeHandling(ride.def);
+    w.player.rideSpeed = 0;
+    if (getOn) w.player.holdFrames = 30;
+    view?.rideBike(ride.owned.id, ride.owned.colour);
+    // Arriving somewhere already riding: you're on it, no swing.
+    if (view && !getOn) view.skipMount();
   }
 
   /**
@@ -1445,9 +1445,11 @@ export class Game {
     w.player.pos.x = out.x;
     w.player.pos.z = out.z;
     w.arena.clamp(w.player.pos);
-    this.applyRiding();
+    // Facing the way the bike points.
+    w.player.facing = out.left ? -1 : 1;
+    this.applyRiding(true);
     this.saveGame();
-    this.hud.toast('On the bike. Interact (away from doors) to get off.', 'item');
+    this.hud.toast(`On the ${BIKES[p.save.property.bikes.find((b) => b.uid === out.uid)?.id ?? '']?.name.toLowerCase() ?? 'bike'}. USE (away from doors) to get off.`, 'item');
   }
 
   /** The level's own parked-bike prop (built with the area) goes when you ride off. */
@@ -1474,13 +1476,29 @@ export class Game {
         break search;
       }
     }
-    parkBike(p, w.level.id, spot.x, spot.z);
+    parkBike(p, w.level.id, spot.x, spot.z, w.player.facing < 0);
     w.player.stats.removeModifier('riding');
-    this.renderer.viewOf(w.player)?.setMount(null);
+    w.player.vehicle = null;
+    w.player.rideSpeed = 0;
     const owned = p.save.property.bikes.find((b) => b.uid === p.save.property.bikeOut!.uid)!;
     w.removeStation('bike');
     w.addStation({ id: 'bike', x: spot.x, z: spot.z + 0.2, label: `Your ${BIKES[owned.id].name}: get on` });
-    this.renderer.setDynamicProp('parked_bike', { kind: 'vehicle', item: owned.id, colour: owned.colour, x: spot.x, z: spot.z, size: [0.95, 0.3], solid: false });
+    const park = () => this.renderer.setDynamicProp('parked_bike', { kind: 'vehicle', item: owned.id, colour: owned.colour, x: spot.x, z: spot.z, size: [0.95, 0.3], solid: false, rot: w.player.facing < 0 ? 2 : 0 });
+    const view = this.renderer.viewOf(w.player);
+    if (reason || !view) {
+      // Knocked off: no time to swing a leg over.
+      view?.setMount(null);
+      park();
+    } else {
+      // Stop where the bike is parked, swing off, then step back from it to stand beside it.
+      w.player.pos.x = spot.x;
+      w.player.pos.z = spot.z;
+      w.player.holdFrames = 26;
+      view.leaveBike(() => {
+        park();
+        if (this.world === w) w.player.pos.z = Math.min(w.arena.bounds.maxZ - 0.2, spot.z + 0.45);
+      });
+    }
     this.saveGame();
     if (reason) this.hud.toast(reason, 'warn');
   }

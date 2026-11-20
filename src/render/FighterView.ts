@@ -7,6 +7,8 @@ import { buildWeaponMesh, disposeGroup } from './weaponMesh';
 import { gymPiece, gymReady, loadGym } from './props/GymLibrary';
 import { FighterAnimator, type Traits } from './anim/animator';
 import { JOINTS, type Pose } from './poses';
+import { ridePose } from './anim/ridePose';
+import { bikeFit, riddenBike, type BikeFit } from './props/bikes';
 
 export { activityPose } from './activityPoses';
 
@@ -62,6 +64,34 @@ export class FighterView {
     if (this.mount) this.root.remove(this.mount);
     this.mount = obj;
     if (obj) this.root.add(obj);
+    if (!obj) this.ride = null;
+  }
+
+  /** The bike being ridden: its model (wheels that turn), how the rider fits it, and the getting on and off. */
+  private ride: { fit: BikeFit; spin(d: number): void; dist: number; on: number; leaving: (() => void) | null } | null = null;
+
+  /** Get on this bike (already standing at it): the model goes under you and you swing a leg over. */
+  rideBike(id: string, colour?: string): void {
+    const fit = bikeFit(id);
+    const bike = riddenBike(id, colour);
+    const holder = new THREE.Group();
+    // The model's nose is +x and the rider faces local +z; the seat goes under the hips.
+    bike.group.position.x = -fit.seat.x;
+    holder.add(bike.group);
+    holder.rotation.y = -Math.PI / 2;
+    this.setMount(holder);
+    this.ride = { fit, spin: bike.spin, dist: 0, on: 0, leaving: null };
+  }
+
+  /** Already on (arrived riding): no getting-on swing. */
+  skipMount(): void {
+    if (this.ride) this.ride.on = 1;
+  }
+
+  /** Get off: the leg swings back over and you stand beside the bike; `done` once you're off (to park it). */
+  leaveBike(done: () => void): void {
+    if (!this.ride) return done();
+    this.ride.leaving = done;
   }
 
   get mounted(): boolean {
@@ -109,13 +139,37 @@ export class FighterView {
     this.root.position.set(f.pos.x, f.pos.y, f.pos.z);
 
     let riding: Pose | null = null;
-    if (this.mount) {
-      // Riding: sat on the bike, leaning into it with speed.
+    let roll = 0;
+    const r = this.ride;
+    if (r) {
+      const step = Number.isFinite(dt) ? Math.min(0.05, dt) : 1 / 60;
+      // Wheels and cranks turn with the ground covered; getting on takes half a second, getting off a little less.
+      r.dist += Math.abs(f.vel.x) * step;
+      r.spin(r.dist);
+      if (r.leaving) {
+        r.on = Math.max(0, r.on - step / 0.4);
+        if (r.on === 0) {
+          const done = r.leaving;
+          this.setMount(null);
+          done();
+        }
+      } else r.on = Math.min(1, r.on + step / 0.5);
+      if (this.ride) {
+        const gear = r.fit.ride === 'pedal' ? 2.4 : 1;
+        riding = ridePose(r.fit, this.rig.metrics, { crank: (r.dist / (r.fit.wheels[0].r * gear)) % (Math.PI * 2), speed: Math.abs(f.vel.x), on: r.on });
+        // Leaning into a change of line, as a bike does.
+        // Leaning into the turn: positive roll leans to the rider's right, which is +z riding right and -z riding left.
+        roll = Math.max(-0.22, Math.min(0.22, f.vel.z * f.facing * 0.09 * Math.min(1, Math.abs(f.vel.x) / 3))) * r.on;
+      }
+    } else if (this.mount) {
+      // Something else to sit on (not a bike): the old seated pose.
       const lean = Math.min(0.2, Math.abs(f.vel.x) * 0.02);
       riding = { ...RIDING, joints: { ...RIDING.joints, spine: [0.45 + lean, 0, 0] } };
     }
     const out = this.animator.update(Number.isFinite(dt) ? dt : 1 / 60, time, riding);
+    this.root.rotation.order = 'YXZ';
     this.root.rotation.y = out.yaw + this.extraYaw;
+    this.root.rotation.z = roll;
     const rig = this.rig;
     for (const j of JOINTS) {
       const v = out.joints[j];

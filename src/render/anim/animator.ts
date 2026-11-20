@@ -336,6 +336,15 @@ export class FighterAnimator {
     const f = this.f;
     let want = f.yawOverride ?? (f.facing * Math.PI) / 2;
     let rate = f.yawOverride !== null ? 9 : 24;
+    if (f.vehicle) {
+      // On a bike you point the way it's going: a little steer into a change of line, never sideways.
+      const ahead = Math.max(1.5, Math.abs(this.vx));
+      want = f.facing * (Math.PI / 2 - Math.max(-0.35, Math.min(0.35, Math.atan2(this.vz, ahead))));
+      this.walkYaw = null;
+      this.yaw += wrap(want - this.yaw) * (1 - Math.exp(-8 * dt));
+      this.yaw = wrap(this.yaw);
+      return;
+    }
     if (f.yawOverride === null && this.combat < 0.5 && (f.state === 'idle' || f.state === 'walk')) {
       // Not fighting: turn to face the way you're walking, in any direction.
       if (speed > 0.5) this.walkYaw = Math.atan2(this.vx, this.vz);

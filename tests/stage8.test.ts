@@ -127,16 +127,16 @@ test('riding past a side fight doesn’t start it; walking past still does', () 
 
 test('get on and off the bike many times: one bike, right place, right state', () => {
   const p = fresh();
-  buyBike(p, 'mx250', '#1f4fa8');
+  buyBike(p, 'b24_petrol_mx', '#1f4fa8');
   const uid = p.save.property.bikes[0].uid;
   takeOutBike(p, uid);
   for (let i = 0; i < 12; i++) {
     const area = i % 2 ? 'high_street' : 'estate';
     p.save.property.bikeOut!.area = area;
     assert(mountBike(p, area).ok && p.save.property.riding, `mount ${i}`);
-    assert(!resolveLevel(area, p.save).props.some((x) => x.kind === 'vehicle' && x.item === 'mx250' && x.label !== 'podium'), 'no parked copy while riding');
+    assert(!resolveLevel(area, p.save).props.some((x) => x.kind === 'vehicle' && x.item === 'b24_petrol_mx' && x.label !== 'podium'), 'no parked copy while riding');
     assert(parkBike(p, area, 5 + i, 0.3).ok && !p.save.property.riding, `park ${i}`);
-    const parked = resolveLevel(area, p.save).props.filter((x) => x.kind === 'vehicle' && x.item === 'mx250');
+    const parked = resolveLevel(area, p.save).props.filter((x) => x.kind === 'vehicle' && x.item === 'b24_petrol_mx');
     assert(parked.length === 1 && parked[0].x === 5 + i, `exactly one bike, where you left it (${parked.length})`);
   }
   assert(p.save.property.bikes.length === 1, 'never duplicated');

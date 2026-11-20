@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BIKES, CARS, FURNITURE, type BikeDef, type CarDef, type FurnitureDef } from '../property/catalogue';
+import { BIKES, CARS, FURNITURE, type CarDef, type FurnitureDef } from '../property/catalogue';
 import { signTexture } from './levelTextures';
 import { EQUIPMENT } from '../business/catalogue';
 import { GYM_KIT } from '../training/gym';
@@ -9,7 +9,8 @@ import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { homeFurnitureModel } from './props/homeFurniture';
 import { packFurnitureModel } from './props/packFurniture';
 import { approvedAt } from './props/approvedFit';
-import { bikePiece, carPiece } from './props/VehicleLibrary';
+import { carPiece } from './props/VehicleLibrary';
+import { parkedBike } from './props/bikes';
 
 /**
  * Furniture, cars and off-road bikes, built from primitives so they share
@@ -582,120 +583,12 @@ function car(g: THREE.Group, def: CarDef, colour: string): void {
 // ---- off-road bikes --------------------------------------------------------------------------------
 
 /** An off-road bike with its front wheel along +x. */
+/** A parked bike or scooter: the approved model (render/props/bikes.ts), painted in its owner's colour. */
 export function buildBikeModel(id: string, colour?: string): THREE.Group {
-  const def = BIKES[id];
   const g = new THREE.Group();
-  if (!def) return g;
-  // The model from VehicleLibrary when it has loaded (numbered like the built one); the code-built bike otherwise.
-  const model = bikePiece(id, colour ?? def.colours[0], bikePlate(def));
-  if (model) {
-    g.add(model);
-    return g;
-  }
-  bike(g, def, colour ?? def.colours[0]);
+  if (!BIKES[id]) return g;
+  g.add(parkedBike(id, colour || BIKES[id].colours[0]));
   return g;
-}
-
-const plateMats = new Map<string, THREE.MeshStandardMaterial>();
-
-/** The white number board with this bike's racing number. */
-function bikePlate(def: BikeDef): THREE.MeshStandardMaterial {
-  const num = String(10 + (def.id.length * 7) % 89);
-  let plateMat = plateMats.get(num);
-  if (!plateMat) {
-    plateMat = new THREE.MeshStandardMaterial({ map: signTexture(num, '#f0eee8', '#111', { w: 128, h: 128 }), roughness: 0.6 });
-    plateMats.set(num, plateMat);
-  }
-  return plateMat;
-}
-
-function bike(g: THREE.Group, def: BikeDef, colour: string): void {
-  const R = def.wheel;
-  const s = R / 0.37;
-  /** Heights above the axle are a touch lower than lengths: a real seat is about 0.95 m up. */
-  const v = 0.78 * s;
-  const wb = 1.45 * s;
-  const plastic = mat(colour, 0.35, 0.05);
-  const frame = mat(def.cls === 'racing' ? '#1a1a1a' : '#8a8a90', 0.35, 0.8);
-  const black = mat('#111113', 0.6);
-  const alloy = mat('#c8c8cc', 0.25, 0.9);
-  const tyre = mat('#0d0d0d', 0.95);
-  // Wheels: knobbly tyres (torus + studs), spokes as a thin disc, hub.
-  for (const x of [-wb / 2, wb / 2]) {
-    const t = new THREE.Mesh(new THREE.TorusGeometry(R - 0.05 * s, 0.055 * s, 10, 28), tyre);
-    t.position.set(x, R, 0);
-    t.castShadow = true;
-    g.add(t);
-    for (let i = 0; i < 18; i++) {
-      const a = (i / 18) * Math.PI * 2;
-      const k = B(g, 0.035 * s, 0.03 * s, 0.13 * s, x + Math.cos(a) * R, R + Math.sin(a) * R, 0, tyre, false);
-      k.rotation.z = a;
-    }
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(R - 0.1 * s, 0.012, 6, 28), alloy);
-    rim.position.set(x, R, 0);
-    g.add(rim);
-    const spokes = C(g, R - 0.1 * s, R - 0.1 * s, 0.01, x, R, 0, mat('#a8a8b0', 0.4, 0.8, { transparent: true, opacity: 0.35 }), 20, false);
-    spokes.rotation.x = Math.PI / 2;
-    const hub = C(g, 0.05 * s, 0.05 * s, 0.14, x, R, 0, alloy, 10, false);
-    hub.rotation.x = Math.PI / 2;
-  }
-  // Brake disc on the front.
-  const disc = C(g, 0.12 * s, 0.12 * s, 0.01, wb / 2, R, 0.07, alloy, 18, false);
-  disc.rotation.x = Math.PI / 2;
-  // Forks, raked back.
-  for (const dz of [-0.09, 0.09]) {
-    const f = C(g, 0.03, 0.035, 0.85 * s, wb / 2 - 0.13 * s, R + 0.38 * v, dz, def.suspension >= 9 ? mat('#c9a227', 0.2, 0.9) : alloy, 8);
-    f.rotation.z = 0.42;
-  }
-  // Triple clamp and bars.
-  B(g, 0.08, 0.05, 0.28, wb / 2 - 0.3 * s, R + 0.78 * v, 0, black);
-  const bars = C(g, 0.014, 0.014, 0.8 * s, wb / 2 - 0.36 * s, R + 0.86 * v, 0, alloy, 6, false);
-  bars.rotation.x = Math.PI / 2;
-  for (const dz of [-0.4 * s, 0.4 * s]) {
-    const grip = C(g, 0.022, 0.022, 0.12, wb / 2 - 0.36 * s, R + 0.86 * v, dz * 0.9, black, 8, false);
-    grip.rotation.x = Math.PI / 2;
-  }
-  // Front number board and mudguard.
-  const plate = B(g, 0.04, 0.22 * s, 0.26 * s, wb / 2 - 0.22 * s, R + 0.62 * v, 0, plastic);
-  plate.rotation.z = 0.42;
-  const fg = B(g, 0.55 * s, 0.03, 0.14, wb / 2 + 0.05 * s, R + 0.3 * v, 0, plastic);
-  fg.rotation.z = -0.12;
-  // Frame: down tube, top rail, swingarm.
-  const down = B(g, 0.07, 0.75 * s, 0.07, wb / 2 - 0.55 * s, R + 0.32 * v, 0, frame);
-  down.rotation.z = 0.75;
-  const top = B(g, 0.85 * s, 0.06, 0.07, -0.05 * s, R + 0.62 * v, 0, frame);
-  top.rotation.z = -0.12;
-  const arm = B(g, 0.7 * s, 0.06, 0.16, -wb / 4, R + 0.05 * v, 0, alloy);
-  arm.rotation.z = -0.1;
-  // Engine block and cylinder.
-  B(g, 0.4 * s, 0.32 * s, 0.24, 0.05 * s, R + 0.12 * v, 0, mat('#3a3a3e', 0.4, 0.6));
-  B(g, 0.18 * s, 0.24 * s, 0.18, 0.1 * s, R + 0.38 * v, 0, mat('#2a2a2e', 0.4, 0.7));
-  // Tank and radiator shrouds.
-  B(g, 0.46 * s, 0.2 * s, 0.32, 0.12 * s, R + 0.68 * v, 0, plastic);
-  for (const dz of [-0.17, 0.17]) {
-    const sh = B(g, 0.3 * s, 0.3 * s, 0.02, 0.24 * s, R + 0.5 * v, dz, plastic);
-    sh.rotation.z = 0.25;
-  }
-  // Seat and rear end.
-  B(g, 0.7 * s, 0.08, 0.22, -0.32 * s, R + 0.74 * v, 0, black);
-  const rear = B(g, 0.6 * s, 0.05, 0.2, -0.68 * s, R + 0.72 * v, 0, plastic);
-  rear.rotation.z = 0.18;
-  // Side plates with a number.
-  const plateMat = bikePlate(def);
-  for (const dz of [-0.13, 0.13]) {
-    const p = B(g, 0.26 * s, 0.2 * s, 0.01, -0.42 * s, R + 0.56 * v, dz, plateMat, false);
-    p.rotation.z = 0.15;
-  }
-  // Exhaust.
-  const ex = C(g, 0.05 * s, 0.06 * s, 0.5 * s, -0.5 * s, R + 0.5 * v, -0.14, def.cls === 'racing' || def.cls === 'mx_pro' ? mat('#8a8aa8', 0.15, 1) : alloy, 10);
-  ex.rotation.z = Math.PI / 2 - 0.25;
-  // Shock.
-  const shock = C(g, 0.03, 0.03, 0.35 * s, -0.15 * s, R + 0.38 * v, 0, mat('#c9a227', 0.3, 0.8), 8, false);
-  shock.rotation.z = -0.4;
-  // Pegs.
-  for (const dz of [-0.16, 0.16]) B(g, 0.05, 0.03, 0.08, -0.05 * s, R + 0.08 * v, dz, alloy, false);
-  // Enduro: headlight and kickstand.
-  if (def.cls === 'enduro') B(g, 0.05, 0.1, 0.12, wb / 2 - 0.16 * s, R + 0.62 * v, 0, mat('#f8f8f0', 0.2, 0, { emissive: 0xffffe0, emissiveIntensity: 0.6 }), false);
 }
 
 /** Car or bike, whichever the id is. */
