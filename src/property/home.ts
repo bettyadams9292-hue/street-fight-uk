@@ -1,5 +1,5 @@
 import { ROOM_EXTRA, deepRoom } from '../world/rooms';
-import { D, addDecor, roomDecor } from '../world/roomDecor';
+import { addDecor, roomDecor } from '../world/roomDecor';
 import type { ContainerDef, LevelDef, PropDef, StationDef } from '../world/LevelTypes';
 import { propHalf } from '../world/LevelTypes';
 import { BIKE_SIZE, BIKES, FURNITURE, GARAGE_SPACES, ROOMS, ROOM_IDS, allowedRooms, roomAt, type FurnitureDef, type RoomId } from './catalogue';
@@ -26,8 +26,13 @@ function HOME_FRONT_Z(): number {
 /** Gap kept from the side walls. */
 export const SIDE_MARGIN = 0.15;
 export const FRONT_DOOR_X = -8;
-/** The stairs down to the basement, in the garage floor. */
-export const STAIRWELL = { x: 16.6, z: -1.45, hx: 0.85, hz: 0.9 };
+/**
+ * The garage, along its back wall from the left: the roller door with the bikes parked nose-in at it, the safe (the
+ * stash), the workbench under its pegboard, and the stairs down to the basement in the far corner.
+ */
+export const GARAGE = { door: 14.2, doorW: 3.2, safe: 16.75, bench: 18.75 };
+/** The stairs down to the basement, in the garage's far back corner. */
+export const STAIRWELL = { x: 21.0, z: -1.45, hx: 0.85, hz: 0.9 };
 /** Pieces may not touch: keep this much air between them. */
 const ALLOWED_GAP = 0.02;
 
@@ -61,10 +66,10 @@ export const HOME_FIXTURES: PropDef[] = [
   { kind: 'fridge', x: 1.3, z: -1.45 },
   // gym: the kit itself comes from the save (training/gymKit.ts)
   { kind: 'coach_board', x: 2.45, z: -2.2, size: [0.4, 0.06], solid: false },
-  // garage: bikes, the stash, the workbench, and the stairs down to the basement
-  { kind: 'workbench', x: 20.6, z: -1.4 },
-  { kind: 'chest', x: 18.75, z: -1.55 },
-  { kind: 'tyre_stack', x: 21.4, z: 0.15 },
+  // garage: bikes at the roller door, the stash, the workbench, a stack of tyres in the front corner, the stairs down
+  { kind: 'workbench', x: GARAGE.bench, z: -1.4 },
+  { kind: 'chest', x: GARAGE.safe, z: -1.55 },
+  { kind: 'tyre_stack', x: 21.4, z: 4.9 },
   { kind: 'stairwell', x: STAIRWELL.x, z: STAIRWELL.z, size: [STAIRWELL.hx, STAIRWELL.hz] },
 ];
 
@@ -76,8 +81,8 @@ const FIXED_STATIONS: StationDef[] = [
   { id: 'tin', x: -13.9, z: -0.9, label: 'Biscuit tin: your savings' },
   { id: 'kitchen', x: -1.2, z: -0.85, label: 'WORKTOP|Prepare food' },
   { id: 'gym', x: 2.45, z: -1.2, label: 'Coach’s board: training plan, moves and styles' },
-  { id: 'garage', x: 20.6, z: -0.75, label: 'Workbench: repair, craft and upgrade weapons' },
-  { id: 'storage', x: 18.75, z: -0.9, label: 'Stash: your safe' },
+  { id: 'garage', x: GARAGE.bench, z: -0.75, label: 'Workbench: repair, craft and upgrade weapons' },
+  { id: 'storage', x: GARAGE.safe, z: -0.9, label: 'Stash: your safe' },
   { id: 'bike_rack', x: 13.75, z: 0.75, label: 'Bike store: take a bike out or put one away' },
 ];
 
@@ -138,8 +143,8 @@ export function furnitureStations(prop: PropertySave): StationDef[] {
   return out;
 }
 
-/** Bike bays in the garage: pointing into the room, side by side. */
-export const GARAGE_SLOTS = [12.85, 13.75, 14.65].slice(0, GARAGE_SPACES).map((x) => ({ x, z: -0.85 }));
+/** Bike bays in the garage: parked side by side in front of the roller door, nose in. */
+export const GARAGE_SLOTS = [GARAGE.door - 1, GARAGE.door, GARAGE.door + 1].slice(0, GARAGE_SPACES).map((x) => ({ x, z: -0.85 }));
 
 type Box = { minX: number; maxX: number; minZ: number; maxZ: number };
 const overlap = (a: Box, b: Box, gap = 0) => a.minX < b.maxX + gap && a.maxX > b.minX - gap && a.minZ < b.maxZ + gap && a.maxZ > b.minZ - gap;
@@ -308,7 +313,7 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave
 }
 
 /** The garage's dressing (racks, cupboard, boxes): fixed, as the garage isn't furnished from the computer. */
-const HOME_DECOR: PropDef[] = [...roomDecor('garage', 12.1, 22), D('gymMirror', 7.0, -2.0, { wallY: 0 })];
+const HOME_DECOR: PropDef[] = roomDecor('garage', 12.1, 22);
 
 /**
  * What furnishes the house's rooms beyond the starter pieces: put out once, as furniture you own, so it can be

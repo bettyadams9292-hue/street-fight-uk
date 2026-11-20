@@ -4,6 +4,7 @@ import { gymPiece, type GymModelId } from './props/GymLibrary';
 import { shopPiece, type ShopModelId } from './props/ShopLibrary';
 import { packWood } from './props/packFurniture';
 import { approvedAt } from './props/approvedFit';
+import { GARAGE } from '../property/home';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { doorPiece, type DoorStyle } from './props/DoorLibrary';
@@ -447,6 +448,19 @@ export class LevelView {
   }
 
   /** Put a gym model (GymLibrary) into the group, fitted to w × h × d; false until they've loaded. */
+  /**
+   * A roller shutter (the approved corrugated one, its housing on top) filling w x h with its foot at y0, standing
+   * just proud of the wall at z. Half-drawn shutters are the same model, shorter. Returns false if it can't be made.
+   */
+  private rollerShutter(cx: number, y0: number, w: number, h: number, z: number): boolean {
+    const m = approvedAt('rollerShutter');
+    if (!m) return false;
+    m.scale.set(w / 2.55, h / 2.47, 0.6);
+    m.position.set(cx, y0, z + 0.11);
+    this.group.add(m);
+    return true;
+  }
+
   /** Gym dressing the approved expansion covers: plate stacks (25 down to 10 kg), and a pair of hex dumbbells. */
   private approvedGymProp(g: THREE.Group, item: string): boolean {
     if (item === 'plate_stack' || item === 'plate_stack_b') {
@@ -1013,7 +1027,10 @@ export class LevelView {
     const lit = f.label !== 'TO LET';
     const colour = f.colour ?? '#2a5a8a';
     this.box(w - 0.4, 2.6, 0.06, cx, 1.3, this.back + 0.08, this.mat('#0e1216', 0.05, 0.7, { emissive: 0xffe8c8, emissiveIntensity: lit ? 0.26 : 0.02 }), false);
-    if (!lit || this.rnd() < 0.3) this.box(w - 0.4, lit ? 1 : 2.6, 0.05, cx, lit ? 2.1 : 1.3, this.back + 0.12, new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 }), false);
+    if (!lit || this.rnd() < 0.3) {
+      const h = lit ? 1 : 2.6;
+      if (!this.rollerShutter(cx, 2.6 - h, w - 0.4, h, this.back + 0.08)) this.box(w - 0.4, h, 0.05, cx, lit ? 2.1 : 1.3, this.back + 0.12, new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 }), false);
+    }
     // Deep concrete canopy along the whole parade.
     this.box(w, 0.35, 1.8, cx, 3.25, this.back + 0.9, new THREE.MeshStandardMaterial({ map: concreteTexture('#7a766c', w / 4, 1), roughness: 1 }));
     if (f.label) {
@@ -1358,9 +1375,18 @@ export class LevelView {
     this.windowAt(dx - 3.2, 4.5, 1.5, 1.2, this.windowMat(0));
     // Garage door on the left of the drive.
     const gx = f.x0 + 2.4;
-    const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.55, metalness: 0.45, color: 0xd8d8d0 });
-    this.box(3.6, 2.4, 0.06, gx, 1.2, this.back + 0.04, sh, false);
-    this.box(3.9, 0.12, 0.1, gx, 2.46, this.back + 0.06, frame, false);
+    // The approved up-and-over garage door, a house's own; the drawn shutter only if it can't be made.
+    const up = approvedAt('estateGarageDoor');
+    if (up) {
+      const sz = prototype('estateGarageDoor').box.getSize(new THREE.Vector3());
+      up.scale.set(3.6 / sz.x, 2.4 / sz.y, 1);
+      up.position.set(gx, 0, this.back + 0.04);
+      this.group.add(up);
+    } else {
+      const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.55, metalness: 0.45, color: 0xd8d8d0 });
+      this.box(3.6, 2.4, 0.06, gx, 1.2, this.back + 0.04, sh, false);
+      this.box(3.9, 0.12, 0.1, gx, 2.46, this.back + 0.06, frame, false);
+    }
     // Tiled roof, gutter, downpipe, chimney.
     const roof = new THREE.MeshStandardMaterial({ map: tileTexture('#6a2a1e', '#3a160e', w / 0.35, 8, 32), roughness: 0.8 });
     const r = this.box(w + 0.3, 0.12, 2.8, cx, H + 0.75, this.back - 1.0, roof);
@@ -1862,8 +1888,11 @@ export class LevelView {
     const glass = this.mat('#101418', 0.05, 0.7, { emissive: 0xfff2d8, emissiveIntensity: lit ? 0.75 : 0.03 });
     this.box(w - 1.0, 2.2, 0.06, cx - 0.4, 1.3, this.back + 0.12, glass, false);
     if (this.rnd() < 0.5 || !lit) {
-      const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
-      this.box(w - 1.0, lit ? 0.9 : 2.2, 0.05, cx - 0.4, lit ? 1.95 : 1.3, this.back + 0.16, sh, false);
+      const h = lit ? 0.9 : 2.2;
+      if (!this.rollerShutter(cx - 0.4, 2.4 - h, w - 1.0, h, this.back + 0.12)) {
+        const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
+        this.box(w - 1.0, h, 0.05, cx - 0.4, lit ? 1.95 : 1.3, this.back + 0.16, sh, false);
+      }
     }
     if (!this.door('shop', f.x1 - 0.65, 0.95, 2.2, 0.1)) this.box(0.9, 2.2, 0.06, f.x1 - 0.65, 1.1, this.back + 0.12, this.mat('#222', 0.5));
     if (f.label) {
@@ -1962,9 +1991,11 @@ export class LevelView {
     this.box(w, 1.2, 0.12, cx, 0.6, this.back + 0.04, new THREE.MeshStandardMaterial({ map: brickTexture(w / 4, 0.3) }));
     // Roller door and a lit office window.
     const rw = Math.min(5, w * 0.4);
-    const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
-    this.box(rw, 4, 0.08, cx - w * 0.15, 2, this.back + 0.15, sh, false);
-    this.box(rw + 0.3, 0.3, 0.3, cx - w * 0.15, 4.1, this.back + 0.2, this.mat('#2a2a2a', 0.5, 0.6), false);
+    if (!this.rollerShutter(cx - w * 0.15, 0, rw, 4.25, this.back + 0.08)) {
+      const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
+      this.box(rw, 4, 0.08, cx - w * 0.15, 2, this.back + 0.15, sh, false);
+      this.box(rw + 0.3, 0.3, 0.3, cx - w * 0.15, 4.1, this.back + 0.2, this.mat('#2a2a2a', 0.5, 0.6), false);
+    }
     this.windowAt(cx + w * 0.3, 2.2, 1.6, 1.0, this.windowMat(0.6));
     // Security lamp, a camera over the roller door and the alarm box.
     if (!this.secure('wall_lamp', cx + w * 0.3, 4.3, 0.02, 2.2)) this.box(0.4, 0.2, 0.3, cx + w * 0.3, 4.2, this.back + 0.2, this.mat('#ffffff', 0.4, 0, { emissive: 0xe8ffe8, emissiveIntensity: 1.3 }), false);
@@ -2319,17 +2350,27 @@ export class LevelView {
       }
     }
     if (f.label === 'Garage') {
-      const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
-      this.box(3.2, 2.3, 0.05, cx + 1.2, 1.15, this.back + 0.04, sh, false);
-      // Pegboard of tools and a wall rack over the bike bays.
-      this.box(2.4, 1.0, 0.03, cx - 2.6, 1.7, this.back + 0.02, this.mat('#a8885a', 0.9), false);
+      // The roller door in the back wall with the bikes parked at it; the pegboard of tools and a shelf of boxes over
+      // the workbench (property/home.ts GARAGE).
+      const door = this.level.id === 'home' ? GARAGE.door : cx + 1.2;
+      const bench = this.level.id === 'home' ? GARAGE.bench : cx - 2.6;
+      if (!this.rollerShutter(door, 0, GARAGE.doorW, 2.5, this.back)) {
+        const sh = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.6, metalness: 0.5 });
+        this.box(3.2, 2.3, 0.05, door, 1.15, this.back + 0.04, sh, false);
+      }
+      this.box(2.0, 0.9, 0.03, bench, 1.65, this.back + 0.02, this.mat('#a8885a', 0.9), false);
       const tool = this.mat('#2a2a2e', 0.4, 0.7);
-      for (let i = 0; i < 7; i++) this.box(0.05, 0.3 + (i % 3) * 0.08, 0.03, cx - 3.6 + i * 0.32, 1.7, this.back + 0.05, i % 2 ? tool : this.mat('#c81010', 0.5), false);
-      this.box(3.0, 0.06, 0.25, cx - 2.6, 2.45, this.back + 0.14, this.mat('#2a2a2e', 0.5, 0.5), false);
-      for (let i = 0; i < 4; i++) this.box(0.45, 0.25, 0.22, cx - 3.7 + i * 0.7, 2.62, this.back + 0.14, this.mat(['#3a5a8a', '#c8a020', '#7a1414', '#3a3a3a'][i], 0.6), false);
+      for (let i = 0; i < 6; i++) this.box(0.05, 0.3 + (i % 3) * 0.08, 0.03, bench - 0.8 + i * 0.32, 1.65, this.back + 0.05, i % 2 ? tool : this.mat('#c81010', 0.5), false);
+      this.box(2.2, 0.06, 0.25, bench, 2.4, this.back + 0.14, this.mat('#2a2a2e', 0.5, 0.5), false);
+      for (let i = 0; i < 3; i++) this.box(0.45, 0.25, 0.22, bench - 0.7 + i * 0.7, 2.57, this.back + 0.14, this.mat(['#3a5a8a', '#c8a020', '#7a1414'][i], 0.6), false);
     }
     if (f.label === 'Gym') {
-      this.box(3, 1.6, 0.03, cx - 1.2, 1.4, this.back + 0.02, this.mat('#a8b8c8', 0.05, 0.2, { emissive: 0x5a6a7a, emissiveIntensity: 0.45 }), false);
+      // The approved full-height gym mirror, flat to the wall where the old panel was.
+      const mirror = approvedAt('gymMirror');
+      if (mirror) {
+        mirror.position.set(cx - 1.2, 0, this.back + 0.08);
+        this.group.add(mirror);
+      } else this.box(3, 1.6, 0.03, cx - 1.2, 1.4, this.back + 0.02, this.mat('#a8b8c8', 0.05, 0.2, { emissive: 0x5a6a7a, emissiveIntensity: 0.45 }), false);
     }
     // Name plates only on the garage and gym walls: in your own house "BEDROOM" on the wall read as debug text.
     if (f.label && !isHome) {

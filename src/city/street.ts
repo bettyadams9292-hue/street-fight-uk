@@ -826,7 +826,7 @@ export function planStreet(level: LevelDef): StreetPlan {
       const doors = level.exits.filter((e) => e.kind === 'door' && e.x > f.x0 && e.x < f.x1).map((e) => e.x);
       const frng = new Rng(hash(`${level.id}:${f.kind}:${Math.round(f.x0 * 10)}`));
       if (f.kind === 'fence' || f.kind === 'hoarding') {
-        fence(f, frng);
+        fence(f, frng, doors);
       } else if (f.kind === 'house_front') {
         house(f, doors);
       } else if (label && SHOP_KINDS.has(f.kind)) {
@@ -878,38 +878,49 @@ export function planStreet(level: LevelDef): StreetPlan {
   }
 
   /**
-   * A fence run from the approved expansion: galvanised palisade round yards, docks and works; chain-link on estates
-   * and back streets; close-board timber in the suburbs. Rough districts mix in the damaged versions (missing boards,
-   * sagging wire, a bent gate). A run longer than 6 m gets a gate of its kind in the middle.
+   * A fence run from the approved expansion, its gate always of the same make: galvanised palisade round yards,
+   * docks and works; chain-link on estates and back streets; close-board timber in the suburbs. Rough districts mix
+   * in damaged panels of the same kind (sagging wire, missing boards; a broken timber gate). A way through the fence
+   * (an exit door) is drawn as the gate itself, never a door in the fence; a suburb fence with a way through is
+   * palisade, as there's no sound timber gate. A long run with no exit gets a gate in the middle where there is one.
    */
-  function approvedFence(f: FacadeDef, frng: Rng): void {
+  function approvedFence(f: FacadeDef, frng: Rng, doors: number[]): void {
     const yard = d!.ground === 'yard' || d!.ground === 'quay';
-    const suburb = d!.ground === 'suburb';
     const rough = d!.tints === GRIT || d!.tints === DARK || level.theme === 'estate' || level.theme === 'alleys';
-    const panel = yard ? 'palisadeFence' : suburb ? 'timberFence' : 'chainLinkFence';
-    const worn = yard ? 'palisadeFence' : suburb ? 'poorTimberFence' : 'poorChainLinkFence';
-    const gate = yard ? (rough ? 'poorPalisadeGate' : 'palisadeGate') : suburb ? (rough ? 'poorTimberGate' : 'timberFence') : 'chainLinkGate';
-    const span = f.x1 - f.x0;
-    const PANEL_W: Record<string, number> = { palisadeFence: 3.17, timberFence: 2.87, chainLinkFence: 3.15, poorTimberFence: 2.87, poorChainLinkFence: 3.15 };
-    const GATE_W: Record<string, number> = { palisadeGate: 1.88, poorPalisadeGate: 1.88, chainLinkGate: 1.61, poorTimberGate: 1.22, timberFence: 2.87 };
-    const gw = span > 6 && gate !== 'timberFence' ? GATE_W[gate] : 0;
-    const mid = (f.x0 + f.x1) / 2;
-    const runs: [number, number][] = gw ? [[f.x0, mid - gw / 2], [mid + gw / 2, f.x1]] : [[f.x0, f.x1]];
-    if (gw) plan.approved.push({ id: gate, x: mid, y: 0, z: back - 0.12, ry: 0 });
-    for (const [a, b] of runs) {
+    const make: 'palisade' | 'chain' | 'timber' = yard || (d!.ground === 'suburb' && doors.length) ? 'palisade' : d!.ground === 'suburb' ? 'timber' : 'chain';
+    const SET = {
+      palisade: { panel: 'palisadeFence', worn: 'palisadeFence', gate: 'palisadeGate' as string | null },
+      chain: { panel: 'chainLinkFence', worn: 'poorChainLinkFence', gate: 'chainLinkGate' as string | null },
+      timber: { panel: 'timberFence', worn: 'poorTimberFence', gate: rough ? 'poorTimberGate' : null },
+    }[make];
+    const W: Record<string, number> = {
+      palisadeFence: 3.17, timberFence: 2.87, chainLinkFence: 3.15, poorTimberFence: 2.87, poorChainLinkFence: 3.15,
+      palisadeGate: 1.88, chainLinkGate: 1.61, poorTimberGate: 1.22,
+    };
+    const gates = doors.length ? doors : SET.gate && f.x1 - f.x0 > 6 ? [(f.x0 + f.x1) / 2] : [];
+    const gw = SET.gate ? W[SET.gate] : 0;
+    // The runs of panel between the gates.
+    const cuts = [f.x0, ...gates.flatMap((x) => [x - gw / 2, x + gw / 2]), f.x1];
+    for (const x of gates) {
+      if (!SET.gate) break;
+      plan.approved.push({ id: SET.gate, x, y: 0, z: back - 0.12, ry: 0 });
+      plan.doors.push(x);
+    }
+    for (let i = 0; i + 1 < cuts.length; i += 2) {
+      const [a, b] = [cuts[i], cuts[i + 1]];
       const len = b - a;
       if (len < 0.4) continue;
-      const n = Math.max(1, Math.round(len / PANEL_W[panel]));
+      const n = Math.max(1, Math.round(len / W[SET.panel]));
       const cw = len / n;
-      for (let i = 0; i < n; i++) {
-        const id = rough && frng.chance(yard ? 0.25 : 0.4) ? worn : panel;
-        plan.approved.push({ id, x: a + cw * (i + 0.5), y: 0, z: back - 0.12, ry: 0, scale: [cw / PANEL_W[id], 1, 1] });
+      for (let k = 0; k < n; k++) {
+        const id = rough && frng.chance(0.4) ? SET.worn : SET.panel;
+        plan.approved.push({ id, x: a + cw * (k + 0.5), y: 0, z: back - 0.12, ry: 0, scale: [cw / W[id], 1, 1] });
       }
     }
   }
 
   /** Fences and hoardings: panels along the building line, with yards and far buildings behind. */
-  function fence(f: FacadeDef, frng: Rng): void {
+  function fence(f: FacadeDef, frng: Rng, doors: number[] = []): void {
     const span = f.x1 - f.x0;
     if (f.kind === 'hoarding') {
       const model = 'nyc/prop-hoarding-panel';
@@ -917,7 +928,7 @@ export function planStreet(level: LevelDef): StreetPlan {
       const n = Math.max(1, Math.round(span / s.w));
       const cw = span / n;
       for (let i = 0; i < n; i++) put(model, f.x0 + cw * (i + 0.5), 0, back - s.maxZ, { sx: cw / s.w });
-    } else approvedFence(f, frng);
+    } else approvedFence(f, frng, doors);
     plan.surfaces.push({ kind: 'garden', x0: f.x0, x1: f.x1, z0: back - 9, z1: back });
     tile('garden', 'hood/driveway-slab-tile', f.x0, f.x1, back - 9, back, { y: -0.05, tint: f.kind === 'hoarding' ? '#8a8478' : '#7f9068' });
     plan.surfaces.pop();
