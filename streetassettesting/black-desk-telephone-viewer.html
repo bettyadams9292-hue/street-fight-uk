@@ -3,7 +3,7 @@ const status=document.getElementById('status'),canvas=document.getElementById('s
 try{
  const THREE=await import('https://esm.sh/three@0.180.0');
  const ts=await import('https://esm.sh/typescript@5.9.3');
- const response=await fetch('https://raw.githubusercontent.com/bettyadams9292-hue/street-fight-uk/a1acd4f6a0e7a2236648524a74c07ca0431bdbe5/streetassettesting/black-desk-telephone.ts',{cache:'no-store'});
+ const response=await fetch('https://raw.githubusercontent.com/bettyadams9292-hue/street-fight-uk/015f083a281be40c5660f6eed3a187f9ce5230a9/streetassettesting/black-desk-telephone.ts',{cache:'no-store'});
  if(!response.ok)throw Error('Asset source HTTP '+response.status);
  const source=await response.text();
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from\s*(['"])three\1/g,"from 'https://esm.sh/three@0.180.0'");
