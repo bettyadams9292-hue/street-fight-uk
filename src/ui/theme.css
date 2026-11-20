@@ -725,6 +725,10 @@ img[src^="/icons/items/"] { background: radial-gradient(circle at 50% 50%, color
 /* ----------------------------------------------------------------------------
    Respect reduced motion.
    ---------------------------------------------------------------------------- */
+@keyframes menu-fighter-pr { from { transform: translateX(-20vw); } to { transform: translateX(20vw) scale(1.02); } }
+@keyframes menu-fighter-pl { from { transform: translateX(20vw); } to { transform: translateX(-20vw) scale(1.02); } }
+@keyframes menu-street-pr { from { transform: translateX(32vw) scale(1.04); } to { transform: translateX(-32vw) scale(1.06); } }
+@keyframes menu-street-pl { from { transform: translateX(-32vw) scale(1.04); } to { transform: translateX(32vw) scale(1.06); } }
 @media (prefers-reduced-motion: reduce) {
   .screen.active, .toast, .area-banner.show, .notice, .mp-card { animation-duration: 0.01ms !important; }
   .mp-route { animation: none; }
@@ -1260,4 +1264,61 @@ body.fight-on .home-only { display: none !important; }
   .editor-actions { grid-column: 2 / -1; grid-template-columns: repeat(4, minmax(70px, 1fr)); }
   .editor-btn { min-height: 36px; font-size: 17px; }
   .editor-keys { display: none; }
+}
+
+/* ----------------------------------------------------------------------------
+   Start screen scene (ui/menuScene.ts): a slow loop of the streets, a fighter
+   in front, the camera circling them (street one way, fighter the other).
+   ---------------------------------------------------------------------------- */
+.screen.main-menu.keyart.scene { background: #07080c; align-items: flex-start; justify-content: flex-end; padding-left: calc(5vw + var(--safe-l)); isolation: isolate; }
+.menu-stage { position: absolute; inset: 0; overflow: hidden; z-index: -2; pointer-events: none; }
+.menu-shot { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease-in-out; }
+.menu-shot.on { opacity: 1; }
+.menu-street { position: absolute; inset: -4%; background: center 60% / cover no-repeat; will-change: transform; animation: menu-street-r var(--shot-ms, 10s) linear forwards; }
+.menu-shot.dir-l .menu-street { animation-name: menu-street-l; }
+/* The fighter stands on the pavement, right of the menu, lit by the street behind. */
+.menu-fighter {
+  position: absolute; left: 66%; bottom: -3vh; height: 100vh; width: auto; max-width: none;
+  translate: -50% 0; will-change: transform;
+  filter: drop-shadow(0 0 28px rgba(0, 0, 0, 0.55)) drop-shadow(-6px 0 18px rgba(214, 30, 30, 0.18));
+  animation: menu-fighter-r var(--shot-ms, 10s) linear forwards;
+}
+.menu-shot.dir-l .menu-fighter { animation-name: menu-fighter-l; }
+@keyframes menu-street-r { from { transform: translateX(2.6%) scale(1.06); } to { transform: translateX(-2.6%) scale(1.1); } }
+@keyframes menu-street-l { from { transform: translateX(-2.6%) scale(1.06); } to { transform: translateX(2.6%) scale(1.1); } }
+@keyframes menu-fighter-r { from { transform: translateX(-2.2vw) scale(1); } to { transform: translateX(2.2vw) scale(1.025); } }
+@keyframes menu-fighter-l { from { transform: translateX(2.2vw) scale(1); } to { transform: translateX(-2.2vw) scale(1.025); } }
+/* Darker behind the logo and menu, and at the foot of the screen, so both read over any street. */
+.menu-shade { position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(7, 8, 12, 0.82) 0%, rgba(7, 8, 12, 0.5) 30%, rgba(7, 8, 12, 0) 52%),
+    linear-gradient(0deg, rgba(7, 8, 12, 0.7) 0%, rgba(7, 8, 12, 0) 30%),
+    radial-gradient(ellipse at 60% 45%, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+}
+.menu-logo { position: absolute; left: calc(4vw + var(--safe-l)); top: calc(3vh + var(--safe-t)); width: min(520px, 38vw); margin: 0; pointer-events: none;
+  animation: menu-logo-in 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.menu-logo img { display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.7)); }
+@keyframes menu-logo-in { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: none; } }
+.main-menu.scene .menu-list { animation: menu-list-in 0.9s 0.5s ease-out both; }
+@keyframes menu-list-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.main-menu.scene .footer { text-align: left; left: calc(5vw + var(--safe-l)); right: auto; }
+@media (max-height: 520px) and (orientation: landscape) {
+  .main-menu.keyart.scene .menu-list { width: min(400px, 46vw); justify-items: start; }
+  .menu-logo { width: min(330px, 34vw); top: calc(10px + var(--safe-t)); }
+  .menu-fighter { left: 74%; height: 104vh; }
+}
+@media (orientation: portrait) and (max-width: 700px) {
+  .screen.main-menu.keyart.scene { align-items: center; padding-left: calc(16px + var(--safe-l)); }
+  /* Phones upright: the fighter stands low, head below the logo and feet at the foot of the screen, and walks the
+     camera's way across the screen while the street (much wider than the screen) slides the other way behind. */
+  .menu-fighter { left: 50%; height: 70vh; bottom: -1vh; animation-name: menu-fighter-pr; }
+  .menu-shot.dir-l .menu-fighter { animation-name: menu-fighter-pl; }
+  .menu-street { inset: 0 auto 0 50%; width: 178vh; margin-left: -89vh; animation-name: menu-street-pr; }
+  .menu-shot.dir-l .menu-street { animation-name: menu-street-pl; }
+  .menu-logo { left: 50%; translate: -50% 0; width: 64vw; top: calc(12px + var(--safe-t)); }
+  .menu-shade { background: linear-gradient(0deg, rgba(7, 8, 12, 0.92) 0%, rgba(7, 8, 12, 0.75) 32%, rgba(7, 8, 12, 0) 55%), linear-gradient(180deg, rgba(7, 8, 12, 0.55) 0%, rgba(7, 8, 12, 0) 26%); }
+  .main-menu.scene .footer { left: 0; right: 0; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-street, .menu-fighter, .menu-logo, .main-menu.scene .menu-list { animation: none; }
 }
