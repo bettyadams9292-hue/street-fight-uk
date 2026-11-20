@@ -217,8 +217,8 @@ const furnitureShop: LevelDef = {
     F('canvas_art', 8.6, -2.0, { wallY: 2.05 }),
     F('wardrobe2', 11.3, -1.78, { colour: '#e8e4dc' }),
     F('dining_table', 14.0, -1.3, { colour: '#c8a070' }),
-    F('dining_chair', 12.95, -1.3, { rot: 1 }),
-    F('dining_chair', 15.05, -1.3, { rot: 3 }),
+    F('dining_chair', 12.95, -1.3, { rot: 3 }),
+    F('dining_chair', 15.05, -1.3, { rot: 1 }),
     F('neon_sign', 14.0, -2.0, { wallY: 2.05 }),
     F('plant_tall', 16.1, -1.85),
     F('fridge2', 17.0, -1.75),
@@ -552,8 +552,8 @@ const P = (kind: PropDef['kind'], x: number, z: number, extra: Partial<PropDef> 
 /** A table with a chair either side, facing it. */
 const tableFor2 = (x: number, z: number, colour = '#7a1414'): PropDef[] => [
   D('f02_05', x, z, { colour: '#4a2e1a' }),
-  F('dining_chair', x - 0.75, z, { rot: 1, colour }),
-  F('dining_chair', x + 0.75, z, { rot: 3, colour }),
+  F('dining_chair', x - 0.75, z, { rot: 3, colour }),
+  F('dining_chair', x + 0.75, z, { rot: 1, colour }),
 ];
 const FRONT: Record<string, PropDef[]> = {
   pub: [...tableFor2(6, 3.2), ...tableFor2(10.5, 4.4), ...tableFor2(15, 3.0), ...tableFor2(21.5, 3.8), ...tableFor2(26, 4.6), ...tableFor2(30.5, 3.2), P('fruit_machine', 35.6, 2.6), P('jukebox', 35.6, 4.2)],
@@ -564,11 +564,11 @@ const FRONT: Record<string, PropDef[]> = {
   clothes_shop: [P('shop_rail', 3.4, 2.6), P('shop_rail', 6.6, 3.8), P('shop_rail', 9.8, 2.6), P('mannequin', 12.8, 2.2), P('mannequin', 13.8, 4.2), P('mannequin', 1.4, 4.6), P('shop_shelf', 9.8, 5.0, { size: [1.2, 0.3] })],
   pawn_shop: [P('glass_counter', 5.0, 3.0), P('display_cabinet', 9.4, 3.8), P('shop_shelf', 12.2, 4.8, { size: [1.0, 0.3] }), P('tv', 2.6, 4.4)],
   furniture_shop: [
-    F('rug_long', 4.2, 3.4, { solid: false }), F('sofa_3', 4.2, 2.6), F('coffee_table', 4.2, 3.7), F('armchair', 6.6, 3.6, { rot: 3 }), F('floor_lamp', 2.0, 2.4),
+    F('rug_long', 4.2, 3.4, { solid: false }), F('sofa_3', 4.2, 2.6), F('coffee_table', 4.2, 3.7), F('armchair', 6.6, 3.6, { rot: 1 }), F('floor_lamp', 2.0, 2.4),
     F('bed_double', 11.0, 3.6), F('bedside', 12.2, 2.9), F('bedside', 9.8, 2.9), F('wardrobe2', 13.8, 4.8),
-    F('dining_table', 18.0, 3.6), F('dining_chair', 17.4, 2.9, { rot: 2 }), F('dining_chair', 18.6, 2.9, { rot: 2 }), F('dining_chair', 17.4, 4.3), F('dining_chair', 18.6, 4.3),
+    F('dining_table', 18.0, 3.6), F('dining_chair', 17.4, 2.9), F('dining_chair', 18.6, 2.9), F('dining_chair', 17.4, 4.3, { rot: 2 }), F('dining_chair', 18.6, 4.3, { rot: 2 }),
   ],
-  car_dealer: [F('desk2', 23.5, 3.4), F('dining_chair', 23.5, 4.1), F('dining_chair', 23.5, 2.7, { rot: 2 }), F('sofa_2', 19.0, 4.6), F('coffee_table', 19.0, 3.7), F('plant_tall', 26.8, 4.8), F('plant_tall', 15.4, 4.8)],
+  car_dealer: [F('desk2', 23.5, 3.4), F('dining_chair', 23.5, 4.1, { rot: 2 }), F('dining_chair', 23.5, 2.7), F('sofa_2', 19.0, 4.6), F('coffee_table', 19.0, 3.7), F('plant_tall', 26.8, 4.8), F('plant_tall', 15.4, 4.8)],
   bike_shop: [P('bike_stand', 5.0, 3.2), P('bike_stand', 9.0, 4.2), P('tyre_stack', 13.0, 3.0), P('tyre_stack', 13.9, 3.2), P('shop_shelf', 17.0, 4.8, { size: [1.2, 0.3] })],
   gym_store: [
     P('gym_kit', 4.0, 3.0, { item: 'treadmill' }), P('gym_kit', 7.0, 3.0, { item: 'treadmill' }), P('gym_kit', 10.0, 3.2, { item: 'exercise_bike' }),

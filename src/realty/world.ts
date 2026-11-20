@@ -309,21 +309,21 @@ function midRoom(kind: RoomKind, x0: number, x1: number, q: number): PropDef[] {
     case 'studio':
       f(posh ? 'rug_long' : 'rug_round', cx, 3.4, { solid: false });
       f('coffee_table', cx, 3.4, { colour: wood });
-      f('armchair', cx - 1.5, 3.4, { rot: 1, colour: fabric });
-      if (w > 5) f('armchair', cx + 1.5, 3.4, { rot: 3, colour: fabric });
+      f('armchair', cx - 1.5, 3.4, { rot: 3, colour: fabric });
+      if (w > 5) f('armchair', cx + 1.5, 3.4, { rot: 1, colour: fabric });
       break;
     case 'dining':
     case 'kitchen':
       f('dining_table', cx, 3.4, { colour: wood });
       for (const dx of [-0.45, 0.45]) {
-        f('dining_chair', cx + dx, 2.7, { rot: 2, colour: wood });
-        f('dining_chair', cx + dx, 4.1, { colour: wood });
+        f('dining_chair', cx + dx, 2.7, { colour: wood });
+        f('dining_chair', cx + dx, 4.1, { rot: 2, colour: wood });
       }
       break;
     case 'bedroom':
     case 'master':
       f('rug_long', cx, 3.0, { solid: false });
-      if (w > 4.6) f('armchair', x1 - 1.0, 4.4, { rot: 3, colour: fabric });
+      if (w > 4.6) f('armchair', x1 - 1.0, 4.4, { rot: 1, colour: fabric });
       f('plant_tall', x0 + 0.6, 4.8);
       break;
     case 'study':
@@ -341,8 +341,8 @@ function midRoom(kind: RoomKind, x0: number, x1: number, q: number): PropDef[] {
     case 'bar':
       for (const [dx, z] of [[-1.2, 3.0], [1.2, 4.4]] as const) {
         out.push({ kind: 'pub_table', x: cx + dx, z });
-        f('dining_chair', cx + dx - 0.7, z, { rot: 1 });
-        f('dining_chair', cx + dx + 0.7, z, { rot: 3 });
+        f('dining_chair', cx + dx - 0.7, z, { rot: 3 });
+        f('dining_chair', cx + dx + 0.7, z, { rot: 1 });
       }
       break;
     case 'gym':

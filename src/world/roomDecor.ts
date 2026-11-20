@@ -48,7 +48,6 @@ const SETS: Record<DecorRoom, Slot[]> = {
     { id: 'f02_13', side: 'right', z: 3.4 }, // side table
     { id: 'f03_06', side: 'left', z: 4.7 }, // low sideboard
     { id: 'pottedTree', side: 'right', z: 2.2 },
-    { id: 'f05_23', side: 'mid', z: 5.0, dx: 0.9 }, // storage ottoman
   ],
   kitchen: [
     { id: 'f03_19', side: 'left', z: 2.3 }, // pantry cabinet
