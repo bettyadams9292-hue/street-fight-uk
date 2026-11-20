@@ -62,7 +62,7 @@ function roundedBox(w:number,h:number,d:number,r:number,depth:number,material:TH
  const sh=new THREE.Shape(),a=-w/2,b=-d/2;
  sh.moveTo(a+r,b);sh.lineTo(a+w-r,b);sh.quadraticCurveTo(a+w,b,a+w,b+r);sh.lineTo(a+w,b+d-r);sh.quadraticCurveTo(a+w,b+d,a+w-r,b+d);sh.lineTo(a+r,b+d);sh.quadraticCurveTo(a,b+d,a,b+d-r);sh.lineTo(a,b+r);sh.quadraticCurveTo(a,b,a+r,b);
  const geo=new THREE.ExtrudeGeometry(sh,{depth:h,bevelEnabled:true,bevelThickness:depth,bevelSize:depth,bevelSegments:3,curveSegments:8});
- geo.rotateX(-Math.PI/2);geo.translate(0,h,0);
+ geo.rotateX(-Math.PI/2);
  const mesh=new THREE.Mesh(geo,material);return mesh;
 }
 export function createBiscuitTinAsset(id:string):THREE.Group{
