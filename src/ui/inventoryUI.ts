@@ -9,7 +9,7 @@ import {
   type ItemDef,
   type WearSlot,
 } from '../items/items';
-import { STORAGE_UPGRADE, type Progress } from '../progress/Progress';
+import { BASE_INVENTORY_SLOTS, STORAGE_UPGRADE, type Progress } from '../progress/Progress';
 import { buyItem, pawnOffer, SHOP_STOCK, shopPrice } from '../items/shops';
 export { pawnOffer, SHOP_STOCK, shopPrice };
 import { MATERIAL_IDS } from '../workshop/workshop';
@@ -222,7 +222,7 @@ function oneLine(d: ItemDef, st: ItemStack): string {
 }
 
 /** A card in the inventory list: picture, name, the key fact, quantity, and whether it's equipped. */
-function itemCard(st: ItemStack, opts: { selected: boolean; equipped?: string; onClick: () => void; onDouble: () => void }): HTMLElement {
+export function itemCard(st: ItemStack, opts: { selected: boolean; equipped?: string; onClick: () => void; onDouble: () => void }): HTMLElement {
   const d = defOf(st);
   const card = h(
     'button',
@@ -295,17 +295,15 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
     if (!selected && shown.length) selected = shown[0].st.uid;
     const sel = all.find((e) => e.st.uid === selected) ?? null;
 
-    const eqLabel = (e: Entry) => (e.where === 'held' ? 'Holding' : e.where === 'pocket' ? undefined : 'Worn');
-    const cards = shown.map((e) =>
-      itemCard(e.st, {
-        selected: e.st.uid === selected,
-        equipped: eqLabel(e),
-        onClick: () => { selected = e.st.uid; confirmDrop = null; build(e.st.uid); },
-        onDouble: () => { const f = primary(e); if (f) { f(); build(); } },
-      }),
-    );
-    if (!cards.length) cards.push(h('div', { class: 'inv-empty', text: filter === 'all' ? 'Nothing on you. Pick things up out there with E.' : 'Nothing of this kind on you.' }));
-
+    const pick = (uid: string) => { selected = uid; confirmDrop = null; build(uid); };
+    const slotTile = (e: Entry | undefined, kind: 'pocket' | 'bag' | 'over', label?: string) => {
+      if (!e) return h('div', { class: `inv-slot empty ${kind}`, 'aria-hidden': 'true' });
+      const t = itemTile(e.st, { selected: e.st.uid === selected, onClick: () => pick(e.st.uid) });
+      t.classList.add('inv-slot', kind);
+      t.addEventListener('dblclick', () => { const f = primary(e); if (f) { f(); build(); } });
+      if (label) t.append(h('span', { class: 'slot-label', text: label }));
+      return t;
+    };
     // Detail for the selected item: the main action first and highlighted.
     let detail: HTMLElement = h('div', { class: 'detail-panel empty', text: 'Pick an item to see what it does.' });
     if (sel) {
@@ -335,26 +333,78 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
     }
 
     const used = s.inventory.length;
+    const bagSt = s.worn.back;
+    const bagDef = bagSt ? defOf(bagSt) : null;
+    const bagSize = cap - BASE_INVENTORY_SLOTS;
+    const carried = all.filter((e) => e.where === 'pocket');
+    const pocketTiles = Array.from({ length: BASE_INVENTORY_SLOTS }, (_, i) => slotTile(carried[i], 'pocket'));
+    const bagTiles = Array.from({ length: bagSize }, (_, i) => slotTile(carried[BASE_INVENTORY_SLOTS + i], 'bag'));
+    // Old saves can carry more than fits: shown in red, nothing more goes in until there's room.
+    const over = carried.slice(cap).map((e) => slotTile(e, 'over'));
+    const wornEntries = all.filter((e) => e.where !== 'pocket' && e.where !== 'back' && e.where !== 'held');
+    const held = all.find((e) => e.where === 'held');
+    const bagEntry = all.find((e) => e.where === 'back');
+
+    const onYou = h('div', { class: 'inv-onyou' },
+      // The bag you're wearing, big: what it is and what it gives you.
+      bagEntry
+        ? h('button', { class: `inv-bagcard${bagEntry.st.uid === selected ? ' selected' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => pick(bagEntry.st.uid) },
+            h('img', { src: itemIconUrl(bagEntry.st.id, bagEntry.st.colour), alt: '', draggable: 'false' }),
+            h('span', { class: 'bc-text' }, h('b', { text: bagDef!.name }), h('span', { text: `+${bagSize} slots on your back` })),
+          )
+        : h('div', { class: 'inv-bagcard none' },
+            h('img', { src: '/icons/hg/backpack.webp', alt: '', draggable: 'false' }),
+            h('span', { class: 'bc-text' }, h('b', { text: 'No bag' }), h('span', { text: 'Threads sells them. A bum bag doubles what you carry.' })),
+          ),
+      h('div', { class: 'inv-hands' },
+        h('span', { class: 'inv-lab', text: 'Holding' }),
+        held ? slotTile(held, 'pocket') : h('div', { class: 'inv-slot empty pocket hands' }),
+      ),
+    );
+
+    const carryView = h('div', { class: 'inv-carry' },
+      onYou,
+      h('div', { class: 'inv-sec' },
+        h('div', { class: 'inv-sec-head' }, h('span', { text: 'Pockets' }), h('span', { class: 'n', text: `${Math.min(used, BASE_INVENTORY_SLOTS)} of ${BASE_INVENTORY_SLOTS}` })),
+        h('div', { class: 'inv-grid pockets' }, ...pocketTiles),
+      ),
+      bagSize > 0
+        ? h('div', { class: 'inv-sec' },
+            h('div', { class: 'inv-sec-head' }, h('span', { text: bagDef!.name }), h('span', { class: 'n', text: `${Math.max(0, Math.min(used, cap) - BASE_INVENTORY_SLOTS)} of ${bagSize}` })),
+            h('div', { class: 'inv-grid bag' }, ...bagTiles, ...over),
+          )
+        : over.length ? h('div', { class: 'inv-grid bag' }, ...over) : null,
+      wornEntries.length
+        ? h('div', { class: 'inv-sec' },
+            h('div', { class: 'inv-sec-head' }, h('span', { text: 'Wearing' }), h('span', { class: 'n', text: String(wornEntries.length) })),
+            h('div', { class: 'inv-grid worn' }, ...wornEntries.map((e) => slotTile(e, 'pocket', WEAR_SLOT_LABELS[e.where as WearSlot]))),
+          )
+        : null,
+    );
+
     el.replaceChildren(
       h('div', { class: 'inv-top' },
-        h('div', { class: 'inv-title' }, icon('bag'), h('h2', { text: 'Inventory' })),
+        h('div', { class: 'inv-title' }, icon('bag'), h('h2', { text: 'Pockets & bag' })),
         h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` }),
-        h('span', { class: `cap${used >= cap ? ' full' : ''}` }, h('i', { class: 'cap-bar' }, h('i', { style: `width:${Math.min(100, (used / cap) * 100)}%` })), `${used}/${cap} pockets`),
+        h('span', { class: `cap${used >= cap ? ' full' : ''}` }, h('i', { class: 'cap-bar' }, h('i', { style: `width:${Math.min(100, (used / cap) * 100)}%` })), `${used}/${cap} slots`),
         h('button', { class: 'icon-btn', 'aria-label': 'Close', title: 'Close (Esc / I)', onclick: close }, icon('close')),
       ),
-      tabsRow(filter, { ...countBy(all.map((e) => e.st)), jewellery: s.jewellery.owned.length }, (f) => { filter = f; selected = null; build(); }),
+      h('div', { class: 'inv-tabs' },
+        h('button', { class: `inv-tab${filter !== 'jewellery' ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => { filter = 'all'; selected = null; build(); } }, icon('bag'), h('span', { text: 'On you' })),
+        h('button', { class: `inv-tab${filter === 'jewellery' ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => { filter = 'jewellery'; selected = null; build(); } }, icon('gem'), h('span', { text: 'Jewellery box' }), s.jewellery.owned.length ? h('span', { class: 'count', text: String(s.jewellery.owned.length) }) : null),
+      ),
       filter === 'jewellery'
         ? h('div', { class: 'inv-body jw-inv' }, jewelleryBoxPanel(progress, actions.changed, actions.changed, say, () => build(), jewels), h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message }))
         : h('div', { class: 'inv-body' },
-            h('div', { class: 'inv-left' }, h('div', { class: 'item-list' }, ...cards)),
+            h('div', { class: 'inv-left' }, carryView),
             h('div', { class: 'inv-right' }, detail, h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message })),
           ),
       h('div', { class: 'panel-actions slim' },
-        h('span', { class: 'hint', text: 'Double-click an item to use, hold or wear it' }),
+        h('span', { class: 'hint', text: 'Tap a slot to see it. Double-tap to use, hold or wear it.' }),
         menuButton(`Sort: ${SORTS.find((x) => x.id === sort)!.label}`, () => { sort = SORTS[(SORTS.findIndex((x) => x.id === sort) + 1) % SORTS.length].id; build(); }, undefined, 'quiet'),
       ),
     );
-    if (focusUid) ui.focusElement(el.querySelector('.item-card.selected') as HTMLElement | null);
+    if (focusUid) ui.focusElement(el.querySelector('.inv-slot.selected, .inv-bagcard.selected') as HTMLElement | null);
     else ui.keepFocus();
   };
   return {
@@ -610,7 +660,7 @@ export function clothesShopScreen(progress: Progress, ui: UIManager, a: ShopActi
           bad = true;
           return build();
         }
-        message = r.where === 'storage' ? `Bought. Your pockets were full, so Priya’s sending it round to yours (in your stash).` : `Bought the ${d.name.toLowerCase()}.`;
+        message = r.where === 'storage' ? `Bought. Your pockets were full, so Priya’s sending it round to yours (in your stash).` : r.where === 'worn' ? `Bought the ${d.name.toLowerCase()}. It’s on your back: ${progress.inventoryCap} slots now.` : `Bought the ${d.name.toLowerCase()}.`;
         bad = false;
         a.changed();
         build();

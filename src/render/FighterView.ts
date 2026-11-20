@@ -8,6 +8,7 @@ import { gymPiece, gymReady, loadGym } from './props/GymLibrary';
 import { FighterAnimator, type Traits } from './anim/animator';
 import { JOINTS, type Pose } from './poses';
 import { ridePose } from './anim/ridePose';
+import { lootModel } from './props/PropLibrary';
 import { bikeFit, riddenBike, type BikeFit } from './props/bikes';
 
 export { activityPose } from './activityPoses';
@@ -69,6 +70,39 @@ export class FighterView {
 
   /** The bike being ridden: its model (wheels that turn), how the rider fits it, and the getting on and off. */
   private ride: { fit: BikeFit; spin(d: number): void; dist: number; on: number; leaving: (() => void) | null } | null = null;
+
+  private bag: THREE.Object3D | null = null;
+  private bagId: string | null = null;
+
+  /**
+   * The bag you're wearing, on you: a bum bag round the front of the waist, a rucksack (or the big hiking pack) on
+   * your back, a holdall at your hip. Same models as the bags on the ground.
+   */
+  setBag(id: string | null): void {
+    if (id === this.bagId) return;
+    this.bagId = id;
+    this.bag?.parent?.remove(this.bag);
+    this.bag = null;
+    if (!id) return;
+    const fit: Record<string, { model: string; size: number; joint: 'spine' | 'hips'; at: [number, number, number]; turn: number; tilt?: number }> = {
+      bag_bumbag: { model: 'bag_bumbag', size: 0.28, joint: 'spine', at: [0, -0.04, 0.17], turn: 0 },
+      bag_rucksack: { model: 'bag_rucksack', size: 0.46, joint: 'spine', at: [0, 0.2, -0.2], turn: Math.PI, tilt: 0.08 },
+      bag_holdall: { model: 'bag_holdall', size: 0.5, joint: 'spine', at: [-0.26, -0.06, -0.04], turn: Math.PI / 2 },
+      bag_hiking: { model: 'bag_rucksack', size: 0.62, joint: 'spine', at: [0, 0.24, -0.24], turn: Math.PI, tilt: 0.06 },
+    };
+    const f = fit[id];
+    const m = f ? lootModel(f.model, f.size) : null;
+    if (!f || !m) return;
+    m.traverse((o: THREE.Object3D) => {
+      if ((o as THREE.Mesh).isMesh) o.castShadow = true;
+    });
+    const holder = new THREE.Group();
+    holder.add(m);
+    holder.position.set(...f.at);
+    holder.rotation.set(f.tilt ?? 0, f.turn, 0);
+    this.rig.joints[f.joint].add(holder);
+    this.bag = holder;
+  }
 
   /** Get on this bike (already standing at it): the model goes under you and you swing a leg over. */
   rideBike(id: string, colour?: string): void {

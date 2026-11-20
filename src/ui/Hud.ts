@@ -190,7 +190,9 @@ export class Hud {
         'div',
         { class: 'hud-buttons' },
         (this.zoomBtn = h('button', { class: 'hud-btn room-only zoom-btn', 'aria-label': 'Zoom in', title: 'Zoom (Z)', onclick: () => actions.zoom?.() }, icon('zoom-in'), h('span', { class: 'k', text: 'Z' }))),
-        // Everything else (messages, map, bag, crew, cabs, money, editing the house) is on the phone.
+        // What you carry is on you, not on the phone: pockets and the bag on your back.
+        h('button', { class: 'hud-btn story-only bag-btn', 'aria-label': 'Pockets and bag', title: 'Pockets & bag (I)', onclick: () => actions.inventory() }, icon('bag'), h('span', { class: 'k', text: 'I' })),
+        // Everything else (messages, map, crew, cabs, money, editing the house) is on the phone.
         (this.bellBtn = h('button', { class: 'hud-btn story-only phone-btn', 'aria-label': 'Phone', title: 'Phone (P)', onclick: () => actions.phone?.() }, icon('phone'), h('span', { class: 'bell-dot' }), h('span', { class: 'k', text: 'P' }))),
         h('button', { class: 'hud-btn pause-btn', 'aria-label': 'Pause', title: 'Pause (Esc)', onclick: () => actions.pause() }, '\u275a\u275a'),
       ),

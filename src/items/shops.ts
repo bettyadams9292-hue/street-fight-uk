@@ -18,7 +18,7 @@ export const SHOP_STOCK: string[] = [
   'cap_black', 'cap_red', 'cap_navy', 'cap_white', 'beanie', 'beanie_red', 'beanie_grey', 'bucket_hat', 'bucket_hat_black', 'flat_cap',
   // Chains, watches, rings, bracelets and earrings are the jeweller's (Halden & Crane, Riverside Centre), not Threads'.
   'sunglasses', 'glasses', 'snood', 'belt_leather',
-  'wraps', 'mouthguard', 'headguard', 'bag_bumbag', 'bag_rucksack', 'bag_holdall',
+  'wraps', 'mouthguard', 'headguard', 'bag_bumbag', 'bag_rucksack', 'bag_holdall', 'bag_hiking',
 ];
 
 export function shopPrice(d: ItemDef, mult: number): number {
@@ -32,17 +32,27 @@ export function pawnOffer(d: ItemDef, st: Pick<ItemStack, 'stolen'>): number {
   return Math.max(1, Math.round(d.value * base * (st.stolen ? 0.6 : 1)));
 }
 
-export type BuyResult = { ok: true; price: number; where: 'pocket' | 'storage' } | { ok: false; reason: string };
+export type BuyResult = { ok: true; price: number; where: 'pocket' | 'storage' | 'worn' } | { ok: false; reason: string };
 
 /** Buy one from a shop: pays pocket first, then the tin; full pockets mean it's delivered home. */
 export function buyItem(p: Progress, id: string, mult: number, stock: readonly string[] = SHOP_STOCK): BuyResult {
   const d = ITEMS[id];
   if (!d || !stock.includes(id)) return { ok: false, reason: 'They don’t sell that.' };
-  // Only your biggest bag counts: a smaller (or the same) one would be money for nothing.
+  // A bag: one of each is plenty. A bigger one than you've got on goes straight on your back.
   const bag = BAG_SLOTS[id];
-  if (bag && [...p.save.inventory, ...p.save.storage].some((s) => (BAG_SLOTS[s.id] ?? 0) >= bag)) return { ok: false, reason: 'You’ve already got a bag at least that big. Only your biggest one counts.' };
+  const worn = p.save.worn.back;
+  if (bag && [...p.save.inventory, ...p.save.storage, ...(worn ? [worn] : [])].some((s) => s.id === id)) return { ok: false, reason: 'You’ve already got one of those.' };
   const price = shopPrice(d, mult);
   if (!p.pay(price)) return { ok: false, reason: `You need £${price}. Pocket money first, then the tin at home.` };
+  if (bag && (!worn || (BAG_SLOTS[worn.id] ?? 0) < bag)) {
+    // The old bag goes in your pockets, or home to the stash if there's no room.
+    p.wearNew(id);
+    if (worn) {
+      const back = p.save.storage.find((x) => x.uid === worn.uid);
+      if (back && p.spaceFor(back.id) > 0) p.withdraw(back.uid, 1);
+    }
+    return { ok: true, price, where: 'worn' };
+  }
   const left = p.giveItem(id);
   if (left) {
     p.stashNew(id);

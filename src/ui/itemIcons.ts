@@ -29,7 +29,7 @@ const HG_BY_ID: Record<string, string> = {
   wraps: 'wraps_roll', mouthguard: 'gumshield_red', headguard: 'headguard', sunglasses: 'sunglasses', sunglasses_designer: 'aviators',
   lucky_chain: 'gold_chain', watch_basic: 'watch', first_aid: 'first_aid_case', bag_rucksack: 'backpack_2', bag_holdall: 'holdall_hg',
   headphones: 'headphones', cash_bundle: 'cash_fifties', old_fiver: 'cash_twenties', coin_sovereign: 'coins', coin_silver: 'coins_2',
-  coin_rare: 'coins', trainers_boxed: 'trainers', lockup_key: 'keys_2', stadium_key: 'keys', dunc_phone: 'phone', protein_bar: 'whey',
+  coin_rare: 'coins', trainers_boxed: 'trainers', lockup_key: 'keys_2', stadium_key: 'keys', dunc_phone: 'phone', protein_bar: 'whey', bag_hiking: 'backpack',
 };
 const HG_BY_PREFIX: [string, string][] = [
   ['hoodie_', 'hoodie_plain'], ['tracksuit_top', 'tracksuit_top'], ['tshirt_', 'tshirt'], ['puffer_', 'puffer'],

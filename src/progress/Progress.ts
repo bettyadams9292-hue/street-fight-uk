@@ -151,7 +151,8 @@ export interface KeptLoot {
   stack: ItemStack;
 }
 
-export const BASE_INVENTORY_SLOTS = 12;
+/** Your pockets: a bag on your back adds its own slots (BAG_SLOTS). */
+export const BASE_INVENTORY_SLOTS = 4;
 export const BASE_STORAGE_SLOTS = 60;
 export const STORAGE_UPGRADE = { slots: 30, cost: 250, max: 150 };
 
@@ -296,6 +297,20 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     // Weapons you've handed to your crew are items too.
     out.companions = sanitiseCompanions(r.companions, (x) => sanitiseStack(x, seen));
     out.inventory = stacks(r.inventory, 99);
+    // Bags used to count just by being carried: an old save puts its biggest one on its back.
+    if (!out.worn.back) {
+      const bags = out.inventory.filter((x) => BAG_SLOTS[x.id]).sort((a, b) => BAG_SLOTS[b.id] - BAG_SLOTS[a.id]);
+      const big = bags[0];
+      if (big) {
+        if (big.qty > 1) {
+          big.qty -= 1;
+          out.worn.back = { ...big, uid: `${big.uid}b`, qty: 1 };
+        } else {
+          out.inventory.splice(out.inventory.indexOf(big), 1);
+          out.worn.back = big;
+        }
+      }
+    }
     pantry = sanitisePantry(r.pantry, (x) => sanitiseStack(x, seen));
     if (pantry) out.pantry = pantry;
     // Boss rewards still on the ground. Read last, so a stack already in your pockets can never also be on the floor.
@@ -498,11 +513,10 @@ export class Progress {
     if (d.questFlag) this.set(d.questFlag);
   }
 
-  /** Pocket space: 12 slots, plus the biggest bag you're carrying. */
+  /** Carry space: 4 pockets, plus the bag you're wearing. */
   get inventoryCap(): number {
-    let bag = 0;
-    for (const s of this.save.inventory) bag = Math.max(bag, BAG_SLOTS[s.id] ?? 0);
-    return BASE_INVENTORY_SLOTS + bag;
+    const bag = this.save.worn.back;
+    return BASE_INVENTORY_SLOTS + (bag ? BAG_SLOTS[bag.id] ?? 0 : 0);
   }
 
   spaceFor(id: string, extra: Partial<ItemStack> = {}): number {
@@ -589,24 +603,18 @@ export class Progress {
     const s = this.save;
     const st = s.storage.find((x) => x.uid === uid);
     if (!st) return { ok: false, reason: 'Not in the stash' };
-    // Taking a bag out makes room for itself.
-    const room = BAG_SLOTS[st.id] ? Infinity : spaceFor(s.inventory, this.inventoryCap, st);
+    const room = spaceFor(s.inventory, this.inventoryCap, st);
     const n = Math.min(qty, st.qty, room);
     if (n <= 0) return { ok: false, reason: 'Your pockets are full' };
     const part = takeStack(s.storage, uid, n, () => this.newUid())!;
-    const left = addStack(s.inventory, BAG_SLOTS[part.id] ? this.inventoryCap + 1 : this.inventoryCap, part, () => this.newUid());
+    const left = addStack(s.inventory, this.inventoryCap, part, () => this.newUid());
     if (left) addStack(s.storage, s.storageCap + 1, left, () => this.newUid());
     return { ok: true };
   }
 
-  /** Take a bag out of your pockets only if what's left still fits. */
-  private bagRemovalOk(uid: string): boolean {
-    const st = this.findCarried(uid);
-    if (!st || !BAG_SLOTS[st.id]) return true;
-    const others = this.save.inventory.filter((x) => x.uid !== uid);
-    let bag = 0;
-    for (const o of others) bag = Math.max(bag, BAG_SLOTS[o.id] ?? 0);
-    return others.length <= BASE_INVENTORY_SLOTS + bag;
+  /** Bags are worn, not carried, so taking one out of your pockets never strands anything. */
+  private bagRemovalOk(_uid: string): boolean {
+    return true;
   }
 
   /** Put on a clothing item or accessory from your pockets (or the stash, at home). */
@@ -616,6 +624,14 @@ export class Progress {
     const st = src.find((x) => x.uid === uid);
     const wear = st ? ITEMS[st.id].wear : undefined;
     if (!st || !wear) return { ok: false, reason: 'You can\u2019t wear that' };
+    // Changing bags: whatever's in the old one has to fit in the new one (and your pockets).
+    if (wear.slot === 'back' && !fromStorage) {
+      const prevBag = s.worn.back;
+      const newCap = BASE_INVENTORY_SLOTS + (BAG_SLOTS[st.id] ?? 0);
+      // The new bag leaves the pockets (one slot fewer used, unless it's one of a stack); the old one goes in.
+      const after = s.inventory.length - (st.qty === 1 ? 1 : 0) + (prevBag ? 1 : 0);
+      if (after > newCap) return { ok: false, reason: `That bag holds ${newCap} with your pockets. Drop or stash ${after - newCap} thing${after - newCap > 1 ? 's' : ''} first.` };
+    }
     // Only ever one comes off the stack: the removed part is what gets worn (no copies).
     const one = takeStack(src, uid, 1, () => this.newUid())!;
     // A chain from Threads takes the place of a chain from the jeweller, and so on.
@@ -633,6 +649,14 @@ export class Progress {
     const st = s.worn[slot];
     if (!st) return { ok: false, reason: 'Nothing there' };
     const dest = toStorage ? s.storage : s.inventory;
+    // Taking your bag off: what's in it has to fit in your pockets (with the bag itself, unless it goes in the stash).
+    if (slot === 'back') {
+      const need = s.inventory.length + (toStorage ? 0 : 1);
+      if (need > BASE_INVENTORY_SLOTS) return { ok: false, reason: `Your pockets only hold ${BASE_INVENTORY_SLOTS}. Empty the bag first.` };
+      delete s.worn[slot];
+      addStack(dest, toStorage ? s.storageCap : BASE_INVENTORY_SLOTS, st, () => this.newUid());
+      return { ok: true };
+    }
     const cap = toStorage ? s.storageCap : this.inventoryCap;
     if (spaceFor(dest, cap, st) < 1) return { ok: false, reason: toStorage ? 'The stash is full' : 'Your pockets are full' };
     delete s.worn[slot];

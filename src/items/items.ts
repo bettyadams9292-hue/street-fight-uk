@@ -25,10 +25,10 @@ export const RARITY_COLOURS: Record<Rarity, string> = { common: '#b8b8b0', uncom
 export const RARITY_LABELS: Record<Rarity, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
 
 /** Where worn things go. One item per slot. */
-export type WearSlot = 'top' | 'bottoms' | 'shoes' | 'head' | 'face' | 'neck' | 'wrist' | 'bracelet' | 'ears' | 'hands' | 'finger' | 'waist' | 'mouth';
-export const WEAR_SLOTS: WearSlot[] = ['top', 'bottoms', 'shoes', 'head', 'face', 'neck', 'wrist', 'bracelet', 'ears', 'hands', 'finger', 'waist', 'mouth'];
+export type WearSlot = 'top' | 'bottoms' | 'shoes' | 'head' | 'face' | 'neck' | 'wrist' | 'bracelet' | 'ears' | 'hands' | 'finger' | 'waist' | 'mouth' | 'back';
+export const WEAR_SLOTS: WearSlot[] = ['back', 'top', 'bottoms', 'shoes', 'head', 'face', 'neck', 'wrist', 'bracelet', 'ears', 'hands', 'finger', 'waist', 'mouth'];
 export const WEAR_SLOT_LABELS: Record<WearSlot, string> = {
-  top: 'Top', bottoms: 'Bottoms', shoes: 'Footwear', head: 'Head', face: 'Face', neck: 'Neck', wrist: 'Wrist', bracelet: 'Bracelet', ears: 'Ears', hands: 'Hands', finger: 'Ring', waist: 'Belt', mouth: 'Gumshield',
+  top: 'Top', bottoms: 'Bottoms', shoes: 'Footwear', head: 'Head', face: 'Face', neck: 'Neck', wrist: 'Wrist', bracelet: 'Bracelet', ears: 'Ears', hands: 'Hands', finger: 'Ring', waist: 'Belt', mouth: 'Gumshield', back: 'Bag',
 };
 
 export interface ItemStat {
@@ -368,16 +368,18 @@ add({ id: 'carbon_fibre', name: 'Carbon fibre sheet', text: 'Light and stupidly 
 add({ id: 'lighter', name: 'Zippo lighter', text: 'Engraved steel lighter. Sells for a few quid.', category: 'misc', rarity: 'common', value: 12, stack: 3, icon: 'scrap', colour: '#c9ccd2' });
 add({ id: 'bus_pass', name: 'Bus pass', text: 'Somebody’s. Dave’s Cabs take it as a free ride.', category: 'misc', rarity: 'common', value: 0, stack: 5, icon: 'card', colour: '#2f6fa8', unsellable: true });
 
-// ---- backpacks (carry capacity) ----------------------------------------------------------------
-add({ id: 'bag_bumbag', name: 'Bum bag', text: '+4 inventory slots while you carry it. Only your biggest bag counts.', category: 'misc', rarity: 'common', value: 40, icon: 'bag', colour: '#1b1d22', unsellable: false });
-add({ id: 'bag_rucksack', name: 'Rucksack', text: '+8 inventory slots while you carry it. Only your biggest bag counts.', category: 'misc', rarity: 'uncommon', value: 120, icon: 'bag', colour: '#2f4a2d' });
-add({ id: 'bag_holdall', name: 'Gym holdall', text: '+12 inventory slots while you carry it. Only your biggest bag counts.', category: 'misc', rarity: 'rare', value: 260, icon: 'bag', colour: '#1f2a44' });
+// ---- bags (carry space) --------------------------------------------------------------------------
+// You have 4 pockets. A bag is worn (one at a time, slot 'back') and adds its own slots; you see it on you.
+add({ id: 'bag_bumbag', name: 'Bum bag', text: 'Round the waist. 4 more slots: 8 with your pockets.', category: 'misc', rarity: 'common', value: 40, icon: 'bag', colour: '#1b1d22', unsellable: false, wear: { slot: 'back' } });
+add({ id: 'bag_rucksack', name: 'Rucksack', text: 'On your back. 8 more slots: 12 with your pockets.', category: 'misc', rarity: 'uncommon', value: 120, icon: 'bag', colour: '#2f4a2d', wear: { slot: 'back' } });
+add({ id: 'bag_holdall', name: 'Gym holdall', text: 'Over the shoulder. 12 more slots: 16 with your pockets.', category: 'misc', rarity: 'rare', value: 260, icon: 'bag', colour: '#1f2a44', wear: { slot: 'back' } });
+add({ id: 'bag_hiking', name: 'Big rucksack', text: 'A 65-litre hiking pack. 20 more slots: 24 with your pockets.', category: 'misc', rarity: 'epic', value: 520, icon: 'bag', colour: '#3a2f22', wear: { slot: 'back' } });
 
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(defs.map((d) => [d.id, d]));
 export const ITEM_LIST: readonly ItemDef[] = defs;
 
-/** Bags add slots just by being carried (only the biggest counts). */
-export const BAG_SLOTS: Record<string, number> = { bag_bumbag: 4, bag_rucksack: 8, bag_holdall: 12 };
+/** What each bag adds to your 4 pockets while you wear it. */
+export const BAG_SLOTS: Record<string, number> = { bag_bumbag: 4, bag_rucksack: 8, bag_holdall: 12, bag_hiking: 20 };
 
 export function itemDef(id: string): ItemDef | undefined {
   return ITEMS[id];

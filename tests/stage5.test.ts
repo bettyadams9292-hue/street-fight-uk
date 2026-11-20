@@ -89,7 +89,7 @@ test('every weapon has sane stats, an item, and breaks into something real', () 
 test('every item has a name, a description, a value, a stack size and a valid slot', () => {
   for (const d of ITEM_LIST) {
     assert(d.name && d.text && d.value >= 0 && d.stack >= 1, `${d.id} basics`);
-    if (d.wear) assert(['top', 'bottoms', 'shoes', 'head', 'face', 'neck', 'wrist', 'ears', 'hands', 'finger', 'waist', 'mouth'].includes(d.wear.slot), `${d.id} slot`);
+    if (d.wear) assert(['top', 'bottoms', 'shoes', 'head', 'face', 'neck', 'wrist', 'ears', 'hands', 'finger', 'waist', 'mouth', 'back', 'bracelet'].includes(d.wear.slot), `${d.id} slot`);
     if (d.questFlag) assert(pawnOffer(d, {}) === 0, `${d.id} quest item is sellable`);
   }
 });
@@ -109,20 +109,40 @@ test('stacking merges up to the stack size; capacity is enforced and leftovers c
   assert(part.qty === 2 && list[0].qty === 3 && part.uid !== list[0].uid, 'split');
 });
 
-test('pockets: 12 slots, bags add room, overflow is returned not deleted', () => {
+test('pockets: 4 slots, a worn bag adds its own, overflow is returned not deleted', () => {
   const p = fresh();
   p.save.inventory = [];
+  delete p.save.worn.back;
+  assert(BASE_INVENTORY_SLOTS === 4, 'four pockets');
   for (let i = 0; i < BASE_INVENTORY_SLOTS; i++) assert(!p.giveItem('watch_basic'), `slot ${i}`);
   const left = p.giveItem('phone_cheap');
   assert(left && left.id === 'phone_cheap', 'overflow lost');
   assert(p.inventoryCap === BASE_INVENTORY_SLOTS, 'cap');
+  // A bag in your pockets does nothing until you wear it.
   p.save.inventory.pop();
   p.giveItem('bag_rucksack');
-  assert(p.inventoryCap === BASE_INVENTORY_SLOTS + 8, `with rucksack ${p.inventoryCap}`);
-  // Can't sell or drop the bag while it's holding things.
-  for (let i = 0; i < 6; i++) p.giveItem('watch_basic');
+  assert(p.inventoryCap === BASE_INVENTORY_SLOTS, 'a carried bag counted');
   const bag = p.save.inventory.find((s) => s.id === 'bag_rucksack')!;
-  assert(!p.drop(bag.uid), 'dropped a full bag and lost what was in it');
+  assert(p.wear(bag.uid).ok, 'wear the rucksack');
+  assert(p.inventoryCap === 12, `with rucksack ${p.inventoryCap}`);
+  for (let i = 0; i < 6; i++) assert(!p.giveItem('watch_basic'), `bag slot ${i}`);
+  // Can't take the bag off while it's holding things your pockets can't.
+  assert(!p.unwear('back').ok, 'took off a full bag');
+  // Nor swap to a smaller one that can't take it all.
+  const small = p.newStack('bag_bumbag');
+  p.save.inventory.push(small);
+  assert(!p.wear(small.uid).ok, 'swapped to a bag too small for what you carry');
+  assert(p.save.worn.back?.id === 'bag_rucksack', 'bag kept');
+});
+
+test('old saves wear the biggest bag they carried', () => {
+  const p = fresh();
+  const raw = JSON.parse(JSON.stringify(p.save));
+  raw.worn = {};
+  raw.inventory = [p.newStack('bag_bumbag'), p.newStack('bag_holdall'), p.newStack('watch_basic')];
+  const s = sanitiseSave(raw)!;
+  assert(s.worn.back?.id === 'bag_holdall', `wore ${s.worn.back?.id}`);
+  assert(s.inventory.length === 2, 'holdall left the pockets');
 });
 
 test('a full inventory leaves the item on the ground with a message', () => {

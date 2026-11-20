@@ -470,6 +470,8 @@ export class Game {
     this.hud.el.style.display = 'block';
     this.state = 'playing';
     this.accumulator = 0;
+    // A bag bought or swapped in a shop goes straight on you.
+    if (this.world && this.progress) this.renderer.viewOf(this.world.player)?.setBag(this.progress.save.worn.back?.id ?? null);
     this.input.flush();
     this.updateTouchVisibility();
     this.hud.notify('TRAINING GROUND', 'big');
@@ -1483,6 +1485,7 @@ export class Game {
     if (!w || !p) return;
     const ride = ridingBike(p);
     const view = this.renderer.viewOf(w.player);
+    view?.setBag(p.save.worn.back?.id ?? null);
     w.player.stats.removeModifier('riding');
     if (!ride) {
       w.player.vehicle = null;
