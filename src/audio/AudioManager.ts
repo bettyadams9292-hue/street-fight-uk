@@ -114,7 +114,7 @@ export class AudioManager {
     const t = this.ctx.currentTime;
     this.master.gain.setTargetAtTime(s.masterVolume, t, 0.05);
     this.sfx.gain.setTargetAtTime(s.effectsVolume, t, 0.05);
-    this.ambience.gain.setTargetAtTime(s.ambienceVolume * 0.6, t, 0.2);
+    this.ambience.gain.setTargetAtTime(s.ambienceVolume * 0.6 * this.ambienceLevel, t, 0.2);
     this.music.gain.setTargetAtTime(s.musicVolume * 0.5, t, 0.2);
   }
 
@@ -434,6 +434,20 @@ export class AudioManager {
 
   private ambienceStop: (() => void) | null = null;
   private ambienceRecorded = false;
+  /** How much of the street bed to hear where you are (0 on the menus); see `setAmbienceLevel`. */
+  private ambienceLevel = 0;
+
+  /**
+   * The street's night bed (traffic, sirens, dogs) belongs on the street: none on the menus, faint through
+   * the walls indoors, and kept under the music when a track is playing. Safe to call every frame.
+   */
+  setAmbienceLevel(level: number): void {
+    if (Math.abs(level - this.ambienceLevel) < 0.001) return;
+    this.ambienceLevel = level;
+    if (!this.ctx) return;
+    // A quick fade out (leaving the street for the menu), a slower one back in.
+    this.ambience.gain.setTargetAtTime((this.settings?.ambienceVolume ?? 1) * 0.6 * level, this.ctx.currentTime, level === 0 ? 0.15 : 0.6);
+  }
 
   /** Night-time city bed: the recorded estate at night, or synthesised traffic rumble and wind until it loads. */
   startAmbience(): void {
