@@ -35,3 +35,10 @@ Original `streetassettesting/` sources and viewers are retained for comparison a
 - `black-desk-telephone.ts`: `blackDeskTelephone`, reference-based black corded desk telephone with handset resting on cradle, coiled cable, LCD, navigation and keypad.
 - **Status:** user-approved 20 November 2026. Promoted from `streetassettesting/black-desk-telephone.ts` to this approved asset folder on `pr-dev` only.
 - Import `TELEPHONE_ASSETS` and `createTelephoneAsset(id)` to use it. No playable-game integration or changes to `dev`.
+
+## Bikes, scooters and motorcycles — 30 APPROVED (V7, pr-dev)
+
+- `bikes-scooters-30.ts`: all 30 user-approved bicycle, electric bicycle, BMX, tandem, dirt bike, motorcycle, moped and scooter models, approved on 20 November 2026.
+- Source preserved in `streetassettesting/bikes-scooters-30.ts`; iPhone review viewer preserved in `streetassettesting/bikes-scooters-30-viewer.html`.
+- Import `BIKE_ASSETS` and `createBikeAsset(id)` from `assets/streetassettesting/bikes-scooters-30.ts` to instantiate approved models. All original IDs remain unchanged.
+- **Status: user-approved for the asset library, V7.** Not integrated into gameplay. No changes to `dev` or existing approved models.
