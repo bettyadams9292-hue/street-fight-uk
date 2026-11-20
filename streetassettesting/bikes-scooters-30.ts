@@ -48,7 +48,7 @@ export function createBikeAsset(id:string):THREE.Group {
  const paint=mat(s.color,.22,.45),accent=mat(s.accent??s.color,.22,.45),black=mat(0x171a1d),grey=mat(0x434a50),silver=mat(0xaab0b4,.65,.35),rotor=mat(0x90999c,.7,.3),red=mat(0xa82a2a),white=mat(0xd4d4c5);
  const motor=['surron','dirt','supermoto','sport','cruiser','moped','scooter'].includes(s.kind),kick=s.kind==='kick';
  const isBmx=s.kind==='bmx',isTandem=s.kind==='tandem',isCargo=s.kind==='cargo';
- const R=s.wheel??(motor?.35:.34),rear=isTandem?-.98:isCargo?-.80:isBmx?-.43:motor?-.65:-.58,front=isTandem?.91:isCargo?.80:isBmx?.43:motor?.68:.58;
+ const R=s.wheel??(motor?.35:.34),rear=isTandem?-1.10:isCargo?-.80:isBmx?-.43:motor?-.65:-.58,front=isTandem?.94:isCargo?.80:isBmx?.43:motor?.68:.58;
  const tube=(a:number[],b:number[],radius:number,m:THREE.Material=paint)=>{
   const p=new THREE.Vector3(...a),q=new THREE.Vector3(...b),d=q.clone().sub(p);
   const obj=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,d.length(),10),m);
@@ -83,11 +83,13 @@ export function createBikeAsset(id:string):THREE.Group {
   if(s.thick)for(let i=0;i<34;i++){const t=i*Math.PI/17;const p=x+Math.cos(t)*(r+.017),y=r+Math.sin(t)*(r+.017);const k=box(.024,.009,fat?.11:.055,p,y,0,rubber);k.rotation.z=t}
  };
  wheel(rear,R);wheel(front,R);
- const forkTop=motor?[.36,motor?1.05:1.02,0]:[isBmx?.27:.32,isBmx?1.05:1.02,0];
+ const forkTop=motor?[.36,1.05,0]:[isBmx?.27:.32,isBmx?.94:1.02,0];
  const fork=(thickness=.018)=>{
   for(const z of [-.075,.075])tube([forkTop[0],forkTop[1],z],[front,R+.04,z],thickness,motor?silver:grey);
-  tube([forkTop[0],forkTop[1]+.04,0],[forkTop[0]+.07,forkTop[1]+.19,0],.016,silver);
-  tube([forkTop[0]-.16,forkTop[1]+.19,0],[forkTop[0]+.18,forkTop[1]+.19,0],.013,black);
+  const stemHeight=isBmx?.22:motor?.14:.13;
+  tube([forkTop[0],forkTop[1],0],[forkTop[0]+.035,forkTop[1]+stemHeight,0],.016,silver);
+  const handleY=forkTop[1]+stemHeight;
+  tube([forkTop[0]-.17,handleY,0],[forkTop[0]+.18,handleY,0],.013,black);
  };
  if(kick){
   box(.94,.055,.17,-.04,.20,0,grey);box(.78,.012,.14,-.04,.232,0,black);
@@ -97,17 +99,18 @@ export function createBikeAsset(id:string):THREE.Group {
   route([[front-.15,1.19,-.06],[front-.02,1.12,-.06],[front,.8,-.05],[front,.32,-.05],[.38,.21,-.06],[rear+.04,R+.04,-.06]],.0027);
   box(.055,.035,.045,rear+.04,R+.04,-.06,black);
  } else if(!motor){
-  const seatX=isTandem?-.34:isBmx?-.14:-.22, seatY=isBmx?1.00:1.08,bbX=isTandem?-.33:isBmx?-.12:-.12,bbY=isBmx?.37:.45;
-  const topY=isBmx?.90:1.00,headX=isBmx?.24:.30;
+  const seatX=isTandem?-.34:isBmx?-.14:-.22, seatY=isBmx?.90:1.08,bbX=isTandem?-.33:isBmx?-.12:-.12,bbY=isBmx?.37:.45;
+  const topY=isBmx?.78:1.00,headX=isBmx?.27:.30;
   // Explicit frame geometry per family: no generic overlays.
   if(isTandem){
-   const rearBB=-.70,frontBB=-.12;
-   tube([rear,R,0],[rearBB,.46,0],.019);tube([rearBB,.46,0],[-.75,1.02,0],.019);
-   tube([-.75,1.02,0],[frontBB,1.02,0],.018);tube([frontBB,1.02,0],[headX,1.02,0],.018);
+   const rearBB=-.82,frontBB=-.12;
+   tube([rear,R,0],[rearBB,.46,0],.019);tube([rearBB,.46,0],[-.86,1.02,0],.019);
+   tube([-.86,1.02,0],[frontBB,1.02,0],.018);tube([frontBB,1.02,0],[headX,1.02,0],.018);
    tube([frontBB,.46,0],[headX,1.02,0],.019);tube([rearBB,.46,0],[frontBB,.46,0],.019);
-   tube([-.75,1.02,0],[frontBB,.46,0],.017);
-   for(const x of [rearBB,frontBB]){disk(.075,.018,x,.46,.08,grey);saddle(x-.09,1.17,.22,.15);tube([x-.09,1.03,0],[x-.09,1.15,0],.013,silver)}
-   tube([-.77,1.17,0],[-.50,1.17,0],.013,black);
+   tube([-.86,1.02,0],[frontBB,.46,0],.017);
+   for(const x of [rearBB,frontBB]){disk(.075,.018,x,.46,.08,grey);saddle(x-.06,1.13,.22,.15);tube([x-.06,1.01,0],[x-.06,1.12,0],.013,silver);tube([x,.46,.11],[x+.11,.38,.11],.012,silver);box(.10,.016,.055,x+.12,.38,.11,black)}
+   tube([rearBB,.46,.10],[frontBB,.46,.10],.008,black);
+   tube([-.89,1.15,0],[-.65,1.15,0],.013,black);
   }else if(s.kind==='step'||s.kind==='rental'){
    tube([rear,R,0],[seatX,.97,0],.019);
    tube([rear,R,0],[bbX,bbY,0],.019);
@@ -140,9 +143,8 @@ export function createBikeAsset(id:string):THREE.Group {
   tube([bbX,bbY,.10],[bbX+.11,bbY-.10,.10],.013,silver);
   box(.10,.014,.06,bbX+.13,bbY-.10,.10,black);
   if(isBmx){
-   tube([headX,1.06,0],[headX,1.26,0],.016,silver);
-   tube([headX-.22,1.26,0],[headX+.22,1.26,0],.014,black);
-   for(const x of [rear,front])tube([x,R,.08],[x,R,.24],.013,silver);
+   // BMX has one raised handlebar assembly; pegs belong on axles, not the frame.
+   for(const x of [rear,front])tube([x,R,.08],[x,R,.19],.013,silver);
   }
   if(s.kind==='road'){
    for(const z of [-.12,.12])route([[headX+.12,1.21,z],[headX+.24,1.19,z],[headX+.23,1.07,z]],.011,black);
@@ -150,19 +152,19 @@ export function createBikeAsset(id:string):THREE.Group {
   if(s.electric){
    // Battery is a single down-tube mounted pack, not duplicate rectangular layers.
    if(s.kind==='rental'){
-    shell([[-.14,.52],[-.02,.52],[.24,.91],[.16,.97]],.12,grey);
+    shell([[-.12,.53],[-.035,.53],[.22,.90],[.14,.95]],.085,grey);
     box(.13,.11,.11,headX,.99,0,black);
     disk(.08,.10,rear,R,0,grey);
    }else{
-    shell([[-.13,.53],[-.04,.53],[.23,.94],[.14,1.00]],.115,grey);
+    shell([[-.12,.53],[-.045,.53],[.22,.91],[.15,.96]],.085,grey);
    }
   }
   if(s.basket){
    // Basket is supported by two struts; rear of basket is attached to the steering head.
-   const bx=front+.02,by=.96;
-   box(.30,.012,.29,bx,by-.08,0,grey);
-   for(const z of [-.14,.14]){box(.30,.14,.010,bx,by,z,s.kind==='rental'?paint:grey);tube([headX,.99,z],[bx,by-.08,z],.010,silver)}
-   for(const x of [bx-.15,bx+.15])box(.012,.14,.29,x,by,0,s.kind==='rental'?paint:grey);
+   const bx=front+.03,by=.90;
+   box(.27,.012,.25,bx,by-.08,0,grey);
+   for(const z of [-.12,.12]){box(.27,.14,.010,bx,by,z,s.kind==='rental'?paint:grey);tube([headX,.93,z],[bx,by-.08,z],.010,silver);tube([front,R+.17,z],[bx,by-.08,z],.008,silver)}
+   for(const x of [bx-.135,bx+.135])box(.012,.14,.25,x,by,0,s.kind==='rental'?paint:grey);
   }
   if(s.carrier){
    // Rack height is just above rear tyre, and rack legs meet rear axle.
@@ -177,8 +179,9 @@ export function createBikeAsset(id:string):THREE.Group {
    for(const x of [rear,front])route(Array.from({length:16},(_,i)=>{const t=.14*Math.PI+i/15*.73*Math.PI;return [x+Math.cos(t)*(R+.045),R+Math.sin(t)*(R+.045),0]}),.010,grey);
   }
   // Routed brake cables: two endpoints at physical calipers, not dangling in space.
-  route([[headX+.12,1.20,-.12],[headX+.19,1.16,-.10],[headX+.17,1.00,-.085],[front-.035,R+.12,-.07]],.0025);
-  route([[headX-.10,1.20,.11],[headX-.19,1.14,.09],[seatX,topY+.03,.075],[rear+.05,R+.12,.06]],.0023);
+  const cableStartY=forkTop[1]+(isBmx?.22:.13);
+  route([[headX+.12,cableStartY,-.12],[headX+.15,cableStartY-.06,-.10],[headX+.12,.89,-.085],[front-.035,R+.12,-.07]],.0025);
+  route([[headX-.10,cableStartY,.11],[headX-.14,cableStartY-.07,.09],[seatX,topY+.03,.075],[rear+.05,R+.12,.06]],.0023);
   box(.045,.04,.03,front-.035,R+.12,-.07,black);
   box(.045,.04,.03,rear+.05,R+.12,.06,black);
  }else{
@@ -193,11 +196,11 @@ export function createBikeAsset(id:string):THREE.Group {
   disk(.09,.18,-.12,.55,.012,silver);
   if(s.kind==='surron'||s.kind==='dirt'||s.kind==='supermoto'){
    // Dirt-bike silhouette: raised narrow tail, sloping saddle, slim angular shrouds.
-   saddle(-.21,1.02,.61,.20);
-   shell([[-.46,.91],[-.36,1.04],[-.05,1.04],[.15,.95],[-.03,.86]],.17,paint);
-   shell([[-.13,.75],[.14,.77],[.31,.97],[.10,1.01],[-.19,.91]],.18,accent);
-   route([[.34,.82,0],[.58,.86,0],[.83,.81,0]],.018,paint);
-   shell([[.39,.95],[.57,.97],[.53,1.14],[.39,1.14]],.13,accent);
+   saddle(-.30,1.03,.48,.19);
+   shell([[-.53,.89],[-.40,1.01],[-.06,1.01],[.12,.91],[-.02,.86]],.14,paint);
+   shell([[-.13,.74],[.12,.76],[.31,.92],[.14,.97],[-.17,.89]],.14,accent);
+   shell([[.40,.75],[.61,.77],[.77,.73],[.55,.82]],.12,paint);
+   shell([[.38,.96],[.52,.96],[.52,1.09],[.38,1.09]],.095,accent);
    if(s.electric){
     shell([[-.23,.59],[.03,.57],[.20,.82],[.03,.94],[-.19,.82]],.18,grey);
     for(const z of [-.12,.12])tube([-.24,.60,z],[.14,.93,z],.012,paint);
@@ -212,11 +215,12 @@ export function createBikeAsset(id:string):THREE.Group {
    shell([[.46,.94],[.69,.89],[.62,1.07],[.52,1.13]],.22,accent);
    shell([[.49,1.07],[.60,1.20],[.67,1.12]],.018,glass);
   }else if(s.kind==='cruiser'){
-   saddle(-.40,.88,.42,.30);
-   const tank=new THREE.Mesh(new THREE.SphereGeometry(1,24,12),paint);tank.scale.set(.31,.12,.19);tank.position.set(.06,.84,0);g.add(tank);
+   saddle(-.42,.84,.36,.27);
+   const tank=new THREE.Mesh(new THREE.SphereGeometry(1,24,12),paint);tank.scale.set(.27,.105,.17);tank.position.set(.00,.84,0);g.add(tank);
+   shell([[-.20,.66],[-.09,.78],[.14,.76],[.25,.64],[.09,.59]],.14,grey);
    shell([[-.82,.61],[-.76,.78],[-.56,.85],[-.41,.76]],.20,paint);
    for(const z of [-.15,.15])route([[-.25,.51,z],[.01,.42,z],[.31,.44,z],[.54,.47,z]],.022,silver);
-   disk(.095,.05,.46,1.03,.02,silver);disk(.075,.006,.46,1.03,.05,white);
+   disk(.075,.05,.46,1.03,.02,silver);disk(.06,.006,.46,1.03,.05,white);
   }else{
    saddle(-.37,.92,.47,.27);
    // Step-through moped / seated e-scooter with attached shield and footboard.
@@ -240,6 +244,6 @@ export function createBikeAsset(id:string):THREE.Group {
  g.updateMatrixWorld(true);
  const bounds=new THREE.Box3().setFromObject(g);
  for(const obj of g.children)obj.position.y-=bounds.min.y;
- g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,polishVersion:5,gameplayIntegrated:false};
+ g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,polishVersion:6,gameplayIntegrated:false};
  return g;
 }
