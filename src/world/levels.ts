@@ -170,13 +170,11 @@ const highStreet: LevelDef = {
     { id: 'furniture_door', kind: 'door', x: 58, z: -1.6, to: 'furniture_shop', toEntry: 'door', label: 'Into Home & Hearth (furniture)' },
     { id: 'to_alleys', kind: 'edge', side: 'right', x: 92, z: 0, to: 'alleys', toEntry: 'left', label: 'Back alleys', requires: 'boss_gaffer', lockedText: 'Gaffer’s lads block the way. Deal with him first.' },
   ],
-  // Cash 4 U: a pawn hatch on the High Street, the worst rates in the game (PAWN_HATCH_RATE).
-  stations: [{ id: 'cash_hatch', x: 39, z: -1.1, label: 'Cash 4 U pawn hatch (worst rates)' }],
   facades: [
     { kind: 'shop', x0: 0, x1: 10, label: 'BOOKIES' },
     { kind: 'shop', x0: 10, x1: 20, label: 'CHIPPY', colour: '#1f4f8a' },
     { kind: 'pub', x0: 20, x1: 34, label: 'THE RED LION' },
-    { kind: 'shop', x0: 34, x1: 44, label: 'CASH 4 U PAWN', colour: '#6b2d82' },
+    { kind: 'shop', x0: 34, x1: 44, label: 'VAPE & PHONE', colour: '#6b2d82' },
     { kind: 'shop', x0: 44, x1: 54, label: 'THREADS', colour: '#101012' },
     { kind: 'showroom', x0: 54, x1: 62, label: 'HOME & HEARTH', colour: '#2a4a3a' },
     { kind: 'shop', x0: 62, x1: 74, label: 'KEBAB HOUSE', colour: '#9a2a1a' },

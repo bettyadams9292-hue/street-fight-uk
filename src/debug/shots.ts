@@ -62,7 +62,13 @@ function story(game: Game, g: Internals, area: AreaId, entry: string, frames = 1
 function district(game: Game, g: Internals, area: string): void {
   const lvl = (LEVELS as Record<string, { entries: { id: string }[] }>)[area];
   if (!lvl) throw new Error(`no area ${area}`);
-  story(game, g, area as AreaId, lvl.entries[0].id, 150);
+  // &x=<metres>: start there instead (the camera needs the frames after the move to catch up).
+  const at = new URLSearchParams(location.search).get('x');
+  story(game, g, area as AreaId, lvl.entries[0].id, at ? 10 : 150);
+  if (at && g.world) {
+    g.world.player.pos.x = Number(at);
+    game.advance(200);
+  }
 }
 
 /** A generated town's street, seen from a quiet stretch a little way in. */
