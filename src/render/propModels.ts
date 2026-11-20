@@ -8,6 +8,7 @@ import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary'
 import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { homeFurnitureModel } from './props/homeFurniture';
 import { packFurnitureModel } from './props/packFurniture';
+import { approvedAt } from './props/approvedFit';
 import { bikePiece, carPiece } from './props/VehicleLibrary';
 
 /**
@@ -1035,9 +1036,15 @@ export function buildAnyModel(id: string, colour?: string, state?: string): THRE
 // ---- home gym kit ------------------------------------------------------------------------------------
 
 /** Gym kit, facing the camera, standing on y = 0 (the speed ball hangs on the wall). */
+/** Home gym kit drawn from the approved gym expansion: the commercial dumbbell rack, the squat rack, the studio bike. */
+const KIT_APPROVED: Record<string, string> = { dumbbells: 'dumbbellRack', barbell: 'squatRack', exercise_bike: 'exerciseBike' };
+
 export function buildGymKitModel(id: string): THREE.Group {
-  // The low-poly gym models when they've loaded (GymLibrary.ts); the built-in kit until then.
+  // The approved expansion where it has the piece (at its own size, a little smaller if the slot needs it); the
+  // low-poly gym models when they've loaded (GymLibrary.ts); the built-in kit until then.
   const size = GYM_KIT[id]?.size;
+  const ap = KIT_APPROVED[id] && size ? approvedAt(KIT_APPROVED[id], { fit: [size[0] * 2 * 1.35, size[1] * 2 * 2.4] }) : null;
+  if (ap) return ap;
   const kit = size ? gymKitPiece(id, size) : null;
   if (kit) return kit;
   const g = new THREE.Group();

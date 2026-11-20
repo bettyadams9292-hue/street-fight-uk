@@ -39,7 +39,7 @@ test('every in-game copy is its approved original, unchanged (run tools/assets/s
 
 test('every approved model builds, stands on the ground at real size, and ids are unique', () => {
   assert(new Set(APPROVED_IDS).size === APPROVED_IDS.length, 'duplicate ids');
-  assert(APPROVED_IDS.length === 252, `${APPROVED_IDS.length} approved models`);
+  assert(APPROVED_IDS.length === 291, `${APPROVED_IDS.length} approved models`);
   for (const id of APPROVED_IDS) {
     const p = prototype(id);
     assert(p.triangles > 0 && p.parts.length > 0 && p.parts.length <= 5, `${id}: ${p.parts.length} parts`);
@@ -49,7 +49,8 @@ test('every approved model builds, stands on the ground at real size, and ids ar
 });
 
 test('nothing unapproved or security-related is registered', () => {
-  const banned = /cctv|camera|alarm|security|safe(Small|Medium|Large)?$|globeStreetLight|palisade|chainLink/i;
+  // Safes, palisade and chain-link fences came in with the owner-approved expansion (20 Nov); cameras and alarms never.
+  const banned = /cctv|camera|alarm|globeStreetLight/i;
   for (const id of APPROVED_IDS) assert(!banned.test(id), `${id} should not be registered`);
   const batch06 = readFileSync('streetassettesting/batch06.ts', 'utf8');
   for (const m of batch06.matchAll(/id:\s*['"]([a-zA-Z0-9]+)['"]/g)) if (APPROVED[m[1]]) assert(APPROVED[m[1]].batch !== ('B06' as never), `${m[1]} from Batch 06`);

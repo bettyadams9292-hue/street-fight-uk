@@ -66,3 +66,11 @@ Terraced-house brickwork, door and windows; shop awning, roller shutter and fasc
 ## Batch 07 — APPROVED (30 models)
 
 User approved all 30 polished models and they were promoted to `assets/streetassettesting/batch07.ts`. Original test source and viewer retained. Not integrated into playable game. Original 1,348-row asset checklist updated separately with MADE, VARIANT and TO MAKE flags.
+
+## Gym, security and neighbourhood expansion — APPROVED (39 models)
+
+All 39 models in `newassetsfromchatgpt-expansion.ts` were confirmed by the user on 20 November 2026 as approved the previous night: 26 gym/weightlifting/boxing models, 9 fences and gates (including damaged variants), and 4 safes (`safeSmall`, `safeMedium`, `safeLarge`, `poorSafe`).
+
+**Approved asset copy:** `assets/streetassettesting/gym-security-neighbourhood-expansion.ts` on `pr-dev`.
+
+**Status:** User-approved for the asset library. No game integration. The 3D review viewer is optional inspection only and does not supersede this approval.
