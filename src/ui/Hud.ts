@@ -108,7 +108,7 @@ export class Hud {
   private activityFill: HTMLElement;
   private sleepShade: HTMLElement;
 
-  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void; zoom?: () => void; editHome?: () => void }) {
+  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void; zoom?: () => void; editHome?: () => void; phone?: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
       const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, h('span', { class: 'key-hint', text: `${i + 1} \u00b7 ` }), TRAINING_MODE_LABELS[m]) as HTMLButtonElement;
       this.modeButtons.set(m, b);
@@ -190,11 +190,8 @@ export class Hud {
         'div',
         { class: 'hud-buttons' },
         (this.zoomBtn = h('button', { class: 'hud-btn room-only zoom-btn', 'aria-label': 'Zoom in', title: 'Zoom (Z)', onclick: () => actions.zoom?.() }, icon('zoom-in'), h('span', { class: 'k', text: 'Z' }))),
-        h('button', { class: 'hud-btn home-only edit-home-btn', 'aria-label': 'Edit home: move, turn and recolour your furniture', title: 'Edit home', onclick: () => actions.editHome?.() }, icon('edit'), h('span', { class: 'zoom-mode', text: 'EDIT' })),
-        (this.bellBtn = h('button', { class: 'hud-btn story-only bell-btn', 'aria-label': 'Notifications', title: 'Notifications', onclick: (e: Event) => { e.stopPropagation(); this.toggleTray(); } }, icon('bell'), h('span', { class: 'bell-dot' }))),
-        h('button', { class: 'hud-btn story-only', 'aria-label': 'Map', title: 'Map (M / Tab)', onclick: () => actions.map() }, icon('map'), h('span', { class: 'k', text: 'M' })),
-        h('button', { class: 'hud-btn story-only', 'aria-label': 'Inventory', title: 'Inventory (I / B)', onclick: () => actions.inventory() }, icon('bag'), h('span', { class: 'k', text: 'I' })),
-        h('button', { class: 'hud-btn story-only', 'aria-label': 'Character and crew', title: 'Character & crew (H)', onclick: () => actions.character() }, icon('contact'), h('span', { class: 'k', text: 'H' })),
+        // Everything else (messages, map, bag, crew, cabs, money, editing the house) is on the phone.
+        (this.bellBtn = h('button', { class: 'hud-btn story-only phone-btn', 'aria-label': 'Phone', title: 'Phone (P)', onclick: () => actions.phone?.() }, icon('phone'), h('span', { class: 'bell-dot' }), h('span', { class: 'k', text: 'P' }))),
         h('button', { class: 'hud-btn pause-btn', 'aria-label': 'Pause', title: 'Pause (Esc)', onclick: () => actions.pause() }, '\u275a\u275a'),
       ),
       h('div', { class: 'prompt-wrap' }, this.prompt, this.subBar),
@@ -346,7 +343,28 @@ export class Hud {
     this.tipTimer = window.setTimeout(() => this.tip.classList.add('off'), 3200);
   }
 
-  /** A message for the notifications tray: no pop-up, the bell shows a dot until you look. */
+  /** What the phone's Messages app shows: what each need says, and recent messages. */
+  messages(): { needs: { key: string; tip: string; urgency: number }[]; log: { text: string; kind: string }[] } {
+    return { needs: this.needTips, log: this.log };
+  }
+
+  /** Messages read on the phone: the dot on the phone button goes. */
+  markRead(): void {
+    this.unread = 0;
+    this.bellBtn.classList.remove('has-new');
+  }
+
+  /** How many messages came in since you last looked. */
+  unreadCount(): number {
+    return this.unread;
+  }
+
+  /** The objective line, for the phone's Jobs app. */
+  objectiveText(): string {
+    return this.objective.textContent ?? '';
+  }
+
+  /** A message for the phone: no pop-up, the phone button shows a dot until you look. */
   remember(text: string, kind = 'info'): void {
     if (this.log[this.log.length - 1]?.text === text) return;
     this.log.push({ text, kind });
@@ -355,22 +373,6 @@ export class Hud {
       this.unread++;
       this.bellBtn.classList.add('has-new');
     } else this.fillTray();
-  }
-
-  private toggleTray(): void {
-    const open = this.tray.classList.contains('off');
-    this.tray.classList.toggle('off', !open);
-    if (!open) return;
-    this.unread = 0;
-    this.bellBtn.classList.remove('has-new');
-    this.fillTray();
-    // Any tap outside closes it.
-    const close = (e: Event) => {
-      if (this.tray.contains(e.target as Node)) return;
-      this.tray.classList.add('off');
-      document.removeEventListener('pointerdown', close, true);
-    };
-    setTimeout(() => document.addEventListener('pointerdown', close, true), 0);
   }
 
   private fillTray(): void {

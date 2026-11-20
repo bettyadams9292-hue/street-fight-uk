@@ -1336,3 +1336,141 @@ body.fight-on .home-only { display: none !important; }
 .main-menu.keyart .menu-btn.hg-btn .label img.title-art { height: 74px; }
 .panel-actions .menu-btn.hg-btn .label img.title-art { height: 50px; }
 @media (max-height: 520px) and (orientation: landscape) { .main-menu.keyart .menu-btn.hg-btn .label img.title-art { height: 50px; } }
+
+/* ----------------------------------------------------------------------------
+   The phone (ui/phone/Phone.ts): CaliLabsOS. Comes up out of the pocket from the
+   bottom right, tilted, and settles; goes back down the same way.
+   ---------------------------------------------------------------------------- */
+.hud-btn.phone-btn { position: relative; display: flex; align-items: center; justify-content: center; }
+.phone-btn.has-new .bell-dot { display: block; }
+.phone { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+.phone.off { display: none; }
+.ph-shade { position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 100%, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.25)); opacity: 0; transition: opacity 0.26s ease; pointer-events: auto; }
+.phone.up .ph-shade { opacity: 1; }
+.ph-device {
+  position: absolute; right: calc(28px + var(--safe-r)); bottom: calc(16px + var(--safe-b));
+  width: min(330px, 46vh); height: min(680px, calc(100vh - 32px - var(--safe-t) - var(--safe-b))); aspect-ratio: 9 / 19.2;
+  pointer-events: auto; transform-origin: 80% 120%;
+  transform: translateY(115%) rotate(9deg); transition: transform 0.36s cubic-bezier(0.2, 0.9, 0.24, 1.08);
+}
+.phone.up .ph-device { transform: none; }
+.phone.leaving .ph-device { transform: translateY(115%) rotate(7deg); transition: transform 0.24s cubic-bezier(0.5, 0, 0.75, 0.2); }
+.ph-bezel {
+  position: absolute; inset: 0; border-radius: 46px; padding: 11px;
+  background: linear-gradient(145deg, #3a3b40, #121216 40%, #08080a);
+  box-shadow: 0 0 0 1.5px #55565c inset, 0 0 0 4px #0a0a0c, 0 28px 60px rgba(0, 0, 0, 0.75), -8px 0 30px rgba(214, 30, 30, 0.12);
+  display: flex; flex-direction: column;
+}
+.ph-bezel::before { content: ''; position: absolute; right: -4px; top: 22%; width: 4px; height: 64px; border-radius: 0 3px 3px 0; background: #2a2b30; }
+.ph-status {
+  position: absolute; top: 11px; left: 11px; right: 11px; height: 44px; z-index: 3; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 26px; color: #fff; font: 700 15px/1 var(--head), sans-serif; letter-spacing: 0.02em; pointer-events: none;
+}
+.ph-island { position: absolute; left: 50%; top: 10px; translate: -50% 0; width: 92px; height: 26px; border-radius: 14px; background: #000; }
+.ph-sig { display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; margin-left: auto; margin-right: 8px; }
+.ph-sig i { width: 3px; background: #fff; border-radius: 1px; }
+.ph-sig i:nth-child(1) { height: 4px; } .ph-sig i:nth-child(2) { height: 6px; } .ph-sig i:nth-child(3) { height: 8.5px; } .ph-sig i:nth-child(4) { height: 11px; }
+.ph-batt { width: 24px; height: 12px; border: 1.5px solid rgba(255, 255, 255, 0.85); border-radius: 4px; padding: 1.5px; position: relative; }
+.ph-batt::after { content: ''; position: absolute; right: -4px; top: 3px; width: 2px; height: 4px; background: rgba(255, 255, 255, 0.85); border-radius: 0 1px 1px 0; }
+.ph-batt i { display: block; height: 100%; width: 72%; background: #fff; border-radius: 1.5px; }
+.ph-screen {
+  position: relative; flex: 1; border-radius: 36px; overflow: hidden; color: #f2efe9;
+  background: #0d0e12 url('/art/menu/street-3-small.webp') center / cover;
+}
+.ph-screen::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 8, 12, 0.35), rgba(8, 8, 12, 0.6) 45%, rgba(8, 8, 12, 0.92)); }
+.ph-screen[data-app]:not([data-app='home'])::before { background: #0f1015; }
+.ph-homebar { position: absolute; bottom: 18px; left: 50%; translate: -50% 0; width: 118px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.85); border: 0; z-index: 4; cursor: pointer; }
+.ph-homebar::before { content: ''; position: absolute; inset: -14px -10px; }
+
+/* Home screen */
+.ph-home { position: relative; height: 100%; display: flex; flex-direction: column; padding: 58px 16px 34px; overflow-y: auto; }
+.ph-lock { text-align: center; margin-bottom: 14px; }
+.ph-bigtime { font: 800 64px/0.95 var(--head), sans-serif; letter-spacing: 0.01em; text-shadow: 0 3px 14px rgba(0, 0, 0, 0.6); }
+.ph-date { font: 600 13px/1.4 var(--ui), sans-serif; opacity: 0.85; text-transform: capitalize; }
+.ph-widget { margin: 12px auto 0; display: grid; grid-template-columns: auto auto auto auto; gap: 4px 8px; align-items: baseline; justify-content: center;
+  padding: 8px 14px; border-radius: 16px; background: rgba(20, 20, 26, 0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 12px; width: max-content; }
+.ph-widget b { font: 800 18px/1 var(--head), sans-serif; }
+.ph-widget span { opacity: 0.75; }
+.ph-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 6px; margin-top: auto; }
+.ph-app { display: flex; flex-direction: column; align-items: center; gap: 5px; background: none; border: 0; color: inherit; cursor: pointer; padding: 0; }
+.ph-appicon { position: relative; width: 58px; height: 58px; border-radius: 15px; display: grid; place-items: center;
+  background: linear-gradient(160deg, #2b2c33, #121318); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 4px 10px rgba(0, 0, 0, 0.45); }
+.ph-appicon img { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); }
+.ph-app:active .ph-appicon { transform: scale(0.92); }
+.ph-app.app-cabs .ph-appicon, .ph-app.app-bank .ph-appicon { background: linear-gradient(160deg, #b1121a, #4a0508); }
+.ph-badge { position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; border-radius: 10px; background: #e01b24; color: #fff; font: 800 12px/20px var(--ui), sans-serif; text-align: center; box-shadow: 0 0 0 2px #0d0e12; }
+.ph-appname { font: 600 11px/1.1 var(--ui), sans-serif; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); white-space: nowrap; }
+.ph-os { text-align: center; margin-top: 12px; font: 800 11px/1 var(--head), sans-serif; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.5; }
+
+/* Inside an app */
+.ph-appview { position: relative; height: 100%; display: flex; flex-direction: column; padding-top: 50px; }
+.ph-bar { display: flex; align-items: center; gap: 8px; padding: 6px 14px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.ph-bar b { font: 800 24px/1 var(--head), sans-serif; text-transform: uppercase; letter-spacing: 0.02em; }
+.ph-back { width: 36px; height: 36px; display: grid; place-items: center; border: 0; background: none; cursor: pointer; padding: 0; }
+.ph-back img { width: 30px; height: 30px; object-fit: contain; }
+.ph-body { flex: 1; overflow-y: auto; padding: 12px 14px 40px; display: flex; flex-direction: column; gap: 8px; font: 500 13px/1.35 var(--ui), sans-serif; }
+.ph-sec { margin-top: 6px; font: 800 12px/1 var(--head), sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: #e8333a; }
+.ph-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #1b1c22; }
+.ph-what { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ph-what b { font: 800 16px/1.15 var(--head), sans-serif; }
+.ph-what span { opacity: 0.7; font-size: 12px; }
+.ph-btn { flex: none; min-width: 64px; padding: 9px 12px; border: 0; border-radius: 12px; background: #d71e27; color: #fff; font: 800 15px/1 var(--head), sans-serif; letter-spacing: 0.03em; cursor: pointer; }
+.ph-btn:disabled { background: #34353c; color: #8b8a90; cursor: default; }
+.ph-btn.wide { width: 100%; padding: 14px; font-size: 18px; }
+.ph-hero { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: linear-gradient(135deg, #2a0c0f, #17181d); }
+.ph-hero img { width: 64px; height: 52px; object-fit: contain; }
+.ph-hero b { display: block; font: 800 20px/1.1 var(--head), sans-serif; }
+.ph-hero span { opacity: 0.75; font-size: 12px; }
+.ph-warn { color: #ff8a8f; font-weight: 700; }
+.ph-empty { opacity: 0.6; }
+.ph-thread { display: flex; gap: 8px; align-items: flex-start; }
+.ph-avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; background: #d71e27; display: grid; place-items: center; font: 800 18px/1 var(--head), sans-serif; }
+.ph-bubble { padding: 9px 12px; border-radius: 4px 16px 16px 16px; background: #24252c; }
+.ph-bubble b { color: #ff6b70; font: 800 14px/1.2 var(--head), sans-serif; }
+.ph-bubble p { margin: 2px 0 0; }
+.ph-bubble.solo { border-radius: 16px; }
+.ph-note { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #1b1c22; }
+.ph-note img { width: 26px; height: 26px; object-fit: contain; flex: none; }
+.ph-note.need.u2, .ph-note.need.u3 { box-shadow: inset 3px 0 0 #e8333a; }
+.ph-note.warn { box-shadow: inset 3px 0 0 #e8a33a; }
+.ph-note.cash { box-shadow: inset 3px 0 0 #3ab86b; }
+.ph-card { padding: 14px; border-radius: 18px; background: linear-gradient(140deg, #b1121a, #3e0609 70%); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35); }
+.ph-card > span { opacity: 0.8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
+.ph-total { display: block; font: 800 40px/1 var(--head), sans-serif; margin: 2px 0 10px; }
+.ph-split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ph-split span { display: block; opacity: 0.75; font-size: 11px; }
+.ph-split b { font: 800 20px/1.1 var(--head), sans-serif; }
+.ph-card.ph-job { background: #1b1c22; box-shadow: inset 3px 0 0 #e8333a; }
+.ph-card.ph-job b { font: 800 17px/1.25 var(--head), sans-serif; }
+.ph-line { display: flex; justify-content: space-between; gap: 8px; padding: 6px 2px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 12px; }
+.ph-in { color: #5fd38a; } .ph-out { color: #ff7a80; }
+/* While the phone's up, the touch pad and HUD buttons step back. */
+body.phone-on .hud-buttons { opacity: 0.35; pointer-events: none; }
+@media (orientation: portrait) and (max-width: 700px) {
+  .ph-device { right: 50%; translate: 50% 0; width: min(330px, 86vw); height: min(640px, calc(100vh - 70px - var(--safe-t) - var(--safe-b))); transform-origin: 50% 130%; }
+}
+/* A phone held sideways on a phone held sideways: the device turns landscape, clock on the left, apps on the right. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .ph-device { aspect-ratio: auto; width: min(700px, 84vw); height: calc(100vh - 20px - var(--safe-t) - var(--safe-b)); right: 50%; translate: 50% 0; bottom: calc(10px + var(--safe-b)); transform-origin: 50% 140%; }
+  .ph-bezel { border-radius: 38px; padding: 9px; }
+  .ph-bezel::before { right: auto; left: 30%; top: -4px; width: 64px; height: 4px; border-radius: 3px 3px 0 0; }
+  .ph-screen { border-radius: 30px; }
+  .ph-status { top: 9px; left: 9px; right: 9px; height: 34px; padding: 0 30px; }
+  .ph-island { top: 7px; height: 22px; width: 84px; }
+  .ph-home { flex-direction: row; align-items: center; gap: 18px; padding: 40px 26px 24px; }
+  .ph-lock { flex: 0 0 40%; margin: 0; }
+  .ph-bigtime { font-size: 52px; }
+  .ph-grid { flex: 1; margin: 0; grid-template-columns: repeat(5, 1fr); gap: 10px 4px; }
+  .ph-appicon { width: 48px; height: 48px; border-radius: 13px; }
+  .ph-appicon img { width: 38px; height: 38px; }
+  .ph-os { position: absolute; left: 0; right: 0; bottom: 14px; margin: 0; }
+  .ph-appview { padding-top: 38px; }
+  .ph-bar { padding: 4px 18px 6px; }
+  .ph-bar b { font-size: 20px; }
+  .ph-body { padding: 8px 18px 28px; display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 8px; }
+  .ph-body > .ph-sec, .ph-body > .ph-thread, .ph-body > .ph-hero, .ph-body > .ph-card, .ph-body > .ph-warn, .ph-body > .ph-bubble, .ph-body > .ph-btn.wide, .ph-body > .ph-empty { grid-column: 1 / -1; }
+  .ph-homebar { bottom: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ph-device, .phone.leaving .ph-device { transition: opacity 0.2s; transform: none; }
+}

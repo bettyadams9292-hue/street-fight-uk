@@ -45,8 +45,9 @@ import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
 import { mapScreen } from './ui/mapUI';
 import { profileScreen } from './ui/profileUI';
-import { nextExit } from './map/worldMap';
-import { barScreen, contactsScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
+import { nextExit, type TravelOption } from './map/worldMap';
+import { Phone } from './ui/phone/Phone';
+import { barScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
 import { resolveLevel } from './property/levels';
@@ -101,6 +102,7 @@ export class Game {
   private renderer: GameRenderer;
   private ui: UIManager;
   private hud: Hud;
+  private phone!: Phone;
   private touch: TouchControls;
   private mode: TrainingMode | null = null;
   /** Training-ground choices, kept for the session. */
@@ -185,8 +187,64 @@ export class Game {
       editHome: () => {
         if (this.state === 'playing') this.openEditHome();
       },
+      phone: () => this.togglePhone(),
     });
     this.hud.setZoomed(0);
+    this.phone = new Phone({
+      progress: () => this.progress,
+      here: () => (this.world ? { area: this.world.level.id as AreaId, calm: this.calm() } : null),
+      objective: () => this.hud.objectiveText(),
+      messages: () => this.hud.messages(),
+      markRead: () => this.hud.markRead(),
+      unread: () => this.hud.unreadCount(),
+      travel: (area, opt) => this.travelTo(area, opt),
+      payIn: () => {
+        const p = this.progress;
+        if (!p || this.world?.level.id !== 'home') return 0;
+        const n = p.bankAll();
+        if (n) {
+          this.saveGame();
+          this.hud.toast(`Put £${n} in the tin`, 'cash');
+        }
+        return n;
+      },
+      atHome: () => this.world?.level.id === 'home',
+      editHome: () => {
+        this.backToPlay();
+        this.openEditHome();
+      },
+      openMap: () => {
+        this.backToPlay();
+        this.openMap();
+      },
+      openBag: () => {
+        this.backToPlay();
+        this.openInventory();
+      },
+      openMe: (tab) => {
+        this.backToPlay();
+        this.openProfile(tab);
+      },
+      openSettings: () => {
+        // Settings over the pause menu, so Back lands somewhere you can resume from.
+        this.backToPlay();
+        this.pause();
+        this.ui.push(settingsScreen(this.settings, this.ui));
+      },
+      shown: (open, launching) => {
+        if (open) {
+          this.state = 'paused';
+          this.input.flush();
+          this.touch.release();
+          this.updateTouchVisibility();
+          document.body.classList.add('phone-on');
+        } else {
+          document.body.classList.remove('phone-on');
+          if (!launching) this.backToPlay();
+        }
+      },
+      sound: (kind) => (kind === 'tap' ? this.audio.uiConfirm() : this.audio.uiMove()),
+    });
     this.hud.el.style.display = 'none';
     uiRoot.append(this.hud.el);
 
@@ -196,6 +254,7 @@ export class Game {
     uiRoot.append(this.fadeEl);
 
     this.input.onMenu((a, src, fightKey) => this.onMenuAction(a, src, fightKey));
+    uiRoot.append(this.phone.el);
     window.addEventListener('keydown', (e) => this.onKey(e));
 
     // Audio can only start after a user gesture.
@@ -1080,15 +1139,10 @@ export class Game {
         screen = sofaScreen(p, close, () => this.saveGame());
         break;
       case 'contacts':
-        screen = contactsScreen(p, close, () => {
-          this.ui.replaceAll(null);
-          this.backToPlay();
-          this.openMap();
-        }, () => {
-          this.backToPlay();
-          this.openProfile('crew');
-        });
-        break;
+        // The landline: ring Dave's Cabs on the phone.
+        this.backToPlay();
+        this.phone.open('cabs');
+        return;
       case 'tin':
         screen = tinScreen(p, close, saved, () => {
           // Redraw the house so the desk carries the new tin; you stay where you stood.
@@ -1787,6 +1841,44 @@ export class Game {
     return !w.enemies.some((e) => !e.isKO && Math.abs(e.pos.x - p.pos.x) < 12);
   }
 
+  /** Pull the phone up or put it away. Not in a fight, a menu, or before there's a game. */
+  private togglePhone(): void {
+    if (this.phone.isOpen) return this.phone.close();
+    if (this.state !== 'playing' || !this.world || !this.progress || this.ui.isOpen) return;
+    if (this.house.active) this.house.abort();
+    if (!this.calm()) {
+      this.hud.toast('Not now. You’re in a fight.', 'warn');
+      return;
+    }
+    this.phone.open();
+  }
+
+  /** Go somewhere by cab, or head home: from the map or the phone. */
+  private travelTo(area: AreaId, opt: TravelOption): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    if (opt.kind === 'home') {
+      this.ui.replaceAll(null);
+      this.state = 'playing';
+      if (p.save.property.riding) this.dismount();
+      return this.goHome(false);
+    }
+    if (opt.kind !== 'cab' || !opt.entry) return this.backToPlay();
+    if (p.save.cash.bank < opt.cost) {
+      this.backToPlay();
+      return this.hud.toast(`Need £${opt.cost} in the tin`, 'warn');
+    }
+    p.save.cash.bank -= opt.cost;
+    if (p.save.destination === area) p.save.destination = null;
+    this.ui.replaceAll(null);
+    this.state = 'playing';
+    // The bike stays parked where you got off it.
+    if (p.save.property.riding) this.dismount();
+    this.hud.toast(`Dave’s Cabs: £${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
+    this.changeArea(area, opt.entry, w.carry());
+  }
+
   /** The town map: see everything, set a route, take a cab or head home (with a confirm step). */
   private openMap(select?: AreaId): void {
     const w = this.world;
@@ -1808,24 +1900,7 @@ export class Game {
           p.save.destination = area;
           this.saveGame();
         },
-        travel: (area, opt) => {
-          if (opt.kind === 'home') {
-            this.ui.replaceAll(null);
-            this.state = 'playing';
-            if (p.save.property.riding) this.dismount();
-            return this.goHome(false);
-          }
-          if (opt.kind !== 'cab' || !opt.entry) return;
-          if (p.save.cash.bank < opt.cost) return this.hud.toast(`Need £${opt.cost} in the tin`, 'warn');
-          p.save.cash.bank -= opt.cost;
-          if (p.save.destination === area) p.save.destination = null;
-          this.ui.replaceAll(null);
-          this.state = 'playing';
-          // The bike stays parked where you got off it.
-          if (p.save.property.riding) this.dismount();
-          this.hud.toast(`Dave’s Cabs: £${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
-          this.changeArea(area, opt.entry, w.carry());
-        },
+        travel: (area, opt) => this.travelTo(area, opt),
       }),
     );
   }
@@ -2085,6 +2160,15 @@ export class Game {
 
   private onMenuAction(a: MenuAction, src: InputSource, fightKey = false): void {
     this.audio.unlock();
+    if (this.phone.isOpen) {
+      if (a === 'phone') this.phone.close();
+      else if (a === 'back' || a === 'pause') this.phone.back();
+      return;
+    }
+    if (a === 'phone') {
+      this.togglePhone();
+      return;
+    }
     if (this.ui.isOpen) {
       this.ui.handle(a, src);
       return;

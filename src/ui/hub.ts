@@ -282,6 +282,12 @@ export function contactsScreen(progress: Progress, close: () => void, openMap: (
   }, close);
 }
 
+/** What Mo says about the next job (the phone's Messages and Jobs apps). */
+export function moHint(progress: Progress): string {
+  const next = DISTRICT_ORDER.find((d) => !d.optional && !progress.has(d.flag));
+  return next ? hintFor(next.flag) : 'You did it. Nobody runs these streets now. Mad.';
+}
+
 function hintFor(flag: string): string {
   switch (flag) {
     case 'boss_gaffer':
@@ -340,11 +346,8 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
       'nav',
       { class: 'menu-list' },
       menuButton('Resume', actions.resume, undefined, 'primary', 'play', 'Esc', 'resume'),
-      menuButton('Map', actions.map, undefined, '', 'map', 'M', 'map'),
-      menuButton('Inventory', actions.inventory, undefined, '', 'bag', 'I', 'inventory'),
-      menuButton('Character & crew', actions.character, undefined, '', 'contact', 'H', 'character-and-crew'),
+      // Map, bag, crew and getting home are on the phone now (P).
       menuButton('Moves', actions.moves, 'Every move and combo you know', '', undefined, undefined, 'moves'),
-      actions.home ? menuButton('Head home', actions.home, 'Fights here will still be waiting', '', 'home', undefined, 'head-home') : actions.homeWhy ? h('div', { class: 'hint', text: actions.homeWhy }) : null,
       h('div', { class: 'menu-gap' }),
       menuButton('Save', actions.save, undefined, '', 'save', undefined, 'save'),
       menuButton('Settings', actions.settings, undefined, '', 'settings', undefined, 'settings'),
