@@ -243,6 +243,7 @@ interface ShotState {
 /** For picking things out of a shot from the console: what's drawn at a point on the screen. */
 function exposePicker(game: Game): void {
   (window as unknown as { __game: Game }).__game = game;
+  void import('../items/jewellery').then((m) => ((window as unknown as { __jewels: unknown }).__jewels = m.JEWEL_LIST));
   (window as unknown as { __pick: (x: number, y: number) => string[] }).__pick = (x, y) => {
     const r = (game as unknown as { renderer: { cameraRig: { camera: THREE.Camera }; scene: THREE.Scene } }).renderer;
     const rc = new THREE.Raycaster();
