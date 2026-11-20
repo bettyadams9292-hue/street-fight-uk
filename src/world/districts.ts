@@ -34,10 +34,13 @@ const residential: LevelDef = {
     { id: 'to_leisure', kind: 'edge', side: 'left', x: 0, z: 0, to: 'leisure', toEntry: 'right', label: 'Leisure Park' },
     { id: 'to_estate', kind: 'edge', side: 'right', x: 86, z: 0, to: 'estate', toEntry: 'left', label: 'Tanner Road' },
   ],
+  // Cash 4 U: a pawn hatch on the estate, the worst rates in the game (PAWN_HATCH_RATE).
+  stations: [{ id: 'cash_hatch', x: 37.5, z: -1.1, label: 'Cash 4 U pawn hatch (worst rates)' }],
   facades: [
     { kind: 'semi', x0: 0, x1: 20 },
     { kind: 'tower', x0: 20, x1: 34, label: 'HOLLINS HOUSE 1-64' },
-    { kind: 'garages', x0: 34, x1: 46 },
+    { kind: 'shop', x0: 34, x1: 41, label: 'CASH 4 U PAWN', colour: '#6b2d82' },
+    { kind: 'garages', x0: 41, x1: 46 },
     { kind: 'semi', x0: 46, x1: 62 },
     { kind: 'tower', x0: 62, x1: 76, label: 'FAIRCLOUGH COURT' },
     { kind: 'terrace', x0: 76, x1: 86 },
@@ -47,8 +50,8 @@ const residential: LevelDef = {
     { kind: 'bin', x: 15, z: -1.55 },
     { kind: 'bin', x: 15.8, z: -1.55, colour: '#2a3f7a' },
     { kind: 'abandoned_car', x: 30, z: 1.3 },
-    { kind: 'rubbish_bags', x: 38, z: -1.5 },
-    { kind: 'trolley', x: 42, z: -0.46 },
+    { kind: 'rubbish_bags', x: 42.5, z: -1.5 },
+    { kind: 'trolley', x: 44, z: -0.46 },
     { kind: 'lamp_post', x: 50, z: -1.85 },
     { kind: 'bike_rack', x: 53.6, z: -1.7 },
     { kind: 'cardboard', x: 66, z: -0.51 },
@@ -66,7 +69,7 @@ const residential: LevelDef = {
   containers: [
     { id: 'bins', kind: 'bin', x: 15.4, z: -1.0, label: 'Search the wheelie bins', loot: 'bin' },
     { id: 'wreck', kind: 'car', x: 30, z: 0.2, label: 'Search the burnt-out car', loot: 'car' },
-    { id: 'bags', kind: 'bag', x: 38, z: -0.9, label: 'Search the rubbish bags', loot: 'bin' },
+    { id: 'bags', kind: 'bag', x: 42.5, z: -0.9, label: 'Search the rubbish bags', loot: 'bin' },
     { id: 'dumpster', kind: 'dumpster', x: 72, z: -0.55, label: 'Search the dumpster', loot: 'dumpster' },
   ],
   breakables: [
