@@ -42,3 +42,9 @@ Original `streetassettesting/` sources and viewers are retained for comparison a
 - Source preserved in `streetassettesting/bikes-scooters-30.ts`; iPhone review viewer preserved in `streetassettesting/bikes-scooters-30-viewer.html`.
 - Import `BIKE_ASSETS` and `createBikeAsset(id)` from `assets/streetassettesting/bikes-scooters-30.ts` to instantiate approved models. All original IDs remain unchanged.
 - **Status: user-approved for the asset library, V7.** Not integrated into gameplay. No changes to `dev` or existing approved models.
+
+## Ornate biscuit tins — 3 APPROVED (V1, pr-dev)
+
+- `ornate-biscuit-tins.ts`: three approved reference-inspired metal biscuit tin finishes: `biscuitTinPink`, `biscuitTinNavy`, `biscuitTinVintageRed`.
+- Import `BISCUIT_TIN_ASSETS` and `createBiscuitTinAsset(id)` to instantiate a model.
+- User-approved on 20 November 2026. Original staging source and iPhone 3D review viewer remain in `streetassettesting/`. No changes to `dev` or playable-game integration.
