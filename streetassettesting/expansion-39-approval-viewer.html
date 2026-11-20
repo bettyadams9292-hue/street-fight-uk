@@ -39,7 +39,7 @@ try{
  active=createAsset(ASSETS[index].id);scene.add(active);
  const bb=new THREE.Box3().setFromObject(active);center=bb.getCenter(new THREE.Vector3());const size=bb.getSize(new THREE.Vector3());radius=Math.max(size.length()*.72,.35);yaw=.55;pitch=.26;zoom=1;
  facts.textContent=ASSETS[index].name+' · '+ASSETS[index].id+' · '+size.x.toFixed(2)+' × '+size.y.toFixed(2)+' × '+size.z.toFixed(2)+' m · review required';
- status.textContent='39 Asset Approval Review · model '+(index+1)+' of '+ASSETS.length;render();
+ status.textContent='39 Asset Approval Review · model '+(index+1)+' of '+ASSETS.length;refreshReview();render();
  }catch(e){status.textContent='Model '+(index+1)+' failed: '+e.message;facts.textContent=String(e);console.error('Asset failure',ASSETS[index],e)}}
  selector.onchange=()=>select(Number(selector.value));function step(dir){const choices=ASSETS.map((a,i)=>category.value==='all'||a.category===category.value?i:-1).filter(i=>i>=0);const pos=choices.indexOf(index);select(choices[(pos+dir+choices.length)%choices.length])}document.getElementById('prev').onclick=()=>step(-1);document.getElementById('next').onclick=()=>step(1);
  document.getElementById('left').onclick=()=>{yaw-=.35;render()};document.getElementById('right').onclick=()=>{yaw+=.35;render()};
