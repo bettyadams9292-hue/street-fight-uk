@@ -239,17 +239,139 @@ function boxBody(progress: Progress, selUid: string | null, select: (uid: string
 }
 
 /** The jewellery box on its own (the inventory's Jewellery tab, the wardrobe at home). */
-export function jewelleryBoxPanel(progress: Progress, changed: () => void, saved: () => void, say: (t: string, bad?: boolean) => void, rebuild: () => void, state: { sel: string | null }): HTMLElement {
+/**
+ * The jewellery box as a body: a silhouette, head to hands, with a tag off each place you can wear something
+ * (ears, mouth, neck, both wrists, the ring finger) saying what's on it. Tap a place (on the body or its tag)
+ * and the drawer underneath lists what you own for it; tap a piece to put it on, tap it again to take it off.
+ * A tick shows what you're wearing. The lead hand is the left: the watch and ring go there, the bracelet on
+ * the right wrist (as `render/jewellery.ts` fits them).
+ */
+type Spot = { cat: JewelCat; where: string; side: 'l' | 'r'; y: number; at: [number, number] };
+const SPOTS: Spot[] = [
+  { cat: 'earring', where: 'Ears', side: 'l', y: 62, at: [172, 78] },
+  { cat: 'necklace', where: 'Neck', side: 'l', y: 160, at: [210, 142] },
+  { cat: 'bracelet', where: 'Right wrist', side: 'l', y: 318, at: [129, 316] },
+  { cat: 'grill', where: 'Teeth', side: 'r', y: 84, at: [210, 96] },
+  { cat: 'watch', where: 'Left wrist', side: 'r', y: 280, at: [291, 316] },
+  { cat: 'ring', where: 'Left hand', side: 'r', y: 372, at: [291, 354] },
+];
+
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svg(tag: string, attrs: Record<string, string | number>): SVGElement {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+  return e;
+}
+
+export function jewelleryBoxPanel(progress: Progress, changed: () => void, saved: () => void, say: (t: string, bad?: boolean) => void, rebuild: () => void, state: { sel: string | null; slot?: JewelCat }): HTMLElement {
   const s = progress.save;
-  return h('div', { class: 'jw-panel' },
-    wornStrip(progress, (c) => {
-      removeJewel(progress, c);
+  const owned = s.jewellery.owned;
+  const unseen = new Set(s.jewellery.unseen);
+  const wornOf = (c: JewelCat) => {
+    const uid = s.jewellery.worn[c];
+    return uid ? owned.find((x) => x.uid === uid) : undefined;
+  };
+  const mineOf = (c: JewelCat) => owned.filter((o) => JEWELS[o.id].cat === c);
+  // Open on the place you last looked at, else the first with something new, else the first you own anything for.
+  const slot: JewelCat = state.slot ?? SPOTS.find((p) => mineOf(p.cat).some((o) => unseen.has(o.uid)))?.cat ?? SPOTS.find((p) => mineOf(p.cat).length)?.cat ?? 'watch';
+  const pick = (c: JewelCat) => {
+    state.slot = c;
+    rebuild();
+  };
+
+  // The figure: head, neck, shoulders, arms down, hands; front on, so your left is on the right.
+  const fig = svg('svg', { viewBox: '0 0 420 420', class: 'jb-fig', 'aria-hidden': 'true' });
+  const body = svg('g', { class: 'jb-body' });
+  // One outline, head to hands: head and ears, neck, shoulders, arms hanging with a gap at the sides, hands.
+  body.append(svg('path', { d: [
+    'M210 30 C230 30 243 46 244 66',
+    'C252 63 255 86 245 89 C242 101 233 110 226 114 L226 130',
+    'C233 141 252 146 270 150 C292 156 301 175 302 196 L308 300',
+    'C312 316 311 330 306 338 C305 358 299 370 290 370 C281 370 275 360 276 346 L274 322 L267 238',
+    'L265 334 C236 344 184 344 155 334 L153 238 L146 322 L144 346',
+    'C145 360 139 370 130 370 C121 370 115 358 114 338 C109 330 108 316 112 300 L118 196',
+    'C119 175 128 156 150 150 C168 146 187 141 194 130 L194 114 C187 110 178 101 175 89',
+    'C165 86 168 63 176 66 C177 46 190 30 210 30 Z',
+  ].join(' ') }));
+  fig.append(body);
+  for (const p of SPOTS) {
+    const on = !!wornOf(p.cat);
+    // Two leads: to the tags over the figure's sides (upright), and to tags further out (a wide stage, sideways).
+    for (const [lx, k] of [[p.side === 'l' ? 104 : 316, 'p'], [p.side === 'l' ? 49 : 371, 'w']] as const)
+      fig.append(svg('path', { d: `M${lx} ${p.y} L${(lx + p.at[0]) / 2} ${p.y} L${p.at[0]} ${p.at[1]}`, class: `jb-lead ${k}${p.cat === slot ? ' sel' : ''}${on ? ' on' : ''}` }));
+  }
+  for (const p of SPOTS) {
+    const on = !!wornOf(p.cat);
+    const dot = svg('circle', { cx: p.at[0], cy: p.at[1], r: 11, class: `jb-spot${p.cat === slot ? ' sel' : ''}${on ? ' on' : ''}` });
+    dot.addEventListener('click', () => pick(p.cat));
+    fig.append(svg('circle', { cx: p.at[0], cy: p.at[1], r: 22, class: 'jb-hit' }), dot);
+    (fig.lastChild!.previousSibling as SVGElement).addEventListener('click', () => pick(p.cat));
+  }
+
+  // A tag off each place: what it is, and what's on it.
+  const tags = SPOTS.map((p) => {
+    const o = wornOf(p.cat);
+    const n = mineOf(p.cat).length;
+    const fresh = mineOf(p.cat).some((x) => unseen.has(x.uid));
+    const t = h('button', { class: `jb-tag ${p.side}${p.cat === slot ? ' sel' : ''}${o ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, 'aria-pressed': String(p.cat === slot), onclick: () => pick(p.cat) },
+      h('small', { text: p.where }),
+      h('b', { text: o ? JEWELS[o.id].name : n ? `${n} to choose` : 'Nothing yet' }),
+      fresh ? h('i', { class: 'jb-new', text: 'New' }) : null);
+    t.style.top = `${(p.y / 420) * 100}%`;
+    return t;
+  });
+
+  // The drawer: everything you own for the place picked; tap to put on, tap again to take off.
+  const spot = SPOTS.find((p) => p.cat === slot)!;
+  const mine = mineOf(slot);
+  const worn = wornOf(slot);
+  const toggle = (o: OwnedJewel) => {
+    const d = JEWELS[o.id];
+    if (isWorn(s, o.uid)) {
+      removeJewel(progress, slot);
       changed();
-      say('Taken off');
-      rebuild();
-    }),
-    ...boxBody(progress, state.sel, (u) => ((state.sel = u), rebuild()), (t, b) => (say(t, b), rebuild()), () => (changed(), rebuild()), saved),
-    s.jewellery.owned.length ? h('p', { class: 'hint', text: 'Sell pieces back at Halden & Crane, Riverside Centre.' }) : null,
+      say(`Took off the ${d.name}`);
+    } else {
+      const r = wearJewel(progress, o.uid);
+      if (r.ok) {
+        changed();
+        say(`Wearing the ${d.name}`);
+      } else say(r.reason, true);
+    }
+    rebuild();
+  };
+  const rows = mine.map((o) => {
+    const d = JEWELS[o.id];
+    const on = isWorn(s, o.uid);
+    const r = h('button', { class: `jb-row${on ? ' on' : ''}`, 'data-nav': true, role: 'switch', 'aria-checked': String(on), onclick: () => toggle(o) },
+      h('i', { class: 'jb-metal' }),
+      h('span', { class: 'jb-name' }, h('b', { text: d.name }), h('span', { text: `${FINISHES[o.finish].name}${d.stone ? ` · ${STONES[d.stone].name}` : ''} · ${RARITY_LABELS[d.rarity]}` })),
+      unseen.has(o.uid) ? h('i', { class: 'jb-new', text: 'New' }) : null,
+      h('span', { class: 'jb-tick', 'aria-hidden': 'true' }, on ? icon('check') : null));
+    const fin = FINISHES[o.finish];
+    (r.querySelector('.jb-metal') as HTMLElement).style.background = fin.metal2 ? `linear-gradient(135deg, ${fin.metal} 50%, ${fin.metal2} 50%)` : fin.metal;
+    r.style.setProperty('--rarity', RARITY_COLOURS[d.rarity]);
+    return r;
+  });
+  const drawer = h('div', { class: 'jb-drawer' },
+    h('div', { class: 'jb-head' },
+      h('div', {}, h('small', { text: spot.where }), h('h3', { text: JEWEL_CAT_LABELS[slot] })),
+      worn ? jewelSlot({ id: worn.id, finish: worn.finish }) : null),
+    rows.length
+      ? h('div', { class: 'jb-rows' }, ...rows)
+      : h('p', { class: 'jb-empty', text: `No ${JEWEL_CAT_LABELS[slot].toLowerCase()} yet. Halden & Crane in the Riverside Centre sells them, and some turn up after a fight.` }),
+    rows.length ? h('p', { class: 'hint', text: worn ? 'Tap the one you’re wearing to take it off.' : 'Tap one to put it on.' }) : null,
+  );
+
+  // Looking at a place clears its "new" badges (after this draw).
+  if (mine.some((o) => unseen.has(o.uid))) {
+    s.jewellery.unseen = s.jewellery.unseen.filter((u) => !mine.some((o) => o.uid === u));
+    saved();
+  }
+  void markSeen;
+  return h('div', { class: 'jw-panel jb' },
+    h('div', { class: 'jb-stage' }, fig, ...tags),
+    drawer,
   );
 }
 

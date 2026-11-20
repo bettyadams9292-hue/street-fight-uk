@@ -399,10 +399,10 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
             h('div', { class: 'inv-left' }, carryView),
             h('div', { class: 'inv-right' }, detail, h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message })),
           ),
-      h('div', { class: 'panel-actions slim' },
+      ...(filter === 'jewellery' ? [] : [h('div', { class: 'panel-actions slim' },
         h('span', { class: 'hint', text: 'Tap a slot to see it. Double-tap to use, hold or wear it.' }),
         menuButton(`Sort: ${SORTS.find((x) => x.id === sort)!.label}`, () => { sort = SORTS[(SORTS.findIndex((x) => x.id === sort) + 1) % SORTS.length].id; build(); }, undefined, 'quiet'),
-      ),
+      )]),
     );
     if (focusUid) ui.focusElement(el.querySelector('.inv-slot.selected, .inv-bagcard.selected') as HTMLElement | null);
     else ui.keepFocus();
