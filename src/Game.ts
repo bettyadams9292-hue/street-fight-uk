@@ -2427,6 +2427,11 @@ export class Game {
       else if (!INDOOR_THEMES.has(this.world.level.theme) && this.world.level.weather !== 'indoors') want = 'street';
     } else if (this.mode) want = 'street';
     this.audio.setMusic(want);
+    // No street noise on the menus; faint indoors; under the music outside, so sirens don't drown it.
+    const outdoors = !!this.world && !INDOOR_THEMES.has(this.world.level.theme) && this.world.level.weather !== 'indoors';
+    const musicOn = want !== null && want !== 'menu' && this.settings.get().musicVolume > 0.01;
+    const menus = this.state === 'menu' || this.state === 'studio';
+    this.audio.setAmbienceLevel(menus ? 0 : !this.world ? (this.mode ? 0.4 : 0) : !outdoors ? 0.25 : musicOn ? (want === 'boss' ? 0.7 : 0.4) : 1);
   }
 
   private touchWanted(): boolean {
