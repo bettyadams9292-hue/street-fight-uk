@@ -212,6 +212,15 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 - #67: heat, district by district (`progress/heat.ts`, `save.districtHeat`): police, locals and gang, 0–100 each, cooling every trip (half as fast where you are). `save.heat` is the police reading where you are (`Progress.enterDistrict`, set by the World), so arrests, police on arrival and the HUD read it as before; arrest wipes only that district's police heat; the basement's raid risk uses `Progress.wanted` (the highest anywhere). Old saves' single heat lands where you are; old `grudge:` flags become gang heat. Locals: muggings, witnesses, assault, robberies; from `KNOWN_FACE_HEAT` (30) the nervy cross the road, and heroes and 999 calls scale with it. Gang heat only once you take on that district's boss (`gang:on:<district>`, `gangProvoked` +25, `gangDone` when the boss is beaten): beating their fights (+6, or -15 while they're after you) and running (+10, +45 with no cash) raise it; from `GANG_GRUDGE` (20) their fights hit harder (`gangMods`, up to ×2 dealt / ×0.5 taken), from `GANG_HUNT` (50) lads come looking for you after you walk in (`World.updateHunt`; see them off for -15). Mugging consequences: police and street heat per witness, a 999 call (`policeCallChance`; officers in 20–35 s, 12 if wanted), have-a-go heroes (`heroChance`), assault heat for putting down a victim or hero. Phone: Heat app (every district's three bars, where you are first) and GraftWiki's Heat article; Messages newest first with how long ago and ×N for repeats, and a repeated notification card jumps back to the top. `tests/mugging.test.ts`.
 ## Open questions and next steps
 
+- **Next up: police (from Leeko, 20 Nov). Read `docs/POLICE_PLAN.md` first.** It covers:
+  - a police station you can go into;
+  - proper arrests (custody, a charge sheet);
+  - bail priced by how serious the crime was;
+  - good cops and bent cops (bungs, a bent desk sergeant);
+  - a second pawn shop on the High Street with the worst rates in the game.
+
+  The plan lists what exists now, a suggested design and numbers to check with Leeko, and the files to touch.
+
 - **Performance, still to do:** characters are about 36–40k triangles each (body about 27k). Agreed plan (19 Nov, not started), all from the models we already have, no new art:
   1. merge each person's ~10 skinned parts (body, clothes, hair, shoes) into one skinned mesh with material groups in `HumanBuilder.ts`: same look, one draw instead of ten;
   2. auto-decimate a lighter copy of the body and garments (about 27k → 8k) for people who aren't fighting; fighters and anyone close up keep the full model;
