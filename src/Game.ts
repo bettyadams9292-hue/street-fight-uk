@@ -36,6 +36,7 @@ import { newSave, Progress, type AreaId } from './progress/Progress';
 import { xpForNextLevel } from './progress/catalogue';
 import { STARTER_ACCESSORIES, STARTER_BOTTOMS, STARTER_SHOES, STARTER_TOPS } from './character/Appearance';
 import { ITEMS, RARITY_COLOURS } from './items/items';
+import { PAWN_HATCH_RATE } from './items/shops';
 import { clothesShopScreen, inventoryScreen, pawnScreen, storageScreen } from './ui/inventoryUI';
 import { arrest, ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
 import { World } from './world/World';
@@ -1230,6 +1231,10 @@ export class Game {
           this.enterArea('home', 'start', { at: { x: w.player.pos.x, z: w.player.pos.z } });
           this.hud.toast('Savings moved into the new tin', 'item');
         });
+        break;
+      case 'cash_hatch':
+        screen = pawnScreen(p, this.ui, saved, close, { priceMult: 1 / PAWN_HATCH_RATE });
+        this.hud.toast('Cash 4 U: they pay less than Pawn & Gold in the City Centre.', 'info');
         break;
       case 'pawn_counter':
         screen = pawnScreen(p, this.ui, saved, close, { rob: () => this.robShop('pawn', at ?? { x: 7.2, z: 0.6 }), priceMult: p.shop('pawn').priceMult });
