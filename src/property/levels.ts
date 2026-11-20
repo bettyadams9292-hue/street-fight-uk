@@ -19,7 +19,7 @@ export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
   const prop = save.property;
   if (area === 'home') dressHouse(prop);
   let level: LevelDef =
-    area === 'home' ? buildHomeLevel(HOME_BASE, prop, save.gym) : area === 'basement' ? buildBasementLevel(save.basement) : area === 'property' ? propertyLevel(save) : LEVELS[area];
+    area === 'home' ? buildHomeLevel(HOME_BASE, prop, save.gym, save.storageCap) : area === 'basement' ? buildBasementLevel(save.basement) : area === 'property' ? propertyLevel(save) : LEVELS[area];
   // Property doors: who owns it, who lives there, what the board outside says.
   if (PROPERTY_LIST.some((p) => p.area === area)) level = dressStreet(level, (id) => doorState(save, id));
   const props: PropDef[] = [];

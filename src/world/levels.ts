@@ -60,8 +60,8 @@ const homeBase: LevelDef = {
     { x: 9.5, y: 2.6, z: -0.3, colour: 0xe8f0ff, intensity: 10, range: 8 },
     { x: 14.5, y: 2.6, z: -0.3, colour: 0xd8e4ff, intensity: 9, range: 8 },
     // Over the stairwell, so the way down is lit.
-    { x: 16.6, y: 2.4, z: -1.0, colour: 0xfff0d0, intensity: 7, range: 5 },
-    { x: 20.0, y: 2.6, z: -0.3, colour: 0xd8e4ff, intensity: 8, range: 7 },
+    { x: STAIRWELL.x, y: 2.4, z: -1.0, colour: 0xfff0d0, intensity: 7, range: 5 },
+    { x: 18.5, y: 2.6, z: -0.3, colour: 0xd8e4ff, intensity: 8, range: 7 },
   ],
   objective: 'Head out the front door when you’re ready',
 };

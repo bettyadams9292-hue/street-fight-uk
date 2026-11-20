@@ -12,6 +12,7 @@ export const SOURCES = {
   'batch07.ts': 'assets/streetassettesting/batch07.ts',
   'streetLibrary.ts': 'newassetsfromchatgpt.ts',
   'furniture.ts': 'assets/streetassettesting/interior-furniture-megapack.ts',
+  'expansion.ts': 'assets/streetassettesting/gym-security-neighbourhood-expansion.ts',
 };
 const OUT = 'src/render/approved/sources';
 if (import.meta.url === `file://${process.argv[1]}`) {

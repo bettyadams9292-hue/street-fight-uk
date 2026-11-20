@@ -440,7 +440,7 @@ export function storageScreen(progress: Progress, ui: UIManager, changed: () => 
           build();
         }, 'Except quest items and bags'),
         s.storageCap < STORAGE_UPGRADE.max
-          ? menuButton(`More shelving (+${STORAGE_UPGRADE.slots})`, () => { const r = progress.buyStorageUpgrade(); say(r.ok ? 'Shelving up. More room in the stash.' : r.reason, !r.ok); if (r.ok) changed(); build(); }, `£${STORAGE_UPGRADE.cost} from the tin`)
+          ? menuButton(`Bigger safe (+${STORAGE_UPGRADE.slots})`, () => { const r = progress.buyStorageUpgrade(); say(r.ok ? 'Bigger safe in. More room in the stash.' : r.reason, !r.ok); if (r.ok) changed(); build(); }, `£${STORAGE_UPGRADE.cost} from the tin`)
           : null,
         menuButton(`Sort: ${SORTS.find((x) => x.id === sort)!.label}`, () => { sort = SORTS[(SORTS.findIndex((x) => x.id === sort) + 1) % SORTS.length].id; build(); }),
         menuButton('Close', close),

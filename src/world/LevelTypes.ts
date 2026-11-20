@@ -73,6 +73,8 @@ export interface PropDef {
   wallY?: number;
   /** Showroom display: stand it on a lit plinth. */
   plinth?: boolean;
+  /** Drawn this much larger or smaller than its model (the stash safe at its biggest). */
+  scale?: number;
 }
 
 /** Back-wall scenery along the street. */

@@ -96,11 +96,13 @@ const SETS: Record<DecorRoom, Slot[]> = {
     { id: 'f05_25', side: 'left', z: 4.8 }, // hallway bench
   ],
   garage: [
-    { id: 'f01_18', side: 'left', z: 2.2 }, // metal utility rack
-    { id: 'f03_24', side: 'right', z: 2.3 }, // utility cupboard
-    { id: 'storageRack', side: 'left', z: 4.4 },
-    { id: 'cardboardBox', side: 'right', z: 4.6 },
-    { id: 'cardboardBox', side: 'right', z: 4.6, dx: 0.7 },
+    // Racking down both side walls, turned to face into the garage; boxes stacked in the front corner.
+    { id: 'f01_18', side: 'left', z: 2.6, rot: 3 }, // metal utility rack
+    { id: 'storageRack', side: 'left', z: 4.4, rot: 3 },
+    { id: 'f03_24', side: 'right', z: 2.4, rot: 1 }, // utility cupboard
+    { id: 'oilDrum', side: 'right', z: 3.5 },
+    { id: 'cardboardBox', side: 'mid', z: 5.1, dx: -2.6 },
+    { id: 'cardboardBox', side: 'mid', z: 5.1, dx: -1.95 },
   ],
   utility: [
     { id: 'laundretteWasher', side: 'left', z: 2.2 },
