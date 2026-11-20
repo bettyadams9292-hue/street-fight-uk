@@ -1474,3 +1474,19 @@ body.phone-on .hud-buttons { opacity: 0.35; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   .ph-device, .phone.leaving .ph-device { transition: opacity 0.2s; transform: none; }
 }
+
+/* An app's screen inside the phone (Map, Bag, Me, Crew, Settings): it fills the phone under the bar, and lays out
+   as on an upright phone (ui/phone/embedCss.ts). The transform keeps its fixed parts inside the phone. */
+.ph-embed { position: relative; flex: 1; min-height: 0; overflow: hidden; container: phone / size; transform: translateZ(0); --safe-t: 0px; --safe-b: 14px; --safe-l: 0px; --safe-r: 0px; }
+.ph-embed > .screen { position: absolute; inset: 0; display: flex; padding: 10px 10px 24px; background: #0f1015; }
+.ph-embed .screen-logo, .ph-embed .panel-head .close-x, .ph-embed .screen > .close-x { display: none; }
+.view-embed .ph-bar { border-bottom-color: rgba(232, 51, 58, 0.5); }
+/* The phone has its own Back: the screens' own close buttons go, and nothing is wider than the phone. */
+.ph-embed .icon-btn.close, .ph-embed button.icon-btn[aria-label='Close'], .ph-embed button.icon-btn[aria-label^='Close '] { display: none; }
+.ph-embed .panel, .ph-embed .pf-col, .ph-embed .pf-tabs, .ph-embed .setting-row { max-width: 100%; min-width: 0; box-sizing: border-box; }
+.ph-embed .panel { width: 100%; }
+.ph-embed .pf-tabs { overflow-x: auto; scrollbar-width: none; }
+.ph-embed .pf-tab { flex: 1 1 0; min-width: 0; }
+.ph-embed .pf-tab img.title-art { max-width: 100%; height: auto; max-height: 34px; }
+.ph-embed .setting-row .name.has-art img.title-art { max-width: 100%; }
+@container phone (max-width: 560px) { .pf-tab .icon { display: none; } }

@@ -19,7 +19,31 @@ export class UIManager {
   onNavigate: (() => void) | null = null;
   onConfirm: (() => void) | null = null;
 
+  /** Where screens go while an app has them inside the phone (null: over the game). */
+  private host: HTMLElement | null = null;
+  /** The last screen inside the phone closed. */
+  onHostEmpty: (() => void) | null = null;
+
   constructor(private readonly root: HTMLElement) {}
+
+  /** Put screens inside this element (the phone's app view), or back over the game with null. */
+  setHost(el: HTMLElement | null): void {
+    this.host = el;
+  }
+
+  get hosted(): boolean {
+    return !!this.host;
+  }
+
+  private get mount(): HTMLElement {
+    return this.host ?? this.root;
+  }
+
+  private emptied(): void {
+    if (this.stack.length || !this.host) return;
+    // The phone decides, a moment later, whether to go back to its home screen (another screen may open straight away).
+    this.onHostEmpty?.();
+  }
 
   get top(): Screen | undefined {
     return this.stack[this.stack.length - 1];
@@ -32,7 +56,7 @@ export class UIManager {
   push(screen: Screen): void {
     if (this.top) this.top.el.classList.remove('active');
     this.stack.push(screen);
-    this.root.append(screen.el);
+    this.mount.append(screen.el);
     this.activate(screen);
   }
 
@@ -40,11 +64,13 @@ export class UIManager {
     const s = this.stack.pop();
     s?.el.remove();
     if (this.top) this.activate(this.top);
+    else this.emptied();
   }
 
   replaceAll(screen: Screen | null): void {
     while (this.stack.length) this.stack.pop()!.el.remove();
     if (screen) this.push(screen);
+    else this.emptied();
   }
 
   /** After a screen rebuilds its contents, focus the same position again. */
