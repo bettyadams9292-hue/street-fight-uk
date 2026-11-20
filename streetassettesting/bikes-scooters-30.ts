@@ -89,14 +89,16 @@ export function createBikeAsset(id:string):THREE.Group {
   const stemHeight=isBmx?.22:motor?.14:.13;
   tube([forkTop[0],forkTop[1],0],[forkTop[0]+.035,forkTop[1]+stemHeight,0],.016,silver);
   const handleY=forkTop[1]+stemHeight;
-  tube([forkTop[0]-.17,handleY,0],[forkTop[0]+.18,handleY,0],.013,black);
+  // Handlebars run across vehicle width (Z), not along wheelbase (X).
+  tube([forkTop[0]+.035,handleY,-.23],[forkTop[0]+.035,handleY,.23],.013,black);
+  for(const z of [-.19,.19])box(.075,.023,.085,forkTop[0]+.035,handleY,z,black);
  };
  if(kick){
   box(.94,.055,.17,-.04,.20,0,grey);box(.78,.012,.14,-.04,.232,0,black);
   tube([front,R,0],[front,1.18,0],.022,grey);
-  tube([front-.18,1.18,0],[front+.18,1.18,0],.016,black);
+  tube([front,1.18,-.23],[front,1.18,.23],.016,black);
   box(.08,.035,.05,front,1.20,0,black);
-  route([[front-.15,1.19,-.06],[front-.02,1.12,-.06],[front,.8,-.05],[front,.32,-.05],[.38,.21,-.06],[rear+.04,R+.04,-.06]],.0027);
+  route([[front,1.18,-.19],[front+.045,1.11,-.10],[front,.95,-.055],[front,.55,-.055],[front,.32,-.055],[.38,.21,-.06],[rear+.04,R+.04,-.06]],.0027);
   box(.055,.035,.045,rear+.04,R+.04,-.06,black);
  } else if(!motor){
   const seatX=isTandem?-.34:isBmx?-.14:-.22, seatY=isBmx?.90:1.08,bbX=isTandem?-.33:isBmx?-.12:-.12,bbY=isBmx?.37:.45;
@@ -110,7 +112,7 @@ export function createBikeAsset(id:string):THREE.Group {
    tube([-.86,1.02,0],[frontBB,.46,0],.017);
    for(const x of [rearBB,frontBB]){disk(.075,.018,x,.46,.08,grey);saddle(x-.06,1.13,.22,.15);tube([x-.06,1.01,0],[x-.06,1.12,0],.013,silver);tube([x,.46,.11],[x+.11,.38,.11],.012,silver);box(.10,.016,.055,x+.12,.38,.11,black)}
    tube([rearBB,.46,.10],[frontBB,.46,.10],.008,black);
-   tube([-.89,1.15,0],[-.65,1.15,0],.013,black);
+   tube([-.82,1.15,-.18],[-.82,1.15,.18],.013,black);
   }else if(s.kind==='step'||s.kind==='rental'){
    tube([rear,R,0],[seatX,.97,0],.019);
    tube([rear,R,0],[bbX,bbY,0],.019);
@@ -180,8 +182,13 @@ export function createBikeAsset(id:string):THREE.Group {
   }
   // Routed brake cables: two endpoints at physical calipers, not dangling in space.
   const cableStartY=forkTop[1]+(isBmx?.22:.13);
-  route([[headX+.12,cableStartY,-.12],[headX+.15,cableStartY-.06,-.10],[headX+.12,.89,-.085],[front-.035,R+.12,-.07]],.0025);
-  route([[headX-.10,cableStartY,.11],[headX-.14,cableStartY-.07,.09],[seatX,topY+.03,.075],[rear+.05,R+.12,.06]],.0023);
+  // Short steering loop, then front hose clipped to the near-side fork leg.
+  const stemX=forkTop[0]+.035;
+  route([[stemX,cableStartY,-.19],[stemX+.045,cableStartY-.045,-.16],[forkTop[0]+.015,forkTop[1]-.035,-.085],[(forkTop[0]+front)/2,(forkTop[1]+R)/2,-.078],[front-.035,R+.12,-.07]],.0025);
+  // Rear brake follows the top tube / step-through tube and the rear seat stay.
+  const rearUpper=isTandem?[-.86,1.02,.066]:[seatX,topY,.066];
+  const rearMid=[(seatX+rear)/2,(topY+R)/2,.068];
+  route([[stemX,cableStartY,.19],[stemX-.055,cableStartY-.045,.13],[headX,topY+.015,.078],rearUpper,rearMid,[rear+.05,R+.12,.06]],.0023);
   box(.045,.04,.03,front-.035,R+.12,-.07,black);
   box(.045,.04,.03,rear+.05,R+.12,.06,black);
  }else{
@@ -235,8 +242,11 @@ export function createBikeAsset(id:string):THREE.Group {
    if(s.electric)box(.32,.15,.16,-.03,.49,0,grey);
   }
   // Front and rear brakes follow fork and swingarm, terminating at calipers.
-  route([[.47,1.17,-.15],[.57,1.12,-.14],[.56,.92,-.12],[front-.06,R+.11,-.10]],.0038);
-  route([[.25,1.13,.12],[.16,.98,.12],[-.13,.60,.12],[rear+.07,R+.09,.11]],.003);
+  const motorBarY=forkTop[1]+.14,motorStemX=forkTop[0]+.035;
+  // Hydraulic hose stays alongside fork tube, with steering slack at the crown.
+  route([[motorStemX,motorBarY,-.19],[motorStemX+.045,motorBarY-.06,-.14],[forkTop[0],forkTop[1]-.03,-.09],[(forkTop[0]+front)/2,(forkTop[1]+R)/2,-.09],[front-.06,R+.11,-.10]],.0038);
+  // Rear hose follows the chassis and swingarm, never crossing the open silhouette.
+  route([[motorStemX,motorBarY,.19],[forkTop[0]-.04,forkTop[1]-.08,.11],[.18,.76,.11],[-.18,.53,.11],[(rear-.18)/2,(R+.53)/2,.11],[rear+.07,R+.09,.11]],.003);
   box(.06,.06,.05,front-.06,R+.11,-.10,black);
   box(.06,.05,.05,rear+.07,R+.09,.11,black);
  }
@@ -244,6 +254,6 @@ export function createBikeAsset(id:string):THREE.Group {
  g.updateMatrixWorld(true);
  const bounds=new THREE.Box3().setFromObject(g);
  for(const obj of g.children)obj.position.y-=bounds.min.y;
- g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,polishVersion:6,gameplayIntegrated:false};
+ g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,polishVersion:7,gameplayIntegrated:false};
  return g;
 }
