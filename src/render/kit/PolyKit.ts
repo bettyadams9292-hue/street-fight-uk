@@ -213,6 +213,90 @@ function panes(part: Part): Float32Array {
   return out;
 }
 
+/**
+ * A building's flat-coloured window panes as windows. The house kits (and some of the city's) model their glass as
+ * plain blue or slate faces in the solid part, which read as painted boards (and, dark enough, took brick). Those
+ * faces (blue-leaning, saturated, upright) are moved into the lit part, where the window shader draws them with a
+ * frame, glazing bars, sky-reflecting glass and a room behind. Cached per model.
+ */
+const splitCache = new Map<string, { rest: Part; panes: Part | null }>();
+function splitWindows(id: string, solid: Part): { rest: Part; panes: Part | null } {
+  const hit = splitCache.get(id);
+  if (hit) return hit;
+  const isPane = (t: number): boolean => {
+    const i = solid.idx[t];
+    const r = solid.col[i * 3], g = solid.col[i * 3 + 1], b = solid.col[i * 3 + 2];
+    const hi = Math.max(r, g, b);
+    const sat = hi > 0 ? (hi - Math.min(r, g, b)) / hi : 0;
+    return Math.abs(solid.nrm[i * 3 + 1]) < 0.3 && b > r * 1.25 && b >= g * 0.95 && sat > 0.3;
+  };
+  const keep: number[] = [];
+  const win: number[] = [];
+  for (let t = 0; t < solid.idx.length; t += 3) (isPane(t) ? win : keep).push(t);
+  const take = (tris: number[]): Part => {
+    const map = new Map<number, number>();
+    const pos: number[] = [], nrm: number[] = [], col: number[] = [], idx: number[] = [];
+    for (const t of tris) for (let k = 0; k < 3; k++) {
+      const i = solid.idx[t + k];
+      let j = map.get(i);
+      if (j === undefined) {
+        j = map.size;
+        map.set(i, j);
+        pos.push(solid.pos[i * 3], solid.pos[i * 3 + 1], solid.pos[i * 3 + 2]);
+        nrm.push(solid.nrm[i * 3], solid.nrm[i * 3 + 1], solid.nrm[i * 3 + 2]);
+        col.push(solid.col[i * 3], solid.col[i * 3 + 1], solid.col[i * 3 + 2]);
+      }
+      idx.push(j);
+    }
+    return { pos: new Float32Array(pos), nrm: new Float32Array(nrm), col: new Float32Array(col), idx: map.size > 65535 ? new Uint32Array(idx) : new Uint16Array(idx) };
+  };
+  const out = win.length ? { rest: take(keep), panes: take(win) } : { rest: solid, panes: null };
+  splitCache.set(id, out);
+  return out;
+}
+
+/**
+ * How big each connected piece of a part is (width across its face, height), per vertex. Brick goes only on the big
+ * pieces (the walls themselves): window surrounds, sills, lintels, doors and trims keep their own colour.
+ */
+const sizeCache = new WeakMap<Part, Float32Array>();
+function pieceSizes(part: Part): Float32Array {
+  const hit = sizeCache.get(part);
+  if (hit) return hit;
+  const n = part.pos.length / 3;
+  const parent = new Int32Array(n).map((_, i) => i);
+  const find = (i: number): number => {
+    while (parent[i] !== i) i = parent[i] = parent[parent[i]];
+    return i;
+  };
+  for (let t = 0; t < part.idx.length; t += 3) {
+    const a = find(part.idx[t]);
+    const b = find(part.idx[t + 1]);
+    if (a !== b) parent[a] = b;
+    const c = find(part.idx[t + 2]);
+    const d = find(part.idx[t + 1]);
+    if (c !== d) parent[c] = d;
+  }
+  const box = new Map<number, number[]>();
+  for (let i = 0; i < n; i++) {
+    const r = find(i);
+    let bb = box.get(r);
+    if (!bb) box.set(r, (bb = [Infinity, -Infinity, Infinity, -Infinity, Infinity, -Infinity]));
+    for (let a = 0; a < 3; a++) {
+      bb[a * 2] = Math.min(bb[a * 2], part.pos[i * 3 + a]);
+      bb[a * 2 + 1] = Math.max(bb[a * 2 + 1], part.pos[i * 3 + a]);
+    }
+  }
+  const out = new Float32Array(n * 2);
+  for (let i = 0; i < n; i++) {
+    const bb = box.get(find(i))!;
+    out[i * 2] = Math.max(bb[1] - bb[0], bb[5] - bb[4]);
+    out[i * 2 + 1] = bb[3] - bb[2];
+  }
+  sizeCache.set(part, out);
+  return out;
+}
+
 function paneHash(x: number, z: number, k: number): number {
   const v = Math.sin(x * 12.9898 + z * 78.233 + k * 37.719) * 43758.5453;
   return v - Math.floor(v);
@@ -227,7 +311,7 @@ class Bucket {
   nrm: number[] = [];
   col: number[] = [];
   idx: number[] = [];
-  /** 1 on building walls (the only surfaces that may be laid in brick), 0 on props: awnings, signs, furniture. */
+  /** 1 on building walls (the only surfaces that may be laid in brick), 2 on house walls (always brick), 0 on props. */
   wall: number[] = [];
   /** Lit panes only: (u, v) within the pane, a random number for the pane, and its width in metres. */
   win: number[] | null;
@@ -242,6 +326,9 @@ class Bucket {
     const info = index?.[pl.model];
     const wallZ = info?.building ? info.wall ?? null : null;
     const front = wallZ === null ? 0 : Math.sign(wallZ) || 1;
+    const sizes = wallZ === null ? null : pieceSizes(part);
+    // Houses (the neighbourhood kit's, built as American clapboard) are British brick whatever their paint: 2.
+    const house = pl.model.startsWith('hood/');
     const base = this.pos.length / 3;
     const c = Math.cos(pl.ry);
     const s = Math.sin(pl.ry);
@@ -262,7 +349,7 @@ class Bucket {
       this.nrm.push(nx * c + nz * s, ny, -nx * s + nz * c);
       if (tint) this.col.push(part.col[i * 3] * tint.r, part.col[i * 3 + 1] * tint.g, part.col[i * 3 + 2] * tint.b);
       else this.col.push(part.col[i * 3], part.col[i * 3 + 1], part.col[i * 3 + 2]);
-      this.wall.push(wallZ !== null && (part.pos[i * 3 + 2] - wallZ) * front < 0.2 ? 1 : 0);
+      this.wall.push(wallZ !== null && (part.pos[i * 3 + 2] - wallZ) * front < 0.2 && sizes![i * 2] >= 1.5 && sizes![i * 2 + 1] >= 1.2 ? (house ? 2 : 1) : 0);
     }
     if (this.win) {
       const pw = panes(part);
@@ -371,7 +458,13 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
       into = o;
     }
     const t = pl.tint ? tint.set(pl.tint) : null;
-    if (m.solid) into.solid.add(m.solid, pl, t);
+    if (m.solid) {
+      if (index![pl.model]?.building) {
+        const sp = splitWindows(pl.model, m.solid);
+        into.solid.add(sp.rest, pl, t);
+        if (sp.panes) into.lit.add(sp.panes, pl, null);
+      } else into.solid.add(m.solid, pl, t);
+    }
     if (m.paint) {
       paint.set(pl.paint ?? index![pl.model].paint ?? '#8a8f96');
       if (t) paint.multiply(t);
