@@ -81,38 +81,9 @@ export function prototype(id: string): Prototype {
   const def = APPROVED[id];
   if (!def) throw new Error(`approved asset ${id}: not in the registry`);
   const root = def.build();
-  root.updateMatrixWorld(true);
-  const buckets = new Map<THREE.Material, THREE.BufferGeometry[]>();
-  const push = (m: THREE.Material, g: THREE.BufferGeometry) => {
-    let b = buckets.get(m);
-    if (!b) buckets.set(m, (b = []));
-    b.push(g);
-  };
-  root.traverse((o: THREE.Object3D) => {
-    const mesh = o as THREE.Mesh;
-    if (!mesh.isMesh || !mesh.visible || !mesh.geometry?.getAttribute('position')) return;
-    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    // One material per mesh in every approved model; a mesh with several would take its first for the whole piece.
-    const m = mats[0];
-    const cls = classify(m);
-    if (cls === 'glass') push(PALETTE.glass, normalise(mesh.geometry, mesh.matrixWorld, null, false));
-    else if (cls === 'glow') {
-      const s = m as Std;
-      const c = s.emissive.clone().multiplyScalar(Math.max(0.6, s.emissiveIntensity)).add(s.color.clone().multiplyScalar(0.3));
-      push(PALETTE.glow, normalise(mesh.geometry, mesh.matrixWorld, c, false));
-    } else if (cls) push(PALETTE[cls], normalise(mesh.geometry, mesh.matrixWorld, (m as Std).color?.clone() ?? new THREE.Color('#888888'), false));
-    else push(m, normalise(mesh.geometry, mesh.matrixWorld, null, true));
-  });
-  const parts: ProtoPart[] = [];
+  const parts = mergeGroup(root);
   let triangles = 0;
-  for (const [material, geos] of buckets) {
-    const geometry = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
-    if (!geometry) continue;
-    for (const g of geos) if (g !== geometry) g.dispose();
-    geometry.computeBoundingBox();
-    triangles += geometry.getAttribute('position').count / 3;
-    parts.push({ geometry, material });
-  }
+  for (const p of parts) triangles += p.geometry.getAttribute('position').count / 3;
   const box = new THREE.Box3();
   for (const p of parts) box.union(p.geometry.boundingBox!);
   // Plain colours by how much of the model they cover (area), so a caller can repaint the main one.
@@ -222,4 +193,43 @@ export function approvedObject(id: string): THREE.Group {
     g.add(mesh);
   }
   return g;
+}
+
+/**
+ * A model's meshes (those `include` takes, all by default) merged into the shared palette, one geometry per material:
+ * what a prototype is made of. The ridden bike uses it to keep each wheel apart so it can turn.
+ */
+export function mergeGroup(root: THREE.Object3D, include?: (mesh: THREE.Mesh) => boolean): ProtoPart[] {
+  root.updateMatrixWorld(true);
+  const buckets = new Map<THREE.Material, THREE.BufferGeometry[]>();
+  const push = (m: THREE.Material, g: THREE.BufferGeometry) => {
+    let b = buckets.get(m);
+    if (!b) buckets.set(m, (b = []));
+    b.push(g);
+  };
+  root.traverse((o: THREE.Object3D) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh || !mesh.visible || !mesh.geometry?.getAttribute('position')) return;
+    if (include && !include(mesh)) return;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    // One material per mesh in every approved model; a mesh with several would take its first for the whole piece.
+    const m = mats[0];
+    const cls = classify(m);
+    if (cls === 'glass') push(PALETTE.glass, normalise(mesh.geometry, mesh.matrixWorld, null, false));
+    else if (cls === 'glow') {
+      const s = m as Std;
+      const c = s.emissive.clone().multiplyScalar(Math.max(0.6, s.emissiveIntensity)).add(s.color.clone().multiplyScalar(0.3));
+      push(PALETTE.glow, normalise(mesh.geometry, mesh.matrixWorld, c, false));
+    } else if (cls) push(PALETTE[cls], normalise(mesh.geometry, mesh.matrixWorld, (m as Std).color?.clone() ?? new THREE.Color('#888888'), false));
+    else push(m, normalise(mesh.geometry, mesh.matrixWorld, null, true));
+  });
+  const parts: ProtoPart[] = [];
+  for (const [material, geos] of buckets) {
+    const geometry = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
+    if (!geometry) continue;
+    for (const g of geos) if (g !== geometry) g.dispose();
+    geometry.computeBoundingBox();
+    parts.push({ geometry, material });
+  }
+  return parts;
 }

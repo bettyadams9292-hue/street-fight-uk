@@ -16,6 +16,8 @@ import type { GameButton } from '../input/InputManager';
 import { reseed } from './deterministic';
 import { LEVELS } from '../world/levels';
 import type { ShotName } from './shotList';
+import { BIKE_LIST } from '../property/catalogue';
+import { buyBike, mountBike, takeOutBike } from '../property/state';
 
 /** The private parts of Game the scenes drive. Kept here so Game itself stays closed to everything else. */
 interface Internals {
@@ -23,7 +25,7 @@ interface Internals {
   progress: Progress | null;
   mode: TrainingMode | null;
   training: { mode: TrainingOpponent; archetype: string; primary: string; secondary: string | null };
-  input: { pressFromTouch(b: GameButton): void };
+  input: { pressFromTouch(b: GameButton): void; touch: { moveX: number; moveZ: number } };
   showMainMenu(): void;
   openCreator(mode: 'new' | 'edit'): void;
   startTraining(): void;
@@ -102,6 +104,43 @@ export const SHOTS: Record<ShotName, SceneFn> & Record<string, SceneFn> = {
     press(game, g, 'hp', 14);
   },
   spar: (game, g) => training(game, g, 'spar', 300),
+  // ?shot=ride&bike=<id>&at=<x>&go=<frames riding right>, or &geton=<frames> (the leg swing), or &getoff=<frames>:
+  // riding a bike or scooter, for checking by eye.
+  ride: (game, g) => {
+    const q = new URLSearchParams(location.search);
+    const id = q.get('bike') ?? BIKE_LIST[0].id;
+    const at = Number(q.get('at') ?? 8);
+    g.progress = new Progress(newSave(hero(g)));
+    g.progress.save.cash.bank = 1e6;
+    buyBike(g.progress, id, BIKE_LIST.find((b) => b.id === id)!.colours[0]);
+    const uid = g.progress.save.property.bikes[0].uid;
+    takeOutBike(g.progress, uid);
+    Object.assign(g.progress.save.property.bikeOut!, { area: 'estate', x: at, z: -0.9 });
+    const geton = q.get('geton');
+    if (!geton) mountBike(g.progress, 'estate');
+    g.enterArea('estate', 'home');
+    const gi = g as unknown as { world: { player: { pos: { x: number; z: number } } }; mountParkedBike(): void; dismount(reason?: string): void };
+    gi.world.player.pos.x = at;
+    gi.world.player.pos.z = -0.7;
+    game.advance(30);
+    if (geton) {
+      gi.mountParkedBike();
+      game.advance(Number(geton));
+      return;
+    }
+    const go = Number(q.get('go') ?? 0);
+    if (go) {
+      g.input.touch.moveX = 1;
+      game.advance(go);
+      g.input.touch.moveX = 0;
+    }
+    const off = q.get('getoff');
+    if (off) {
+      game.advance(90);
+      gi.dismount();
+      game.advance(Number(off));
+    }
+  },
   group: (game, g) => training(game, g, 'group', 240),
   home: (game, g) => story(game, g, 'home', 'start'),
   estate: (game, g) => story(game, g, 'estate', 'home'),
@@ -203,6 +242,7 @@ interface ShotState {
 
 /** For picking things out of a shot from the console: what's drawn at a point on the screen. */
 function exposePicker(game: Game): void {
+  (window as unknown as { __game: Game }).__game = game;
   (window as unknown as { __pick: (x: number, y: number) => string[] }).__pick = (x, y) => {
     const r = (game as unknown as { renderer: { cameraRig: { camera: THREE.Camera }; scene: THREE.Scene } }).renderer;
     const rc = new THREE.Raycaster();

@@ -7,6 +7,7 @@ import {
   FURNITURE,
   GARAGE_SPACES,
   MAX_CARS,
+  OLD_BIKE_IDS,
   ROOM_IDS,
   resale,
   type RoomId,
@@ -58,7 +59,8 @@ export interface PropertySave {
   activeCar: string | null;
   bikes: OwnedVehicle[];
   /** The bike that's out of the garage, and where it's parked (or that you're on it). */
-  bikeOut: { uid: string; area: AreaId; x: number; z: number } | null;
+  /** Where the bike is parked; `left` if it points left (you got off riding that way). */
+  bikeOut: { uid: string; area: AreaId; x: number; z: number; left?: boolean } | null;
   riding: boolean;
   casino: CasinoStats;
   seq: number;
@@ -128,6 +130,8 @@ export function sanitiseProperty(raw: unknown, areas: readonly string[]): Proper
   }
   const vehicles = (v: unknown, table: Record<string, { colours: string[] }>, cap: number) =>
     (Array.isArray(v) ? v : [])
+      // Bikes from before the 30 approved models are swapped for their nearest new one.
+      .map((x) => (x && typeof x === 'object' && table === BIKES && OLD_BIKE_IDS[(x as OwnedVehicle).id] ? { ...(x as OwnedVehicle), id: OLD_BIKE_IDS[(x as OwnedVehicle).id], colour: table[OLD_BIKE_IDS[(x as OwnedVehicle).id]].colours[0] } : x))
       .filter((x): x is OwnedVehicle => !!x && !!table[x.id] && uidOk(x.uid))
       .slice(0, cap)
       .map((x) => ({ uid: x.uid, id: x.id, colour: colourOk(x.colour, table[x.id].colours[0]), from: x.from === 'won' ? ('won' as const) : ('bought' as const) }));
@@ -136,7 +140,7 @@ export function sanitiseProperty(raw: unknown, areas: readonly string[]): Proper
   out.activeCar = out.cars.some((c) => c.uid === r.activeCar) ? r.activeCar! : out.cars[0]?.uid ?? null;
   const bo = r.bikeOut;
   if (bo && out.bikes.some((b) => b.uid === bo.uid) && areas.includes(bo.area)) {
-    out.bikeOut = { uid: bo.uid, area: bo.area, x: num(bo.x, BIKE_HOME_SPOT.x), z: num(bo.z, BIKE_HOME_SPOT.z) };
+    out.bikeOut = { uid: bo.uid, area: bo.area, x: num(bo.x, BIKE_HOME_SPOT.x), z: num(bo.z, BIKE_HOME_SPOT.z), ...(bo.left === true ? { left: true } : {}) };
     out.riding = r.riding === true;
   }
   const c = (r.casino ?? {}) as Partial<CasinoStats>;
@@ -313,10 +317,10 @@ export function mountBike(p: Progress, area: AreaId): PurchaseResult {
 }
 
 /** Get off and leave it parked here. */
-export function parkBike(p: Progress, area: AreaId, x: number, z: number): PurchaseResult {
+export function parkBike(p: Progress, area: AreaId, x: number, z: number, left = false): PurchaseResult {
   const prop = P(p);
   if (!prop.bikeOut) return fail('No bike out');
-  prop.bikeOut = { uid: prop.bikeOut.uid, area, x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100 };
+  prop.bikeOut = { uid: prop.bikeOut.uid, area, x: Math.round(x * 100) / 100, z: Math.round(z * 100) / 100, ...(left ? { left: true } : {}) };
   prop.riding = false;
   return { ok: true };
 }

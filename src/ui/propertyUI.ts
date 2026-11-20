@@ -300,16 +300,16 @@ export function carDealerScreen(progress: Progress, close: () => void, saved: ()
 // ---- bike shop ----------------------------------------------------------------------------------
 
 export function bikeShopScreen(progress: Progress, close: () => void, saved: () => void): Screen {
-  let cls: BikeClass = 'beginner';
+  let cls: BikeClass = 'bicycle';
   let sel = BIKE_LIST[0].id;
   let colour = BIKES[sel].colours[0];
   let compare: string | null = null;
-  return panelScreen('Mudlark Moto', progress, (msg, rebuild) => {
+  return panelScreen('Mudlark Moto & Cycles', progress, (msg, rebuild) => {
     const prop = progress.save.property;
     const def = BIKES[sel];
     const cmp: BikeDef | null = compare && compare !== sel ? BIKES[compare] : null;
     const rows: HTMLElement[] = [
-      h('p', { class: 'hint', text: `Bikes are delivered to your garage (${prop.bikes.length}/${GARAGE_SPACES} spaces). Take one out from the bike store in the garage.` }),
+      h('p', { class: 'hint', text: `Bikes and scooters are delivered to your garage (${prop.bikes.length}/${GARAGE_SPACES} spaces). Take one out from the bike store in the garage.` }),
       tabs(BIKE_CLASSES, cls, (c) => {
         cls = c;
         sel = BIKE_LIST.find((x) => x.cls === c)!.id;
@@ -319,12 +319,12 @@ export function bikeShopScreen(progress: Progress, close: () => void, saved: () 
     ];
     const list = h('div', { class: 'prop-list' }, ...BIKE_LIST.filter((b) => b.cls === cls).map((b) =>
       h('button', { class: `prop-item${b.id === sel ? ' on' : ''}`, 'data-nav': true, onclick: () => ((sel = b.id), (colour = b.colours[0]), rebuild()) },
-        h('b', { text: b.name }), h('span', { text: `${money(b.price)} · ${b.cc}cc${prop.bikes.some((o) => o.id === b.id) ? ' · owned' : ''}` }))));
+        h('b', { text: b.name }), h('span', { text: `${money(b.price)} · ${b.cc ? `${b.cc}cc` : b.electric ? 'electric' : 'pedal'}${prop.bikes.some((o) => o.id === b.id) ? ' · owned' : ''}` }))));
     const detail = h('div', { class: 'prop-detail' },
       previewCanvas(def.id, colour),
       h('h3', { text: `${def.name} — ${money(def.price)}` }),
       h('p', { class: 'hint', text: `${def.blurb}${cmp ? ` Marker shows the ${cmp.name}.` : ''}` }),
-      statBar('Top speed (mph)', def.topSpeed, 95, cmp?.topSpeed),
+      statBar('Top speed (mph)', def.topSpeed, 120, cmp?.topSpeed),
       statBar('Acceleration', def.accel, 10, cmp?.accel),
       statBar('Handling', def.handling, 10, cmp?.handling),
       statBar('Braking', def.braking, 10, cmp?.braking),

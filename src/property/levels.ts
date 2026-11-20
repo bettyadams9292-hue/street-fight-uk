@@ -9,6 +9,7 @@ import { buildBasementLevel } from '../business/basement';
 import { PROPERTIES, PROPERTY_LIST, formatPounds, valueNow } from '../realty/catalogue';
 import { holding } from '../realty/portfolio';
 import { buildPropertyInterior, dressStreet, type DoorState } from '../realty/world';
+import { streetBikes } from '../world/streetBikes';
 
 /**
  * Areas as they are for this save: the house with your furniture, your car
@@ -22,7 +23,7 @@ export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
     area === 'home' ? buildHomeLevel(HOME_BASE, prop, save.gym, save.storageCap) : area === 'basement' ? buildBasementLevel(save.basement) : area === 'property' ? propertyLevel(save) : LEVELS[area];
   // Property doors: who owns it, who lives there, what the board outside says.
   if (PROPERTY_LIST.some((p) => p.area === area)) level = dressStreet(level, (id) => doorState(save, id));
-  const props: PropDef[] = [];
+  const props: PropDef[] = area === 'home' || area === 'basement' || area === 'property' ? [] : streetBikes(level);
   const stations: StationDef[] = [];
 
   if (area === 'estate') {
@@ -39,7 +40,7 @@ export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
     const bike = prop.bikes.find((b) => b.uid === out.uid);
     if (bike) {
       // Parked bikes don't block you (you might be stood where you got off).
-      props.push({ kind: 'vehicle', item: bike.id, colour: bike.colour, x: out.x, z: out.z, size: BIKE_SIZE, solid: false });
+      props.push({ kind: 'vehicle', item: bike.id, colour: bike.colour, x: out.x, z: out.z, size: BIKE_SIZE, solid: false, rot: out.left ? 2 : 0 });
       stations.push({ id: 'bike', x: out.x, z: out.z + 0.2, label: `Your ${BIKES[bike.id].name}: get on` });
     }
   }

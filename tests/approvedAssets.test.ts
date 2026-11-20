@@ -39,7 +39,7 @@ test('every in-game copy is its approved original, unchanged (run tools/assets/s
 
 test('every approved model builds, stands on the ground at real size, and ids are unique', () => {
   assert(new Set(APPROVED_IDS).size === APPROVED_IDS.length, 'duplicate ids');
-  assert(APPROVED_IDS.length === 292, `${APPROVED_IDS.length} approved models`);
+  assert(APPROVED_IDS.length === 322, `${APPROVED_IDS.length} approved models`);
   for (const id of APPROVED_IDS) {
     const p = prototype(id);
     assert(p.triangles > 0 && p.parts.length > 0 && p.parts.length <= 5, `${id}: ${p.parts.length} parts`);

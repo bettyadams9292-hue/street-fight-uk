@@ -274,21 +274,21 @@ test('bike shop: all five classes stocked with the six stats', () => {
 test('bikes go in the garage, up to its space; take out, ride, park, store', () => {
   const p = fresh(100000);
   const before = wallet(p);
-  assert(buyBike(p, 'mx250', '#1f4fa8').ok && wallet(p) === before - BIKES.mx250.price, 'bought and charged');
-  for (let i = 1; i < GARAGE_SPACES; i++) assert(buyBike(p, 'pup85', '#3a9a3a').ok, 'room for more');
-  assert(!buyBike(p, 'pup85', '#3a9a3a').ok, 'garage full refused');
+  assert(buyBike(p, 'b24_petrol_mx', '#1f4fa8').ok && wallet(p) === before - BIKES.b24_petrol_mx.price, 'bought and charged');
+  for (let i = 1; i < GARAGE_SPACES; i++) assert(buyBike(p, 'b23_mini_e_mx', '#3a9a3a').ok, 'room for more');
+  assert(!buyBike(p, 'b23_mini_e_mx', '#3a9a3a').ok, 'garage full refused');
   const home = resolveLevel('home', p.save);
   assert(home.props.filter((x) => x.kind === 'vehicle').length === GARAGE_SPACES, 'all shown in the garage');
   const bike = p.save.property.bikes[0];
   assert(takeOutBike(p, bike.uid).ok, 'taken out');
   assert(resolveLevel('home', p.save).props.filter((x) => x.kind === 'vehicle').length === GARAGE_SPACES - 1, 'gone from its bay');
   const estate = resolveLevel('estate', p.save);
-  const outside = estate.props.find((x) => x.kind === 'vehicle' && x.item === 'mx250');
+  const outside = estate.props.find((x) => x.kind === 'vehicle' && x.item === 'b24_petrol_mx');
   assert(outside && outside.x === BIKE_HOME_SPOT.x, 'waiting outside the house');
   assert(estate.stations!.some((s) => s.id === 'bike'), 'can get on');
   assert(!takeOutBike(p, p.save.property.bikes[1].uid).ok, 'one out at a time');
   assert(mountBike(p, 'estate').ok && p.save.property.riding, 'riding');
-  assert(!resolveLevel('estate', p.save).props.some((x) => x.kind === 'vehicle' && x.item === 'mx250'), 'not parked while you ride it');
+  assert(!resolveLevel('estate', p.save).props.some((x) => x.kind === 'vehicle' && x.item === 'b24_petrol_mx'), 'not parked while you ride it');
   assert(parkBike(p, 'high_street', 20, 0.5).ok, 'parked');
   const hs = resolveLevel('high_street', p.save);
   assert(hs.props.some((x) => x.kind === 'vehicle' && x.x === 20), 'parked where you left it');
@@ -389,7 +389,7 @@ test('everything persists through save and load', () => {
   buyCar(p, 'regent', '#1a1a1a');
   buyCar(p, 'warden', '#3a4a2a');
   setActiveCar(p, p.save.property.cars[1].uid);
-  buyBike(p, 'enduro300', '#1f2a44');
+  buyBike(p, 'b22_e_dirt', '#1f2a44');
   takeOutBike(p, p.save.property.bikes[0].uid);
   parkBike(p, 'high_street', 12.5, 0.4);
   playSlots(p, 5, seq(0.99, 0.99, 0.99));

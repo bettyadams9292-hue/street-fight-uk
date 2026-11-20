@@ -235,19 +235,23 @@ export const CAR_LIST: CarDef[] = [
 ];
 export const CARS: Record<string, CarDef> = Object.fromEntries(CAR_LIST.map((c) => [c.id, c]));
 
-export type BikeClass = 'beginner' | 'motocross' | 'mx_pro' | 'enduro' | 'racing';
+export type BikeClass = 'bicycle' | 'ebike' | 'scooter' | 'electric' | 'motorbike';
 export const BIKE_CLASSES: { id: BikeClass; name: string }[] = [
-  { id: 'beginner', name: 'Beginner' },
-  { id: 'motocross', name: 'Motocross' },
-  { id: 'mx_pro', name: 'High-performance MX' },
-  { id: 'enduro', name: 'Enduro' },
-  { id: 'racing', name: 'Pro racing' },
+  { id: 'bicycle', name: 'Bicycles' },
+  { id: 'ebike', name: 'E-bikes' },
+  { id: 'scooter', name: 'Scooters & mopeds' },
+  { id: 'electric', name: 'Electric dirt bikes' },
+  { id: 'motorbike', name: 'Motorbikes' },
 ];
+
+/** How it's ridden: pedalled, stood on, sat on with feet on a floor, or sat astride with feet on pegs. */
+export type RideStyle = 'pedal' | 'kick' | 'step' | 'astride';
 
 export interface BikeDef {
   id: string;
   name: string;
   cls: BikeClass;
+  ride: RideStyle;
   price: number;
   /** mph */
   topSpeed: number;
@@ -256,26 +260,64 @@ export interface BikeDef {
   handling: number;
   braking: number;
   suspension: number;
-  /** Engine size, cc. */
+  /** Engine size, cc (0: pedals or electric). */
   cc: number;
+  electric: boolean;
   colours: string[];
-  /** Wheel radius (m); smaller for the kids' bikes. */
+  /** Wheel radius (m), as the model is built (assets/streetassettesting/bikes-scooters-30.ts). */
   wheel: number;
   blurb: string;
 }
 
+type B = Omit<BikeDef, 'electric' | 'ride'> & { electric?: boolean; ride?: RideStyle };
+const bike = (b: B): BikeDef => ({ electric: false, ride: b.cls === 'bicycle' || b.cls === 'ebike' ? 'pedal' : 'astride', ...b });
+
+/**
+ * The 30 owner-approved bikes and scooters (20 Nov), from the pushbike roadster to the sportbike. Stats are on the
+ * game's scale (top speed in mph, the rest 1..10); colours[0] is the model's own paint.
+ */
 export const BIKE_LIST: BikeDef[] = [
-  { id: 'pup85', name: 'Kawa Pup 85', cls: 'beginner', price: 1400, topSpeed: 48, accel: 4, handling: 7, braking: 5, suspension: 4, cc: 85, colours: ['#3a9a3a', '#e8e4dc'], wheel: 0.28, blurb: 'Small, forgiving, first bike.' },
-  { id: 'trail125', name: 'Hondo Trail 125', cls: 'beginner', price: 2100, topSpeed: 58, accel: 5, handling: 6, braking: 5, suspension: 5, cc: 125, colours: ['#c82a2a', '#1a1a1a'], wheel: 0.32, blurb: 'Learner-legal and indestructible.' },
-  { id: 'mx250', name: 'Yamo YZ 250F', cls: 'motocross', price: 4800, topSpeed: 68, accel: 7, handling: 7, braking: 6, suspension: 7, cc: 250, colours: ['#1f4fa8', '#e8e4dc'], wheel: 0.36, blurb: 'The track-day standard.' },
-  { id: 'mx350', name: 'Kato SX 350', cls: 'motocross', price: 5900, topSpeed: 72, accel: 8, handling: 7, braking: 7, suspension: 7, cc: 350, colours: ['#e86a10', '#1a1a1a'], wheel: 0.36, blurb: 'Orange, angry, light.' },
-  { id: 'mx450r', name: 'Kawa KX 450R', cls: 'mx_pro', price: 8400, topSpeed: 80, accel: 9, handling: 8, braking: 8, suspension: 9, cc: 450, colours: ['#3a9a3a', '#1a1a1a'], wheel: 0.37, blurb: 'Factory-spec forks and a launch mode.' },
-  { id: 'mx450f', name: 'Hondo CRF 450 Works', cls: 'mx_pro', price: 9800, topSpeed: 82, accel: 9, handling: 9, braking: 8, suspension: 9, cc: 450, colours: ['#c82a2a', '#e8e4dc'], wheel: 0.37, blurb: 'Titanium exhaust, works graphics.' },
-  { id: 'enduro300', name: 'Husk TE 300', cls: 'enduro', price: 7600, topSpeed: 76, accel: 7, handling: 8, braking: 7, suspension: 8, cc: 300, colours: ['#e8e4dc', '#1f2a44'], wheel: 0.37, blurb: 'Lights, kickstand, and tons of torque.' },
-  { id: 'enduro500', name: 'Beta RR 500', cls: 'enduro', price: 9200, topSpeed: 88, accel: 8, handling: 7, braking: 8, suspension: 8, cc: 500, colours: ['#c82a2a', '#1a1a1a'], wheel: 0.37, blurb: 'Big four-stroke for long days in the hills.' },
-  { id: 'factory450', name: 'Kato Factory Edition 450', cls: 'racing', price: 12800, topSpeed: 90, accel: 10, handling: 9, braking: 9, suspension: 10, cc: 450, colours: ['#e86a10', '#1f2a44'], wheel: 0.38, blurb: 'What the pros race. Carbon everything.' },
-  { id: 'gp500', name: 'Suzu RM-Z GP Replica', cls: 'racing', price: 14500, topSpeed: 93, accel: 10, handling: 10, braking: 9, suspension: 10, cc: 450, colours: ['#e8c020', '#1a1a1a'], wheel: 0.38, blurb: 'Championship replica, numbered.' },
+  // ---- pushbikes
+  bike({ id: 'b01_roadster_1950', name: 'Raleigh-style 1950s roadster', cls: 'bicycle', price: 140, topSpeed: 14, accel: 2, handling: 4, braking: 3, suspension: 2, cc: 0, colours: ['#252c27', '#7a1414', '#1f2a44'], wheel: 0.34, blurb: 'Rod brakes, a rack and a bell. Built to outlive you.' }),
+  bike({ id: 'b02_shopper_1970', name: '1970s shopper', cls: 'bicycle', price: 90, topSpeed: 12, accel: 2, handling: 5, braking: 3, suspension: 2, cc: 0, colours: ['#638bb1', '#c8a020', '#e8e4dc'], wheel: 0.34, blurb: 'Step-through, basket on the front. Nan approved.' }),
+  bike({ id: 'b03_chopper_1970', name: '1970s chopper', cls: 'bicycle', price: 260, topSpeed: 14, accel: 3, handling: 4, braking: 3, suspension: 2, cc: 0, colours: ['#b84b23', '#7a1414', '#1f4fa8'], wheel: 0.34, blurb: 'High bars, long seat, the coolest kid on the estate.' }),
+  bike({ id: 'b04_school_bike', name: 'Old school bike', cls: 'bicycle', price: 45, topSpeed: 13, accel: 2, handling: 5, braking: 3, suspension: 2, cc: 0, colours: ['#49596b', '#3a3a3a', '#5a2a2a'], wheel: 0.34, blurb: 'Worn, rattly, nobody will nick it.' }),
+  bike({ id: 'b05_city_stepthrough', name: 'City step-through', cls: 'bicycle', price: 320, topSpeed: 15, accel: 3, handling: 6, braking: 5, suspension: 3, cc: 0, colours: ['#8ba3a2', '#e8e4dc', '#2a2a2e'], wheel: 0.34, blurb: 'Easy on, easy off, basket for the shopping.' }),
+  bike({ id: 'b06_hybrid_commuter', name: 'Hybrid commuter', cls: 'bicycle', price: 480, topSpeed: 18, accel: 4, handling: 6, braking: 6, suspension: 3, cc: 0, colours: ['#333d47', '#7a1414', '#e8e4dc'], wheel: 0.34, blurb: 'Mudguards and a rack: the sensible one.' }),
+  bike({ id: 'b07_road_racer', name: 'Drop-bar road racer', cls: 'bicycle', price: 1400, topSpeed: 24, accel: 6, handling: 6, braking: 6, suspension: 1, cc: 0, colours: ['#9e2328', '#1a1a1a', '#e8e4dc'], wheel: 0.34, blurb: 'Light, fast and very unforgiving of kerbs.' }),
+  bike({ id: 'b08_gravel', name: 'Gravel adventure bike', cls: 'bicycle', price: 1200, topSpeed: 21, accel: 5, handling: 7, braking: 6, suspension: 3, cc: 0, colours: ['#807c61', '#2a3a2a', '#1a1a1a'], wheel: 0.34, blurb: 'Road speed, towpath tyres.' }),
+  bike({ id: 'b09_touring', name: 'Steel tourer', cls: 'bicycle', price: 900, topSpeed: 18, accel: 4, handling: 5, braking: 5, suspension: 2, cc: 0, colours: ['#3d6472', '#7a1414', '#2a2a2e'], wheel: 0.34, blurb: 'Racks front and back. Land’s End to John o’ Groats.' }),
+  bike({ id: 'b10_mtb_hardtail', name: 'Hardtail mountain bike', cls: 'bicycle', price: 650, topSpeed: 18, accel: 5, handling: 7, braking: 6, suspension: 5, cc: 0, colours: ['#202a29', '#c82a2a', '#1f4fa8'], wheel: 0.34, blurb: 'Front suspension and knobbly tyres for the rec.' }),
+  bike({ id: 'b11_mtb_full', name: 'Full-suspension trail bike', cls: 'bicycle', price: 1900, topSpeed: 19, accel: 5, handling: 8, braking: 7, suspension: 8, cc: 0, colours: ['#526b33', '#e86a10', '#1a1a1a'], wheel: 0.34, blurb: 'Soaks up the steps behind the precinct.' }),
+  bike({ id: 'b12_bmx', name: 'BMX', cls: 'bicycle', price: 280, topSpeed: 15, accel: 6, handling: 9, braking: 5, suspension: 2, cc: 0, colours: ['#773d8c', '#1a1a1a', '#e8c020'], wheel: 0.265, blurb: 'Small wheels, pegs, endless wheelies.' }),
+  bike({ id: 'b13_folding', name: 'Folding commuter', cls: 'bicycle', price: 750, topSpeed: 14, accel: 4, handling: 7, braking: 5, suspension: 2, cc: 0, colours: ['#353c43', '#c82a2a', '#e8e4dc'], wheel: 0.245, blurb: 'Folds up, goes on the bus.' }),
+  bike({ id: 'b14_delivery_cargo', name: 'Front-load cargo bike', cls: 'bicycle', price: 1600, topSpeed: 13, accel: 2, handling: 3, braking: 4, suspension: 2, cc: 0, colours: ['#b48a3b', '#2a3a2a', '#1f2a44'], wheel: 0.34, blurb: 'A box on the front for parcels or kids.' }),
+  bike({ id: 'b15_family_longtail', name: 'Longtail family bike', cls: 'bicycle', price: 1300, topSpeed: 14, accel: 3, handling: 4, braking: 4, suspension: 2, cc: 0, colours: ['#5e7c78', '#7a1414', '#2a2a2e'], wheel: 0.34, blurb: 'Room on the back for a passenger.' }),
+  bike({ id: 'b16_tandem', name: 'Tandem', cls: 'bicycle', price: 1100, topSpeed: 17, accel: 3, handling: 2, braking: 4, suspension: 2, cc: 0, colours: ['#803f35', '#1f4fa8', '#2a2a2e'], wheel: 0.34, blurb: 'Bicycle made for two. You do the work of both.' }),
+  // ---- e-bikes
+  bike({ id: 'b17_city_ebike', name: 'City e-bike', cls: 'ebike', price: 1800, topSpeed: 20, accel: 6, handling: 6, braking: 6, suspension: 3, cc: 0, electric: true, colours: ['#2e5a75', '#e8e4dc', '#1a1a1a'], wheel: 0.34, blurb: 'Assisted to 15.5 mph, legally. Feels faster.' }),
+  bike({ id: 'b18_rental_ebike', name: 'Rental e-bike', cls: 'ebike', price: 900, topSpeed: 18, accel: 5, handling: 5, braking: 5, suspension: 3, cc: 0, electric: true, colours: ['#3bdb4d'], wheel: 0.34, blurb: 'Bought off the scheme. Still lime green.' }),
+  bike({ id: 'b19_fat_ebike', name: 'Fat-tyre e-bike', cls: 'ebike', price: 2200, topSpeed: 22, accel: 7, handling: 6, braking: 6, suspension: 5, cc: 0, electric: true, colours: ['#db912d', '#1a1a1a', '#2a3a2a'], wheel: 0.34, blurb: 'Tyres like a moon buggy.' }),
+  bike({ id: 'b20_e_mtb', name: 'Electric mountain bike', cls: 'ebike', price: 3800, topSpeed: 23, accel: 7, handling: 8, braking: 7, suspension: 8, cc: 0, electric: true, colours: ['#3d4146', '#e86a10', '#1f4fa8'], wheel: 0.34, blurb: 'Up the hill as fast as down it.' }),
+  // ---- scooters and mopeds
+  bike({ id: 'b29_standup_escooter', name: 'Stand-up e-scooter', cls: 'scooter', ride: 'kick', price: 450, topSpeed: 15, accel: 5, handling: 7, braking: 4, suspension: 1, cc: 0, electric: true, colours: ['#24282b', '#e8e4dc', '#c82a2a'], wheel: 0.16, blurb: 'Folds, beeps, hits every pothole.' }),
+  bike({ id: 'b30_seated_escooter', name: 'Seated e-scooter', cls: 'scooter', ride: 'step', price: 900, topSpeed: 20, accel: 5, handling: 6, braking: 5, suspension: 2, cc: 0, electric: true, colours: ['#454a50', '#1f4fa8', '#e8e4dc'], wheel: 0.23, blurb: 'A seat and a footboard. Civilised.' }),
+  bike({ id: 'b28_delivery_moped', name: 'Delivery moped', cls: 'scooter', ride: 'step', price: 1700, topSpeed: 30, accel: 4, handling: 6, braking: 5, suspension: 3, cc: 50, colours: ['#54636e', '#c82a2a', '#e8e4dc'], wheel: 0.35, blurb: 'Top box, L-plates, every takeaway’s favourite.' }),
+  // ---- electric dirt bikes
+  bike({ id: 'b21_light_bee', name: 'Light electric trail bike', cls: 'electric', price: 3900, topSpeed: 47, accel: 8, handling: 8, braking: 6, suspension: 7, cc: 0, electric: true, colours: ['#9eae41', '#1a1a1a', '#e8e4dc'], wheel: 0.35, blurb: 'Silent, light and quicker than it looks.' }),
+  bike({ id: 'b22_e_dirt', name: 'Electric dirt bike', cls: 'electric', price: 7900, topSpeed: 58, accel: 9, handling: 8, braking: 7, suspension: 8, cc: 0, electric: true, colours: ['#7aa33b', '#1a1a1a', '#c82a2a'], wheel: 0.35, blurb: 'Full-size, instant torque, no fumes.' }),
+  bike({ id: 'b23_mini_e_mx', name: 'Youth electric MX', cls: 'electric', price: 1600, topSpeed: 25, accel: 5, handling: 8, braking: 5, suspension: 5, cc: 0, electric: true, colours: ['#2367b1', '#3a9a3a', '#e8c020'], wheel: 0.28, blurb: 'Small, forgiving, first bike.' }),
+  // ---- motorbikes
+  bike({ id: 'b24_petrol_mx', name: 'Motocross race bike', cls: 'motorbike', price: 6800, topSpeed: 72, accel: 9, handling: 8, braking: 7, suspension: 9, cc: 250, colours: ['#f1c72b', '#c82a2a', '#3a9a3a'], wheel: 0.35, blurb: 'Number boards, works graphics, angry.' }),
+  bike({ id: 'b25_supermoto', name: 'Urban supermoto', cls: 'motorbike', price: 7400, topSpeed: 88, accel: 9, handling: 9, braking: 8, suspension: 7, cc: 450, colours: ['#242c2c', '#e86a10', '#e8e4dc'], wheel: 0.35, blurb: 'Road tyres on a dirt bike. Made for town.' }),
+  bike({ id: 'b26_sportbike', name: 'Sportbike', cls: 'motorbike', price: 11800, topSpeed: 120, accel: 10, handling: 8, braking: 10, suspension: 7, cc: 600, colours: ['#e42a27', '#1a1a1a', '#1f4fa8'], wheel: 0.35, blurb: 'Fully faired. Tucked in, it flies.' }),
+  bike({ id: 'b27_cruiser', name: 'Cruiser', cls: 'motorbike', price: 9600, topSpeed: 95, accel: 7, handling: 5, braking: 7, suspension: 5, cc: 1200, colours: ['#9b262b', '#1a1a1a', '#e8e4dc'], wheel: 0.35, blurb: 'Chrome and V-twin rumble. Sit back.' }),
 ];
+/** Saves made before the 30 approved models: each old bike becomes the nearest new one. */
+export const OLD_BIKE_IDS: Record<string, string> = {
+  pup85: 'b23_mini_e_mx', trail125: 'b28_delivery_moped', mx250: 'b24_petrol_mx', mx350: 'b24_petrol_mx', mx450r: 'b24_petrol_mx',
+  mx450f: 'b24_petrol_mx', enduro300: 'b22_e_dirt', enduro500: 'b22_e_dirt', factory450: 'b25_supermoto', gp500: 'b26_sportbike',
+};
 export const BIKES: Record<string, BikeDef> = Object.fromEntries(BIKE_LIST.map((b) => [b.id, b]));
 
 /** Half extents of a parked bike (long in x). */
@@ -286,6 +328,21 @@ export const GARAGE_SPACES = 3;
 export const MAX_CARS = 8;
 
 /** Riding speed: quicker bikes move you faster. */
+/**
+ * How a bike moves (game metres and seconds): its top speed, how hard it pulls away and stops, and how quickly it
+ * can move across the street. Pushbikes are a brisk run; motorbikes about three times that.
+ */
+export function bikeHandling(b: BikeDef): { top: number; accel: number; brake: number; lane: number; coast: number } {
+  return {
+    top: 3.2 + b.topSpeed * 0.085,
+    accel: 1.6 + b.accel * 0.75,
+    brake: 4 + b.braking * 0.9,
+    lane: 0.8 + b.handling * 0.12,
+    coast: b.ride === 'pedal' || b.ride === 'kick' ? 1.4 : 0.9,
+  };
+}
+
+/** Kept for the bike shop's speed bar: how much faster than walking (about). */
 export function bikeSpeedMult(b: BikeDef): number {
-  return 1.45 + (b.topSpeed - 45) / 60 + b.accel * 0.02;
+  return bikeHandling(b).top / 3.2;
 }

@@ -12,9 +12,9 @@
  */
 import * as THREE from 'three';
 import { modelSet } from './modelSet';
-import { BIKE_IDS, CAR_MODELS, VEHICLE_FILES, type VehicleFile } from './vehicleFiles';
+import { CAR_MODELS, VEHICLE_FILES } from './vehicleFiles';
 
-export { BIKE_IDS, CAR_MODELS, VEHICLE_FILES };
+export { CAR_MODELS, VEHICLE_FILES };
 
 const vehicles = modelSet('vehicles', '/models/vehicles/', VEHICLE_FILES);
 
@@ -89,13 +89,3 @@ export function carPiece(id: string, colour: string, length: number, width: numb
   return place(scaler);
 }
 
-/** A bike at its real size (nose along +x, front wheel at +x), or null until loaded. */
-export function bikePiece(id: string, colour: string, plate?: THREE.Material): THREE.Group | null {
-  if (!(BIKE_IDS as readonly string[]).includes(id)) return null;
-  const p = vehicles.piece(`bike-${id}` as VehicleFile, 0, 0, 0, { native: true });
-  if (!p) return null;
-  const inner = p.children[0];
-  dress(inner, colour, plate);
-  // Keep the origin midway between the wheels, as the rider's seat is placed from there.
-  return place(inner, true);
-}

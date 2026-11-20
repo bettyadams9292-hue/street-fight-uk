@@ -21,8 +21,9 @@ import { createStreetAsset as lib } from './sources/streetLibrary';
 import { ASSETS as FURNITURE_PACK, createAsset as furn } from './sources/furniture';
 import { EXPANSION_ASSETS, createExpansionAsset as exp } from './sources/expansion';
 import { createTelephoneAsset as phone } from './sources/telephone';
+import { BIKE_ASSETS, createBikeAsset as bikeAsset } from './sources/bikes';
 
-export type ApprovedBatch = 'street-library' | 'B01' | 'B02' | 'B03' | 'B04' | 'B05' | 'B07' | 'FURNITURE' | 'EXPANSION' | 'PHONE';
+export type ApprovedBatch = 'street-library' | 'B01' | 'B02' | 'B03' | 'B04' | 'B05' | 'B07' | 'FURNITURE' | 'EXPANSION' | 'PHONE' | 'BIKES';
 export type ApprovedCategory = 'street' | 'architecture' | 'shop' | 'pub' | 'takeaway' | 'domestic' | 'industrial' | 'interior';
 /**
  * Where a model belongs: on the pavement, against or fixed to a building wall, on a roof, on a shop or room
@@ -47,7 +48,7 @@ type Row = [id: string, batch: ApprovedBatch, category: ApprovedCategory, name: 
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const L = (id: string) => () => lib(id as any);
-const F: Record<Exclude<ApprovedBatch, 'street-library' | 'B03' | 'FURNITURE' | 'EXPANSION' | 'PHONE'>, (id: any) => THREE.Group> = { B01: b01, B02: b02, B04: b04, B05: b05, B07: b07 };
+const F: Record<Exclude<ApprovedBatch, 'street-library' | 'B03' | 'FURNITURE' | 'EXPANSION' | 'PHONE' | 'BIKES'>, (id: any) => THREE.Group> = { B01: b01, B02: b02, B04: b04, B05: b05, B07: b07 };
 
 const ROWS: Row[] = [
   // ---- original street furniture library ----
@@ -188,14 +189,17 @@ const EXPANSION_ROWS: Row[] = (EXPANSION_ASSETS as readonly { id: string; label:
 /** The black corded desk telephone, approved by the owner on 20 Nov: the house phone on the living-room table. */
 const PHONE_ROWS: Row[] = [['blackDeskTelephone', 'PHONE', 'domestic', 'Black corded desk telephone', 'counter', false]];
 
+/** The 30 bikes and scooters (V7), approved by the owner on 20 Nov: the bikes you buy and ride, and those parked about. */
+const BIKE_ROWS: Row[] = (BIKE_ASSETS as readonly { id: string; label: string }[]).map((b) => [b.id, 'BIKES', 'street', b.label, 'pavement', false]);
+
 export const APPROVED: Readonly<Record<string, ApprovedAsset>> = Object.fromEntries(
-  [...ROWS, ...FURNITURE_ROWS, ...EXPANSION_ROWS, ...PHONE_ROWS].map(([id, batch, category, name, place, solid, replaces]) => [
+  [...ROWS, ...FURNITURE_ROWS, ...EXPANSION_ROWS, ...PHONE_ROWS, ...BIKE_ROWS].map(([id, batch, category, name, place, solid, replaces]) => [
     id,
     {
       id, batch, category, name, place, solid, replaces,
-      build: batch === 'street-library' || batch === 'B03' ? L(id) : batch === 'FURNITURE' ? () => furn(id) : batch === 'EXPANSION' ? () => exp(id as never) : batch === 'PHONE' ? () => phone(id) : () => F[batch](id),
+      build: batch === 'street-library' || batch === 'B03' ? L(id) : batch === 'FURNITURE' ? () => furn(id) : batch === 'EXPANSION' ? () => exp(id as never) : batch === 'PHONE' ? () => phone(id) : batch === 'BIKES' ? () => bikeAsset(id) : () => F[batch](id),
     },
   ]),
 );
 
-export const APPROVED_IDS: readonly string[] = [...ROWS, ...FURNITURE_ROWS, ...EXPANSION_ROWS, ...PHONE_ROWS].map((r) => r[0]);
+export const APPROVED_IDS: readonly string[] = [...ROWS, ...FURNITURE_ROWS, ...EXPANSION_ROWS, ...PHONE_ROWS, ...BIKE_ROWS].map((r) => r[0]);

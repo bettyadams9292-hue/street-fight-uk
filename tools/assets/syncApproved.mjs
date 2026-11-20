@@ -14,6 +14,7 @@ export const SOURCES = {
   'furniture.ts': 'assets/streetassettesting/interior-furniture-megapack.ts',
   'expansion.ts': 'assets/streetassettesting/gym-security-neighbourhood-expansion.ts',
   'telephone.ts': 'assets/streetassettesting/black-desk-telephone.ts',
+  'bikes.ts': 'assets/streetassettesting/bikes-scooters-30.ts',
 };
 const OUT = 'src/render/approved/sources';
 if (import.meta.url === `file://${process.argv[1]}`) {
