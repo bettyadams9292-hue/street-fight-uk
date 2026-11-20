@@ -69,7 +69,9 @@ export function packFurnitureModel(item: string, colour?: string): THREE.Group |
   const sx = (def.size[0] * 2) / size.x;
   const sz = (def.size[1] * 2) / size.z;
   // Height follows the footprint's stretch, but never by more than a fifth, so a sofa stays a sofa.
-  const sy = Math.max(0.85, Math.min(1.2, Math.sqrt(sx * sz)));
+  // A footprint in the model's own proportions scales it evenly (a smaller bedside is a shorter one too).
+  const even = Math.abs(Math.log(sx / sz)) < 0.08;
+  const sy = even ? (sx + sz) / 2 : Math.max(0.85, Math.min(1.2, Math.sqrt(sx * sz)));
   const paint = colour ?? def.colours[0];
   const g = new THREE.Group();
   g.name = `pack:${map.id}`;

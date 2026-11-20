@@ -185,6 +185,24 @@ export type PlacementCheck = { ok: true; room: RoomId } | { ok: false; reason: s
  * Can this piece go here? Checks the room, the walls, the walkway, doors,
  * stations, the fixed fittings and everything else you've placed.
  */
+/**
+ * A chair tucked in at a table: it goes under the table's edge from one side only, by no more than about half its
+ * depth (the seat under, the back still out), and its middle stays outside the table.
+ */
+function tucked(chair: Box, table: Box): boolean {
+  const cx = (chair.minX + chair.maxX) / 2;
+  const cz = (chair.minZ + chair.maxZ) / 2;
+  if (cx > table.minX && cx < table.maxX && cz > table.minZ && cz < table.maxZ) return false;
+  const ix = Math.min(chair.maxX, table.maxX) - Math.max(chair.minX, table.minX);
+  const iz = Math.min(chair.maxZ, table.maxZ) - Math.max(chair.minZ, table.minZ);
+  const w = chair.maxX - chair.minX;
+  const d = chair.maxZ - chair.minZ;
+  // Under the side of the table (overlapping across x) or its front or back (across z).
+  const fromSide = ix <= w * 0.55 && iz >= d - 0.001;
+  const fromEnd = iz <= d * 0.55 && ix >= w - 0.001;
+  return fromSide || fromEnd;
+}
+
 export function checkPlacement(prop: PropertySave, def: FurnitureDef, at: { x: number; z: number; rot: number }, ignoreUid?: string): PlacementCheck {
   const room = roomAt(at.x);
   if (!room) return { ok: false, reason: 'Pick a room you can decorate' };
@@ -225,7 +243,12 @@ export function checkPlacement(prop: PropertySave, def: FurnitureDef, at: { x: n
   for (const o of others) {
     const od = FURNITURE[o.id];
     if (od.mount !== 'floor') continue;
-    if (overlap(box, footprint(od, o.at!), ALLOWED_GAP)) return { ok: false, reason: `Overlaps the ${od.name.toLowerCase()}` };
+    const ob = footprint(od, o.at!);
+    if (!overlap(box, ob, ALLOWED_GAP)) continue;
+    // A chair pushed in under the edge of a table is how they stand, not a clash.
+    if (def.tuck === 'chair' && od.tuck === 'table' && tucked(box, ob)) continue;
+    if (def.tuck === 'table' && od.tuck === 'chair' && tucked(ob, box)) continue;
+    return { ok: false, reason: `Overlaps the ${od.name.toLowerCase()}` };
   }
   return { ok: true, room };
 }

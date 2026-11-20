@@ -23,7 +23,10 @@ import {
   allowedRooms,
   resale,
 } from '../src/property/catalogue';
-import { BACK_Z, FRONT_DOOR_X, HOME_FIXTURES, LANE_Z, buildHomeLevel, checkPlacement, footprint, suggestSpot } from '../src/property/home';
+import { BACK_Z, FRONT_DOOR_X, FRONT_FLOOR_Z, HOME_FIXTURES, LANE_Z, buildHomeLevel, checkPlacement, footprint, suggestSpot } from '../src/property/home';
+import * as THREE from 'three';
+import { PACK_FOR } from '../src/render/props/packFurniture';
+import { prototype } from '../src/render/approved/prototype';
 import {
   BIKE_HOME_SPOT,
   DRIVEWAY,
@@ -153,6 +156,33 @@ test('recolouring only allows the catalogue colours', () => {
   const sofa = p.save.property.furniture.find((f) => f.id === 'sofa_3')!;
   assert(recolourFurniture(p, sofa.uid, FURNITURE.sofa_3.colours[1]).ok && sofa.colour === FURNITURE.sofa_3.colours[1], 'recoloured');
   assert(!recolourFurniture(p, sofa.uid, '#123456').ok, 'off-catalogue colour refused');
+});
+
+test('chairs tuck in under a table edge, but not into it, and nothing else may overlap', () => {
+  const p = fresh();
+  const prop = p.save.property;
+  const z = FRONT_FLOOR_Z + 0.6;
+  const table = { room: 'kitchen' as const, x: -1, z, rot: 0 };
+  prop.furniture = [{ uid: 'c1', id: 'windsor_chair', colour: FURNITURE.windsor_chair.colours[0], at: { room: 'kitchen', x: -0.44, z, rot: 1 } }] as typeof prop.furniture;
+  assert(checkPlacement(prop, FURNITURE.round_table, table).ok, `table beside a tucked-in chair: ${JSON.stringify(checkPlacement(prop, FURNITURE.round_table, table))}`);
+  prop.furniture[0].at!.x = -0.72;
+  assert(!checkPlacement(prop, FURNITURE.round_table, table).ok, 'a chair pushed right into the table is refused');
+  prop.furniture[0].at!.x = -0.44;
+  prop.furniture[0].id = 'cupboard';
+  assert(!checkPlacement(prop, FURNITURE.round_table, table).ok, 'a cupboard under the table is refused');
+  // And the other way round: placing the chair at a table already there.
+  prop.furniture = [{ uid: 't1', id: 'round_table', colour: FURNITURE.round_table.colours[0], at: table }] as typeof prop.furniture;
+  assert(checkPlacement(prop, FURNITURE.windsor_chair, { room: 'kitchen', x: -1.56, z, rot: 3 }).ok, 'chair tucked in on the other side');
+});
+
+test("every furniture piece's footprint (its hitbox) has the model's own proportions", () => {
+  for (const [item, map] of Object.entries(PACK_FOR)) {
+    const def = FURNITURE[item];
+    if (!def) continue;
+    const s = prototype(map.id).box.getSize(new THREE.Vector3());
+    const r = (def.size[0] * 2) / s.x / ((def.size[1] * 2) / s.z);
+    assert(Math.abs(Math.log(r)) < 0.18, `${item}: footprint ${def.size[0] * 2}x${def.size[1] * 2} m against a ${s.x.toFixed(2)}x${s.z.toFixed(2)} m model`);
+  }
 });
 
 test('placement rules: no overlap, no clipping walls or fittings, no blocking the door, stations or walkway, no floating', () => {
