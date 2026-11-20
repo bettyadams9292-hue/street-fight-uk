@@ -2,6 +2,7 @@ import type { SettingsStore, Settings, Quality, TouchMode, Difficulty } from '..
 import { titleArt } from './titles';
 import { DIFFICULTY } from '../progress/catalogue';
 import { h } from './dom';
+import { menuScene } from './menuScene';
 import { cycleRow, menuButton, sliderRow } from './controls';
 import type { Screen, UIManager } from './UIManager';
 
@@ -21,9 +22,11 @@ export function mainMenu(
 ): Screen {
   const el = h(
     'div',
-    { class: 'screen main-menu keyart' },
-    // The key art carries the logo; the name is still there for screen readers.
-    h('h1', { class: 'sr-only', text: 'Street Fight UK' }),
+    { class: 'screen main-menu keyart scene' },
+    // A slow loop of the streets with a fighter in front (ui/menuScene.ts), the logo over it.
+    menuScene(),
+    h('div', { class: 'menu-shade', 'aria-hidden': 'true' }),
+    h('h1', { class: 'menu-logo' }, h('img', { src: '/art/menu/logo-hard-graft.webp', alt: 'Hard Graft', draggable: 'false' })),
     h(
       'nav',
       { class: 'menu-list' },
