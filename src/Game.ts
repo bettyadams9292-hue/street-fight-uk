@@ -832,7 +832,7 @@ export class Game {
     const title = lines[Math.floor(Math.random() * lines.length)];
     this.hud.shame(title, r.grudge ? 'Skint and legged it, you gimp. They’ll remember your face.' : `You dropped £${r.dropped} (${Math.round(r.share * 100)}% of it), you gimp.`);
     this.hud.remember(
-      r.grudge ? 'Legged it with nothing on you: the next fight round here comes at you twice as hard.' : `Legged it: threw down £${r.dropped} (${Math.round(r.share * 100)}%) and they went for that instead.`,
+      r.grudge ? 'Gang heat: you legged it with nothing on you. Their crew round here won’t forget it.' : `Legged it: threw down £${r.dropped} (${Math.round(r.share * 100)}%) and they went for that instead. Gang heat up a bit.`,
       r.grudge ? 'warn' : 'cash',
     );
   }
@@ -1001,6 +1001,12 @@ export class Game {
         if (known) this.hud.toast('Known face: people round here have started to recognise you. They’ll cross the road.', 'warn');
       }),
       ev.on('assault', ({ name, heat }) => this.hud.toast(`Assault: ${name} was only defending themselves. Heat +${heat}.`, 'warn')),
+      ev.on('gang:hunt', ({ count }) => {
+        this.hud.notify('THEY’RE AFTER YOU', 'warn');
+        this.hud.toast(`Gang heat: ${count} of their crew have come looking for you. Put them down and it eases.`, 'warn');
+      }),
+      ev.on('gang:beaten', () => this.hud.toast('Gang heat: you saw off the lads they sent. They’ll think twice.', 'item')),
+      ev.on('grudge', () => this.hud.toast('Gang heat: their crew remember you. This lot come at you harder.', 'warn')),
       ev.on('known:face', () => this.hud.toast('Known face: people round here know you for muggings. The nervy ones keep their distance.', 'warn')),
       ev.on('alarm', () => {
         this.hud.notify('ALARM!', 'warn');
@@ -1830,7 +1836,7 @@ export class Game {
       b.business.lastTick = p.save.playTime;
       return;
     }
-    for (const e of tickBusiness(b, p.save.playTime, p.save.heat)) this.hud.toast(`Basement: ${e.text}`, e.kind === 'storage_full' ? 'item' : 'warn');
+    for (const e of tickBusiness(b, p.save.playTime, p.wanted)) this.hud.toast(`Basement: ${e.text}`, e.kind === 'storage_full' ? 'item' : 'warn');
   }
 
   /** Injuries heal with time (three times faster at home); your crew get their strength back. */

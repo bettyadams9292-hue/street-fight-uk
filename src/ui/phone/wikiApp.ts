@@ -1,7 +1,8 @@
 import type { StyleData } from '../../styles/StyleData';
 import { h } from '../dom';
 import { movesKey, styleSection, type Device } from '../moveList';
-import { ASSAULT_HEAT, BAIL_MAX, BAIL_MIN, KNOWN_FACE, MUG_HEAT, MUG_WITNESS_HEAT } from '../../world/World';
+import { BAIL_MAX, BAIL_MIN, MUG_HEAT } from '../../world/World';
+import { GANG_GRUDGE, GANG_HUNT, HEAT, HEAT_COOL, KNOWN_FACE_HEAT } from '../../progress/heat';
 import { ARREST_HEAT } from '../../world/robbery';
 import { BASE_INVENTORY_SLOTS } from '../../progress/Progress';
 import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
@@ -12,7 +13,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'pockets';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'pockets';
 
 export interface WikiDeps {
   device: () => Device;
@@ -24,6 +25,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'controls', title: 'Controls', blurb: 'Every button: moving, fighting, getting about.' },
   { id: 'moves', title: 'Moves', blurb: 'Your styles: single hits, specials, combos, the finisher.' },
   { id: 'fighting', title: 'Fighting', blurb: 'Blocking, parries, staggers, finishers and pussying out.' },
+  { id: 'heat', title: 'Heat', blurb: 'What the police, the locals and the gangs think of you, district by district.' },
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
 ];
 
@@ -136,16 +138,31 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       sec('Staggers and finishers'),
       p(`Heavy hits stagger. When someone is nearly out (under 15% health) and staggered right in front of you, SPECIAL + HARD punch finishes them in one go, and it can’t be blocked. Then it needs ${Math.round(FINISHER_COOLDOWN / 60)} seconds to recharge, so you can’t finish a whole crowd with it.`),
       sec('Pussying out'),
-      p(`In a fight that’s going wrong, PUSSY OUT throws down some of the cash on you (somewhere between ${Math.round(BAIL_MIN * 100)}% and ${Math.round(BAIL_MAX * 100)}%, different every fight; the button tells you how much before you press it) and you leg it off the screen. They go for the money instead of you. With nothing on you they let you go, but the district remembers your face: its next fight comes at you twice as hard (hit twice as hard, take half the damage) until you beat it. You can’t pussy out of a boss fight, from the police or from a duel.`),
+      p(`In a fight that’s going wrong, PUSSY OUT throws down some of the cash on you (somewhere between ${Math.round(BAIL_MIN * 100)}% and ${Math.round(BAIL_MAX * 100)}%, different every fight; the button tells you how much before you press it) and you leg it off the screen. They go for the money instead of you. Their crew don't forget it: a little gang heat for running, a lot (+${HEAT.bailBroke.gang}) for running with nothing on you (see Heat). You can’t pussy out of a boss fight, from the police or from a duel.`),
       sec('Mugging'),
       p(`Walk up to anyone on the street and USE says MUG: what you can see they’re wearing (a chain, a watch, a ring) is what you’re after, plus their wallet and maybe a phone. The nervy hand it all over and leg it, and it lands at their feet. Others square up and fight for it: put them down and it’s on the floor. Either way it’s stolen (the pawn shop pays less, the police take it if they nick you). The bigger the prize, the more likely they fight for it; the more of a name you are, the more likely they just hand it over.`),
-      sec('What mugging costs you'),
-      p(`Heat: +${MUG_HEAT} for the mugging and +${MUG_WITNESS_HEAT} for everyone who saw it. Put down someone who fought for their own stuff and it’s assault: +${ASSAULT_HEAT} more. Heat dies down as you move between areas; at ${ARREST_HEAT} or more, losing any street fight gets you nicked.`),
-      p('The police: with witnesses about, someone may ring 999 and officers turn up in 20–35 seconds (12 if you’re already wanted). Leave the area before they arrive and they’ve missed you.'),
-      p('Have-a-go heroes: someone steady nearby may step in and fight you too.'),
-      p(`Your face: after ${KNOWN_FACE} muggings in one district, people there know you. The nervy ones cross the road when you come near, so the only ones left to mug are the ones likely to fight back, and heroes and 999 calls get likelier with every one.`),
+      p('What it costs you is heat with the police and the locals: see Heat.'),
       sec('Weapons'),
       p('Pick a weapon up with GRAB when nobody’s in reach. It wears out with every hit; the workbench at home mends it.'),
+    );
+  }
+
+  if (page === 'heat') {
+    return article('Heat', 'Every district keeps three readings of you, 0 to 100. They all cool off as you move between areas; the district you’re in cools at half the rate.',
+      infobox('Heat', [
+        ['Police', `crimes · nicked if you lose a fight at ${ARREST_HEAT}+`],
+        ['Locals', `muggings, assault · known face at ${KNOWN_FACE_HEAT}+`],
+        ['Gang', `only once you take on their boss · harder from ${GANG_GRUDGE}, hunting you from ${GANG_HUNT}`],
+        ['See yours', 'Heat app on the phone'],
+      ]),
+      sec('Police'),
+      p(`Robbing a shop, mugging (+${HEAT.mug.police}, +${HEAT.witness.police} a witness) and assault (+${HEAT.assault.police}: putting down someone who was only defending themselves or someone else). From 40 the police may be waiting when you walk in; with witnesses about someone may ring 999 and officers turn up in 20–35 seconds, 12 if you’re already wanted. At ${ARREST_HEAT} or more, losing any fight there gets you nicked: stolen gear taken, a fine, and that district’s police heat wiped. Leave before they arrive and they’ve missed you.`),
+      sec('Locals'),
+      p(`What the people on the street think of you. Muggings (+${HEAT.mug.street}, +${HEAT.witness.street} a witness), assault (+${HEAT.assault.street}) and robbing their shops (+${HEAT.robbery.street}). From ${KNOWN_FACE_HEAT} they know your face: the nervy cross the road when you come near, so the only ones left to mug are the ones likely to fight back. The higher it is, the more have-a-go heroes step in and the more people ring 999.`),
+      sec('Gang'),
+      p(`Each district’s crew. They leave you alone until you take on their boss: before that, nothing you do raises gang heat, so you can get about. Once you’ve started on the boss their crew are involved (+${HEAT.provoke.gang}) until you beat them. Beating one of their fights when they weren’t bothered (+${HEAT.beatCrew.gang}), pussying out (+${HEAT.bail.gang}, or +${HEAT.bailBroke.gang} with nothing on you). From ${GANG_GRUDGE} their fights come at you harder: up to twice as hard and taking half the damage at 100. Beat a fight while they’re after you and some of it settles (-15). From ${GANG_HUNT} they come looking for you a few seconds after you walk in; put the lads they send down and it eases (${HEAT.beatHunters.gang}). Beat their boss and they’re finished with you: back to nothing.`),
+      sec('Cooling off'),
+      p(`Every time you move between areas, police heat drops ${HEAT_COOL.police}, locals ${HEAT_COOL.street} and gang ${HEAT_COOL.gang}. The basement business’s raid risk goes by the highest police heat anywhere.`),
     );
   }
 

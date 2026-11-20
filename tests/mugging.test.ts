@@ -7,7 +7,9 @@ import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { emptyCommand } from '../src/input/Commands';
 import { newSave, Progress } from '../src/progress/Progress';
 import { LEVELS } from '../src/world/levels';
-import { ASSAULT_HEAT, BAIL_MAX, BAIL_MIN, heroChance, KNOWN_FACE, MUG_HEAT, MUG_WITNESS_HEAT, mugResistChance, policeCallChance, valuablesOf, World } from '../src/world/World';
+import { ASSAULT_HEAT, BAIL_MAX, BAIL_MIN, heroChance, MUG_HEAT, MUG_WITNESS_HEAT, mugResistChance, policeCallChance, valuablesOf, World } from '../src/world/World';
+import { coolHeat, GANG_GRUDGE, gangMods, HEAT, huntChance, KNOWN_FACE_HEAT } from '../src/progress/heat';
+import { arrest } from '../src/world/robbery';
 import { ARREST_HEAT } from '../src/world/robbery';
 import { ago } from '../src/ui/phone/Phone';
 
@@ -92,7 +94,7 @@ test('mugging: they hand it over and run, or fight for it and drop it when they�
     assert(ev, 'mug event');
     const e = ev as unknown as { witnesses: number; heat: number };
     assert(e.heat === MUG_HEAT + e.witnesses * MUG_WITNESS_HEAT && p.save.heat === heat + e.heat, `heat +${MUG_HEAT} and +${MUG_WITNESS_HEAT} a witness (${e.witnesses}): ${p.save.heat - heat}`);
-    assert(w.mugCount === 1, 'the district remembers');
+    assert(p.heatIn(street.district).street === HEAT.mug.street + e.witnesses * HEAT.witness.street, 'the locals remember');
     const chain = () => w.items.find((g) => g.stack.id === 'chain_gold');
     if (c.f.team === 'enemy') {
       fought++;
@@ -121,14 +123,14 @@ test('mugging: they hand it over and run, or fight for it and drop it when they�
 
 test('consequences scale: witnesses and a reputation bring the police and heroes', () => {
   assert(policeCallChance(0, 0, 0) < policeCallChance(3, 0, 0), 'witnesses ring it in');
-  assert(policeCallChance(1, 3, 0) > policeCallChance(1, 0, 0), 'a known mugger gets reported more');
+  assert(policeCallChance(1, 60, 0) > policeCallChance(1, 0, 0), 'a known mugger gets reported more');
   assert(policeCallChance(0, 0, ARREST_HEAT) === 1, 'once wanted, every time');
-  assert(heroChance(3) > heroChance(0) && heroChance(9) <= 0.65, 'heroes likelier, never certain');
+  assert(heroChance(60) > heroChance(0) && heroChance(100) <= 0.65, 'heroes likelier, never certain');
 });
 
 test('a known face: after enough muggings the nervy cross the road when you come near', () => {
   const p = progress();
-  for (let n = 1; n <= KNOWN_FACE; n++) p.set(`mugged:${street.district}:${n}`);
+  p.addHeatOf({ street: KNOWN_FACE_HEAT }, street.district);
   let checked = 0;
   for (let seed = 1; seed < 40 && checked < 3; seed++) {
     const w = new World(street, p, { entry: street.entries[0].id, seed });
@@ -145,6 +147,87 @@ test('a known face: after enough muggings the nervy cross the road when you come
     checked++;
   }
   assert(checked > 0, 'found a nervy walker');
+});
+
+test('heat is kept district by district, and save.heat is the police reading where you are', () => {
+  const p = progress();
+  p.enterDistrict('High Street');
+  p.gangProvoked();
+  p.setHeat('gang', 0);
+  p.addHeat(30);
+  p.addHeatOf({ street: 20, gang: 10 });
+  assert(p.save.heat === 30, 'wanted here');
+  p.enterDistrict('Canal Docks');
+  assert(p.save.heat === 0 && p.heatIn('High Street').police === 30, 'not wanted at the docks; still wanted on the High Street');
+  p.addHeat(70);
+  assert(p.wanted === 70, 'the basement sees the worst of it');
+  arrest(p);
+  assert(p.heatIn('Canal Docks').police === 0 && p.heatIn('High Street').police === 30, 'nicked at the docks: only their police are done with you');
+  p.tick();
+  assert(p.heatIn('High Street').police === 30 - 8 && p.heatIn('High Street').street === 20 - 4 && p.heatIn('High Street').gang === 10 - 3, 'cools away from it');
+  const m = { A: { police: 10, street: 10, gang: 10 }, B: { police: 4, street: 0, gang: 0 } };
+  coolHeat(m, 'A');
+  assert(m.A.police === 6 && m.A.gang === 8 && !('B' in m), 'where you are cools at half the rate; cold districts are forgotten');
+});
+
+test('old saves: one wanted level lands where you are; a grudge becomes gang heat', () => {
+  const p = progress();
+  p.save.heat = 50;
+  p.gangProvoked('Back Alleys');
+  p.setHeat('gang', 0, 'Back Alleys');
+  p.set('grudge:Back Alleys');
+  p.set('grudge:Old Market');
+  p.enterDistrict('High Street');
+  assert(p.heatIn('High Street').police === 50 && p.heatIn('Back Alleys').gang === HEAT.bailBroke.gang && !p.has('grudge:Back Alleys'), 'migrated');
+  assert(p.heatIn('Old Market').gang === 0 && !p.has('grudge:Old Market'), 'a crew you never provoked lets it go');
+});
+
+test('gang heat: their fights hit harder, running raises it, their boss down wipes it', () => {
+  assert(!gangMods(GANG_GRUDGE - 1) && gangMods(100)!.dealt === 2 && gangMods(100)!.taken === 0.5, 'grudge scale');
+  assert(huntChance(10) === 0 && huntChance(90) > huntChance(55), 'hunting only when it’s high');
+  const p = progress();
+  p.save.cash.pocket = 0;
+  const run = () => {
+    const w = new World(street, p, { entry: street.entries[0].id, seed: 2, civilians: false });
+    w.spawnEnemy('thug', w.player.pos.x + 2, w.player.pos.z);
+    w.step(emptyCommand());
+    return w.bailOut();
+  };
+  assert(run().ok && p.heatIn(street.district).gang === 0, 'before you take on their boss, the crew don’t care');
+  p.gangProvoked(street.district);
+  assert(p.heatIn(street.district).gang === HEAT.provoke.gang, 'started on the boss: they’re in it');
+  assert(run().ok && p.heatIn(street.district).gang === HEAT.provoke.gang + HEAT.bailBroke.gang, 'ran with nothing: they won’t forget');
+  p.gangDone(street.district);
+  assert(p.heatIn(street.district).gang === 0 && !p.gangOn(street.district), 'boss down: finished with you');
+  p.addHeatOf({ gang: 30 }, street.district);
+  assert(p.heatIn(street.district).gang === 0, 'and it stays that way');
+});
+
+test('gang hunt: with their heat high, lads come looking for you', () => {
+  let came = 0;
+  for (let seed = 1; seed < 12 && !came; seed++) {
+    const p = progress();
+    p.gangProvoked(street.district);
+    p.addHeatOf({ gang: 100 }, street.district);
+    const w = new World(street, p, { entry: street.entries[0].id, seed, civilians: false });
+    for (const e of w.encounters) e.status = 'cleared';
+    let n = 0;
+    w.events.on('gang:hunt', (e) => (n = e.count));
+    for (let f = 0; f < 60 * 14 && !n; f++) w.step(emptyCommand());
+    if (!n) continue;
+    came = n;
+    const lads = w.enemies.filter((e) => !e.isKO);
+    assert(lads.length === n && lads.every((e) => e.stats.hasModifier('grudge_dealt')), 'they’re out for you');
+    let eased = false;
+    w.events.on('gang:beaten', () => (eased = true));
+    for (const f of lads) {
+      f.knockOut();
+      w.sim.bus.emit('fighter:ko', { fighter: f, by: w.player });
+    }
+    for (let f = 0; f < 200; f++) w.step(emptyCommand());
+    assert(eased && p.heatIn(street.district).gang === 100 + HEAT.beatHunters.gang, `seen off: ${p.heatIn(street.district).gang}`);
+  }
+  assert(came >= 2, 'they came');
 });
 
 test('phone times read like a phone', () => {

@@ -1432,6 +1432,21 @@ body.fight-on .home-only { display: none !important; }
 .ph-note { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #1b1c22; }
 .ph-note img { width: 26px; height: 26px; object-fit: contain; flex: none; }
 .ph-note > span { flex: 1; min-width: 0; }
+.ph-heat-intro { margin: 0 2px 4px; color: #a9aab2; font-size: 13px; line-height: 1.35; }
+.ph-heat { padding: 10px 12px; border-radius: 14px; background: #1b1c22; display: grid; gap: 6px; }
+.ph-heat.here { box-shadow: inset 3px 0 0 var(--accent); }
+.ph-heat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ph-heat-head b { font-family: var(--display, inherit); font-size: 17px; letter-spacing: 0.02em; }
+.ph-heat-here { color: var(--accent); font-size: 12px; font-weight: 700; }
+.ph-heat-row { display: grid; grid-template-columns: 52px 1fr 70px; align-items: center; gap: 8px; font-size: 13px; }
+.ph-heat-k { color: #c9cad0; }
+.ph-heat-bar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.ph-heat-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #f0b43a, #e8333a); }
+.ph-heat-row.k-police .ph-heat-bar i { background: linear-gradient(90deg, #4a8cff, #e8333a); }
+.ph-heat-row.k-gang .ph-heat-bar i { background: linear-gradient(90deg, #9a6cff, #e8333a); }
+.ph-heat-w { color: #8d8e96; font-size: 12px; text-align: right; }
+.ph-heat-note { margin: 2px 0 0; color: #ffb3b5; font-size: 12.5px; line-height: 1.35; }
+.ph-link { justify-self: start; margin: 4px 2px; padding: 0; border: 0; background: none; color: #7fb0ff; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
 .ph-ago { flex: none; align-self: flex-start; white-space: pre; color: #8d8e96; font-size: 12px; font-variant-numeric: tabular-nums; }
 .ph-note.need.u2, .ph-note.need.u3 { box-shadow: inset 3px 0 0 #e8333a; }
 .ph-note.warn { box-shadow: inset 3px 0 0 #e8a33a; }

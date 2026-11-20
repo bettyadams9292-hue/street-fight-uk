@@ -225,14 +225,14 @@ export function startBusiness(p: Progress): PurchaseResult {
 
 export function setPaused(p: Progress, paused: boolean): void {
   const b = p.save.basement;
-  tickBusiness(b, p.save.playTime, p.save.heat);
+  tickBusiness(b, p.save.playTime, p.wanted);
   b.business.paused = paused;
 }
 
 /** Sell all stock: the money goes into the business balance (bills come out first). */
 export function sellStock(p: Progress): { ok: true; units: number; value: number } | { ok: false; reason: string } {
   const b = p.save.basement;
-  tickBusiness(b, p.save.playTime, p.save.heat);
+  tickBusiness(b, p.save.playTime, p.wanted);
   const units = b.business.stock;
   if (units <= 0) return { ok: false, reason: 'No stock to sell' };
   const value = Math.floor(units * businessStats(b).unitValue);
@@ -250,7 +250,7 @@ export function sellStock(p: Progress): { ok: true; units: number; value: number
 /** Take the business's money: into your pocket, or straight into the tin. */
 export function withdraw(p: Progress, to: 'pocket' | 'bank'): { ok: true; amount: number } | { ok: false; reason: string } {
   const b = p.save.basement;
-  tickBusiness(b, p.save.playTime, p.save.heat);
+  tickBusiness(b, p.save.playTime, p.wanted);
   const amount = b.business.balance;
   if (amount <= 0) return { ok: false, reason: 'Nothing to take' };
   b.business.balance = 0;

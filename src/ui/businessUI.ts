@@ -208,7 +208,7 @@ export function terminalScreen(progress: Progress, close: () => void, saved: () 
   return panelScreen('Business terminal', progress, (msg, rebuild) => {
     const s = progress.save;
     const b = s.basement;
-    tickBusiness(b, s.playTime, s.heat);
+    tickBusiness(b, s.playTime, progress.wanted);
     const st = businessStats(b);
     const status = businessStatus(b, s.playTime, st);
     const bs = b.business;

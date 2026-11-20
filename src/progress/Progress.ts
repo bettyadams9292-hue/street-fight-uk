@@ -15,6 +15,7 @@ import { sanitiseStyleTraining, type StyleTraining } from '../training/styleGyms
 import { defaultCompanions, sanitiseCompanions, type CompanionSave } from '../companions/companions';
 import { TOWN_AREA_IDS, type TownAreaId } from '../world/townIds';
 import { DISTRICT_ORDER } from '../world/levels';
+import { coolHeat, emptyHeat, HEAT, HEAT_COOL, HEAT_KINDS, sanitiseHeatMap, type DistrictHeat, type HeatKind, type HeatMap } from './heat';
 import { defaultNeeds, eat, needsModifiers, sanitiseNeeds, type NeedsSave } from '../home/needs';
 import { putInto, sanitisePantry, STARTER_GROCERIES, type PantrySave } from '../home/recipes';
 import { conditionModifiers, defaultCondition, sanitiseCondition, treatInjury, type ConditionSave } from '../condition/condition';
@@ -94,8 +95,10 @@ export interface GameSave {
   held: ItemStack | null;
   /** Item ids you've ever had, for the collection book. */
   discovered: string[];
-  /** Wanted level, 0..100. Drops as trips pass. */
+  /** Wanted level where you are now, 0..100: the police reading of `districtHeat` for this district. */
   heat: number;
+  /** Police, street and gang heat, district by district (progress/heat.ts). */
+  districtHeat: HeatMap;
   /** Counts area changes: the game's clock for shop closures and heat. */
   trips: number;
   shops: Record<string, ShopState>;
@@ -174,6 +177,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     held: null,
     discovered: [],
     heat: 0,
+    districtHeat: {},
     trips: 0,
     shops: {},
     pawn: { itemsSold: 0, earned: 0 },
@@ -253,6 +257,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     storageCap: num(r.storageCap, BASE_STORAGE_SLOTS, BASE_STORAGE_SLOTS, STORAGE_UPGRADE.max),
     discovered: Array.isArray(r.discovered) ? [...new Set(r.discovered.filter((x): x is string => typeof x === 'string' && !!ITEMS[x]))] : [],
     heat: num(r.heat, 0, 0, 100),
+    districtHeat: sanitiseHeatMap(r.districtHeat),
     trips: num(r.trips, 0),
     shops: sanitiseShops(r.shops),
     pawn: { itemsSold: num(r.pawn?.itemsSold, 0), earned: num(r.pawn?.earned, 0) },
@@ -766,14 +771,91 @@ export class Progress {
   }
 
   // ---- heat and the clock --------------------------------------------------------------
+  /** The district you're in (set by the World for its level): where heat lands. */
+  here = '';
+
+  /** You're in `district` now: `save.heat` reads its police heat. Old saves' one wanted level lands here once. */
+  enterDistrict(district: string): void {
+    this.here = district;
+    const map = this.save.districtHeat;
+    if (!Object.keys(map).length && this.save.heat > 0) map[district] = { ...emptyHeat(), police: this.save.heat };
+    // Old saves' "they remember your face" (running with nothing): their crew's grudge.
+    for (const k of Object.keys(this.save.flags)) {
+      if (!k.startsWith('grudge:')) continue;
+      const d = k.slice('grudge:'.length);
+      if (this.gangOn(d)) {
+        const h = (map[d] ??= emptyHeat());
+        h.gang = Math.max(h.gang, HEAT.bailBroke.gang);
+      }
+      delete this.save.flags[k];
+    }
+    this.save.heat = this.heatIn(district).police;
+  }
+
+  heatIn(district = this.here): DistrictHeat {
+    return this.save.districtHeat[district] ?? emptyHeat();
+  }
+
+  /** Police heat where you are (the wanted level). */
   addHeat(n: number): void {
-    this.save.heat = Math.max(0, Math.min(100, this.save.heat + n));
+    this.addHeatOf({ police: n });
+  }
+
+  /**
+   * Whether a district's crew are involved with you at all: only once you've taken on their boss (gangProvoked),
+   * and only until you beat them. Until then their gang heat can't rise, so the streets stay passable.
+   */
+  gangOn(district = this.here): boolean {
+    return this.has(`gang:on:${district}`);
+  }
+
+  /** You've started on their boss: from now on the district's crew are watching you. */
+  gangProvoked(district = this.here): void {
+    if (this.gangOn(district)) return;
+    this.set(`gang:on:${district}`);
+    this.addHeatOf(HEAT.provoke, district);
+  }
+
+  /** Their boss is down: the crew are finished with you, heat and all. */
+  gangDone(district = this.here): void {
+    this.setHeat('gang', 0, district);
+    delete this.save.flags[`gang:on:${district}`];
+  }
+
+  /** Change any of the three readings in a district (here by default). */
+  addHeatOf(d: Partial<DistrictHeat>, district = this.here): DistrictHeat {
+    // A crew that isn't involved yet doesn't get hotter (it can still cool).
+    if ((d.gang ?? 0) > 0 && !this.gangOn(district)) d = { ...d, gang: 0 };
+    const map = this.save.districtHeat;
+    const h = (map[district] ??= emptyHeat());
+    // Anything set straight on save.heat (tests, old code) is where the police reading starts.
+    if (district === this.here && h.police !== this.save.heat) h.police = this.save.heat;
+    for (const k of HEAT_KINDS) if (d[k]) h[k] = Math.max(0, Math.min(100, Math.round(h[k] + d[k]!)));
+    if (!h.police && !h.street && !h.gang) delete map[district];
+    if (district === this.here) this.save.heat = h.police;
+    return h;
+  }
+
+  /** Set one reading outright (a boss beaten wipes their crew's grudge). */
+  setHeat(kind: HeatKind, n: number, district = this.here): void {
+    const h = this.heatIn(district);
+    this.addHeatOf({ [kind]: n - (kind === 'police' && district === this.here ? this.save.heat : h[kind]) }, district);
+  }
+
+  /** The highest police heat anywhere: how much the law knows about you (the basement's raid risk). */
+  get wanted(): number {
+    return Math.max(this.save.heat, ...Object.values(this.save.districtHeat).map((h) => h.police));
   }
 
   /** Call on every area change: the clock ticks and heat dies down. */
   tick(): void {
     this.save.trips++;
-    if (this.save.heat > 0) this.save.heat = Math.max(0, this.save.heat - 8);
+    if (this.here) {
+      const h = this.save.districtHeat[this.here];
+      if (h) h.police = this.save.heat;
+      coolHeat(this.save.districtHeat, this.here);
+      this.save.heat = this.heatIn(this.here).police;
+    } else if (this.save.heat > 0) this.save.heat = Math.max(0, this.save.heat - HEAT_COOL.police);
     // Forget searched-container and restock marks from past windows so the save doesn't grow forever.
     const win = Math.floor(this.save.trips / 6);
     for (const k of Object.keys(this.save.flags)) {
