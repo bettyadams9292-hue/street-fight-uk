@@ -24,8 +24,8 @@ Original `streetassettesting/` sources and viewers are retained for comparison a
 - **Status: imported into asset folder for availability, NOT final visually approved.** Existing furniture assets and the playable game have not been replaced or modified.
 - Keep the source test viewer and staging file for continued review; fix defects in staging before updating this asset copy.
 
-## Gym, security and neighbourhood expansion (pr-dev)
+## Gym, security and neighbourhood expansion (39 user-approved assets; pr-dev)
 
 - `gym-security-neighbourhood-expansion.ts` is a preserved copy of the existing `newassetsfromchatgpt-expansion.ts` source, including the four original safes: `safeSmall`, `safeMedium`, `safeLarge`, and `poorSafe`.
 - Use `EXPANSION_ASSETS` and `createExpansionAsset(id)` to access the models. The file also includes the original gym and neighbourhood assets; no existing source or game integrations were changed.
-- Branch: `pr-dev`; not merged into `dev`. Visual review status remains unchanged.
+- Branch: `pr-dev`; not merged into `dev`. **Approval status: all 39 expansion models confirmed approved by user on 20 November 2026, referring to approval the previous night.** This includes 26 gym models, 9 fences/gates, and 4 safes. Approved for the asset library; no playable-game integration.
