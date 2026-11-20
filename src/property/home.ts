@@ -76,7 +76,7 @@ export const HOME_FIXTURES: PropDef[] = [
 const FIXED_STATIONS: StationDef[] = [
   { id: 'wardrobe', x: -15.4, z: -0.8, label: 'Wardrobe: change your look' },
   { id: 'mirror', x: -16.9, z: -1.15, label: 'Mirror: check yourself' },
-  { id: 'contacts', x: -6.4, z: -0.75, label: 'Phone: contacts' },
+  { id: 'contacts', x: -6.4, z: -0.75, label: 'Phone: ring a cab or your contacts' },
   { id: 'computer', x: -5.0, z: -1.25, label: 'Computer: shop for furniture, arrange the house, decorate' },
   { id: 'tin', x: -13.9, z: -0.9, label: 'Biscuit tin: your savings' },
   { id: 'kitchen', x: -1.2, z: -0.85, label: 'WORKTOP|Prepare food' },

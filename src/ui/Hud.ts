@@ -108,7 +108,7 @@ export class Hud {
   private activityFill: HTMLElement;
   private sleepShade: HTMLElement;
 
-  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void; zoom?: () => void }) {
+  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void; zoom?: () => void; editHome?: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
       const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, h('span', { class: 'key-hint', text: `${i + 1} \u00b7 ` }), TRAINING_MODE_LABELS[m]) as HTMLButtonElement;
       this.modeButtons.set(m, b);
@@ -190,6 +190,7 @@ export class Hud {
         'div',
         { class: 'hud-buttons' },
         (this.zoomBtn = h('button', { class: 'hud-btn room-only zoom-btn', 'aria-label': 'Zoom in', title: 'Zoom (Z)', onclick: () => actions.zoom?.() }, icon('zoom-in'), h('span', { class: 'k', text: 'Z' }))),
+        h('button', { class: 'hud-btn home-only edit-home-btn', 'aria-label': 'Edit home: move, turn and recolour your furniture', title: 'Edit home', onclick: () => actions.editHome?.() }, icon('edit'), h('span', { class: 'zoom-mode', text: 'EDIT' })),
         (this.bellBtn = h('button', { class: 'hud-btn story-only bell-btn', 'aria-label': 'Notifications', title: 'Notifications', onclick: (e: Event) => { e.stopPropagation(); this.toggleTray(); } }, icon('bell'), h('span', { class: 'bell-dot' }))),
         h('button', { class: 'hud-btn story-only', 'aria-label': 'Map', title: 'Map (M / Tab)', onclick: () => actions.map() }, icon('map'), h('span', { class: 'k', text: 'M' })),
         h('button', { class: 'hud-btn story-only', 'aria-label': 'Inventory', title: 'Inventory (I / B)', onclick: () => actions.inventory() }, icon('bag'), h('span', { class: 'k', text: 'I' })),
@@ -383,11 +384,12 @@ export class Hud {
     );
   }
 
-  /** Indoors: the zoom button shows which way it will go. */
-  setZoomed(on: boolean): void {
-    this.zoomBtn.replaceChildren(icon(on ? 'zoom-out' : 'zoom-in'), h('span', { class: 'k', text: 'Z' }));
-    this.zoomBtn.setAttribute('aria-label', on ? 'Zoom out' : 'Zoom in');
-    this.zoomBtn.classList.toggle('on', on);
+  /** Indoors: the zoom button shows the view you're in (whole room, zoomed, close up) and moves to the next. */
+  setZoomed(mode: 0 | 1 | 2): void {
+    const names = ['Whole room', 'Zoomed', 'Close up'];
+    this.zoomBtn.replaceChildren(icon(mode === 2 ? 'zoom-out' : 'zoom-in'), h('span', { class: 'zoom-mode', text: ['ROOM', 'ZOOM', 'CLOSE'][mode] }), h('span', { class: 'k', text: 'Z' }));
+    this.zoomBtn.setAttribute('aria-label', `View: ${names[mode]}. Tap for ${names[(mode + 1) % 3].toLowerCase()}`);
+    this.zoomBtn.classList.toggle('on', mode > 0);
   }
 
   /** District name card when you arrive somewhere. */

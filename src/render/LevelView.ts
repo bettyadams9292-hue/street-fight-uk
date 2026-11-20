@@ -2676,12 +2676,20 @@ export class LevelView {
         break;
       }
       case 'table': {
+        // The house phone (the approved black desk telephone) sits on the table the phone station is at, the
+        // handset towards you, a little to one side.
+        if ((this.level.stations ?? []).some((st) => st.id === 'contacts' && Math.abs(st.x - p.x) < 0.4)) {
+          const tel = approvedAt('blackDeskTelephone');
+          if (tel) {
+            tel.position.set(0.12, 0.765, 0.02);
+            tel.rotation.y = -0.18;
+            g.add(tel);
+          }
+        }
         if (this.fit(g, 'table', W, 0.76, D)) break;
         const wood = this.mat('#8a6a4a', 0.7);
         B(W, 0.05, D, 0, 0.74, 0, wood);
         for (const dx of [-W / 2 + 0.05, W / 2 - 0.05]) for (const dz of [-D / 2 + 0.05, D / 2 - 0.05]) B(0.05, 0.74, 0.05, dx, 0.37, dz, wood, false);
-        // Phone on the living room table, kettle on the kitchen one.
-        B(0.08, 0.01, 0.15, 0.1, 0.77, 0, this.mat('#111', 0.2, 0, { emissive: 0x6aa0ff, emissiveIntensity: 0.8 }), false);
         break;
       }
       case 'fridge': {

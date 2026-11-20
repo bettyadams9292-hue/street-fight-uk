@@ -184,7 +184,11 @@ export class Game {
       zoom: () => {
         if (this.state === 'playing') this.toggleRoomZoom();
       },
+      editHome: () => {
+        if (this.state === 'playing') this.openEditHome();
+      },
     });
+    this.hud.setZoomed(0);
     this.hud.el.style.display = 'none';
     uiRoot.append(this.hud.el);
 
@@ -1527,22 +1531,28 @@ export class Game {
     this.ui.replaceAll(null);
     this.enterArea(space, space === 'home' ? 'start' : 'stairs', { at: { x: at.x, z: 1.0 } });
     this.state = 'editing';
+    this.updateTouchVisibility();
     const status = h('div', { class: 'editor-status' });
     const btn = (label: string, fn: () => void, cls = '') => h('button', { class: `editor-btn ${cls}`, onclick: (e: Event) => (e.preventDefault(), fn()), text: label });
+    // A cross of moves with the turns either side of forward; the actions underneath. Taps move 25 cm (the keys
+    // 10 cm, Shift for bigger steps).
+    const step = 0.25;
     const bar = h('div', { class: 'placement-bar' },
-      h('div', { class: 'editor-title', text: `${space === 'home' ? 'Placing' : 'Installing'}: ${name}` }),
-      status,
-      h('div', { class: 'editor-pad' },
-        btn('◀', () => this.nudge(-0.1, 0)),
-        wall ? null : btn('▲', () => this.nudge(0, -0.1)),
-        wall ? null : btn('▼', () => this.nudge(0, 0.1)),
-        btn('▶', () => this.nudge(0.1, 0)),
-        wall ? null : btn('⟲', () => this.turn(-1)),
-        wall ? null : btn('⟳', () => this.turn(1)),
+      h('div', { class: 'editor-head' },
+        h('div', { class: 'editor-title', text: `${space === 'home' ? 'Placing' : 'Installing'}: ${name}` }),
+        status,
       ),
-      h('div', { class: 'editor-pad' },
+      h('div', { class: `editor-dpad${wall ? ' wall' : ''}` },
+        wall ? null : btn('⟲', () => this.turn(-1), 'turn'),
+        wall ? null : btn('▲', () => this.nudge(0, -step), 'move up'),
+        wall ? null : btn('⟳', () => this.turn(1), 'turn'),
+        btn('◀', () => this.nudge(-step, 0), 'move'),
+        wall ? null : btn('▼', () => this.nudge(0, step), 'move'),
+        btn('▶', () => this.nudge(step, 0), 'move'),
+      ),
+      h('div', { class: 'editor-actions' },
         btn(space === 'home' ? 'Place' : 'Install', () => this.confirmPlacing(), 'ok'),
-        btn('Cancel', () => this.endPlacing('cancel')),
+        btn('Cancel', () => this.endPlacing('cancel'), 'quiet'),
         btn('Store', () => this.endPlacing('store')),
         btn(`Sell £${resale}`, () => this.endPlacing('sell'), 'bad'),
       ),
@@ -1640,6 +1650,8 @@ export class Game {
     this.renderer.setGhost(null, '');
     const at = { x: this.world?.player.pos.x ?? ed.at.x, z: 1.0 };
     this.enterArea(ed.space, ed.space === 'home' ? 'start' : 'stairs', { at });
+    // Opened from Edit home: back to it, on the room the piece is in.
+    if (ed.space === 'home' && this.editHomeOpen) this.openEditHome(ed.at.room);
   }
 
   // ---- the basement business clock ----------------------------------------------------------------
@@ -2015,11 +2027,34 @@ export class Game {
 
   // ---- input -----------------------------------------------------------------
 
-  /** Indoors: swap between the whole room and a closer view that follows you. Kept for the rest of the session. */
+  /**
+   * Edit home (the button in your own house): the planner for the room you're standing in. Move, turn, recolour,
+   * store or sell anything, or put out what's boxed; after placing a piece you come back here, not to the game.
+   */
+  private editHomeOpen = false;
+  private openEditHome(room?: RoomId): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p || w.level.id !== 'home' || this.editor) return;
+    const here = room ?? (Object.keys(ROOMS) as RoomId[]).find((r) => w.player.pos.x > ROOMS[r].x0 && w.player.pos.x < ROOMS[r].x1) ?? 'living';
+    this.state = 'paused';
+    this.touch.release();
+    this.input.flush();
+    this.updateTouchVisibility();
+    this.editHomeOpen = true;
+    const close = () => {
+      this.editHomeOpen = false;
+      this.ui.replaceAll(null);
+      this.enterArea('home', 'start', { at: { x: w.player.pos.x, z: w.player.pos.z } });
+    };
+    this.ui.replaceAll(plannerScreen(p, close, () => this.saveGame(), (uid, r) => this.startPlacing(uid, r), here, 'Edit home'));
+  }
+
+  /** Indoors: the whole room, zoomed in following you, or just you close up, in turn. Kept for the session. */
   private toggleRoomZoom(): void {
     const rig = this.renderer.cameraRig;
     if (!this.world?.level.deep) return;
-    rig.roomZoom = !rig.roomZoom;
+    rig.roomZoom = ((rig.roomZoom + 1) % 3) as 0 | 1 | 2;
     this.hud.setZoomed(rig.roomZoom);
   }
 
@@ -2196,6 +2231,11 @@ export class Game {
   }
 
   private updateTouchVisibility(): void {
+    // Paused, in a panel or placing furniture: nothing to use, so no USE plate or button over it.
+    if (this.state !== 'playing') {
+      this.hud.setPrompt('', null);
+      document.body.classList.remove('can-use');
+    }
     document.body.classList.toggle('in-fight', this.state === 'playing' || this.state === 'transition');
     this.touch.visible = this.state === 'playing' && this.touchWanted();
     this.uiRoot.classList.toggle('touch-ui', this.touchWanted());

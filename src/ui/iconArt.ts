@@ -17,6 +17,7 @@ export const ICON_ART = {
   consumable: "<path d=\"M10 2.5h4\"/><path d=\"M10.5 3v3.5L8 10v11h8V10l-2.5-3.5V3\"/><path d=\"M8 14h8\"/>",
   contact: "<circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M3 20.5v-1a6 6 0 0 1 12 0v1\"/><path d=\"M15.5 4.8a3.5 3.5 0 0 1 0 6.4\"/><path d=\"M18 14a5.5 5.5 0 0 1 3 5v1.5\"/>",
   controls: "<path d=\"M7 7h10a5 5 0 0 1 4.9 6l-.9 4.4a2.5 2.5 0 0 1-4.4 1.1L14.5 16h-5l-2.1 2.5A2.5 2.5 0 0 1 3 17.4L2.1 13A5 5 0 0 1 7 7z\"/><path d=\"M6 11.5h4M8 9.5v4\"/><path d=\"M15.5 10.5h.01M17.5 13h.01\"/>",
+  edit: "<path d=\"M4 20h4L19 9l-4-4L4 16z\"/><path d=\"M13.5 6.5l4 4\"/>",
   equipment: "<path d=\"M3 9h18v11H3z\"/><path d=\"M9 9V5.5h6V9\"/><path d=\"M3 13.5h18\"/><path d=\"M10.5 12v3.5h3V12\"/>",
   food: "<path d=\"M5 3v6a3 3 0 0 0 6 0V3\"/><path d=\"M8 3v18\"/><path d=\"M18 21V3c-2.5 1-4 4.5-4 9h4\"/>",
   gem: "<path d=\"M6 4h12l3.5 5L12 20.5 2.5 9z\"/><path d=\"M2.5 9h19\"/><path d=\"M9.5 4 8 9l4 11.5L16 9l-1.5-5\"/>",

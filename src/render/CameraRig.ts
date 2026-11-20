@@ -19,11 +19,15 @@ export class CameraRig {
    * rises and looks down into the room, backing off just enough to show it all between the HUD and the controls.
    */
   room: { back: number; front: number } | null = null;
-  /** Indoors, zoomed in: closer and following you round the room, instead of the whole room in view. */
-  roomZoom = false;
+  /**
+   * Indoors, how close: 0 the whole room in view; 1 zoomed, closer and following you round the room; 2 just you,
+   * close up and lower, as in a cutscene.
+   */
+  roomZoom: 0 | 1 | 2 = 0;
   /** Indoors: how far down the camera looks (radians): steeper on a tall screen, shallower on a wide one. */
   private get roomPitch(): number {
-    return this.camera.aspect < 1 ? 0.62 : 0.46;
+    const base = this.camera.aspect < 1 ? 0.62 : 0.46;
+    return this.roomZoom === 2 ? base * 0.55 : base;
   }
 
   constructor(aspect: number) {
@@ -77,7 +81,7 @@ export class CameraRig {
     if (this.room) {
       // Looking down into the room from above its open front.
       const th = this.roomPitch;
-      const lookY = 0.9 - 0.3 * this.cine;
+      const lookY = (this.roomZoom === 2 ? 1.05 : 0.9) - 0.3 * this.cine;
       this.camera.position.set(fx + sx, lookY + dist * Math.sin(th) + sy, this.focus.z + dist * Math.cos(th));
       this.camera.lookAt(fx + sx * 0.5, lookY, this.focus.z);
       return;
@@ -222,7 +226,8 @@ export class CameraRig {
     let d = 5;
     while (d < 26 && (ndc(2.9, r.back, d) > top || ndc(0, r.front, d) < bottom)) d += 0.25;
     // Zoomed in: a little over half as far, looking where you stand.
-    if (this.roomZoom) return { z: mid + (playerZ - mid) * 0.85, dist: Math.max(4.2, d * 0.58) };
+    if (this.roomZoom === 1) return { z: mid + (playerZ - mid) * 0.85, dist: Math.max(4.2, d * 0.58) };
+    if (this.roomZoom === 2) return { z: playerZ, dist: this.camera.aspect < 1 ? 3.4 : 3.0 };
     return { z, dist: d };
   }
 
