@@ -147,24 +147,24 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
 
   if (page === 'heat') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
-    return article('Heat', 'Heat is how much trouble you’re in. Every part of town keeps its own: what the police, the people on the street and the local gang think of you. Open the Heat app on your phone to see yours. Each bar reads Cold, Simmering, Warm, Hot or Red hot.',
+    return article('Heat', 'Heat is how much trouble you’re in. Every part of town keeps its own: what the police, the people on the street and the local gang think of you. Open the Heat app on your phone to see yours. Each bar runs from Cold, through Simmering, Warm and Hot, up to Red hot.',
       infobox('In short', [
-        ['Police', 'Stay out of fights where it’s Hot, or you’ll get nicked'],
-        ['Locals', 'From Warm, people know your face'],
-        ['Gang', 'Nothing until you take on their boss'],
-        ['Cooling off', 'Keep moving: it all fades'],
+        ['Police', 'When their bar is Hot, losing any fight gets you nicked'],
+        ['Locals', 'Once their bar is Warm, people start recognising you'],
+        ['Gang', 'They leave you alone until you go after their boss'],
+        ['Cooling off', 'Lie low somewhere else and it dies down'],
       ]),
       sec('The police'),
-      p('Crime raises it: robbing a shop, mugging someone, and battering someone who was only defending themselves. Mugging in front of people is worse, since every one of them can describe you.'),
+      p('Crime makes it worse: robbing a shop, mugging someone, and battering someone who was only defending themselves. Mugging in front of people is worse, since every one of them can describe you.'),
       list([
-        'Getting warm: the police might already be waiting when you walk into that part of town.',
+        'Once the bar is Warm, the police may already be waiting for you when you arrive.',
         'Mug someone with people watching and somebody may ring 999. Officers turn up about half a minute later, quicker if you’re already wanted. Leave the area before they get there and you’re away.',
-        'Hot: lose any fight here, not just against the police, and you’re nicked. They take anything stolen you’re carrying and fine you. Your police heat in that part of town goes back to Cold, but everywhere else still remembers.',
+        'Once it’s Hot, lose any fight here, not just against the police, and you’re nicked. They take anything stolen you’re carrying and fine you. The police there wipe the slate clean, but the rest of town still remembers you.',
       ]),
       sec('The locals'),
       p('What the people on the street think of you. Mugging them, battering them and robbing their shops all make it worse.'),
       list([
-        'Warm: they know your face. The nervous ones cross the road when you come near, so the only people left to mug are the ones who’ll fight back.',
+        'Once their bar is Warm, people start recognising you. The nervous ones cross the road when you come near, so the only people left to mug are the ones who’ll fight back.',
         'The worse it gets, the more often someone steps in to stop you, and the more often someone calls the police.',
       ]),
       sec('The gang'),
@@ -172,11 +172,11 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       list([
         'Start a fight with their boss and they’re after you straight away: their lads hit harder and take more punishment.',
         'Running from their fights makes it worse, much worse if you leg it with no cash to throw down. Beating their lads while they’re after you calms it down a little.',
-        'Get them well into Warm and they’ll come looking for you when you walk into their streets. Put down the lads they send and they back off a bit.',
+        'Let their bar climb past halfway and they’ll send lads after you when you walk onto their streets. Put down the lads they send and they back off a bit.',
         'Beat their boss and they’re done with you for good.',
       ]),
       sec('Cooling off'),
-      p('Heat fades every time you move from one area to another. Police heat fades fastest and the gang’s slowest. It fades half as fast in the part of town you’re standing in, so lying low somewhere else is the quickest way out. Hot police heat takes about eight moves away from that district to die down.'),
+      p('Heat dies down a little every time you move from one area to another. The police forget quickest and the gangs slowest. It fades twice as fast in the parts of town you’re not in, so the quickest way out is to lie low somewhere else. If the police are Hot on you somewhere, keep away for about eight trips and they’ll cool off.'),
       p('Your basement grow is raided more often the hotter the police are anywhere in town.'),
     );
   }
