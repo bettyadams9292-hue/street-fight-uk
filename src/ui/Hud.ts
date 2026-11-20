@@ -362,7 +362,8 @@ export class Hud {
         h(
           'button',
           { class: `status-chip need u${n.urgency}`, 'aria-label': n.tip ?? n.text, title: n.tip ?? n.text, onclick: (e: Event) => { e.stopPropagation(); this.showTip(n.tip ?? n.text, n.key); } },
-          icon(NEED_ICONS[n.key] ?? 'info'),
+          // Centred, splash-free versions of the painted icons (tools/icons/hg/badges.py), so they sit in the ring.
+          h('span', { class: 'icon hg' }, h('img', { src: `/icons/hg/badge/${NEED_ICONS[n.key] ?? 'info'}.webp`, alt: '', draggable: 'false' })),
           h('span', { class: 'need-text', text: n.text }),
         ),
       ),

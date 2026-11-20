@@ -1676,7 +1676,10 @@ body .hud .hud-flow .status-strip {
 body .hud .hud-flow .needs-chips { display: flex; gap: 5px; pointer-events: auto; }
 body .hud .hud-flow .status-chip.need { width: clamp(28px, 2.4vmin + 18px, 34px); height: clamp(28px, 2.4vmin + 18px, 34px); padding: 0; justify-content: center; border-radius: 50%; }
 body .hud .hud-flow .status-chip.need .need-text { display: none; }
-body .hud .hud-flow .status-chip.need .icon, body .hud .hud-flow .status-chip.need img, body .hud .hud-flow .status-chip.need svg { width: 78% !important; height: 78% !important; }
+/* The icon sits dead centre in its ring: the chip is a one-cell grid, the icon a square inside it, the picture filling that. */
+body .hud .hud-flow .status-chip.need { display: grid !important; place-items: center; gap: 0 !important; box-sizing: border-box; line-height: 0; }
+body .hud .hud-flow .status-chip.need .icon { display: grid !important; place-items: center; width: 70% !important; height: 70% !important; margin: 0 !important; transform: none !important; }
+body .hud .hud-flow .status-chip.need .icon img, body .hud .hud-flow .status-chip.need .icon svg { display: block; width: 100% !important; height: 100% !important; object-fit: contain; margin: 0 !important; }
 body .hud .hud-flow .status-chip.need.u1 { background: rgba(16, 18, 26, 0.85); box-shadow: inset 0 0 0 2px var(--accent); }
 body .hud .hud-flow .status-chip.need.u2 { background: rgba(16, 18, 26, 0.85); box-shadow: inset 0 0 0 2px var(--no-entry); animation: need-pulse 1.8s ease-in-out infinite; }
 @keyframes need-pulse { 50% { box-shadow: inset 0 0 0 2px var(--no-entry), 0 0 0 4px rgba(232, 51, 58, 0.3); } }
