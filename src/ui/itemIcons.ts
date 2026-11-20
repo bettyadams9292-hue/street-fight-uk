@@ -27,7 +27,7 @@ const HG_BY_ID: Record<string, string> = {
   w_bat: 'bat', w_baseball_bat: 'bat', w_crowbar: 'crowbar', w_knife: 'knife', w_cone: 'cone', w_dustbin_lid: 'dustbin',
   designer_hoodie: 'hoodie_red', vest_white: 'vest', work_trousers: 'cargo_trousers', cargos_khaki: 'cargos',
   wraps: 'wraps_roll', mouthguard: 'gumshield_red', headguard: 'headguard', sunglasses: 'sunglasses', sunglasses_designer: 'aviators',
-  lucky_chain: 'gold_chain', watch_basic: 'watch', first_aid: 'first_aid_case', bag_rucksack: 'backpack_2', bag_holdall: 'holdall_hg',
+  lucky_chain: 'gold_chain', watch_basic: 'watch', first_aid: 'first_aid_case', bag_rucksack: 'backpack_small', bag_holdall: 'holdall_hg', bag_bumbag: 'bumbag',
   headphones: 'headphones', cash_bundle: 'cash_fifties', old_fiver: 'cash_twenties', coin_sovereign: 'coins', coin_silver: 'coins_2',
   coin_rare: 'coins', trainers_boxed: 'trainers', lockup_key: 'keys_2', stadium_key: 'keys', dunc_phone: 'phone', protein_bar: 'whey', bag_hiking: 'backpack',
 };

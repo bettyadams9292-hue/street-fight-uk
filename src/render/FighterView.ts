@@ -8,7 +8,7 @@ import { gymPiece, gymReady, loadGym } from './props/GymLibrary';
 import { FighterAnimator, type Traits } from './anim/animator';
 import { JOINTS, type Pose } from './poses';
 import { ridePose } from './anim/ridePose';
-import { lootModel } from './props/PropLibrary';
+import { BAG_ORIGIN, WORN_BAGS, wornBag, type WornBagId } from './props/wornBags';
 import { bikeFit, riddenBike, type BikeFit } from './props/bikes';
 
 export { activityPose } from './activityPoses';
@@ -71,37 +71,48 @@ export class FighterView {
   /** The bike being ridden: its model (wheels that turn), how the rider fits it, and the getting on and off. */
   private ride: { fit: BikeFit; spin(d: number): void; dist: number; on: number; leaving: (() => void) | null } | null = null;
 
-  private bag: THREE.Object3D | null = null;
+  private bagParts: THREE.Object3D[] = [];
   private bagId: string | null = null;
 
   /**
-   * The bag you're wearing, on you: a bum bag round the front of the waist, a rucksack (or the big hiking pack) on
-   * your back, a holdall at your hip. Same models as the bags on the ground.
+   * The bag you're wearing, on you, straps and all (`render/props/wornBags.ts`): rucksacks on your back, the
+   * bum bag round your waist, the holdall at your left hip on a strap over the right shoulder. The parts that
+   * ride on the chest go on the upper spine bone and the rest on the pelvis, placed through each bone's bind
+   * matrix so they sit where the body was measured whatever the pose. A rig without that skeleton (the simple
+   * one) gets both on its spine joint.
    */
   setBag(id: string | null): void {
     if (id === this.bagId) return;
     this.bagId = id;
-    this.bag?.parent?.remove(this.bag);
-    this.bag = null;
-    if (!id) return;
-    const fit: Record<string, { model: string; size: number; joint: 'spine' | 'hips'; at: [number, number, number]; turn: number; tilt?: number }> = {
-      bag_bumbag: { model: 'bag_bumbag', size: 0.28, joint: 'spine', at: [0, -0.04, 0.17], turn: 0 },
-      bag_rucksack: { model: 'bag_rucksack', size: 0.46, joint: 'spine', at: [0, 0.2, -0.2], turn: Math.PI, tilt: 0.08 },
-      bag_holdall: { model: 'bag_holdall', size: 0.5, joint: 'spine', at: [-0.26, -0.06, -0.04], turn: Math.PI / 2 },
-      bag_hiking: { model: 'bag_rucksack', size: 0.62, joint: 'spine', at: [0, 0.24, -0.24], turn: Math.PI, tilt: 0.06 },
-    };
-    const f = fit[id];
-    const m = f ? lootModel(f.model, f.size) : null;
-    if (!f || !m) return;
-    m.traverse((o: THREE.Object3D) => {
-      if ((o as THREE.Mesh).isMesh) o.castShadow = true;
+    for (const o of this.bagParts) o.removeFromParent();
+    this.bagParts = [];
+    if (!id || !(WORN_BAGS as readonly string[]).includes(id)) return;
+    const bag = wornBag(id as WornBagId);
+    let body: THREE.SkinnedMesh | null = null;
+    this.rig.root.traverse((o: THREE.Object3D) => {
+      if (!body && (o as THREE.SkinnedMesh).isSkinnedMesh && o.name === 'body') body = o as THREE.SkinnedMesh;
     });
-    const holder = new THREE.Group();
-    holder.add(m);
-    holder.position.set(...f.at);
-    holder.rotation.set(f.tilt ?? 0, f.turn, 0);
-    this.rig.joints[f.joint].add(holder);
-    this.bag = holder;
+    const hang = (part: THREE.Group, boneName: string) => {
+      const sk = body ? (body as THREE.SkinnedMesh).skeleton : null;
+      const i = sk ? sk.bones.findIndex((bn: THREE.Bone) => bn.name === boneName) : -1;
+      const anchor = new THREE.Group();
+      if (sk && i >= 0) {
+        // Bone space ← rest-pose mesh space ← the bag's origin.
+        anchor.matrixAutoUpdate = false;
+        anchor.matrix.copy(sk.boneInverses[i]).multiply((body as THREE.SkinnedMesh).bindMatrix).multiply(new THREE.Matrix4().makeTranslation(BAG_ORIGIN.x, BAG_ORIGIN.y, BAG_ORIGIN.z));
+        sk.bones[i].add(anchor);
+      } else {
+        anchor.position.set(0, 0, -0.03);
+        this.rig.joints.spine.add(anchor);
+      }
+      anchor.add(part);
+      part.traverse((o: THREE.Object3D) => {
+        if ((o as THREE.Mesh).isMesh) o.frustumCulled = false;
+      });
+      this.bagParts.push(anchor);
+    };
+    hang(bag.upper, 'spine01');
+    hang(bag.lower, 'spine05');
   }
 
   /** Get on this bike (already standing at it): the model goes under you and you swing a leg over. */

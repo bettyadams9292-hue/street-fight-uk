@@ -9,6 +9,9 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { pickupSize, pickupSource } from './pickups';
+import { bagModel, WORN_BAGS, type WornBagId } from './wornBags';
+
+const bagSrc: Record<string, THREE.Group> = {};
 
 export const PROP_FILES = {
   dumpster: 'dumpster.glb',
@@ -223,7 +226,8 @@ export function weaponModel(weaponId: string, length: number): THREE.Group | nul
  */
 export function lootModel(kind: string, size = pickupSize(kind) ?? 0.34): THREE.Group | null {
   const id = ITEM_MODELS[kind];
-  const src = pickupSource(kind) ?? (id ? loaded.get(id) : undefined);
+  // Bags are the same models you wear (render/props/wornBags.ts), so the one you pick up is the one you get.
+  const src = (WORN_BAGS as readonly string[]).includes(kind) ? (bagSrc[kind] ??= bagModel(kind as WornBagId)) : pickupSource(kind) ?? (id ? loaded.get(id) : undefined);
   if (!src) return null;
   const inner = share(src.clone(true));
   const box = new THREE.Box3().setFromObject(src);
