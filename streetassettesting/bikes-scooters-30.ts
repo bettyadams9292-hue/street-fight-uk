@@ -88,7 +88,7 @@ export function createBikeAsset(id:string):THREE.Group{
    line([.20,.69,0],[.38,h,0],.036,paint);
    line([.38,h,0],[frontX,cy,0],.027,steel);
    line([-.24,.53,0],[-.32,.98,0],.030,paint);
-   block(.58,.10,.27,-.22,.99,0,seatMat);
+   // Saddle constructed below as tapered upholstered mesh.
    disk(.20,.18,-.15,.57,0,dark);
    disk(.105,.20,-.15,.57,.01,steel);
    block(.40,.30,.20,.07,.79,0,accent);
@@ -96,7 +96,7 @@ export function createBikeAsset(id:string):THREE.Group{
    line([.49,h+.04,-.25],[.49,h+.04,.25],.018,steel);
    block(.24,.025,.19,.43,.99,0,paint);
    if(['surron','dirt','supermoto'].includes(s.kind)){
-      block(.52,.065,.21,-.18,1.00,0,seatMat);
+      // Narrow motocross saddle is constructed below.
       block(.42,.10,.19,.19,.84,0,paint);
       block(.24,.04,.19,frontX-.09,.80,0,paint);
       block(.18,.18,.08,.45,1.07,0,accent);
@@ -106,24 +106,24 @@ export function createBikeAsset(id:string):THREE.Group{
       block(.60,.42,.29,.34,.80,0,paint);
       block(.26,.26,.30,.56,.94,0,accent);
       block(.25,.23,.025,.52,1.09,0,glass);
-      block(.36,.07,.26,-.43,1.01,0,seatMat);
+      // Sport pillion seat is constructed below.
    }
    if(s.kind==='cruiser'){
       block(.47,.20,.29,.00,.78,0,paint);
-      block(.38,.07,.29,-.48,.86,0,seatMat);
+      // Cruiser saddle is constructed below.
       line([.38,.98,0],[.40,1.27,0],.025,steel);
       line([.40,1.27,-.33],[.40,1.27,.33],.018,steel);
       for(const z of [-.16,.16])line([-.30,.50,z],[.18,.47,z],.028,steel);
    }
    if(s.kind==='moped'||s.kind==='scooter'){
       block(.44,.43,.25,.40,.66,0,paint);
-      block(.45,.07,.29,-.37,.91,0,seatMat);
+      // Scooter saddle is constructed below.
       block(.40,.04,.26,.05,.40,0,dark);
       if(s.carrier)block(.40,.28,.33,-.75,1.06,0,dark);
    }
    if(s.electric){
-      block(.30,.34,.20,-.04,.78,0,dark);
-      block(.22,.24,.018,-.04,.78,.112,paint);
+      // Motorbike battery integrated into frame in V3.
+      // Motorbike battery side cover integrated in V3.
    }
    // Disc brakes and front headlamp for roadgoing models.
    for(const x of [rearX,frontX])disk(r*.25,.009,x,cy,.045,steel);
@@ -151,7 +151,7 @@ export function createBikeAsset(id:string):THREE.Group{
    line(head,[.38,1.18,0],.015,steel);
    line([.21,1.19,0],[.53,1.19,0],.015,dark);
    line([-.20,.96,0],[-.23,1.12,0],.015,steel);
-   block(.24,.045,.19,-.24,1.14,0,seatMat);
+   // Anatomical bicycle saddle is constructed below.
    disk(.105,.019,bb[0],bb[1],0,steel);
    for(const z of [-.11,.11]){
      line([bb[0],bb[1],z],[bb[0]+.14,bb[1]-.11,z],.012,dark);
@@ -160,7 +160,7 @@ export function createBikeAsset(id:string):THREE.Group{
    if(s.kind==='road'){for(const z of [-.14,.14])line([.48,1.20,z],[.52,1.06,z],.014,dark)}
    if(s.kind==='bmx'){line([.28,1.13,0],[.40,1.36,0],.015,steel);line([.13,1.36,0],[.65,1.36,0],.015,dark)}
    if(s.kind==='tandem'){
-     line([-.42,.94,0],[-.45,1.12,0],.015,steel);block(.20,.04,.18,-.45,1.14,0,seatMat);
+     line([-.42,.94,0],[-.45,1.12,0],.015,steel);// Tandem rear saddle is constructed below.
      line([-.48,.92,0],[-.33,1.10,0],.017,paint);
    }
    if(s.kind==='cargo'){
@@ -182,7 +182,7 @@ export function createBikeAsset(id:string):THREE.Group{
      const mesh=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),32,.012,6,false),dark);g.add(mesh);
    }
    if(s.electric){
-     block(.09,.35,.12,.01,.77,0,dark);
+     // E-bike battery aligned with frame in V3 assembly.
      disk(.07,.10,rearX,cy,0,dark);
    }
  }
@@ -288,13 +288,13 @@ export function createBikeAsset(id:string):THREE.Group{
    if(s.kind==='rental'){
      // Shared-bike electronics and robust integrated basket.
      block(.14,.13,.10,.28,1.02,0,dark);
-     block(.13,.20,.22,.02,.77,0,paint);
+     // Rental battery housing integrated in V3.
      block(.07,.04,.055,.33,1.21,0,dark);
      disk(.075,.09,rearX,r,0,dark);
    }
    if(s.kind==='fat'){
      panel([[-.15,.54],[.04,.54],[.29,.95],[.17,1.04],[-.07,.84]],.17,paint);
-     block(.20,.30,.17,.07,.75,0,dark);
+     // Fat e-bike battery integrated below.
    }
    if(s.electric){
      // Charge socket and battery indicator.
@@ -337,7 +337,7 @@ export function createBikeAsset(id:string):THREE.Group{
      if(s.kind==='surron'){
        // Lightweight open frame and visible battery pack, not petrol engine.
        panel([[-.32,.63],[-.13,.54],[.23,.78],[.08,.95]],.10,paint);
-       block(.28,.34,.17,-.04,.75,0,dark);
+       // Sur-Ron battery integrated in V3.
        for(let i=0;i<4;i++)line([-.15,.59+i*.07,.10],[.09,.59+i*.07,.10],.006,paint);
      }
      if(s.kind==='dirt'){
@@ -357,7 +357,7 @@ export function createBikeAsset(id:string):THREE.Group{
      panel([[.40,.87],[.70,.84],[.62,1.05],[.48,1.16]],.22,accent);
      panel([[.43,1.06],[.57,1.20],[.69,1.12]],.015,glass);
      for(const z of [-.145,.145])line([.38,1.11,z],[.46,1.13,z+(z>0?.12:-.12)],.009,dark);
-     block(.23,.038,.23,-.49,1.06,0,seatMat);
+     // Sport pillion seat constructed below.
      curved([[-.22,.49,.17],[-.04,.42,.17],[.27,.48,.17]],.023,dark);
    }
    if(s.kind==='cruiser'){
@@ -369,7 +369,7 @@ export function createBikeAsset(id:string):THREE.Group{
      }
      disk(.11,.09,.46,1.04,0,chrome);
      disk(.085,.008,.46,1.04,.051,lamp);
-     block(.20,.03,.33,-.45,.93,0,seatMat);
+     // Cruiser seat constructed below.
    }
    if(s.kind==='moped'||s.kind==='scooter'){
      // Step-through footwell, leg shield, integrated light and rear lamp.
@@ -405,9 +405,111 @@ export function createBikeAsset(id:string):THREE.Group{
    }
  }
 
+
+ // V3 orientation and silhouette correction.
+ // This model uses X as vehicle length, Y as vertical, Z as width.
+ // The wheels spin about Z; batteries and bodywork must follow X/Y frame planes.
+ const smoothSeat=(points:number[][],width:number,height:number,material:THREE.Material)=>{
+   const sh=new THREE.Shape();sh.moveTo(points[0][0],points[0][1]);
+   for(let i=1;i<points.length;i++)sh.lineTo(points[i][0],points[i][1]);
+   sh.closePath();
+   const geo=new THREE.ExtrudeGeometry(sh,{depth:width,steps:1,bevelEnabled:true,bevelThickness:height*.20,bevelSize:height*.20,bevelSegments:3});
+   const ob=new THREE.Mesh(geo,material);ob.position.z=-width/2;g.add(ob);return ob;
+ };
+ const batteryBetween=(corners:number[][],width:number)=>{
+   // Side-profile extruded across Z: no vertical floating battery boxes.
+   const body=panel(corners,width,dark);
+   const inset=corners.map(([x,y])=>[x*.86,y*.94+.045]);
+   panel(inset,.008,paint).position.z=width/2+.002;
+   return body;
+ };
+ const wire=(points:number[][],radius=.0028)=>{
+   // Cable is routed along steering head and frame, not across the wheel openings.
+   curved(points,radius,dark);
+ };
+ if(!kick&&!moto){
+   // Traditional nose and wider rear of bicycle saddle, oriented along X.
+   smoothSeat([[-.37,1.143],[-.35,1.168],[-.23,1.178],[-.12,1.155],[-.14,1.132],[-.32,1.130]],.135,.032,seatMat);
+   if(s.kind==='tandem')smoothSeat([[-.57,1.142],[-.54,1.165],[-.45,1.170],[-.36,1.15],[-.39,1.127]],.13,.03,seatMat);
+   if(s.electric){
+     if(s.kind==='rental'){
+       // Battery follows the low down-tube with a rear hub motor.
+       batteryBetween([[-.16,.55],[-.075,.55],[.19,.94],[.105,.96]],.13);
+       disk(.087,.12,rearX,r,0,dark);
+     }else if(s.kind==='fat'){
+       batteryBetween([[-.10,.57],[.09,.58],[.24,.89],[.11,.99],[-.01,.87]],.17);
+     }else{
+       batteryBetween([[-.18,.53],[-.085,.52],[.29,.98],[.21,1.035]],.115);
+     }
+     // Charging port on side of battery, not disconnected in mid-air.
+     disk(.013,.009,.04,.77,.10,steel);
+   }
+   // Keep brake lines near the steering head and fork.
+   wire([[.42,1.17,-.035],[.49,1.12,-.035],[.45,.94,-.035],[frontX,r+.17,-.035]]);
+   // Saddle under-rails and seat clamp.
+   for(const z of [-.045,.045])line([-.32,1.126,z],[-.19,1.127,z],.005,steel);
+   block(.06,.018,.09,-.23,1.115,0,dark);
+ }
+ if(moto){
+   // Motorbike seating follows the tank and tail, rather than boxy floating pads.
+   if(s.kind==='sport'){
+     smoothSeat([[-.53,1.018],[-.48,1.060],[-.30,1.07],[-.18,1.020],[-.20,.99],[-.48,.99]],.24,.045,seatMat);
+     smoothSeat([[-.72,1.068],[-.68,1.103],[-.52,1.106],[-.48,1.066]],.20,.035,seatMat);
+   }else if(s.kind==='cruiser'){
+     smoothSeat([[-.59,.87],[-.54,.93],[-.34,.95],[-.17,.90],[-.23,.85],[-.54,.84]],.27,.055,seatMat);
+   }else if(s.kind==='moped'||s.kind==='scooter'){
+     smoothSeat([[-.58,.90],[-.55,.97],[-.29,.98],[-.12,.94],[-.14,.89]],.26,.048,seatMat);
+   }else{
+     smoothSeat([[-.53,1.00],[-.49,1.048],[-.08,1.05],[.13,1.015],[.13,.98],[-.46,.97]],.18,.037,seatMat);
+   }
+   if(s.electric){
+     if(s.kind==='surron'){
+       // Sur-Ron-like battery is slanted inside an open cradle frame.
+       batteryBetween([[-.26,.60],[-.07,.57],[.22,.82],[.10,.95],[-.16,.86]],.18);
+       for(const z of [-.12,.12]){
+         line([-.30,.61,z],[.12,.95,z],.014,paint);
+         line([-.30,.61,z],[.23,.80,z],.012,paint);
+       }
+     }else if(s.kind==='dirt'){
+       batteryBetween([[-.19,.56],[.13,.58],[.24,.86],[.03,.96],[-.20,.80]],.19);
+     }else if(s.kind==='scooter'){
+       batteryBetween([[-.18,.45],[.17,.45],[.17,.66],[-.18,.66]],.19);
+     }
+   }
+   if(s.kind==='sport'){
+     // Fairing nose and belly share a continuous aerodynamic silhouette.
+     panel([[-.37,.57],[.19,.47],[.58,.62],[.79,.84],[.64,1.03],[.34,1.04],[.09,.86],[-.30,.79]],.25,paint);
+     panel([[.22,.70],[.44,.76],[.55,.87],[.28,.86]],.012,dark);
+     panel([[.48,.95],[.73,.92],[.64,1.06],[.53,1.12]],.024,accent);
+     curved([[-.20,.55,.17],[.03,.51,.17],[.25,.55,.17]],.020,dark);
+   }else if(s.kind==='cruiser'){
+     // Teardrop tank, sweeping rear mudguard and lower exposed engine.
+     const tank=sphere(.20,.04,.84,0,paint);tank.scale.set(1.45,.67,1.02);
+     panel([[-.81,.60],[-.80,.75],[-.58,.88],[-.37,.83],[-.40,.71]],.22,paint);
+     for(const z of [-.15,.15])curved([[-.26,.52,z],[.00,.41,z],[.35,.43,z],[.55,.49,z]],.019,chrome);
+   }else if(s.kind==='dirt'||s.kind==='surron'||s.kind==='supermoto'){
+     // Long narrow mudguard, sharply rising tank shrouds and tail.
+     panel([[-.57,.91],[-.47,1.05],[-.08,1.04],[.12,.96],[.04,.89]],.17,accent);
+     panel([[-.10,.74],[.16,.78],[.33,.97],[.07,1.02],[-.20,.91]],.17,paint);
+     curved([[.39,.85,0],[.61,.89,0],[.88,.83,0]],.018,paint);
+   }else{
+     // Scooter leg shield is a vertical side-profile, with a real footwell.
+     panel([[.27,.41],[.50,.45],[.57,.86],[.47,1.10],[.36,1.12],[.26,.78]],.23,paint);
+     panel([[-.36,.40],[.24,.40],[.29,.47],[-.32,.48]],.22,dark);
+   }
+   // Cable loops are constrained to the handlebar and fork, not free-floating.
+   wire([[.43,1.08,-.11],[.53,1.03,-.10],[.51,.89,-.10],[frontX,r+.12,-.10]],.0035);
+   wire([[.41,1.08,.10],[.35,.96,.10],[.17,.87,.10]],.003);
+ }
+ if(kick){
+   // Battery is fully inside deck, not attached to the steering pole.
+   block(.72,.035,.14,-.02,.164,0,dark);
+   wire([[frontX,1.16,.04],[frontX+.025,1.07,.045],[frontX,.79,.045],[frontX,.43,.04]],.003);
+ }
+
  // Ground alignment and stable metadata for later asset placement.
  g.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(g);
  for(const child of g.children)child.position.y-=bounds.min.y;
- g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,polishVersion:2,gameplayIntegrated:false};
+ g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,polishVersion:3,gameplayIntegrated:false};
  return g;
 }
