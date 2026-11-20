@@ -20,25 +20,44 @@ export function mainMenu(
   continueText: string | null,
   actions: { newGame: () => void; continue: () => void; training: () => void; character: () => void; settings: () => void; controls: () => void },
 ): Screen {
+  // The menu: plain lettering, quiet until chosen. Only the item you're on gets the red (a bar, an underline,
+  // its line of detail). The painted title buttons stay in public/art/titles for the rest of the game.
+  const item = (label: string, go: () => void, sub: string, cls = '') =>
+    h('button', { class: `menu-btn nav-item ${cls}`, 'data-nav': true, onclick: () => go() },
+      h('span', { class: 'nav-label', text: label }),
+      h('span', { class: 'nav-sub', text: sub }),
+    );
+  const list = h(
+    'nav',
+    { class: 'menu-list nav-list', 'aria-label': 'Main menu' },
+    continueText ? item('Continue', actions.continue, continueText, 'primary') : null,
+    item('New game', actions.newGame, 'Create a new fighter and start the story', continueText ? '' : 'primary'),
+    hasCharacter ? item('Training ground', actions.training, 'Spar, drill combos, try every style') : null,
+    hasCharacter ? item('Character', actions.character, 'Stats and look') : null,
+    item('Settings', actions.settings, 'Sound, picture, difficulty'),
+    item('Controls', actions.controls, 'Every button, on every pad'),
+  );
+  // One item is "on" at a time: the pointer moves it like the keys and pad do (UIManager's .focused).
+  list.addEventListener('pointerover', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('.nav-item');
+    if (!b || b.classList.contains('focused')) return;
+    for (const x of list.querySelectorAll('.nav-item.focused')) x.classList.remove('focused');
+    b.classList.add('focused');
+    b.focus({ preventScroll: true });
+  });
+  list.style.setProperty('--n', String(list.children.length));
+  Array.from(list.children).forEach((c, i) => (c as HTMLElement).style.setProperty('--i', String(i)));
   const el = h(
     'div',
-    { class: 'screen main-menu keyart scene' },
+    { class: 'screen main-menu keyart scene hg-menu' },
     // A slow loop of the streets with a fighter in front (ui/menuScene.ts), the logo over it.
     menuScene(),
     h('div', { class: 'menu-shade', 'aria-hidden': 'true' }),
     h('h1', { class: 'menu-logo' }, h('img', { src: '/icons/hg/logo.webp', alt: 'Hard Graft', draggable: 'false' })),
-    h(
-      'nav',
-      { class: 'menu-list' },
-      continueText ? menuButton('Continue', actions.continue, continueText, 'primary', 'play', undefined, 'menu-continue') : null,
-      menuButton('New game', actions.newGame, 'Create a new fighter and start the story', continueText ? '' : 'primary', 'side', undefined, 'menu-new-game'),
-      hasCharacter ? menuButton('Training ground', actions.training, 'Spar, drill combos, try every style', '', 'gym', undefined, 'menu-training-ground') : null,
-      hasCharacter ? menuButton('Character', actions.character, 'Stats and look', '', 'contact', undefined, 'menu-character') : null,
-      menuButton('Settings', actions.settings, undefined, '', 'settings', undefined, 'menu-settings'),
-      menuButton('Controls', actions.controls, undefined, '', 'controls', undefined, 'menu-controls'),
-    ),
-    h('div', { class: 'footer', text: `v${VERSION}, early build: some art and sound are placeholders` }),
+    list,
+    h('div', { class: 'footer', text: `Early build ${VERSION}` }),
   );
+  if (!list.querySelector('.focused')) list.firstElementChild?.classList.add('focused');
   // The main menu has nowhere to go back to.
   return { el, onBack: () => undefined };
 }

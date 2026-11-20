@@ -1970,3 +1970,93 @@ body:has(#ui .screen) .hud { visibility: hidden; }
 .wk .move-table .ml-input { grid-column: 1 / -1; white-space: normal; }
 .wk .ml-bar { display: none; }
 .wk { max-width: 680px; margin: 0 auto; }
+
+/* ----------------------------------------------------------------------------
+   Main menu, premium pass (.hg-menu, ui/screens.ts mainMenu). The scene, the logo
+   and every action are as they were; only the composition and the navigation
+   change. Items are plain lettering, quiet until chosen; only the chosen one
+   (UIManager's .focused, moved by pointer, keys and pad alike) gets the red.
+   ---------------------------------------------------------------------------- */
+.screen.main-menu.keyart.scene.hg-menu { justify-content: flex-end; padding-bottom: calc(11vh + var(--safe-b)); padding-left: calc(5.2vw + var(--safe-l)); }
+.hg-menu .menu-shade {
+  background:
+    linear-gradient(90deg, rgba(7, 8, 12, 0.72) 0%, rgba(7, 8, 12, 0.38) 26%, rgba(7, 8, 12, 0) 46%),
+    linear-gradient(0deg, rgba(7, 8, 12, 0.55) 0%, rgba(7, 8, 12, 0) 24%),
+    radial-gradient(ellipse at 62% 45%, transparent 58%, rgba(0, 0, 0, 0.4) 100%);
+}
+.hg-menu .menu-logo { left: calc(4.4vw + var(--safe-l)); top: calc(5vh + var(--safe-t)); width: clamp(260px, 30vw, 620px); animation: hgm-logo 1.1s 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes hgm-logo { from { opacity: 0; transform: translateY(-6px) scale(1.03); } to { opacity: 1; transform: none; } }
+
+.screen.main-menu.hg-menu .menu-list.nav-list { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(2px, 0.6vh, 8px); width: auto; min-width: 0; animation: none; }
+.screen.main-menu.keyart.hg-menu .menu-list .nav-item {
+  --ink: rgba(236, 232, 224, 0.6);
+  position: relative; display: flex; align-items: baseline; gap: 16px; width: auto; min-height: 0; margin: 0;
+  padding: clamp(4px, 0.7vh, 9px) 14px clamp(4px, 0.7vh, 9px) 22px;
+  background: none; border: 0; box-shadow: none; backdrop-filter: none; border-radius: 0; transform: none;
+  color: var(--ink); cursor: pointer; text-align: left;
+  transition: color 0.22s ease, translate 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation: hgm-item 0.5s calc(0.75s + var(--i, 0) * 70ms) cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes hgm-item { from { opacity: 0; translate: -12px 0; } to { opacity: 1; translate: 0 0; } }
+.hg-menu .nav-item .nav-label {
+  font-family: 'Big Shoulders', Impact, 'Arial Narrow Bold', sans-serif; font-weight: 800; text-transform: uppercase;
+  font-size: clamp(22px, 0.9vw + 15px, 36px); line-height: 1; letter-spacing: 0.035em; color: inherit;
+  padding-bottom: 4px;
+  background: linear-gradient(var(--accent), var(--accent)) no-repeat 0 100% / 0% 2px;
+  transition: background-size 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.65);
+}
+/* The first thing to do (Continue, or New game) is set larger: it's the usual choice. */
+.hg-menu .nav-item.primary .nav-label { font-size: clamp(30px, 1.5vw + 18px, 52px); }
+.hg-menu .nav-item .nav-sub {
+  font-family: var(--ui); font-size: clamp(12px, 0.25vw + 10px, 15px); font-weight: 600; color: #c9c4ba; white-space: nowrap;
+  opacity: 0; translate: -6px 0; transition: opacity 0.22s ease, translate 0.28s ease; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+/* The marker: a red bar to the left of the chosen item, grown from its middle. */
+.hg-menu .nav-item::before {
+  content: ''; position: absolute; left: 2px; top: 50%; width: 4px; height: 62%; translate: 0 -50%;
+  background: var(--accent); box-shadow: 0 0 14px rgba(232, 51, 58, 0.45);
+  transform: scaleY(0); transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.screen.main-menu.keyart.hg-menu .menu-list .nav-item.focused,
+.screen.main-menu.keyart.hg-menu .menu-list .nav-item:focus-visible { --ink: #fff; translate: 8px 0; background: none; outline: none; }
+.hg-menu .nav-item.focused::before, .hg-menu .nav-item:focus-visible::before { transform: scaleY(1); }
+.hg-menu .nav-item.focused .nav-label, .hg-menu .nav-item:focus-visible .nav-label { background-size: 100% 2px; }
+.hg-menu .nav-item.focused .nav-sub, .hg-menu .nav-item:focus-visible .nav-sub { opacity: 1; translate: 0 0; }
+.screen.main-menu.keyart.hg-menu .menu-list .nav-item:active { --ink: var(--accent); }
+.screen.main-menu.keyart.hg-menu .menu-list .nav-item:active .nav-label { transform: scale(0.98); }
+.screen.main-menu.hg-menu .footer { left: calc(5.2vw + var(--safe-l)); bottom: calc(3.2vh + var(--safe-b)); color: rgba(236, 232, 224, 0.38); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Phones on their side: logo small top left, the list under it, the fighter clear on the right. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .screen.main-menu.keyart.scene.hg-menu { padding-bottom: calc(26px + var(--safe-b)); }
+  .hg-menu .menu-logo { width: clamp(170px, 24vw, 260px); top: calc(8px + var(--safe-t)); }
+  .screen.main-menu.hg-menu .menu-list.nav-list { gap: 0; }
+  .screen.main-menu.keyart.hg-menu .menu-list .nav-item { padding: 3px 12px 3px 18px; min-height: 30px; align-items: center; }
+  .hg-menu .nav-item .nav-label { font-size: 19px; padding-bottom: 2px; }
+  .hg-menu .nav-item.primary .nav-label { font-size: 27px; }
+  .screen.main-menu.hg-menu .footer { bottom: calc(6px + var(--safe-b)); font-size: 10px; }
+}
+/* Phones upright: the fighter owns the middle; the logo sits over the sky and the menu under his feet's shadow:
+   the first choice across the width, the rest two by two. */
+@media (orientation: portrait) and (max-width: 700px) {
+  .screen.main-menu.keyart.scene.hg-menu { align-items: stretch; padding: 0 calc(18px + var(--safe-r)) calc(34px + var(--safe-b)) calc(18px + var(--safe-l)); }
+  .hg-menu .menu-logo { left: 50%; translate: -50% 0; width: min(62vw, 320px); top: calc(14px + var(--safe-t)); }
+  .hg-menu .menu-shade { background: linear-gradient(0deg, rgba(7, 8, 12, 0.9) 0%, rgba(7, 8, 12, 0.62) 24%, rgba(7, 8, 12, 0) 42%), linear-gradient(180deg, rgba(7, 8, 12, 0.5) 0%, rgba(7, 8, 12, 0) 22%); }
+  .screen.main-menu.hg-menu .menu-list.nav-list { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; width: 100%; }
+  .screen.main-menu.keyart.hg-menu .menu-list .nav-item { justify-content: center; min-height: 44px; padding: 6px 8px; align-items: center; }
+  .screen.main-menu.keyart.hg-menu .menu-list .nav-item.primary { grid-column: 1 / -1; min-height: 56px; }
+  /* An odd one out at the end gets the whole row, not half of it. */
+  .screen.main-menu.keyart.hg-menu .menu-list .nav-item:not(.primary):last-child:nth-child(even) { grid-column: 1 / -1; }
+  .screen.main-menu.keyart.hg-menu .menu-list .nav-item.focused, .screen.main-menu.keyart.hg-menu .menu-list .nav-item:focus-visible { translate: 0 0; }
+  .hg-menu .nav-item::before { left: 50%; top: auto; bottom: 2px; width: 26px; height: 3px; translate: -50% 0; transform: scaleX(0); }
+  .hg-menu .nav-item.focused::before, .hg-menu .nav-item:focus-visible::before { transform: scaleX(1); }
+  .hg-menu .nav-item .nav-label { font-size: 21px; background: none; padding-bottom: 0; }
+  .hg-menu .nav-item.primary .nav-label { font-size: 34px; }
+  .hg-menu .nav-item .nav-sub { display: none; }
+  .screen.main-menu.hg-menu .footer { left: 0; right: 0; bottom: calc(10px + var(--safe-b)); text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hg-menu .menu-logo, .screen.main-menu.keyart.hg-menu .menu-list .nav-item { animation: none; }
+  .hg-menu .nav-item, .hg-menu .nav-item::before, .hg-menu .nav-item .nav-label, .hg-menu .nav-item .nav-sub { transition: none; }
+}
