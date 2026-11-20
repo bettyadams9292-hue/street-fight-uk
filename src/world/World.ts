@@ -965,12 +965,24 @@ export class World {
       else if (--this.searching === 0 && this.searchTarget) this.finishSearch(this.searchTarget);
     }
 
-    // USE (E, the touch USE button, LB on a pad) uses whatever's in front of you, unless an enemy is in grabbing range.
-    // GRAB on its own never does: it only grabs. (LB sends both, so on a pad the use wins and the grab is dropped.)
-    this.interactable = p.isKO || this.enemyInGrabRange() || this.searching > 0 ? null : this.findInteractable();
-    if (cmd.use && this.interactable && p.isFree) {
+    // USE and GRAB are separate. Out of a fight USE (E, the touch USE button, LB on a pad) uses what's in front of
+    // you and nothing grabs. In a fight (sparring too) nothing is used: GRAB grabs, or, with nobody in reach, picks up
+    // a weapon or item lying at your feet. (LB on a pad sends both; which one counts follows the same rule.)
+    const fighting = this.fightOn || !!this.duel;
+    if (fighting) {
+      this.interactable = null;
+      cmd = { ...cmd, use: false };
+      if (cmd.pressed.grab && p.isFree && !p.isKO && this.searching <= 0 && !this.enemyInGrabRange()) {
+        const it = this.findInteractable();
+        if (it?.kind === 'item') {
+          cmd = { ...cmd, pressed: { ...cmd.pressed, grab: false } };
+          this.interact(it);
+        }
+      }
+    } else {
       cmd = { ...cmd, pressed: { ...cmd.pressed, grab: false } };
-      this.interact(this.interactable);
+      this.interactable = p.isKO || this.searching > 0 ? null : this.findInteractable();
+      if (cmd.use && this.interactable && p.isFree) this.interact(this.interactable);
     }
 
     const commands = new Map<number, CommandFrame>();
