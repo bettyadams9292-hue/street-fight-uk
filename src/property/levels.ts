@@ -3,7 +3,7 @@ import type { LevelDef, PropDef, StationDef } from '../world/LevelTypes';
 import { HOME_BASE, LEVELS } from '../world/levels';
 import { BIKES, BIKE_SIZE, CARS } from './catalogue';
 import { compPrize } from './casino';
-import { buildHomeLevel, dressHouse } from './home';
+import { buildHomeLevel, dressHouse, relayHouse } from './home';
 import { DRIVEWAY } from './state';
 import { buildBasementLevel } from '../business/basement';
 import { PROPERTIES, PROPERTY_LIST, formatPounds, valueNow } from '../realty/catalogue';
@@ -18,7 +18,10 @@ import { streetBikes } from '../world/streetBikes';
  */
 export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
   const prop = save.property;
-  if (area === 'home') dressHouse(prop);
+  if (area === 'home') {
+    relayHouse(prop);
+    dressHouse(prop);
+  }
   let level: LevelDef =
     area === 'home' ? buildHomeLevel(HOME_BASE, prop, save.gym, save.storageCap) : area === 'basement' ? buildBasementLevel(save.basement) : area === 'property' ? propertyLevel(save) : LEVELS[area];
   // Property doors: who owns it, who lives there, what the board outside says.

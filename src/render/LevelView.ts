@@ -18,6 +18,8 @@ import { hashString, planFacade, type FacadePlan } from '../city/compose';
 import { cityKit } from './city/CityKit';
 import { buildCityFacades, type SignedFacade } from './city/CityFacades';
 import { fittedProp, lootModel } from './props/PropLibrary';
+import { pickupFx, type PickupFx } from './props/pickupFx';
+import { UseMarker } from './props/useMarker';
 import { buildCar, fadeCar } from './street/carModel';
 import type { Progress } from '../progress/Progress';
 import type { ExitDef, FacadeDef, LevelDef, PropDef, Theme } from '../world/LevelTypes';
@@ -91,7 +93,7 @@ export class LevelView {
   private gates = new Map<string, { mesh: THREE.Object3D; lift: number }>();
   private levers = new Map<string, { handle: THREE.Object3D; lamp: THREE.MeshStandardMaterial }>();
   private exitSigns: { exit: ExitDef; mat: THREE.MeshStandardMaterial; text: THREE.Mesh; locked: boolean | null }[] = [];
-  private highlight: THREE.Mesh;
+  private marker = new UseMarker();
   private flicker: { light: THREE.PointLight; base: number }[] = [];
   private sun: THREE.DirectionalLight;
   private water: THREE.Mesh | null = null;
@@ -169,10 +171,7 @@ export class LevelView {
     this.X1 = this.street ? this.street.x1 : level.bounds.maxX + extent;
     this.group.add(this.lightRig);
     this.rnd = seeded(hash(level.id));
-    this.highlight = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.035, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd23d, transparent: true, opacity: 0.85 }));
-    this.highlight.rotation.x = -Math.PI / 2;
-    this.highlight.visible = false;
-    this.group.add(this.highlight);
+    this.group.add(this.marker.root);
     this.sun = new THREE.DirectionalLight(0x9fb0e0, 0.55);
     this.build();
   }
@@ -4216,16 +4215,45 @@ export class LevelView {
       s.mat.needsUpdate = true;
     }
 
-    // Highlight whatever you can use right now.
+    // Mark whatever you can use right now, round the thing itself: a door's threshold, or the footprint of the
+    // furniture or fitting it belongs to (the nearest one to its use spot), not the spot on the floor you stand.
     const it = world.interactable;
-    this.highlight.visible = !!it;
-    if (it) {
-      this.highlight.position.set(it.x, 0.03, it.z);
-      const pulse = 1 + Math.sin(time * 6) * 0.08;
-      this.highlight.scale.setScalar(pulse);
-      const bad = (it.kind === 'exit' && it.locked) || (it.kind === 'lever' && it.done);
-      (this.highlight.material as THREE.MeshBasicMaterial).color.setHex(bad ? 0xff4a3a : 0xffd23d);
+    if (!it) this.marker.hide();
+    else {
+      const bad = (it.kind === 'exit' && it.locked) || (it.kind === 'lever' && it.done) || (it.kind === 'container' && it.empty);
+      if (it.kind === 'exit') this.marker.show(it.x, this.back + 0.3, 0.5, 0.24, bad);
+      else if (it.kind === 'item') this.marker.hide();
+      // Someone you could mug: a ring round their feet, red (it's a crime).
+      else if (it.kind === 'mug') this.marker.show(it.x, it.z, 0.32, 0.26, true);
+      else {
+        const p = this.nearestProp(it.x, it.z);
+        if (p) {
+          const [hx, hz] = propHalf(p);
+          this.marker.show(p.x, p.z, hx, hz, bad);
+        } else this.marker.show(it.x, it.z, 0.3, 0.3, bad);
+      }
     }
+    this.marker.update(time);
+  }
+
+  /** The furniture or fitting a use spot belongs to: the nearest solid thing to it, within reach. */
+  private nearestProp(x: number, z: number): PropDef | null {
+    let best: PropDef | null = null;
+    let bd = 1.7;
+    for (const p of this.level.props) {
+      if (p.solid === false || p.kind === 'decor') continue;
+      const [hx, hz] = propHalf(p);
+      if (hx > 2.6 || hz > 2.6) continue;
+      // Distance to its footprint, not its middle: a long counter is near along its whole front.
+      const dx = Math.max(0, Math.abs(x - p.x) - hx);
+      const dz = Math.max(0, Math.abs(z - p.z) - hz);
+      const d = Math.hypot(dx, dz);
+      if (d < bd) {
+        bd = d;
+        best = p;
+      }
+    }
+    return best;
   }
 
   /** Keeps meshes for everything that comes and goes in the world in step with it. */
@@ -4250,9 +4278,21 @@ export class LevelView {
       }
     };
     // Cash on the floor: a small stack of notes or a few coins.
-    sync(world.cash.map((c) => ({ ...c, key: `c:${c.key}` })), this.pickupMeshes, (c) => this.pickupMesh(c.amount >= 20 ? 'cash' : 'drop'), (m, c) => {
-      m.position.set(c.x, 0.25 + Math.sin(time * 3 + c.x) * 0.06, c.z);
-      m.rotation.y = time * 1.8;
+    sync(world.cash.map((c) => ({ ...c, key: `c:${c.key}` })), this.pickupMeshes, (c) => {
+      // Money glows green on the floor, the notes turning over above it.
+      const g = new THREE.Group();
+      const notes = this.pickupMesh(c.amount >= 20 ? 'cash' : 'drop');
+      const fx = pickupFx('#4fd16a', 0.34, c.x);
+      g.add(fx.root, notes, fx.halo);
+      g.userData = { fx, notes, halo: fx.halo };
+      return g;
+    }, (m, c) => {
+      m.position.set(c.x, 0, c.z);
+      const notes = m.userData.notes as THREE.Object3D;
+      notes.position.y = 0.3 + Math.sin(time * 3 + c.x) * 0.06;
+      notes.rotation.y = time * 1.8;
+      (m.userData.halo as THREE.Object3D).position.y = notes.position.y;
+      (m.userData.fx as PickupFx).update(time);
     });
     // Secrets are only a faint glint until you stand on them.
     sync(world.secrets.map((s) => ({ ...s, key: `s:${s.key}` })), this.pickupMeshes, () => this.pickupMesh('secret'), (m, s) => {
@@ -4272,8 +4312,11 @@ export class LevelView {
       const spin = m.userData.spin as THREE.Object3D | undefined;
       if (spin) {
         spin.rotation.y = time * 1.5;
-        spin.position.y = 0.35 + Math.sin(time * 3 + it.x) * 0.05;
+        spin.position.y = 0.42 + Math.sin(time * 3 + it.x) * 0.05;
+        const halo = m.userData.halo as THREE.Object3D | undefined;
+        if (halo) halo.position.y = spin.position.y;
       }
+      (m.userData.fx as PickupFx | undefined)?.update(time);
     });
     // Thrown weapons, spinning end over end.
     sync(world.projectiles, this.projMeshes, (p) => {
@@ -4324,10 +4367,10 @@ export class LevelView {
     const def = itemDef(id);
     const g = new THREE.Group();
     const rarity = new THREE.Color(RARITY_COLOURS[def?.rarity ?? 'common']);
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.28, 0.34, 24), new THREE.MeshBasicMaterial({ color: rarity, transparent: true, opacity: 0.6 }));
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.012;
-    g.add(ring);
+    // The glow: a turning ring flat on the floor, a pool of light, a faint column and drifting motes (pickupFx).
+    const fx = pickupFx(rarity, 0.4, (id.length * 1.7) % 6.28);
+    g.add(fx.root);
+    g.userData.fx = fx;
     const wid = def?.weapon;
     if (wid && WEAPONS[wid]) {
       const w = buildWeaponMesh(WEAPONS[wid]);
@@ -4349,10 +4392,10 @@ export class LevelView {
     if (model) {
       model.rotation.x = 0.5;
       spin.add(model);
-      const glow3 = new THREE.Mesh(new THREE.CircleGeometry(0.2, 20), new THREE.MeshBasicMaterial({ color: rarity, transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false }));
-      glow3.position.z = -0.12;
-      spin.add(glow3);
       g.add(spin);
+      // The halo floats with the item but faces the camera, so it glows round it from any side.
+      g.userData.halo = fx.halo;
+      g.add(fx.halo);
       g.userData.spin = spin;
       return g;
     }
@@ -4360,10 +4403,9 @@ export class LevelView {
     tex.colorSpace = THREE.SRGBColorSpace;
     const card = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.42), new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
     spin.add(card);
-    const glow = new THREE.Mesh(new THREE.CircleGeometry(0.26, 20), new THREE.MeshBasicMaterial({ color: rarity, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
-    glow.position.z = -0.01;
-    spin.add(glow);
     g.add(spin);
+    g.userData.halo = fx.halo;
+    g.add(fx.halo);
     g.userData.spin = spin;
     return g;
   }

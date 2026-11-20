@@ -2,7 +2,7 @@ import { emptyCommand, type CommandFrame, type PressButton } from './Commands';
 
 export type GameButton = PressButton;
 const PRESS_BUTTONS: readonly GameButton[] = ['lp', 'hp', 'lk', 'hk', 'jump', 'dodge', 'grab', 'swap'];
-export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory' | 'map' | 'character' | 'crew' | 'zoom' | 'phone';
+export type MenuAction = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'pause' | 'inventory' | 'map' | 'character' | 'crew' | 'zoom' | 'phone' | 'bail';
 export type InputSource = 'keyboard' | 'gamepad' | 'touch';
 
 /** Keyboard layout. Kept in one place so a rebinding screen can edit it later. */
@@ -133,6 +133,7 @@ export class InputManager {
       }
       if (code === 'Escape') this.emitMenu('back');
       else if (code === 'KeyP') this.emitMenu('phone');
+      else if (code === 'KeyX') this.emitMenu('bail');
       else if (code === 'KeyB') this.emitMenu('inventory');
       else if (code === 'KeyM') this.emitMenu('map');
       else if (code === 'KeyH') this.emitMenu('character');

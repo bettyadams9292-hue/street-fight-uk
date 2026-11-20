@@ -210,7 +210,7 @@ test('placement rules: no overlap, no clipping walls or fittings, no blocking th
   // Tall pieces can't stand in front of a window.
   assert(!checkPlacement({ ...prop, furniture: [] }, FURNITURE.bookcase, { room: 'living', x: win, z: BACK_Z + 0.18, rot: 0 }).ok, 'bookcase in front of the window refused');
   // Rugs can go under furniture (they're on the floor, not solid).
-  assert(checkPlacement(prop, FURNITURE.rug_round, { room: 'living', x: sofa.at!.x, z: -0.9, rot: 0 }).ok, 'rug under the coffee table is fine');
+  assert(checkPlacement(prop, FURNITURE.rug_round, { room: 'living', x: -11.0, z: -1.2, rot: 0 }).ok, 'rug under the coffee table is fine');
   // A valid spot is valid.
   assert(checkPlacement(prop, table, { room: 'kitchen', x: -2.6, z: -0.25, rot: 0 }).ok, 'free kitchen spot accepted');
 });
@@ -227,7 +227,7 @@ test('the house level is built from the save: solid furniture collides, rugs and
   assert(propBox(furn.find((x) => x.item === 'rug_round')!) === null, 'rug walk-over');
   assert(!lvl.props.some((x) => x.kind === 'homecar'), 'no car in the garage');
   const w = new World(lvl, p, { entry: 'start', seed: 3 });
-  assert(w.arena.blocked(-11.3, -1.85, 0.1), 'cannot walk through the sofa');
+  assert(w.arena.blocked(-12.38, -1.2, 0.1), 'cannot walk through the sofa');
   assert(!w.arena.blocked(-11.3, 1.0, 0.3), 'walkway clear');
   // Every station is reachable from the walkway (nothing placed on top of one).
   for (const st of lvl.stations ?? []) assert(!w.arena.blocked(st.x, st.z, 0.05), `station ${st.id} not buried`);

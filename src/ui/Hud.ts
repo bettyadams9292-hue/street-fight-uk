@@ -85,6 +85,8 @@ export class Hud {
   private weaponText: HTMLElement;
   private notes = new Notifications();
   private bagBtn!: HTMLElement;
+  private bailBtn!: HTMLElement;
+  private bailCost!: HTMLElement;
   private bagCount!: HTMLElement;
   private flow!: HTMLElement;
   private head!: HTMLElement;
@@ -110,7 +112,7 @@ export class Hud {
   private activityFill: HTMLElement;
   private sleepShade: HTMLElement;
 
-  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void; zoom?: () => void; editHome?: () => void; phone?: () => void }) {
+  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void; zoom?: () => void; editHome?: () => void; phone?: () => void; bail?: () => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
       const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, h('span', { class: 'key-hint', text: `${i + 1} \u00b7 ` }), TRAINING_MODE_LABELS[m]) as HTMLButtonElement;
       this.modeButtons.set(m, b);
@@ -195,6 +197,8 @@ export class Hud {
         { class: 'hud-buttons' },
         (this.zoomBtn = h('button', { class: 'hud-btn room-only zoom-btn', 'aria-label': 'Zoom in', title: 'Zoom (Z)', onclick: () => actions.zoom?.() }, icon('zoom-in'), h('span', { class: 'k', text: 'Z' }))),
         // What you carry is on you, not on the phone: pockets and the bag on your back.
+        (this.bailBtn = h('button', { class: 'hud-btn bail-btn off', 'aria-label': 'Pussy out: throw down cash and run', title: 'Pussy out (X)', onclick: () => actions.bail?.() },
+          h('b', { text: 'PUSSY OUT' }), (this.bailCost = h('small', { text: '' })))),
         (this.bagBtn = h('button', { class: 'hud-btn story-only bag-btn', 'aria-label': 'Pockets and bag', title: 'Pockets & bag (I)', onclick: () => actions.inventory() }, icon('bag'), (this.bagCount = h('span', { class: 'slot-count' })), h('span', { class: 'k', text: 'I' }))),
         // Everything else (messages, map, crew, cabs, money, editing the house) is on the phone.
         (this.bellBtn = h('button', { class: 'hud-btn story-only phone-btn', 'aria-label': 'Phone', title: 'Phone (P)', onclick: () => actions.phone?.() }, icon('phone'), h('span', { class: 'bell-dot' }), h('span', { class: 'k', text: 'P' }))),
@@ -227,6 +231,31 @@ export class Hud {
     }
     this.el.style.setProperty('--head-b', `${Math.round(b)}px`);
   };
+  /**
+   * The pussy-out button: shown in a fight you're allowed to run from, saying what it costs (a share of the cash
+   * on you, or the district's grudge when you've none). Hidden in boss fights, against the police and out of fights.
+   */
+  setBail(can: { ok: true; cost: number } | { ok: false; reason: string } | null): void {
+    const show = !!can && can.ok;
+    this.bailBtn.classList.toggle('off', !show);
+    if (can && can.ok) {
+      const t = can.cost > 0 ? `drop £${can.cost}` : 'they’ll remember';
+      if (this.bailCost.textContent !== t) this.bailCost.textContent = t;
+    }
+  }
+
+  /**
+   * The big shout when you pussy out: a line slammed across the middle of the screen in the game's lettering,
+   * with what it cost you underneath. Gone after a couple of seconds.
+   */
+  shame(title: string, sub: string): void {
+    this.el.querySelector('.shame')?.remove();
+    const el = h('div', { class: 'shame', role: 'status' }, h('b', { text: title }), h('span', { text: sub }));
+    this.el.append(el);
+    window.setTimeout(() => el.classList.add('out'), 2300);
+    window.setTimeout(() => el.remove(), 2800);
+  }
+
   /** Start keeping the layout (call once the HUD is in the page). */
   attach(): void {
     if (this.layoutObserver || typeof ResizeObserver === 'undefined') return;

@@ -32,6 +32,7 @@ import {
   sellBike,
   sellCar,
   sellFurniture,
+  furnitureValue,
   setActiveCar,
   storeBike,
   storeFurniture,
@@ -208,11 +209,11 @@ export function plannerBody(progress: Progress, saved: () => void, place: (uid: 
         menuButton('Move', () => place(f.uid, room), undefined, 'small'),
         menuButton('Colour', () => ((recolour = recolour === f.uid ? null : f.uid), rebuild()), undefined, 'small'),
         menuButton('Store', () => result(storeFurniture(progress, f.uid), `${def.name} put away`, msg, saved), undefined, 'small'),
-        menuButton(`Sell ${money(resale(def.price))}`, () => {
+        menuButton(f.free ? 'Get rid of it' : `Sell ${money(furnitureValue(f))}`, () => {
           const r = sellFurniture(progress, f.uid);
           if (r.ok) {
             saved();
-            msg(`Sold the ${def.name.toLowerCase()} for ${money(r.refund)}`);
+            msg(f.free ? `Got rid of the ${def.name.toLowerCase()} (it came with the house, so there’s nothing for it)` : `Sold the ${def.name.toLowerCase()} for ${money(r.refund)}`);
           } else msg(r.reason, true);
         }, undefined, 'small'),
       );
@@ -229,11 +230,11 @@ export function plannerBody(progress: Progress, saved: () => void, place: (uid: 
         h('div', { class: 'shop-row' }, h('div', { class: 'what' }, h('b', { text: def.name }), h('span', { text: 'In its box' })),
           h('div', { class: 'row-actions' },
             menuButton('Place', () => place(f.uid, room), undefined, 'small'),
-            menuButton(`Sell ${money(resale(def.price))}`, () => {
+            menuButton(f.free ? 'Get rid of it' : `Sell ${money(furnitureValue(f))}`, () => {
               const r = sellFurniture(progress, f.uid);
               if (r.ok) {
                 saved();
-                msg(`Sold for ${money(r.refund)}`);
+                msg(f.free ? 'Got rid of it' : `Sold for ${money(r.refund)}`);
               } else msg(r.reason, true);
             }, undefined, 'small'),
           )),

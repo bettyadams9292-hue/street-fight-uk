@@ -2,7 +2,7 @@ import { BODY_HEIGHT, BODY_RADIUS } from '../core/constants';
 import type { EventBus } from '../core/EventBus';
 import type { GameEvents, HitInfo } from '../core/GameEvents';
 import type { Rng } from '../core/Rng';
-import { COUNTER_WINDOW, type Fighter } from '../fighter/Fighter';
+import { COUNTER_WINDOW, FINISHER_COOLDOWN, type Fighter } from '../fighter/Fighter';
 import type { Arena } from '../world/Arena';
 import { BLOCK_STAMINA_RATIO, CLEAN_HIT_DAMAGE, CLEAN_HIT_POISE, computeDamage, repetitionMultiplier } from './Damage';
 import { endGrapple, resolveGrappleMove, startGrapple } from './Grapple';
@@ -144,6 +144,7 @@ export function resolveHit(
 
   // ---- Finisher ------------------------------------------------------------------
   if (move.kind === 'finisher') {
+    attacker.finisherReadyAt = frame + FINISHER_COOLDOWN;
     const dmg = target.vitals.health;
     target.vitals.takeDamage(dmg, frame);
     target.knockVel = dir * move.knockback;
