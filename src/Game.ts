@@ -38,7 +38,9 @@ import { STARTER_ACCESSORIES, STARTER_BOTTOMS, STARTER_SHOES, STARTER_TOPS } fro
 import { ITEMS, RARITY_COLOURS } from './items/items';
 import { PAWN_HATCH_RATE } from './items/shops';
 import { clothesShopScreen, inventoryScreen, pawnScreen, storageScreen } from './ui/inventoryUI';
-import { arrest, ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
+import { ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
+import { book, canPayBail, nightInCells, payBail, type Booking } from './world/custody';
+import { CRIME_NAME, settlePrice } from './progress/record';
 import { World } from './world/World';
 import { gateNeeds, type GateNeed } from './world/gates';
 import type { BossDef } from './ai/bosses';
@@ -1036,22 +1038,17 @@ export class Game {
       ev.on('player:defeated', ({ byPolice }) => {
         const p = this.progress!;
         if (byPolice || p.save.heat >= ARREST_HEAT) {
-          const { fine, seized } = this.arrested();
+          // Nicked: booked in at the Central Police Station, with a charge sheet and a choice.
+          const b = book(p);
           p.save.mealBuff = false;
+          this.saveGame();
           this.pending = {
             at: this.time + 0.4,
             show: () => {
               this.state = 'paused';
               this.touch.release();
               this.updateTouchVisibility();
-              this.ui.replaceAll(
-                rewardScreen('NICKED', [
-                  { text: 'You\u2019re under arrest.', big: true },
-                  { text: seized ? `They took ${seized} stolen item${seized === 1 ? '' : 's'} off you.` : 'Nothing stolen on you, at least.' },
-                  { text: `Fined \u00a3${fine}. A night in the cells and they let you go.` },
-                  { text: 'Your heat is back to nothing. Everything you\u2019ve beaten stays beaten.' },
-                ], [{ label: 'Walk home', go: () => this.goHome(true) }], ['nicked']),
-              );
+              this.ui.replaceAll(this.chargeSheet(b));
             },
           };
           return;
@@ -1231,6 +1228,9 @@ export class Game {
           this.enterArea('home', 'start', { at: { x: w.player.pos.x, z: w.player.pos.z } });
           this.hud.toast('Savings moved into the new tin', 'item');
         });
+        break;
+      case 'front_desk':
+        screen = this.frontDesk(close);
         break;
       case 'cash_hatch':
         screen = pawnScreen(p, this.ui, saved, close, { priceMult: 1 / PAWN_HATCH_RATE });
@@ -2196,6 +2196,7 @@ export class Game {
     const w = this.world!;
     const keeper = [...w.npcs.entries()].find(([st]) => st.id === spec.counter)?.[1] ?? null;
     const r = robShop(p, w, shopId, keeper);
+    p.logCrime('robbery');
     this.hud.notify('ROBBERY', 'big');
     this.audio.guardBreak();
     if (r.resisted) {
@@ -2209,11 +2210,79 @@ export class Game {
     this.saveGame();
   }
 
-  /** Caught by the police: lose stolen goods, pay a fine, heat wiped. */
-  private arrested(): { fine: number; seized: number } {
-    const r = arrest(this.progress!);
-    this.saveGame();
-    return r;
+  /**
+   * The front counter at Central Police Station: what's on your record, and settling up a district's fines
+   * early (clears its police heat and the crimes logged there) at a price (`settlePrice`).
+   */
+  private frontDesk(close: () => void): Screen {
+    const p = this.progress!;
+    const s = p.save;
+    const districts = [...new Set([...s.record.map((e) => e.district), ...Object.entries(s.districtHeat).filter(([, h]) => h.police > 0).map(([d]) => d)])];
+    const lines: { text: string; big?: boolean }[] = [{ text: s.record.length ? 'Sgt Hollis pulls up your file.' : 'Sgt Hollis types your name in. Nothing comes up.', big: true }];
+    for (const e of [...s.record].reverse().slice(0, 6)) lines.push({ text: `${CRIME_NAME[e.crime]}, ${e.district}` });
+    if (s.record.length > 6) lines.push({ text: `…and ${s.record.length - 6} more.` });
+    const buttons: { label: string; sub?: string; go: () => void }[] = [];
+    for (const d of districts.slice(0, 4)) {
+      const price = settlePrice(s.record, d, p.heatIn(d).police);
+      buttons.push({
+        label: `Settle up: ${d} (\u00a3${price})`,
+        sub: 'Pays the fines: police heat and the record there wiped',
+        go: () => {
+          if (!p.pay(price)) {
+            this.hud.toast(`You need \u00a3${price} on you or in the tin.`, 'warn');
+            return;
+          }
+          s.record = s.record.filter((e) => e.district !== d);
+          p.setHeat('police', 0, d);
+          if (d === p.here) s.heat = 0;
+          this.saveGame();
+          this.hud.toast(`Fines paid in ${d}: \u00a3${price}. Clean slate there.`, 'cash');
+          this.ui.replaceAll(this.frontDesk(close));
+        },
+      });
+    }
+    buttons.push({ label: 'Leave', go: close });
+    return rewardScreen('FRONT COUNTER', lines, buttons, []);
+  }
+
+  /**
+   * The charge sheet after you're nicked (world/custody.ts): what they've got you for, what they took, and
+   * bail. Pay it and you're let out of custody at the Central Police Station; or do a night in the cells and
+   * the court takes a smaller fine in the morning.
+   */
+  private chargeSheet(b: Booking): Screen {
+    const p = this.progress!;
+    const lines: { text: string; big?: boolean }[] = [{ text: `You\u2019re nicked. Booked in at Central Police Station.`, big: true }];
+    if (b.charges.length) for (const c of b.charges) lines.push({ text: `Charge: ${CRIME_NAME[c.crime]} (${c.district})` });
+    else lines.push({ text: 'Charge: wanted for questioning. They\u2019ve nothing they can make stick.' });
+    lines.push({ text: b.seized ? `Seized: ${b.seized} stolen item${b.seized === 1 ? '' : 's'} (worth \u00a3${b.seizedValue}).` : 'Nothing stolen on you, at least.' });
+    lines.push({ text: `Bail: \u00a3${b.bail}. Or a night in the cells and a \u00a3${b.fine} court fine.` });
+    const out = (msg: string, entry: 'cell' | 'door') => {
+      this.saveGame();
+      // Full health: you've had a night's sleep or a doctor's look-over in custody.
+      this.changeArea('police_station' as AreaId, entry, null);
+      this.hud.toast(msg, 'info');
+    };
+    const buttons: { label: string; sub?: string; go: () => void }[] = [];
+    if (canPayBail(p, b)) {
+      buttons.push({
+        label: `Pay bail (\u00a3${b.bail})`,
+        sub: 'From the cash on you, then the tin',
+        go: () => {
+          payBail(p, b);
+          out(`Bail paid: \u00a3${b.bail}. "Don\u2019t let us see you back here."`, 'door');
+        },
+      });
+    }
+    buttons.push({
+      label: 'Night in the cells',
+      sub: canPayBail(p, b) ? `Keep the bail money; the court takes \u00a3${b.fine} in the morning` : 'You can\u2019t make bail',
+      go: () => {
+        const taken = nightInCells(p, b);
+        out(taken ? `A night on a plastic mattress. The court fined you \u00a3${taken}.` : 'A night on a plastic mattress. The court let you off: you\u2019ve got nothing.', 'cell');
+      },
+    });
+    return rewardScreen('NICKED', lines, buttons, ['nicked']);
   }
 
   // ---- input -----------------------------------------------------------------

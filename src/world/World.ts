@@ -888,9 +888,12 @@ export class World {
         }
       }
       if (fighter === this.player) return;
+      // Putting an officer down goes on your record, whoever gets the last hit in.
+      if (this.police.includes(fighter)) progress.logCrime('assault_police');
       if (this.mugLoot.has(fighter) && !this.assaulted.has(fighter)) {
         this.assaulted.add(fighter);
         progress.addHeatOf(HEAT.assault);
+        progress.logCrime('assault');
         this.events.emit('assault', { name: fighter.name, heat: ASSAULT_HEAT });
       }
       this.koAt.set(fighter, this.sim.frame);
@@ -1993,6 +1996,7 @@ export class World {
     const wasKnown = this.progress.heatIn().street >= KNOWN_FACE_HEAT;
     const heat = HEAT.mug.police + witnesses.length * HEAT.witness.police;
     const h = this.progress.addHeatOf({ police: heat, street: HEAT.mug.street + witnesses.length * HEAT.witness.street });
+    this.progress.logCrime('mugging');
     target.facing = p.pos.x < target.pos.x ? -1 : 1;
     const say = (f: Fighter, lines: string[]) => this.events.emit('enemy:say', { fighter: f, text: lines[Math.floor(rng.next() * lines.length)], kind: 'taunt' });
     if (resisted) {

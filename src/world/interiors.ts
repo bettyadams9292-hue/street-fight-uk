@@ -630,6 +630,46 @@ export function fitOut<T extends LevelDef>(level: T): T {
   return decor ? { ...withFront, props: [...withFront.props, ...addDecor(withFront, decor.map((p) => ({ ...p })), withFront.bounds.maxZ + ROOM_EXTRA)] } : withFront;
 }
 
+// ---- Central Police Station: the front desk, and through the back the custody suite --------------
+const policeStation: LevelDef = {
+  id: 'police_station',
+  name: 'Central Police Station',
+  district: 'City Centre',
+  theme: 'shop',
+  bounds: { minX: 0, maxX: 16, ...ROOM },
+  entries: [
+    { id: 'door', x: 14.6, z: 0.4, facing: -1 },
+    // Where you wake up when you're nicked: in the cell at the custody end.
+    { id: 'cell', x: 1.6, z: -0.2, facing: 1 },
+  ],
+  exits: [{ id: 'out', kind: 'door', x: 15.4, z: 0.9, to: 'city', toEntry: 'police', label: 'Back out to Market Square' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 16, label: 'CENTRAL POLICE STATION — FRONT COUNTER', colour: '#16243f' }],
+  props: [
+    // Custody: the cell bench and the custody sergeant's desk. (No cell door or bars yet: there's no model for
+    // them, and the casino cage reads as a cashier's booth. See docs/POLICE_PLAN.md, asset rows.)
+    { kind: 'bench', x: 1.6, z: -1.55 },
+    { kind: 'desk', x: 5.2, z: -1.3 },
+    // The public side: the front counter and the waiting benches.
+    { kind: 'shop_counter', x: 10.8, z: -0.7 },
+    { kind: 'bench', x: 13.2, z: -1.55 },
+    { kind: 'vending', x: 15.2, z: -1.4 },
+  ],
+  stations: [
+    {
+      id: 'front_desk', x: 10.8, z: 0.1, label: 'Front counter (your record, settle fines)',
+      npc: { name: 'Sgt Hollis', seed: 7713, body: 'male', top: 'workwear', topColour: '#16243f', dz: -1.65 },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    { x: 3, y: 2.8, z: -0.4, colour: 0xe8f0ff, intensity: 8, range: 8 },
+    { x: 11, y: 2.8, z: -0.4, colour: 0xe8f0ff, intensity: 9, range: 8 },
+  ],
+  objective: 'Sort it out at the front counter, or get out',
+  weather: 'indoors',
+};
+
 // Every room at its real depth (world/rooms.ts), its front floor filled.
 export const INTERIORS = {
   gym_store: deepRoom(fitOut(gymStore)),
@@ -638,5 +678,6 @@ export const INTERIORS = {
   wrestling_club: deepRoom(wrestlingClub),
   grow_shop: deepRoom(fitOut(growShop)),
   clothes_shop: deepRoom(fitOut(clothesShop)), pawn_shop: deepRoom(fitOut(pawnShop)), pub: deepRoom(fitOut(pub)),
+  police_station: deepRoom(policeStation),
   furniture_shop: deepRoom(fitOut(furnitureShop)), car_dealer: deepRoom(fitOut(carDealer)), bike_shop: deepRoom(fitOut(bikeShop)), casino: deepRoom(fitOut(casino)),
 };

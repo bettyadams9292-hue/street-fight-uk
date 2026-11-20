@@ -12,7 +12,7 @@ export type IconName =
   | 'property' | 'contact' | 'street' | 'parked' | 'lock' | 'map' | 'bag' | 'close' | 'play' | 'save' | 'settings'
   | 'controls' | 'quit' | 'phone' | 'pin' | 'you' | 'plus' | 'minus' | 'target' | 'route' | 'cab' | 'walk' | 'weapon'
   | 'consumable' | 'material' | 'valuable' | 'misc' | 'equipment' | 'all' | 'check' | 'coin' | 'back' | 'info'
-  | 'food' | 'sleep' | 'shower' | 'tooth' | 'toilet' | 'gem' | 'key' | 'bell' | 'zoom-in' | 'zoom-out' | 'edit';
+  | 'food' | 'sleep' | 'shower' | 'tooth' | 'toilet' | 'gem' | 'key' | 'bell' | 'zoom-in' | 'zoom-out' | 'edit' | 'police';
 
 const P: Record<IconName, string> = ICON_ART;
 
@@ -37,7 +37,7 @@ export const PAINTED: Partial<Record<IconName, string>> = {
   coin: 'coins', back: 'arrow_left', info: 'info', gem: 'gold_chain', key: 'keys', edit: 'spanners', 'zoom-in': 'search',
   // Painted to match for the ones the sheets don't have (tools/icons/paint_icon.py).
   food: 'food', shower: 'shower', toilet: 'toilet', tooth: 'tooth', sleep: 'sleep', bell: 'bell', pub: 'pub', casino: 'casino',
-  you: 'you', 'zoom-out': 'zoom_out',
+  you: 'you', 'zoom-out': 'zoom_out', police: 'police',
 };
 
 /** The painted icon's file, if this icon has one. */
