@@ -250,10 +250,10 @@ type Spot = { cat: JewelCat; where: string; side: 'l' | 'r'; y: number; at: [num
 const SPOTS: Spot[] = [
   { cat: 'earring', where: 'Ears', side: 'l', y: 62, at: [172, 78] },
   { cat: 'necklace', where: 'Neck', side: 'l', y: 160, at: [210, 142] },
-  { cat: 'bracelet', where: 'Right wrist', side: 'l', y: 318, at: [129, 316] },
+  { cat: 'bracelet', where: 'Right wrist', side: 'l', y: 318, at: [129, 318] },
   { cat: 'grill', where: 'Teeth', side: 'r', y: 84, at: [210, 96] },
-  { cat: 'watch', where: 'Left wrist', side: 'r', y: 280, at: [291, 316] },
-  { cat: 'ring', where: 'Left hand', side: 'r', y: 372, at: [297, 378] },
+  { cat: 'watch', where: 'Left wrist', side: 'r', y: 280, at: [291, 318] },
+  { cat: 'ring', where: 'Left hand', side: 'r', y: 372, at: [296, 372] },
 ];
 
 const SVGNS = 'http://www.w3.org/2000/svg';
@@ -286,13 +286,18 @@ export function jewelleryBoxPanel(progress: Progress, changed: () => void, saved
   body.append(svg('path', { d: [
     'M210 30 C230 30 243 46 244 66',
     'C252 63 255 86 245 89 C242 101 233 110 226 114 L226 130',
-    'C233 141 252 146 270 150 C292 156 301 175 302 196 L308 300',
-    'C312 316 311 330 306 338 C309 348 310 358 308 364 Q309 377 304 377 Q301 376 301 369 Q302 385 297 385 Q293 384 295 371 Q295 389 290 389 Q286 388 288 372 Q287 386 282 385 Q278 383 281 368 Q276 369 271 364 Q266 359 270 354 L276 346 L274 322 L267 238',
-    'L265 334 C236 344 184 344 155 334 L153 238 L146 322 L144 346',
-    'L150 354 Q154 359 149 364 Q144 369 139 368 Q142 383 138 385 Q133 386 132 372 Q134 388 130 389 Q125 389 125 371 Q127 384 123 385 Q118 385 119 369 Q119 376 116 377 Q111 377 112 364 C110 358 111 348 114 338 C109 330 108 316 112 300 L118 196',
+    'C233 141 252 146 270 150 C292 156 301 175 302 196',
+    'C305 230 307 258 307 280 C307 298 303 312 300 322 C304 330 307 342 306 352 C306 365 302 379 296 385 C292 388 287 383 287 372 L286 358 C283 362 280 367 278 370 C275 374 272 371 274 365 C276 353 279 339 281 326 L281 322 C278 300 274 282 272 268 L267 238',
+    'L265 334 C236 344 184 344 155 334 L153 238',
+    'L148 268 C146 282 142 300 139 322 L139 326 C141 339 144 353 146 365 C148 371 145 374 142 370 C140 367 137 362 134 358 L133 372 C133 383 128 388 124 385 C118 379 114 365 114 352 C113 342 116 330 120 322 C117 312 113 298 113 280 C113 258 115 230 118 196',
     'C119 175 128 156 150 150 C168 146 187 141 194 130 L194 114 C187 110 178 101 175 89',
     'C165 86 168 63 176 66 C177 46 190 30 210 30 Z',
   ].join(' ') }));
+  // The gaps between the fingers, drawn as fine lines so the hands read as hands.
+  for (const sx of [1, -1]) {
+    const x = (v: number) => (sx > 0 ? v : 420 - v);
+    body.append(svg('path', { class: 'jb-crease', d: `M${x(301)} 356 Q${x(302)} 366 ${x(300)} 377 M${x(296)} 358 Q${x(297)} 370 ${x(295)} 382 M${x(291)} 359 Q${x(292)} 371 ${x(290)} 382` }));
+  }
   fig.append(body);
   for (const p of SPOTS) {
     const on = !!wornOf(p.cat);
@@ -302,7 +307,7 @@ export function jewelleryBoxPanel(progress: Progress, changed: () => void, saved
   }
   for (const p of SPOTS) {
     const on = !!wornOf(p.cat);
-    const dot = svg('circle', { cx: p.at[0], cy: p.at[1], r: 11, class: `jb-spot${p.cat === slot ? ' sel' : ''}${on ? ' on' : ''}` });
+    const dot = svg('circle', { cx: p.at[0], cy: p.at[1], r: p.cat === 'ring' ? 7 : 10, class: `jb-spot${p.cat === slot ? ' sel' : ''}${on ? ' on' : ''}` });
     dot.addEventListener('click', () => pick(p.cat));
     fig.append(svg('circle', { cx: p.at[0], cy: p.at[1], r: 22, class: 'jb-hit' }), dot);
     (fig.lastChild!.previousSibling as SVGElement).addEventListener('click', () => pick(p.cat));

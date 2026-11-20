@@ -1820,3 +1820,4 @@ body:has(#ui .screen) .hud { visibility: hidden; }
   .jb-lead.p { display: none; }
   .jb-lead.w { display: inline; }
 }
+.jb-body > .jb-crease { fill: none; stroke: rgba(255, 255, 255, 0.16); stroke-width: 1.2; stroke-linecap: round; pointer-events: none; }
