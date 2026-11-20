@@ -186,9 +186,228 @@ export function createBikeAsset(id:string):THREE.Group{
      disk(.07,.10,rearX,cy,0,dark);
    }
  }
+
+ // V2 silhouette and mechanical-detail pass: bespoke assemblies for every category.
+ const tyreGroove=mat(0x333639),chrome=mat(0xc0c7ca,.85,.23),brake=mat(0x767b7c,.65,.34),amber=mat(0xe1a046),tail=mat(0xb32c2d),meshMat=mat(0x555b5d,.35,.72);
+ const sphere=(radius:number,x:number,y:number,z:number,m:THREE.Material)=>{
+   const obj=new THREE.Mesh(new THREE.SphereGeometry(radius,12,10),m);obj.position.set(x,y,z);g.add(obj);return obj;
+ };
+ const curved=(points:number[][],radius:number,m:THREE.Material)=>{
+   const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));
+   const obj=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(16,points.length*8),radius,7,false),m);g.add(obj);return obj;
+ };
+ const panel=(points:number[][],depth:number,m:THREE.Material)=>{
+   const shape=new THREE.Shape();shape.moveTo(points[0][0],points[0][1]);
+   for(let i=1;i<points.length;i++)shape.lineTo(points[i][0],points[i][1]);shape.closePath();
+   const geom=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelSize:.009,bevelThickness:.008,bevelSegments:2});
+   const obj=new THREE.Mesh(geom,m);obj.position.z=-depth/2;g.add(obj);return obj;
+ };
+ // Wheel brakes, axle fasteners and sidewalls. Larger rotors on motorbikes.
+ for(const x of [rearX,frontX]){
+   disk(moto?r*.35:r*.22,.007,x,r,.044,brake);
+   for(let i=0;i<8;i++){
+     const t=i*Math.PI/4;
+     disk(.006,.008,x+Math.cos(t)*r*(moto?.22:.14),r+Math.sin(t)*r*(moto?.22:.14),.051,dark);
+   }
+   disk(.022,.065,x,r,0,chrome);
+   // Individual valve stem near the rim.
+   line([x+r*.83,r+r*.33,.015],[x+r*.91,r+r*.36,.015],.003,dark);
+ }
+ if(!moto&&!kick){
+   // Drivetrain: chainring, crank arms, rear sprocket and two chain runs.
+   disk(.077,.014,-.12,.47,.087,dark);
+   disk(.054,.017,rearX,r,.083,steel);
+   line([rearX,r+.052,.088],[-.12,.47+.072,.088],.0035,dark);
+   line([rearX,r-.052,.088],[-.12,.47-.072,.088],.0035,dark);
+   for(const side of [-1,1]){
+     line([-.12,.47,side*.10],[-.025,.36,side*.10],.011,chrome);
+     block(.095,.016,.055,-.025,.36,side*.10,dark);
+   }
+   // Bowden brake and gear cables arc from the bar to the fork and frame.
+   curved([[.35,1.19,.03],[.51,1.16,.045],[.54,.97,.045],[frontX,r+.08,.045]],.0035,dark);
+   curved([[.31,1.19,-.03],[.18,1.05,-.045],[-.12,.92,-.045],[-.31,.66,-.045]],.003,dark);
+   // Rear derailleur and chain tensioner on geared bikes.
+   if(!['roadster','step','rental','bmx','fold'].includes(s.kind)){
+     line([rearX,r,.084],[rearX-.05,r-.11,.084],.009,dark);
+     disk(.022,.014,rearX-.05,r-.11,.084,steel);
+   }
+   // Rear brake, front brake and visible cable attachment points.
+   block(.044,.038,.05,frontX-.04,r+.18,.05,dark);
+   block(.044,.038,.05,rearX+.05,r+.17,.05,dark);
+   if(s.old){
+     // Aged paint, worn chain guard, traditional sprung saddle and bell.
+     curved([[rearX+.12,r+.07,.11],[-.30,.37,.11],[-.10,.43,.11]],.013,paint);
+     for(const x of [-.31,-.17])line([x,1.11,-.04],[x+.045,1.11,-.04],.009,steel);
+     sphere(.026,.35,1.20,.04,chrome);
+   }
+   if(['mtb','fat'].includes(s.kind)||s.thick){
+     // Knobbly tyres, fork crowns, twin suspension stanchions and disc calipers.
+     for(const z of [-.065,.065]){
+       line([.33,1.01,z],[frontX,r+.08,z],.014,chrome);
+       line([.38,.89,z],[frontX,r+.10,z],.019,dark);
+     }
+     block(.18,.036,.16,.39,.91,0,dark);
+   }
+   if(s.full){
+     // Exposed rear triangle and diagonal coil-over shock.
+     line([rearX,r,-.07],[-.18,.73,-.07],.017,paint);
+     line([rearX,r,.07],[-.18,.73,.07],.017,paint);
+     line([-.17,.76,.07],[.05,.98,.07],.014,steel);
+     for(let i=0;i<7;i++)sphere(.013,-.15+i*.025,.78+i*.026,.07,dark);
+   }
+   if(s.kind==='road'){
+     // Curved drop bars and slim road calliper.
+     for(const z of [-.13,.13])curved([[.40,1.19,z],[.56,1.18,z],[.58,1.10,z],[.51,1.07,z]],.011,dark);
+   }
+   if(s.kind==='bmx'){
+     for(const x of [rearX,frontX])for(const z of [-.16,.16])line([x,r,z],[x,r,z+(z>0?.16:-.16)],.014,chrome);
+     line([.19,1.33,0],[.56,1.33,0],.014,chrome);
+   }
+   if(s.kind==='fold'){
+     disk(.041,.048,-.05,.80,.01,chrome);
+     line([-.05,.76,.07],[-.05,.84,.07],.009,dark);
+   }
+   if(s.kind==='tandem'){
+     disk(.073,.018,-.47,.47,.07,dark);
+     line([-.47,.47,.07],[-.12,.47,.07],.0035,dark);
+     line([-.47,.47,-.06],[-.47,.91,-.06],.018,paint);
+   }
+   if(s.kind==='cargo'){
+     // Load-support rails and cargo platform, not just a floating slab.
+     for(const z of [-.17,.17]){
+       line([rearX-.27,.94,z],[rearX-.17,r+.08,z],.012,steel);
+       line([rearX+.22,.94,z],[rearX+.11,r+.08,z],.012,steel);
+     }
+     if(s.id==='b14_delivery_cargo'){
+       block(.47,.28,.33,rearX-.08,1.13,0,paint);
+       block(.44,.016,.34,rearX-.08,1.28,0,dark);
+     }else{
+       for(const x of [rearX-.22,rearX+.20])line([x,.98,-.20],[x,1.16,-.20],.012,steel);
+     }
+   }
+   if(s.kind==='rental'){
+     // Shared-bike electronics and robust integrated basket.
+     block(.14,.13,.10,.28,1.02,0,dark);
+     block(.13,.20,.22,.02,.77,0,paint);
+     block(.07,.04,.055,.33,1.21,0,dark);
+     disk(.075,.09,rearX,r,0,dark);
+   }
+   if(s.kind==='fat'){
+     panel([[-.15,.54],[.04,.54],[.29,.95],[.17,1.04],[-.07,.84]],.17,paint);
+     block(.20,.30,.17,.07,.75,0,dark);
+   }
+   if(s.electric){
+     // Charge socket and battery indicator.
+     block(.038,.025,.009,.06,.85,.11,chrome);
+     for(let i=0;i<4;i++)block(.008,.009,.002,.036+i*.011,.85,.118,paint);
+   }
+   if(s.kind==='roadster'||s.kind==='step'){
+     // Traditional skirt guard / enclosed chaincase and dynamo light.
+     panel([[rearX+.04,r+.04],[-.10,.40],[-.08,.49],[rearX+.05,r+.12]],.024,paint);
+     disk(.047,.03,frontX-.10,1.06,.02,chrome);
+     disk(.035,.004,frontX-.10,1.06,.042,lamp);
+   }
+ }
+ if(moto){
+   // Two actual fork tubes, triple clamps, engine cooling and rear suspension.
+   for(const z of [-.105,.105]){
+     line([.38,1.03,z],[frontX,r+.07,z],.014,chrome);
+     line([.49,.82,z],[frontX,r+.08,z],.022,dark);
+     line([rearX,r,z],[-.15,.60,z],.022,dark);
+   }
+   block(.22,.035,.29,.40,1.00,0,dark);
+   for(let i=0;i<6;i++)line([-.31,.51+i*.024,.12],[-.02,.51+i*.024,.12],.004,steel);
+   for(const z of [-.12,.12]){
+     line([-.27,.60,z],[-.38,.89,z],.018,steel);
+     for(let i=0;i<8;i++)sphere(.009,-.27-i*.012,.60+i*.035,z,dark);
+   }
+   // Foot pegs, rear brake, chain and sprockets.
+   for(const z of [-.17,.17])line([-.17,.52,z],[-.17,.52,z+(z>0?.10:-.10)],.013,steel);
+   disk(.09,.012,rearX,r,.105,steel);
+   line([rearX,r+.065,.11],[-.17,.55,.11],.006,dark);
+   line([rearX,r-.065,.11],[-.17,.47,.11],.006,dark);
+   // Front brake discs with caliper.
+   block(.07,.09,.055,frontX-.08,r+.07,.06,dark);
+   if(['dirt','surron','supermoto'].includes(s.kind)){
+     // Distinct angular side panels, raised front mudguard and rear number boards.
+     panel([[-.27,.77],[.00,.72],[.30,.90],[.12,1.00],[-.19,.98]],.20,paint);
+     panel([[-.48,.91],[-.15,.91],[-.07,1.04],[-.43,1.05]],.19,accent);
+     curved([[.40,.82,0],[.59,.87,0],[.85,.80,0]],.022,paint);
+     block(.17,.21,.018,.47,1.09,.10,accent);
+     if(s.kind==='surron'){
+       // Lightweight open frame and visible battery pack, not petrol engine.
+       panel([[-.32,.63],[-.13,.54],[.23,.78],[.08,.95]],.10,paint);
+       block(.28,.34,.17,-.04,.75,0,dark);
+       for(let i=0;i<4;i++)line([-.15,.59+i*.07,.10],[.09,.59+i*.07,.10],.006,paint);
+     }
+     if(s.kind==='dirt'){
+       block(.21,.24,.19,-.02,.67,0,dark);
+       block(.29,.09,.23,.10,.82,0,accent);
+       curved([[-.17,.56,.14],[.04,.53,.14],[.32,.68,.14]],.023,steel);
+     }
+     if(s.kind==='supermoto'){
+       block(.27,.04,.24,.65,.77,0,paint);
+       disk(.13,.012,frontX,r,.06,steel);
+     }
+   }
+   if(s.kind==='sport'){
+     // Layered side fairing with vent cutouts, tall screen and pointed nose.
+     panel([[-.41,.67],[-.18,.49],[.28,.51],[.67,.73],[.57,.94],[.15,1.00],[-.22,.87]],.26,paint);
+     panel([[.05,.68],[.35,.74],[.48,.90],[.19,.87]],.012,dark);
+     panel([[.40,.87],[.70,.84],[.62,1.05],[.48,1.16]],.22,accent);
+     panel([[.43,1.06],[.57,1.20],[.69,1.12]],.015,glass);
+     for(const z of [-.145,.145])line([.38,1.11,z],[.46,1.13,z+(z>0?.12:-.12)],.009,dark);
+     block(.23,.038,.23,-.49,1.06,0,seatMat);
+     curved([[-.22,.49,.17],[-.04,.42,.17],[.27,.48,.17]],.023,dark);
+   }
+   if(s.kind==='cruiser'){
+     // Wide teardrop tank, sweeping exhausts, large round headlamp and pannier.
+     const tank=sphere(.25,.01,.84,0,paint);tank.scale.set(1.30,.55,.78);
+     for(const z of [-.18,.18]){
+       curved([[-.35,.53,z],[-.13,.40,z],[.22,.41,z],[.48,.44,z]],.026,chrome);
+       block(.22,.23,.06,-.52,.70,z,paint);
+     }
+     disk(.11,.09,.46,1.04,0,chrome);
+     disk(.085,.008,.46,1.04,.051,lamp);
+     block(.20,.03,.33,-.45,.93,0,seatMat);
+   }
+   if(s.kind==='moped'||s.kind==='scooter'){
+     // Step-through footwell, leg shield, integrated light and rear lamp.
+     panel([[-.32,.39],[.17,.39],[.28,.53],[.09,.56],[-.30,.53]],.23,dark);
+     panel([[.28,.48],[.54,.54],[.51,1.08],[.39,1.16],[.29,.90]],.25,paint);
+     disk(.045,.02,.49,.96,.14,lamp);
+     block(.10,.05,.06,-.78,.86,0,tail);
+     if(s.kind==='scooter')block(.23,.18,.21,-.11,.69,0,dark);
+   }
+   // Rear lighting and indicators on roadgoing motorcycles.
+   if(['sport','cruiser','moped','scooter','supermoto'].includes(s.kind)){
+     block(.11,.035,.18,-.68,1.01,0,tail);
+     for(const z of [-.20,.20])sphere(.023,-.64,1.00,z,amber);
+   }
+ }
+ if(kick){
+   // Stand-up e-scooter gets a properly narrow deck, cable, brake and display.
+   block(.88,.014,.15,-.02,.209,0,tyreGroove);
+   block(.22,.10,.17,-.29,.15,0,dark);
+   curved([[frontX,1.14,.02],[frontX-.06,1.07,.04],[frontX-.03,.73,.04],[frontX,.47,.04]],.004,dark);
+   block(.10,.025,.07,frontX,1.21,0,dark);
+   block(.045,.004,.025,frontX,1.226,0,glass);
+   disk(.035,.025,frontX,1.08,.015,lamp);
+   block(.065,.027,.08,-.45,.23,0,tail);
+   line([-.31,.16,-.09],[-.42,.035,-.11],.009,steel);
+ }
+ // Model-specific trim and distinguishing hardware for all 30 variants.
+ const mark=mat(s.old?0x6b6256:0xd5d8d8,.3,.55);
+ if(!kick){
+   for(const z of [-.115,.115]){
+     if(s.kind==='roadster'||s.kind==='step')block(.07,.025,.009,-.22,.90,z,mark);
+     if(s.kind==='mtb'||s.kind==='fat')block(.11,.025,.010,-.10,.83,z,mark);
+   }
+ }
+
  // Ground alignment and stable metadata for later asset placement.
  g.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(g);
  for(const child of g.children)child.position.y-=bounds.min.y;
- g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,gameplayIntegrated:false};
+ g.userData={id:s.id,label:s.label,kind:s.kind,collection:'SFUK_30_Bikes',status:'pending-review',units:'metres',prototype:true,polishVersion:2,gameplayIntegrated:false};
  return g;
 }
