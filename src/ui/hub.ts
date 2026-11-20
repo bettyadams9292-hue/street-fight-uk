@@ -1,3 +1,4 @@
+import { DEFAULT_TIN, TIN_STYLES } from '../render/props/biscuitTin';
 import { BOSSES } from '../ai/bosses';
 import { WEAPONS } from '../combat/Weapons';
 import { STYLES } from '../data/styles';
@@ -304,9 +305,10 @@ function hintFor(flag: string): string {
   }
 }
 
-export function tinScreen(progress: Progress, close: () => void, changed: () => void): Screen {
-  return panelScreen('Biscuit tin', progress, (msg) => {
+export function tinScreen(progress: Progress, close: () => void, changed: () => void, restyle?: () => void): Screen {
+  return panelScreen('Biscuit tin', progress, (msg, rebuild) => {
     const s = progress.save;
+    const now = s.property.tin ?? DEFAULT_TIN;
     return [
       h('p', { text: 'Money in the tin is safe and pays for training, food and cabs. Money in your pocket goes with you, and some of it goes if you get battered.' }),
       shopRow('Put it in the tin', `£${s.cash.pocket} on you`, s.cash.pocket > 0 ? `Bank £${s.cash.pocket}` : 'Nothing on you', s.cash.pocket > 0 ? () => {
@@ -314,6 +316,14 @@ export function tinScreen(progress: Progress, close: () => void, changed: () => 
         changed();
         msg(`Put £${n} in the tin. £${s.cash.bank} saved.`);
       } : null),
+      // Which tin sits on the desk: the three ornate tins, free to swap.
+      ...TIN_STYLES.map((t) => shopRow(`${t.name} tin`, t.id === now ? 'On the desk now' : 'Swap your savings into this one', t.id === now ? 'In use' : 'Use this tin', t.id === now ? null : () => {
+        s.property.tin = t.id;
+        changed();
+        restyle?.();
+        msg(`Your savings are in the ${t.name.toLowerCase()} tin now.`);
+        rebuild();
+      })),
     ];
   }, close);
 }

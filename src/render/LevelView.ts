@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { biscuitTin } from './props/biscuitTin';
 import { furniture, produceHeap, type FurnitureId, type ProduceId } from './props/KenneyLibrary';
 import { gymPiece, type GymModelId } from './props/GymLibrary';
 import { shopPiece, type ShopModelId } from './props/ShopLibrary';
@@ -2636,16 +2637,26 @@ export class LevelView {
         break;
       }
       case 'desk': {
+        // The biscuit tin (your savings) at the left end of the desktop, turned a little as if just put down.
+        const tin = (y: number) => {
+          const t = biscuitTin(p.item);
+          if (!t) return false;
+          t.position.set(-W / 2 + 0.22, y, 0.02);
+          t.rotation.y = 0.12;
+          g.add(t);
+          return true;
+        };
         if (this.fit(g, 'desk', W, 0.78, D)) {
-          this.fit(g, 'laptop', 0.4, 0.25, 0.3, { x: -0.1, y: 0.78 });
+          this.fit(g, 'laptop', 0.4, 0.25, 0.3, { x: 0.02, y: 0.78 });
           this.fit(g, 'lampRoundTable', 0.2, 0.42, 0.2, { x: W / 2 - 0.2, y: 0.78 });
+          tin(0.78);
           break;
         }
         const wood = this.mat('#9a7a5a', 0.7);
         B(W, 0.05, D, 0, 0.75, 0, wood);
         for (const dx of [-W / 2 + 0.04, W / 2 - 0.04]) B(0.05, 0.75, D, dx, 0.375, 0, wood);
         // Biscuit tin and lamp.
-        C(0.13, 0.13, 0.12, -0.2, 0.84, 0.05, this.mat('#1d4a8a', 0.3, 0.6));
+        if (!tin(0.775)) C(0.13, 0.13, 0.12, -0.2, 0.84, 0.05, this.mat('#1d4a8a', 0.3, 0.6));
         B(0.05, 0.4, 0.05, 0.4, 0.97, -0.1, this.mat('#222', 0.5));
         B(0.2, 0.12, 0.2, 0.4, 1.2, -0.05, this.mat('#f0e0b0', 0.6, 0, { emissive: 0xffd080, emissiveIntensity: 0.8 }), false);
         break;

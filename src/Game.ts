@@ -1090,7 +1090,14 @@ export class Game {
         });
         break;
       case 'tin':
-        screen = tinScreen(p, close, saved);
+        screen = tinScreen(p, close, saved, () => {
+          // Redraw the house so the desk carries the new tin; you stay where you stood.
+          const w = this.world;
+          if (!w || w.level.id !== 'home') return;
+          close();
+          this.enterArea('home', 'start', { at: { x: w.player.pos.x, z: w.player.pos.z } });
+          this.hud.toast('Savings moved into the new tin', 'item');
+        });
         break;
       case 'pawn_counter':
         screen = pawnScreen(p, this.ui, saved, close, { rob: () => this.robShop('pawn', at ?? { x: 7.2, z: 0.6 }), priceMult: p.shop('pawn').priceMult });
