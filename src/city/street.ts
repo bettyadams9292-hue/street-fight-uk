@@ -877,14 +877,47 @@ export function planStreet(level: LevelDef): StreetPlan {
     return prev;
   }
 
+  /**
+   * A fence run from the approved expansion: galvanised palisade round yards, docks and works; chain-link on estates
+   * and back streets; close-board timber in the suburbs. Rough districts mix in the damaged versions (missing boards,
+   * sagging wire, a bent gate). A run longer than 6 m gets a gate of its kind in the middle.
+   */
+  function approvedFence(f: FacadeDef, frng: Rng): void {
+    const yard = d!.ground === 'yard' || d!.ground === 'quay';
+    const suburb = d!.ground === 'suburb';
+    const rough = d!.tints === GRIT || d!.tints === DARK || level.theme === 'estate' || level.theme === 'alleys';
+    const panel = yard ? 'palisadeFence' : suburb ? 'timberFence' : 'chainLinkFence';
+    const worn = yard ? 'palisadeFence' : suburb ? 'poorTimberFence' : 'poorChainLinkFence';
+    const gate = yard ? (rough ? 'poorPalisadeGate' : 'palisadeGate') : suburb ? (rough ? 'poorTimberGate' : 'timberFence') : 'chainLinkGate';
+    const span = f.x1 - f.x0;
+    const PANEL_W: Record<string, number> = { palisadeFence: 3.17, timberFence: 2.87, chainLinkFence: 3.15, poorTimberFence: 2.87, poorChainLinkFence: 3.15 };
+    const GATE_W: Record<string, number> = { palisadeGate: 1.88, poorPalisadeGate: 1.88, chainLinkGate: 1.61, poorTimberGate: 1.22, timberFence: 2.87 };
+    const gw = span > 6 && gate !== 'timberFence' ? GATE_W[gate] : 0;
+    const mid = (f.x0 + f.x1) / 2;
+    const runs: [number, number][] = gw ? [[f.x0, mid - gw / 2], [mid + gw / 2, f.x1]] : [[f.x0, f.x1]];
+    if (gw) plan.approved.push({ id: gate, x: mid, y: 0, z: back - 0.12, ry: 0 });
+    for (const [a, b] of runs) {
+      const len = b - a;
+      if (len < 0.4) continue;
+      const n = Math.max(1, Math.round(len / PANEL_W[panel]));
+      const cw = len / n;
+      for (let i = 0; i < n; i++) {
+        const id = rough && frng.chance(yard ? 0.25 : 0.4) ? worn : panel;
+        plan.approved.push({ id, x: a + cw * (i + 0.5), y: 0, z: back - 0.12, ry: 0, scale: [cw / PANEL_W[id], 1, 1] });
+      }
+    }
+  }
+
   /** Fences and hoardings: panels along the building line, with yards and far buildings behind. */
   function fence(f: FacadeDef, frng: Rng): void {
     const span = f.x1 - f.x0;
-    const model = f.kind === 'hoarding' ? 'nyc/prop-hoarding-panel' : level.theme === 'alleys' || d!.ground === 'suburb' ? 'hood/board-privacy-fence-run' : 'hood/chain-link-fence-run';
-    const s = size(model);
-    const n = Math.max(1, Math.round(span / s.w));
-    const cw = span / n;
-    for (let i = 0; i < n; i++) put(model, f.x0 + cw * (i + 0.5), 0, back - s.maxZ, { sx: cw / s.w });
+    if (f.kind === 'hoarding') {
+      const model = 'nyc/prop-hoarding-panel';
+      const s = size(model);
+      const n = Math.max(1, Math.round(span / s.w));
+      const cw = span / n;
+      for (let i = 0; i < n; i++) put(model, f.x0 + cw * (i + 0.5), 0, back - s.maxZ, { sx: cw / s.w });
+    } else approvedFence(f, frng);
     plan.surfaces.push({ kind: 'garden', x0: f.x0, x1: f.x1, z0: back - 9, z1: back });
     tile('garden', 'hood/driveway-slab-tile', f.x0, f.x1, back - 9, back, { y: -0.05, tint: f.kind === 'hoarding' ? '#8a8478' : '#7f9068' });
     plan.surfaces.pop();

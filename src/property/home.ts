@@ -1,5 +1,5 @@
 import { ROOM_EXTRA, deepRoom } from '../world/rooms';
-import { addDecor, roomDecor } from '../world/roomDecor';
+import { D, addDecor, roomDecor } from '../world/roomDecor';
 import type { ContainerDef, LevelDef, PropDef, StationDef } from '../world/LevelTypes';
 import { propHalf } from '../world/LevelTypes';
 import { BIKE_SIZE, BIKES, FURNITURE, GARAGE_SPACES, ROOMS, ROOM_IDS, allowedRooms, roomAt, type FurnitureDef, type RoomId } from './catalogue';
@@ -77,7 +77,7 @@ const FIXED_STATIONS: StationDef[] = [
   { id: 'kitchen', x: -1.2, z: -0.85, label: 'WORKTOP|Prepare food' },
   { id: 'gym', x: 2.45, z: -1.2, label: 'Coach’s board: training plan, moves and styles' },
   { id: 'garage', x: 20.6, z: -0.75, label: 'Workbench: repair, craft and upgrade weapons' },
-  { id: 'storage', x: 18.75, z: -0.9, label: 'Stash: your storage chest' },
+  { id: 'storage', x: 18.75, z: -0.9, label: 'Stash: your safe' },
   { id: 'bike_rack', x: 13.75, z: 0.75, label: 'Bike store: take a bike out or put one away' },
 ];
 
@@ -261,8 +261,24 @@ export function garageBikes(prop: PropertySave): PropDef[] {
 }
 
 /** The whole house from the save. */
-export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave): LevelDef {
-  const props: PropDef[] = [...HOME_FIXTURES, ...garageBikes(prop), ...(gym ? gymProps(gym) : [])];
+/**
+ * The stash is a safe that grows with it (the approved expansion's safes): small at the start (60 slots), then
+ * medium, then large, and the large one bigger again at the most it holds.
+ */
+export function stashSafe(cap: number): { id: string; scale: number; size: [number, number] } {
+  const tier = Math.max(0, Math.round((Math.min(150, cap) - 60) / 30));
+  const id = ['safeSmall', 'safeMedium', 'safeLarge', 'safeLarge'][Math.min(3, tier)];
+  const scale = tier >= 3 ? 1.12 : 1;
+  const half: Record<string, [number, number]> = { safeSmall: [0.28, 0.26], safeMedium: [0.43, 0.4], safeLarge: [0.68, 0.63] };
+  const [hx, hz] = half[id];
+  return { id, scale, size: [hx * scale, hz * scale] };
+}
+
+export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave, stashCap = 60): LevelDef {
+  // The stash's chest is drawn as its safe, standing against the garage's back wall at the safe's own size.
+  const safe = stashSafe(stashCap);
+  const fixtures = HOME_FIXTURES.map((p) => (p.kind === 'chest' ? { ...p, item: safe.id, scale: safe.scale, size: safe.size, z: -2.02 + safe.size[1] } : p));
+  const props: PropDef[] = [...fixtures, ...garageBikes(prop), ...(gym ? gymProps(gym) : [])];
   for (const f of prop.furniture) {
     const def = FURNITURE[f.id];
     if (!def || !f.at) continue;
@@ -283,7 +299,7 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave
     facades,
     walls: HOME_WALLS.map((w) => ({ ...w })),
     props,
-    stations: [...FIXED_STATIONS, ...HOUSE_SPOTS.map(({ id, x, z, label }) => ({ id, x, z, label })), ...furnitureStations(prop), seatStation(prop), ...gymStations(gym)],
+    stations: [...FIXED_STATIONS.map((st) => (st.id === 'storage' ? { ...st, z: Math.max(st.z, -2.02 + safe.size[1] * 2 + 0.3) } : st)), ...HOUSE_SPOTS.map(({ id, x, z, label }) => ({ id, x, z, label })), ...furnitureStations(prop), seatStation(prop), ...gymStations(gym)],
     containers: HOME_CONTAINERS.map((c) => ({ ...c })),
   });
   // Each room dressed round its edges with the furniture pack. Anything you've bought or placed comes first: a
@@ -292,7 +308,7 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave
 }
 
 /** The garage's dressing (racks, cupboard, boxes): fixed, as the garage isn't furnished from the computer. */
-const HOME_DECOR: PropDef[] = roomDecor('garage', 12.1, 22);
+const HOME_DECOR: PropDef[] = [...roomDecor('garage', 12.1, 22), D('gymMirror', 7.0, -2.0, { wallY: 0 })];
 
 /**
  * What furnishes the house's rooms beyond the starter pieces: put out once, as furniture you own, so it can be

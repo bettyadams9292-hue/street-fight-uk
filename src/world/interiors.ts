@@ -605,7 +605,12 @@ const DECOR: Record<string, PropDef[]> = {
     D('f02_06', 15.6, 4.9), D('f04_05', 14.6, 4.9, { rot: 3 }), D('f04_05', 16.6, 4.9, { rot: 1 }), D('f03_28', 20.6, 5.0),
   ],
   clothes_shop: [D('f01_19', 15.0, 4.8), D('f06_12', 4.8, 4.8), D('pottedTree', 1.2, 2.2)],
-  pawn_shop: [D('f03_30', 1.6, 2.4), D('arcadeCabinet', 12.8, 2.3), D('f01_07', 6.8, 5.0)],
+  pawn_shop: [D('f03_30', 1.6, 2.4), D('arcadeCabinet', 12.8, 2.3), D('f01_07', 6.8, 5.0), D('poorSafe', 10.4, 2.3)],
+  // Gyms (the approved expansion): mirrors on the back wall, a dumbbell rack and squat rack out on the floor, a bike.
+  gym_store: [W('gymMirror', 9.0, 0), D('olympicBar20kg', 6.0, 4.9), D('safeSmall', 18.4, 2.1), D('safeMedium', 19.6, 2.3), D('squatRack', 3.4, 4.3), D('dumbbellRack', 11.5, 4.9)],
+  boxing_gym: [W('gymMirror', 6.0, 0), W('gymMirror', 8.2, 0), D('dumbbellRack', 18.4, 4.9), D('exerciseBike', 1.4, 2.4)],
+  karate_dojo: [W('gymMirror', 6.0, 0), W('gymMirror', 8.2, 0), D('dumbbellRack', 17.6, 4.9)],
+  wrestling_club: [W('gymMirror', 6.0, 0), W('gymMirror', 8.2, 0), D('squatRack', 17.6, 4.4), D('exerciseBike', 1.4, 2.4)],
   bike_shop: [D('f01_18', 1.6, 2.4), D('cardboardBox', 15.6, 2.4), D('cardboardBox', 16.3, 2.4)],
   grow_shop: [D('f01_18', 1.6, 2.4), D('cardboardBox', 2.4, 5.0)],
 };

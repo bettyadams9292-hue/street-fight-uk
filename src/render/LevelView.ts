@@ -3,6 +3,7 @@ import { furniture, produceHeap, type FurnitureId, type ProduceId } from './prop
 import { gymPiece, type GymModelId } from './props/GymLibrary';
 import { shopPiece, type ShopModelId } from './props/ShopLibrary';
 import { packWood } from './props/packFurniture';
+import { approvedAt } from './props/approvedFit';
 import { hydroPiece, hydroReady, type HydroModelId } from './props/HydroLibrary';
 import { securityPiece, type SecurityModelId } from './props/SecurityLibrary';
 import { doorPiece, type DoorStyle } from './props/DoorLibrary';
@@ -446,6 +447,33 @@ export class LevelView {
   }
 
   /** Put a gym model (GymLibrary) into the group, fitted to w × h × d; false until they've loaded. */
+  /** Gym dressing the approved expansion covers: plate stacks (25 down to 10 kg), and a pair of hex dumbbells. */
+  private approvedGymProp(g: THREE.Group, item: string): boolean {
+    if (item === 'plate_stack' || item === 'plate_stack_b') {
+      const plates = item === 'plate_stack' ? ['plate25kg', 'plate20kg', 'plate15kg', 'plate10kg'] : ['plate20kg', 'plate20kg', 'plate10kg', 'plate5kg'];
+      let y = 0;
+      for (const id of plates) {
+        const m = approvedAt(id);
+        if (!m) return false;
+        m.position.y = y;
+        y += 0.055;
+        g.add(m);
+      }
+      return true;
+    }
+    if (item === 'dumbbell_medium' || item === 'dumbbell_large' || item === 'dumbbell_small') {
+      const id = item === 'dumbbell_large' ? 'hexDumbbell20' : 'hexDumbbell10';
+      for (const dz of [-0.1, 0.1]) {
+        const m = approvedAt(id);
+        if (!m) return false;
+        m.position.z = dz;
+        g.add(m);
+      }
+      return true;
+    }
+    return false;
+  }
+
   private gym(g: THREE.Group, id: GymModelId, w: number, h: number, d: number, o: { x?: number; y?: number; z?: number; keepAspect?: boolean; turn?: number } = {}): boolean {
     const m = gymPiece(id, w, h, d, o);
     if (!m) return false;
@@ -2116,20 +2144,12 @@ export class LevelView {
     backWall.position.set(cx, 4, this.back - 3.5);
     this.group.add(backWall);
     for (let x = f.x0 + 2; x < f.x1 - 1; x += 4) this.windowAt2(x, 4.5, this.back - 3.48);
-    // Palisade fence.
-    const steel = this.mat('#2d3a33', 0.5, 0.6);
-    this.box(w, 0.08, 0.06, cx, 0.4, this.back + 0.05, steel, false);
-    this.box(w, 0.08, 0.06, cx, 2.0, this.back + 0.05, steel, false);
-    const n = Math.floor(w / 0.18);
-    const geo = new THREE.BoxGeometry(0.07, 2.4, 0.03);
-    const inst = new THREE.InstancedMesh(geo, steel, n);
-    const m = new THREE.Matrix4();
-    for (let i = 0; i < n; i++) {
-      m.makeTranslation(f.x0 + i * 0.18 + 0.09, 1.2, this.back + 0.08);
-      inst.setMatrixAt(i, m);
-    }
-    inst.castShadow = true;
-    this.group.add(inst);
+    // The approved galvanised palisade fence, panels stretched a little to fill the run, baked into one mesh.
+    const n = Math.max(1, Math.round(w / 3.17));
+    const cw = w / n;
+    const panels: ApprovedPlacement[] = [];
+    for (let i = 0; i < n; i++) panels.push({ id: 'palisadeFence', x: f.x0 + cw * (i + 0.5), y: 0, z: this.back + 0.1, ry: 0, scale: [cw / 3.17, 1, 1] });
+    this.buildApproved(panels);
   }
 
   private windowAt2(x: number, y: number, z: number): void {
@@ -2692,6 +2712,14 @@ export class LevelView {
         break;
       }
       case 'chest': {
+        // The stash: a safe from the approved expansion, its size set by how much the stash holds.
+        if (p.item?.startsWith('safe')) {
+          const safe = approvedAt(p.item, { scale: p.scale ?? 1 });
+          if (safe) {
+            g.add(safe);
+            break;
+          }
+        }
         // Ottoman storage chest: wood with iron straps and a brass lock.
         const wood = new THREE.MeshStandardMaterial({ map: woodFloorTexture(1, 0.5), color: 0x8a5a32, roughness: 0.6 });
         B(W, 0.55, D, 0, 0.3, 0, wood);
@@ -3297,11 +3325,18 @@ export class LevelView {
         break;
       }
       case 'gym_prop': {
-        // Benches, plate stacks and loose dumbbells dressing the gyms; nothing until the models load.
+        // Plates and loose dumbbells from the approved gym expansion; benches from the gym kit (nothing until it loads).
+        if (this.approvedGymProp(g, p.item ?? '')) break;
         this.gym(g, (p.item ?? 'flat_bench') as GymModelId, W, 1.2, D, { keepAspect: true });
         break;
       }
       case 'boxing_ring': {
+        // The approved professional four-rope ring, fitted to the floor it stands on.
+        const ring = approvedAt('boxingRing', { fit: [W, D + 0.7], max: 1.05 });
+        if (ring) {
+          g.add(ring);
+          break;
+        }
         // A ring at its footprint: raised canvas with a skirt, four corner posts (red and blue corners, two neutral),
         // three ropes on every side, padded turnbuckles, and steps up on the near side.
         const H0 = 0.75;

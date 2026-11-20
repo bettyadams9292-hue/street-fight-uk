@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { approvedAt } from './props/approvedFit';
 import type { CharacterAppearance } from '../character/Appearance';
 import type { Fighter } from '../fighter/Fighter';
 import { buildCharacterRig, type Rig } from './CharacterRig';
@@ -201,7 +202,7 @@ export class FighterView {
   }
 
   private buildGear(kind: 'dumbbells' | 'barbell'): boolean {
-    if (!gymReady()) return void loadGym(), false;
+    if (!gymReady()) void loadGym();
     if (!this.fists) {
       this.fists = [new THREE.Object3D(), new THREE.Object3D()];
       this.fists[0].position.set(0, -0.3, 0.02);
@@ -211,20 +212,22 @@ export class FighterView {
     }
     if (kind === 'dumbbells') {
       for (const fist of this.fists) {
-        // The handle across the fist (the model's long axis is z), the heads either side.
-        const piece = gymPiece('dumbbell_small', 0.17, 0.16, 0.19, { keepAspect: true });
+        // The approved 10 kg hex dumbbell: its handle (the long axis, x) across the fist, the heads either side.
+        const hex = approvedAt('hexDumbbell10', { scale: 0.9 });
+        const piece = hex ?? gymPiece('dumbbell_small', 0.17, 0.16, 0.19, { keepAspect: true });
         if (!piece) return this.dropGear(), false;
         const g = new THREE.Group();
-        piece.position.y = -0.08;
+        piece.position.y = -0.08 + (hex ? 0.02 : 0);
         g.add(piece);
-        g.rotation.y = Math.PI / 2;
+        if (!hex) g.rotation.y = Math.PI / 2;
         fist.add(g);
         this.gear.push(g);
       }
       return true;
     }
-    // A bar 1.35 m long with 44 cm plates, centred on its own middle.
-    const piece = gymPiece('barbell', 1.35, 0.44, 0.44, { keepAspect: true });
+    // The approved 60 kg Olympic barbell (the bar a little short of its 2.2 m, so it clears the walls), centred on its
+    // own middle; the gym kit's bar if that isn't there.
+    const piece = approvedAt('barbell60kg', { scale: 0.75 }) ?? gymPiece('barbell', 1.35, 0.44, 0.44, { keepAspect: true });
     if (!piece) return false;
     const box = new THREE.Box3().setFromObject(piece);
     piece.position.y -= (box.min.y + box.max.y) / 2;

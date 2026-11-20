@@ -73,3 +73,11 @@ city 112 / 379k, Hollins Estate 74 / 240k, Tanner Road Estate 98 / 320k.
 - **Shop windows and fronts:** pubs, chippies, bakeries, kebab shops, corner shops and off-licences show approved stock; awnings over most small shops in the shop's colour; hanging signs on pubs.
 - **Interior furniture pack** (`FURNITURE` batch, 142 of 150 models; the 8 bookcases that throw as authored are left out, `FURNITURE_BROKEN`). Catalogue furniture with a pack equivalent is drawn from it everywhere furniture appears (home, the 20 properties, Home & Hearth, shop goods): `src/render/props/packFurniture.ts`, fitted to the item's footprint so collision and the home editor are unchanged, the chosen colour on its upholstery or wood. TVs, rugs, appliances, bathroom fittings and wall pieces keep their own models.
 - **Street furniture at real size:** placements no longer shrink a whole model to fit a shallow slot (bus shelters were drawn at 70%). Height and length stay real (2.5 m shelter, 2.7 m phone box beside a 1.78 m player); only depth gives way.
+
+## Update, 20 Nov: gym, security and neighbourhood expansion
+
+All 39 owner-approved models (`assets/streetassettesting/gym-security-neighbourhood-expansion.ts`, from `pr-dev`) are registered (`EXPANSION` batch) and in use:
+- **Gym:** home gym kit (dumbbell rack, squat rack, studio bike), plate stacks and hex dumbbells, the professional boxing ring, mirrors in every gym, an Olympic bar and racks on show at Iron Temple; the trainee holds the hex dumbbells and a 60 kg barbell. Treadmill, speed ball, heavy bag and mat keep their old models (no equivalent).
+- **Fences:** palisade round yards and works (rusted bent gates in rough districts), chain-link on estates and back streets (sagging runs mixed in), close-board timber in the suburbs (missing-board runs, broken gates); non-kit fence frontages are palisade too.
+- **Safes:** the stash is a safe that grows with each upgrade (small at 60 slots, medium at 90, large at 120, larger at 150); safes on show at Iron Temple; the battered safe in the pawn shop.
+- Barbells by weight (40–200 kg), the bare 20 kg bar, single plates and collars are registered for shop items and strength levels but not yet placed.
