@@ -29,3 +29,9 @@ Original `streetassettesting/` sources and viewers are retained for comparison a
 - `gym-security-neighbourhood-expansion.ts` is a preserved copy of the existing `newassetsfromchatgpt-expansion.ts` source, including the four original safes: `safeSmall`, `safeMedium`, `safeLarge`, and `poorSafe`.
 - Use `EXPANSION_ASSETS` and `createExpansionAsset(id)` to access the models. The file also includes the original gym and neighbourhood assets; no existing source or game integrations were changed.
 - Branch: `pr-dev`; not merged into `dev`. **Approval status: all 39 expansion models confirmed approved by user on 20 November 2026, referring to approval the previous night.** This includes 26 gym models, 9 fences/gates, and 4 safes. Approved for the asset library; no playable-game integration.
+
+## Black corded office desk telephone — APPROVED
+
+- `black-desk-telephone.ts`: `blackDeskTelephone`, reference-based black corded desk telephone with handset resting on cradle, coiled cable, LCD, navigation and keypad.
+- **Status:** user-approved 20 November 2026. Promoted from `streetassettesting/black-desk-telephone.ts` to this approved asset folder on `pr-dev` only.
+- Import `TELEPHONE_ASSETS` and `createTelephoneAsset(id)` to use it. No playable-game integration or changes to `dev`.
