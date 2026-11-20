@@ -12,7 +12,9 @@ const FIGHTERS = 5;
 const SHOT_MS = 9000;
 const FADE_MS = 1400;
 
-const small = () => Math.min(innerWidth, innerHeight) < 600 || innerWidth < 1000;
+// Always the full-size art: phones have dense screens, and the street on an upright phone is shown far wider than
+// the screen, so the old half-size copies (the -small files) were blown up past their pixels.
+const small = () => false;
 const streetSrc = (i: number) => `/art/menu/street-${i + 1}${small() ? '-small' : ''}.webp`;
 const fighterSrc = (i: number) => `/art/menu/fighter-${i + 1}${small() ? '-small' : ''}.webp`;
 
