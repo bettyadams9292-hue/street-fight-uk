@@ -192,7 +192,12 @@ export class Game {
     this.hud.setZoomed(0);
     this.phone = new Phone({
       progress: () => this.progress,
-      here: () => (this.world ? { area: this.world.level.id as AreaId, calm: this.calm() } : null),
+      here: () => (this.world ? { area: this.world.level.id as AreaId, calm: this.calm(), x: this.world.player.pos.x } : null),
+      setDestination: (area) => {
+        if (!this.progress) return;
+        this.progress.save.destination = area;
+        this.saveGame();
+      },
       objective: () => this.hud.objectiveText(),
       messages: () => this.hud.messages(),
       markRead: () => this.hud.markRead(),

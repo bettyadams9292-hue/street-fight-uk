@@ -12,6 +12,7 @@ import { cabStop, onMap, place, places, travelOptions, unlocked, type TravelOpti
 import { TAXI_COST, moHint } from '../hub';
 import { LEVELS } from '../../world/levels';
 import { embedPortraitRules } from './embedCss';
+import { mapApp } from './mapApp';
 
 export interface PhoneMessage {
   text: string;
@@ -21,7 +22,9 @@ export interface PhoneMessage {
 export interface PhoneDeps {
   progress(): Progress | null;
   /** Where you are, and whether it's calm enough to leave (no fight, no police). */
-  here(): { area: AreaId; calm: boolean } | null;
+  here(): { area: AreaId; calm: boolean; x: number } | null;
+  /** The route on the map (null: none). */
+  setDestination(area: AreaId | null): void;
   objective(): string;
   messages(): { needs: { key: string; tip: string; urgency: number }[]; log: PhoneMessage[] };
   markRead(): void;
@@ -46,7 +49,7 @@ export interface PhoneDeps {
   sound(kind: 'open' | 'close' | 'tap'): void;
 }
 
-type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'jobs' | 'house' | 'embed';
+type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'jobs' | 'house' | 'embed' | 'map';
 
 interface AppDef {
   id: string;
@@ -201,9 +204,26 @@ export class Phone {
 
   private render(): void {
     if (this.app === 'embed') return;
+    if (this.app === 'map') return this.renderMap();
     const view = this.app === 'home' ? this.homeScreen() : this.appScreen(this.app);
     this.screen.replaceChildren(view);
     this.screen.dataset.app = this.app;
+  }
+
+  /** Maps: full-bleed, its own sheet and buttons; a small back button over the map. */
+  private renderMap(): void {
+    const p = this.d.progress();
+    const here = this.d.here();
+    if (!p || !here) return;
+    const view = mapApp({
+      progress: p,
+      here: { area: here.area, x: here.x },
+      calm: here.calm,
+      travel: (area, opt) => this.leave(() => this.d.travel(area, opt)),
+      setDestination: (area) => this.d.setDestination(area),
+    });
+    this.screen.replaceChildren(h('div', { class: 'ph-appview view-map' }, view, h('button', { class: 'pm-back', 'aria-label': 'Back', onclick: () => this.go('home') }, h('img', { src: ICON('arrow_left'), alt: '' }))));
+    this.screen.dataset.app = 'map';
   }
 
   // ---- home screen ---------------------------------------------------------------------------
@@ -212,7 +232,7 @@ export class Phone {
     const unread = () => this.d.unread();
     return [
       { id: 'messages', name: 'Messages', icon: 'bell', open: () => this.go('messages'), badge: unread },
-      { id: 'map', name: 'Map', icon: 'map', open: () => this.launch(() => this.d.openMap(), 'Map') },
+      { id: 'map', name: 'Maps', icon: 'map', open: () => this.go('map') },
       { id: 'cabs', name: 'Cabs', icon: 'car_hatch', open: () => this.go('cabs') },
       { id: 'bank', name: 'CaliBank', icon: 'coins', open: () => this.go('bank') },
       { id: 'bag', name: 'Bag', icon: 'backpack', open: () => this.launch(() => this.d.openBag(), 'Bag') },
@@ -251,7 +271,7 @@ export class Phone {
   // ---- apps --------------------------------------------------------------------------------------
 
   private appScreen(app: AppId): HTMLElement {
-    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Dave’s Cabs', bank: 'CaliBank', jobs: 'Jobs', house: 'Home', embed: '' };
+    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Dave’s Cabs', bank: 'CaliBank', jobs: 'Jobs', house: 'Home', embed: '', map: 'Maps' };
     const body = app === 'messages' ? this.messages() : app === 'cabs' ? this.cabs() : app === 'bank' ? this.bank() : app === 'jobs' ? this.jobs() : this.house();
     return h(
       'div',
@@ -355,7 +375,7 @@ export class Phone {
     if (dest && LEVELS[dest]) {
       out.push(h('div', { class: 'ph-sec', text: 'Heading to' }), h('div', { class: 'ph-row' },
         h('div', { class: 'ph-what' }, h('b', { text: place(dest).name }), h('span', { text: place(dest).district })),
-        h('button', { class: 'ph-btn', onclick: () => this.launch(() => this.d.openMap(), 'Map') }, 'Map'),
+        h('button', { class: 'ph-btn', onclick: () => this.go('map') }, 'Map'),
       ));
     }
     return out;
