@@ -2,7 +2,7 @@
  * Police step 2 (docs/POLICE_PLAN.md): straight cops and bent ones, bungs, the bent custody sergeant, ringing
  * your crew for bail, and your phone held at the desk while you're in custody.
  *
- * - Every district has its own few officers (`roster`), the same faces every time, about one in six bent: more in
+ * - Every district has its own few officers (`roster`), the same faces every time, about one in four bent: more in
  *   the rough districts, fewer in the City Centre. You can't tell which is which until you've tried one.
  * - When they turn up you can have a word and offer a bung (`bungPrice`). A bent one takes it and walks off,
  *   and the district's police heat drops. A straight one nicks the idea: bribery goes on your record, more heat,
@@ -38,12 +38,12 @@ export function defaultPolice(): PoliceSave {
 
 // ---- the officers --------------------------------------------------------------------------------
 
-/** The bent ones' share, by district: rough streets more, the City Centre fewer, about 1 in 6 elsewhere. */
-export const BENT_BASE = 1 / 6;
+/** The bent ones' share, by district: rough streets more, the City Centre fewer, 1 in 4 elsewhere. */
+export const BENT_BASE = 0.25;
 export const ROUGH_DISTRICTS: ReadonlySet<string> = new Set(['Back Alleys', 'Kingsway', 'Canal Docks', 'Hollins', 'Abandoned Factory', 'Industrial Quarter', 'Dunc’s Territory']);
 export const CLEAN_DISTRICTS: ReadonlySet<string> = new Set(['City Centre', 'Ashcombe Park', 'Riverside Centre']);
 export function bentChance(district: string): number {
-  return ROUGH_DISTRICTS.has(district) ? 0.3 : CLEAN_DISTRICTS.has(district) ? 0.08 : BENT_BASE;
+  return ROUGH_DISTRICTS.has(district) ? 0.4 : CLEAN_DISTRICTS.has(district) ? 0.12 : BENT_BASE;
 }
 
 /** Officers each district has: the ones you meet there, in turn. */

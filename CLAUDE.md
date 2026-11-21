@@ -241,7 +241,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
      - the front counter's "Settle up: <district>" buttons are plain lettering (one per district, with a price);
      - what you owe a crew member for bail shows only when they refuse to follow you: show it in the Crew screen and the bank app, and let you pay it off there;
      - Kerrigan only appears in the Heat app: maybe a Messages thread, or the landline;
-     - you're let out standing in front of the cells, never shown inside one;
+     - the single cell you wake up in is drawn cut away (no front wall, `CUTAWAY` in `render/approved/prototype.ts`); a cell door that opens would let it keep its front;
      - the old `arrest()` in `world/robbery.ts` is only used by tests now (`stage5`, `mugging`): move those tests to `book()` and remove it.
 
 - **Performance, still to do:** characters are about 36–40k triangles each (body about 27k). Agreed plan (19 Nov, not started), all from the models we already have, no new art:

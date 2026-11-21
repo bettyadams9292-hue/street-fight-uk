@@ -74,6 +74,9 @@ function normalise(src: THREE.BufferGeometry, matrix: THREE.Matrix4, colour: THR
 
 const cache = new Map<string, Prototype>();
 
+/** Drawn cut away, without the front wall: the cell you wake up in after a night inside. */
+const CUTAWAY = new Set(['policeHoldingCellSingle']);
+
 /** The approved model `id`, built once. Throws for an id that isn't in the registry. */
 export function prototype(id: string): Prototype {
   const hit = cache.get(id);
@@ -83,7 +86,14 @@ export function prototype(id: string): Prototype {
   const root = def.build();
   // Lift-off roofs (the police cells' `inspectionRoof`) stay off: the game's rooms have no ceilings, and the
   // indoor camera looks down into them.
-  const parts = mergeGroup(root, (m) => m.name !== 'inspectionRoof');
+  // The single holding cell is one you wake up in: like every room in the game it's drawn cut away, without its
+  // front wall (and the door and sign on it), so you can be seen inside and walk out (world/interiors.ts).
+  let front = Infinity;
+  if (CUTAWAY.has(id)) {
+    root.updateMatrixWorld(true);
+    front = new THREE.Box3().setFromObject(root).max.z - 0.4;
+  }
+  const parts = mergeGroup(root, (m) => m.name !== 'inspectionRoof' && m.position.z < front);
   let triangles = 0;
   for (const p of parts) triangles += p.geometry.getAttribute('position').count / 3;
   const box = new THREE.Box3();
