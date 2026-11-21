@@ -23,6 +23,8 @@ export interface Settings {
   showFps: boolean;
   /** Story mode only: how hard the streets hit back. */
   difficulty: Difficulty;
+  /** One-off tutorial cards the first time you meet something (src/tutorial). */
+  tutorialHints: boolean;
 }
 
 const KEY = 'sfuk.settings.v1';
@@ -41,6 +43,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showHitboxes: false,
   showFps: false,
   difficulty: 'normal',
+  tutorialHints: true,
 };
 
 type Listener = (s: Settings) => void;

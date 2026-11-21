@@ -89,6 +89,8 @@ export class Hud {
   private bailCost!: HTMLElement;
   private bagCount!: HTMLElement;
   private flow!: HTMLElement;
+  /** Where the tutorial's lesson card sits: under the objective, above notifications (src/tutorial/overlay.ts). */
+  lesson!: HTMLElement;
   private head!: HTMLElement;
   private weaponChip: HTMLElement;
   private weaponBar: HTMLElement;
@@ -169,7 +171,8 @@ export class Hud {
     this.bossBar = h('div', { class: 'boss-bar' }, this.bossName, h('div', { class: 'bar health' }, this.bossTrail, this.bossFill));
     // Everything under the top bars flows down in one column: your level, money and needs, the objective,
     // then notifications. Its top follows the bars and buttons above it (measured, so it fits any screen).
-    this.flow = h('div', { class: 'hud-flow' }, this.story, this.notes.el);
+    this.lesson = h('div', { class: 'tut-slot' });
+    this.flow = h('div', { class: 'hud-flow' }, this.story, this.lesson, this.notes.el);
     this.activityTitle = h('b');
     this.activityLabel = h('span');
     this.activityFill = h('div', { class: 'act-fill' });

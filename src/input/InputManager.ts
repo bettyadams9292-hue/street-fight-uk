@@ -29,9 +29,14 @@ export const KEY_BINDINGS = {
   crew: ['KeyG'],
 } as const;
 
+/** Keys that open things outside a fight (the tutorial's prompts read these too). */
+export const MENU_KEYS = { phone: 'KeyP', bail: 'KeyX', inventory: 'KeyB', map: 'KeyM', character: 'KeyH', crew: 'KeyG', zoom: 'KeyZ' } as const;
+
 /** Standard gamepad mapping (Xbox names). */
-const PAD = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, LS: 10, RS: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
-const PAD_BUTTONS: Record<GameButton, number> = { lp: PAD.X, hp: PAD.Y, lk: PAD.A, hk: PAD.B, jump: PAD.LS, dodge: PAD.LT, grab: PAD.LB, swap: PAD.BACK };
+export const PAD = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, LS: 10, RS: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+export const PAD_BUTTONS: Record<GameButton, number> = { lp: PAD.X, hp: PAD.Y, lk: PAD.A, hk: PAD.B, jump: PAD.LS, dodge: PAD.LT, grab: PAD.LB, swap: PAD.BACK };
+/** The pad's other buttons: held block and special, USE, the phone and pause. */
+export const PAD_EXTRA = { block: PAD.RT, special: PAD.RB, use: PAD.LB, phone: PAD.RS, pause: PAD.START } as const;
 const STICK_DEADZONE = 0.25;
 /** Two taps of a direction this close together start a sprint (ms). */
 const DOUBLE_TAP_MS = 280;
@@ -132,13 +137,13 @@ export class InputManager {
       if ((KEY_BINDINGS.use as readonly string[]).includes(code)) this.useQueued = true;
       }
       if (code === 'Escape') this.emitMenu('back');
-      else if (code === 'KeyP') this.emitMenu('phone');
-      else if (code === 'KeyX') this.emitMenu('bail');
-      else if (code === 'KeyB') this.emitMenu('inventory');
-      else if (code === 'KeyM') this.emitMenu('map');
-      else if (code === 'KeyH') this.emitMenu('character');
-      else if (code === 'KeyG') this.emitMenu('crew');
-      else if (code === 'KeyZ') this.emitMenu('zoom');
+      else if (code === MENU_KEYS.phone) this.emitMenu('phone');
+      else if (code === MENU_KEYS.bail) this.emitMenu('bail');
+      else if (code === MENU_KEYS.inventory) this.emitMenu('inventory');
+      else if (code === MENU_KEYS.map) this.emitMenu('map');
+      else if (code === MENU_KEYS.character) this.emitMenu('character');
+      else if (code === MENU_KEYS.crew) this.emitMenu('crew');
+      else if (code === MENU_KEYS.zoom) this.emitMenu('zoom');
       // Outside a fight these open the map and inventory; in one they stay swap style and heavy punch.
       else if (code === 'Tab') this.emitMenu('map', 'keyboard', true);
       else if (code === 'KeyI') this.emitMenu('inventory', 'keyboard', true);
@@ -176,10 +181,10 @@ export class InputManager {
 
     for (const b of PRESS_BUTTONS) if (edge(PAD_BUTTONS[b])) this.pressedQueue.add(b);
     // A pad has no spare button: LB is USE out of a fight and GRAB in one (the world decides which counts).
-    if (edge(PAD.LB)) this.useQueued = true;
-    if (edge(PAD.START)) this.emitMenu('pause', 'gamepad');
+    if (edge(PAD_EXTRA.use)) this.useQueued = true;
+    if (edge(PAD_EXTRA.pause)) this.emitMenu('pause', 'gamepad');
     // Right-stick click: I (heavy punch) and RB (special) are fight buttons.
-    if (edge(PAD.RS)) this.emitMenu('phone', 'gamepad');
+    if (edge(PAD_EXTRA.phone)) this.emitMenu('phone', 'gamepad');
     if (edge(PAD.A)) this.emitMenu('confirm', 'gamepad');
     if (edge(PAD.B)) this.emitMenu('back', 'gamepad');
     if (edge(PAD.UP)) this.emitMenu('up', 'gamepad');
@@ -206,8 +211,8 @@ export class InputManager {
     out.moveX = ax + (pressed(PAD.RIGHT) ? 1 : 0) - (pressed(PAD.LEFT) ? 1 : 0);
     // Up = into the screen = negative z.
     out.moveZ = ay + (pressed(PAD.DOWN) ? 1 : 0) - (pressed(PAD.UP) ? 1 : 0);
-    out.block = pressed(PAD.RT) || (pad.buttons[PAD.RT]?.value ?? 0) > 0.4;
-    out.special = pressed(PAD.RB);
+    out.block = pressed(PAD_EXTRA.block) || (pad.buttons[PAD_EXTRA.block]?.value ?? 0) > 0.4;
+    out.special = pressed(PAD_EXTRA.special);
 
     if (pad.buttons.some((b) => b.pressed) || ax !== 0 || ay !== 0) this.lastDevice = 'gamepad';
     this.padPrev = pad.buttons.map((b) => b.pressed);

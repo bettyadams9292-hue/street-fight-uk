@@ -75,6 +75,10 @@ export function settingsScreen(store: SettingsStore, ui: UIManager): Screen {
         { class: 'panel' },
         h('h3', {}, titleArt('Game', 'game')),
         cycleRow<Difficulty>('Difficulty (story)', (['easy', 'normal', 'hard'] as const).map((d) => ({ value: d, label: DIFFICULTY[d].name, note: DIFFICULTY[d].text, art: d })), s.difficulty, (v) => store.update({ difficulty: v }), 'difficulty'),
+        cycleRow<boolean>('Tutorial hints', [
+          { value: true, label: 'On', note: 'A short card the first time you meet something new' },
+          { value: false, label: 'Off' },
+        ], s.tutorialHints, (v) => store.update({ tutorialHints: v }), 'tutorial-hints'),
         h('h3', {}, titleArt('Audio', 'audio')),
         sliderRow('Master volume', s.masterVolume, (v) => store.update({ masterVolume: v }), { art: 'master-volume' }),
         sliderRow('Effects volume', s.effectsVolume, (v) => store.update({ effectsVolume: v }), { art: 'effects-volume' }),

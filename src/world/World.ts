@@ -33,6 +33,7 @@ import { Simulation } from '../core/Simulation';
 import { getStyle } from '../data/styles';
 import { Fighter } from '../fighter/Fighter';
 import { emptyCommand, type CommandFrame } from '../input/Commands';
+import { TutorialBrain, type LessonMode } from '../ai/TutorialBrain';
 import type { ItemStack } from '../items/Inventory';
 import { ITEMS, weaponItemId } from '../items/items';
 import { bossDropValue, lootTableFor, rollLoot } from '../items/loot';
@@ -270,7 +271,7 @@ export class World {
   /** Frames left of searching a container (the player stands still). */
   searching = 0;
   private searchTarget: ContainerDef | null = null;
-  private brains = new Map<Fighter, FighterAI | DummyBrain | CivilianBrain | CompanionBrain | LeaveBrain>();
+  private brains = new Map<Fighter, FighterAI | DummyBrain | CivilianBrain | CompanionBrain | LeaveBrain | TutorialBrain>();
   private archetypeOf = new Map<Fighter, string>();
   private koAt = new Map<Fighter, number>();
   private gateObstacles = new Map<string, Obstacle>();
@@ -692,6 +693,39 @@ export class World {
     return true;
   }
 
+  /**
+   * A tutorial lesson with Mo (src/tutorial): sparring, with his choices scripted by TutorialBrain. His hits
+   * barely land and he never goes down, so a lesson can't be lost; walk away and it stops like any spar.
+   */
+  startLesson(mode: LessonMode): boolean {
+    const f = this.sparPartner;
+    if (!f || this.activeEncounter) return false;
+    if (this.duel && this.duel.id !== 'lesson') return false;
+    if (!this.duel) {
+      f.team = 'enemy';
+      f.stats.addModifier({ id: 'spar_soft', source: 'spar', stat: 'damageMult', mul: 0.02 });
+      this.duel = { f, kind: 'spar', id: 'lesson', landed: 0, blocked: 0, started: this.sim.frame };
+      this.events.emit('duel:start', { kind: 'spar', name: f.name });
+    }
+    let brain = this.brains.get(f);
+    if (!(brain instanceof TutorialBrain)) {
+      brain = new TutorialBrain(f);
+      this.brains.set(f, brain);
+    }
+    brain.setMode(mode, this.sim.frame);
+    return true;
+  }
+
+  /** Mo, in a lesson or not (the tutorial checks he's there before asking for him). */
+  get sparringPartner(): Fighter | null {
+    return this.sparPartner ?? null;
+  }
+
+  /** In a tutorial lesson with Mo now. */
+  get inLesson(): boolean {
+    return this.duel?.id === 'lesson';
+  }
+
   /** A pub regular wants a straightener before they'll join you. */
   startChallenge(station: StationDef, def: CompanionDef): boolean {
     const f = this.npcs.get(station);
@@ -717,6 +751,12 @@ export class World {
     if (!d) return;
     const p = this.player;
     const them = d.f;
+    // A lesson can't be lost or won: both of you stay on your feet (only walking away ends it).
+    if (d.id === 'lesson') {
+      for (const x of [p, them]) if (!x.isKO) x.vitals.health = Math.max(x.vitals.health, x.vitals.maxHealth * 0.6);
+      if (Math.abs(p.pos.x - them.pos.x) > 7) this.endDuel(false, true);
+      return;
+    }
     const pLow = p.isKO || p.vitals.health <= p.vitals.maxHealth * 0.25;
     const tLow = them.isKO || them.vitals.health <= them.vitals.maxHealth * 0.2;
     // Walked well away: it's over.

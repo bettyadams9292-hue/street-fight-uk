@@ -337,7 +337,7 @@ export function tinScreen(progress: Progress, close: () => void, changed: () => 
 
 // ---- story menus --------------------------------------------------------------------------
 
-export function storyPauseMenu(actions: { resume: () => void; inventory: () => void; map: () => void; character: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; moves: () => void; quit: () => void }): Screen {
+export function storyPauseMenu(actions: { resume: () => void; inventory: () => void; map: () => void; character: () => void; home: (() => void) | null; homeWhy: string; save: () => void; settings: () => void; controls: () => void; moves: () => void; tutorials: () => void; quit: () => void }): Screen {
   const el = h(
     'div',
     { class: 'screen pause-menu' },
@@ -349,6 +349,7 @@ export function storyPauseMenu(actions: { resume: () => void; inventory: () => v
       menuButton('Resume', actions.resume, undefined, 'primary', 'play', 'Esc', 'resume'),
       // Map, bag, crew and getting home are on the phone now (P).
       menuButton('Moves', actions.moves, 'Every move and combo you know', '', undefined, undefined, 'moves'),
+      menuButton('Tutorials', actions.tutorials, 'Every lesson, and replays', '', undefined, undefined, 'tutorials'),
       h('div', { class: 'menu-gap' }),
       menuButton('Save', actions.save, undefined, '', 'save', undefined, 'save'),
       menuButton('Settings', actions.settings, undefined, '', 'settings', undefined, 'settings'),
