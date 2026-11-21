@@ -12,6 +12,13 @@ import { PROP_SIZE } from '../src/world/LevelTypes';
 // @ts-expect-error plain JavaScript tool
 import { HEADER, SOURCES } from '../tools/assets/syncApproved.mjs';
 
+// The police sets letter their signs on a canvas: under Node, a stand-in canvas that draws nothing.
+const g = globalThis as { document?: unknown };
+if (!g.document) {
+  const ctx = new Proxy({}, { get: (_t, k) => (k === 'measureText' ? () => ({ width: 10 }) : String(k).startsWith('create') ? () => ({ addColorStop() {} }) : () => {}), set: () => true });
+  g.document = { createElement: () => ({ getContext: () => ctx, width: 0, height: 0 }) };
+}
+
 let passed = 0;
 let failed = 0;
 function test(name: string, fn: () => void): void {
@@ -39,7 +46,7 @@ test('every in-game copy is its approved original, unchanged (run tools/assets/s
 
 test('every approved model builds, stands on the ground at real size, and ids are unique', () => {
   assert(new Set(APPROVED_IDS).size === APPROVED_IDS.length, 'duplicate ids');
-  assert(APPROVED_IDS.length === 322, `${APPROVED_IDS.length} approved models`);
+  assert(APPROVED_IDS.length === 337, `${APPROVED_IDS.length} approved models`);
   for (const id of APPROVED_IDS) {
     const p = prototype(id);
     assert(p.triangles > 0 && p.parts.length > 0 && p.parts.length <= 5, `${id}: ${p.parts.length} parts`);

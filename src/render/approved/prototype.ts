@@ -81,7 +81,9 @@ export function prototype(id: string): Prototype {
   const def = APPROVED[id];
   if (!def) throw new Error(`approved asset ${id}: not in the registry`);
   const root = def.build();
-  const parts = mergeGroup(root);
+  // Lift-off roofs (the police cells' `inspectionRoof`) stay off: the game's rooms have no ceilings, and the
+  // indoor camera looks down into them.
+  const parts = mergeGroup(root, (m) => m.name !== 'inspectionRoof');
   let triangles = 0;
   for (const p of parts) triangles += p.geometry.getAttribute('position').count / 3;
   const box = new THREE.Box3();

@@ -185,7 +185,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
 
   if (page === 'police') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
-    return article('Getting nicked', 'Lose to the police, or lose any fight while the police are Hot on you, and you’re nicked. You’re booked in at Central Police Station in the City Centre, on Market Square.',
+    return article('Getting nicked', 'Lose to the police, or lose any fight while the police are Hot on you, and you’re nicked. You’re booked in at Central Police Station in the City Centre, on Market Square. When it’s sorted, the door takes you straight home.',
       infobox('Bail', [
         ['Mugging', `£${BAIL_BASE[1]}`],
         ['Assault', `£${BAIL_BASE[2]}`],
