@@ -15,6 +15,8 @@ import { embedPortraitRules } from './embedCss';
 import { mapApp } from './mapApp';
 import { GANG_GRUDGE, GANG_HUNT, HEAT_KINDS, heatWord, KNOWN_FACE_HEAT, type HeatKind } from '../../progress/heat';
 import { ARREST_HEAT } from '../../world/robbery';
+import { coolPrice, gearBackPrice } from '../../progress/cops';
+import { kerriganCool, kerriganGearBack, seizedValue, type Favour } from '../../world/custody';
 import { wikiApp, type WikiDeps, type WikiPage } from './wikiApp';
 import type { Device } from '../moveList';
 
@@ -48,6 +50,8 @@ export interface PhoneDeps {
   unread(): number;
   travel(area: AreaId, opt: TravelOption): void;
   payIn(): number;
+  /** Something changed that should be saved now (a favour from Kerrigan). */
+  saved(): void;
   /** In your own house (Home app, paying into the tin). */
   atHome(): boolean;
   editHome(): void;
@@ -290,7 +294,7 @@ export class Phone {
       { id: 'cabs', name: 'Cabs', icon: 'car_hatch', open: () => this.go('cabs') },
       { id: 'bank', name: 'CaliBank', icon: 'coins', open: () => this.go('bank') },
       { id: 'jobs', name: 'Jobs', icon: 'target_skull', open: () => this.go('jobs') },
-      { id: 'heat', name: 'Heat', icon: 'police', open: () => this.go('heat') },
+      { id: 'heat', name: 'Heat', icon: 'police', open: () => ((this.kerriganSaid = ''), this.go('heat')) },
       { id: 'crew', name: 'Crew', icon: 'crew', open: () => this.launch(() => this.d.openMe('crew'), 'Crew') },
       { id: 'me', name: 'Me', icon: 'fist', open: () => this.launch(() => this.d.openMe('character'), 'Me') },
       { id: 'house', name: 'Home', icon: 'house', open: () => this.go('house') },
@@ -418,9 +422,54 @@ export class Phone {
       );
     };
     const out: HTMLElement[] = [h('p', { class: 'ph-heat-intro', text: 'What the police, the locals and the gangs think of you. It all cools off as you move about.' })];
+    out.push(...this.kerrigan(names));
     if (!names.length) out.push(h('p', { class: 'ph-empty', text: 'Nobody’s looking for you. Yet.' }));
     for (const d of names) out.push(card(d));
     out.push(h('button', { class: 'ph-link', onclick: () => ((this.wikiPage = 'heat'), this.go('wiki')) , text: 'How heat works' }));
+    return out;
+  }
+
+  /** What Kerrigan last said (a favour done, or him getting caught). */
+  private kerriganSaid = '';
+
+  /**
+   * Sgt Kerrigan, once you've paid him to lose your paperwork (progress/cops.ts): he cools a district's police
+   * down and gets seized gear out of the property store, for a price, and tips you off when they're waiting for
+   * you. Every favour has a small chance he's caught, and then the police everywhere come for you.
+   */
+  private kerrigan(districts: string[]): HTMLElement[] {
+    const p = this.d.progress()!;
+    const s = p.save.police;
+    const out: HTMLElement[] = [];
+    if (this.kerriganSaid) out.push(h('p', { class: 'ph-warn ph-kerrigan-said', text: this.kerriganSaid }));
+    if (!s.contact) return out;
+    out.push(h('div', { class: 'ph-sec', text: 'Sgt Kerrigan' }));
+    out.push(h('p', { class: 'ph-heat-note', text: 'Bent as a nine-bob note. He rings ahead when they’re waiting for you. Every favour’s a risk: if he’s caught, he talks.' }));
+    const done = (f: Favour, what: string) => {
+      this.kerriganSaid = f.caught
+        ? `Kerrigan’s been caught on the take, and he’s talking. Police heat up everywhere. He’s off your phone for good.`
+        : `Kerrigan: "Done." ${what} (£${f.price})`;
+      this.d.saved();
+      this.render();
+    };
+    const have = p.save.cash.pocket + p.save.cash.bank;
+    for (const d of districts) {
+      const heat = p.heatIn(d).police;
+      if (heat <= 0) continue;
+      const price = coolPrice(heat);
+      out.push(h('div', { class: 'ph-row' },
+        h('div', { class: 'ph-what' }, h('b', { text: `Cool off ${d}` }), h('span', { text: 'Police heat there to nothing' })),
+        h('button', { class: 'ph-btn', disabled: have < price, onclick: () => done(kerriganCool(p, d, Math.random()), `${d}’s gone quiet.`) }, money(price)),
+      ));
+    }
+    if (s.seized.length) {
+      const n = s.seized.reduce((t, x) => t + x.qty, 0);
+      const price = gearBackPrice(seizedValue(p));
+      out.push(h('div', { class: 'ph-row' },
+        h('div', { class: 'ph-what' }, h('b', { text: 'Gear back' }), h('span', { text: `${n} seized item${n === 1 ? '' : 's'} out of the property store, to your stash at home (still hot)` })),
+        h('button', { class: 'ph-btn', disabled: have < price, onclick: () => done(kerriganGearBack(p, Math.random()), 'It’s in your stash.') }, money(price)),
+      ));
+    }
     return out;
   }
 

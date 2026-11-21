@@ -26,12 +26,46 @@ What's built:
   marker and icon), a cab stop, and GraftWiki's "Getting nicked" article.
 - `tests/police.test.ts`.
 
+**The station is furnished (#78)** from the owner's police sets: holding cells, interview room, custody and
+charge desks and the rest. Its door always takes you home.
+
+**Step 2 is built (21 Nov 2026).** The numbers are in `src/progress/cops.ts`, for Leeko to check:
+
+- **Officers:** each district has 6 named officers (`roster`), the same every game, met in turn. Bent: 30% on
+  the rough estates (Back Alleys, Kingsway, Canal Docks, Hollins, the Factory, the Industrial Quarter, Dunc's),
+  8% in the City Centre, Ashcombe Park and the Riverside Centre, 1 in 6 elsewhere. Every district has at least
+  one bent officer.
+- **When they turn up** (999 call, alarm, waiting on arrival), the OLD BILL screen (`Game.oldBill`):
+  - Offer a bung (`World.bung`): £40 + £2.50 a point of police heat, +50% for each officer past the first.
+    - A bent officer takes it: they walk off and the district's police heat drops 30.
+    - A straight one refuses: bribery goes on your record, +15 police heat, and they hit 25% harder and take
+      15% less.
+    - Either way you remember him (`save.police.known`), and the screen says so next time.
+  - Come quietly: nicked with no beating.
+  - Have it out.
+- **In custody:**
+  - The desk keeps your phone till you walk out of the station (`save.police.custody`): no cabs and no
+    maps, so you can't get out of custody by cab.
+  - Sgt Kerrigan has the custody desk 40% of nights (`sargeOnDuty`, fixed per arrest). For half the bail (at
+    least £50) he loses the paperwork, and he's your contact after that.
+  - Ring for bail: one of your crew pays. You owe them bail +25%, taken from the tin (then your pockets) when
+    you get home, and they won't follow you till you're square.
+  - Stolen goods go into the property store (`save.police.seized`, the latest haul).
+- **Kerrigan as a contact** (phone, Heat app):
+  - Cool a district: £5 a point of its police heat, at least £50.
+  - Get the seized gear back to your stash, still stolen: 30% of its value, at least £40.
+  - He rings ahead when police would be waiting for you: 25 s instead of 6.
+  - Each favour has a 6% chance he's caught. Then +25 police heat in every district, and he's gone for good.
+- **Painted titles** for the new buttons: Offer a bung, Come quietly, Have it out, Lose the paperwork, Pay bail,
+  Ring for bail, Night in the cells, Leave; headings OLD BILL and FRONT COUNTER. Made with
+  `tools/icons/hg/kit_from_titles.py` (rebuilds the lettering kit from the existing buttons).
+- `tests/police.test.ts` covers it.
+
 **Still to do:**
-- Step 2: good cops and bent cops, bungs, the bent desk sergeant as a contact (below).
-- Ring someone from custody (a crew member pays).
-- Models: cell door and bars, custody desk, station front and blue lamp, an officer's uniform. There's no
-  cell drawn yet (the casino cage looked like a cashier's booth); add the rows to `docs/ASSETS_NEEDED.*`.
-- New buttons (Pay bail, Night in the cells, Settle up, Leave) use plain lettering, not painted titles.
+- Models: an officer's uniform (hi-vis, stab vest) and the station front and blue lamp on Market Square. The
+  pack's front is too deep for the street's walking lanes.
+- The front counter's "Settle up: <district>" buttons are plain lettering (one per district, with a price).
+- A small tell for bent officers before you've tried them (Leeko to decide; for now you only know after).
 
 ## What's there already
 

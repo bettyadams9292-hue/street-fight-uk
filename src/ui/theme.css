@@ -2060,3 +2060,6 @@ body:has(#ui .screen) .hud { visibility: hidden; }
   .hg-menu .menu-logo, .screen.main-menu.keyart.hg-menu .menu-list .nav-item { animation: none; }
   .hg-menu .nav-item, .hg-menu .nav-item::before, .hg-menu .nav-item .nav-label, .hg-menu .nav-item .nav-sub { transition: none; }
 }
+
+/* Booked in at the station: the custody desk has your phone (progress/cops.ts). */
+body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }

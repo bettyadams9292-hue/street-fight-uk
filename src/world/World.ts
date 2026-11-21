@@ -27,6 +27,7 @@ import { SIM_HZ } from '../core/constants';
 import { EventBus } from '../core/EventBus';
 import { Rng } from '../core/Rng';
 import { gangMods, HEAT, huntChance, KNOWN_FACE_HEAT } from '../progress/heat';
+import { BRIBERY_HEAT, BUNG_COOL, bungPrice, copFor, REFUSED_DEALT, REFUSED_TAKEN, TIPOFF_SECONDS, type Cop } from '../progress/cops';
 import { ARREST_HEAT } from './robbery';
 import { Simulation } from '../core/Simulation';
 import { getStyle } from '../data/styles';
@@ -88,7 +89,10 @@ export interface WorldEvents {
   'level:up': { level: number };
   'gate:opened': { label: string };
   station: { id: StationDef['id']; station: StationDef };
-  'police:arrive': { count: number };
+  /** Officers turned up: the one you'd talk to, whether you know him (from a bung before), and whether there's time for a word. */
+  'police:arrive': { count: number; lead: string; known: 'bent' | 'straight' | null; talk: boolean };
+  /** Kerrigan's tipped you off: the police are waiting here, and you've this long to clear off. */
+  'police:tipoff': { seconds: number };
   'alarm': { shop: string };
   'player:defeated': { byPolice: boolean };
   /** A fight left someone hurt: `who` is 'you' or a companion id. */
@@ -266,7 +270,7 @@ export class World {
   /** Frames left of searching a container (the player stands still). */
   searching = 0;
   private searchTarget: ContainerDef | null = null;
-  private brains = new Map<Fighter, FighterAI | DummyBrain | CivilianBrain | CompanionBrain>();
+  private brains = new Map<Fighter, FighterAI | DummyBrain | CivilianBrain | CompanionBrain | LeaveBrain>();
   private archetypeOf = new Map<Fighter, string>();
   private koAt = new Map<Fighter, number>();
   private gateObstacles = new Map<string, Obstacle>();
@@ -283,6 +287,12 @@ export class World {
   private policeDue: { at: number; count: number } | null = null;
   private policeSpawned = false;
   readonly police: Fighter[] = [];
+  /** Each officer's name and whether he's bent (progress/cops.ts). */
+  private readonly copOf = new Map<Fighter, Cop>();
+  /** Bunged officers walking off: removed when they're out of sight. */
+  private readonly leaving = new Map<Fighter, number>();
+  /** Kerrigan's tip-off, waiting for the first frame to be told. */
+  private tipoff = 0;
   /** This visit's stations: the level's, plus things that come and go (a parked bike). */
   readonly stations: StationDef[];
 
@@ -904,7 +914,10 @@ export class World {
     // Heat: if you're wanted, the police might be waiting for you on the street.
     const street = !['home', 'shop', 'pawn', 'pub'].includes(level.theme);
     if (street && progress.save.heat >= 40 && this.lootRng.next() < progress.save.heat / 120) {
-      this.policeDue = { at: SIM_HZ * 6, count: progress.save.heat >= 75 ? 3 : 2 };
+      // Kerrigan rings ahead: they'll be a while, and you know they're coming.
+      const tipped = progress.save.police.contact;
+      this.policeDue = { at: SIM_HZ * (tipped ? TIPOFF_SECONDS : 6), count: progress.save.heat >= 75 ? 3 : 2 };
+      if (tipped) this.tipoff = TIPOFF_SECONDS;
     }
     // Gang heat: their crew may come looking for you a few seconds after you walk in (once a visit).
     const gang = progress.heatIn().gang;
@@ -1749,7 +1762,7 @@ export class World {
     };
   }
 
-  spawnEnemy(id: ArchetypeId, x: number, z: number, weapon?: WeaponId): Fighter {
+  spawnEnemy(id: ArchetypeId, x: number, z: number, weapon?: WeaponId, name?: string): Fighter {
     ({ x, z } = this.freeSpot(x, z));
     const a = this.toughened(ARCHETYPES[id], id);
     // Grunts get a first name (picked from their id, so the same fight names the same lads), with
@@ -1758,7 +1771,7 @@ export class World {
     const first = GRUNT_NAMES.male[(this.nextId * 7 + this.level.id.length * 3) % GRUNT_NAMES.male.length];
     const f = new Fighter({
       id: this.nextId++,
-      name: named ? first : a.name,
+      name: name ?? (named ? first : a.name),
       team: 'enemy',
       attributes: { ...a.attributes },
       level: a.level,
@@ -1856,14 +1869,89 @@ export class World {
   }
 
   private updatePolice(): void {
+    if (this.tipoff) {
+      this.events.emit('police:tipoff', { seconds: this.tipoff });
+      this.tipoff = 0;
+    }
+    this.updateLeaving();
     if (!this.policeDue || this.policeSpawned || this.sim.frame < this.policeDue.at) return;
     this.policeSpawned = true;
     const n = this.policeDue.count;
+    // The district's own officers, in turn: you keep meeting the same faces.
+    const district = this.level.district;
+    const first = this.progress.save.trips * 2 + this.police.length;
+    let lead: Cop | null = null;
     for (let i = 0; i < n; i++) {
-      const f = this.spawnEnemy('police', this.spawnX(null, i), this.spawnZ(i));
+      const cop = copFor(district, first + i);
+      const f = this.spawnEnemy('police', this.spawnX(null, i), this.spawnZ(i), undefined, cop.name);
+      f.tag = 'Police';
+      this.copOf.set(f, cop);
       this.police.push(f);
+      lead ??= cop;
     }
-    this.events.emit('police:arrive', { count: n });
+    const talk = !this.duel && !this.activeEncounter && !this.player.isKO;
+    this.events.emit('police:arrive', { count: n, lead: lead!.name, known: this.progress.save.police.known[lead!.name] ?? null, talk });
+  }
+
+  /** The officers on the street now, still standing. */
+  private standingPolice(): Fighter[] {
+    return this.police.filter((f) => !f.isKO && !this.leaving.has(f));
+  }
+
+  /** What a bung costs the officers here now. */
+  bungPrice(): number {
+    return bungPrice(this.progress.save.heat, Math.max(1, this.standingPolice().length));
+  }
+
+  /**
+   * Have a word: offer the lead officer a bung. A bent one takes it, they all walk off and the district cools; a
+   * straight one won't have it (bribery on your record, more heat, and they come at you harder). 'broke': you
+   * haven't got it on you or in the tin (nothing happens).
+   */
+  bung(): 'taken' | 'refused' | 'broke' {
+    const cops = this.standingPolice();
+    const lead = cops[0];
+    const cop = lead ? this.copOf.get(lead) : undefined;
+    if (!lead || !cop) return 'refused';
+    const p = this.progress;
+    const price = this.bungPrice();
+    if (p.save.cash.pocket + p.save.cash.bank < price) return 'broke';
+    p.save.police.known[cop.name] = cop.bent ? 'bent' : 'straight';
+    if (cop.bent) {
+      p.pay(price);
+      p.setHeat('police', Math.max(0, p.heatIn().police - BUNG_COOL), this.level.district);
+      for (const f of cops) this.walkOff(f);
+      this.policeDue = null;
+      return 'taken';
+    }
+    p.logCrime('bribery');
+    p.addHeatOf({ police: BRIBERY_HEAT });
+    for (const f of cops) {
+      f.stats.addModifier({ id: 'bribed_dealt', source: 'bribery', stat: 'damageMult', mul: REFUSED_DEALT });
+      f.stats.addModifier({ id: 'bribed_taken', source: 'bribery', stat: 'damageTakenMult', mul: REFUSED_TAKEN });
+    }
+    return 'refused';
+  }
+
+  /** Off they go, the way they're facing away from you, and out of the fight. */
+  private walkOff(f: Fighter): void {
+    const dir = f.pos.x >= this.player.pos.x ? 1 : -1;
+    this.brains.set(f, new LeaveBrain(dir));
+    this.tokens.release(f);
+    this.enemies = this.enemies.filter((x) => x !== f);
+    const i = this.police.indexOf(f);
+    if (i >= 0) this.police.splice(i, 1);
+    f.team = 'neutral';
+    this.leaving.set(f, this.sim.frame + SIM_HZ * 5);
+  }
+
+  private updateLeaving(): void {
+    for (const [f, until] of this.leaving) {
+      if (this.sim.frame < until) continue;
+      this.leaving.delete(f);
+      this.brains.delete(f);
+      this.sim.remove(f);
+    }
   }
 
   /** Remove beaten enemies after a moment, dropping loot. The sparring partner just gets up again. */
@@ -2298,4 +2386,12 @@ export interface CrewMember {
   waiting?: boolean;
   enterAt?: number;
   saidAt?: number;
+}
+
+/** A bunged officer strolling off down the street. */
+class LeaveBrain {
+  constructor(private readonly dir: number) {}
+  think(): CommandFrame {
+    return { ...emptyCommand(), moveX: this.dir };
+  }
 }

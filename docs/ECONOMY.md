@@ -38,4 +38,6 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 | Business | `src/business/catalogue.ts`, `src/business/production.ts` |
 | Property market and rent | `src/realty/catalogue.ts`, `src/realty/portfolio.ts` |
 | Fines | `arrestFine` in `src/world/robbery.ts` |
+| Bail, court fines, settling up at the front counter | `src/progress/record.ts` |
+| Bungs, Kerrigan's paperwork and favours, what you owe crew who bail you out | `src/progress/cops.ts` |
 | Casino | `src/property/casino.ts` |

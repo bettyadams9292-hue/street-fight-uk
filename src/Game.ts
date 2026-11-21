@@ -39,7 +39,8 @@ import { ITEMS, RARITY_COLOURS } from './items/items';
 import { PAWN_HATCH_RATE } from './items/shops';
 import { clothesShopScreen, inventoryScreen, pawnScreen, storageScreen } from './ui/inventoryUI';
 import { ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
-import { book, canPayBail, nightInCells, payBail, type Booking } from './world/custody';
+import { book, canPayBail, crewToRing, losePaperwork, nightInCells, payBail, repayCrew, ringCrew, type Booking } from './world/custody';
+import { owedFor } from './progress/cops';
 import { CRIME_NAME, settlePrice } from './progress/record';
 import { World } from './world/World';
 import { gateNeeds, type GateNeed } from './world/gates';
@@ -215,6 +216,7 @@ export class Game {
       markRead: () => this.hud.markRead(),
       unread: () => this.hud.unreadCount(),
       travel: (area, opt) => this.travelTo(area, opt),
+      saved: () => this.saveGame(),
       payIn: () => {
         const p = this.progress;
         if (!p || this.world?.level.id !== 'home') return 0;
@@ -555,8 +557,16 @@ export class Game {
       else this.openMoves();
       return;
     }
+    if (this.phoneHeld()) return;
     this.ui.replaceAll(null);
     this.phone.openWiki(page);
+  }
+
+  /** Booked in at the station: the desk has your phone till you walk out (no cabs home). Says so; true if held. */
+  private phoneHeld(): boolean {
+    if (!this.progress?.save.police.custody) return false;
+    this.hud.toast('They took your phone at the custody desk. You get it back when you walk out of the station.', 'warn');
+    return true;
   }
 
   /** Pause → Moves: the player's style (and second style), named for the controller in hand. */
@@ -696,6 +706,16 @@ export class Game {
     if (area !== from) p.tick();
     // Home: the trip's meal is used up.
     if (area === 'home' && from !== 'home' && p.save.mealBuff) p.save.mealBuff = false;
+    // Out of the station: your phone back from the desk.
+    if (area !== 'police_station') p.save.police.custody = false;
+    document.body.classList.toggle('phone-held', p.save.police.custody);
+    // Home with the crew's bail money owed: it comes out of the tin, then your pockets.
+    if (area === 'home' && p.save.police.owed) {
+      const o = p.save.police.owed;
+      const who = COMPANIONS[o.id]?.nickname ?? 'Your mate';
+      const paid = repayCrew(p);
+      if (paid) this.hud.toast(p.save.police.owed ? `Paid ${who} \u00a3${paid} of your bail money. Still owe \u00a3${p.save.police.owed.left}.` : `Paid ${who} back the \u00a3${paid} bail money. Square again.`, 'cash');
+    }
     // Rebuilding the area you're in (after a menu) keeps this visit's finished side-fights finished.
     const keepCleared = leaving && leaving.area === area && this.world ? this.world.clearedOptional() : [];
     // Your crew: whoever's following you and fit comes along. Too hurt: they stay home resting until they're fit.
@@ -1020,9 +1040,26 @@ export class Game {
         this.hud.notify('ALARM!', 'warn');
         this.hud.toast('The alarm\u2019s going. Police on their way: get out or get ready.', 'warn');
       }),
-      ev.on('police:arrive', ({ count }) => {
+      ev.on('police:arrive', ({ count, lead, known, talk }) => {
         this.hud.notify('POLICE!', 'big');
-        this.hud.toast(`${count} officers. If they put you down, you\u2019re nicked: stolen gear seized and a fine.`, 'warn');
+        if (!talk) {
+          this.hud.toast(`${count} officers. If they put you down, you\u2019re nicked: stolen gear seized and a fine.`, 'warn');
+          return;
+        }
+        // A moment before it kicks off: have a word, come quietly, or have it out.
+        this.pending = {
+          at: this.time + 0.5,
+          show: () => {
+            if (!this.world?.policeActive) return;
+            this.state = 'paused';
+            this.touch.release();
+            this.updateTouchVisibility();
+            this.ui.replaceAll(this.oldBill(count, lead, known));
+          },
+        };
+      }),
+      ev.on('police:tipoff', ({ seconds }) => {
+        this.hud.toast(`Kerrigan: "Plod are on their way to you. You\u2019ve got about ${seconds} seconds." Get off the street.`, 'warn');
       }),
       ev.on('secret', ({ label }) => {
         this.audio.uiConfirm();
@@ -1043,19 +1080,7 @@ export class Game {
       ev.on('player:defeated', ({ byPolice }) => {
         const p = this.progress!;
         if (byPolice || p.save.heat >= ARREST_HEAT) {
-          // Nicked: booked in at the Central Police Station, with a charge sheet and a choice.
-          const b = book(p);
-          p.save.mealBuff = false;
-          this.saveGame();
-          this.pending = {
-            at: this.time + 0.4,
-            show: () => {
-              this.state = 'paused';
-              this.touch.release();
-              this.updateTouchVisibility();
-              this.ui.replaceAll(this.chargeSheet(b));
-            },
-          };
+          this.nicked(0.4);
           return;
         }
         const lost = p.losePocket(0.25);
@@ -1942,6 +1967,7 @@ export class Game {
       this.hud.toast('Not now. You’re in a fight.', 'warn');
       return;
     }
+    if (this.phoneHeld()) return;
     this.phone.open();
   }
 
@@ -2249,7 +2275,76 @@ export class Game {
       });
     }
     buttons.push({ label: 'Leave', go: close });
-    return rewardScreen('FRONT COUNTER', lines, buttons, []);
+    return rewardScreen('FRONT COUNTER', lines, buttons, ['front-counter']);
+  }
+
+  /** Nicked: booked in at the Central Police Station, with a charge sheet and a choice. */
+  private nicked(delay: number): void {
+    const p = this.progress!;
+    const b = book(p);
+    p.save.mealBuff = false;
+    this.saveGame();
+    this.pending = {
+      at: this.time + delay,
+      show: () => {
+        this.state = 'paused';
+        this.touch.release();
+        this.updateTouchVisibility();
+        this.ui.replaceAll(this.chargeSheet(b));
+      },
+    };
+  }
+
+  /**
+   * The police have turned up (progress/cops.ts): offer the lead officer a bung (a bent one takes it and they walk
+   * off; a straight one adds bribery to your record and they come at you harder), come quietly (nicked, no
+   * beating), or have it out.
+   */
+  private oldBill(count: number, lead: string, known: 'bent' | 'straight' | null): Screen {
+    const w = this.world!;
+    const price = w.bungPrice();
+    const resume = () => {
+      this.ui.replaceAll(null);
+      this.state = 'playing';
+      this.updateTouchVisibility();
+    };
+    const lines: { text: string; big?: boolean }[] = [
+      { text: `${lead}${count > 1 ? ` and ${count - 1 === 1 ? 'another officer' : `${count - 1} more`}` : ''}. "Right, you. Stay where you are."`, big: true },
+    ];
+    if (known === 'bent') lines.push({ text: `You know ${lead}: he took your money last time.` });
+    else if (known === 'straight') lines.push({ text: `You know ${lead}: he knocked back a bung before. He\u2019ll do it again.` });
+    else lines.push({ text: 'Some of them can be bought. You can\u2019t tell which till you try.' });
+    lines.push({ text: `A bung to look the other way: \u00a3${price}. If he\u2019s straight, that\u2019s bribery on your record and they come at you harder.` });
+    lines.push({ text: 'Come quietly and you\u2019re booked in without a beating. Have it out, and if they put you down you\u2019re nicked anyway.' });
+    const buttons: { label: string; sub?: string; go: () => void }[] = [
+      {
+        label: 'Offer a bung',
+        sub: `\u00a3${price} from the cash on you, then the tin`,
+        go: () => {
+          const r = w.bung();
+          resume();
+          if (r === 'broke') this.hud.toast(`You haven\u2019t got \u00a3${price}. "Nice try."`, 'warn');
+          else if (r === 'taken') {
+            this.hud.toast(`${lead} pockets the \u00a3${price}. "Never saw you." Off they go.`, 'cash');
+            this.saveGame();
+          } else {
+            this.hud.notify('BRIBERY', 'warn');
+            this.hud.toast(`${lead}: "Trying to bribe an officer? That\u2019s going on your sheet." They\u2019re not happy.`, 'warn');
+            this.saveGame();
+          }
+        },
+      },
+      {
+        label: 'Come quietly',
+        sub: 'Booked in at the station, no beating',
+        go: () => {
+          this.ui.replaceAll(null);
+          this.nicked(0);
+        },
+      },
+      { label: 'Have it out', sub: 'Fight your way out', go: resume },
+    ];
+    return rewardScreen('OLD BILL', lines, buttons, ['old-bill']);
   }
 
   /**
@@ -2262,22 +2357,45 @@ export class Game {
     const lines: { text: string; big?: boolean }[] = [{ text: `You\u2019re nicked. Booked in at Central Police Station.`, big: true }];
     if (b.charges.length) for (const c of b.charges) lines.push({ text: `Charge: ${CRIME_NAME[c.crime]} (${c.district})` });
     else lines.push({ text: 'Charge: wanted for questioning. They\u2019ve nothing they can make stick.' });
-    lines.push({ text: b.seized ? `Seized: ${b.seized} stolen item${b.seized === 1 ? '' : 's'} (worth \u00a3${b.seizedValue}).` : 'Nothing stolen on you, at least.' });
-    lines.push({ text: `Bail: \u00a3${b.bail}. Or a night in the cells and a \u00a3${b.fine} court fine.` });
+    lines.push({ text: `${b.seized ? `Seized: ${b.seized} stolen item${b.seized === 1 ? '' : 's'} (\u00a3${b.seizedValue}).` : 'Nothing stolen on you.'} They\u2019ve got your phone till you walk out.` });
+    lines.push({ text: `Bail \u00a3${b.bail}, or a night in the cells and a \u00a3${b.fine} fine.` });
+    const ring = crewToRing(p);
+    const mate = ring.length ? (COMPANIONS[p.save.companions.following.find((id) => ring.includes(id)) ?? ring[0]]) : null;
+    if (mate) lines.push({ text: `${mate.nickname} would pay it: you\u2019d owe \u00a3${owedFor(b.bail)}.` });
+    if (b.bent) lines.push({ text: `${b.sarge}\u2019s on the desk: "\u00a3${b.paperwork} and this paperwork goes missing."` });
     const out = (msg: string, entry: 'cell' | 'door') => {
       this.saveGame();
-      // Full health: you've had a night's sleep or a doctor's look-over in custody.
       this.changeArea('police_station' as AreaId, entry, null);
       this.hud.toast(msg, 'info');
     };
     const buttons: { label: string; sub?: string; go: () => void }[] = [];
+    if (b.bent && p.save.cash.pocket + p.save.cash.bank >= b.paperwork) {
+      buttons.push({
+        label: 'Lose the paperwork',
+        sub: `\u00a3${b.paperwork} to ${b.sarge}: charges gone, and he\u2019s your contact after`,
+        go: () => {
+          losePaperwork(p, b);
+          out(`${b.sarge} feeds the charge sheet to the shredder. "You owe me one. I\u2019ll be in touch." He\u2019s on your phone now (Heat app).`, 'door');
+        },
+      });
+    }
     if (canPayBail(p, b)) {
       buttons.push({
-        label: `Pay bail (\u00a3${b.bail})`,
-        sub: 'From the cash on you, then the tin',
+        label: 'Pay bail',
+        sub: `\u00a3${b.bail} from the cash on you, then the tin`,
         go: () => {
           payBail(p, b);
           out(`Bail paid: \u00a3${b.bail}. "Don\u2019t let us see you back here."`, 'door');
+        },
+      });
+    }
+    if (mate) {
+      buttons.push({
+        label: 'Ring for bail',
+        sub: `${mate.nickname} pays; you owe \u00a3${owedFor(b.bail)}`,
+        go: () => {
+          ringCrew(p, b, mate.id);
+          out(`${mate.nickname} turns up with the \u00a3${b.bail}. "You owe me. Don\u2019t forget it." They won\u2019t come out with you till you\u2019ve paid them back.`, 'door');
         },
       });
     }
