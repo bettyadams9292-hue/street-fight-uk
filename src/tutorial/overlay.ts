@@ -28,6 +28,8 @@ export class LessonOverlay {
   readonly el: HTMLElement;
   private shown = '';
   private lit: Element[] = [];
+  /** Rings laid over what's lit (an outline can't be used: the bars are cut to shape with a clip-path). */
+  private rings: HTMLElement[] = [];
   private flashing = 0;
 
   constructor(
@@ -40,6 +42,10 @@ export class LessonOverlay {
 
   /** Show this (or nothing). Cheap to call every frame. */
   show(v: LessonView | null, side: 'left' | 'right' = 'left'): void {
+    this.place();
+    // The USE plate steps to the other half of the screen while a card is up (the card would hide it).
+    document.body?.classList?.toggle('tut-on-left', !!v && side === 'left');
+    document.body?.classList?.toggle('tut-on-right', !!v && side === 'right');
     // Hold the tick on screen for a moment before the next step replaces it.
     if (performance.now() < this.flashing) return;
     const key = v ? JSON.stringify(v) + side : '';
@@ -81,6 +87,7 @@ export class LessonOverlay {
   clear(): void {
     this.shown = '';
     this.light([]);
+    document.body?.classList?.remove('tut-on-left', 'tut-on-right');
     this.el.classList.add('off');
   }
 
@@ -95,8 +102,22 @@ export class LessonOverlay {
   }
 
   private light(selectors: string[]): void {
-    for (const e of this.lit) e.classList.remove('tut-focus');
     this.lit = selectors.length ? [...document.querySelectorAll(selectors.join(', '))] : [];
-    for (const e of this.lit) e.classList.add('tut-focus');
+    for (const r of this.rings) r.remove();
+    this.rings = this.lit.map(() => h('div', { class: 'tut-ring', 'aria-hidden': 'true' }));
+    if (this.rings.length) document.body.append(...this.rings);
+    this.place();
+  }
+
+  /** Each ring over its element, where it is now; hidden when the element isn't on screen. */
+  private place(): void {
+    this.lit.forEach((e, i) => {
+      const ring = this.rings[i];
+      if (!ring?.style) return;
+      const r = (e as HTMLElement).getBoundingClientRect?.();
+      const on = !!r && r.width > 0 && r.height > 0;
+      ring.style.display = on ? 'block' : 'none';
+      if (on) Object.assign(ring.style, { left: `${r.left - 4}px`, top: `${r.top - 4}px`, width: `${r.width + 8}px`, height: `${r.height + 8}px` });
+    });
   }
 }

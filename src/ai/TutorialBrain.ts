@@ -40,12 +40,17 @@ export class TutorialBrain {
       if (frame % 90 === 0) cmd.pressed.grab = true;
       return cmd;
     }
-    if (this.mode === 'stand' || this.mode === 'hold') return cmd;
-    if (foe.grapple) return cmd;
-    // Into range: close enough to reach you, not so close he's on top of you.
     const dx = foe.pos.x - me.pos.x;
     const dz = foe.pos.z - me.pos.z;
     const dist = Math.hypot(dx, dz);
+    // Never stood on top of you: he steps back to a distance your hits can land from.
+    if (dist < 0.6 && me.isFree && !foe.grapple) {
+      cmd.moveX = -Math.sign(dx || 1) * 0.6;
+      return cmd;
+    }
+    if (this.mode === 'stand' || this.mode === 'hold') return cmd;
+    if (foe.grapple) return cmd;
+    // Into range: close enough to reach you, not so close he's on top of you.
     if (dist > 1.05) {
       cmd.moveX = Math.sign(dx) * Math.min(1, Math.abs(dx));
       cmd.moveZ = Math.max(-1, Math.min(1, dz * 2));

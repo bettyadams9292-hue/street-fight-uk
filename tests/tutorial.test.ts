@@ -274,6 +274,21 @@ test('a fight you’ve already won is passed over', () => {
   assert(p.save.tutorial.active?.chapter === 'building' && p.save.tutorial.completed.includes('first-scrap'), JSON.stringify(p.save.tutorial));
 });
 
+test('your first proper scrap: out the door, and only a fight you really win ticks it off', () => {
+  const p = fresh();
+  const r = rig(p);
+  goTo(p, 'first-scrap', 'out');
+  r.frames(5);
+  assert(r.at() === 'first-scrap/out', 'left without leaving');
+  r.move('estate', 'start');
+  r.frames(5);
+  assert(r.at() === 'first-scrap/fight', r.at());
+  r.world.events.emit('encounter:cleared', { id: 'side', cash: 5, xp: 5, optional: true });
+  assert(r.at() === 'first-scrap/fight', 'an optional scrap counted');
+  r.world.events.emit('encounter:cleared', { id: 'lads', cash: 30, xp: 40, optional: false });
+  assert(r.at() === 'first-scrap/rewards', r.at());
+});
+
 test('listeners go when the world goes', () => {
   const p = fresh();
   const r = rig(p);

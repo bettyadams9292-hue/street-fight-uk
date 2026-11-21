@@ -50,6 +50,14 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 - `docs/assets/TEXTURE_CATALOGUE.md` lists every set; `docs/assets/TEXTURE_ASSIGNMENTS.md` says where each is used and which are still spare.
 - The owner wants realistic surfaces: use a library set for new surfaces rather than a flat colour or a drawn texture.
 
+**Tutorial.** `src/tutorial/`, design and coverage matrix in `docs/TUTORIAL.md`.
+- `lessons.ts`: the chapters (run in order on a new game) and the one-off hints, as data. Each step has its words, keys, the HUD elements it lights, and the real event or state that completes it.
+- `TutorialManager.ts`: listens to the game's own events, runs Mo's lessons (`World.startLesson`, `ai/TutorialBrain.ts`), and keeps its place in `save.tutorial`. Old saves count as done.
+- `controls.ts`: prompts read from `KEY_BINDINGS`, `MENU_KEYS`, `PAD_BUTTONS` and `PAD_EXTRA`, so they can't name a key the game doesn't use.
+- `overlay.ts`: the card in the HUD column, and the rings over the HUD.
+- `library.ts`: Pause → Tutorials.
+- A new feature should add a hint to `HINTS`, or a step to a chapter.
+
 **Heat.** `src/progress/heat.ts`: police, locals and gang heat per district, what raises it (`HEAT`), how fast it cools, and the thresholds. Raise it with `Progress.addHeatOf`, never by writing `save.heat`.
 
 **Economy.** `docs/ECONOMY.md` has the targets and where every number lives. Run `npx tsx tools/economy/model.ts` after changing a price or reward; `tests/economy.test.ts` fails if the curve breaks.

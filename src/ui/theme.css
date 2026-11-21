@@ -2100,10 +2100,10 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .tut-tick { position: absolute; right: 12px; top: 50%; width: 22px; height: 12px; margin-top: -9px; border-left: 4px solid var(--sign-white); border-bottom: 4px solid var(--sign-white); transform: rotate(-45deg) scale(0.4); opacity: 0; animation: tut-tick 0.5s ease-out forwards; }
 @keyframes tut-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 @keyframes tut-tick { 40% { opacity: 1; transform: rotate(-45deg) scale(1.1); } 100% { opacity: 1; transform: rotate(-45deg) scale(1); } }
-/* What the step is about, on the real HUD: a white ring that breathes (never replaces or hides it). */
-.tut-focus { outline: 2px solid var(--sign-white) !important; outline-offset: 3px; animation: tut-focus 1.3s ease-in-out infinite; }
-@keyframes tut-focus { 0%, 100% { outline-color: rgba(245, 246, 250, 0.95); box-shadow: 0 0 0 0 rgba(232, 51, 58, 0); } 50% { outline-color: rgba(245, 246, 250, 0.45); box-shadow: 0 0 14px 2px rgba(232, 51, 58, 0.55); } }
-@media (prefers-reduced-motion: reduce) { .tut-card, .tut-tick, .tut-focus { animation: none; } .tut-tick { opacity: 1; transform: rotate(-45deg); } }
+/* What the step is about, on the real HUD: a white ring that breathes, laid over it (never replaces or hides it). */
+.tut-ring { position: fixed; z-index: 60; pointer-events: none; box-sizing: border-box; border: 2px solid var(--sign-white); border-radius: 3px; animation: tut-focus 1.3s ease-in-out infinite; }
+@keyframes tut-focus { 0%, 100% { border-color: rgba(245, 246, 250, 0.95); box-shadow: 0 0 0 0 rgba(232, 51, 58, 0); } 50% { border-color: rgba(245, 246, 250, 0.45); box-shadow: 0 0 14px 2px rgba(232, 51, 58, 0.55); } }
+@media (prefers-reduced-motion: reduce) { .tut-card, .tut-tick, .tut-ring { animation: none; } .tut-tick { opacity: 1; transform: rotate(-45deg); } }
 
 /* Pause → Tutorials */
 .tut-library .tut-list { display: flex; flex-direction: column; gap: 14px; max-height: min(62vh, 560px); overflow-y: auto; }
@@ -2128,5 +2128,9 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 }
 /* With your fighter on the left of the screen, the card moves to the right, under the HUD buttons. */
 @media not ((orientation: portrait) and (max-width: 700px)) {
+  body.tut-on-left .prompt-wrap { left: 70%; }
+  body.tut-on-right .prompt-wrap { left: 30%; }
+  body.tut-on-left .touch-ui .prompt-wrap { left: 70% !important; }
+  body.tut-on-right .touch-ui .prompt-wrap { left: 30% !important; }
   .hud .hud-flow .tut-card.right { position: fixed; top: calc(var(--head-b, 84px) + 6px); right: calc(12px + var(--safe-r)); }
 }
