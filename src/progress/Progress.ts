@@ -17,6 +17,7 @@ import { TOWN_AREA_IDS, type TownAreaId } from '../world/townIds';
 import { DISTRICT_ORDER } from '../world/levels';
 import { ageRecord, logCrime, sanitiseRecord, type Crime, type CrimeEntry } from './record';
 import { defaultPolice, sanitisePolice, type PoliceSave } from './cops';
+import { newTutorial, sanitiseTutorial, type TutorialSave } from '../tutorial/state';
 import { coolHeat, emptyHeat, HEAT, HEAT_COOL, HEAT_KINDS, sanitiseHeatMap, type DistrictHeat, type HeatKind, type HeatMap } from './heat';
 import { defaultNeeds, eat, needsModifiers, sanitiseNeeds, type NeedsSave } from '../home/needs';
 import { putInto, sanitisePantry, STARTER_GROCERIES, type PantrySave } from '../home/recipes';
@@ -105,6 +106,8 @@ export interface GameSave {
   record: CrimeEntry[];
   /** Bent and straight cops you know, Kerrigan, what's in the property store, crew you owe, your phone at the desk (`progress/cops.ts`). */
   police: PoliceSave;
+  /** The tutorial: lessons done and skipped, hints shown, an unfinished lesson (src/tutorial). */
+  tutorial: TutorialSave;
   /** Counts area changes: the game's clock for shop closures and heat. */
   trips: number;
   shops: Record<string, ShopState>;
@@ -186,6 +189,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     districtHeat: {},
     record: [],
     police: defaultPolice(),
+    tutorial: newTutorial(),
     trips: 0,
     shops: {},
     pawn: { itemsSold: 0, earned: 0 },
@@ -268,6 +272,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     districtHeat: sanitiseHeatMap(r.districtHeat),
     record: sanitiseRecord(r.record),
     police: defaultPolice(),
+    tutorial: sanitiseTutorial(r.tutorial),
     trips: num(r.trips, 0),
     shops: sanitiseShops(r.shops),
     pawn: { itemsSold: num(r.pawn?.itemsSold, 0), earned: num(r.pawn?.earned, 0) },

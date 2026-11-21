@@ -79,6 +79,8 @@ import { GYM_KIT, SPAR_FATIGUE, SPAR_TRAINS, canTrain, finishSession, recover, t
 const ROUTINE_SECONDS = 6;
 import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, type FightGym } from './training/styleGyms';
 import { themeProfile } from './render/themes';
+import { TutorialManager } from './tutorial/TutorialManager';
+import { tutorialLibrary } from './tutorial/library';
 import {
   bikeShopScreen,
   blackjackScreen,
@@ -107,6 +109,8 @@ export class Game {
   private ui: UIManager;
   private hud: Hud;
   private phone!: Phone;
+  /** The tutorial: lessons on a new game, hints later, Pause → Tutorials (src/tutorial). */
+  private tutorial!: TutorialManager;
   private touch: TouchControls;
   private mode: TrainingMode | null = null;
   /** Training-ground choices, kept for the session. */
@@ -195,6 +199,18 @@ export class Game {
       bail: () => this.pussyOut(),
     });
     this.hud.setZoomed(0);
+    this.tutorial = new TutorialManager(
+      {
+        progress: () => (this.world ? this.progress : null),
+        world: () => this.world,
+        playing: () => this.state === 'playing' && !this.ui.isOpen && !this.phone?.isOpen,
+        device: () => (this.touchWanted() ? 'touch' : this.input.lastDevice === 'gamepad' ? 'gamepad' : 'keyboard'),
+        hintsOn: () => this.settings.get().tutorialHints,
+        save: () => this.saveGame(),
+        sound: (k) => (k === 'step' ? this.audio.uiMove() : this.audio.uiConfirm()),
+      },
+      this.hud.lesson,
+    );
     this.phone = new Phone({
       wiki: {
         device: () => (this.input.lastDevice === 'gamepad' ? 'gamepad' : this.touchWanted() ? 'touch' : 'keyboard'),
@@ -247,6 +263,7 @@ export class Game {
         if (this.ui.isOpen && this.ui.hosted) this.ui.replaceAll(null);
       },
       shown: (open, launching) => {
+        this.tutorial?.feed({ type: 'phone', open });
         if (open) {
           this.state = 'paused';
           this.input.flush();
@@ -311,6 +328,7 @@ export class Game {
   // ---- flow ----------------------------------------------------------------
 
   private showMainMenu(): void {
+    this.tutorial?.stop();
     this.state = 'menu';
     this.studio = null;
     this.leaveWorld();
@@ -523,12 +541,15 @@ export class Game {
           // Controls and Moves are GraftWiki articles on the phone: the pause menu goes, the phone comes up on them.
           controls: () => this.wikiFromPause('controls'),
           moves: () => this.wikiFromPause('moves'),
+          tutorials: () => this.openTutorials(),
           quit: () => {
             this.saveGame();
             this.showMainMenu();
           },
         }),
       );
+      this.pauseShown = true;
+      this.tutorial.feed({ type: 'pause', open: true });
       return;
     }
     this.ui.replaceAll(
@@ -596,6 +617,45 @@ export class Game {
     this.accumulator = 0;
     this.input.flush();
     this.updateTouchVisibility();
+    if (this.pauseShown) {
+      this.pauseShown = false;
+      this.tutorial.feed({ type: 'pause', open: false });
+    }
+  }
+
+  /** The pause menu is up (so closing it tells the tutorial you've resumed). */
+  private pauseShown = false;
+
+  /** Pause → Tutorials: every lesson, its status, replays (src/tutorial/library.ts). */
+  private openTutorials(): void {
+    const p = this.progress;
+    if (!p) return;
+    const play = () => {
+      this.ui.replaceAll(null);
+      this.resume();
+    };
+    this.ui.push(
+      tutorialLibrary(p, {
+        replay: (id) => {
+          this.tutorial.replayChapter(id);
+          play();
+        },
+        hint: (id) => {
+          this.tutorial.showHint(id);
+          play();
+        },
+        resume: () => {
+          this.tutorial.resumeAll();
+          play();
+        },
+        skip: () => {
+          this.tutorial.skipAll();
+          play();
+        },
+        back: () => this.ui.pop(),
+        atHome: () => this.world?.level.id === 'home',
+      }),
+    );
   }
 
   private quitToMenu(): void {
@@ -650,7 +710,7 @@ export class Game {
     this.audio.startAmbience();
     if (fresh) {
       this.enterArea('home', 'start');
-      this.hud.toast('Have a look round the house. The front door’s in the living room.', 'info');
+      if (p.save.tutorial.essentialDone) this.hud.toast('Have a look round the house. The front door’s in the living room.', 'info');
       return;
     }
     this.enterArea(p.save.area, p.save.entry);
@@ -896,6 +956,7 @@ export class Game {
 
   private wireWorld(w: World): void {
     const ev = w.events;
+    this.worldUnsub.push(...this.tutorial.attach(w, w.sim.bus));
     this.worldUnsub.push(
       ev.on('area:exit', ({ to, entry, seam }) => {
         // The basement is down a real flight of stairs: walk down (or up) them, then arrive.
@@ -1473,6 +1534,8 @@ export class Game {
   private duelEnded(w: World, e: { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number }): void {
     const p = this.progress;
     if (!p) return;
+    // A tutorial lesson with Mo pays nothing, so replaying one never earns anything.
+    if (e.id === 'lesson') return;
     if (e.kind === 'spar') {
       // Defence training from what you landed and blocked, worth less the shorter it was.
       const reps = Math.min(10, Math.floor((e.landed + e.blocked * 1.5) / 2));
@@ -2093,6 +2156,7 @@ export class Game {
     const w = this.world;
     const p = this.progress;
     if (!w || !p || (this.state !== 'playing' && this.state !== 'paused')) return;
+    if (tab === 'character') this.tutorial.feed({ type: 'screen', name: 'me' });
     this.state = 'paused';
     this.touch.release();
     this.input.flush();
@@ -2462,6 +2526,11 @@ export class Game {
     }
     if (this.ui.isOpen) {
       this.ui.handle(a, src);
+      return;
+    }
+    // A tutorial card you read: Enter (or A on a pad) moves it on.
+    if (a === 'confirm' && this.state === 'playing' && this.tutorial.wantsNext) {
+      this.tutorial.next();
       return;
     }
     // Doing something in the house: Esc stops it; opening a menu stops it first.
@@ -2849,6 +2918,8 @@ export class Game {
   private coachText(p: Fighter, k: (key: string, pad: string, t: string) => string): string {
     const prog = this.progress;
     if (!this.world || !prog || prog.has('coach:done') || !this.world.fightOn || this.state !== 'playing') return '';
+    // Saves with the tutorial learn the buttons from Mo (src/tutorial); this coach is for older saves.
+    if (!prog.save.tutorial.hints.includes('*')) return '';
     // Saves from before the coach existed, past the first level, already know the buttons.
     if (prog.save.level > 1) {
       prog.set('coach:done');
@@ -2994,6 +3065,7 @@ export class Game {
       // Out and about in the story with no fight near: the touch pad drops to PUNCH, KICK and JUMP.
       document.body.classList.toggle('roam', !!this.world && !this.world.fightOn);
       if (this.world && this.progress) this.updateStoryHud(dt);
+      if (this.world && this.progress) this.tutorial.update(realDt);
       this.updatePrompt();
     }
 

@@ -2063,3 +2063,66 @@ body:has(#ui .screen) .hud { visibility: hidden; }
 
 /* Booked in at the station: the custody desk has your phone (progress/cops.ts). */
 body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
+
+/* ---------------------------------------------------------------------------------------------------------------
+   Tutorial (src/tutorial): the lesson card sits in the HUD's own column under the objective, a steel plate with a
+   red edge like the objective's; what it's about on the real HUD gets a white ring that breathes. */
+.hud .hud-flow .tut-slot { display: contents; }
+.tut-card {
+  pointer-events: auto; position: relative;
+  width: min(380px, 100%); box-sizing: border-box;
+  padding: 9px 12px 10px 16px;
+  background: var(--grain), rgba(16, 20, 34, 0.94);
+  box-shadow: inset 4px 0 0 var(--accent), inset 0 0 0 1px var(--edge), 0 3px 0 rgba(0, 0, 0, 0.45);
+  color: var(--text); font-family: var(--ui);
+  animation: tut-in 0.22s ease-out;
+}
+.tut-card.off { display: none; }
+.tut-card.hint { box-shadow: inset 4px 0 0 var(--neon-blue), inset 0 0 0 1px var(--edge), 0 3px 0 rgba(0, 0, 0, 0.45); }
+.tut-head { display: flex; align-items: center; gap: 10px; margin-bottom: 3px; }
+.tut-head span { font: 800 12px/1 var(--head), sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.tut-card.hint .tut-head span { color: var(--neon-blue); }
+.tut-dots { display: flex; gap: 3px; margin-left: auto; }
+.tut-dots i { width: 6px; height: 3px; background: rgba(245, 246, 250, 0.18); }
+.tut-dots i.on { background: var(--concrete); }
+.tut-dots i.now { background: var(--accent); width: 12px; }
+.tut-text { margin: 0; font: 700 clamp(15px, 0.6vmin + 12px, 17px)/1.25 var(--ui), sans-serif; color: var(--sign-white); }
+.tut-keys { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.tut-key { display: inline-block; padding: 3px 8px 2px; font: 800 14px/1.1 var(--head), sans-serif; letter-spacing: 0.03em; color: #fff; background: var(--no-entry); box-shadow: 0 2px 0 #7a1418; border-radius: 3px; }
+.tut-pointer { margin: 6px 0 0; font: 700 14px/1.2 var(--head), sans-serif; color: #fff; background: var(--motorway); display: inline-block; padding: 3px 8px 2px; box-shadow: inset 0 0 0 1.5px #fff, inset 0 0 0 3px var(--motorway); }
+.tut-why { margin: 5px 0 0; font-size: 13px; line-height: 1.3; color: var(--muted); }
+.tut-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.tut-next { display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer; padding: 6px 12px 5px; font: 800 15px/1 var(--head), sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); background: var(--sign-white); box-shadow: 0 2px 0 #000; }
+.tut-next small { font: 700 11px/1 var(--ui), sans-serif; text-transform: none; letter-spacing: 0; color: var(--faint); }
+.touch-ui .tut-next small { display: none; }
+.tut-skip { border: 0; background: none; cursor: pointer; padding: 4px 0; font: 600 13px/1 var(--ui), sans-serif; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.tut-card.done { box-shadow: inset 4px 0 0 var(--accent), inset 0 0 0 2px rgba(245, 246, 250, 0.7), 0 3px 0 rgba(0, 0, 0, 0.45); }
+.tut-tick { position: absolute; right: 12px; top: 50%; width: 22px; height: 12px; margin-top: -9px; border-left: 4px solid var(--sign-white); border-bottom: 4px solid var(--sign-white); transform: rotate(-45deg) scale(0.4); opacity: 0; animation: tut-tick 0.5s ease-out forwards; }
+@keyframes tut-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes tut-tick { 40% { opacity: 1; transform: rotate(-45deg) scale(1.1); } 100% { opacity: 1; transform: rotate(-45deg) scale(1); } }
+/* What the step is about, on the real HUD: a white ring that breathes (never replaces or hides it). */
+.tut-focus { outline: 2px solid var(--sign-white) !important; outline-offset: 3px; animation: tut-focus 1.3s ease-in-out infinite; }
+@keyframes tut-focus { 0%, 100% { outline-color: rgba(245, 246, 250, 0.95); box-shadow: 0 0 0 0 rgba(232, 51, 58, 0); } 50% { outline-color: rgba(245, 246, 250, 0.45); box-shadow: 0 0 14px 2px rgba(232, 51, 58, 0.55); } }
+@media (prefers-reduced-motion: reduce) { .tut-card, .tut-tick, .tut-focus { animation: none; } .tut-tick { opacity: 1; transform: rotate(-45deg); } }
+
+/* Pause → Tutorials */
+.tut-library .tut-list { display: flex; flex-direction: column; gap: 14px; max-height: min(62vh, 560px); overflow-y: auto; }
+.tut-sec h3 { margin: 0 0 6px; font: 800 13px/1 var(--head), sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.tut-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--asphalt-2); box-shadow: inset 0 0 0 1px var(--edge); margin-bottom: 4px; }
+.tut-row-what { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tut-row-what b { font: 800 16px/1.1 var(--head), sans-serif; color: var(--sign-white); }
+.tut-row-what span { font-size: 12px; line-height: 1.3; color: var(--muted); }
+.tut-row-what small { font-size: 11px; color: var(--concrete); }
+.tut-state { flex: none; font: 700 11px/1 var(--head), sans-serif; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 6px 2px; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+.tut-state.s-done, .tut-state.s-seen { color: var(--ink); background: var(--concrete); box-shadow: none; }
+.tut-state.s-now { color: #fff; background: var(--accent); box-shadow: none; }
+.tut-row-btn { flex: none; border: 0; cursor: pointer; padding: 7px 10px 6px; font: 800 14px/1 var(--head), sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: var(--flag-blue); box-shadow: 0 2px 0 #0c1d5a; }
+.tut-row-btn.focused, .tut-row-btn:focus-visible { outline: 2px solid var(--sign-white); outline-offset: 2px; }
+
+@media (orientation: portrait) and (max-width: 700px) {
+  .tut-card { width: 100%; padding: 8px 10px 9px 14px; }
+  .tut-why { font-size: 12px; }
+  .tut-row { flex-wrap: wrap; }
+  .tut-row-what { flex-basis: 100%; }
+  .tut-row-btn { margin-left: auto; }
+}
