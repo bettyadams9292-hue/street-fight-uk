@@ -66,7 +66,7 @@ function propertyLevel(save: GameSave): LevelDef {
   const id = save.portfolio.inside ?? PROPERTY_LIST[0].id;
   const def = PROPERTIES[id] ?? PROPERTY_LIST[0];
   const h = holding(save, def.id);
-  return buildPropertyInterior(def, h ? 'owner' : 'viewing', !!h && h.use === 'personal', formatPounds(valueNow(def, save.playTime)));
+  return buildPropertyInterior(def, h ? 'owner' : 'viewing', !!h && h.use === 'personal', formatPounds(valueNow(def, save.playTime)), !!save.portfolio.viaAgent);
 }
 
 /** What a property's front door says and whether it opens, for this save. */

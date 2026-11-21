@@ -55,6 +55,11 @@ export interface PortfolioSave {
   holdings: Holding[];
   /** Which property you're standing in, if any (the interior is built from it). */
   inside: string | null;
+  /**
+   * A viewing booked through Keys & Co (the office or the computer at home): its front door takes you straight
+   * home, not out onto a street you haven't reached yet.
+   */
+  viaAgent?: boolean;
 }
 
 export const HISTORY_LINES = 18;
@@ -101,6 +106,8 @@ export function sanitisePortfolio(raw: unknown, playTime: number): PortfolioSave
       });
     }
   out.inside = typeof r.inside === 'string' && PROPERTIES[r.inside] ? r.inside : null;
+  // Kept across a reload, so saving in a viewing can't reopen the street route.
+  if (out.inside && r.viaAgent === true) out.viaAgent = true;
   return out;
 }
 

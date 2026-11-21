@@ -449,5 +449,20 @@ test('your own place, lived in, has a bed to rest in; a viewing doesn’t', () =
   assert(!buildPropertyInterior(d, 'viewing', false, '£1').stations?.some((s) => s.id === 'prop_rest'), 'not on a viewing');
 });
 
+test('a viewing booked through the agent leaves straight home; one walked into from the street goes back out', () => {
+  const def = PROPERTY_LIST[0];
+  const booked = buildPropertyInterior(def, 'viewing', false, '£1', true).exits.find((e) => e.id === 'front_door')!;
+  assert(booked.to === 'home' && LEVELS.home.entries.some((e) => e.id === booked.toEntry), `booked viewing leads to ${booked.to}`);
+  const walked = buildPropertyInterior(def, 'viewing', false, '£1', false).exits.find((e) => e.id === 'front_door')!;
+  assert(walked.to === def.area, 'walked-in viewing goes back to its street');
+  const owned = buildPropertyInterior(def, 'owner', true, '£1', true).exits.find((e) => e.id === 'front_door')!;
+  assert(owned.to === def.area, 'your own place opens onto its street');
+  // A save made inside a booked viewing keeps it booked, so a reload can't open the street route.
+  const raw = JSON.parse(JSON.stringify(fresh().save)) as GameSave;
+  raw.portfolio.inside = def.id;
+  raw.portfolio.viaAgent = true;
+  assert(sanitiseSave(raw)!.portfolio.viaAgent === true, 'kept across a reload');
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

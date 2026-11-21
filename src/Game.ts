@@ -676,7 +676,12 @@ export class Game {
       }
       p.save.portfolio.inside = id;
       if (entry === 'start' || !PROPERTIES[entry]) entry = id;
-    } else p.save.portfolio.inside = null;
+      // Walked in from the street: its door goes back to that street.
+      if (leaving && leaving.area !== 'property' && LEVELS[leaving.area as AreaId]?.exits.some((x) => x.to === 'property' && x.toEntry === id)) p.save.portfolio.viaAgent = false;
+    } else {
+      p.save.portfolio.inside = null;
+      p.save.portfolio.viaAgent = false;
+    }
     const level = resolveLevel(area, p.save);
     this.unwire();
     this.leaveWorld();
@@ -1111,6 +1116,8 @@ export class Game {
         this.ui.replaceAll(null);
         this.state = 'playing';
         this.hud.toast(`${def.name}: have a look round. The brochure’s in the hall.`, 'item');
+        // Booked through Keys & Co: the front door leads back there, not onto the property's street.
+        this.progress!.save.portfolio.viaAgent = true;
         this.changeArea('property', id, null);
       },
     };
