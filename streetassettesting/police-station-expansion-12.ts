@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-/** SFUK police station expansion V1. Review only, pr-dev. Units: metres. */
+/** SFUK police station expansion V2. Review only, pr-dev. Units: metres. */
 export const POLICE_EXPANSION_ASSETS=[
 {id:'policeHoldingCellSingle',name:'Single holding cell'},
 {id:'policeHoldingCellDouble',name:'Two-person holding cell'},
@@ -22,7 +22,21 @@ function b(w:number,h:number,d:number,x:number,y:number,z:number,mat:THREE.Mater
 function rod(a:number[],c:number[],r:number,mat:THREE.Material){const p=new THREE.Vector3(...a),q=new THREE.Vector3(...c),v=q.clone().sub(p);const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,v.length(),10),mat);o.position.copy(p.add(q).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());g.add(o)}
 function cy(r:number,h:number,x:number,y:number,z:number,mat:THREE.Material){const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,16),mat);o.position.set(x,y,z);g.add(o)}
 function sign(txt:string,w:number,h:number,x:number,y:number,z:number){const c=document.createElement('canvas');c.width=768;c.height=192;const a=c.getContext('2d')!;a.fillStyle='#233b56';a.fillRect(0,0,768,192);a.strokeStyle='#f2f2ed';a.lineWidth=9;a.strokeRect(9,9,750,174);a.font='bold 75px Arial';a.textAlign='center';a.textBaseline='middle';a.fillStyle='#fff';a.fillText(txt,384,98,700);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const o=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide}));o.position.set(x,y,z);g.add(o)}
-function room(w:number,d:number){b(w,.14,d,0,.07,0,floor);b(w,2.65,.14,0,1.40,-d/2,wall);b(.14,2.65,d,-w/2,1.40,0,wall);b(.14,2.65,d,w/2,1.40,0,wall);b(w,.10,.13,0,2.67,d/2,wall);b(.70,2.55,.13,-w/2+.35,1.36,d/2,wall);b(.70,2.55,.13,w/2-.35,1.36,d/2,wall);b(w-.35,.12,.06,0,.19,-d/2+.09,dark)}
+function room(w:number,d:number,opening=1.65){
+b(w,.14,d,0,.07,0,floor);
+b(w,2.65,.14,0,1.40,-d/2,wall);
+b(.14,2.65,d,-w/2,1.40,0,wall);b(.14,2.65,d,w/2,1.40,0,wall);
+// Complete front wall with a central structural door opening.
+const side=(w-opening)/2;
+for(const x of [-(opening+side)/2,(opening+side)/2])b(side,2.65,.15,x,1.40,d/2,wall);
+b(opening,.20,.15,0,2.63,d/2,wall);
+b(opening,.16,.20,0,.19,d/2,concrete);
+for(const x of [-w/2+.16,w/2-.16])b(.04,2.45,.04,x,1.35,d/2+.085,concrete);
+b(w-.25,.11,.06,0,.20,-d/2+.10,dark);
+// Removable roof: full structural slab, hidden in review mode to reveal interior.
+const roof=b(w,.16,d,0,2.83,0,concrete);roof.name='inspectionRoof';
+const light=b(.82,.025,.24,0,2.70,-.38,paper);light.name='inspectionRoof';
+}
 function door(w:number,z:number,barred:boolean){const h=2.39;for(const x of [-w/2,w/2])b(.075,h,.085,x,1.32,z,steel);for(const y of [.15,2.50])b(w+.08,.07,.085,0,y,z,steel);
 if(barred){for(let x=-w/2+.13;x<w/2-.05;x+=.15)rod([x,.21,z],[x,2.45,z],.021,steel);b(w,.045,.09,0,1.28,z,steel)}
 else{b(w-.08,h-.10,.055,0,1.33,z,dark);b(w-.28,.31,.018,0,1.62,z+.04,glass);for(const y of [1.44,1.80])b(w-.25,.025,.03,0,y,z+.055,steel)}
@@ -30,8 +44,8 @@ b(.16,.27,.14,w/2-.18,1.19,z+.07,black);b(.12,.045,.055,w/2-.18,1.18,z+.17,steel
 function bench(x:number,y:number,z:number,w:number){b(w,.09,.52,x,y,z,wood);for(const dx of [-w/2+.16,w/2-.16]){b(.10,y-.08,.38,x+dx,(y-.08)/2,z,steel);b(.11,.10,.55,x+dx,.16,z,steel)}}
 function drawer(x:number,y:number,z:number,w:number,h:number){b(w,h,.045,x,y,z,steel);b(w*.36,.018,.025,x,y,z+.035,black)}
 if(id==='policeHoldingCellSingle'||id==='policeHoldingCellDouble'){
-const dbl=id==='policeHoldingCellDouble',w=dbl?4.5:3.1,d=3.45;room(w,d);
-const z=d/2+.01,doorW=1.34;
+const dbl=id==='policeHoldingCellDouble',w=dbl?4.5:3.1,d=3.45;room(w,d,1.52);
+const z=d/2+.10,doorW=1.34;
 b(doorW+.20,.18,.16,0,2.53,z,wall);door(doorW,z,dbl?true:false);
 b(.34,.31,.045,doorW/2+.39,1.61,z+.04,dark);b(.25,.17,.015,doorW/2+.39,1.61,z+.071,glass);
 bench(-w/2+.84,.60,-d/2+.48,dbl?1.50:1.25);if(dbl)bench(w/2-.84,.60,-d/2+.48,1.50);
@@ -42,24 +56,28 @@ for(const x of [-w/2+.55,w/2-.55])b(.02,2.40,.02,x,1.39,-d/2+.09,concrete);
 b(.60,.065,.21,0,2.48,-d/2+.17,paper);b(.20,.22,.03,-.38,2.18,-d/2+.08,dark);
 sign(dbl?'HOLDING 02':'HOLDING 01',.80,.19,0,2.71,z+.08);
 }else if(id==='policeInterviewRoom'){
-room(3.9,3.5);door(1.1,1.77,false);b(1.45,.085,.78,0,.83,-.10,wood);for(const x of [-.55,.55])b(.08,.75,.62,x,.42,-.10,steel);
+room(3.9,3.5,1.24);door(1.1,1.85,false);b(1.45,.085,.78,0,.83,-.10,wood);for(const x of [-.55,.55])b(.08,.75,.62,x,.42,-.10,steel);
 for(const z of [-.91,.68]){b(.54,.08,.52,0,.46,z,dark);b(.48,.50,.09,0,.74,z+(z<0?-.22:.22),navy);for(const x of [-.19,.19])b(.05,.41,.05,x,.24,z,steel)}
 b(.26,.20,.20,.34,.96,-.10,black);b(.20,.12,.015,.34,1.00,.01,glass);
 b(.48,.06,.32,-.32,.90,-.10,paper);b(.17,.035,.12,-.42,.94,-.07,black);b(.43,.30,.05,0,2.10,-1.70,dark);b(.32,.20,.02,0,2.10,-1.66,glass);
 sign('INTERVIEW',.72,.20,0,2.73,1.83);
 }else if(id==='policeCustodyBench'||id==='policeCorridorBench'){
 const corridor=id==='policeCorridorBench';bench(0,corridor?.52:.59,0,corridor?2.4:2.9);
-if(!corridor){b(2.9,.41,.08,0,.94,-.24,navy);for(const x of [-.94,0,.94])b(.06,.38,.08,x,.95,-.24,steel);for(const x of [-1.0,1.0])b(.10,.15,.48,x,.70,0,steel)}
-else{b(2.7,1.7,.10,0,1.05,-.38,wall);for(const x of [-1.04,1.04]){rod([x,.35,-.28],[x,.55,.12],.028,steel);b(.15,.08,.15,x,.45,-.32,steel)}}
+if(!corridor){b(2.9,.34,.07,0,.93,-.25,navy);for(const x of [-.94,0,.94])b(.06,.38,.08,x,.95,-.24,steel);for(const x of [-1.0,1.0])b(.10,.15,.48,x,.70,0,steel)}
+else{// Compact wall mounting plate rather than a large blank wall section.
+b(2.55,.30,.08,0,.58,-.37,wall);for(const x of [-1.04,1.04]){rod([x,.35,-.28],[x,.55,.12],.028,steel);b(.15,.08,.15,x,.45,-.32,steel)}}
 }else if(id==='policeFingerprintStation'){
 b(1.52,.10,.70,0,.93,0,wood);for(const x of [-.67,.67])b(.09,.90,.60,x,.46,0,steel);
 b(.57,.38,.07,-.37,1.23,-.17,black);b(.48,.30,.014,-.37,1.25,-.12,glass);b(.10,.21,.08,-.37,1.00,-.16,steel);
 b(.43,.09,.33,.34,1.01,.10,black);b(.34,.012,.24,.34,1.065,.10,glass);for(let i=0;i<4;i++)b(.055,.01,.06,.18+i*.10,1.074,.13,steel);
-b(.30,.28,.24,.50,1.22,-.18,dark);b(.18,.08,.04,.50,1.30,-.048,blue);sign('BOOKING',.90,.22,0,.51,.37);
+b(.30,.28,.24,.50,1.22,-.18,dark);b(.18,.08,.04,.50,1.30,-.048,blue);// Equipment sits on a working desk, not on a signboard.
+b(.55,.56,.045,0,.60,.36,navy);b(.24,.10,.02,0,.69,.391,paper);
 }else if(id==='policePropertyStorage'){
-b(2.35,2.28,.82,0,1.14,0,steel);for(let y=.23;y<2.24;y+=.49)b(2.22,.045,.73,0,y,0,dark);
-for(const x of [-1.11,1.11])b(.065,2.26,.80,x,1.14,0,black);
-for(let i=0;i<4;i++)for(let j=0;j<3;j++){const x=-.73+j*.73,y=.49+i*.49;b(.57,.30,.48,x,y,0,wood);b(.30,.10,.015,x,y+.02,.251,paper);b(.09,.025,.022,x,y-.09,.256,steel)}
+// Open rack: individual shelves, posts, and a thin back panel, never a solid cabinet.
+for(let y=.18;y<2.24;y+=.49)b(2.22,.045,.73,0,y,0,dark);
+b(2.24,2.20,.025,0,1.14,-.405,steel);
+for(const x of [-1.11,1.11])for(const z of [-.35,.35])b(.065,2.26,.065,x,1.14,z,steel);
+for(let i=0;i<4;i++)for(let j=0;j<3;j++){const x=-.73+j*.73,y=.44+i*.49;b(.57,.27,.43,x,y,0,wood);b(.30,.10,.015,x,y+.02,.251,paper);b(.09,.025,.022,x,y-.09,.256,steel)}
 b(2.43,.08,.87,0,2.31,0,steel);sign('PROPERTY',1.0,.21,0,2.45,.43);
 }else if(id==='policeStaffLockers'){
 for(let i=0;i<4;i++){const x=-1.01+i*.67;b(.62,2.02,.57,x,1.04,0,steel);b(.56,1.90,.018,x,1.06,.30,navy);
@@ -71,7 +89,9 @@ b(2.9,.12,1.02,0,1.05,0,wood);b(2.9,.88,.14,0,.56,.44,navy);for(const x of [-1.3
 b(2.95,.055,1.08,0,1.14,0,concrete);b(2.70,.025,.04,0,1.18,.52,steel);
 b(.61,.43,.07,-.68,1.45,-.21,black);b(.52,.34,.018,-.68,1.46,-.16,glass);b(.11,.28,.09,-.68,1.22,-.22,steel);
 b(.44,.06,.27,-.68,1.22,.09,black);b(.62,.025,.42,.30,1.20,-.17,paper);b(.27,.10,.17,.94,1.22,.12,black);
-for(let i=0;i<4;i++)drawer(-.87+i*.56,.69,.53,.45,.25);sign('CUSTODY',.94,.22,0,.55,.53);
+// Keep drawer fronts on the staff-facing side; do not obstruct the public-facing sign.
+for(let i=0;i<4;i++)drawer(-.87+i*.56,.69,-.53,.45,.25);
+sign('CUSTODY',.94,.22,0,.58,.526);
 }else if(id==='policeNoticeboard'){
 b(1.86,1.22,.08,0,.93,0,wood);b(1.72,1.08,.02,0,.93,.055,navy);
 for(let i=0;i<7;i++){const x=-.61+(i%3)*.60,y=.54+Math.floor(i/3)*.34;b(.43,.25,.012,x,y,.072,i%4===0?yellow:paper);cy(.015,.012,x,y+.11,.084,steel);for(let j=0;j<3;j++)b(.30,.005,.006,x,y+.05-j*.06,.082,dark)}
@@ -83,5 +103,9 @@ rod([.59,1.10,-.29],[.59,1.10,.29],.026,steel);
 for(let i=0;i<3;i++){const x=-.39+i*.40;b(.31,.19,.31,x,.49,0,wood);b(.22,.065,.014,x,.51,.163,paper)}
 b(.48,.20,.37,0,1.16,0,dark);b(.37,.09,.015,0,1.17,.195,paper);
 }else throw Error('Unknown police expansion asset: '+id);
-g.userData={id,status:'pending-review',branch:'pr-dev',gameplayIntegrated:false,collection:'Police Station Expansion V1'};return g;
+// Subtle edge and fastening details for standalone props.
+if(id==='policeStaffLockers')for(let i=0;i<4;i++){const x=-1.01+i*.67;b(.50,.018,.03,x,.31,.325,steel);b(.07,.065,.025,x+.22,1.03,.355,black)}
+if(id==='policeFilingCabinet')for(let i=0;i<4;i++){const y=.30+i*.36;for(const x of [-.35,.35])b(.018,.018,.015,x,y,.358,black)}
+if(id==='policeCustodyBench')for(const x of [-1.28,1.28])b(.12,.10,.10,x,.57,.21,steel);
+g.userData={id,status:'pending-review',branch:'pr-dev',gameplayIntegrated:false,collection:'Police Station Expansion V2'};return g;
 }
