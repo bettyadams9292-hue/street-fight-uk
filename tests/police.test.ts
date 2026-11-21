@@ -17,7 +17,11 @@ import {
   settlePrice,
   type CrimeEntry,
 } from '../src/progress/record';
-import { book, canPayBail, nightInCells, payBail } from '../src/world/custody';
+import { book, canPayBail, crewToRing, kerriganCool, kerriganGearBack, losePaperwork, nightInCells, payBail, repayCrew, ringCrew } from '../src/world/custody';
+import { BENT_BASE, BENT_SARGE, BRIBERY_HEAT, BUNG_COOL, bentChance, bungPrice, CAUGHT_HEAT, copFor, owedFor, ROSTER_SIZE, roster, sargeOnDuty } from '../src/progress/cops';
+import { COMPANIONS, followMe } from '../src/companions/companions';
+import { World } from '../src/world/World';
+import { emptyCommand } from '../src/input/Commands';
 import { LEVELS } from '../src/world/levels';
 
 let passed = 0;
@@ -163,6 +167,144 @@ test('Central Police Station: a door on Market Square, the cells, the front coun
   }
   const door = LEVELS.city.exits.find((e) => e.to === 'police_station');
   assert(door && st.entries.some((e) => e.id === door.toEntry), 'door from Market Square');
+});
+
+
+// ---- step 2: bent and straight cops, the bent sergeant, ringing your crew, the phone at the desk ----
+
+test('every district has its own officers, the same each game, bent more on rough streets and at least one anywhere', () => {
+  const a = roster('Back Alleys');
+  assert(JSON.stringify(a) === JSON.stringify(roster('Back Alleys')), 'roster changes');
+  assert(a.length === ROSTER_SIZE && new Set(a.map((c) => c.name)).size === ROSTER_SIZE, 'names');
+  for (const d of ['City Centre', 'High Street', 'Back Alleys', 'Kingsway']) assert(roster(d).some((c) => c.bent), `${d}: nobody bent`);
+  assert(bentChance('Back Alleys') > bentChance('High Street') && bentChance('High Street') > bentChance('City Centre'), 'odds by district');
+  // Over many districts' worth of officers about one in six are bent (a bit more: every district has one).
+  let bent = 0, n = 0;
+  for (let i = 0; i < 400; i++) for (const c of roster(`Somewhere ${i}`)) (n++, bent += c.bent ? 1 : 0);
+  assert(bent / n >= BENT_BASE - 0.02 && bent / n < 0.25, `bent share ${(bent / n).toFixed(3)}`);
+  // Most officers are straight, even on the roughest street.
+  assert(roster('Back Alleys').filter((c) => c.bent).length < ROSTER_SIZE / 2 + 1, 'Back Alleys mostly bent');
+});
+
+test('a bung costs more the hotter they are and the more of them there are', () => {
+  assert(bungPrice(40, 2) > bungPrice(40, 1) && bungPrice(80, 1) > bungPrice(40, 1), 'price');
+  assert(bungPrice(0, 1) === 40, `${bungPrice(0, 1)}`);
+});
+
+function streetWithPolice(bent: boolean): { p: Progress; w: World } {
+  const p = fresh(5000);
+  // The lead officer is the district's officer number trips × 2: pick a trip where he's bent (or straight).
+  let t = 0;
+  while (copFor('High Street', t * 2).bent !== bent) t++;
+  p.save.trips = t;
+  p.setHeat('police', 50, 'High Street');
+  const w = new World(LEVELS.high_street, p, { entry: 'start', seed: 5 });
+  let lead = '';
+  w.events.on('police:arrive', (e) => (lead = e.lead));
+  w.raiseAlarm('test', 1, 2);
+  for (let i = 0; i < 5; i++) w.step(emptyCommand());
+  assert(w.policeActive && lead === copFor('High Street', t * 2).name, `police ${w.policeActive} ${lead}`);
+  return { p, w };
+}
+
+test('a bent copper takes the bung: they walk off, the street cools, you know him after', () => {
+  const { p, w } = streetWithPolice(true);
+  const price = w.bungPrice();
+  const before = p.heatIn('High Street').police;
+  assert(w.bung() === 'taken', 'not taken');
+  assert(!w.policeActive, 'still a fight');
+  assert(p.save.cash.pocket === 5000 - price, `paid ${5000 - p.save.cash.pocket} of ${price}`);
+  assert(p.heatIn('High Street').police === before - BUNG_COOL, `heat ${p.heatIn('High Street').police}`);
+  assert(Object.values(p.save.police.known).includes('bent'), 'not remembered');
+  assert(!p.save.record.some((e) => e.crime === 'bribery'), 'bribery logged for a bent one');
+});
+
+test('a straight copper won\u2019t have it: bribery on your record, more heat, and they hit harder', () => {
+  const { p, w } = streetWithPolice(false);
+  const before = p.heatIn('High Street').police;
+  assert(w.bung() === 'refused', 'not refused');
+  assert(w.policeActive && p.save.cash.pocket === 5000, 'money taken or police gone');
+  assert(p.save.record.some((e) => e.crime === 'bribery'), 'no bribery charge');
+  assert(p.heatIn('High Street').police === before + BRIBERY_HEAT, `heat ${p.heatIn('High Street').police}`);
+  assert(w.police.every((f) => f.stats.hasModifier('bribed_dealt')), 'not angrier');
+  assert(Object.values(p.save.police.known).includes('straight'), 'not remembered');
+});
+
+test('booked in: they take your phone and the stolen gear goes into the property store', () => {
+  const p = fresh(0);
+  const st = p.newStack('chain_silver', 1);
+  st.stolen = true;
+  p.pocket(st);
+  const b = book(p);
+  assert(p.save.police.custody, 'phone not taken');
+  assert(b.seized >= 1 && p.save.police.seized.length >= 1, 'nothing in the property store');
+  assert(LEVELS.police_station.exits.every((e) => e.to === 'home'), 'the station lets you out somewhere but home');
+});
+
+test('Kerrigan on the desk loses the paperwork for half the bail, then he\u2019s your contact', () => {
+  const p = fresh(5000);
+  p.logCrime('robbery');
+  let t = 0;
+  while (!sargeOnDuty(t, 0, false)) t++;
+  p.save.trips = t;
+  const b = book(p);
+  assert(b.bent && b.sarge === BENT_SARGE && b.paperwork < b.bail, `sarge ${b.sarge} ${b.paperwork}/${b.bail}`);
+  assert(losePaperwork(p, b), 'not lost');
+  assert(p.save.cash.pocket === 5000 - b.paperwork && !p.save.record.length && p.save.police.contact, 'paperwork deal');
+  // A straight sergeant has no such deal.
+  const q = fresh(5000);
+  let u = 0;
+  while (sargeOnDuty(u, 0, false)) u++;
+  q.save.trips = u;
+  const c = book(q);
+  assert(!c.bent && !losePaperwork(q, c) && q.save.cash.pocket === 5000, 'straight sergeant took money');
+  assert(!sargeOnDuty(t, 0, true), 'on duty after being caught');
+});
+
+test('Kerrigan cools a district and gets your gear back; if he\u2019s caught, the heat comes down everywhere', () => {
+  const p = fresh(5000);
+  p.save.police.contact = true;
+  p.setHeat('police', 60, 'Back Alleys');
+  const f = kerriganCool(p, 'Back Alleys', 0.9);
+  assert(f.ok && !f.caught && p.heatIn('Back Alleys').police === 0 && p.save.cash.pocket === 5000 - f.price, 'cool');
+  p.save.police.seized = [{ ...p.newStack('chain_silver', 1), stolen: true }];
+  const g = kerriganGearBack(p, 0.9);
+  assert(g.ok && !p.save.police.seized.length && p.save.storage.some((x) => x.id === 'chain_silver' && x.stolen), 'gear back');
+  p.save.police.seized = [p.newStack('chain_silver', 1)];
+  const h = kerriganGearBack(p, 0);
+  assert(h.ok && h.caught && !p.save.police.contact && p.save.police.burned, 'caught');
+  assert(p.heatIn('Back Alleys').police >= CAUGHT_HEAT && p.heatIn('High Street').police >= CAUGHT_HEAT, 'no heat everywhere');
+  assert(!kerriganCool(p, 'Back Alleys', 0.9).ok, 'favour after being caught');
+});
+
+test('ring your crew: they pay, you owe them a quarter on top from the tin, and they won\u2019t follow you till then', () => {
+  const p = fresh(0, 0);
+  const id = Object.keys(COMPANIONS)[0];
+  p.save.companions.recruited.push(id);
+  p.save.companions.following.push(id);
+  p.logCrime('assault');
+  const b = book(p);
+  assert(crewToRing(p).includes(id) && ringCrew(p, b, id), 'ring');
+  assert(!p.save.record.length && p.save.police.owed?.left === owedFor(b.bail) && owedFor(b.bail) > b.bail, 'owed');
+  assert(!p.save.companions.following.includes(id) && !followMe(p, id).ok, 'still following');
+  assert(!crewToRing(p).length, 'can ring again while owing');
+  p.save.cash.bank = 100;
+  repayCrew(p);
+  assert(p.save.cash.bank === 0 && p.save.police.owed!.left === owedFor(b.bail) - 100, 'part paid');
+  p.save.cash.bank = 5000;
+  repayCrew(p);
+  assert(!p.save.police.owed && followMe(p, id).ok, 'square again');
+});
+
+test('the police state survives a save and load', () => {
+  const p = fresh();
+  p.save.police = { known: { 'PC Tate': 'bent', x: 'junk' as never }, contact: true, burned: false, seized: [p.newStack('chain_silver', 1)], owed: { id: 'x', left: 120 }, custody: true };
+  const back = sanitiseSave(JSON.parse(JSON.stringify(p.save)))!;
+  assert(back.police.known['PC Tate'] === 'bent' && !('x' in back.police.known), 'known');
+  assert(back.police.contact && back.police.seized.length === 1 && back.police.owed?.left === 120 && back.police.custody, JSON.stringify(back.police));
+  const old = JSON.parse(JSON.stringify(p.save));
+  delete old.police;
+  assert(!sanitiseSave(old)!.police.contact, 'old saves');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

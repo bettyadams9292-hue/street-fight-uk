@@ -16,6 +16,7 @@ import { defaultCompanions, sanitiseCompanions, type CompanionSave } from '../co
 import { TOWN_AREA_IDS, type TownAreaId } from '../world/townIds';
 import { DISTRICT_ORDER } from '../world/levels';
 import { ageRecord, logCrime, sanitiseRecord, type Crime, type CrimeEntry } from './record';
+import { defaultPolice, sanitisePolice, type PoliceSave } from './cops';
 import { coolHeat, emptyHeat, HEAT, HEAT_COOL, HEAT_KINDS, sanitiseHeatMap, type DistrictHeat, type HeatKind, type HeatMap } from './heat';
 import { defaultNeeds, eat, needsModifiers, sanitiseNeeds, type NeedsSave } from '../home/needs';
 import { putInto, sanitisePantry, STARTER_GROCERIES, type PantrySave } from '../home/recipes';
@@ -102,6 +103,8 @@ export interface GameSave {
   districtHeat: HeatMap;
   /** What the police have on you, newest last (`progress/record.ts`). */
   record: CrimeEntry[];
+  /** Bent and straight cops you know, Kerrigan, what's in the property store, crew you owe, your phone at the desk (`progress/cops.ts`). */
+  police: PoliceSave;
   /** Counts area changes: the game's clock for shop closures and heat. */
   trips: number;
   shops: Record<string, ShopState>;
@@ -182,6 +185,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     heat: 0,
     districtHeat: {},
     record: [],
+    police: defaultPolice(),
     trips: 0,
     shops: {},
     pawn: { itemsSold: 0, earned: 0 },
@@ -263,6 +267,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     heat: num(r.heat, 0, 0, 100),
     districtHeat: sanitiseHeatMap(r.districtHeat),
     record: sanitiseRecord(r.record),
+    police: defaultPolice(),
     trips: num(r.trips, 0),
     shops: sanitiseShops(r.shops),
     pawn: { itemsSold: num(r.pawn?.itemsSold, 0), earned: num(r.pawn?.earned, 0) },
@@ -321,6 +326,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
         }
       }
     }
+    out.police = sanitisePolice(r.police, (x) => sanitiseStack(x, seen));
     pantry = sanitisePantry(r.pantry, (x) => sanitiseStack(x, seen));
     if (pantry) out.pantry = pantry;
     // Boss rewards still on the ground. Read last, so a stack already in your pockets can never also be on the floor.
@@ -761,18 +767,26 @@ export class Progress {
 
   /** The police take anything stolen from your pockets, hands and back. */
   confiscateStolen(): number {
+    return this.takeStolen().reduce((n, x) => n + x.qty, 0);
+  }
+
+  /** Everything stolen you're carrying, wearing or holding, taken off you (the police put it in their property store). */
+  takeStolen(): ItemStack[] {
     const s = this.save;
-    let n = 0;
-    s.inventory = s.inventory.filter((x) => (x.stolen ? (n += x.qty, false) : true));
-    for (const slot of WEAR_SLOTS) if (s.worn[slot]?.stolen) {
-      delete s.worn[slot];
-      n++;
+    const out: ItemStack[] = s.inventory.filter((x) => x.stolen);
+    s.inventory = s.inventory.filter((x) => !x.stolen);
+    for (const slot of WEAR_SLOTS) {
+      const w = s.worn[slot];
+      if (w?.stolen) {
+        out.push(w);
+        delete s.worn[slot];
+      }
     }
     if (s.held?.stolen) {
+      out.push(s.held);
       s.held = null;
-      n++;
     }
-    return n;
+    return out;
   }
 
   // ---- heat and the clock --------------------------------------------------------------
