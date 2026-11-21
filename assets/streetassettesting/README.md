@@ -48,3 +48,10 @@ Original `streetassettesting/` sources and viewers are retained for comparison a
 - `ornate-biscuit-tins.ts`: three approved reference-inspired metal biscuit tin finishes: `biscuitTinPink`, `biscuitTinNavy`, `biscuitTinVintageRed`.
 - Import `BISCUIT_TIN_ASSETS` and `createBiscuitTinAsset(id)` to instantiate a model.
 - User-approved on 20 November 2026. Original staging source and iPhone 3D review viewer remain in `streetassettesting/`. No changes to `dev` or playable-game integration.
+
+## Police station expansion — 12 APPROVED (V3, pr-dev)
+
+- `police-station-expansion-12.ts`: all 12 user-approved police station assets, including single/double holding cells, secure interview room, custody waiting bench, fingerprint booking station, secure property shelving, staff lockers, glazed charge/booking counter, rebuilt wall-fixed corridor bench, briefing noticeboard, records cabinet and evidence trolley.
+- Import `POLICE_EXPANSION_ASSETS` and `createPoliceExpansionAsset(id)` to instantiate a model.
+- User-approved on 21 November 2026. Promoted from `streetassettesting/police-station-expansion-12.ts` V3; original staging source and interactive viewer retained for comparison.
+- **Status: approved for asset library on `pr-dev` only.** No changes to `dev` or playable-game integration.
