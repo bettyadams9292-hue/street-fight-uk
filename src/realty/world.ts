@@ -385,7 +385,7 @@ const ROOM_FIT: Partial<Record<RoomKind, { back: number; pieces: { kind: PropDef
  * The inside of a property: its rooms side by side along the walkway, each with its own floor, walls and
  * furniture, front door in the hallway. `as` says whether you're viewing it (the brochure) or it's yours.
  */
-export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', personal: boolean, priceText: string): LevelDef {
+export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', personal: boolean, priceText: string, viaAgent = false): LevelDef {
   const scale = [0, 0.85, 0.92, 1, 1.08, 1.2][p.quality];
   const fin = FINISH_BY_QUALITY[p.quality];
   const facades: FacadeDef[] = [];
@@ -450,7 +450,13 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
     x = x1;
   });
   const hallMid = 1.0;
-  const exits: ExitDef[] = [{ id: 'front_door', kind: 'door', x: 0.9, z: -1.4, to: p.area, toEntry: exitId(p.id), label: 'Go out (front door)' }];
+  // A viewing booked through the agent (the office or the computer at home) takes you straight home: the front
+  // door can't be a way onto streets further along than you've got.
+  const exits: ExitDef[] = [
+    as === 'viewing' && viaAgent
+      ? { id: 'front_door', kind: 'door', x: 0.9, z: -1.4, to: 'home', toEntry: 'door', label: 'Leave: straight home' }
+      : { id: 'front_door', kind: 'door', x: 0.9, z: -1.4, to: p.area, toEntry: exitId(p.id), label: 'Go out (front door)' },
+  ];
   const entries: EntryDef[] = [{ id: p.id, x: 1.4, z: -0.4, facing: 1 }];
   stations.push({
     id: 'prop_info', x: hallMid + 1.2, z: 0.3,
