@@ -144,13 +144,23 @@ test('the record survives a save and load, junk dropped', () => {
   assert(sanitiseSave(old)!.record.length === 0, 'old saves start with a clean record');
 });
 
-test('Central Police Station: a door on Market Square, a cell to wake in, the front counter', () => {
+test('Central Police Station: a door on Market Square, the cells, the front counter, and the only way out goes home', () => {
   const st = LEVELS.police_station;
   assert(st, 'no station');
   assert(st.entries.some((e) => e.id === 'cell') && st.entries.some((e) => e.id === 'door'), 'entries');
   assert(st.stations?.some((s) => s.id === 'front_desk'), 'front counter');
-  const out = st.exits.find((e) => e.to === 'city');
-  assert(out && LEVELS.city.entries.some((e) => e.id === out.toEntry), 'way out lands on Market Square');
+  // Leaving never puts you back on Market Square: every way out of the station goes straight home.
+  assert(st.exits.length > 0 && st.exits.every((e) => e.to === 'home'), `exits: ${st.exits.map((e) => e.to)}`);
+  for (const e of st.exits) assert(LEVELS.home.entries.some((n) => n.id === e.toEntry), `home has no entry ${e.toEntry}`);
+  // Furnished from the owner's police sets: the holding cells and the charge desk at least.
+  const items = new Set(st.props.map((p) => p.item));
+  for (const id of ['policeHoldingCellDouble', 'policeHoldingCellSingle', 'policeChargeDesk', 'policeCustodyDesk']) assert(items.has(id), `no ${id}`);
+  // Nobody wakes up or walks in inside something solid.
+  for (const n of st.entries) for (const p of st.props) {
+    if (p.solid === false || !p.size) continue;
+    const [hx, hz] = (p.rot ?? 0) % 2 ? [p.size[1], p.size[0]] : p.size;
+    assert(Math.abs(n.x - p.x) > hx + 0.2 || Math.abs(n.z - p.z) > hz + 0.2, `entry ${n.id} inside ${p.item ?? p.kind}`);
+  }
   const door = LEVELS.city.exits.find((e) => e.to === 'police_station');
   assert(door && st.entries.some((e) => e.id === door.toEntry), 'door from Market Square');
 });

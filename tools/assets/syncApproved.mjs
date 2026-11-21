@@ -16,6 +16,8 @@ export const SOURCES = {
   'telephone.ts': 'assets/streetassettesting/black-desk-telephone.ts',
   'bikes.ts': 'assets/streetassettesting/bikes-scooters-30.ts',
   'biscuitTins.ts': 'assets/streetassettesting/ornate-biscuit-tins.ts',
+  'policeStation.ts': 'assets/streetassettesting/british-police-station-assets.ts',
+  'policeExpansion.ts': 'assets/streetassettesting/police-station-expansion-12.ts',
 };
 const OUT = 'src/render/approved/sources';
 if (import.meta.url === `file://${process.argv[1]}`) {

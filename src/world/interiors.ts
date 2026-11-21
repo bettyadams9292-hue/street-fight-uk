@@ -1,3 +1,4 @@
+import { DECOR_SIZE } from './decorSizes';
 import type { LevelDef, PropDef } from './LevelTypes';
 import { FURNITURE } from '../property/catalogue';
 import { EQUIPMENT } from '../business/catalogue';
@@ -631,42 +632,62 @@ export function fitOut<T extends LevelDef>(level: T): T {
 }
 
 // ---- Central Police Station: the front desk, and through the back the custody suite --------------
+/**
+ * Central Police Station (police step 1, furnished from the owner's police sets): the custody block at the left
+ * end (two holding cells and the interview room against the back wall, the custody sergeant's desk, fingerprints
+ * and the property store beside them), the public side at the right (the charge desk where Sgt Hollis keeps the
+ * front counter, waiting benches, the noticeboard). Leaving takes you straight home, never back onto Market
+ * Square: you come here by cab, by the station door or in the back of a van, and go home when it's sorted.
+ */
+/** The back wall, and how far a piece of a given half depth stands in front of it. */
+const BACK = ROOM.minZ;
+const atBack = (id: string) => BACK + 0.06 + DECOR_SIZE[id][1];
 const policeStation: LevelDef = {
   id: 'police_station',
   name: 'Central Police Station',
   district: 'City Centre',
   theme: 'shop',
-  bounds: { minX: 0, maxX: 16, ...ROOM },
+  bounds: { minX: 0, maxX: 26, ...ROOM },
   entries: [
-    { id: 'door', x: 14.6, z: 0.4, facing: -1 },
-    // Where you wake up when you're nicked: in the cell at the custody end.
-    { id: 'cell', x: 1.6, z: -0.2, facing: 1 },
+    { id: 'door', x: 24.8, z: 0.4, facing: -1 },
+    // Let out of the cells in the morning (or straight after paying bail): in front of the holding cells.
+    { id: 'cell', x: 3.2, z: 3.0, facing: 1 },
   ],
-  exits: [{ id: 'out', kind: 'door', x: 15.4, z: 0.9, to: 'city', toEntry: 'police', label: 'Back out to Market Square' }],
-  facades: [{ kind: 'interior', x0: 0, x1: 16, label: 'CENTRAL POLICE STATION — FRONT COUNTER', colour: '#16243f' }],
+  exits: [{ id: 'out', kind: 'door', x: 25.6, z: 0.9, to: 'home', toEntry: 'door', label: 'Leave: straight home' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'CENTRAL POLICE STATION', colour: '#16243f' }],
   props: [
-    // Custody: the cell bench and the custody sergeant's desk. (No cell door or bars yet: there's no model for
-    // them, and the casino cage reads as a cashier's booth. See docs/POLICE_PLAN.md, asset rows.)
-    { kind: 'bench', x: 1.6, z: -1.55 },
-    { kind: 'desk', x: 5.2, z: -1.3 },
-    // The public side: the front counter and the waiting benches.
-    { kind: 'shop_counter', x: 10.8, z: -0.7 },
-    { kind: 'bench', x: 13.2, z: -1.55 },
-    { kind: 'vending', x: 15.2, z: -1.4 },
+    // Custody: the holding cells and the interview room stand against the back wall, their barred doors facing out.
+    D('policeHoldingCellDouble', 2.45, atBack('policeHoldingCellDouble')),
+    D('policeHoldingCellSingle', 6.5, atBack('policeHoldingCellSingle')),
+    D('policeInterviewRoom', 10.4, atBack('policeInterviewRoom')),
+    D('policeCustodyDesk', 14.2, atBack('policeCustodyDesk')),
+    D('policeFingerprintStation', 16.6, atBack('policeFingerprintStation')),
+    D('policePropertyStorage', 18.9, atBack('policePropertyStorage')),
+    // The custody floor in front: the bench you wait on, the evidence trolley, lockers and files on the end wall.
+    D('policeCustodyBench', 4.6, 4.9),
+    D('policeEvidenceTrolley', 9.2, 4.4),
+    D('policeStaffLockers', 0.12 + 0.35, 4.2, { rot: 3 }),
+    D('policeFilingCabinet', 13.0, 4.8),
+    // The public side: the charge desk is the front counter, the waiting bench and the noticeboard by the door.
+    D('policeChargeDesk', 21.6, -0.45),
+    D('policeNoticeboard', 23.95, BACK + 0.09, { solid: false, wallY: 0 }),
+    D('policeCorridorBench', 21.6, 4.9),
+    { kind: 'vending', x: 25.2, z: 4.8 },
   ],
   stations: [
     {
-      id: 'front_desk', x: 10.8, z: 0.1, label: 'Front counter (your record, settle fines)',
-      npc: { name: 'Sgt Hollis', seed: 7713, body: 'male', top: 'workwear', topColour: '#16243f', dz: -1.65 },
+      id: 'front_desk', x: 21.6, z: 0.75, label: 'Front counter (your record, settle fines)',
+      npc: { name: 'Sgt Hollis', seed: 7713, body: 'male', top: 'shirt', topColour: '#f1f3f5', dz: -2.1 },
     },
   ],
   pickups: [],
   encounters: [],
   lights: [
-    { x: 3, y: 2.8, z: -0.4, colour: 0xe8f0ff, intensity: 8, range: 8 },
-    { x: 11, y: 2.8, z: -0.4, colour: 0xe8f0ff, intensity: 9, range: 8 },
+    { x: 4, y: 2.8, z: -0.4, colour: 0xe8f0ff, intensity: 8, range: 8 },
+    { x: 13, y: 2.8, z: -0.4, colour: 0xe8f0ff, intensity: 8, range: 8 },
+    { x: 22.5, y: 2.8, z: 1.2, colour: 0xe8f0ff, intensity: 9, range: 8 },
   ],
-  objective: 'Sort it out at the front counter, or get out',
+  objective: 'Sort it out at the front counter, or go home',
   weather: 'indoors',
 };
 
