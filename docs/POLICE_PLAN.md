@@ -61,11 +61,29 @@ charge desks and the rest. Its door always takes you home.
   `tools/icons/hg/kit_from_titles.py` (rebuilds the lettering kit from the existing buttons).
 - `tests/police.test.ts` covers it.
 
-**Still to do:**
-- Models: an officer's uniform (hi-vis, stab vest) and the station front and blue lamp on Market Square. The
-  pack's front is too deep for the street's walking lanes.
-- The front counter's "Settle up: <district>" buttons are plain lettering (one per district, with a price).
-- A small tell for bent officers before you've tried them (Leeko to decide; for now you only know after).
+**Still to do** (also in CLAUDE.md, "Police: still to do"):
+1. **Leeko to check the numbers above.** Bail and bungs aren't in `tools/economy/model.ts` yet: add them, and
+   targets in `tests/economy.test.ts`, so they stay painful but payable at each stage.
+2. **Models.** The rows are in `docs/ASSETS_NEEDED.*`, Area "Police":
+   - an officer uniform (hi-vis, stab vest, cap or helmet, radio). Officers are the `police` archetype, built in
+     code in a dark top.
+   - a station front and blue lamp for Market Square, no deeper than about 0.4 m. The approved
+     `policeStationFront` is 1.9 m deep, and anything in the walking lanes fails `tests/npc.test.ts`.
+   - a cell door that opens.
+   - the desk sergeants' looks.
+3. **A tell for bent officers** before you've tried one (Leeko to decide). Now you only know after a bung.
+4. **The High Street pawn shop** (item 5 below): only the Cash 4 U hatch exists, in Hollins Estate (#75), paying
+   60% of Pawn & Gold. The plan wanted a High Street pawnbroker with a door and an interior. Ask Leeko if the
+   hatch is enough.
+5. **Small things:**
+   - The front counter's "Settle up: <district>" buttons are plain lettering (each has its own district and
+     price).
+   - What you owe a crew member for bail shows only when they refuse to follow you. Show it in the Crew screen
+     and the bank app, and let you pay it off there, not just at home.
+   - Kerrigan is only in the Heat app: maybe a Messages thread, or the landline at home.
+   - You're let out standing in front of the cells, never shown inside one (that wants the opening cell door).
+   - The old `arrest()` in `world/robbery.ts` is only used by tests (`stage5`, `mugging`): move them to `book()`
+     and delete it.
 
 ## What's there already
 

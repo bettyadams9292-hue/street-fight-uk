@@ -230,14 +230,17 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 - #80: police step 2 (`progress/cops.ts`, `docs/POLICE_PLAN.md` Status): each district has 6 named officers (`roster`), about 1 in 6 bent (30% on rough estates, 8% in the City Centre); when they turn up the OLD BILL screen (`Game.oldBill`) offers a bung (`World.bung`: bent ones walk off and the district cools 30; straight ones add bribery, +15 heat and hit harder; `save.police.known` remembers), coming quietly, or a fight. Booked in, the desk keeps your phone till you walk out (`save.police.custody`, `Game.phoneHeld`). Sgt Kerrigan has the custody desk 40% of nights: Lose the paperwork for half the bail, then he's a contact in the Heat app (cool a district, gear back from the property store `save.police.seized`, tip-offs; 6% a favour he's caught and police heat rises everywhere). Ring for bail: a crew member pays, you owe +25%, repaid from the tin at home (`repayCrew`), and they won't follow you till then. Painted titles for every new button (`tools/icons/hg/kit_from_titles.py` rebuilds the lettering kit from existing buttons).
 ## Open questions and next steps
 
-- **Police: steps 1 and 2 are built (#76, #78, #80). Read `docs/POLICE_PLAN.md` first: its Status section lists the numbers for Leeko to check and what's left (an officer uniform model, the station front, a tell for bent officers).** The plan covers:
-  - a police station you can go into;
-  - proper arrests (custody, a charge sheet);
-  - bail priced by how serious the crime was;
-  - good cops and bent cops (bungs, a bent desk sergeant);
-  - a second pawn shop on the High Street with the worst rates in the game.
-
-  The plan lists what exists now, a suggested design and numbers to check with Leeko, and the files to touch.
+- **Police: still to do (for whoever picks it up next).** Steps 1 and 2 are built (#76, #78, #80); `docs/POLICE_PLAN.md` has the full Status, the numbers and the files. Left:
+  1. **Leeko to check the numbers** (all in `progress/record.ts` and `progress/cops.ts`, listed in the plan's Status): bail, court fine, settling up, bung price, how many officers are bent, Kerrigan's share of nights, his prices and his 6% risk, the crew's 25% on top. Bail and bungs aren't in `tools/economy/model.ts` yet: add them so `tests/economy.test.ts` keeps them payable at each stage.
+  2. **Models** (rows added to `docs/ASSETS_NEEDED.*`, Area "Police"): an officer uniform (hi-vis, stab vest, cap or helmet; officers are code-built in a dark top now); a station front and blue lamp for Market Square no deeper than about 0.4 m (the approved `policeStationFront` is 1.9 m and stands in the walking lanes, see `tests/npc.test.ts`); a cell door that opens; desk sergeants' looks.
+  3. **A tell for bent officers** before you've tried one (Leeko to decide). Now you only know after a bung (`save.police.known`).
+  4. **The High Street pawn shop** (the plan's item 5): there's only the Cash 4 U hatch, in Hollins (#75), at 60% of Pawn & Gold. The plan wanted a pawnbroker on the High Street with a door and an interior. Ask Leeko if the hatch is enough.
+  5. **Small things:**
+     - the front counter's "Settle up: <district>" buttons are plain lettering (one per district, with a price);
+     - what you owe a crew member for bail shows only when they refuse to follow you: show it in the Crew screen and the bank app, and let you pay it off there;
+     - Kerrigan only appears in the Heat app: maybe a Messages thread, or the landline;
+     - you're let out standing in front of the cells, never shown inside one;
+     - the old `arrest()` in `world/robbery.ts` is only used by tests now (`stage5`, `mugging`): move those tests to `book()` and remove it.
 
 - **Performance, still to do:** characters are about 36–40k triangles each (body about 27k). Agreed plan (19 Nov, not started), all from the models we already have, no new art:
   1. merge each person's ~10 skinned parts (body, clothes, hair, shoes) into one skinned mesh with material groups in `HumanBuilder.ts`: same look, one draw instead of ten;
