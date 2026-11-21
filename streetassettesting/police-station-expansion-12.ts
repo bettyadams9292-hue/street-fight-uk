@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-/** SFUK police station expansion V2. Review only, pr-dev. Units: metres. */
+/** SFUK police station expansion V3. Review only, pr-dev. Units: metres. */
 export const POLICE_EXPANSION_ASSETS=[
 {id:'policeHoldingCellSingle',name:'Single holding cell'},
 {id:'policeHoldingCellDouble',name:'Two-person holding cell'},
@@ -62,16 +62,44 @@ b(.26,.20,.20,.34,.96,-.10,black);b(.20,.12,.015,.34,1.00,.01,glass);
 b(.48,.06,.32,-.32,.90,-.10,paper);b(.17,.035,.12,-.42,.94,-.07,black);b(.43,.30,.05,0,2.10,-1.70,dark);b(.32,.20,.02,0,2.10,-1.66,glass);
 sign('INTERVIEW',.72,.20,0,2.73,1.83);
 }else if(id==='policeCustodyBench'||id==='policeCorridorBench'){
-const corridor=id==='policeCorridorBench';bench(0,corridor?.52:.59,0,corridor?2.4:2.9);
-if(!corridor){b(2.9,.34,.07,0,.93,-.25,navy);for(const x of [-.94,0,.94])b(.06,.38,.08,x,.95,-.24,steel);for(const x of [-1.0,1.0])b(.10,.15,.48,x,.70,0,steel)}
-else{// Compact wall mounting plate rather than a large blank wall section.
-b(2.55,.30,.08,0,.58,-.37,wall);for(const x of [-1.04,1.04]){rod([x,.35,-.28],[x,.55,.12],.028,steel);b(.15,.08,.15,x,.45,-.32,steel)}}
+const corridor=id==='policeCorridorBench';
+if(!corridor){
+bench(0,.59,0,2.9);
+b(2.9,.34,.07,0,.93,-.25,navy);
+for(const x of [-.94,0,.94])b(.06,.38,.08,x,.95,-.24,steel);
+for(const x of [-1.0,1.0])b(.10,.15,.48,x,.70,0,steel);
+}else{
+// A true cantilevered wall-mounted bench: no floor legs or floating mounting panel.
+const seat=b(2.5,.085,.53,0,.53,0,wood);
+b(2.50,.30,.065,0,.86,-.265,navy);
+for(const x of [-.96,0,.96]){
+b(.12,.23,.045,x,.66,-.285,steel);
+rod([x,.33,-.30],[x,.49,.18],.036,steel);
+b(.13,.09,.18,x,.50,-.18,steel);
+for(const y of [.58,.74])cy(.018,.012,x,y,-.311,black);
+}
+for(const x of [-1.08,1.08])b(.10,.014,.014,x,.58,.17,black);
+}
 }else if(id==='policeFingerprintStation'){
-b(1.52,.10,.70,0,.93,0,wood);for(const x of [-.67,.67])b(.09,.90,.60,x,.46,0,steel);
-b(.57,.38,.07,-.37,1.23,-.17,black);b(.48,.30,.014,-.37,1.25,-.12,glass);b(.10,.21,.08,-.37,1.00,-.16,steel);
-b(.43,.09,.33,.34,1.01,.10,black);b(.34,.012,.24,.34,1.065,.10,glass);for(let i=0;i<4;i++)b(.055,.01,.06,.18+i*.10,1.074,.13,steel);
-b(.30,.28,.24,.50,1.22,-.18,dark);b(.18,.08,.04,.50,1.30,-.048,blue);// Equipment sits on a working desk, not on a signboard.
-b(.55,.56,.045,0,.60,.36,navy);b(.24,.10,.02,0,.69,.391,paper);
+// Freestanding custody fingerprint workstation, with a recognisable optical platen.
+b(1.65,.065,.78,0,.91,0,concrete);
+for(const x of [-.72,.72]){b(.055,.82,.055,x,.47,-.28,steel);b(.055,.82,.055,x,.47,.28,steel)}
+b(1.50,.075,.12,0,.25,-.30,steel);
+b(.59,.43,.065,-.43,1.32,-.20,black);
+b(.52,.35,.009,-.43,1.33,-.162,blue);
+b(.11,.25,.11,-.43,1.02,-.20,steel);
+b(.40,.035,.19,-.43,.95,.06,black);
+for(let i=0;i<6;i++)b(.035,.009,.035,-.57+(i%3)*.09,.974,.01+Math.floor(i/3)*.065,steel);
+// Angled sloping scanner top, separated into a palm platen and four-finger capture area.
+b(.57,.16,.43,.40,1.035,.06,black);
+const platen=b(.49,.018,.34,.40,1.126,.06,glass);platen.rotation.x=-.12;
+b(.44,.014,.27,.40,1.141,.06,navy);
+for(let i=0;i<4;i++)b(.076,.012,.13,.245+i*.105,1.151,.055,steel);
+b(.19,.04,.055,.40,1.152,.255,blue);
+b(.32,.27,.24,.48,1.27,-.24,dark);
+b(.22,.12,.012,.48,1.29,-.11,blue);
+b(.47,.48,.045,0,.64,.365,navy);
+b(.23,.12,.014,0,.68,.391,paper);
 }else if(id==='policePropertyStorage'){
 // Open rack: individual shelves, posts, and a thin back panel, never a solid cabinet.
 for(let y=.18;y<2.24;y+=.49)b(2.22,.045,.73,0,y,0,dark);
@@ -85,11 +113,29 @@ for(let j=0;j<4;j++)b(.34,.013,.025,x,1.72+j*.045,.32,black);
 b(.035,.19,.035,x+.22,1.06,.34,steel);b(.10,.10,.02,x-.17,1.70,.32,paper)}
 b(2.70,.10,.65,0,2.11,0,dark);b(2.70,.10,.67,0,.06,0,dark);
 }else if(id==='policeChargeDesk'){
-b(2.9,.12,1.02,0,1.05,0,wood);b(2.9,.88,.14,0,.56,.44,navy);for(const x of [-1.34,1.34])b(.12,.94,.90,x,.54,0,wood);
-b(2.95,.055,1.08,0,1.14,0,concrete);b(2.70,.025,.04,0,1.18,.52,steel);
-b(.61,.43,.07,-.68,1.45,-.21,black);b(.52,.34,.018,-.68,1.46,-.16,glass);b(.11,.28,.09,-.68,1.22,-.22,steel);
-b(.44,.06,.27,-.68,1.22,.09,black);b(.62,.025,.42,.30,1.20,-.17,paper);b(.27,.10,.17,.94,1.22,.12,black);
-// Keep drawer fronts on the staff-facing side; do not obstruct the public-facing sign.
+// Counter with continuous protective glazed screen and a deliberately open document slot.
+b(2.9,.12,1.02,0,1.05,0,wood);
+b(2.9,.88,.14,0,.56,.44,navy);
+for(const x of [-1.34,1.34])b(.12,.94,.90,x,.54,0,wood);
+b(2.95,.055,1.08,0,1.14,0,concrete);
+b(2.70,.025,.04,0,1.18,.52,steel);
+// Glass is above the public edge (positive z), with clear visible separation.
+const screenZ=.485;
+for(const x of [-1.42,0,1.42])b(.055,1.13,.065,x,1.78,screenZ,steel);
+b(2.95,.065,.075,0,2.37,screenZ,steel);
+b(2.95,.045,.075,0,1.22,screenZ,steel);
+const safetyGlass=new THREE.MeshStandardMaterial({color:0xa3cadb,transparent:true,opacity:.30,roughness:.09,metalness:.06,side:THREE.DoubleSide,depthWrite:false});
+for(const x of [-.71,.71])b(1.34,.88,.018,x,1.90,screenZ,safetyGlass);
+// Low transaction slot with open gap above the countertop, and metal pass-through tray.
+b(1.0,.025,.35,0,1.24,.49,steel);
+b(.94,.018,.28,0,1.262,.49,black);
+for(const x of [-.51,.51])b(.03,.17,.05,x,1.35,screenZ,steel);
+b(.61,.43,.07,-.68,1.45,-.21,black);
+b(.52,.34,.018,-.68,1.46,-.16,glass);
+b(.11,.28,.09,-.68,1.22,-.22,steel);
+b(.44,.06,.27,-.68,1.22,.09,black);
+b(.62,.025,.42,.30,1.20,-.17,paper);
+b(.27,.10,.17,.94,1.22,.12,black);
 for(let i=0;i<4;i++)drawer(-.87+i*.56,.69,-.53,.45,.25);
 sign('CUSTODY',.94,.22,0,.58,.526);
 }else if(id==='policeNoticeboard'){
@@ -107,5 +153,5 @@ b(.48,.20,.37,0,1.16,0,dark);b(.37,.09,.015,0,1.17,.195,paper);
 if(id==='policeStaffLockers')for(let i=0;i<4;i++){const x=-1.01+i*.67;b(.50,.018,.03,x,.31,.325,steel);b(.07,.065,.025,x+.22,1.03,.355,black)}
 if(id==='policeFilingCabinet')for(let i=0;i<4;i++){const y=.30+i*.36;for(const x of [-.35,.35])b(.018,.018,.015,x,y,.358,black)}
 if(id==='policeCustodyBench')for(const x of [-1.28,1.28])b(.12,.10,.10,x,.57,.21,steel);
-g.userData={id,status:'pending-review',branch:'pr-dev',gameplayIntegrated:false,collection:'Police Station Expansion V2'};return g;
+g.userData={id,status:'pending-review',branch:'pr-dev',gameplayIntegrated:false,collection:'Police Station Expansion V3'};return g;
 }
