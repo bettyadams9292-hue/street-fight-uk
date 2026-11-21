@@ -31,9 +31,10 @@ charge desks and the rest. Its door always takes you home.
 
 **Step 2 is built (21 Nov 2026).** The numbers are in `src/progress/cops.ts`, for Leeko to check:
 
-- **Officers:** each district has 6 named officers (`roster`), the same every game, met in turn. Bent: 30% on
+- **Officers:** each district has 6 named officers (`roster`), the same every game, met in turn. Bent: 40% on
   the rough estates (Back Alleys, Kingsway, Canal Docks, Hollins, the Factory, the Industrial Quarter, Dunc's),
-  8% in the City Centre, Ashcombe Park and the Riverside Centre, 1 in 6 elsewhere. Every district has at least
+  12% in the City Centre, Ashcombe Park and the Riverside Centre, 1 in 4 elsewhere (raised 21 Nov: at 1 in 6 a
+  few tries could all come up straight). Every district has at least
   one bent officer.
 - **When they turn up** (999 call, alarm, waiting on arrival), the OLD BILL screen (`Game.oldBill`):
   - Offer a bung (`World.bung`): £40 + £2.50 a point of police heat, +50% for each officer past the first.
@@ -81,7 +82,8 @@ charge desks and the rest. Its door always takes you home.
    - What you owe a crew member for bail shows only when they refuse to follow you. Show it in the Crew screen
      and the bank app, and let you pay it off there, not just at home.
    - Kerrigan is only in the Heat app: maybe a Messages thread, or the landline at home.
-   - You're let out standing in front of the cells, never shown inside one (that wants the opening cell door).
+   - After a night in the cells you wake inside the single cell (#83), drawn cut away like every room in the game
+     (no front wall), and walk out of the front. A cell door that opens would let it keep its front.
    - The old `arrest()` in `world/robbery.ts` is only used by tests (`stage5`, `mugging`): move them to `book()`
      and delete it.
 
