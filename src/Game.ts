@@ -208,6 +208,11 @@ export class Game {
         hintsOn: () => this.settings.get().tutorialHints,
         save: () => this.saveGame(),
         sound: (k) => (k === 'step' ? this.audio.uiMove() : this.audio.uiConfirm()),
+        playerScreenX: () => {
+          const pl = this.world?.player;
+          const at = pl ? this.renderer.screenOf(pl.pos.x, 1, pl.pos.z) : null;
+          return at ? at.x / Math.max(1, window.innerWidth) : null;
+        },
       },
       this.hud.lesson,
     );

@@ -2126,3 +2126,7 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
   .tut-row-what { flex-basis: 100%; }
   .tut-row-btn { margin-left: auto; }
 }
+/* With your fighter on the left of the screen, the card moves to the right, under the HUD buttons. */
+@media not ((orientation: portrait) and (max-width: 700px)) {
+  .hud .hud-flow .tut-card.right { position: fixed; top: calc(var(--head-b, 84px) + 6px); right: calc(12px + var(--safe-r)); }
+}

@@ -24,6 +24,8 @@ export class TutorialBrain {
 
   /** Change what Mo's doing; his next swing or grab waits a beat so it never comes out of nowhere. */
   setMode(mode: LessonMode, frame: number): void {
+    // Asked again for what he's already doing (the tutorial asks every frame): carry on as he is.
+    if (mode === this.mode && this.nextAt > 0) return;
     this.mode = mode;
     this.nextAt = frame + SIM_HZ * 1.2;
   }

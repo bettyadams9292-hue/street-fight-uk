@@ -39,10 +39,10 @@ export class LessonOverlay {
   }
 
   /** Show this (or nothing). Cheap to call every frame. */
-  show(v: LessonView | null): void {
+  show(v: LessonView | null, side: 'left' | 'right' = 'left'): void {
     // Hold the tick on screen for a moment before the next step replaces it.
     if (performance.now() < this.flashing) return;
-    const key = v ? JSON.stringify(v) : '';
+    const key = v ? JSON.stringify(v) + side : '';
     if (key === this.shown && (!v || this.litStill(v))) return;
     this.shown = key;
     this.light(v?.focus ?? []);
@@ -50,7 +50,7 @@ export class LessonOverlay {
       this.el.classList.add('off');
       return;
     }
-    this.el.className = `tut-card ${v.kind}`;
+    this.el.className = `tut-card ${v.kind} ${side}`;
     const keys = v.keys.length ? h('div', { class: 'tut-keys' }, ...v.keys.map((k) => h('kbd', { class: 'tut-key', text: k }))) : null;
     const dots = v.progress ? h('div', { class: 'tut-dots', 'aria-label': `Step ${v.progress.at} of ${v.progress.of}` }, ...Array.from({ length: v.progress.of }, (_, i) => h('i', { class: i < v.progress!.at - 1 ? 'on' : i === v.progress!.at - 1 ? 'now' : '' }))) : null;
     const actions = v.next || v.skip

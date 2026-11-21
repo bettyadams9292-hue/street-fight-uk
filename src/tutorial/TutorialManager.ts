@@ -29,6 +29,8 @@ export interface TutorialHost {
   hintsOn(): boolean;
   save(): void;
   sound(kind: 'step' | 'done' | 'chapter'): void;
+  /** Where you are across the screen, 0 (left) to 1 (right), or null if not on it. */
+  playerScreenX(): number | null;
 }
 
 /** A hint card stays this long unless you dismiss it first. */
@@ -49,6 +51,7 @@ export class TutorialManager {
   private hint: { def: HintDef; until: number } | null = null;
   private hintQueue: HintDef[] = [];
   private pollAt = 0;
+  private side: 'left' | 'right' = 'left';
 
   constructor(private readonly host: TutorialHost, slot: HTMLElement) {
     this.overlay = new LessonOverlay(slot, { next: () => this.next(), skip: () => this.skipStep() });
@@ -149,7 +152,10 @@ export class TutorialManager {
     } else if (playing) {
       this.pollHints(ctx);
     }
-    this.overlay.show(playing ? this.view(ctx) : null);
+    // The card keeps off your fighter: on the right while you're on the left of the screen.
+    const sx = this.host.playerScreenX();
+    if (sx !== null) this.side = sx < 0.45 ? 'right' : sx > 0.55 ? 'left' : this.side;
+    this.overlay.show(playing ? this.view(ctx) : null, this.side);
   }
 
   /** Mo's part, and passing over what can't be done here. */
@@ -166,9 +172,11 @@ export class TutorialManager {
 
   /** You're where the step needs you (otherwise it waits, with a pointer). */
   private ready(step: StepDef, ctx: Ctx): boolean {
+    // A step with Mo counts once you're in the lesson with him, wherever on the mat the fight has taken you.
+    if (step.mo) return ctx.world.inLesson;
     if (!step.at) return true;
     if (ctx.world.level.id !== step.at.area) return false;
-    return step.at.x === undefined || Math.abs(ctx.player.pos.x - step.at.x) < 3.5 || !step.mo;
+    return step.at.x === undefined || Math.abs(ctx.player.pos.x - step.at.x) < 3.5;
   }
 
   private ctx(): Ctx | null {
@@ -378,7 +386,7 @@ export class TutorialManager {
     const at = step.at;
     if (!at) return undefined;
     if (ctx.world.level.id !== at.area) return at.area === 'home' ? 'Head home first: Cabs on your phone will take you.' : `Head to ${at.label}.`;
-    if (at.x === undefined || Math.abs(ctx.player.pos.x - at.x) < 3.5) return undefined;
+    if (at.x === undefined || Math.abs(ctx.player.pos.x - at.x) < 3.5 || (step.mo && ctx.world.inLesson)) return undefined;
     const dx = at.x - ctx.player.pos.x;
     return `${dx > 0 ? '→' : '←'} ${at.label}, ${Math.round(Math.abs(dx))} m`;
   }

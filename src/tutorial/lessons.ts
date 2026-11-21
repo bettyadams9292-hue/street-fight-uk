@@ -97,9 +97,9 @@ export const CHAPTERS: readonly ChapterDef[] = [
     blurb: 'Moving about, using things, what the HUD tells you, the phone and pause.',
     steps: [
       { id: 'intro', text: 'Every reputation starts somewhere. This one starts here, at 14 Tanner Road.', why: 'A few minutes to learn the basics. You can skip any of it.', done: { read: true } },
-      { id: 'walk', text: 'Walk about.', keys: ['move'], why: 'Left and right takes you along the street.', done: { poll: (c) => c.walked >= 2.5 } },
-      { id: 'depth', text: 'Step towards the back wall, and back out.', keys: ['depth'], why: 'You can move in and out as well: it’s how you get round people.', done: { poll: (c) => c.stepped >= 0.8 } },
-      { id: 'run', text: 'Break into a run.', keys: ['run'], why: 'Running gets you about quicker. In a fight it costs stamina.', done: { poll: (c) => c.ran >= 0.4 } },
+      { id: 'walk', text: 'Walk about.', keys: ['move'], why: 'Left and right takes you along the street.', done: { poll: (c) => c.walked >= 1.2 } },
+      { id: 'depth', text: 'Step towards the back wall, and back out.', keys: ['depth'], why: 'You can move in and out as well: it’s how you get round people.', done: { poll: (c) => c.stepped >= 0.5 } },
+      { id: 'run', text: 'Break into a run.', keys: ['run'], why: 'Running gets you about quicker. In a fight it costs stamina.', done: { poll: (c) => c.ran >= 0.3 } },
       { id: 'jump', text: 'Jump.', keys: ['jump'], done: { on: 'jump' } },
       { id: 'use', text: 'Use the biscuit tin on the desk.', keys: ['use'], why: 'Stand at something and its name comes up. That’s your money tin: cash in it is safe.', at: { area: 'home', x: -13.9, label: 'the desk in the bedroom' }, done: { on: 'station', test: (e) => e.type === 'station' && e.id === 'tin' } },
       { id: 'health', text: 'Health: the red bar. Hits take it; food and rest bring it back.', why: 'At nothing, you’re done in and someone goes through your pockets.', focus: ['.hud-top .bar.health'], done: { read: true } },
