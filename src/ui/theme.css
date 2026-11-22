@@ -1397,6 +1397,14 @@ body.fight-on .home-only { display: none !important; }
   background: linear-gradient(160deg, #2b2c33, #121318); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 4px 10px rgba(0, 0, 0, 0.45); }
 .ph-appicon img { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); }
 .ph-app:active .ph-appicon { transform: scale(0.92); }
+/* A mouse or trackpad gets a hover; keys and pads a picked control (Phone.nav). Touch screens show neither. */
+@media (hover: hover) {
+  .ph-app:hover .ph-appicon { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22) inset, 0 6px 14px rgba(0, 0, 0, 0.55); filter: brightness(1.12); }
+  .ph-btn:not(:disabled):hover, .ph-back:hover, .pm-back:hover { filter: brightness(1.15); }
+}
+.ph-screen .ph-pick { outline: 2px solid #fff; outline-offset: 3px; border-radius: 12px; }
+.ph-app.ph-pick { outline: 0; }
+.ph-app.ph-pick .ph-appicon { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #d71e27, 0 4px 10px rgba(0, 0, 0, 0.45); }
 .ph-app.app-cabs .ph-appicon, .ph-app.app-bank .ph-appicon { background: linear-gradient(160deg, #b1121a, #4a0508); }
 .ph-badge { position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; border-radius: 10px; background: #e01b24; color: #fff; font: 800 12px/20px var(--ui), sans-serif; text-align: center; box-shadow: 0 0 0 2px #0d0e12; }
 .ph-appname { font: 600 11px/1.1 var(--ui), sans-serif; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); white-space: nowrap; }
@@ -1507,6 +1515,9 @@ body.phone-on .hud-buttons { opacity: 0.35; pointer-events: none; }
 .ph-embed .pf-tab img.title-art { max-width: 100%; height: auto; max-height: 34px; }
 .ph-embed .setting-row .name.has-art img.title-art { max-width: 100%; }
 @container phone (max-width: 560px) { .pf-tab .icon { display: none; } }
+/* The upright-phone portrait is 36vh of the real screen: on an iPhone (700 tall) about 252 px; on an iPad or a desktop
+   it would be far taller than the phone it's in, so it stops at the iPhone's size. */
+.ph-narrow .pf-portrait:not(.small) { height: min(36vh, 252px); }
 
 /* Inside the phone, each screen loses what the phone already gives it: its own title, tabs (Me and Crew are their
    own apps), key hints and close buttons. */
