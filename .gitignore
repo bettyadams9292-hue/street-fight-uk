@@ -6,3 +6,5 @@ dist/
 tools/visual/out/
 tools/visual/report/
 __pycache__/
+tools/phone/out/
+tools/phone/report/

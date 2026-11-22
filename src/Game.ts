@@ -2521,6 +2521,8 @@ export class Game {
       // An app's screen inside the phone takes its own keys (Back closes it, back to the phone's home).
       else if (this.ui.isOpen && this.ui.hosted) this.ui.handle(a, src);
       else if (a === 'back' || a === 'pause') this.phone.back();
+      // Keys and pads move between the phone's buttons and press them (mouse, touch and pen press them directly).
+      else if (a === 'up' || a === 'down' || a === 'left' || a === 'right' || a === 'confirm') this.phone.nav(a);
       return;
     }
     if (a === 'phone') {

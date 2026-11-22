@@ -11,7 +11,7 @@ import type { AreaId, Progress } from '../../progress/Progress';
 import { cabStop, onMap, place, places, travelOptions, unlocked, type TravelOption } from '../../map/worldMap';
 import { TAXI_COST, moHint } from '../hub';
 import { LEVELS } from '../../world/levels';
-import { embedPortraitRules } from './embedCss';
+import { embedPortraitRules, markNarrow } from './embedCss';
 import { mapApp } from './mapApp';
 import { GANG_GRUDGE, GANG_HUNT, HEAT_KINDS, heatWord, KNOWN_FACE_HEAT, type HeatKind } from '../../progress/heat';
 import { ARREST_HEAT } from '../../world/robbery';
@@ -81,6 +81,32 @@ interface AppDef {
 }
 
 const ICON = (f: string) => `/icons/hg/${f}.webp`;
+
+/** The control nearest `from` in a direction, by where they are on screen (ties to the one most in line). */
+export function nearest(all: HTMLElement[], from: HTMLElement, dir: 'up' | 'down' | 'left' | 'right'): HTMLElement | null {
+  const c = (e: HTMLElement) => {
+    const r = e.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  };
+  const o = c(from);
+  let best: HTMLElement | null = null;
+  let score = Infinity;
+  for (const e of all) {
+    if (e === from) continue;
+    const p = c(e);
+    const dx = p.x - o.x;
+    const dy = p.y - o.y;
+    const along = dir === 'left' ? -dx : dir === 'right' ? dx : dir === 'up' ? -dy : dy;
+    const across = dir === 'left' || dir === 'right' ? Math.abs(dy) : Math.abs(dx);
+    if (along <= 2) continue;
+    const s = along + across * 2;
+    if (s < score) {
+      score = s;
+      best = e;
+    }
+  }
+  return best;
+}
 const money = (n: number) => `£${Math.round(n).toLocaleString('en-GB')}`;
 
 export class Phone {
@@ -92,6 +118,10 @@ export class Phone {
   private wikiState: { device?: Device; q?: string } = {};
   private openNow = false;
   private clockTimer = 0;
+  /** Stops watching the hosted app view's width. */
+  private unwatch: () => void = () => {};
+  /** The control picked with the keys or a pad (null: none yet). */
+  private picked: HTMLElement | null = null;
 
   constructor(private d: PhoneDeps) {
     this.clock = h('span', { class: 'ph-time' });
@@ -139,6 +169,9 @@ export class Phone {
     this.d.host(null);
     this.openNow = false;
     clearInterval(this.clockTimer);
+    this.unwatch();
+    this.unwatch = () => {};
+    this.pick(null);
     this.el.classList.remove('up');
     this.el.classList.add('leaving');
     this.el.setAttribute('aria-hidden', 'true');
@@ -161,6 +194,7 @@ export class Phone {
   /** Back: an app goes back to the home screen; the home screen puts the phone away. */
   back(): void {
     if (this.app === 'embed' && this.d.hosting()) this.d.closeHosted();
+    else if (this.app === 'wiki' && this.wikiPage !== 'index') this.wikiGo('index');
     else if (this.app !== 'home') this.go('home');
     else this.close();
   }
@@ -170,6 +204,9 @@ export class Phone {
     if (!this.openNow) return;
     this.openNow = false;
     clearInterval(this.clockTimer);
+    this.unwatch();
+    this.unwatch = () => {};
+    this.pick(null);
     this.d.host(null);
     this.el.classList.remove('up', 'leaving');
     this.el.classList.add('off');
@@ -191,7 +228,11 @@ export class Phone {
 
   private go(app: AppId): void {
     this.d.sound('tap');
-    if (app !== 'embed') this.d.host(null);
+    if (app !== 'embed') {
+      this.d.host(null);
+      this.unwatch();
+      this.unwatch = () => {};
+    }
     this.app = app;
     this.render();
   }
@@ -210,6 +251,8 @@ export class Phone {
     ));
     this.screen.dataset.app = 'embed';
     embedPortraitRules();
+    this.unwatch();
+    this.unwatch = markNarrow(box);
     this.d.host(box);
     fn();
   }
@@ -220,6 +263,40 @@ export class Phone {
     this.close(fn);
   }
 
+  /**
+   * The keys or a pad, on the phone's own screens: arrows (or the D-pad / stick) move between its buttons by where
+   * they are on screen, Enter (or A) presses the one picked. Mouse, touch and pen just press buttons directly.
+   * Returns whether the phone used it.
+   */
+  nav(a: 'up' | 'down' | 'left' | 'right' | 'confirm'): boolean {
+    if (!this.openNow || this.app === 'embed') return false;
+    const all = Array.from(this.screen.querySelectorAll<HTMLElement>('button, a[href], input, [tabindex="0"]')).filter((e) => {
+      if ((e as HTMLButtonElement).disabled) return false;
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    });
+    if (!all.length) return false;
+    const cur = this.picked && this.picked.isConnected && all.includes(this.picked) ? this.picked : null;
+    if (a === 'confirm') {
+      if (!cur) return this.pick(all.find((e) => e.classList.contains('ph-app')) ?? all[0]), true;
+      if (cur instanceof HTMLInputElement) cur.focus();
+      else cur.click();
+      return true;
+    }
+    if (!cur) return this.pick(all.find((e) => e.classList.contains('ph-app')) ?? all[0]), true;
+    this.pick(nearest(all, cur, a) ?? cur);
+    return true;
+  }
+
+  private pick(el: HTMLElement | null): void {
+    this.picked?.classList.remove('ph-pick');
+    this.picked = el;
+    if (!el) return;
+    el.classList.add('ph-pick');
+    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    this.d.sound('open');
+  }
+
   private tick(): void {
     const t = new Date();
     this.clock.textContent = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
@@ -227,6 +304,7 @@ export class Phone {
 
   private render(): void {
     if (this.app === 'embed') return;
+    this.picked = null;
     if (this.app === 'map') return this.renderMap();
     if (this.app === 'wiki') return this.renderWiki();
     const view = this.app === 'home' ? this.homeScreen() : this.appScreen(this.app);
