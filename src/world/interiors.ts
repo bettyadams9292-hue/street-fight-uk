@@ -642,6 +642,19 @@ export function fitOut<T extends LevelDef>(level: T): T {
 /** The back wall, and how far a piece of a given half depth stands in front of it. */
 const BACK = ROOM.minZ;
 const atBack = (id: string) => BACK + 0.06 + DECOR_SIZE[id][1];
+/** The single holding cell: where you wake after a night inside (its model's doorway is an open frame). */
+const CELL_X = 6.5;
+const CELL_Z = atBack('policeHoldingCellSingle');
+const [CELL_HW, CELL_HD] = DECOR_SIZE.policeHoldingCellSingle;
+/**
+ * The cell's side walls (the back is the station wall). It's drawn cut away, with no front wall, like every room
+ * in the game (render/approved/prototype.ts `CUTAWAY`), so you're seen inside and walk out of the front.
+ */
+const CELL_WALLS = [
+  { minX: CELL_X - CELL_HW, maxX: CELL_X - CELL_HW + 0.16, minZ: CELL_Z - CELL_HD, maxZ: CELL_Z + CELL_HD - 0.4, visual: 'none' as const },
+  { minX: CELL_X + CELL_HW - 0.16, maxX: CELL_X + CELL_HW, minZ: CELL_Z - CELL_HD, maxZ: CELL_Z + CELL_HD - 0.4, visual: 'none' as const },
+];
+
 const policeStation: LevelDef = {
   id: 'police_station',
   name: 'Central Police Station',
@@ -650,15 +663,17 @@ const policeStation: LevelDef = {
   bounds: { minX: 0, maxX: 26, ...ROOM },
   entries: [
     { id: 'door', x: 24.8, z: 0.4, facing: -1 },
-    // Let out of the cells in the morning (or straight after paying bail): in front of the holding cells.
-    { id: 'cell', x: 3.2, z: 3.0, facing: 1 },
+    // A night in the cells: you wake up inside the single cell, and walk out of it in the morning.
+    { id: 'cell', x: CELL_X, z: CELL_Z - 0.2, facing: 1 },
   ],
   exits: [{ id: 'out', kind: 'door', x: 25.6, z: 0.9, to: 'home', toEntry: 'door', label: 'Leave: straight home' }],
+  walls: CELL_WALLS,
   facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'CENTRAL POLICE STATION', colour: '#16243f' }],
   props: [
     // Custody: the holding cells and the interview room stand against the back wall, their barred doors facing out.
     D('policeHoldingCellDouble', 2.45, atBack('policeHoldingCellDouble')),
-    D('policeHoldingCellSingle', 6.5, atBack('policeHoldingCellSingle')),
+    // You can be inside this one: its side walls are solid (below), and it's open at the front.
+    D('policeHoldingCellSingle', CELL_X, CELL_Z, { solid: false }),
     D('policeInterviewRoom', 10.4, atBack('policeInterviewRoom')),
     D('policeCustodyDesk', 14.2, atBack('policeCustodyDesk')),
     D('policeFingerprintStation', 16.6, atBack('policeFingerprintStation')),

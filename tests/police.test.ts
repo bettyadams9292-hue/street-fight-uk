@@ -178,10 +178,10 @@ test('every district has its own officers, the same each game, bent more on roug
   assert(a.length === ROSTER_SIZE && new Set(a.map((c) => c.name)).size === ROSTER_SIZE, 'names');
   for (const d of ['City Centre', 'High Street', 'Back Alleys', 'Kingsway']) assert(roster(d).some((c) => c.bent), `${d}: nobody bent`);
   assert(bentChance('Back Alleys') > bentChance('High Street') && bentChance('High Street') > bentChance('City Centre'), 'odds by district');
-  // Over many districts' worth of officers about one in six are bent (a bit more: every district has one).
+  // Over many districts' worth of officers about one in four are bent (a bit more: every district has one).
   let bent = 0, n = 0;
   for (let i = 0; i < 400; i++) for (const c of roster(`Somewhere ${i}`)) (n++, bent += c.bent ? 1 : 0);
-  assert(bent / n >= BENT_BASE - 0.02 && bent / n < 0.25, `bent share ${(bent / n).toFixed(3)}`);
+  assert(bent / n >= BENT_BASE - 0.02 && bent / n < BENT_BASE + 0.08, `bent share ${(bent / n).toFixed(3)}`);
   // Most officers are straight, even on the roughest street.
   assert(roster('Back Alleys').filter((c) => c.bent).length < ROSTER_SIZE / 2 + 1, 'Back Alleys mostly bent');
 });
@@ -228,6 +228,20 @@ test('a straight copper won\u2019t have it: bribery on your record, more heat, a
   assert(p.heatIn('High Street').police === before + BRIBERY_HEAT, `heat ${p.heatIn('High Street').police}`);
   assert(w.police.every((f) => f.stats.hasModifier('bribed_dealt')), 'not angrier');
   assert(Object.values(p.save.police.known).includes('straight'), 'not remembered');
+});
+
+test('a night in the cells: you wake inside the single cell, walled each side, and walk out of the front', () => {
+  const st = LEVELS.police_station;
+  const cell = st.entries.find((e) => e.id === 'cell')!;
+  const walls = st.walls ?? [];
+  const inWall = (x: number, z: number) => walls.some((w) => x > w.minX && x < w.maxX && z > w.minZ && z < w.maxZ);
+  const box = st.props.find((p) => p.item === 'policeHoldingCellSingle')!;
+  const [hw, hd] = box.size!;
+  assert(Math.abs(cell.x - box.x) < hw - 0.3 && Math.abs(cell.z - box.z) < hd - 0.3, 'wakes outside the cell');
+  assert(!inWall(cell.x, cell.z), 'wakes in a wall');
+  // Walls each side of you; the front is open (drawn cut away), so you walk out that way.
+  assert(inWall(box.x - hw + 0.08, cell.z) && inWall(box.x + hw - 0.08, cell.z), 'no side walls');
+  for (let x = box.x - hw + 0.3; x < box.x + hw - 0.3; x += 0.2) assert(!inWall(x, box.z + hd - 0.1), `front blocked at x ${x.toFixed(1)}`);
 });
 
 test('booked in: they take your phone and the stolen gear goes into the property store', () => {

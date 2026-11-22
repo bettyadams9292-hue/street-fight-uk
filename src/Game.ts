@@ -2407,7 +2407,9 @@ export class Game {
         label: 'Come quietly',
         sub: 'Booked in at the station, no beating',
         go: () => {
+          // Straight to the charge sheet: the game's paused for this screen, so nothing queued would ever show.
           this.ui.replaceAll(null);
+          this.state = 'playing';
           this.nicked(0);
         },
       },
@@ -2473,7 +2475,7 @@ export class Game {
       sub: canPayBail(p, b) ? `Keep the bail money; the court takes \u00a3${b.fine} in the morning` : 'You can\u2019t make bail',
       go: () => {
         const taken = nightInCells(p, b);
-        out(taken ? `A night on a plastic mattress. The court fined you \u00a3${taken}.` : 'A night on a plastic mattress. The court let you off: you\u2019ve got nothing.', 'cell');
+        out(`${taken ? `A night on a plastic mattress. The court fined you \u00a3${taken}.` : 'A night on a plastic mattress. The court let you off: you\u2019ve got nothing.'} The cell door\u2019s open: walk out when you\u2019re ready.`, 'cell');
       },
     });
     return rewardScreen('NICKED', lines, buttons, ['nicked']);
