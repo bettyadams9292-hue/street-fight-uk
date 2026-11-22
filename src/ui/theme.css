@@ -2145,3 +2145,60 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
   body.tut-on-right .touch-ui .prompt-wrap { left: 30% !important; }
   .hud .hud-flow .tut-card.right { position: fixed; top: calc(var(--head-b, 84px) + 6px); right: calc(12px + var(--safe-r)); }
 }
+
+/* ---- Hotbar: medical, food, weapon (items/hotbar.ts, Hud.setHotbar) ----
+   Three bolt-head plates like the HUD buttons, each with its item's painted icon, how many you've got, a red tag
+   saying what the slot is for and, on a keyboard, its number. After patching up or eating, a dark sweep runs
+   round the medical and food slots until the next can go (a weapon never waits). Desktop: bottom centre. Phones: a column beside the stick, clear of every button. */
+.hotbar { --hb: 58px; position: absolute; left: 50%; bottom: calc(18px + var(--safe-b)); transform: translateX(-50%); display: flex; gap: 8px; z-index: 4; pointer-events: auto; }
+.hotbar.off { display: none; }
+.hb-slot {
+  position: relative; width: var(--hb); height: var(--hb); padding: 0; border: 0; cursor: pointer; touch-action: none;
+  background: linear-gradient(180deg, var(--asphalt-3), var(--asphalt));
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -2px 0 rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(245, 246, 250, 0.08);
+  -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+}
+.hb-slot .hb-ico { position: absolute; left: 50%; top: 44%; width: 74%; height: 74%; object-fit: contain; transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55)); transition: opacity 0.15s, filter 0.15s; }
+.hb-slot.empty .hb-ico { opacity: 0.28; filter: grayscale(1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)); }
+.hb-slot .hb-k { position: absolute; left: 5px; top: 2px; font-family: var(--head); font-weight: 900; font-size: 13px; color: var(--accent); text-shadow: 0 1px 2px #000; pointer-events: none; z-index: 2; }
+.hb-slot .hb-n { position: absolute; right: 3px; top: 3px; min-width: 18px; padding: 0 3px; border-radius: 6px; font-family: var(--head); font-weight: 800; font-size: 11px; line-height: 1.3; text-align: center; color: #111; background: var(--sign-white); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); pointer-events: none; z-index: 2; }
+.hb-slot .hb-n:empty { display: none; }
+.hb-slot .hb-tag { position: absolute; left: 0; right: 0; bottom: 0; height: 13px; font-family: var(--head); font-weight: 900; font-size: 9.5px; line-height: 13px; letter-spacing: 0.08em; text-align: center; color: #fff; background: linear-gradient(180deg, var(--accent), var(--accent-deep)); pointer-events: none; z-index: 2; }
+.hb-slot .hb-bar { position: absolute; left: 6px; right: 6px; bottom: 16px; height: 3px; background: rgba(0, 0, 0, 0.55); pointer-events: none; z-index: 2; }
+.hb-slot .hb-bar.off { display: none; }
+.hb-slot .hb-bar i { position: absolute; left: 0; top: 0; bottom: 0; }
+.hb-slot .hb-cd { position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: 0; background: conic-gradient(rgba(8, 10, 18, 0.72) calc(var(--hb-wait, 0) * 360deg), transparent 0); }
+.hotbar.waiting .hb-slot:not(.weapon) .hb-cd { opacity: 1; }
+.hb-slot.in-hand { box-shadow: inset 0 0 0 2px var(--accent), inset 0 -2px 0 rgba(0, 0, 0, 0.45); }
+.hb-slot.in-hand .hb-ico { opacity: 0.6; }
+.hb-slot:active { transform: translateY(1px); }
+.hb-slot.used { animation: hb-used 0.45s ease-out; }
+.hb-slot.nope { animation: hb-nope 0.32s ease-in-out; }
+@keyframes hb-used { 0% { filter: brightness(2.1) saturate(1.3); transform: scale(1.12); } 100% { filter: none; transform: none; } }
+@keyframes hb-nope { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@media (hover: hover) { .hb-slot:hover { background: linear-gradient(180deg, #4a4d45, var(--asphalt-2)); } }
+@media (prefers-reduced-motion: reduce) { .hb-slot.used, .hb-slot.nope { animation: none; } }
+
+/* Touch: no key numbers; smaller plates in a column just right of the stick, clear of the fight buttons and the USE plate. */
+.touch-ui .hotbar { --hb: 46px; left: calc(45% + 6px + var(--safe-l)); bottom: calc(66px + var(--safe-b)); transform: none; flex-direction: column; gap: 6px; }
+.touch-ui .hb-slot .hb-k { display: none; }
+.touch-ui .hb-slot .hb-tag { height: 11px; font-size: 8px; line-height: 11px; }
+.touch-ui .hb-slot .hb-bar { bottom: 13px; }
+/* Upright phone: a column on the left edge, above the stick. */
+@media (orientation: portrait) and (max-width: 700px) {
+  .touch-ui .hotbar { --hb: 44px; left: calc(10px + var(--safe-l)); bottom: calc(var(--deck-h) + 74px); }
+}
+
+/* Pockets & bag: the hotbar row (tap a slot to change it) and the "on the hotbar" chip. */
+.inv-hotbar .inv-grid.hotbar-row { grid-template-columns: repeat(3, var(--slot)); }
+.inv-slot.hb-pick { position: relative; cursor: pointer; background: linear-gradient(180deg, var(--asphalt-3), var(--asphalt)); border: 1px solid rgba(232, 51, 58, 0.55); border-bottom: 3px solid var(--accent); }
+.inv-slot.hb-pick img { width: 72%; height: 72%; object-fit: contain; margin: auto; display: block; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); }
+.inv-slot.hb-pick.empty img { opacity: 0.28; filter: grayscale(1); }
+.inv-slot.hb-pick .slot-label { color: var(--accent); font-weight: 800; text-shadow: 0 1px 2px #000; }
+.inv-slot.hb-pick .hb-n { position: absolute; right: 3px; bottom: 3px; min-width: 18px; padding: 0 3px; border-radius: 6px; font-family: var(--head); font-weight: 800; font-size: 11px; line-height: 1.3; text-align: center; color: #111; background: var(--sign-white); }
+.detail-title .hb-pin { margin-top: 6px; font-size: 13px; padding: 4px 10px; }
+.detail-title .eq-now.hb-on { color: var(--accent); }
+@media (orientation: portrait) and (max-width: 700px) {
+  .inv-hotbar .inv-grid.hotbar-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

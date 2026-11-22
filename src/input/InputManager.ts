@@ -1,4 +1,5 @@
 import { emptyCommand, type CommandFrame, type PressButton } from './Commands';
+import { HOTBAR_SLOTS, type HotbarSlot } from '../items/hotbar';
 
 export type GameButton = PressButton;
 const PRESS_BUTTONS: readonly GameButton[] = ['lp', 'hp', 'lk', 'hk', 'jump', 'dodge', 'grab', 'swap'];
@@ -36,7 +37,11 @@ export const MENU_KEYS = { phone: 'KeyP', bail: 'KeyX', inventory: 'KeyB', map: 
 export const PAD = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, LS: 10, RS: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 export const PAD_BUTTONS: Record<GameButton, number> = { lp: PAD.X, hp: PAD.Y, lk: PAD.A, hk: PAD.B, jump: PAD.LS, dodge: PAD.LT, grab: PAD.LB, swap: PAD.BACK };
 /** The pad's other buttons: held block and special, USE, the phone and pause. */
-export const PAD_EXTRA = { block: PAD.RT, special: PAD.RB, use: PAD.LB, phone: PAD.RS, pause: PAD.START } as const;
+export const PAD_EXTRA = { block: PAD.RT, special: PAD.RB, use: PAD.LB, phone: PAD.RS, pause: PAD.START, hotbar: PAD.BACK } as const;
+/** Held with PAD_EXTRA.hotbar: the medical, food and weapon slots, in HOTBAR_SLOTS order. */
+export const PAD_HOTBAR = [PAD.X, PAD.Y, PAD.B] as const;
+/** The hotbar's keys, in HOTBAR_SLOTS order (medical, food, weapon). */
+export const HOTBAR_KEYS = [['Digit1', 'Numpad1'], ['Digit2', 'Numpad2'], ['Digit3', 'Numpad3']] as const;
 const STICK_DEADZONE = 0.25;
 /** Two taps of a direction this close together start a sprint (ms). */
 const DOUBLE_TAP_MS = 280;
@@ -52,6 +57,10 @@ export class InputManager {
   private pressedQueue = new Set<GameButton>();
   /** USE (E, the touch USE button, or LB on a pad, which is GRAB in a fight) queued since the last step. */
   private useQueued = false;
+  /** Hotbar slots pressed since the game last looked (1, 2, 3; Back + X / Y / B on a pad; the HUD's slots). */
+  private hotbarQueue: HotbarSlot[] = [];
+  /** A pad's Back has been used for the hotbar since it went down, so letting go of it isn't a style swap. */
+  private backCombo = false;
   private menuListeners = new Set<(a: MenuAction, source: InputSource, fightKey?: boolean) => void>();
   private padPrev: boolean[] = [];
   private padAxesPrev = { x: 0, y: 0 };
@@ -88,6 +97,19 @@ export class InputManager {
   useFromTouch(): void {
     this.useQueued = true;
     this.lastDevice = 'touch';
+  }
+
+  /** A hotbar slot tapped or clicked on screen. */
+  hotbarFromScreen(slot: HotbarSlot, source: InputSource): void {
+    this.hotbarQueue.push(slot);
+    this.lastDevice = source;
+  }
+
+  /** The hotbar slots pressed since last asked (oldest first). */
+  takeHotbar(): HotbarSlot[] {
+    const q = this.hotbarQueue;
+    this.hotbarQueue = [];
+    return q;
   }
 
   /** Touch buttons call this. */
@@ -136,6 +158,8 @@ export class InputManager {
         if ((KEY_BINDINGS[b] as readonly string[]).includes(code)) this.pressedQueue.add(b);
       if ((KEY_BINDINGS.use as readonly string[]).includes(code)) this.useQueued = true;
       }
+      const hb = HOTBAR_KEYS.findIndex((codes) => (codes as readonly string[]).includes(code));
+      if (hb >= 0) this.hotbarQueue.push(HOTBAR_SLOTS[hb]);
       if (code === 'Escape') this.emitMenu('back');
       else if (code === MENU_KEYS.phone) this.emitMenu('phone');
       else if (code === MENU_KEYS.bail) this.emitMenu('bail');
@@ -179,14 +203,31 @@ export class InputManager {
     const pressed = (i: number) => !!pad.buttons[i]?.pressed;
     const edge = (i: number) => pressed(i) && !this.padPrev[i];
 
-    for (const b of PRESS_BUTTONS) if (edge(PAD_BUTTONS[b])) this.pressedQueue.add(b);
+    // Hold Back (style swap) and press X, Y or B for the hotbar's medical, food and weapon slots. Back on its
+    // own still swaps style, when it's let go.
+    const backHeld = pressed(PAD_EXTRA.hotbar);
+    if (edge(PAD_EXTRA.hotbar)) this.backCombo = false;
+    if (backHeld) {
+      PAD_HOTBAR.forEach((btn, i) => {
+        if (edge(btn)) {
+          this.hotbarQueue.push(HOTBAR_SLOTS[i]);
+          this.backCombo = true;
+        }
+      });
+    }
+    for (const b of PRESS_BUTTONS) {
+      if (b === 'swap') continue;
+      if (backHeld && (PAD_HOTBAR as readonly number[]).includes(PAD_BUTTONS[b])) continue;
+      if (edge(PAD_BUTTONS[b])) this.pressedQueue.add(b);
+    }
+    if (!backHeld && this.padPrev[PAD_EXTRA.hotbar] && !this.backCombo) this.pressedQueue.add('swap');
     // A pad has no spare button: LB is USE out of a fight and GRAB in one (the world decides which counts).
     if (edge(PAD_EXTRA.use)) this.useQueued = true;
     if (edge(PAD_EXTRA.pause)) this.emitMenu('pause', 'gamepad');
     // Right-stick click: I (heavy punch) and RB (special) are fight buttons.
     if (edge(PAD_EXTRA.phone)) this.emitMenu('phone', 'gamepad');
     if (edge(PAD.A)) this.emitMenu('confirm', 'gamepad');
-    if (edge(PAD.B)) this.emitMenu('back', 'gamepad');
+    if (edge(PAD.B) && !backHeld) this.emitMenu('back', 'gamepad');
     if (edge(PAD.UP)) this.emitMenu('up', 'gamepad');
     if (edge(PAD.DOWN)) this.emitMenu('down', 'gamepad');
     if (edge(PAD.LEFT)) this.emitMenu('left', 'gamepad');

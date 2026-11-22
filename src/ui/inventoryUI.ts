@@ -20,6 +20,7 @@ import { icon, type IconName } from './icons';
 import { itemIconUrl } from './itemIcons';
 import type { Screen, UIManager } from './UIManager';
 import { jewelleryBoxPanel } from './jewelleryUI';
+import { cycleHotbar, HOTBAR_EMPTY_ICON, HOTBAR_LABELS, HOTBAR_SLOTS, hotbarChoices, hotbarView, setHotbar, slotFor } from '../items/hotbar';
 
 /**
  * Inventory, stash, pawn shop and clothes shop screens. They all share one
@@ -329,6 +330,17 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
         acts.push(menuButton('Take off into the stash', () => { const r = progress.unwear(sel.where as WearSlot, true); if (r.ok) { say('In the stash'); actions.changed(); } else say(r.reason, true); build(); }));
       }
       detail = detailPanel(d, st, acts, sel.where === 'pocket' ? compareBlock(progress, d) : null);
+      // Medical, food and weapons can go on the hotbar: say so, or offer to put it there.
+      const hbSlot = sel.where === 'pocket' ? slotFor(d) : null;
+      if (hbSlot) {
+        const onIt = hotbarView(s, hbSlot).stack?.id === st.id;
+        const n = HOTBAR_SLOTS.indexOf(hbSlot) + 1;
+        detail.querySelector('.detail-title')?.append(
+          onIt
+            ? h('div', { class: 'eq-now hb-on' }, icon('check'), `On the hotbar (${HOTBAR_LABELS[hbSlot].toLowerCase()}, ${n})`)
+            : h('button', { class: 'chip hb-pin', 'data-nav': true, onclick: () => { setHotbar(s, st.id); say(`${d.name} on the hotbar (${n})`); actions.changed(); build(st.uid); } }, h('span', { text: `Put on the hotbar (${n})` })),
+        );
+      }
       if (sel.where !== 'pocket') detail.querySelector('.detail-title')?.append(h('div', { class: 'eq-now' }, icon('check'), sel.where === 'held' ? 'Holding it' : `Wearing (${WEAR_SLOT_LABELS[sel.where as WearSlot]})`));
     }
 
@@ -362,8 +374,37 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
       ),
     );
 
+    // The hotbar: what 1, 2 and 3 use. Tap a slot to move it on to the next thing you carry that fits.
+    const hotbarRow = h('div', { class: 'inv-sec inv-hotbar' },
+      h('div', { class: 'inv-sec-head' }, h('span', { text: 'Hotbar' }), h('span', { class: 'n', text: 'Tap to change' })),
+      h('div', { class: 'inv-grid hotbar-row' }, ...HOTBAR_SLOTS.map((slot, i) => {
+        const v = hotbarView(s, slot);
+        const st = v.stack;
+        const choices = hotbarChoices(s, slot);
+        return h('button', {
+          class: `inv-slot hb-pick ${slot}${st ? '' : ' empty'}`, 'data-nav': true, 'data-grid': true,
+          'aria-label': `Hotbar ${i + 1}, ${HOTBAR_LABELS[slot].toLowerCase()}: ${st ? defOf(st).name : 'nothing'}${choices.length > 1 ? '. Tap for the next' : ''}`,
+          onclick: () => {
+            if (choices.length < 2) {
+              say(choices.length ? `${defOf(st!).name} is the only ${HOTBAR_LABELS[slot].toLowerCase()} thing on you` : `Nothing on you for the ${HOTBAR_LABELS[slot].toLowerCase()} slot`, !choices.length);
+            } else {
+              const id = cycleHotbar(s, slot);
+              if (id) say(`Hotbar ${i + 1}: ${ITEMS[id].name}`);
+              actions.changed();
+            }
+            build();
+          },
+        },
+          h('img', { src: st ? itemIconUrl(st.id, st.colour) : `/icons/hg/${HOTBAR_EMPTY_ICON[slot]}.webp`, alt: '', draggable: 'false' }),
+          h('span', { class: 'slot-label', text: `${i + 1} · ${HOTBAR_LABELS[slot]}` }),
+          v.count > 1 ? h('span', { class: 'hb-n', text: `×${v.count}` }) : null,
+        );
+      })),
+    );
+
     const carryView = h('div', { class: 'inv-carry' },
       onYou,
+      hotbarRow,
       h('div', { class: 'inv-sec' },
         h('div', { class: 'inv-sec-head' }, h('span', { text: 'Pockets' }), h('span', { class: 'n', text: `${Math.min(used, BASE_INVENTORY_SLOTS)} of ${BASE_INVENTORY_SLOTS}` })),
         h('div', { class: 'inv-grid pockets' }, ...pocketTiles),

@@ -36,6 +36,7 @@ import { emptyCommand, type CommandFrame } from '../input/Commands';
 import { TutorialBrain, type LessonMode } from '../ai/TutorialBrain';
 import type { ItemStack } from '../items/Inventory';
 import { ITEMS, weaponItemId } from '../items/items';
+import { HOTBAR_COOLDOWN, hotbarView, refillHotbar, type HotbarSlot } from '../items/hotbar';
 import { bossDropValue, lootTableFor, rollLoot } from '../items/loot';
 import type { AreaId, Progress } from '../progress/Progress';
 import { defaultAttributes } from '../stats/Stats';
@@ -72,6 +73,7 @@ export interface WorldEvents {
   'encounter:start': { id: string; boss: BossDef | null };
   /** You pussied out: `dropped` thrown down (0 = none on you, so they'll remember you). */
   bail: { dropped: number; grudge: boolean };
+  'hotbar:used': { slot: HotbarSlot };
   /** A district you ran from with nothing on you: this fight comes at you twice as hard. */
   grudge: { district: string };
   'encounter:wave': { id: string; wave: number; of: number };
@@ -2352,6 +2354,45 @@ export class World {
     if (!r.ok) return false;
     this.player.weapon = null;
     return true;
+  }
+
+  /** Sim frame of the last medical or food use from the hotbar: a short wait between them, so healing is a choice in a fight, not a button to mash. */
+  private hotbarAt = -Infinity;
+
+  /** How much of the wait after a medical or food use is left, 1 just used .. 0 ready. */
+  get hotbarWait(): number {
+    return Math.max(0, 1 - (this.sim.frame - this.hotbarAt) / (HOTBAR_COOLDOWN * SIM_HZ));
+  }
+
+  /**
+   * Use a hotbar slot (items/hotbar.ts), in or out of a fight: patch up, eat or drink the slot's item, or draw
+   * its weapon (put it away when it's the one in your hands and there's no other). Afterwards the slot keeps its
+   * item, or pulls in the next suitable thing from your pockets when that was the last of it.
+   */
+  useHotbar(slot: HotbarSlot): { ok: boolean; text: string; next?: string | null } {
+    const p = this.player;
+    if (p.vitals.health <= 0 || !p.isFree) return { ok: false, text: 'Not now' };
+    // The wait is for patching up and eating; drawing or putting away a weapon never waits on it.
+    if (slot !== 'weapon' && this.sim.frame - this.hotbarAt < HOTBAR_COOLDOWN * SIM_HZ) return { ok: false, text: 'Hang on' };
+    const s = this.progress.save;
+    const v = hotbarView(s, slot);
+    let r: { ok: boolean; text: string };
+    if (slot === 'weapon') {
+      if (v.stack) {
+        const name = ITEMS[v.stack.id].name;
+        r = this.holdFromInventory(v.stack.uid) ? { ok: true, text: `${name} out` } : { ok: false, text: 'Can’t right now' };
+      } else if (v.inHand) {
+        const name = ITEMS[v.inHand.id].name;
+        r = this.putAwayWeapon() ? { ok: true, text: `${name} away` } : { ok: false, text: 'Your pockets are full' };
+      } else r = { ok: false, text: 'No weapon on you' };
+    } else if (!v.stack) {
+      r = { ok: false, text: slot === 'medic' ? 'Nothing to patch up with' : 'Nothing to eat or drink' };
+    } else r = this.useItem(v.stack.uid);
+    if (!r.ok) return r;
+    if (slot !== 'weapon') this.hotbarAt = this.sim.frame;
+    const next = refillHotbar(s, slot);
+    this.events.emit('hotbar:used', { slot });
+    return { ...r, next };
   }
 
   // ---- exits ----------------------------------------------------------------------

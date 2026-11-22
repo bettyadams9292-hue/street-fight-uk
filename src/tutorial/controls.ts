@@ -3,12 +3,12 @@
  * PAD_BUTTONS, PAD_EXTRA in input/InputManager.ts) and the touch buttons' own labels (ui/TouchControls.ts), so a
  * tutorial prompt can never name a key the game doesn't listen for.
  */
-import { KEY_BINDINGS, MENU_KEYS, PAD, PAD_BUTTONS, PAD_EXTRA, type InputSource } from '../input/InputManager';
+import { HOTBAR_KEYS, KEY_BINDINGS, MENU_KEYS, PAD, PAD_BUTTONS, PAD_EXTRA, PAD_HOTBAR, type InputSource } from '../input/InputManager';
 
 export type Action =
   | 'move' | 'depth' | 'run' | 'jump' | 'use'
   | 'lp' | 'hp' | 'lk' | 'hk' | 'block' | 'parry' | 'dodge' | 'grab' | 'special' | 'swap'
-  | 'phone' | 'pause' | 'bag' | 'map' | 'me';
+  | 'phone' | 'pause' | 'bag' | 'map' | 'me' | 'hotbar';
 
 const PAD_NAME: Record<number, string> = Object.fromEntries(Object.entries(PAD).map(([k, v]) => [v, k])) as Record<number, string>;
 PAD_NAME[PAD.LS] = 'L3';
@@ -39,6 +39,7 @@ function keyboard(a: Action): string {
     case 'bag': return keyName(MENU_KEYS.inventory);
     case 'map': return keyName(MENU_KEYS.map);
     case 'me': return keyName(MENU_KEYS.character);
+    case 'hotbar': return HOTBAR_KEYS.map((k) => keyName(k[0])).join(' / ');
   }
 }
 
@@ -58,6 +59,7 @@ function pad(a: Action): string {
     case 'pause': return n(PAD_EXTRA.pause);
     // A pad has no spare button for the bag: it's the bag button on screen or the keyboard.
     case 'bag': return `${keyName(MENU_KEYS.inventory)} on a keyboard`;
+    case 'hotbar': return `hold ${n(PAD_EXTRA.hotbar)} + ${PAD_HOTBAR.map(n).join(' / ')}`;
   }
 }
 
@@ -83,6 +85,7 @@ const TOUCH: Record<Action, { label: string; sel: string }> = {
   bag: { label: 'the bag button', sel: '.bag-btn' },
   map: { label: 'Maps on the phone', sel: '.phone-btn' },
   me: { label: 'Me on the phone', sel: '.phone-btn' },
+  hotbar: { label: 'a hotbar slot', sel: '.hotbar' },
 };
 
 /** What to press for `a` on `device`. */
@@ -93,5 +96,5 @@ export function control(a: Action, device: InputSource): string {
 /** The on-screen element(s) to light up for `a` on `device` (touch buttons; the HUD buttons everywhere). */
 export function controlTarget(a: Action, device: InputSource): string | null {
   if (device === 'touch') return TOUCH[a].sel;
-  return a === 'phone' || a === 'pause' || a === 'bag' ? TOUCH[a].sel : null;
+  return a === 'phone' || a === 'pause' || a === 'bag' || a === 'hotbar' ? TOUCH[a].sel : null;
 }
