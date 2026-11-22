@@ -35,6 +35,7 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 **UI** (`src/ui/`).
 - `styles.css` is the base. `theme.css` is the "Council Estate Grime" design system: a red, white and blue palette, Big Shoulders and Overpass fonts. It loads after `styles.css`, so put new styling in `theme.css`.
 - Portrait phone layout: the `@media (orientation: portrait) and (max-width: 700px)` blocks at the end of `theme.css`.
+- The in-game phone shows Me, Crew and Settings inside itself. `ui/phone/embedCss.ts` judges every size `@media` rule against an upright phone (390×700), not the real screen, so those screens look the same on an iPhone, an iPad and a desktop. Nothing to do when you add a media rule; `docs/PHONE.md` has the details, the app list and a by-hand checklist. `npm run phone` (after a build) works every phone app at eight screen sizes.
 
 **Painted titles** (`public/art/titles/*.webp`).
 - `src/ui/titles.ts`: `TITLE_SLUGS`, `titleArt()`, `titleFor()`.
