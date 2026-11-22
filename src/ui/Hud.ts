@@ -5,6 +5,10 @@ import { hasTitle, titleArt, titleFor } from './titles';
 import { h } from './dom';
 import { icon, type IconName } from './icons';
 import { Notifications } from './notifications';
+import { HOTBAR_EMPTY_ICON, HOTBAR_LABELS, HOTBAR_SLOTS, type HotbarSlot, type HotbarView } from '../items/hotbar';
+import { ITEMS } from '../items/items';
+import { WEAPONS } from '../combat/Weapons';
+import { itemIconUrl } from './itemIcons';
 
 const NEED_ICONS: Record<string, IconName> = { hunger: 'food', energy: 'sleep', hygiene: 'shower', oral: 'tooth', bladder: 'toilet', nutrition: 'food' };
 
@@ -50,6 +54,9 @@ function bars(side: 'left' | 'right'): BarSet {
  * notifications, combo counter, floating damage numbers and the
  * training-ground controls.
  */
+/** The word on each hotbar slot's tag. */
+const HOTBAR_TAGS: Record<HotbarSlot, string> = { medic: 'MED', food: 'FOOD', weapon: 'WEAPON' };
+
 export class Hud {
   readonly el: HTMLElement;
   private player = bars('left');
@@ -86,6 +93,10 @@ export class Hud {
   private notes = new Notifications();
   private bagBtn!: HTMLElement;
   private bailBtn!: HTMLElement;
+  /** The hotbar: medical, food and weapon, each a slot you tap, click or press 1, 2 or 3 for. */
+  private hotbar!: HTMLElement;
+  private hotbarSlots = new Map<HotbarSlot, { btn: HTMLElement; img: HTMLImageElement; n: HTMLElement; bar: HTMLElement; name: string }>();
+  private hotbarKey = '';
   private bailCost!: HTMLElement;
   private bagCount!: HTMLElement;
   private flow!: HTMLElement;
@@ -114,7 +125,7 @@ export class Hud {
   private activityFill: HTMLElement;
   private sleepShade: HTMLElement;
 
-  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void; zoom?: () => void; editHome?: () => void; phone?: () => void; bail?: () => void }) {
+  constructor(actions: { setMode: (m: TrainingOpponent) => void; nextOpponent: () => void; reset: () => void; pause: () => void; map: () => void; inventory: () => void; character: () => void; use?: () => void; zoom?: () => void; editHome?: () => void; phone?: () => void; bail?: () => void; hotbar?: (slot: HotbarSlot) => void }) {
     const modes = (Object.keys(TRAINING_MODE_LABELS) as TrainingOpponent[]).map((m, i) => {
       const b = h('button', { class: 'chip', title: `Key ${i + 1}`, onclick: () => actions.setMode(m) }, h('span', { class: 'key-hint', text: `${i + 1} \u00b7 ` }), TRAINING_MODE_LABELS[m]) as HTMLButtonElement;
       this.modeButtons.set(m, b);
@@ -207,6 +218,25 @@ export class Hud {
         (this.bellBtn = h('button', { class: 'hud-btn story-only phone-btn', 'aria-label': 'Phone', title: 'Phone (P)', onclick: () => actions.phone?.() }, icon('phone'), h('span', { class: 'bell-dot' }), h('span', { class: 'k', text: 'P' }))),
         h('button', { class: 'hud-btn pause-btn', 'aria-label': 'Pause', title: 'Pause (Esc)', onclick: () => actions.pause() }, '\u275a\u275a'),
       ),
+      (this.hotbar = h('div', { class: 'hotbar story-only off', role: 'group', 'aria-label': 'Hotbar' },
+        ...HOTBAR_SLOTS.map((slot, i) => {
+          const img = h('img', { class: 'hb-ico', src: `/icons/hg/${HOTBAR_EMPTY_ICON[slot]}.webp`, alt: '', draggable: 'false' }) as HTMLImageElement;
+          const n = h('span', { class: 'hb-n' });
+          const bar = h('span', { class: 'hb-bar' }, h('i'));
+          // pointerdown, not click: in a fight a tap has to land at once, and a stray drag mustn't lose it.
+          const btn = h('button', { class: `hb-slot ${slot} empty`, 'data-slot': slot, 'aria-label': HOTBAR_LABELS[slot], title: `${HOTBAR_LABELS[slot]} (${i + 1})` },
+            h('span', { class: 'hb-k', text: String(i + 1) }), img, n, bar, h('span', { class: 'hb-cd' }), h('span', { class: 'hb-tag', text: HOTBAR_TAGS[slot] }));
+          btn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            actions.hotbar?.(slot);
+          });
+          btn.addEventListener('keydown', (e) => {
+            if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') e.preventDefault();
+          });
+          this.hotbarSlots.set(slot, { btn, img, n, bar, name: '' });
+          return btn;
+        }))),
       h('div', { class: 'prompt-wrap' }, this.prompt, this.subBar),
       (this.tray = h('div', { class: 'notif-tray off', role: 'dialog', 'aria-label': 'Notifications' })),
       this.notices,
@@ -234,6 +264,54 @@ export class Hud {
     }
     this.el.style.setProperty('--head-b', `${Math.round(b)}px`);
   };
+  /**
+   * The hotbar's three slots: what each would use (its painted icon and how many you've got), the weapon's
+   * condition and whether it's in your hands, and the wait after a use (a sweep over every slot, 0..1 left).
+   * Hidden while a screen is open and outside the story.
+   */
+  setHotbar(views: HotbarView[] | null, wait: number): void {
+    this.hotbar.classList.toggle('off', !views);
+    this.hotbar.style.setProperty('--hb-wait', String(Math.max(0, Math.min(1, wait))));
+    this.hotbar.classList.toggle('waiting', wait > 0);
+    if (!views) return;
+    const key = views.map((v) => `${v.stack?.uid ?? ''}:${v.stack?.id ?? ''}:${v.count}:${v.stack?.hits ?? ''}:${v.inHand?.uid ?? ''}:${v.inHand?.hits ?? ''}`).join('|');
+    if (key === this.hotbarKey) return;
+    this.hotbarKey = key;
+    for (const v of views) {
+      const el = this.hotbarSlots.get(v.slot)!;
+      const st = v.stack ?? v.inHand;
+      const d = st ? ITEMS[st.id] : null;
+      const src = st ? itemIconUrl(st.id, st.colour) : `/icons/hg/${HOTBAR_EMPTY_ICON[v.slot]}.webp`;
+      if (el.img.getAttribute('src') !== src) el.img.src = src;
+      el.btn.classList.toggle('empty', !st);
+      // The weapon slot with only the one in your hands: pressing puts it away.
+      el.btn.classList.toggle('in-hand', !v.stack && !!v.inHand);
+      el.n.textContent = v.stack && v.count > 1 ? `×${v.count}` : '';
+      // A weapon's wear: hits left of its durability (a fresh one has no count yet: full).
+      const max = d?.weapon ? WEAPONS[d.weapon].durability : 0;
+      const hits = max > 0 ? st?.hits ?? max : 0;
+      el.bar.classList.toggle('off', !(max > 0));
+      if (max > 0) {
+        const c = Math.max(0, Math.min(1, hits / max));
+        const i = el.bar.firstElementChild as HTMLElement;
+        i.style.width = `${c * 100}%`;
+        i.style.background = c > 0.5 ? '#6ad04a' : c > 0.25 ? '#e8c040' : '#e84a3a';
+      }
+      const what = d ? (v.stack ? `${d.name}${v.count > 1 ? `, ${v.count} left` : ''}` : `${d.name} in your hands: put it away`) : `${HOTBAR_LABELS[v.slot]}: nothing on you`;
+      el.btn.setAttribute('aria-label', `${HOTBAR_LABELS[v.slot]}: ${what}`);
+      el.btn.title = `${what} (${HOTBAR_SLOTS.indexOf(v.slot) + 1})`;
+    }
+  }
+
+  /** A slot used: a quick punch of light on it. */
+  flashHotbar(slot: HotbarSlot, ok: boolean): void {
+    const b = this.hotbarSlots.get(slot)?.btn;
+    if (!b) return;
+    b.classList.remove('used', 'nope');
+    void b.offsetWidth;
+    b.classList.add(ok ? 'used' : 'nope');
+  }
+
   /**
    * The pussy-out button: shown in a fight you're allowed to run from, saying what it costs (a share of the cash
    * on you, or the district's grudge when you've none). Hidden in boss fights, against the police and out of fights.

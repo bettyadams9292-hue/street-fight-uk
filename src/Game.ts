@@ -36,6 +36,8 @@ import { newSave, Progress, type AreaId } from './progress/Progress';
 import { xpForNextLevel } from './progress/catalogue';
 import { STARTER_ACCESSORIES, STARTER_BOTTOMS, STARTER_SHOES, STARTER_TOPS } from './character/Appearance';
 import { ITEMS, RARITY_COLOURS } from './items/items';
+import { HOTBAR_SLOTS, hotbarView, type HotbarSlot } from './items/hotbar';
+
 import { PAWN_HATCH_RATE } from './items/shops';
 import { clothesShopScreen, inventoryScreen, pawnScreen, storageScreen } from './ui/inventoryUI';
 import { ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
@@ -93,6 +95,9 @@ import {
   rouletteScreen,
   slotsScreen,
 } from './ui/propertyUI';
+
+/** How long a hotbar press waits for you to be free to act (ms). */
+const HOTBAR_BUFFER_MS = 650;
 
 type GameState = 'menu' | 'studio' | 'playing' | 'paused' | 'transition' | 'editing' | 'training';
 const MAX_STEPS_PER_FRAME = 5;
@@ -197,6 +202,7 @@ export class Game {
       },
       phone: () => this.togglePhone(),
       bail: () => this.pussyOut(),
+      hotbar: (slot) => this.input.hotbarFromScreen(slot, this.touchWanted() ? 'touch' : 'keyboard'),
     });
     this.hud.setZoomed(0);
     this.tutorial = new TutorialManager(
@@ -873,6 +879,64 @@ export class Game {
     }, 380);
   }
 
+  /**
+   * The hotbar (items/hotbar.ts): use what was pressed (1, 2, 3, Back + X / Y / B, or a tap on a slot), in a fight
+   * or out of one, then show each slot's item. A slot whose item has run out shows the next suitable thing in
+   * your pockets, and a toast says what came in.
+   */
+  /** A hotbar press waiting for you to be free (mid-punch, or reeling from one). */
+  private hotbarPending: { slot: HotbarSlot; until: number } | null = null;
+
+  private updateHotbar(): void {
+    const w = this.world!;
+    const s = this.progress!.save;
+    const live = this.state === 'playing' && !this.ui.isOpen && !this.phone?.isOpen && !this.mode;
+    const now = performance.now();
+    const pressed = this.input.takeHotbar();
+    // A press while you're mid-punch or reeling from one waits a moment for you to be free, so it isn't lost.
+    if (!pressed.length && this.hotbarPending && now < this.hotbarPending.until) pressed.push(this.hotbarPending.slot);
+    else if (this.hotbarPending && now >= this.hotbarPending.until) {
+      // It never got its moment: a shake of the slot says it didn't go.
+      this.hud.flashHotbar(this.hotbarPending.slot, false);
+      this.hotbarPending = null;
+    }
+    if (pressed.length) this.hotbarPending = null;
+    for (const slot of pressed) {
+      if (!live) continue;
+      const before = s.hotbar[slot];
+      const r = w.useHotbar(slot);
+      // Mid-punch, reeling, or still in the wait after the last heal: hold the press a moment rather than lose it.
+      if (!r.ok && (r.text === 'Not now' || r.text === 'Hang on')) {
+        if (!this.hotbarPending) this.hotbarPending = { slot, until: now + HOTBAR_BUFFER_MS };
+        continue;
+      }
+      this.hud.flashHotbar(slot, r.ok);
+      if (!r.ok) {
+        this.hud.toast(r.text, 'warn');
+        this.audio.uiMove();
+        continue;
+      }
+      if (slot === 'medic') this.audio.uiConfirm();
+      else if (slot === 'food') this.audio.house('eat');
+      else this.audio.uiConfirm();
+      const swapped = r.next && before && r.next !== before ? ITEMS[r.next]?.name : null;
+      const left = hotbarView(s, slot);
+      const out = slot !== 'weapon' && !left.stack ? ` Last one: no more ${slot === 'medic' ? 'medical' : 'food or drink'} on you.` : '';
+      this.hud.toast(`${r.text}${swapped ? `. Next up: ${swapped}` : ''}${out ? `.${out}` : ''}`, slot === 'weapon' ? 'info' : 'item');
+    }
+    if (!live) {
+      this.hud.setHotbar(null, 0);
+      return;
+    }
+    const views = HOTBAR_SLOTS.map((slot) => {
+      const v = hotbarView(s, slot);
+      // The weapon in your hands wears as you fight: show its live count.
+      if (v.inHand && w.player.weapon) v.inHand = { ...v.inHand, hits: w.player.weapon.hits };
+      return v;
+    });
+    this.hud.setHotbar(views, w.hotbarWait);
+  }
+
   private goHome(fullHealth: boolean): void {
     const w = this.world;
     const carry = w && !fullHealth ? w.carry() : null;
@@ -906,6 +970,7 @@ export class Game {
       dt,
     );
     this.hud.setBail(this.state === 'playing' ? w.canBail() : null);
+    this.updateHotbar();
     this.hud.setActivity(this.house.status);
     this.hud.setNeeds(attention(s.needs).map((a) => ({ key: a.key, text: a.label.label, urgency: a.label.urgency, tip: NUDGES[a.key as NeedKey] })));
   }
