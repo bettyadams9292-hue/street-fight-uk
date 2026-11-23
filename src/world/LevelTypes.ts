@@ -209,6 +209,11 @@ export interface EncounterDef {
   /** Walls you in until it's done. Optional fights have no lock. */
   lock?: [number, number];
   optional: boolean;
+  /**
+   * Optional fights only: the chance it's on when you arrive (0..1), rolled once per trip (World.fightIsOn), so
+   * walking in doesn't always start one. Left out: every visit.
+   */
+  chance?: number;
   waves: WaveDef[];
   boss?: BossId;
   reward: { cash: number; xp: number };

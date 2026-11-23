@@ -114,6 +114,10 @@ const pawnShop: LevelDef = {
 };
 
 // ---- The Red Lion: pub on the High Street -------------------------------------------------------
+
+/** How often the Red Lion's regulars start a lock-in when you walk in. */
+export const LOCK_IN_CHANCE = 1 / 3;
+
 const pub: LevelDef = {
   id: 'pub',
   name: 'The Red Lion',
@@ -178,7 +182,8 @@ const pub: LevelDef = {
   ],
   encounters: [
     {
-      id: 'lock_in', triggerX: 12, optional: true,
+      // Not every pint ends in a scrap: the regulars kick off about one visit in three.
+      id: 'lock_in', triggerX: 12, optional: true, chance: LOCK_IN_CHANCE,
       waves: [{ enemies: [{ archetype: 'brawler' }, { archetype: 'brawler' }] }, { enemies: [{ archetype: 'casual' }, { archetype: 'tooled', weapon: 'pool_cue' }] }],
       reward: { cash: 50, xp: 140 },
     },

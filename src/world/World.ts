@@ -36,6 +36,7 @@ import { emptyCommand, type CommandFrame } from '../input/Commands';
 import { TutorialBrain, type LessonMode } from '../ai/TutorialBrain';
 import type { ItemStack } from '../items/Inventory';
 import { ITEMS, weaponItemId } from '../items/items';
+import { hash01 } from '../realty/catalogue';
 import { HOTBAR_COOLDOWN, hotbarView, refillHotbar, type HotbarSlot } from '../items/hotbar';
 import { bossDropValue, lootTableFor, rollLoot } from '../items/loot';
 import type { AreaId, Progress } from '../progress/Progress';
@@ -253,6 +254,15 @@ export type Interactable =
  * to progress goes through Progress, so rewards are paid once, items are
  * never duplicated and everything survives saving.
  */
+/**
+ * Is an optional fight with a `chance` on this trip? Rolled from the area, the fight and the trip number (not
+ * the fight's own RNG), so a rebuild mid-visit keeps the answer and the next visit rolls again.
+ */
+export function fightIsOn(def: EncounterDef, area: string, trips: number): boolean {
+  if (!def.optional || def.chance === undefined) return true;
+  return hash01(`fight:${area}:${def.id}:${trips}`) < def.chance;
+}
+
 export class World {
   readonly sim: Simulation;
   readonly arena: Arena;
@@ -862,6 +872,7 @@ export class World {
     for (const def of level.encounters) {
       const cleared =
         (def.optional && !!opts.keepCleared?.includes(def.id)) ||
+        (def.optional && !fightIsOn(def, level.id, progress.save.trips)) ||
         (!def.optional && (progress.has(this.clearedKey(def)) || (def.boss ? progress.has(BOSSES[def.boss].flag) : false)));
       this.encounters.push({ def, status: cleared ? 'cleared' : 'waiting', wave: 0, enemies: [], boss: null, bossDef: null, phasesDone: 0 });
     }
