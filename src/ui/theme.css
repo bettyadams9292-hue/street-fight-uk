@@ -970,6 +970,7 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
 .job-mark { position: absolute; left: 0; top: 0; width: 26px; height: 26px; display: grid; place-items: center; font-family: var(--head); font-weight: 900; font-size: 20px; line-height: 1; color: var(--ink); background: #ffd23d; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5)); animation: job-bob 1.4s ease-in-out infinite; }
 .job-mark.target { background: var(--accent); width: 20px; height: 20px; }
 .job-mark.target::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--sign-white); }
+.job-mark.punter { background: #2fbf5a; color: var(--ink); width: 22px; height: 22px; font-size: 15px; clip-path: none; border-radius: 50%; }
 @keyframes job-bob { 50% { margin-top: -5px; } }
 @media (prefers-reduced-motion: reduce) { .job-mark { animation: none; } }
 /* The phone's Jobs app */
@@ -2283,3 +2284,9 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .pf-item.pf-buff { display: block; border-left: 3px solid #ffd23d; padding-left: 8px; }
 .pf-item.pf-buff b, .pf-item.pf-buff small { display: block; }
 .pf-item.pf-buff small { color: #ffd23d; }
+
+/* Dealing (ui/dealingUI.ts): the prep table */
+.deal-row { padding: 8px 10px; margin: 0 0 8px; background: var(--asphalt-2); box-shadow: inset 0 0 0 1px rgba(242, 240, 232, 0.1); display: flex; flex-direction: column; gap: 4px; }
+.deal-row b { font-family: var(--head); font-weight: 900; font-size: 18px; color: var(--sign-white); }
+.deal-row small { font-family: var(--ui); font-size: 13px; color: var(--concrete); }
+.deal-actions { flex-wrap: wrap; }

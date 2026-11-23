@@ -116,6 +116,7 @@ export class TutorialManager {
       ev.on('level:up', () => this.feed({ type: 'levelup' })),
       ev.on('police:arrive', () => this.feed({ type: 'police' })),
       ev.on('hotbar:used', () => this.feed({ type: 'hotbar' })),
+      ev.on('deal:sold', ({ undercover }) => { if (!undercover) this.feed({ type: 'deal' }); }),
       ev.on('job:step', () => this.feed({ type: 'job', stage: 'step' })),
       ev.on('job:done', () => this.feed({ type: 'job', stage: 'done' })),
       ev.on('job:failed', () => this.feed({ type: 'job', stage: 'failed' })),

@@ -27,7 +27,7 @@ export interface TutorialSave {
 export const ESSENTIAL_CHAPTERS = ['first-steps', 'learning-to-fight', 'styles', 'first-scrap', 'building'] as const;
 
 /** The guides, started the first time you meet their thing (tutorial/lessons.ts; a test keeps the two in step). */
-export const GUIDE_CHAPTERS = ['jobs', 'hotbar'] as const;
+export const GUIDE_CHAPTERS = ['jobs', 'dealing', 'hotbar'] as const;
 
 /** In `hints`: every hint counts as shown (saves from before the tutorial). */
 export const ALL_HINTS = '*';

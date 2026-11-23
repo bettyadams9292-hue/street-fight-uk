@@ -96,6 +96,8 @@ export interface ItemDef {
   ingredient?: boolean;
   /** Carried for a job (src/jobs): can't be sold, dropped or stashed, and goes when the job does. */
   jobItem?: boolean;
+  /** Drugs for dealing (business/dealing.ts): always stolen, so the police take it; the pawn shop won't. */
+  contraband?: boolean;
 }
 
 const defs: ItemDef[] = [];
@@ -384,6 +386,17 @@ job('job_phones', 'Box of phones', 'phone', '#2a2a2e', 'A box of brand-new phone
 job('job_ledger', 'Little black book', 'document', '#1b1b1b', 'Names, numbers and amounts. Someone would very much like it back.');
 job('job_ring', 'Gold ring', 'ring', '#d4af37', 'An old gold band, worn thin. It means a lot to someone.');
 job('job_keys', 'Van keys', 'key', '#c9ccd2', 'Keys to a van that somebody wants back, with whatever’s in it.');
+
+// ---- dealing (business/dealing.ts): bulk from Kez, deals bagged up in the garage ------------------------------
+// Contraband: the pawn shop won't touch it and the police take it (it's always given as stolen).
+const gear = (id: string, name: string, icon: IconKind, colour: string, stack: number, text: string) =>
+  add({ id, name, text, category: 'misc', rarity: 'uncommon', value: 0, stack, icon, colour, unsellable: true, contraband: true });
+gear('bulk_weed', 'Bulk bag of weed', 'bag', '#4a6a2a', 3, 'Vacuum-packed and heavy. Bag it up at the prep table in your garage: 20 deals.');
+gear('bulk_coke', 'Block of cocaine', 'bag', '#e8e6e1', 3, 'Wrapped tight in cling film. Bag it up at the prep table in your garage: 28 wraps.');
+gear('bulk_pills', 'Bag of pills', 'bag', '#c070ff', 3, 'Hundreds of them in a freezer bag. Bag them up at the prep table in your garage: 50 to sell.');
+gear('deal_weed', 'Bag of weed', 'grocery', '#4a6a2a', 40, 'A deal, bagged up. Sell it to a punter on the street.');
+gear('deal_coke', 'Wrap of cocaine', 'grocery', '#e8e6e1', 40, 'A wrap, ready to go. Sell it to a punter on the street.');
+gear('deal_pills', 'Pill', 'grocery', '#c070ff', 60, 'One pill, bagged. Sell it to a punter on the street.');
 
 // ---- misc ------------------------------------------------------------------------------------
 add({ id: 'scrap_metal', name: 'Scrap metal', text: 'Copper pipe and bits. The pawn shop takes it by weight.', category: 'misc', rarity: 'common', value: 6, stack: 10, icon: 'scrap', colour: '#b87333' });
