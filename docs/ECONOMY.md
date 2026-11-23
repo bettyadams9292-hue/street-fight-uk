@@ -42,4 +42,5 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 | Bail, court fines, settling up at the front counter | `src/progress/record.ts` |
 | Bungs, Kerrigan's paperwork and favours, what you owe crew who bail you out | `src/progress/cops.ts` |
 | Casino | `src/property/casino.ts` |
+| Clothes tiers and stats, outfit buffs, jewellery XP bonus | `src/items/gearBonus.ts` (`XP_BONUS_CAP` 30%) |
 | Jobs: pay, heat, standing, boards and chains | `jobPay`, `jobHeat`, `TIERS` in `src/jobs/jobs.ts`; chains in `src/jobs/contacts.ts` |

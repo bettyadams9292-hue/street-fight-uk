@@ -56,6 +56,7 @@ Inputs are keyboard / pad / touch. Unless a row says "(info)" or "(hint)", the l
 | Passers-by with a job | `World.setUpStreetGiver` | USE | a yellow ! on the street | streets | B: Someone needs a hand (when one's near) | read | B |
 | A job gone wrong | `failJob`, `job:failed` | none | a job failed or dropped | any | B: A job gone wrong | read | B |
 | Hotbar: medical, food, drink, weapon | `items/hotbar.ts`, `World.useHotbar` | 1–4 / Back + X, Y, A, B / the slots | hurt, with something to heal with | any | G: 07 The hotbar (starts when you're hurt) | `hotbar:used` | G |
+| Clothes tiers, outfit buffs, jewellery XP | `items/gearBonus.ts` | none | wearing something that gives a buff | any | B: Dressed for it | read | B |
 | Kitchen: fridge, cupboards, cooking | `home/house.ts`, `kitchenUI.ts` | USE | home | home | B: The kitchen (first fridge or cupboard) | read | B |
 | The Red Lion: bar, lock-in, the Snug | `world/interiors.ts`, `recruit` | USE | in the pub | High Street | B: The Red Lion (first visit) | read | B |
 | Property | `realty/` | USE at Keys & Co | Riverside Centre | later | C: Property (hint at the agent) | read | C |

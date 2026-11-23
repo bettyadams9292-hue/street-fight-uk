@@ -1,4 +1,5 @@
 import type { Accessory, BottomStyle, ShoeStyle, TopStyle } from '../character/Appearance';
+import { clothingStats } from './gearBonus';
 import { WEAPONS, WEAPON_IDS, type WeaponId } from '../combat/Weapons';
 import type { AttributeName, DerivedStatName, FlatStatName } from '../stats/Stats';
 
@@ -118,12 +119,14 @@ for (const id of WEAPON_IDS) {
 }
 
 // ---- clothing ------------------------------------------------------------------------
-const top = (id: string, name: string, style: TopStyle, value: number, colour: string, text: string, rarity: Rarity = 'common', stats?: ItemStat[]) =>
-  add({ id, name, text, category: 'clothing', rarity, value, icon: 'top', colour, wear: { slot: 'top', top: style, colour }, stats });
+// Every piece's stats come from its style and its tier (its rarity): gearBonus.ts.
+const clothes = (d: Omit<ItemDef, 'stack'>) => add({ ...d, stats: clothingStats(d) });
+const top = (id: string, name: string, style: TopStyle, value: number, colour: string, text: string, rarity: Rarity = 'common') =>
+  clothes({ id, name, text, category: 'clothing', rarity, value, icon: 'top', colour, wear: { slot: 'top', top: style, colour } });
 const bottoms = (id: string, name: string, style: BottomStyle, value: number, colour: string, text: string, rarity: Rarity = 'common') =>
-  add({ id, name, text, category: 'clothing', rarity, value, icon: 'bottoms', colour, wear: { slot: 'bottoms', bottoms: style, colour } });
-const shoes = (id: string, name: string, style: ShoeStyle, value: number, colour: string, text: string, rarity: Rarity = 'common', stats?: ItemStat[]) =>
-  add({ id, name, text, category: 'clothing', rarity, value, icon: 'shoes', colour, wear: { slot: 'shoes', shoes: style, colour }, stats });
+  clothes({ id, name, text, category: 'clothing', rarity, value, icon: 'bottoms', colour, wear: { slot: 'bottoms', bottoms: style, colour } });
+const shoes = (id: string, name: string, style: ShoeStyle, value: number, colour: string, text: string, rarity: Rarity = 'common') =>
+  clothes({ id, name, text, category: 'clothing', rarity, value, icon: 'shoes', colour, wear: { slot: 'shoes', shoes: style, colour } });
 
 top('hoodie_grey', 'Grey hoodie', 'hoodie', 25, '#6a6d74', 'Plain pullover hoodie, kangaroo pocket.');
 top('hoodie_black', 'Black hoodie', 'hoodie', 25, '#1b1d22', 'Plain pullover hoodie, kangaroo pocket.');
@@ -135,12 +138,9 @@ top('tshirt_black', 'Black T-shirt', 'tshirt', 12, '#1b1d22', 'Crew neck, short 
 top('football_home', 'Football shirt (home)', 'football', 55, '#b3121b', 'Local club, this season’s home kit.');
 top('football_away', 'Football shirt (away)', 'football', 55, '#e8e6e1', 'Local club, this season’s away kit.');
 top('bomber_jacket', 'Bomber jacket', 'bomber', 70, '#2f4a2d', 'Satin shell, ribbed cuffs, orange lining.', 'uncommon');
-top('puffer_black', 'Black puffer jacket', 'puffer', 110, '#1b1d22', 'Quilted and warm. Takes the edge off a hit.', 'uncommon', [{ flat: 'maxPoise', add: 8, text: '+8 poise' }]);
-top('puffer_red', 'Red puffer jacket', 'puffer', 110, '#7d1a1a', 'Quilted and warm. Takes the edge off a hit.', 'uncommon', [{ flat: 'maxPoise', add: 8, text: '+8 poise' }]);
-top('leather_jacket', 'Leather jacket', 'leather', 160, '#1a1410', 'Thick leather. Tough, but you feel it on your shoulders.', 'rare', [
-  { attr: 'defence', add: 3, text: '+3 Defence' },
-  { attr: 'speed', add: -1, text: '−1 Speed' },
-]);
+top('puffer_black', 'Black puffer jacket', 'puffer', 110, '#1b1d22', 'Quilted and warm. Takes the edge off a hit.', 'uncommon');
+top('puffer_red', 'Red puffer jacket', 'puffer', 110, '#7d1a1a', 'Quilted and warm. Takes the edge off a hit.', 'uncommon');
+top('leather_jacket', 'Leather jacket', 'leather', 160, '#1a1410', 'Thick leather. Tough, but you feel it on your shoulders.', 'rare');
 top('denim_jacket', 'Denim jacket', 'denim', 60, '#2f5a8a', 'Stonewashed with brass buttons.');
 top('long_coat', 'Long wool coat', 'coat', 120, '#2b2e35', 'Knee-length overcoat. Smart.', 'uncommon');
 top('vest_white', 'White vest', 'vest', 8, '#e8e6e1', 'Ribbed vest.');
@@ -148,7 +148,7 @@ top('workwear_hivis', 'Hi-vis work jacket', 'workwear', 30, '#e8d000', 'Site jac
 top('hoodie_navy', 'Navy hoodie', 'hoodie', 25, '#1f2a44', 'Plain pullover hoodie, kangaroo pocket.');
 top('tshirt_grey', 'Grey marl T-shirt', 'tshirt', 12, '#8a8c90', 'Crew neck, short sleeves.');
 top('tracksuit_top_grey', 'Grey tracksuit top', 'tracksuit', 45, '#55585e', 'Zip-up with stripes down the arms.');
-top('puffer_navy', 'Navy puffer jacket', 'puffer', 110, '#1f2a44', 'Quilted and warm. Takes the edge off a hit.', 'uncommon', [{ flat: 'maxPoise', add: 8, text: '+8 poise' }]);
+top('puffer_navy', 'Navy puffer jacket', 'puffer', 110, '#1f2a44', 'Quilted and warm. Takes the edge off a hit.', 'uncommon');
 top('polo_navy', 'Navy polo shirt', 'polo', 30, '#1f2a44', 'Piqué cotton, two-button placket, ribbed collar.');
 top('polo_white', 'White polo shirt', 'polo', 30, '#e8e6e1', 'Piqué cotton, two-button placket, ribbed collar.');
 top('polo_bottle', 'Bottle green polo', 'polo', 30, '#1d3b2a', 'Piqué cotton, two-button placket, ribbed collar.');
@@ -158,12 +158,26 @@ top('jumper_navy', 'Crew-neck jumper', 'jumper', 40, '#1f2a44', 'Lambswool knit 
 top('jumper_oat', 'Oatmeal jumper', 'jumper', 40, '#b9a888', 'Lambswool knit with ribbed cuffs and hem.');
 top('quarter_zip_black', 'Quarter-zip top', 'quarter_zip', 45, '#1b1d22', 'Fleece pullover, half zip at the neck.');
 top('quarter_zip_grey', 'Grey quarter-zip', 'quarter_zip', 45, '#55585e', 'Fleece pullover, half zip at the neck.');
-top('gilet_black', 'Black gilet', 'gilet', 65, '#1b1d22', 'Quilted body warmer, no sleeves. Arms stay free.', 'common', [{ flat: 'maxPoise', add: 4, text: '+4 poise' }]);
-top('gilet_olive', 'Olive gilet', 'gilet', 65, '#3d4a2a', 'Quilted body warmer, no sleeves. Arms stay free.', 'common', [{ flat: 'maxPoise', add: 4, text: '+4 poise' }]);
+top('gilet_black', 'Black gilet', 'gilet', 65, '#1b1d22', 'Quilted body warmer, no sleeves. Arms stay free.', 'common');
+top('gilet_olive', 'Olive gilet', 'gilet', 65, '#3d4a2a', 'Quilted body warmer, no sleeves. Arms stay free.', 'common');
 top('windbreaker', 'Windbreaker', 'windbreaker', 55, '#2f6fa8', 'Packable nylon shell with a hood and a chest panel.');
 top('windbreaker_retro', 'Retro windbreaker', 'windbreaker', 60, '#6b2a6a', 'Nineties colour-block nylon shell.');
 top('harrington_stone', 'Harrington jacket', 'harrington', 75, '#b9a27a', 'Cotton jacket with a check lining and ribbed cuffs.', 'uncommon');
 top('harrington_black', 'Black Harrington', 'harrington', 75, '#1b1d22', 'Cotton jacket with a check lining and ribbed cuffs.', 'uncommon');
+
+// The top of the range: Luxury (epic) and Iconic (legendary) labels.
+top('designer_tracksuit_top', 'Designer tracksuit top', 'tracksuit', 420, '#141414', 'Heavy jersey, gold zip, embroidered crest. Built for speed and for being seen.', 'epic');
+top('luxury_puffer', 'Luxury puffer', 'puffer', 650, '#0e1a2e', 'Goose down, glossy shell, fur-trim hood. Takes a hit like a duvet.', 'epic');
+top('luxury_leather', 'Luxury leather jacket', 'leather', 780, '#2a1410', 'Lambskin, quilted shoulders. Barely weighs a thing for leather.', 'epic');
+top('iconic_hoodie', 'Iconic hoodie', 'designer_hoodie', 1100, '#d8c49a', 'Numbered run of 50, signed tag. People ask where you got it.', 'legendary');
+top('iconic_puffer', 'Iconic puffer', 'puffer', 1600, '#b3121b', 'The one from the music videos. Waiting list, or you know someone.', 'legendary');
+bottoms('designer_trackies', 'Designer trackies', 'trackies', 360, '#141414', 'Matching jersey with a gold stripe.', 'epic');
+bottoms('luxury_jeans', 'Selvedge jeans', 'jeans', 420, '#1b2a44', 'Japanese selvedge denim, raw indigo.', 'epic');
+bottoms('iconic_joggers', 'Iconic joggers', 'joggers', 950, '#d8c49a', 'From the same numbered run as the hoodie.', 'legendary');
+shoes('designer_trainers', 'Designer trainers', 'trainers', 480, '#f2efe8', 'Italian leather low-tops, gold heel tab.', 'epic');
+shoes('luxury_runners', 'Carbon runners', 'runners', 520, '#101014', 'Carbon plate, super-foam. Banned from some races.', 'epic');
+shoes('grail_trainers', 'Grail trainers', 'trainers', 1800, '#d4a017', 'Deadstock, never on general release. The ones everyone wants.', 'legendary');
+shoes('iconic_boots', 'Iconic boots', 'boots', 1250, '#1a1410', 'Hand-welted, steel shank. Every kick lands like a brick.', 'legendary');
 
 bottoms('trackies_black', 'Black trackies', 'trackies', 25, '#1b1d22', 'Tracksuit bottoms with side stripes.');
 bottoms('joggers_grey', 'Grey joggers', 'joggers', 25, '#6a6d74', 'Cuffed fleece joggers.');
@@ -181,19 +195,21 @@ bottoms('cargo_shorts', 'Cargo shorts', 'cargo_shorts', 28, '#5b5a3a', 'Knee-len
 bottoms('denim_shorts', 'Denim shorts', 'denim_shorts', 25, '#5a7da0', 'Cut-off denim, rolled hems.');
 
 shoes('trainers_white', 'White trainers', 'trainers', 60, '#e8e6e1', 'Clean low-tops.');
-shoes('runners', 'Running trainers', 'runners', 80, '#2f6fa8', 'Light and bouncy.', 'common', [{ stat: 'moveSpeedMult', mul: 1.04, text: '+4% move speed' }]);
+shoes('runners', 'Running trainers', 'runners', 80, '#2f6fa8', 'Light and bouncy.', 'common');
 shoes('hitops_black', 'High-tops', 'hitops', 75, '#1b1d22', 'Ankle-height basketball shoes.');
 shoes('boots_work', 'Work boots', 'boots', 70, '#5b3a24', 'Lace-up leather boots.');
-shoes('steel_toecaps', 'Steel toecap boots', 'boots', 90, '#151515', 'Kicks land heavier.', 'uncommon', [{ attr: 'strength', add: 2, text: '+2 Strength' }]);
+shoes('steel_toecaps', 'Steel toecap boots', 'boots', 90, '#151515', 'Kicks land heavier.', 'uncommon');
 shoes('rare_trainers_worn', 'Limited trainers', 'trainers', 220, '#d4a017', 'Limited run, still in good nick. Worth more boxed.', 'rare');
 shoes('trainers_black', 'Black trainers', 'trainers', 60, '#1b1d22', 'All-black low-tops.');
 shoes('trainers_navy', 'Navy trainers', 'trainers', 60, '#1f2a44', 'Suede low-tops, gum-white sole.');
-shoes('runners_red', 'Red running trainers', 'runners', 80, '#b3121b', 'Light and bouncy.', 'common', [{ stat: 'moveSpeedMult', mul: 1.04, text: '+4% move speed' }]);
+shoes('runners_red', 'Red running trainers', 'runners', 80, '#b3121b', 'Light and bouncy.', 'common');
 shoes('hitops_white', 'White high-tops', 'hitops', 75, '#e8e6e1', 'Ankle-height basketball shoes.');
 
 // ---- accessories --------------------------------------------------------------------
-const acc = (id: string, name: string, slot: WearSlot, a: Accessory, value: number, icon: IconKind, colour: string, text: string, rarity: Rarity = 'common', stats?: ItemStat[], chain?: 'gold' | 'silver') =>
-  add({ id, name, text, category: 'accessory', rarity, value, icon, colour, wear: { slot, accessory: a, colour, chain }, stats });
+const acc = (id: string, name: string, slot: WearSlot, a: Accessory, value: number, icon: IconKind, colour: string, text: string, rarity: Rarity = 'common', stats?: ItemStat[], chain?: 'gold' | 'silver') => {
+  const d = { id, name, text, category: 'accessory' as const, rarity, value, icon, colour, wear: { slot, accessory: a, colour, chain } };
+  add({ ...d, stats: clothingStats(d, stats) });
+};
 acc('wraps', 'Hand wraps', 'hands', 'wraps', 8, 'wraps', '#e2ddd2', 'Protect the knuckles.', 'common', [{ stat: 'damageMult', mul: 1.05, text: '+5% damage' }]);
 acc('mouthguard', 'Gumshield', 'mouth', 'mouthguard', 15, 'gumshield', '#3a7ab0', 'Hard to rattle with one in.', 'common', [
   { flat: 'maxPoise', add: 20, text: '+20 poise' },

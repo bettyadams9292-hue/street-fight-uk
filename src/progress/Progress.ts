@@ -1,4 +1,5 @@
 import { sanitiseCharacter, finalAttributes, BACKGROUNDS, type PlayerCharacter } from '../character/Character';
+import { jewelBuffs, outfitBuffs, xpBonusOf, type Buff, type WornJewels } from '../items/gearBonus';
 import { WEAPON_IDS, WEAPONS } from '../combat/Weapons';
 import { addStack, defOf, sanitiseStack, spaceFor, takeStack, type ItemStack } from '../items/Inventory';
 import { BAG_SLOTS, ITEMS, WEAR_SLOTS, weaponItemId, type WearSlot } from '../items/items';
@@ -457,9 +458,31 @@ export class Progress {
   }
 
   /** Add XP; returns how many levels were gained. */
-  addXp(amount: number): number {
+  /** What you've got on from the jewellery box. */
+  wornJewels(): WornJewels {
+    const j = this.save.jewellery;
+    return Object.values(j.worn)
+      .map((uid) => j.owned.find((o) => o.uid === uid))
+      .filter((o): o is NonNullable<typeof o> => !!o)
+      .map((o) => ({ id: o.id, finish: o.finish }));
+  }
+
+  /** Extra XP from the jewellery you're wearing, as a fraction (gearBonus.ts). */
+  get xpBonus(): number {
+    return xpBonusOf(this.wornJewels());
+  }
+
+  /** Buffs from your outfit and your jewellery, for the screens. */
+  buffs(): Buff[] {
+    const w = this.save.worn;
+    const def = (slot: 'top' | 'bottoms' | 'shoes') => (w[slot] ? ITEMS[w[slot]!.id] : undefined);
+    return [...outfitBuffs({ top: def('top'), bottoms: def('bottoms'), shoes: def('shoes') }), ...jewelBuffs(this.wornJewels())];
+  }
+
+  /** XP earned: your jewellery's bonus on top (`raw` skips it, for XP that isn't earned, like a cheat or a refund). */
+  addXp(amount: number, raw = false): number {
     const s = this.save;
-    s.xp += Math.max(0, Math.round(amount));
+    s.xp += Math.max(0, Math.round(amount * (raw ? 1 : 1 + this.xpBonus)));
     let gained = 0;
     while (s.level < LEVEL_CAP && s.xp >= xpForNextLevel(s.level)) {
       s.xp -= xpForNextLevel(s.level);
@@ -1005,6 +1028,9 @@ export class Progress {
         f.stats.addModifier({ id: `gear_${slot}_${i}`, source: 'gear', attribute: m.attr, stat: m.stat, flat: m.flat, add: m.add, mul: m.mul }),
       );
     }
+    // Buffs: the outfit (a whole fit in one tier, or a matching set) and each piece of jewellery (gearBonus.ts).
+    f.stats.removeModifiersFrom('buff');
+    for (const b of this.buffs()) b.stats.forEach((m, i) => f.stats.addModifier({ id: `buff_${b.id}_${i}`, source: 'buff', attribute: m.attr, stat: m.stat, flat: m.flat, add: m.add, mul: m.mul }));
     if (s.moves.includes('counter_mastery')) f.stats.addModifier({ id: 'counter_mastery', source: 'move', flat: 'parryFrames', add: 3 });
     if (s.moves.includes('iron_chin')) f.stats.addModifier({ id: 'iron_chin', source: 'move', flat: 'maxPoise', add: 30 });
     if (s.mealBuff) f.stats.addModifier({ id: 'meal', source: 'meal', flat: 'maxHealth', add: 25 });

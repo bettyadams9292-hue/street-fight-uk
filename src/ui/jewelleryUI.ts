@@ -15,6 +15,7 @@ import {
 } from '../items/jewellery';
 import { buyJewel, isWorn, markSeen, removeJewel, sellJewel, wearJewel, type OwnedJewel } from '../items/jewelleryBox';
 import { RARITY_COLOURS, RARITY_LABELS } from '../items/items';
+import { jewelBonus, XP_BONUS_CAP } from '../items/gearBonus';
 import { menuButton } from './controls';
 import { h } from './dom';
 import { icon } from './icons';
@@ -154,6 +155,7 @@ export function jewellerScreen(progress: Progress, close: () => void, saved: () 
       h('h3', { text: d.name }),
       h('div', { class: 'jw-chips' }, chip(RARITY_LABELS[d.rarity], RARITY_COLOURS[d.rarity]), chip(FINISHES[finish].quality, FINISHES[finish].metal), d.stone ? chip(STONES[d.stone].name, STONES[d.stone].colour) : null),
       h('p', { class: 'hint', text: `${d.spec}. ${d.blurb}` }),
+      bonusLine(d, finish),
       finishPicker(d, finish, (f) => ((finish = f), rebuild())),
       h('div', { class: 'jw-price' }, h('b', { text: money(price) }), ownedHere.length ? h('span', { class: 'jw-tag', text: `You own ${ownedHere.length} in ${FINISHES[finish].name.toLowerCase()}` }) : null, priceMult > 1 ? h('span', { class: 'jw-tag bad', text: 'Marcus remembers you: prices are up' }) : null),
       h('div', { class: 'row-actions' },
@@ -232,6 +234,7 @@ function boxBody(progress: Progress, selUid: string | null, select: (uid: string
         h('h3', { text: d.name }),
         h('div', { class: 'jw-chips' }, chip(RARITY_LABELS[d.rarity], RARITY_COLOURS[d.rarity]), chip(FINISHES[sel.finish].quality, FINISHES[sel.finish].metal), d.stone ? chip(STONES[d.stone].name, STONES[d.stone].colour) : null),
         h('p', { class: 'hint', text: `${d.spec}. ${sel.paid > 0 ? `Bought for ${money(sel.paid)}.` : 'Taken in a fight: it cost you nothing.'}` }),
+        bonusLine(d, sel.finish),
         h('div', { class: 'row-actions' }, ...acts),
       ),
     ),
@@ -261,6 +264,12 @@ function svg(tag: string, attrs: Record<string, string | number>): SVGElement {
   const e = document.createElementNS(SVGNS, tag);
   for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
   return e;
+}
+
+/** What a piece does for you: its XP bonus and its buff. */
+function bonusLine(d: (typeof JEWELS)[string], finish: FinishId): HTMLElement {
+  const b = jewelBonus(d, finish);
+  return h('p', { class: 'jw-bonus' }, h('b', { text: b.xpText }), h('span', { text: ` · ${b.name}: ${b.stats.map((x) => x.text).join(', ')}` }));
 }
 
 export function jewelleryBoxPanel(progress: Progress, changed: () => void, saved: () => void, say: (t: string, bad?: boolean) => void, rebuild: () => void, state: { sel: string | null; slot?: JewelCat }): HTMLElement {
@@ -350,7 +359,7 @@ export function jewelleryBoxPanel(progress: Progress, changed: () => void, saved
     const on = isWorn(s, o.uid);
     const r = h('button', { class: `jb-row${on ? ' on' : ''}`, 'data-nav': true, role: 'switch', 'aria-checked': String(on), onclick: () => toggle(o) },
       h('i', { class: 'jb-metal' }),
-      h('span', { class: 'jb-name' }, h('b', { text: d.name }), h('span', { text: `${FINISHES[o.finish].name}${d.stone ? ` · ${STONES[d.stone].name}` : ''} · ${RARITY_LABELS[d.rarity]}` })),
+      h('span', { class: 'jb-name' }, h('b', { text: d.name }), h('span', { text: `${FINISHES[o.finish].name}${d.stone ? ` · ${STONES[d.stone].name}` : ''} · ${RARITY_LABELS[d.rarity]}` }), h('span', { class: 'jb-bonus', text: [jewelBonus(d, o.finish).xpText, ...jewelBonus(d, o.finish).stats.map((x) => x.text)].join(', ') })),
       unseen.has(o.uid) ? h('i', { class: 'jb-new', text: 'New' }) : null,
       h('span', { class: 'jb-tick', 'aria-hidden': 'true' }, on ? icon('check') : null));
     const fin = FINISHES[o.finish];
@@ -366,6 +375,7 @@ export function jewelleryBoxPanel(progress: Progress, changed: () => void, saved
       ? h('div', { class: 'jb-rows' }, ...rows)
       : h('p', { class: 'jb-empty', text: `No ${JEWEL_CAT_LABELS[slot].toLowerCase()} yet. Halden & Crane in the Riverside Centre sells them, and some turn up after a fight.` }),
     rows.length ? h('p', { class: 'hint', text: worn ? 'Tap the one you’re wearing to take it off.' : 'Tap one to put it on.' }) : null,
+    h('p', { class: 'jb-xp' }, h('b', { text: `+${Math.round(progress.xpBonus * 100)}% XP` }), h('span', { text: ` from what you’re wearing (up to ${Math.round(XP_BONUS_CAP * 100)}%). Four pieces on at once adds more, six more again.` })),
   );
 
   // Looking at a place clears its "new" badges (after this draw).
