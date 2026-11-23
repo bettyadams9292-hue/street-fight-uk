@@ -68,7 +68,7 @@ function standingBar(p: Progress, id: ContactId): HTMLElement {
 }
 
 /** A contact: standing, the job you're doing for them, their own job, and what's going. */
-export function contactScreen(p: Progress, id: ContactId, close: () => void, acts: JobActions): Screen {
+export function contactScreen(p: Progress, id: ContactId, close: () => void, acts: JobActions, extra?: (msg: (t: string, bad?: boolean) => void, rebuild: () => void) => HTMLElement[]): Screen {
   const c = CONTACTS[id];
   return panelScreen(`${c.name} · ${c.role}`, p, (msg, rebuild) => {
     const s = p.save.jobs;
@@ -123,6 +123,7 @@ export function contactScreen(p: Progress, id: ContactId, close: () => void, act
     if (!board.length) rows.push(h('p', { class: 'ph-empty', text: 'Nothing going right now. Come back in a bit.' }));
     for (const job of board) rows.push(jobCard(job, busy ? null : take(job)));
     rows.push(h('small', { class: 'job-note', text: 'New jobs come up every few trips.' }));
+    if (extra) rows.push(...extra(msg, rebuild));
     return rows;
   }, close);
 }

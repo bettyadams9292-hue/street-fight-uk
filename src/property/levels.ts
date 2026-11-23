@@ -1,4 +1,5 @@
 import type { AreaId, GameSave } from '../progress/Progress';
+import { DEALING_FLAG } from '../business/dealing';
 import type { LevelDef, PropDef, StationDef } from '../world/LevelTypes';
 import { HOME_BASE, LEVELS } from '../world/levels';
 import { BIKES, BIKE_SIZE, CARS } from './catalogue';
@@ -23,7 +24,7 @@ export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
     dressHouse(prop);
   }
   let level: LevelDef =
-    area === 'home' ? buildHomeLevel(HOME_BASE, prop, save.gym, save.storageCap) : area === 'basement' ? buildBasementLevel(save.basement) : area === 'property' ? propertyLevel(save) : LEVELS[area];
+    area === 'home' ? buildHomeLevel(HOME_BASE, prop, save.gym, save.storageCap, { open: !!save.flags[DEALING_FLAG], table: save.dealing.table }) : area === 'basement' ? buildBasementLevel(save.basement) : area === 'property' ? propertyLevel(save) : LEVELS[area];
   // Property doors: who owns it, who lives there, what the board outside says.
   if (PROPERTY_LIST.some((p) => p.area === area)) level = dressStreet(level, (id) => doorState(save, id));
   const props: PropDef[] = area === 'home' || area === 'basement' || area === 'property' ? [] : streetBikes(level);

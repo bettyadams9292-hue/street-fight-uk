@@ -232,7 +232,9 @@ export type StationId =
   // Jewellery and property
   | 'jeweller_counter' | 'jeweller_case' | 'agent_desk' | 'agent_window' | 'prop_info' | 'prop_rest'
   // Someone who gives out jobs (`tab` is their id, src/jobs/contacts.ts)
-  | 'contact';
+  | 'contact'
+  // The dealing prep table in the garage (business/dealing.ts)
+  | 'prep';
 
 /** A non-hostile character standing at a station (shopkeepers, barmen). */
 export interface NpcDef {

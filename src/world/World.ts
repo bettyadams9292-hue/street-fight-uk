@@ -37,8 +37,10 @@ import { TutorialBrain, type LessonMode } from '../ai/TutorialBrain';
 import type { ItemStack } from '../items/Inventory';
 import { ITEMS, weaponItemId } from '../items/items';
 import { hash01 } from '../realty/catalogue';
+import { DRUG_DEFS, DRUGS, dealingOpen, dealsOnYou, recordSale, SALE_HEAT, streetPrice, takeFromPockets, undercoverChance, type Drug } from '../business/dealing';
+import { stripAreaOf } from '../jobs/jobs';
 import { checkJob, completeJob, jobStep, objectiveOf, spotIn, streetJob, STREET_CHANCE, TARGET_ARCH, timeLeft, type ActiveJob, type Job, type JobPaid } from '../jobs/jobs';
-import { onStrip } from './strip';
+import { onStrip, stripIndex } from './strip';
 import { HOTBAR_COOLDOWN, hotbarView, refillHotbar, type HotbarSlot } from '../items/hotbar';
 import { bossDropValue, lootTableFor, rollLoot } from '../items/loot';
 import type { AreaId, Progress } from '../progress/Progress';
@@ -127,6 +129,8 @@ export interface WorldEvents {
   /** Done and paid where it happened (a delivery, a deal, a street job). */
   'job:done': { paid: JobPaid; text: string };
   'job:failed': { text: string };
+  /** A deal sold on the street (business/dealing.ts); `undercover`: the punter was police. */
+  'deal:sold': { drug: Drug; qty: number; price: number; undercover: boolean };
   'duel:start': { kind: 'spar' | 'challenge'; name: string };
   'duel:end': { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
 }
@@ -256,7 +260,9 @@ export type Interactable =
   | { kind: 'container'; x: number; z: number; label: string; container: ContainerDef; empty: boolean }
   | { kind: 'mug'; x: number; z: number; label: string; target: Fighter }
   /** The passer-by with a job, or the person at the far end of yours (the debtor, the recipient, the buyer). */
-  | { kind: 'job'; x: number; z: number; label: string; f: Fighter; role: 'giver' | 'target' };
+  | { kind: 'job'; x: number; z: number; label: string; f: Fighter; role: 'giver' | 'target' }
+  /** A punter who'll buy deals off you (business/dealing.ts). */
+  | { kind: 'deal'; x: number; z: number; label: string; target: Fighter; drug: Drug; qty: number; price: number };
 
 /**
  * One area of the world running live: the level's collision, the player,
@@ -411,8 +417,8 @@ export class World {
   }
 
   /** Who to put a badge over: someone with a job, and who you're after (till they're down or it's done). */
-  jobMarks(): { f: Fighter; kind: 'giver' | 'target' }[] {
-    const out: { f: Fighter; kind: 'giver' | 'target' }[] = [];
+  jobMarks(): { f: Fighter; kind: 'giver' | 'target' | 'punter' }[] {
+    const out: { f: Fighter; kind: 'giver' | 'target' | 'punter' }[] = this.punters().map((f) => ({ f, kind: 'punter' as const }));
     const g = this.jobGiver;
     if (g && !this.leaving.has(g.f) && !g.f.isKO) out.push({ f: g.f, kind: 'giver' });
     const t = this.jobFolk.find((x) => x.role === 'target');
@@ -2372,7 +2378,106 @@ export class World {
       best = o;
       bestD = d;
     }
-    return best ?? this.findMuggable();
+    return best ?? this.findPunter() ?? this.findMuggable();
+  }
+
+  // ---- dealing (business/dealing.ts) ---------------------------------------------------------------------------
+
+  /** About this share of passers-by are punters, when you've got something to sell. */
+  static readonly PUNTER_SHARE = 0.3;
+  private served = new WeakSet<Fighter>();
+  private soldHere = false;
+
+  /** Is this passer-by after something, and what? Fixed for the person and the trip. */
+  private punterWants(f: Fighter, have: Record<Drug, number>): { drug: Drug; qty: number } | null {
+    if (this.served.has(f) || this.mugged.has(f)) return null;
+    const h = (salt: string) => hash01(`punter:${f.id}:${this.progress.save.trips}:${salt}`);
+    if (h('is') >= World.PUNTER_SHARE) return null;
+    const east = this.east();
+    // What they're after: weed most, pills next, coke more the further east you are.
+    const weights: Record<Drug, number> = { weed: 0.5, pills: 0.3, coke: 0.2 + 0.04 * east };
+    const want = DRUGS.filter((d) => have[d] > 0);
+    if (!want.length) return null;
+    const total = want.reduce((n, d) => n + weights[d], 0);
+    let r = h('drug') * total;
+    let drug = want[0];
+    for (const d of want) {
+      if (r < weights[d]) {
+        drug = d;
+        break;
+      }
+      r -= weights[d];
+    }
+    return { drug, qty: Math.min(have[drug], 1 + Math.floor(h('qty') * 3)) };
+  }
+
+  /** How far east this street is (strip steps past the estate). */
+  private east(): number {
+    return Math.max(0, stripIndex(stripAreaOf(this.level.id)) - stripIndex('estate'));
+  }
+
+  /** Punters about (for the badges over their heads). */
+  punters(): Fighter[] {
+    if (!dealingOpen(this.progress) || this.inFight || this.level.deep) return [];
+    const have = dealsOnYou(this.progress);
+    if (!DRUGS.some((d) => have[d] > 0)) return [];
+    return this.civilians.filter((c) => c.brain.activity !== 'flee' && !c.f.isKO && this.punterWants(c.f, have)).map((c) => c.f);
+  }
+
+  /** A punter close enough to sell to, when you're carrying something they want. */
+  private findPunter(): Interactable | null {
+    const p = this.player;
+    if (!dealingOpen(this.progress) || this.inFight || this.duel || this.locked || this.progress.save.property.riding) return null;
+    const have = dealsOnYou(this.progress);
+    if (!DRUGS.some((d) => have[d] > 0)) return null;
+    let best: { f: Fighter; drug: Drug; qty: number } | null = null;
+    let bd = 1.1;
+    for (const c of this.civilians) {
+      if (c.brain.activity === 'flee' || c.f.isKO) continue;
+      const d = Math.hypot(c.f.pos.x - p.pos.x, (c.f.pos.z - p.pos.z) * 1.2);
+      if (d >= bd || this.arena.lineBlocked(p.pos.x, p.pos.z, c.f.pos.x, c.f.pos.z)) continue;
+      const w = this.punterWants(c.f, have);
+      if (!w) continue;
+      best = { f: c.f, ...w };
+      bd = d;
+    }
+    if (!best) return null;
+    const each = streetPrice(this.progress, best.drug, this.level.district, this.east());
+    const dd = DRUG_DEFS[best.drug];
+    const what = best.qty > 1 ? `${best.qty} ${dd.dealPlural}` : dd.dealName.toLowerCase();
+    return { kind: 'deal', x: best.f.pos.x, z: best.f.pos.z, label: `Sell: ${what} £${each * best.qty}`, target: best.f, drug: best.drug, qty: best.qty, price: each * best.qty };
+  }
+
+  /** Sell to a punter: the money, a bit of XP, heat, and now and then it's the police. */
+  private sellTo(it: Extract<Interactable, { kind: 'deal' }>): void {
+    const p = this.progress;
+    const c = this.civilians.find((x) => x.f === it.target);
+    if (!c || this.served.has(it.target)) return;
+    if (!takeFromPockets(p, DRUG_DEFS[it.drug].dealItem, it.qty)) return;
+    this.served.add(it.target);
+    const h = p.heatIn();
+    const undercover = this.lootRng.next() < undercoverChance(h.police);
+    p.addHeatOf({ police: SALE_HEAT.police * it.qty, street: SALE_HEAT.street * it.qty }, this.level.district);
+    if (!this.soldHere || undercover) p.logCrime('dealing', this.level.district);
+    this.soldHere = true;
+    if (undercover) {
+      // Plain clothes: the money's evidence, and the van's round the corner.
+      this.say(it.target, ['Police! Stay where you are!', 'You’re nicked, son. Hands where I can see them.', 'Wrong customer, mate. Police!']);
+      p.addHeatOf({ police: 25 }, this.level.district);
+      this.policeDue = { at: this.sim.frame + 3 * SIM_HZ, count: 2 };
+      this.policeSpawned = false;
+      c.brain.bolt(this.player.pos.x, this.sim.frame);
+    } else {
+      p.addCash(it.price);
+      recordSale(p, it.drug, it.qty, it.price, this.level.district);
+      const levels = p.addXp(2 * it.qty);
+      if (levels > 0) {
+        this.player.stats.level = p.save.level;
+        this.events.emit('level:up', { level: p.save.level });
+      }
+      this.say(it.target, ['Cheers, mate.', 'Sound. Same again next week?', 'Nice one.', 'Lovely. Keep it quiet, yeah?']);
+    }
+    this.events.emit('deal:sold', { drug: it.drug, qty: it.qty, price: undercover ? 0 : it.price, undercover });
   }
 
   /** People you've already mugged (they're running, or they've had their go). */
@@ -2516,6 +2621,9 @@ export class World {
         return;
       case 'job':
         this.talkJob(it.f, it.role);
+        return;
+      case 'deal':
+        this.sellTo(it);
         return;
       case 'container':
         if (it.container.requires && !this.progress.has(it.container.requires)) {

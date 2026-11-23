@@ -56,6 +56,7 @@ Inputs are keyboard / pad / touch. Unless a row says "(info)" or "(hint)", the l
 | Passers-by with a job | `World.setUpStreetGiver` | USE | a yellow ! on the street | streets | B: Someone needs a hand (when one's near) | read | B |
 | A job gone wrong | `failJob`, `job:failed` | none | a job failed or dropped | any | B: A job gone wrong | read | B |
 | Hotbar: medical, food, drink, weapon | `items/hotbar.ts`, `World.useHotbar` | 1–4 / Back + X, Y, A, B / the slots | hurt, with something to heal with | any | G: 07 The hotbar (starts when you're hurt) | `hotbar:used` | G |
+| Dealing: bulk, the prep table, punters | `business/dealing.ts`, `ui/dealingUI.ts` | USE at the prep table, USE on a punter | after the Ratcatcher | garage, streets | G: 08 Dealing (first use of the prep spot) | table set up, bulk on, bags, deals taken, a sale (`deal:sold`) | G |
 | Clothes tiers, outfit buffs, jewellery XP | `items/gearBonus.ts` | none | wearing something that gives a buff | any | B: Dressed for it | read | B |
 | Kitchen: fridge, cupboards, cooking | `home/house.ts`, `kitchenUI.ts` | USE | home | home | B: The kitchen (first fridge or cupboard) | read | B |
 | The Red Lion: bar, lock-in, the Snug | `world/interiors.ts`, `recruit` | USE | in the pub | High Street | B: The Red Lion (first visit) | read | B |
@@ -68,7 +69,7 @@ Inputs are keyboard / pad / touch. Unless a row says "(info)" or "(hint)", the l
 - **Layers.**
   - **A (essential):** chapters 1–5. They run on a new game, at home and in the first fight. Every step can be skipped, and so can the whole tutorial.
   - **B and C (contextual):** a one-time card the first time you meet the thing (`HINTS`). They respect Settings → Tutorial hints.
-  - **G (guides):** short lessons for things met later (`GUIDES` in `lessons.ts`: 06 Jobs, 07 The hotbar), run on real events like the chapters. Each starts itself the first time you meet its thing (`start`: an event, or a check made every second, never in a fight), only once the first-run lessons are done and with Tutorial hints on. The first card has Not now (skips it; it's never offered again). Pause → Tutorials can start one, or replay one you've done. `save.tutorial.guide` keeps one in progress across a reload; `GUIDE_CHAPTERS` in `state.ts` must match `GUIDES` (`tests/tutorial.test.ts`).
+  - **G (guides):** short lessons for things met later (`GUIDES` in `lessons.ts`: 06 Jobs, 07 The hotbar, 08 Dealing), run on real events like the chapters. Each starts itself the first time you meet its thing (`start`: an event, or a check made every second, never in a fight), only once the first-run lessons are done and with Tutorial hints on. The first card has Not now (skips it; it's never offered again). Pause → Tutorials can start one, or replay one you've done. `save.tutorial.guide` keeps one in progress across a reload; `GUIDE_CHAPTERS` in `state.ts` must match `GUIDES` (`tests/tutorial.test.ts`).
 - **Saves.**
   - `save.tutorial` holds the version, started, essential done, completed and skipped lesson ids, hints shown, the active step, and a guide in progress.
   - A save from before the tutorial counts as done, with every hint already shown, so existing players aren't marched through it.

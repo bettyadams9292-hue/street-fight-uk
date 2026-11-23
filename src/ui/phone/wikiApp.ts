@@ -1,4 +1,5 @@
 import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
+import { BAG_PACK, BAG_PACK_PRICE, BULK_BUYBACK, bulkWorth, DRUG_DEFS, DRUGS, GROW_PER_BULK, TABLES } from '../../business/dealing';
 import { DRIP_LIST, JEWEL_BUFF_LIST, OUTFIT_LIST, STONE_BUFF_LIST, TIER_NAMES, XP_BONUS_CAP } from '../../items/gearBonus';
 import { BOARD_TRIPS, CONTACT_IDS, CONTACTS } from '../../jobs/jobs';
 import type { StyleData } from '../../styles/StyleData';
@@ -14,7 +15,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing';
 
 export interface WikiDeps {
   device: () => Device;
@@ -29,6 +30,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'heat', title: 'Heat', blurb: 'How much trouble you’re in with the police, the locals and the gangs, and how to cool off.' },
   { id: 'police', title: 'Getting nicked', blurb: 'Your record, the charge sheet, bail, a night in the cells, and the front counter.' },
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
+  { id: 'dealing', title: 'Dealing', blurb: 'Bulk, the prep table in your garage, punters, prices and the risks.' },
   { id: 'gear', title: 'Clothes and jewellery', blurb: 'Tiers, what each kind of clothing does, outfit buffs, and jewellery’s XP bonus.' },
   { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
 ];
@@ -149,6 +151,29 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       p('What it costs you is heat with the police and the locals: see Heat.'),
       sec('Weapons'),
       p('Pick a weapon up with GRAB when nobody’s in reach. It wears out with every hit; the workbench at home mends it.'),
+    );
+  }
+
+  if (page === 'dealing') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('Dealing', `Once you’ve dealt with the Ratcatcher, Kez has a connect. Buy in bulk, break it down and bag it up at a prep table in your garage, and sell it on the street.`,
+      infobox('Bulk from Kez', DRUGS.map((d) => [DRUG_DEFS[d].bulkName, `£${DRUG_DEFS[d].bulkPrice}: ${DRUG_DEFS[d].deals} deals at about £${DRUG_DEFS[d].street}`] as [string, string])),
+      sec('The prep table'),
+      p(`Set it up on the garage floor (£${TABLES[0].price}). Put bulk on it and it bags up a batch at a time while you’re out, one bag per deal (a pack of ${BAG_PACK} is £${BAG_PACK_PRICE}). ${TABLES.slice(1).map((t) => `${t.name} (£${t.price}): ${t.text.toLowerCase()}`).join(' ')}`),
+      p(`Your grow in the basement links in: bring its stock up as bulk weed, ${GROW_PER_BULK} units to a bag. Sold by the unit that’s about £140; bagged up and sold on the street it’s about £${bulkWorth('weed')}.`),
+      sec('Selling'),
+      list([
+        'Carry deals out on the streets and punters show a green £ over their head. Walk up and USE.',
+        'Weed sells most; coke sells better and for more the further east you go; pills are cheap and quick.',
+        'Every sale in a district on one trip knocks the price there down a little: spread it about.',
+        `Kez buys bulk back at ${Math.round(BULK_BUYBACK * 100)}% if you change your mind.`,
+      ]),
+      sec('The risks'),
+      list([
+        'Every sale is police heat where you are, and dealing goes on your record.',
+        'Now and then a punter is plain clothes: more often where police heat is high. Then they’re on their way.',
+        'Get nicked with bulk or deals on you and the police take the lot.',
+      ]),
     );
   }
 

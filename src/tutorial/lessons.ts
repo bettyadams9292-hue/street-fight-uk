@@ -41,7 +41,9 @@ export type TutEvent =
   /** A job (src/jobs): taken, its hard part done (`step`: go back for your money), paid, or gone wrong. */
   | { type: 'job'; stage: 'taken' | 'step' | 'done' | 'failed' }
   /** A hotbar slot used. */
-  | { type: 'hotbar' };
+  | { type: 'hotbar' }
+  /** A deal sold on the street (business/dealing.ts). */
+  | { type: 'deal' };
 
 /** What a check can look at. */
 export interface Ctx {
@@ -196,6 +198,20 @@ export const GUIDES: readonly ChapterDef[] = [
       { id: 'do', text: 'Go and do it.', why: 'Some square up when you get close. A debtor might pay, or might fight. Deliveries pay on the doorstep.', done: { poll: (c) => { const j = c.progress.save.jobs.active; return !j || j.stage === 'back'; } } },
       { id: 'back', text: (c) => { const j = c.progress.save.jobs.active; return j ? `Take it back to ${j.giver.split(' ')[0]} and hand it over.` : 'That’s the job done.'; }, why: 'Go down on the way with the money or the goods and they’re gone, and so is the job.', done: { poll: (c) => !c.progress.save.jobs.active } },
       { id: 'standing', text: 'Every job done raises your standing with whoever gave it.', why: 'Known, Trusted, then Inner circle: better pay, and their own special jobs open up. GraftWiki on your phone has the lot.', done: { read: true } },
+    ],
+  },
+  {
+    id: 'dealing', num: '08', title: 'Dealing', category: 'Money and survival',
+    blurb: 'Bulk from Kez or your grow, bagged up in the garage, sold to punters on the street.',
+    start: { on: 'station', test: (e) => e.type === 'station' && e.id === 'prep' },
+    steps: [
+      { id: 'table', text: 'The prep table: bulk goes on, deals come off.', why: 'Set it up once. It bags up while you’re out, a batch at a time (faster, and two at once, with the upgrades).', done: { read: true } },
+      { id: 'setup', text: 'Set up the table.', done: { poll: (c) => c.progress.save.dealing.table > 0 } },
+      { id: 'bulk', text: 'Get some bulk on it: buy it off Kez on Hollins, or bring your weed up from the basement.', why: 'Bulk is cheap. Bagged up and sold on the street it’s worth a lot more, and your own weed is worth far more bagged than sold by the unit.', done: { poll: (c) => { const d = c.progress.save.dealing; return d.batches.length > 0 || Object.values(d.bulk).some((n) => n > 0) || Object.values(d.deals).some((n) => n > 0); } } },
+      { id: 'bags', text: 'It needs bags: one for every deal. Buy a pack at the table.', done: { poll: (c) => { const d = c.progress.save.dealing; return d.bags > 0 || d.batches.length > 0 || Object.values(d.deals).some((n) => n > 0); } } },
+      { id: 'take', text: 'When it’s bagged up, take the deals.', why: 'Check back at the table. It keeps working while you’re out.', done: { poll: (c) => c.progress.save.inventory.some((x) => x.id.startsWith('deal_')) } },
+      { id: 'sell', text: 'Sell to a punter: someone on the street with a green £ over their head.', keys: ['use'], why: 'Prices go up further east, and down the more you sell in one place on one trip.', done: { on: 'deal' } },
+      { id: 'heat', text: 'Every sale is police heat, and now and then a punter is plain clothes.', why: 'Get nicked carrying it and they take the lot. Keep moving, spread it about, watch your heat on the phone.', done: { read: true } },
     ],
   },
   {

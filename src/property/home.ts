@@ -311,12 +311,19 @@ export function stashSafe(cap: number): { id: string; scale: number; size: [numb
   return { id, scale, size: [hx * scale, hz * scale] };
 }
 
-export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave, stashCap = 60): LevelDef {
+/** The prep table for dealing (business/dealing.ts): out on the garage floor, the second one beside it. */
+export const PREP = { x: 17.0, z: 2.7, x2: 19.4, size: [0.8, 0.42] as [number, number] };
+
+export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave, stashCap = 60, prep: { open: boolean; table: number } = { open: false, table: 0 }): LevelDef {
   // The stash's chest is drawn as its safe, standing against the garage's back wall at the safe's own size.
   const safe = stashSafe(stashCap);
   // The bedroom desk carries the biscuit tin in the style you chose.
   const fixtures = HOME_FIXTURES.map((p) => (p.kind === 'chest' ? { ...p, item: safe.id, scale: safe.scale, size: safe.size, z: -2.02 + safe.size[1] } : p.kind === 'desk' ? { ...p, item: prop.tin } : p));
   const props: PropDef[] = [...fixtures, ...garageBikes(prop), ...(gym ? gymProps(gym) : [])];
+  // Dealing: once it's open, the garage floor has a spot for the prep table (and the table, once bought).
+  if (prep.table >= 1) props.push({ kind: 'table', x: PREP.x, z: PREP.z, size: PREP.size, colour: '#6a6e74' });
+  if (prep.table >= 3) props.push({ kind: 'table', x: PREP.x2, z: PREP.z, size: PREP.size, colour: '#6a6e74' });
+  const prepStation: StationDef[] = prep.open ? [{ id: 'prep', x: PREP.x, z: PREP.z + PREP.size[1] + 0.55, label: prep.table ? 'Prep table: bag up, take deals' : 'Garage floor: set up a prep table' }] : [];
   for (const f of prop.furniture) {
     const def = FURNITURE[f.id];
     if (!def || !f.at) continue;
@@ -337,7 +344,7 @@ export function buildHomeLevel(base: LevelDef, prop: PropertySave, gym?: GymSave
     facades,
     walls: HOME_WALLS.map((w) => ({ ...w })),
     props,
-    stations: [...FIXED_STATIONS.map((st) => (st.id === 'storage' ? { ...st, z: Math.max(st.z, -2.02 + safe.size[1] * 2 + 0.3) } : st)), ...HOUSE_SPOTS.map(({ id, x, z, label }) => ({ id, x, z, label })), ...furnitureStations(prop), seatStation(prop), ...gymStations(gym)],
+    stations: [...FIXED_STATIONS.map((st) => (st.id === 'storage' ? { ...st, z: Math.max(st.z, -2.02 + safe.size[1] * 2 + 0.3) } : st)), ...HOUSE_SPOTS.map(({ id, x, z, label }) => ({ id, x, z, label })), ...furnitureStations(prop), seatStation(prop), ...gymStations(gym), ...prepStation],
     containers: HOME_CONTAINERS.map((c) => ({ ...c })),
   });
   // Each room dressed round its edges with the furniture pack. Anything you've bought or placed comes first: a

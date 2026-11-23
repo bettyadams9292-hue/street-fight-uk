@@ -651,7 +651,7 @@ export class Hud {
   /** Badges over the heads of job people (src/jobs): a "!" over someone with a job, a target over who you're after. */
   private jobMarks: HTMLElement[] = [];
   private jobMarkLayer: HTMLElement | null = null;
-  updateJobMarks(list: { f: Fighter; kind: 'giver' | 'target' }[], project: (x: number, y: number, z: number) => { x: number; y: number } | null): void {
+  updateJobMarks(list: { f: Fighter; kind: 'giver' | 'target' | 'punter' }[], project: (x: number, y: number, z: number) => { x: number; y: number } | null): void {
     if (!this.jobMarkLayer) {
       this.jobMarkLayer = h('div', { class: 'job-marks' });
       this.el.append(this.jobMarkLayer);
@@ -670,7 +670,7 @@ export class Hud {
       }
       m.style.display = '';
       m.className = `job-mark ${it.kind}`;
-      m.textContent = it.kind === 'giver' ? '!' : '';
+      m.textContent = it.kind === 'giver' ? '!' : it.kind === 'punter' ? '£' : '';
       m.style.transform = `translate(${Math.round(pt.x)}px, ${Math.round(pt.y)}px) translate(-50%, -100%)`;
     });
   }

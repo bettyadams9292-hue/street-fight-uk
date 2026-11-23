@@ -1,4 +1,6 @@
 import { setHumansEnabled } from './render/human/HumanRig';
+import { DRUG_DEFS, dealingOpen, tickPrep } from './business/dealing';
+import { prepScreen, wholesaleRows } from './ui/dealingUI';
 import { acceptJob, completeJob, failJob, objectiveOf, type ContactId, type Job } from './jobs/jobs';
 import { contactScreen, offerScreen, type JobActions } from './ui/jobsUI';
 import { slugify } from './ui/titles';
@@ -839,6 +841,7 @@ export class Game {
     this.input.flush();
     this.updateTouchVisibility();
     if (area !== from || !opts.at) this.hud.showBanner(level.district, level.name);
+    this.dealingNews(area);
     // First time here: one line pointing out what's on the street (the map has the rest).
     const firstVisit = !p.save.visited.includes(area);
     if (firstVisit) {
@@ -1234,6 +1237,14 @@ export class Game {
         this.audio.coins();
         this.saveGame();
       }),
+      ev.on('deal:sold', ({ drug, qty, price, undercover }) => {
+        if (undercover) this.hud.toast('Plain clothes: that punter was police. Get away, quick.', 'warn');
+        else {
+          this.hud.toast(`Sold ${qty > 1 ? `${qty} ${DRUG_DEFS[drug].dealPlural}` : DRUG_DEFS[drug].dealName.toLowerCase()}: £${price}`, 'cash');
+          this.audio.coins();
+        }
+        this.saveGame();
+      }),
       ev.on('job:failed', ({ text }) => {
         this.hud.toast(`Job failed: ${text}`, 'warn');
         this.saveGame();
@@ -1437,7 +1448,10 @@ export class Game {
         screen = this.frontDesk(close);
         break;
       case 'contact':
-        screen = contactScreen(p, (station?.tab ?? 'terry') as ContactId, close, this.jobActions(close));
+        screen = contactScreen(p, (station?.tab ?? 'terry') as ContactId, close, this.jobActions(close), station?.tab === 'kez' && dealingOpen(p) ? (msg, rebuild) => wholesaleRows(p, msg, rebuild, saved) : undefined);
+        break;
+      case 'prep':
+        screen = prepScreen(p, close, saved, changed);
         break;
       case 'cash_hatch':
         screen = pawnScreen(p, this.ui, saved, close, { priceMult: 1 / PAWN_HATCH_RATE });
@@ -2426,6 +2440,27 @@ export class Game {
    * The front counter at Central Police Station: what's on your record, and settling up a district's fines
    * early (clears its police heat and the crimes logged there) at a price (`settlePrice`).
    */
+  /**
+   * Dealing (business/dealing.ts): the first time it's open, Kez gets in touch; back home, what the prep table's
+   * bagged up while you were out.
+   */
+  private dealingNews(area: string): void {
+    const p = this.progress;
+    if (!p || !dealingOpen(p)) return;
+    const s = p.save.dealing;
+    if (!s.told) {
+      s.told = true;
+      this.hud.remember('Kez: You’re making a name. I’ve got a connect: weed, coke, pills, bought in bulk, cheap. Come and see me on Hollins. And clear a bit of your garage.', 'item');
+      this.hud.toast('Kez: I’ve got something for you. Hollins.', 'item');
+      this.saveGame();
+    }
+    if (area === 'home' && s.table) {
+      const done = tickPrep(p);
+      const n = done.weed + done.coke + done.pills;
+      if (n) this.hud.toast(`Prep table: ${n} deals bagged up and waiting`, 'item');
+    }
+  }
+
   /** What the contact screen's buttons do (src/jobs). */
   private jobActions(close: () => void): JobActions {
     const p = this.progress!;

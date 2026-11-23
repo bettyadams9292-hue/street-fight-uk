@@ -9,6 +9,8 @@ import { h } from './dom';
 export const TITLE_SLUGS: ReadonlySet<string> = new Set([
   // The tutorial (tools/icons/hg/kit_from_titles.py).
   'tutorials', 'resume-tutorial', 'skip-tutorial', 'tutorial-hints',
+  // Dealing (kit_from_titles.py).
+  'set-it-up', 'upgrade-it', 'put-it-on', 'bring-it-up', 'buy-bags', 'take-them', 'buy-it', 'sell-it-back',
   // Jobs (kit_from_titles.py; J is built from the U in hgtype.py).
   'take-the-job', 'hand-it-over', 'drop-the-job', 'not-now',
   // The fridge and cupboards (kit_from_titles.py).
