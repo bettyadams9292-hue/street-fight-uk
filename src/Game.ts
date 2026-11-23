@@ -1,4 +1,6 @@
 import { setHumansEnabled } from './render/human/HumanRig';
+import { acceptJob, completeJob, failJob, objectiveOf, type ContactId, type Job } from './jobs/jobs';
+import { contactScreen, offerScreen, type JobActions } from './ui/jobsUI';
 import { slugify } from './ui/titles';
 import { AudioManager, type MusicTrack } from './audio/AudioManager';
 import { moveListScreen, type Device } from './ui/moveList';
@@ -1216,8 +1218,30 @@ export class Game {
         this.hud.toast('+1 training point: spend it at the gym', 'item');
       }),
       ev.on('station', ({ id, station }) => this.openStation(id, station)),
+      // Jobs (src/jobs): a passer-by's offer, the job moving on, paid, or gone wrong.
+      ev.on('job:offer', ({ job, name }) => this.jobOffer(job, name)),
+      ev.on('job:step', ({ text }) => {
+        this.hud.toast(`Job: ${text}`, 'info');
+        this.saveGame();
+      }),
+      ev.on('job:done', ({ paid, text }) => {
+        this.hud.toast(`Job done: ${text}`, 'cash');
+        if (paid.tier) this.hud.toast(`${paid.giver} trusts you more: ${paid.tier}`, 'item');
+        this.audio.coins();
+        this.saveGame();
+      }),
+      ev.on('job:failed', ({ text }) => {
+        this.hud.toast(`Job failed: ${text}`, 'warn');
+        this.saveGame();
+      }),
       ev.on('player:defeated', ({ byPolice }) => {
         const p = this.progress!;
+        // Down on a job with something to lose: the parcel, the package, the goods or the money's gone with it.
+        const job = p.save.jobs.active;
+        if (job && (job.kind === 'deliver' || job.kind === 'deal' || job.stage === 'back')) {
+          failJob(p, 'failed');
+          this.hud.toast(`Job failed: they took ${job.kind === 'deliver' ? 'the parcel' : job.kind === 'deal' ? 'the package' : job.kind === 'debt' ? 'the money' : 'it'} off you. ${job.giver.split(' ')[0]} won’t be pleased.`, 'warn');
+        }
         if (byPolice || p.save.heat >= ARREST_HEAT) {
           this.nicked(0.4);
           return;
@@ -1406,6 +1430,9 @@ export class Game {
         break;
       case 'front_desk':
         screen = this.frontDesk(close);
+        break;
+      case 'contact':
+        screen = contactScreen(p, (station?.tab ?? 'terry') as ContactId, close, this.jobActions(close));
         break;
       case 'cash_hatch':
         screen = pawnScreen(p, this.ui, saved, close, { priceMult: 1 / PAWN_HATCH_RATE });
@@ -2394,6 +2421,66 @@ export class Game {
    * The front counter at Central Police Station: what's on your record, and settling up a district's fines
    * early (clears its police heat and the crimes logged there) at a price (`settlePrice`).
    */
+  /** What the contact screen's buttons do (src/jobs). */
+  private jobActions(close: () => void): JobActions {
+    const p = this.progress!;
+    return {
+      take: (job) => {
+        const r = acceptJob(p, job);
+        if (!r.ok) return { ok: false, reason: r.reason };
+        this.saveGame();
+        close();
+        this.world?.setUpJob();
+        this.hud.toast(`Job: ${objectiveOf(p.save.jobs.active!)}`, 'info');
+        return { ok: true };
+      },
+      handIn: () => {
+        const paid = completeJob(p);
+        if (!paid) return null;
+        const w = this.world;
+        if (w) {
+          for (const o of paid.over) w.dropOnGround(p.newStack(o.id, o.qty), w.player.pos.x, w.player.pos.z + 0.2);
+          if (paid.levels > 0) {
+            w.player.stats.level = p.save.level;
+            this.hud.toast(`Level up! You're level ${p.save.level}`, 'item');
+          }
+        }
+        this.saveGame();
+        this.audio.coins();
+        return `Paid: £${paid.cash} and ${paid.xp} XP${paid.items.length ? `, plus ${paid.items.map((id) => ITEMS[id]?.name ?? id).join(', ')}` : ''}${paid.over.length ? ' (no room: it’s at your feet)' : ''}.${paid.tier ? ` You’re ${paid.tier.toLowerCase()} now.` : ''}`;
+      },
+      drop: () => {
+        const j = failJob(p, 'dropped');
+        this.saveGame();
+        return j ? `Dropped: ${j.title}. ${j.giver.split(' ')[0]} isn’t impressed.` : null;
+      },
+    };
+  }
+
+  /** Someone on the street has a job: show it, and take it if you want it. */
+  private jobOffer(job: Job, name: string): void {
+    const p = this.progress;
+    const w = this.world;
+    if (!p || !w) return;
+    this.state = 'paused';
+    this.touch.release();
+    this.input.flush();
+    this.updateTouchVisibility();
+    const close = () => {
+      this.ui.replaceAll(null);
+      this.resume();
+    };
+    this.ui.replaceAll(offerScreen(p, job, name, () => {
+      const r = acceptJob(p, job);
+      if (!r.ok) return { ok: false, reason: r.reason };
+      w.giverTook();
+      this.saveGame();
+      close();
+      this.hud.toast(`Job: ${objectiveOf(p.save.jobs.active!)}`, 'info');
+      return { ok: true };
+    }, close));
+  }
+
   private frontDesk(close: () => void): Screen {
     const p = this.progress!;
     const s = p.save;
@@ -3147,6 +3234,7 @@ export class Game {
       // In story mode the boss has its own bar along the bottom.
       this.hud.update(realDt, player, this.world?.activeBoss && enemy === this.world.activeBoss ? null : enemy);
       this.hud.updateBubbles((x, y, z) => this.renderer.screenOf(x, y, z));
+      this.hud.updateJobMarks(this.world ? this.world.jobMarks() : [], (x, y, z) => this.renderer.screenOf(x, y, z));
       this.updateEdgeMarkers(player);
       document.body.classList.toggle('fight-on', !!this.world?.fightOn);
       // Out and about in the story with no fight near: the touch pad drops to PUNCH, KICK and JUMP.

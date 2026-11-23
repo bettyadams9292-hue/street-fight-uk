@@ -648,6 +648,33 @@ export class Hud {
     }
   }
 
+  /** Badges over the heads of job people (src/jobs): a "!" over someone with a job, a target over who you're after. */
+  private jobMarks: HTMLElement[] = [];
+  private jobMarkLayer: HTMLElement | null = null;
+  updateJobMarks(list: { f: Fighter; kind: 'giver' | 'target' }[], project: (x: number, y: number, z: number) => { x: number; y: number } | null): void {
+    if (!this.jobMarkLayer) {
+      this.jobMarkLayer = h('div', { class: 'job-marks' });
+      this.el.append(this.jobMarkLayer);
+    }
+    while (this.jobMarks.length < list.length) {
+      const m = h('div', { class: 'job-mark' });
+      this.jobMarkLayer.append(m);
+      this.jobMarks.push(m);
+    }
+    this.jobMarks.forEach((m, i) => {
+      const it = list[i];
+      const pt = it ? project(it.f.pos.x, it.f.pos.y + 2.3, it.f.pos.z) : null;
+      if (!it || !pt) {
+        m.style.display = 'none';
+        return;
+      }
+      m.style.display = '';
+      m.className = `job-mark ${it.kind}`;
+      m.textContent = it.kind === 'giver' ? '!' : '';
+      m.style.transform = `translate(${Math.round(pt.x)}px, ${Math.round(pt.y)}px) translate(-50%, -100%)`;
+    });
+  }
+
   /** Red arrows at the screen edge for anyone coming at you from outside the view (screen pixels). */
   private markers: HTMLElement[] = [];
   private markerLayer: HTMLElement | null = null;

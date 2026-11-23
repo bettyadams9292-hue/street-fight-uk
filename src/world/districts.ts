@@ -1,3 +1,4 @@
+import { contactStation } from '../jobs/contacts';
 import type { LevelDef } from './LevelTypes';
 
 /**
@@ -35,7 +36,11 @@ const residential: LevelDef = {
     { id: 'to_estate', kind: 'edge', side: 'right', x: 86, z: 0, to: 'estate', toEntry: 'left', label: 'Tanner Road' },
   ],
   // Cash 4 U: a pawn hatch on the estate, the worst rates in the game (PAWN_HATCH_RATE).
-  stations: [{ id: 'cash_hatch', x: 37.5, z: -1.1, label: 'Cash 4 U pawn hatch (worst rates)' }],
+  stations: [
+    { id: 'cash_hatch', x: 37.5, z: -1.1, label: 'Cash 4 U pawn hatch (worst rates)' },
+    // Kez, by the garages (clear of the estate's fights): jobs (src/jobs).
+    contactStation('kez', 47.6, -1.0, -0.65),
+  ],
   facades: [
     { kind: 'semi', x0: 0, x1: 20 },
     { kind: 'tower', x0: 20, x1: 34, label: 'HOLLINS HOUSE 1-64' },

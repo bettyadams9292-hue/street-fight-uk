@@ -1,4 +1,5 @@
 import { BOSSES } from '../ai/bosses';
+import { CONTACT_IDS, CONTACTS, contactOpen, objectiveOf, type ContactId } from '../jobs/jobs';
 import { COMPANION_LIST } from '../companions/companions';
 import { ITEMS } from '../items/items';
 import { AREA_IDS, type AreaId, type Progress } from '../progress/Progress';
@@ -551,6 +552,21 @@ export function markers(p: Progress): MapMarker[] {
   // The Snug's fighters for hire, next to the pub.
   const pub = placePoint('pub');
   out.push({ key: 'contact:snug', kind: 'contact', area: 'pub', at: { x: pub.x + 30, y: pub.y - 26 }, label: 'The Snug: fighters for hire' });
+  // Contacts with work going (src/jobs), and where the job you're on takes you next.
+  for (const id of CONTACT_IDS) {
+    const c = CONTACTS[id];
+    if (!contactOpen(p, id)) continue;
+    const st = (LEVELS[c.area].stations ?? []).find((x) => x.id === 'contact' && x.tab === id);
+    const at = LAYOUT[c.area] && st ? streetPoint(c.area, st.x) : placePoint(c.area);
+    if (at) out.push({ key: `job:${id}`, kind: 'contact', area: c.area, at: { x: at.x - 18, y: at.y - 24 }, label: `${c.name}, ${c.role.toLowerCase()}: jobs` });
+  }
+  const job = p.save.jobs?.active;
+  if (job) {
+    const back = job.stage === 'back' && job.from !== 'street';
+    const area = back ? CONTACTS[job.from as ContactId].area : job.area;
+    const at = !back && LAYOUT[area] ? streetPoint(area, job.x) : LAYOUT[area] ? streetPoint(area, (LEVELS[area].stations ?? []).find((x) => x.id === 'contact' && x.tab === job.from)?.x ?? LEVELS[area].bounds.maxX / 2) : placePoint(area);
+    if (at) out.push({ key: 'job:active', kind: 'side', area, at: { x: at.x, y: at.y + 22 }, label: `Job: ${objectiveOf(job)}` });
+  }
   if (p.save.basement && p.save.basement.equipment?.length) {
     const h = placePoint('home');
     out.push({ key: 'place:basement', kind: 'property', area: 'basement', at: { x: h.x + 30, y: h.y - 22 }, label: 'Your basement business' });

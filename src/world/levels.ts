@@ -1,3 +1,4 @@
+import { contactStation } from '../jobs/contacts';
 import type { AreaId } from '../progress/Progress';
 import { DISTRICTS } from './districts';
 import { INTERIORS, fitOut } from './interiors';
@@ -180,6 +181,8 @@ const highStreet: LevelDef = {
     { kind: 'shop', x0: 62, x1: 74, label: 'KEBAB HOUSE', colour: '#9a2a1a' },
     { kind: 'pub', x0: 74, x1: 92, label: 'THE GAFFER’S ARMS', colour: '#2a1a12' },
   ],
+  // Bev Okafor, the money lender, outside the bookies: jobs (src/jobs).
+  stations: [contactStation('bev', 4.2, -1.0, -0.65)],
   props: [
     { kind: 'busstop', x: 8, z: -1.55 },
     { kind: 'phonebox', x: 18, z: -1.4 },
@@ -253,6 +256,8 @@ const alleys: LevelDef = {
     { kind: 'fence', x0: 44, x1: 58 },
     { kind: 'terrace', x0: 58, x1: 72, label: 'back' },
   ],
+  // Nails at the top of the alleys and Dodgy Del round the back of the far terraces, both clear of the fights: jobs (src/jobs).
+  stations: [contactStation('nails', 10.2, -0.7, -0.6), contactStation('del', 64.8, -0.7, -0.6)],
   props: [
     { kind: 'bin', x: 6, z: -1.2 },
     { kind: 'bin', x: 6.8, z: -1.2 },

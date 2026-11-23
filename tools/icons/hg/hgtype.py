@@ -1,6 +1,6 @@
 """
 Hard Graft lettering and buttons, built from the owner's own painted buttons:
-- letters are cut from the HG buttons (glyphs/, made by glyphs.py); the few the buttons never spell (B, F, K, Q, Z, !)
+- letters are cut from the HG buttons (glyphs/, made by glyphs.py); the few the buttons never spell (B, F, J, K, Q, Z, !)
   are put together from parts of the others, in the same brush;
 - the plate is the HG button's own black (or red) brush plate with its lettering painted out, stretched to fit.
 """
@@ -71,6 +71,14 @@ def glyph(ch):
         n = glyph('N')
         g = n.rotate(-90, expand=True, resample=Image.BICUBIC)
         g = g.resize((int(n.width * 0.95), H), Image.LANCZOS)
+    elif ch == 'J':
+        # The U's right stroke and its hooked foot: the top of its left stroke painted out.
+        u = np.array(glyph('U'))
+        w = u.shape[1]
+        u[: int(H * 0.58), : int(w * 0.45), 3] = 0
+        g = Image.fromarray(u)
+        bb = g.getbbox()
+        g = g.crop((bb[0], 0, bb[2], H))
     elif ch == '!':
         i = glyph('I')
         top = i.resize((i.width, int(H * 0.7)), Image.LANCZOS)

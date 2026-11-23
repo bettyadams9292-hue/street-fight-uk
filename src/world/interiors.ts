@@ -1,3 +1,4 @@
+import { contactStation } from '../jobs/contacts';
 import { DECOR_SIZE } from './decorSizes';
 import type { LevelDef, PropDef } from './LevelTypes';
 import { FURNITURE } from '../property/catalogue';
@@ -162,6 +163,8 @@ const pub: LevelDef = {
       id: 'bar', x: 6.5, z: 0.2, label: 'Order at the bar (Ray)', shop: 'pub',
       npc: { name: 'Ray', seed: 2210, body: 'male', top: 'tshirt', topColour: '#2b2e35', dz: -1.65 },
     },
+    // Terry Walsh, the fixer, against the wall by the door: jobs (src/jobs).
+    contactStation('terry', 3.5, -0.6, -0.95),
     ...COMPANION_LIST.map((c, i) => ({
       id: 'recruit' as const, x: 22.9 + i * 1.3, z: -0.25, label: `${c.name}, ${c.role.toLowerCase()}`, tab: c.id,
       npc: { name: c.nickname, seed: c.seed, body: c.body, top: c.look.top ?? 'tshirt', topColour: c.look.topColour, dz: -0.95 },

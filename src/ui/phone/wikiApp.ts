@@ -1,4 +1,5 @@
 import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
+import { BOARD_TRIPS, CONTACT_IDS, CONTACTS } from '../../jobs/jobs';
 import type { StyleData } from '../../styles/StyleData';
 import { h } from '../dom';
 import { movesKey, styleSection, type Device } from '../moveList';
@@ -12,7 +13,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs';
 
 export interface WikiDeps {
   device: () => Device;
@@ -27,6 +28,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'heat', title: 'Heat', blurb: 'How much trouble you’re in with the police, the locals and the gangs, and how to cool off.' },
   { id: 'police', title: 'Getting nicked', blurb: 'Your record, the charge sheet, bail, a night in the cells, and the front counter.' },
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
+  { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
 ];
 
 type Row = [string, string, string, string];
@@ -145,6 +147,32 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       p('What it costs you is heat with the police and the locals: see Heat.'),
       sec('Weapons'),
       p('Pick a weapon up with GRAB when nobody’s in reach. It wears out with every hit; the workbench at home mends it.'),
+    );
+  }
+
+  if (page === 'jobs') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('Jobs', 'People round here have work for someone who can handle themselves. Walk up to a contact and press USE to see what they’ve got. You do one job at a time; the Jobs app on your phone shows what you’re on, how long you’ve got, and gives you directions.',
+      infobox('Contacts', CONTACT_IDS.map((id) => [`${CONTACTS[id].name}`, `${CONTACTS[id].role}. ${CONTACTS[id].where}`] as [string, string])),
+      sec('The work'),
+      list([
+        'Sort someone out: find the lad in another part of town and put him down (his mates join in). Then go back for your money.',
+        'Collect a debt: lean on whoever owes. They pay up, or they’d rather fight for it. Take the money back and keep your cut.',
+        'Deliver a package: get the parcel to someone before the time runs out. They pay you on the doorstep.',
+        'Get something back: take it off the lad who nicked it. He drops it when he goes down; pick it up and take it back.',
+        'Buy and sell: buy a package off Kez and sell it to a buyer for more. Now and then the buyer tries to rip you off, and you have to win the money. It’s police heat, and it goes on your record.',
+      ]),
+      sec('Standing'),
+      p(`Every job you finish for a contact raises your standing with them: Known, then Trusted, then Inner circle. The higher it is, the more their work pays (up to half as much again). Each contact also has three jobs of their own, a story, that open as your standing grows; they pay more and come with something extra. Their boards change every ${BOARD_TRIPS} trips.`),
+      sec('When it goes wrong'),
+      list([
+        'Too slow with a parcel or a package and the job’s off.',
+        'Go down while you’re carrying the parcel, the package, the goods or the money, and it’s gone, and so is the job.',
+        'Get nicked with a package and the police take it.',
+        'Dropping a job, or failing one, costs you some standing.',
+      ]),
+      sec('Odd jobs'),
+      p('Now and then someone on the street has a yellow mark over their head: they need a hand. Their jobs are one-offs, paid when it’s done.'),
     );
   }
 

@@ -27,6 +27,7 @@ import { currentFatigue } from '../training/gym';
 import { applyJewellery, clearJewelForSlot, defaultJewellery, sanitiseJewellery, type JewellerySave } from '../items/jewelleryBox';
 import { defaultFinance, sanitiseFinance, type FinanceSave } from './finance';
 import { defaultPortfolio, sanitisePortfolio, type PortfolioSave } from '../realty/portfolio';
+import { newJobs, sanitiseJobs, type JobsSave } from '../jobs/save';
 import {
   GEAR_IDS,
   LEVEL_CAP,
@@ -109,8 +110,10 @@ export interface GameSave {
   police: PoliceSave;
   /** The tutorial: lessons done and skipped, hints shown, an unfinished lesson (src/tutorial). */
   tutorial: TutorialSave;
-  /** What's in the three hotbar slots (medical, food, weapon), by item id; null picks for you (items/hotbar.ts). */
+  /** What's in the four hotbar slots (medical, food, drink, weapon), by item id; null picks for you (items/hotbar.ts). */
   hotbar: HotbarSave;
+  /** Jobs: standing with each contact, their boards and chains, and the job you're on (src/jobs). */
+  jobs: JobsSave;
   /** Counts area changes: the game's clock for shop closures and heat. */
   trips: number;
   shops: Record<string, ShopState>;
@@ -194,6 +197,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     police: defaultPolice(),
     tutorial: newTutorial(),
     hotbar: newHotbar(),
+    jobs: newJobs(),
     trips: 0,
     shops: {},
     pawn: { itemsSold: 0, earned: 0 },
@@ -278,6 +282,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     police: defaultPolice(),
     tutorial: sanitiseTutorial(r.tutorial),
     hotbar: sanitiseHotbar(r.hotbar),
+    jobs: sanitiseJobs(r.jobs, AREA_IDS),
     trips: num(r.trips, 0),
     shops: sanitiseShops(r.shops),
     pawn: { itemsSold: num(r.pawn?.itemsSold, 0), earned: num(r.pawn?.earned, 0) },
