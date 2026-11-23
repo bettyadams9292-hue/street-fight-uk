@@ -834,3 +834,8 @@ function drawWeapon(g: CanvasRenderingContext2D, id: string, col: string, length
   }
   g.restore();
 }
+
+/** What an empty hotbar slot shows (faded): its painted icon, or an item's own icon (items/hotbar HOTBAR_EMPTY_ICON). */
+export function hotbarEmptyIcon(name: string): string {
+  return name.startsWith('item:') ? itemIconUrl(name.slice(5)) : `/icons/hg/${name}.webp`;
+}

@@ -17,7 +17,7 @@ import type { AreaId } from '../progress/Progress';
 import { menuButton } from './controls';
 import { h } from './dom';
 import { icon, type IconName } from './icons';
-import { itemIconUrl } from './itemIcons';
+import { hotbarEmptyIcon, itemIconUrl } from './itemIcons';
 import type { Screen, UIManager } from './UIManager';
 import { jewelleryBoxPanel } from './jewelleryUI';
 import { cycleHotbar, HOTBAR_EMPTY_ICON, HOTBAR_LABELS, HOTBAR_SLOTS, hotbarChoices, hotbarView, setHotbar, slotFor } from '../items/hotbar';
@@ -395,7 +395,7 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
             build();
           },
         },
-          h('img', { src: st ? itemIconUrl(st.id, st.colour) : `/icons/hg/${HOTBAR_EMPTY_ICON[slot]}.webp`, alt: '', draggable: 'false' }),
+          h('img', { src: st ? itemIconUrl(st.id, st.colour) : hotbarEmptyIcon(HOTBAR_EMPTY_ICON[slot]), alt: '', draggable: 'false' }),
           h('span', { class: 'slot-label', text: `${i + 1} · ${HOTBAR_LABELS[slot]}` }),
           v.count > 1 ? h('span', { class: 'hb-n', text: `×${v.count}` }) : null,
         );

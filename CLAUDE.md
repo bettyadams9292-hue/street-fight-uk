@@ -59,7 +59,7 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 - `library.ts`: Pause → Tutorials.
 - A new feature should add a hint to `HINTS`, or a step to a chapter.
 
-**Hotbar.** `src/items/hotbar.ts`: three slots (medical, food, weapon) in `save.hotbar` by item id; a slot uses the next of its item and, when that runs out, pulls in the next suitable thing in your pockets (`hotbarStack`, `refillHotbar`). `World.useHotbar` applies it, in a fight too, with `HOTBAR_COOLDOWN` between heals (weapons never wait); `Game.updateHotbar` takes presses (1 / 2 / 3, Back + X / Y / B on a pad, the HUD slots) and holds one briefly while you're reeling. Changed in Pockets & bag (`inventoryUI.ts`). `tests/hotbar.test.ts`.
+**Hotbar.** `src/items/hotbar.ts`: four slots (1 medical, 2 food, 3 drink, 4 weapon) in `save.hotbar` by item id; a slot uses the next of its item and, when that runs out, pulls in the next suitable thing in your pockets (`hotbarStack`, `refillHotbar`). `World.useHotbar` applies it, in a fight too, with `HOTBAR_COOLDOWN` between heals (weapons never wait); `Game.updateHotbar` takes presses (1–4, Back + X / Y / A / B on a pad, the HUD slots) and holds one briefly while you're reeling. Changed in Pockets & bag (`inventoryUI.ts`). `tests/hotbar.test.ts`.
 
 **Heat.** `src/progress/heat.ts`: police, locals and gang heat per district, what raises it (`HEAT`), how fast it cools, and the thresholds. Raise it with `Progress.addHeatOf`, never by writing `save.heat`.
 
