@@ -3,7 +3,7 @@ import { CONTACT_IDS, CONTACTS, contactOpen, objectiveOf, type ContactId } from 
 import { COMPANION_LIST } from '../companions/companions';
 import { ITEMS } from '../items/items';
 import { AREA_IDS, type AreaId, type Progress } from '../progress/Progress';
-import { SHOP_STOPS, TAXI_COST, TAXI_STOPS } from '../ui/hub';
+import { CAB_FLAG, CAB_MIN, CAB_PER_MILE, SHOP_STOPS, TAXI_STOPS } from '../ui/hub';
 import { DISTRICT_ORDER, LEVELS } from '../world/levels';
 import type { ExitDef, LevelDef } from '../world/LevelTypes';
 import { STRIP, stripLength, stripOffsets } from '../world/strip';
@@ -483,6 +483,8 @@ export interface TravelOption {
   kind: 'cab' | 'home' | 'walk' | 'here';
   label: string;
   cost: number;
+  /** A cab's distance in miles, for the meter. */
+  miles?: number;
   entry?: string;
   ok: boolean;
   why?: string;
@@ -494,11 +496,34 @@ export function cabStop(id: AreaId): { entry: string } | null {
   return s ? { entry: s.entry } : null;
 }
 
+/** Map units to a mile: the town is about five miles end to end. */
+export const MAP_PER_MILE = 250;
+/** Roads wind: a cab goes about 1.3 times the straight-line distance, the usual ratio for a British town. */
+export const ROAD_FACTOR = 1.3;
+
+/** Where you are on the map: your spot on the street if you're on one, else the place's marker. */
+function startPoint(area: AreaId, x?: number): Pt {
+  if (area === 'basement') area = 'home';
+  return (x !== undefined && LAYOUT[area] && streetPoint(area, x)) || placePoint(area);
+}
+
+/** How far a cab drives you, in miles (to a tenth), from where you stand to the stop. */
+export function cabMiles(from: AreaId, to: AreaId, x?: number): number {
+  const a = startPoint(from, x);
+  const b = placePoint(to === 'basement' ? 'home' : to);
+  return Math.round((Math.hypot(b.x - a.x, b.y - a.y) / MAP_PER_MILE) * ROAD_FACTOR * 10) / 10;
+}
+
+/** The fare on the meter for that many miles: flag fall plus the mileage, rounded to the pound, never under the minimum. */
+export function cabFare(miles: number): number {
+  return Math.max(CAB_MIN, Math.round(CAB_FLAG + CAB_PER_MILE * miles));
+}
+
 /**
- * How you can get somewhere from where you are now.
+ * How you can get somewhere from where you are now. `x` is where you stand on the street, for the cab's meter.
  * `calm` is false in a fight, with the police on you, or while knocked down.
  */
-export function travelOptions(p: Progress, here: AreaId, to: AreaId, calm: boolean): TravelOption[] {
+export function travelOptions(p: Progress, here: AreaId, to: AreaId, calm: boolean, x?: number): TravelOption[] {
   if (to === here || (to === 'basement' && here === 'home')) return [{ kind: 'here', label: 'You are here', cost: 0, ok: false }];
   const open = unlocked(p, to);
   const lock = open ? null : lockReason(p, to);
@@ -508,9 +533,11 @@ export function travelOptions(p: Progress, here: AreaId, to: AreaId, calm: boole
   const stop = cabStop(to);
   if (stop) {
     const shut = SHOP_STOPS.find((x) => x.area === to && x.shop && !p.isShopOpen(x.shop));
-    const ok = open && calm && !shut && p.save.cash.bank >= TAXI_COST;
-    const why = !open ? lock! : shut ? 'Shutters down after the robbery' : busy ?? (p.save.cash.bank < TAXI_COST ? `Need £${TAXI_COST} in the tin` : undefined);
-    out.push({ kind: 'cab', label: `Dave’s Cabs (£${TAXI_COST} from the tin)`, cost: TAXI_COST, entry: stop.entry, ok, why });
+    const miles = cabMiles(here, to, x);
+    const fare = cabFare(miles);
+    const ok = open && calm && !shut && p.save.cash.bank >= fare;
+    const why = !open ? lock! : shut ? 'Shutters down after the robbery' : busy ?? (p.save.cash.bank < fare ? `Need £${fare} in the tin` : undefined);
+    out.push({ kind: 'cab', label: `Dave’s Cabs: ${miles.toFixed(1)} miles, £${fare} from the tin`, cost: fare, miles, entry: stop.entry, ok, why });
   }
   const r = route(p, here, to);
   out.push({ kind: 'walk', label: r ? `Walk: ${r.length} stop${r.length > 1 ? 's' : ''} away` : 'Walk', cost: 0, ok: !!r, why: r ? undefined : lock ?? 'No way through from here yet' });

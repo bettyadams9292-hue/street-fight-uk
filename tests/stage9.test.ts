@@ -8,10 +8,12 @@ import { defaultAppearance } from '../src/character/Appearance';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { AREA_IDS, newSave, Progress, sanitiseSave, type AreaId } from '../src/progress/Progress';
 import { LEVELS, DISTRICT_ORDER } from '../src/world/levels';
-import { SHOP_STOPS, TAXI_COST, TAXI_STOPS } from '../src/ui/hub';
+import { CAB_MIN, SHOP_STOPS, TAXI_STOPS } from '../src/ui/hub';
 import {
   MAP_H,
   MAP_W,
+  cabFare,
+  cabMiles,
   cabStop,
   lockReason,
   markers,
@@ -143,7 +145,7 @@ test('cabs: only to the stops Dave’s Cabs already serve, never in a fight, nev
   const stops = new Set([...SHOP_STOPS.map((s) => s.area), ...TAXI_STOPS.map((s) => s.area)]);
   for (const id of AREA_IDS) assert(!!cabStop(id) === stops.has(id), `cab stop mismatch for ${id}`);
   const cab = travelOptions(p, 'estate', 'pub', true).find((t) => t.kind === 'cab')!;
-  assert(cab.ok && cab.cost === TAXI_COST && cab.entry === 'door', 'cab to the pub');
+  assert(cab.ok && cab.cost === cabFare(cab.miles!) && cab.entry === 'door', 'cab to the pub');
   assert(!travelOptions(p, 'estate', 'pub', false).find((t) => t.kind === 'cab')!.ok, 'not in a fight');
   const locked = travelOptions(p, 'estate', 'pawn_shop', true).find((t) => t.kind === 'cab')!;
   assert(!locked.ok && locked.why!.includes('Gaz'), 'no cab to somewhere still locked');
@@ -156,6 +158,28 @@ test('cabs: only to the stops Dave’s Cabs already serve, never in a fight, nev
   p.shop('threads').closedUntil = p.save.trips + 3;
   const shut = travelOptions(p, 'estate', 'clothes_shop', true).find((t) => t.kind === 'cab')!;
   assert(!shut.ok && /robbery/.test(shut.why!), 'no cab to a shop that’s shut after a robbery');
+});
+
+test('cabs: on the meter, so further costs more', () => {
+  const p = fresh(1000);
+  allFlags(p);
+  const fare = (from: AreaId, to: AreaId, x?: number) => travelOptions(p, from, to, true, x).find((t) => t.kind === 'cab')!;
+  assert(cabFare(0) === CAB_MIN && cabFare(0.1) === CAB_MIN, 'a hop round the corner is the minimum');
+  assert(cabFare(10) > cabFare(5) && cabFare(5) > cabFare(2), 'the meter goes up with the miles');
+  const pub = fare('estate', 'pub');
+  const far = fare('estate', 'subway');
+  assert(far.miles! > pub.miles! && far.cost > pub.cost, `across town costs more: pub £${pub.cost} (${pub.miles} mi), subway £${far.cost} (${far.miles} mi)`);
+  assert(pub.cost >= CAB_MIN && pub.cost <= 12, `the pub from the estate is a short fare: £${pub.cost}`);
+  assert(far.cost >= 12 && far.cost <= 30, `the far end of town is a real fare: £${far.cost}`);
+  // Where you stand on the street counts: the far end of the estate is further from the subway.
+  const b = LEVELS.estate.bounds;
+  const m1 = cabMiles('estate', 'subway', b.minX), m2 = cabMiles('estate', 'subway', b.maxX);
+  assert(m1 !== m2, 'the meter starts where you are');
+  assert(far.ok, 'the far end is open once the story has opened it');
+  const skint = fresh(far.cost - 1);
+  allFlags(skint);
+  const t = travelOptions(skint, 'estate', 'subway', true).find((t) => t.kind === 'cab')!;
+  assert(!t.ok, 'can’t take a fare you can’t pay');
 });
 
 test('visited places and the destination are saved; old saves get sensible visited places', () => {
