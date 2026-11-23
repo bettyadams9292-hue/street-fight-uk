@@ -36,8 +36,22 @@ function grouped(list: ItemStack[]): { id: string; qty: number }[] {
   return [...m].map(([id, qty]) => ({ id, qty })).sort((a, b) => ITEMS[a.id].name.localeCompare(ITEMS[b.id].name));
 }
 
-/** The fridge or the cupboards: take things out, put things away, order more. */
-export function storeScreen(which: 'fridge' | 'cupboard', p: Progress, close: () => void, changed: () => void): Screen {
+/** Doing something with what's in the fridge or cupboard, from its screen (home/house.ts does the walking and eating). */
+export interface StoreActions {
+  /** Go and have it: fetched from in here, sat down with, eaten or drunk (no pocket space needed). */
+  eat: (id: string) => void;
+  /** Open the recipes, to cook with what's in. */
+  cook: () => void;
+}
+
+/** Drinks rather than food (the button says Drink). */
+const isDrink = (id: string) => id === 'g_milk' || ITEMS[id]?.icon === 'drink';
+
+/**
+ * The fridge or the cupboards: have something now (Eat / Drink), take one for later, put things away, order more,
+ * or go and cook with what's in.
+ */
+export function storeScreen(which: 'fridge' | 'cupboard', p: Progress, close: () => void, changed: () => void, acts?: StoreActions): Screen {
   const title = which === 'fridge' ? 'Fridge' : 'Kitchen cupboards';
   let shopping = false;
   return panelScreen(title, p, (msg, rebuild) => {
@@ -76,16 +90,34 @@ export function storeScreen(which: 'fridge' | 'cupboard', p: Progress, close: ()
     }
     const inside = grouped(store);
     if (!inside.length) rows.push(h('p', { class: 'hint', text: `Nothing in the ${which === 'fridge' ? 'fridge' : 'cupboards'}. Order a food shop.` }));
+    else if (acts && inside.some((g) => ITEMS[g.id]?.ingredient)) {
+      // Raw ingredients are for cooking: straight to the recipes from here.
+      const cook = menuButton('Cook something', () => acts.cook(), 'Recipes you can make with what’s in', 'k-cook', undefined, undefined, 'cook-something');
+      rows.push(h('div', { class: 'k-cookrow' }, h('span', { class: 'hint', text: 'Raw ingredients go in a recipe.' }), cook));
+    }
+    // What you can have as it is comes first.
+    const edible = (id: string) => !!ITEMS[id]?.use?.needs;
+    inside.sort((a, b) => Number(edible(b.id)) - Number(edible(a.id)));
     for (const g of inside) {
       const d = ITEMS[g.id];
-      const kind = d.ingredient ? 'Ingredient' : d.icon === 'plate' ? 'Leftovers — take it to eat' : d.use ? d.use.text : '';
-      rows.push(itemRow(g, kind, 'Take one', () => {
+      const can = edible(g.id);
+      const kind = d.icon === 'plate' ? `Leftovers · ${d.use?.text ?? 'ready to eat'}` : can ? (d.use?.text ?? '') : d.ingredient ? 'Ingredient: cook with it' : d.use?.text ?? '';
+      const take = () => {
         if (p.spaceFor(g.id) < 1) return msg('No room in your pockets', true);
         takeFrom(store, g.id, 1);
         p.giveItem(g.id, 1);
         changed();
         msg(`Took ${d.name.toLowerCase()}.`);
-      }));
+      };
+      const row = itemRow(g, kind, 'Take one', take);
+      // The row's own button: Take one, painted.
+      row.querySelector('button')?.replaceWith(menuButton('Take one', take, 'Into your pockets', 'k-take', undefined, undefined, 'take-one'));
+      if (can && acts) {
+        const drink = isDrink(g.id);
+        const eat = menuButton(drink ? 'Drink' : 'Eat', () => acts.eat(g.id), drink ? 'Have a drink of it now' : 'Have it now', 'k-eat', undefined, undefined, drink ? 'drink' : 'eat');
+        row.querySelector('.k-take')?.before(eat);
+      }
+      rows.push(row);
     }
     // What you're carrying that belongs in here.
     const put = s.inventory.filter((st) => ITEMS[st.id]?.store === which);

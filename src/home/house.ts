@@ -16,6 +16,9 @@ import { HouseActivity, type Step } from './activity';
 import { attention, eat, needLabel, needsModifierKey, tickNeeds, type NeedKey } from './needs';
 import { missing, takeFrom, useIngredients, putInto, type Recipe } from './recipes';
 
+/** Drinks rather than food: you drink them, and the house says so. */
+const drinking = (id: string) => id === 'g_milk' || ITEMS[id]?.icon === 'drink';
+
 /** Everything the house needs from the game. */
 export interface HouseHost {
   world(): World | null;
@@ -221,7 +224,17 @@ export class HouseController {
       // Stand looking in while the list is open.
       w.player.yawOverride = spot.stand.yaw;
       w.player.activity = which === 'fridge' ? 'reach' : 'reach_low';
-      this.host.panel((close) => storeScreen(which, p, close, () => this.host.save()), () => {
+      this.host.panel((close) => storeScreen(which, p, close, () => this.host.save(), {
+        // Have it now: shut the door and go and eat or drink it (the eating flow fetches it from in here).
+        eat: (id) => {
+          close();
+          this.eatFlow(id);
+        },
+        cook: () => {
+          close();
+          this.open('kitchen');
+        },
+      }), () => {
         w.player.activity = null;
         w.player.yawOverride = null;
         this.closeDoor(which);
@@ -398,17 +411,21 @@ export class HouseController {
     if (!needs) return;
     const snack = d.icon !== 'plate';
     const steps: Step[] = [];
-    // Fetch it from the fridge or cupboard if it isn't in your pockets.
+    // Fetch it from the fridge or cupboard if it isn't in your pockets (groceries, snacks and leftovers alike).
+    // It's carried in your hand to the table, not put in your pockets, so full pockets don't matter; if you
+    // stop before you start eating it goes back where it came from.
     const inPockets = () => p.save.inventory.some((s) => s.id === id);
-    if (!inPockets() && d.store) {
-      const which = p.save.pantry.fridge.some((s) => s.id === id) ? 'fridge' : 'cupboard';
+    let fetched: 'fridge' | 'cupboard' | null = null;
+    const where = inPockets() ? null : p.save.pantry.fridge.some((s) => s.id === id) ? 'fridge' : p.save.pantry.cupboard.some((s) => s.id === id) ? 'cupboard' : null;
+    if (where) {
+      const which = where;
       steps.push(this.walkTo(which, `To the ${which === 'fridge' ? 'fridge' : 'cupboards'}`), {
         kind: 'act', yaw: Math.PI, pose: which === 'fridge' ? 'reach' : 'reach_low', secs: 0.9, label: `Getting the ${d.name.toLowerCase()}`,
         start: () => this.doorFx(which),
         done: () => {
           this.closeDoor(which);
           const store = which === 'fridge' ? p.save.pantry.fridge : p.save.pantry.cupboard;
-          if (takeFrom(store, id, 1)) p.giveItem(id, 1);
+          if (takeFrom(store, id, 1)) fetched = which;
         },
       });
     }
@@ -429,9 +446,11 @@ export class HouseController {
       );
     }
     steps.push({
-      kind: 'act', yaw: seat ? seat.yaw : Math.PI, pose: seat ? 'eat' : 'drink', secs, label: `Eating ${d.name.toLowerCase()}`,
+      kind: 'act', yaw: seat ? seat.yaw : Math.PI, pose: seat ? 'eat' : 'drink', secs, label: `${drinking(id) ? 'Drinking' : 'Eating'} ${d.name.toLowerCase()}`,
       start: () => {
-        if (!takeFrom(p.save.inventory, id, 1)) {
+        const have = fetched ? true : takeFrom(p.save.inventory, id, 1);
+        fetched = null;
+        if (!have) {
           this.host.toast('It’s gone. Nothing to eat.', 'warn');
           this.active?.cancel();
           return;
@@ -450,8 +469,13 @@ export class HouseController {
       },
     });
     if (!snack && seat) steps.push({ kind: 'act', yaw: seat.yaw, pose: 'sit_drink', secs: 2, label: 'A drink with it', start: () => this.fx('plate', null) });
-    this.start('eat', `Eating: ${d.name}`, steps, (cancelled) => {
-      if (!started) return;
+    this.start('eat', `${drinking(id) ? 'Drinking' : 'Eating'}: ${d.name}`, steps, (cancelled) => {
+      if (!started) {
+        // Stopped on the way to the table: it goes back in the fridge or cupboard.
+        if (fetched) putInto(fetched === 'fridge' ? p.save.pantry.fridge : p.save.pantry.cupboard, id, 1, () => p.newUid());
+        fetched = null;
+        return;
+      }
       const k = cancelled ? Math.max(0.25, frac) : 1;
       this.finishMeal(id, k, !cancelled && !!seat);
       if (cancelled) this.host.toast(`Left the rest of the ${d.name.toLowerCase()}.`, 'info');
@@ -480,7 +504,7 @@ export class HouseController {
       lines.push('+25 max health for your next trip out');
     }
     this.host.refresh();
-    this.host.toast(`Ate ${d.name.toLowerCase()}. ${lines.join(', ')}.`, 'item');
+    this.host.toast(`${drinking(id) ? 'Drank' : 'Ate'} ${d.name.toLowerCase()}. ${lines.join(', ')}.`, 'item');
   }
 
   /** Crew at home come and eat too, while there are servings in the fridge. */

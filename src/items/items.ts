@@ -245,15 +245,16 @@ drink('flask_tea', 'Flask of tea', 35, 3, 'Strong, two sugars.', '#8a5a3a', 15, 
 
 // ---- the kitchen: groceries, snacks and home-cooked meals (Stage 12) ----------------------------
 /** A cooking ingredient: kept in the fridge or the cupboards, used by recipes (home/recipes.ts). */
-const grocery = (id: string, name: string, store: 'fridge' | 'cupboard', value: number, colour: string, text: string) =>
-  add({ id, name, text, category: 'misc', rarity: 'common', value, stack: 10, icon: 'grocery', colour, store, ingredient: true, unsellable: true });
-grocery('g_bread', 'Loaf of bread', 'cupboard', 1, '#d8a860', 'Thick sliced white. A few slices per meal.');
+/** Kitchen groceries: ingredients for cooking. The ones you'd have cold (milk, cheese, ham...) can be eaten as they are too. */
+const grocery = (id: string, name: string, store: 'fridge' | 'cupboard', value: number, colour: string, text: string, cold?: UseSpec) =>
+  add({ id, name, text, category: 'misc', rarity: 'common', value, stack: 10, icon: 'grocery', colour, store, ingredient: true, unsellable: true, use: cold });
+grocery('g_bread', 'Loaf of bread', 'cupboard', 1, '#d8a860', 'Thick sliced white. A few slices per meal.', { text: 'A couple of slices', needs: { fill: 10, diet: 25 }, heal: 2 });
 grocery('g_butter', 'Butter', 'fridge', 2, '#f4dc70', 'Proper butter, not spread.');
-grocery('g_cheese', 'Cheddar', 'fridge', 3, '#f0c040', 'Mature. Grates, slices, melts.');
-grocery('g_ham', 'Sliced ham', 'fridge', 2, '#e89a9a', 'Pack of thick-cut ham.');
+grocery('g_cheese', 'Cheddar', 'fridge', 3, '#f0c040', 'Mature. Grates, slices, melts.', { text: 'A few slices of cheese', needs: { fill: 12, diet: 30 }, heal: 3 });
+grocery('g_ham', 'Sliced ham', 'fridge', 2, '#e89a9a', 'Pack of thick-cut ham.', { text: 'A few slices of ham', needs: { fill: 12, diet: 35 }, heal: 3 });
 grocery('g_eggs', 'Eggs', 'fridge', 2, '#f4ecd8', 'Free range, half a dozen.');
-grocery('g_milk', 'Milk', 'fridge', 1, '#f8f8f4', 'Semi-skimmed, two pints.');
-grocery('g_cereal', 'Cereal', 'cupboard', 2, '#d84a2a', 'Big box of cornflakes.');
+grocery('g_milk', 'Milk', 'fridge', 1, '#f8f8f4', 'Semi-skimmed, two pints.', { text: 'A big glass of milk', needs: { fill: 6, diet: 50, bladder: 8 }, stamina: 8 });
+grocery('g_cereal', 'Cereal', 'cupboard', 2, '#d84a2a', 'Big box of cornflakes.', { text: 'A handful, dry', needs: { fill: 8, diet: 30 }, heal: 2 });
 grocery('g_beans', 'Baked beans', 'cupboard', 1, '#3a7ad8', 'Tin of beans in tomato sauce.');
 grocery('g_bacon', 'Bacon', 'fridge', 3, '#d86a5a', 'Back bacon, smoked.');
 grocery('g_sausages', 'Sausages', 'fridge', 3, '#c87a5a', 'Pork bangers from the butcher.');
@@ -268,7 +269,7 @@ grocery('g_curry_sauce', 'Curry sauce', 'cupboard', 2, '#d88a2a', 'Jar of tikka 
 grocery('g_rice', 'Rice', 'cupboard', 1, '#f4f0e6', 'Basmati.');
 grocery('g_onions', 'Onions', 'cupboard', 1, '#c8a060', 'A net of onions.');
 grocery('g_mushrooms', 'Mushrooms', 'fridge', 1, '#c8b8a0', 'Punnet of chestnut mushrooms.');
-grocery('g_tomatoes', 'Tomatoes', 'fridge', 1, '#e04030', 'Vine tomatoes.');
+grocery('g_tomatoes', 'Tomatoes', 'fridge', 1, '#e04030', 'Vine tomatoes.', { text: 'Eat one like an apple', needs: { fill: 5, diet: 80 }, heal: 2 });
 grocery('g_peas', 'Frozen peas', 'fridge', 1, '#5ab040', 'From the freezer drawer.');
 grocery('g_oven_chips', 'Oven chips', 'fridge', 2, '#e8c060', 'Freezer bag of crinkle cuts.');
 
