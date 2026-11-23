@@ -138,6 +138,8 @@ export class Game {
   private pending: { at: number; show: () => void } | null = null;
   /** Hub panel changed the save: rebuild the player when it closes. */
   private hubDirty = false;
+  /** Just hired in the bar: they get up from their seat when the area's rebuilt (World justHired). */
+  private justHired: string | null = null;
   /** The house's activities: cooking, eating, washing, sleeping. */
   private house!: HouseController;
   private state: GameState = 'menu';
@@ -808,7 +810,12 @@ export class Game {
       const residents = p.save.companions.recruited.map((id) => COMPANIONS[id]).filter((d) => d && !arriving.includes(d));
       home = { residents, arriving };
     } else if (!COMPANION_WAITS_OUTSIDE.has(area)) companions = fit;
-    const world = new World(level, p, { entry, touch: this.touchWanted(), carry, difficulty: this.settings.get().difficulty, at: opts.at, keepCleared, companions, home });
+    const justHired = area === from ? this.justHired : null;
+    this.justHired = null;
+    const world = new World(level, p, { entry, touch: this.touchWanted(), carry, difficulty: this.settings.get().difficulty, at: opts.at, keepCleared, companions, home, justHired });
+    if (justHired && !companions.some((d) => d.id === justHired) && COMPANIONS[justHired]) {
+      this.hud.toast(`${COMPANIONS[justHired].nickname} heads home. Your crew’s full: bring them out from your phone.`, 'item');
+    }
     this.world = world;
     p.save.area = area;
     p.save.entry = level.entries.some((e) => e.id === entry) ? entry : level.entries[0].id;
@@ -1331,10 +1338,13 @@ export class Game {
       case 'style_coach':
         screen = styleCoachScreen(p, close, changed, (station?.tab ?? 'boxing_gym') as FightGym['id']);
         break;
-      case 'recruit':
+      case 'recruit': {
+        const before = new Set(p.save.companions.recruited);
         screen = recruitScreen(p, station?.tab ?? '', close, () => {
           saved();
           this.hubDirty = true;
+          // Hired here: they get up from their seat when the bar's rebuilt, not stand there waiting for hire.
+          this.justHired = p.save.companions.recruited.find((id) => !before.has(id)) ?? this.justHired;
         }, () => {
           this.ui.replaceAll(null);
           this.backToPlay();
@@ -1342,6 +1352,7 @@ export class Game {
           if (station && def && w.startChallenge(station, def)) this.hud.toast(`${def.nickname} squares up. Beat them and they’ll join you.`, 'warn');
         });
         break;
+      }
       case 'train':
         this.backToPlay();
         return this.startGymSession(station?.tab ?? '');
@@ -1625,6 +1636,7 @@ export class Game {
     const def = COMPANIONS[e.id];
     if (e.won && def) {
       winChallenge(p, e.id);
+      this.justHired = e.id;
       this.saveGame();
       this.hud.toast(`${def.nickname}: “Fair enough. I’m in.” Bring them along from your phone, or they’ll follow you now.`, 'cash');
       this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
