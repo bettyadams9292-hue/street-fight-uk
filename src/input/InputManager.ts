@@ -38,10 +38,10 @@ export const PAD = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8
 export const PAD_BUTTONS: Record<GameButton, number> = { lp: PAD.X, hp: PAD.Y, lk: PAD.A, hk: PAD.B, jump: PAD.LS, dodge: PAD.LT, grab: PAD.LB, swap: PAD.BACK };
 /** The pad's other buttons: held block and special, USE, the phone and pause. */
 export const PAD_EXTRA = { block: PAD.RT, special: PAD.RB, use: PAD.LB, phone: PAD.RS, pause: PAD.START, hotbar: PAD.BACK } as const;
-/** Held with PAD_EXTRA.hotbar: the medical, food and weapon slots, in HOTBAR_SLOTS order. */
-export const PAD_HOTBAR = [PAD.X, PAD.Y, PAD.B] as const;
-/** The hotbar's keys, in HOTBAR_SLOTS order (medical, food, weapon). */
-export const HOTBAR_KEYS = [['Digit1', 'Numpad1'], ['Digit2', 'Numpad2'], ['Digit3', 'Numpad3']] as const;
+/** Held with PAD_EXTRA.hotbar: the medical, food, drink and weapon slots, in HOTBAR_SLOTS order. */
+export const PAD_HOTBAR = [PAD.X, PAD.Y, PAD.A, PAD.B] as const;
+/** The hotbar's keys, in HOTBAR_SLOTS order (medical, food, drink, weapon). */
+export const HOTBAR_KEYS = [['Digit1', 'Numpad1'], ['Digit2', 'Numpad2'], ['Digit3', 'Numpad3'], ['Digit4', 'Numpad4']] as const;
 const STICK_DEADZONE = 0.25;
 /** Two taps of a direction this close together start a sprint (ms). */
 const DOUBLE_TAP_MS = 280;
@@ -203,7 +203,7 @@ export class InputManager {
     const pressed = (i: number) => !!pad.buttons[i]?.pressed;
     const edge = (i: number) => pressed(i) && !this.padPrev[i];
 
-    // Hold Back (style swap) and press X, Y or B for the hotbar's medical, food and weapon slots. Back on its
+    // Hold Back (style swap) and press X, Y, A or B for the hotbar's medical, food, drink and weapon slots. Back on its
     // own still swaps style, when it's let go.
     const backHeld = pressed(PAD_EXTRA.hotbar);
     if (edge(PAD_EXTRA.hotbar)) this.backCombo = false;
@@ -226,7 +226,7 @@ export class InputManager {
     if (edge(PAD_EXTRA.pause)) this.emitMenu('pause', 'gamepad');
     // Right-stick click: I (heavy punch) and RB (special) are fight buttons.
     if (edge(PAD_EXTRA.phone)) this.emitMenu('phone', 'gamepad');
-    if (edge(PAD.A)) this.emitMenu('confirm', 'gamepad');
+    if (edge(PAD.A) && !backHeld) this.emitMenu('confirm', 'gamepad');
     if (edge(PAD.B) && !backHeld) this.emitMenu('back', 'gamepad');
     if (edge(PAD.UP)) this.emitMenu('up', 'gamepad');
     if (edge(PAD.DOWN)) this.emitMenu('down', 'gamepad');

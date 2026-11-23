@@ -8,7 +8,7 @@ import { Notifications } from './notifications';
 import { HOTBAR_EMPTY_ICON, HOTBAR_LABELS, HOTBAR_SLOTS, type HotbarSlot, type HotbarView } from '../items/hotbar';
 import { ITEMS } from '../items/items';
 import { WEAPONS } from '../combat/Weapons';
-import { itemIconUrl } from './itemIcons';
+import { hotbarEmptyIcon, itemIconUrl } from './itemIcons';
 
 const NEED_ICONS: Record<string, IconName> = { hunger: 'food', energy: 'sleep', hygiene: 'shower', oral: 'tooth', bladder: 'toilet', nutrition: 'food' };
 
@@ -55,7 +55,7 @@ function bars(side: 'left' | 'right'): BarSet {
  * training-ground controls.
  */
 /** The word on each hotbar slot's tag. */
-const HOTBAR_TAGS: Record<HotbarSlot, string> = { medic: 'MED', food: 'FOOD', weapon: 'WEAPON' };
+const HOTBAR_TAGS: Record<HotbarSlot, string> = { medic: 'MED', food: 'FOOD', drink: 'DRINK', weapon: 'WEAPON' };
 
 export class Hud {
   readonly el: HTMLElement;
@@ -93,7 +93,7 @@ export class Hud {
   private notes = new Notifications();
   private bagBtn!: HTMLElement;
   private bailBtn!: HTMLElement;
-  /** The hotbar: medical, food and weapon, each a slot you tap, click or press 1, 2 or 3 for. */
+  /** The hotbar: medical, food, drink and weapon, each a slot you tap, click or press 1, 2, 3 or 4 for. */
   private hotbar!: HTMLElement;
   private hotbarSlots = new Map<HotbarSlot, { btn: HTMLElement; img: HTMLImageElement; n: HTMLElement; bar: HTMLElement; name: string }>();
   private hotbarKey = '';
@@ -220,7 +220,7 @@ export class Hud {
       ),
       (this.hotbar = h('div', { class: 'hotbar story-only off', role: 'group', 'aria-label': 'Hotbar' },
         ...HOTBAR_SLOTS.map((slot, i) => {
-          const img = h('img', { class: 'hb-ico', src: `/icons/hg/${HOTBAR_EMPTY_ICON[slot]}.webp`, alt: '', draggable: 'false' }) as HTMLImageElement;
+          const img = h('img', { class: 'hb-ico', src: hotbarEmptyIcon(HOTBAR_EMPTY_ICON[slot]), alt: '', draggable: 'false' }) as HTMLImageElement;
           const n = h('span', { class: 'hb-n' });
           const bar = h('span', { class: 'hb-bar' }, h('i'));
           // pointerdown, not click: in a fight a tap has to land at once, and a stray drag mustn't lose it.
@@ -281,7 +281,7 @@ export class Hud {
       const el = this.hotbarSlots.get(v.slot)!;
       const st = v.stack ?? v.inHand;
       const d = st ? ITEMS[st.id] : null;
-      const src = st ? itemIconUrl(st.id, st.colour) : `/icons/hg/${HOTBAR_EMPTY_ICON[v.slot]}.webp`;
+      const src = st ? itemIconUrl(st.id, st.colour) : hotbarEmptyIcon(HOTBAR_EMPTY_ICON[v.slot]);
       if (el.img.getAttribute('src') !== src) el.img.src = src;
       el.btn.classList.toggle('empty', !st);
       // The weapon slot with only the one in your hands: pressing puts it away.

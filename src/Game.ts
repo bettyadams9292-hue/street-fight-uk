@@ -925,10 +925,11 @@ export class Game {
       }
       if (slot === 'medic') this.audio.uiConfirm();
       else if (slot === 'food') this.audio.house('eat');
+      else if (slot === 'drink') this.audio.house('clink');
       else this.audio.uiConfirm();
       const swapped = r.next && before && r.next !== before ? ITEMS[r.next]?.name : null;
       const left = hotbarView(s, slot);
-      const out = slot !== 'weapon' && !left.stack ? ` Last one: no more ${slot === 'medic' ? 'medical' : 'food or drink'} on you.` : '';
+      const out = slot !== 'weapon' && !left.stack ? ` Last one: no more ${slot === 'medic' ? 'medical' : slot === 'drink' ? 'drinks' : 'food'} on you.` : '';
       this.hud.toast(`${r.text}${swapped ? `. Next up: ${swapped}` : ''}${out ? `.${out}` : ''}`, slot === 'weapon' ? 'info' : 'item');
     }
     if (!live) {

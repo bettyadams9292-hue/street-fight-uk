@@ -143,6 +143,30 @@ test('weapon: draws the slot’s weapon; when it breaks, the next weapon in your
   assert(away.ok && !w.player.weapon && count(p, 'w_hammer') === 1, `put away: ${away.text}`);
 });
 
+test('drinks have their own slot: a can or energy drink mid-fight, refilled from your pockets; food leaves them alone', () => {
+  assert(slotFor(ITEMS.energy_drink) === 'drink' && slotFor(ITEMS.can_of_pop) === 'drink' && slotFor(ITEMS.water) === 'drink' && slotFor(ITEMS.flask_tea) === 'drink', 'the four drinks');
+  assert(!fitsSlot('food', ITEMS.energy_drink), 'not food');
+  const p = progress();
+  p.save.inventory = [];
+  p.giveItem('energy_drink', 1);
+  p.giveItem('water', 2);
+  p.giveItem('chips', 1);
+  setHotbar(p.save, 'energy_drink');
+  assert(hotbarView(p.save, 'food').stack?.id === 'chips', 'food slot has the chips, not a drink');
+  const w = new World(street, p, { entry: street.entries[0].id, seed: 4, civilians: false });
+  w.spawnEnemy('thug', w.player.pos.x + 2.5, w.player.pos.z);
+  w.step(emptyCommand());
+  const v = w.player.vitals;
+  v.stamina = 10;
+  const r = w.useHotbar('drink');
+  assert(r.ok && v.stamina > 50, `energy drink: ${r.text} (stamina ${v.stamina})`);
+  assert(r.next === 'water' && hotbarView(p.save, 'drink').stack?.id === 'water', `water next: ${r.next}`);
+  // Shares the wait with heals and food, so it can't be mashed either.
+  assert(!w.useHotbar('drink').ok && !w.useHotbar('food').ok, 'waits');
+  wait(w, HOTBAR_COOLDOWN + 0.1);
+  assert(w.useHotbar('drink').ok, 'water');
+});
+
 test('changing a slot from Pockets & bag cycles through what you carry that fits', () => {
   const p = progress();
   p.save.inventory = [];
@@ -170,10 +194,11 @@ test('saved and loaded; old saves and junk get "pick for me"', () => {
   assert(junk.medic === null && junk.food === null && junk.weapon === null, 'wrong-slot and unknown ids dropped');
 });
 
-test('controls: 1, 2, 3; Back with X, Y, B on a pad; named in prompts for every device', () => {
-  assert(HOTBAR_KEYS.map((k) => k[0]).join() === 'Digit1,Digit2,Digit3', 'number keys');
-  assert(PAD_EXTRA.hotbar === PAD.BACK && PAD_HOTBAR.join() === [PAD.X, PAD.Y, PAD.B].join(), 'pad combos');
-  assert(control('hotbar', 'keyboard') === '1 / 2 / 3', control('hotbar', 'keyboard'));
+test('controls: 1–4; Back with X, Y, A, B on a pad; named in prompts for every device', () => {
+  assert(HOTBAR_KEYS.map((k) => k[0]).join() === 'Digit1,Digit2,Digit3,Digit4', 'number keys');
+  assert(PAD_EXTRA.hotbar === PAD.BACK && PAD_HOTBAR.join() === [PAD.X, PAD.Y, PAD.A, PAD.B].join(), 'pad combos');
+  assert(HOTBAR_SLOTS.join() === 'medic,food,drink,weapon', 'slot order matches the keys');
+  assert(control('hotbar', 'keyboard') === '1 / 2 / 3 / 4', control('hotbar', 'keyboard'));
   assert(/BACK/.test(control('hotbar', 'gamepad')), control('hotbar', 'gamepad'));
   assert(control('hotbar', 'touch').length > 0, 'touch');
 });

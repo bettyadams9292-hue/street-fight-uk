@@ -1,5 +1,5 @@
 /**
- * The hotbar: three quick slots, one for something medical, one for food or drink, one for a weapon. Each
+ * The hotbar: four quick slots, one for something medical, one for food, one for a drink, one for a weapon. Each
  * slot remembers an item (by id) and uses the next of it from your pockets; when you've none of that left it
  * pulls in the next suitable thing you're carrying, so a fight never stops for a trip to the bag. Change
  * what's in a slot from Pockets & bag.
@@ -9,18 +9,19 @@
 import type { ItemStack } from './Inventory';
 import { ITEMS, type ItemDef } from './items';
 
-export type HotbarSlot = 'medic' | 'food' | 'weapon';
-export const HOTBAR_SLOTS: readonly HotbarSlot[] = ['medic', 'food', 'weapon'];
-export const HOTBAR_LABELS: Record<HotbarSlot, string> = { medic: 'Medical', food: 'Food', weapon: 'Weapon' };
-/** The painted icon an empty slot shows (public/icons/hg). */
-export const HOTBAR_EMPTY_ICON: Record<HotbarSlot, string> = { medic: 'first_aid', food: 'food', weapon: 'bat' };
+export type HotbarSlot = 'medic' | 'food' | 'drink' | 'weapon';
+/** In key order: 1 medical, 2 food, 3 drink, 4 weapon (what you use up together, then the weapon). */
+export const HOTBAR_SLOTS: readonly HotbarSlot[] = ['medic', 'food', 'drink', 'weapon'];
+export const HOTBAR_LABELS: Record<HotbarSlot, string> = { medic: 'Medical', food: 'Food', drink: 'Drink', weapon: 'Weapon' };
+/** What an empty slot shows, faded: a painted icon (public/icons/hg), or `item:<id>` for that item's own icon. */
+export const HOTBAR_EMPTY_ICON: Record<HotbarSlot, string> = { medic: 'first_aid', food: 'food', drink: 'item:can_of_pop', weapon: 'bat' };
 
-/** Seconds between medical or food uses from the hotbar (World.useHotbar): a choice in a fight, not a button to mash. Weapons don't wait. */
+/** Seconds between medical, food or drink uses from the hotbar (World.useHotbar): a choice in a fight, not a button to mash. Weapons don't wait. */
 export const HOTBAR_COOLDOWN = 1.5;
 
 /** What each slot is set to (item ids); null: pick for me. */
 export type HotbarSave = Record<HotbarSlot, string | null>;
-export const newHotbar = (): HotbarSave => ({ medic: null, food: null, weapon: null });
+export const newHotbar = (): HotbarSave => ({ medic: null, food: null, drink: null, weapon: null });
 
 export function sanitiseHotbar(v: unknown): HotbarSave {
   const out = newHotbar();
@@ -37,8 +38,10 @@ export function fitsSlot(slot: HotbarSlot, d: ItemDef): boolean {
   if (slot === 'weapon') return !!d.weapon;
   if (!d.use || d.ingredient) return false;
   if (slot === 'medic') return d.icon === 'medkit';
-  // Food and drink: anything you eat or drink that does something for you.
-  return d.icon !== 'medkit' && !!((d.use.heal ?? 0) > 0 || (d.use.healPct ?? 0) > 0 || (d.use.stamina ?? 0) > 0 || (d.use.needs?.fill ?? 0) > 0);
+  // Drinks: cans, bottles and flasks (mostly stamina: handy mid-fight).
+  if (slot === 'drink') return d.icon === 'drink';
+  // Food: anything else you eat that does something for you.
+  return d.icon !== 'medkit' && d.icon !== 'drink' && !!((d.use.heal ?? 0) > 0 || (d.use.healPct ?? 0) > 0 || (d.use.stamina ?? 0) > 0 || (d.use.needs?.fill ?? 0) > 0);
 }
 
 /** The slot an item goes in, if any. */
@@ -53,7 +56,7 @@ interface Carrying {
 }
 
 /**
- * The next suitable thing when a slot's own item has run out. Medical and food: whatever you've most of (the
+ * The next suitable thing when a slot's own item has run out. Medical, food and drink: whatever you've most of (the
  * cheaper on a tie), so a stack of plasters goes before your one first aid kit. Weapons: the best one you carry.
  */
 function fallback(slot: HotbarSlot, stacks: ItemStack[]): ItemStack | null {

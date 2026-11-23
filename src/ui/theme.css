@@ -2146,11 +2146,13 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
   .hud .hud-flow .tut-card.right { position: fixed; top: calc(var(--head-b, 84px) + 6px); right: calc(12px + var(--safe-r)); }
 }
 
-/* ---- Hotbar: medical, food, weapon (items/hotbar.ts, Hud.setHotbar) ----
+/* ---- Hotbar: medical, food, drink, weapon (items/hotbar.ts, Hud.setHotbar) ----
    Three bolt-head plates like the HUD buttons, each with its item's painted icon, how many you've got, a red tag
    saying what the slot is for and, on a keyboard, its number. After patching up or eating, a dark sweep runs
    round the medical and food slots until the next can go (a weapon never waits). Desktop: bottom centre. Phones: a column beside the stick, clear of every button. */
 .hotbar { --hb: 58px; position: absolute; left: 50%; bottom: calc(18px + var(--safe-b)); transform: translateX(-50%); display: flex; gap: 8px; z-index: 4; pointer-events: auto; }
+/* Notifications and the tutorial card come first: on an upright phone they can reach down over the slots. */
+.hud .hud-flow { z-index: 5; }
 .hotbar.off { display: none; }
 .hb-slot {
   position: relative; width: var(--hb); height: var(--hb); padding: 0; border: 0; cursor: pointer; touch-action: none;
@@ -2185,13 +2187,16 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .touch-ui .hb-slot .hb-k { display: none; }
 .touch-ui .hb-slot .hb-tag { height: 11px; font-size: 8px; line-height: 11px; }
 .touch-ui .hb-slot .hb-bar { bottom: 13px; }
+/* Sideways: four slots as a 2 × 2 block (a column of four is too tall beside the stick). */
+.touch-ui .hotbar { flex-direction: row; flex-wrap: wrap; width: calc(var(--hb) * 2 + 6px); }
 /* Upright phone: a column on the left edge, above the stick. */
 @media (orientation: portrait) and (max-width: 700px) {
-  .touch-ui .hotbar { --hb: 44px; left: calc(10px + var(--safe-l)); bottom: calc(var(--deck-h) + 74px); }
+  .touch-ui .hotbar { --hb: 40px; left: calc(10px + var(--safe-l)); bottom: calc(var(--deck-h) + 66px); flex-direction: column; flex-wrap: nowrap; width: auto; gap: 5px; }
+  .touch-ui .hb-slot .hb-tag { height: 10px; font-size: 7.5px; line-height: 10px; }
 }
 
 /* Pockets & bag: the hotbar row (tap a slot to change it) and the "on the hotbar" chip. */
-.inv-hotbar .inv-grid.hotbar-row { grid-template-columns: repeat(3, var(--slot)); }
+.inv-hotbar .inv-grid.hotbar-row { grid-template-columns: repeat(4, var(--slot)); }
 .inv-slot.hb-pick { position: relative; cursor: pointer; background: linear-gradient(180deg, var(--asphalt-3), var(--asphalt)); border: 1px solid rgba(232, 51, 58, 0.55); border-bottom: 3px solid var(--accent); }
 .inv-slot.hb-pick img { width: 72%; height: 72%; object-fit: contain; margin: auto; display: block; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); }
 .inv-slot.hb-pick.empty img { opacity: 0.28; filter: grayscale(1); }
