@@ -9,6 +9,8 @@ import { h } from './dom';
 export const TITLE_SLUGS: ReadonlySet<string> = new Set([
   // The tutorial (tools/icons/hg/kit_from_titles.py).
   'tutorials', 'resume-tutorial', 'skip-tutorial', 'tutorial-hints',
+  // The fridge and cupboards (kit_from_titles.py).
+  'eat', 'drink', 'take-one', 'cook-something',
   // Police step 2 (tools/icons/hg/kit_from_titles.py, then hgtype.button).
   'offer-a-bung', 'old-bill', 'lose-the-paperwork', 'come-quietly', 'have-it-out', 'ring-for-bail', 'front-counter', 'police', 'leave', 'pay-bail', 'night-in-the-cells',
   // Added for the audit fixes (tools/titles/gen.py).
