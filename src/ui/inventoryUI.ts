@@ -1,4 +1,5 @@
 import { WEAPONS } from '../combat/Weapons';
+import { tierLabel } from '../items/gearBonus';
 import { defOf, sortStacks, type ItemStack, type SortMode } from '../items/Inventory';
 import {
   ITEMS,
@@ -119,6 +120,7 @@ function detailLines(d: ItemDef, st: ItemStack | null): HTMLElement[] {
   if (d.use) out.push(statLine('Effect', d.use.text));
   if (d.wear) out.push(statLine('Worn on', WEAR_SLOT_LABELS[d.wear.slot]));
   for (const s of d.stats ?? []) out.push(statLine('Bonus', s.text));
+  if (d.category === 'clothing') out.push(h('p', { class: 'hint', text: 'Better labels give bigger bonuses. A whole fit (top, bottoms and shoes) in one tier or better, or a matching set, adds a buff: GraftWiki → Clothes and jewellery.' }));
   out.push(statLine('Value', d.value > 0 ? `£${d.value}${st && st.qty > 1 ? ` each (£${d.value * st.qty} total)` : ''}` : 'Worthless'));
   out.push(statLine('Space', `1 slot${d.stack > 1 ? `, stacks to ${d.stack}` : ''}`));
   if (st?.stolen) out.push(h('p', { class: 'warn-line', text: 'Stolen. The pawn shop pays less, and the police will take it if they catch you.' }));
@@ -148,7 +150,7 @@ function detailPanel(d: ItemDef, st: ItemStack | null, actions: HTMLElement[], c
       'div',
       { class: 'detail-title' },
       h('h3', { text: d.name }),
-      h('div', { class: 'rarity', text: `${RARITY_LABELS[d.rarity]} · ${CATEGORY_ONE[d.category]}` }),
+      h('div', { class: 'rarity', text: `${(d.category === 'clothing' || d.category === 'accessory') && d.stats?.length ? tierLabel(d.rarity) : RARITY_LABELS[d.rarity]} · ${CATEGORY_ONE[d.category]}` }),
     ),
   );
   (head.querySelector('.rarity') as HTMLElement).style.color = RARITY_COLOURS[d.rarity];

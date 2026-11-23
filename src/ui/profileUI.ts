@@ -1,4 +1,5 @@
 import { needsEffects, overallNeeds } from '../home/needs';
+import { XP_BONUS_CAP } from '../items/gearBonus';
 import { needsBars } from './kitchenUI';
 import { BACKGROUNDS } from '../character/Character';
 import {
@@ -202,6 +203,7 @@ export function profileScreen(o: ProfileOptions): Screen {
       ),
     );
 
+    const buffs = p.buffs();
     const worn = WEAR_SLOTS.filter((slot) => s.worn[slot]).map((slot) => {
       const it = s.worn[slot]!;
       const d = ITEMS[it.id];
@@ -228,6 +230,13 @@ export function profileScreen(o: ProfileOptions): Screen {
       ),
       section('Equipment', 'bag', weaponLine(s.held, f), ...(worn.length ? worn : [h('p', { class: 'pf-none', text: 'Nothing worn.' })]),
         row('Pockets', `${s.inventory.length} / ${p.inventoryCap}`, `Stash at home: ${s.storage.length} / ${s.storageCap}`)),
+      // Buffs from the outfit and the jewellery (items/gearBonus.ts).
+      section('Buffs', 'gem',
+        row('XP bonus', `+${Math.round(p.xpBonus * 100)}%`, `From your jewellery (up to ${Math.round(XP_BONUS_CAP * 100)}%)`),
+        ...(buffs.length
+          ? buffs.map((b) => h('div', { class: 'pf-item pf-buff' }, h('div', {}, h('b', { text: b.name }), h('small', { text: [b.xp ? `+${Math.round(b.xp * 100)}% XP` : '', ...b.stats.map((m) => m.text)].filter(Boolean).join(', ') || b.text }))))
+          : [h('p', { class: 'pf-none', text: 'None yet. Wear a whole fit in one tier, a matching set, or some jewellery.' })]),
+      ),
     );
     return h('div', { class: 'pf-grid' }, left, centre, right);
   }

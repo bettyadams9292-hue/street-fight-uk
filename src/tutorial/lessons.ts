@@ -241,6 +241,8 @@ export const HINTS: readonly HintDef[] = [
   // Jobs (src/jobs): the Jobs guide covers contacts; these are the bits you meet on your own.
   { id: 'street-job', title: 'Someone needs a hand', category: 'Money and survival', text: 'A yellow ! over someone: they’ve got a one-off job for you.', why: 'Walk up and USE. They pay when it’s done, wherever that is.', keys: ['use'], when: { poll: (_p, w) => !!w.jobGiver && Math.abs(w.jobGiver.f.pos.x - w.player.pos.x) < 8 } },
   { id: 'job-failed', title: 'A job gone wrong', category: 'Money and survival', text: 'The job’s off. Too slow, or what you were carrying is gone.', why: 'It costs standing with whoever gave it. Their board has more work: just don’t make a habit of it.', when: { on: 'job', test: (e) => e.type === 'job' && e.stage === 'failed' } },
+  // Clothes and jewellery bonuses (items/gearBonus.ts): the first time something you wear gives a buff.
+  { id: 'buffs', title: 'Dressed for it', category: 'Inventory', text: 'What you wear has stats: better labels, bigger bonuses. A whole fit, a matching set or jewellery adds a buff.', why: 'Jewellery makes you learn faster too: extra XP for every piece on. Your Me screen lists the lot.', keys: ['phone'], when: { poll: (p) => p.buffs().length > 0 } },
   // The fridge and cupboards (#88).
   { id: 'kitchen', title: 'The kitchen', category: 'Money and survival', text: 'The fridge and cupboards keep what you buy. Eat or drink it here, take one with you, or cook.', why: 'Cooking turns raw food into proper meals that fill you up more. Hunger is one of your needs.', when: { on: 'station', test: (e) => e.type === 'station' && (e.id === 'fridge' || e.id === 'cupboard') } },
   // The Red Lion's lock-in (#86) and the Snug (#87).

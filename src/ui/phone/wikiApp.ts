@@ -1,4 +1,5 @@
 import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
+import { DRIP_LIST, JEWEL_BUFF_LIST, OUTFIT_LIST, STONE_BUFF_LIST, TIER_NAMES, XP_BONUS_CAP } from '../../items/gearBonus';
 import { BOARD_TRIPS, CONTACT_IDS, CONTACTS } from '../../jobs/jobs';
 import type { StyleData } from '../../styles/StyleData';
 import { h } from '../dom';
@@ -13,7 +14,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear';
 
 export interface WikiDeps {
   device: () => Device;
@@ -28,6 +29,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'heat', title: 'Heat', blurb: 'How much trouble you’re in with the police, the locals and the gangs, and how to cool off.' },
   { id: 'police', title: 'Getting nicked', blurb: 'Your record, the charge sheet, bail, a night in the cells, and the front counter.' },
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
+  { id: 'gear', title: 'Clothes and jewellery', blurb: 'Tiers, what each kind of clothing does, outfit buffs, and jewellery’s XP bonus.' },
   { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
 ];
 
@@ -147,6 +149,32 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       p('What it costs you is heat with the police and the locals: see Heat.'),
       sec('Weapons'),
       p('Pick a weapon up with GRAB when nobody’s in reach. It wears out with every hit; the workbench at home mends it.'),
+    );
+  }
+
+  if (page === 'gear') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('Clothes and jewellery', 'What you wear isn’t just for show. Every piece of clothing has stats, and better labels have more. Jewellery makes you learn faster and gives a buff of its own.',
+      infobox('Tiers', TIER_NAMES.slice(1).map((n, i) => [`Tier ${i + 1}`, `${n} (${['common', 'uncommon', 'rare', 'epic', 'legendary'][i]})`] as [string, string])),
+      sec('Clothes'),
+      p('Each kind of clothing does one thing, and its tier sets how much: the same thing in a Designer label does three times what a Basic one does.'),
+      list([
+        'Tracksuits, trackies and joggers: Speed. Runners and windbreakers: move speed.',
+        'Hoodies, beanies and bucket hats: Endurance. Jumpers and quarter-zips: max stamina.',
+        'T-shirts, vests, shorts and trainers: Agility.',
+        'Leather, denim, jeans, chinos and flat caps: Defence (leather costs a point of Speed).',
+        'Bombers, workwear and boots: Strength.',
+        'Polos, shirts, Harringtons, caps and glasses: Technique.',
+        'Puffers, gilets and high-tops: poise. Coats, cargos and belts: max health.',
+        'Football shirts: stamina back. Sunglasses: less damage taken. Face coverings: less stamina used.',
+      ]),
+      sec('Outfit buffs'),
+      p('Wear a whole fit (top, bottoms and shoes) and you get a buff for its lowest tier. Matching sets add their own.'),
+      list(OUTFIT_LIST.map((o) => `${o.name}: ${o.text} ${o.stats}.`)),
+      sec('Jewellery'),
+      p(`Every piece you wear gives extra XP: more for rarer pieces and precious metals (platinum and 18ct gold best, steel and titanium least), and more again for a diamond. Together it’s capped at ${Math.round(XP_BONUS_CAP * 100)}%. ${DRIP_LIST.map((d) => `${d.at} pieces on at once: ${d.name}, +${Math.round(d.xp * 100)}% more.`).join(' ')}`),
+      list([...JEWEL_BUFF_LIST.map((j) => `${j.cat[0].toUpperCase()}${j.cat.slice(1)}s, ${j.name}: ${j.text}.`), ...STONE_BUFF_LIST.map((x) => `${x.stone[0].toUpperCase()}${x.stone.slice(1)}: ${x.text}.`)]),
+      p('Your Me screen lists the buffs you’ve got on and your XP bonus.'),
     );
   }
 

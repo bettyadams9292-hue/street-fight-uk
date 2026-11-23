@@ -11,6 +11,9 @@ export const SHOP_STOCK: string[] = [
   'hoodie_navy', 'tshirt_grey', 'tracksuit_top_grey', 'polo_navy', 'polo_white', 'polo_bottle', 'shirt_oxford', 'shirt_check',
   'jumper_navy', 'jumper_oat', 'quarter_zip_black', 'quarter_zip_grey', 'gilet_black', 'gilet_olive', 'windbreaker', 'windbreaker_retro',
   'harrington_stone', 'harrington_black',
+  // Luxury and Iconic (tiers 4 and 5): gearBonus.ts
+  'designer_tracksuit_top', 'designer_trackies', 'luxury_puffer', 'luxury_leather', 'luxury_jeans', 'designer_trainers', 'luxury_runners',
+  'iconic_hoodie', 'iconic_joggers', 'iconic_puffer', 'grail_trainers', 'iconic_boots',
   'bomber_jacket', 'puffer_black', 'puffer_red', 'puffer_navy', 'leather_jacket', 'denim_jacket', 'long_coat', 'vest_white', 'workwear_hivis',
   'trackies_black', 'trackies_navy', 'joggers_grey', 'joggers_black', 'jeans_blue', 'jeans_black', 'jeans_light', 'chinos_stone', 'chinos_navy',
   'cargos_khaki', 'cargo_shorts', 'denim_shorts', 'shorts_black',
