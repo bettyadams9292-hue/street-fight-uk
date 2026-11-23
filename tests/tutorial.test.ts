@@ -33,8 +33,9 @@ import { emptyCommand } from '../src/input/Commands';
 import { newSave, Progress, sanitiseSave } from '../src/progress/Progress';
 import { resolveLevel } from '../src/property/levels';
 import { control } from '../src/tutorial/controls';
-import { CHAPTERS, HINTS } from '../src/tutorial/lessons';
-import { ESSENTIAL_CHAPTERS } from '../src/tutorial/state';
+import { CHAPTERS, GUIDES, HINTS } from '../src/tutorial/lessons';
+import { acceptJob, boardOf, completeJob, failJob } from '../src/jobs/jobs';
+import { ESSENTIAL_CHAPTERS, GUIDE_CHAPTERS } from '../src/tutorial/state';
 import { TutorialManager, type TutorialHost } from '../src/tutorial/TutorialManager';
 import { World } from '../src/world/World';
 import { LEVELS } from '../src/world/levels';
@@ -310,6 +311,110 @@ test('hints come once, after the basics, and respect what you’ve seen', () => 
   r.t.feed({ type: 'picked' });
   r.frames(70);
   assert(p.save.tutorial.hints.filter((h) => h === 'pockets').length === 1 && !r.t.wantsNext, 'hint came twice');
+});
+
+// ---- guides: lessons for things you meet later (jobs, the hotbar) ------------------------------------------------
+
+/** Past the first-run lessons, as a player a few hours in would be. */
+const grown = (): Progress => {
+  const p = fresh();
+  p.save.tutorial.essentialDone = true;
+  p.save.tutorial.active = null;
+  p.save.visited.push('high_street', 'residential', 'alleys');
+  p.save.cash.pocket = 1000;
+  return p;
+};
+const guideAt = (p: Progress) => { const g = p.save.tutorial.guide; return g ? `${g.chapter}/${GUIDES.find((c) => c.id === g.chapter)!.steps[g.step]?.id}` : 'none'; };
+
+test('the guides and the save’s list agree, and their steps are unique', () => {
+  assert(JSON.stringify(GUIDES.map((c) => c.id)) === JSON.stringify(GUIDE_CHAPTERS), 'guide lists differ');
+  for (const c of GUIDES) {
+    assert(new Set(c.steps.map((s) => s.id)).size === c.steps.length, `${c.id}: duplicate step`);
+    assert(c.start, `${c.id}: says what starts it`);
+    assert(!CHAPTERS.some((x) => x.id === c.id || x.num === c.num), `${c.id}: its own id and number`);
+  }
+  assert(!HINTS.some((h) => h.id === 'jobs' || h.id === 'hotbar'), 'the old jobs and hotbar hints are guides now');
+  for (const id of ['street-job', 'job-failed', 'kitchen', 'pub']) assert(HINTS.some((h) => h.id === id), `hint ${id}`);
+});
+
+test('jobs guide: starts at the first contact, follows a real job through to the money, and is done', () => {
+  const p = grown();
+  const r = rig(p, 'high_street' as never, 'left');
+  r.t.feed({ type: 'station', id: 'contact' });
+  assert(guideAt(p) === 'jobs/contacts', guideAt(p));
+  r.read();
+  r.read();
+  assert(guideAt(p) === 'jobs/take', guideAt(p));
+  r.frames(20);
+  assert(guideAt(p) === 'jobs/take', 'waits for a job');
+  assert(acceptJob(p, boardOf(p, 'bev')[0]).ok, 'took Bev’s job');
+  r.frames(3);
+  assert(guideAt(p) === 'jobs/objective', guideAt(p));
+  r.read();
+  r.read();
+  assert(guideAt(p) === 'jobs/do', guideAt(p));
+  r.frames(20);
+  assert(guideAt(p) === 'jobs/do', 'waits for the job');
+  p.save.jobs.active!.stage = 'back';
+  r.frames(3);
+  assert(guideAt(p) === 'jobs/back', guideAt(p));
+  completeJob(p);
+  r.frames(3);
+  assert(guideAt(p) === 'jobs/standing', guideAt(p));
+  r.read();
+  assert(!p.save.tutorial.guide && p.save.tutorial.completed.includes('jobs'), JSON.stringify(p.save.tutorial));
+  r.t.feed({ type: 'station', id: 'contact' });
+  assert(!p.save.tutorial.guide, 'once only');
+});
+
+test('a guide waits for the first-run lessons, and “Not now” puts it away', () => {
+  const p = fresh();
+  const r = rig(p);
+  r.t.feed({ type: 'station', id: 'contact' });
+  assert(p.save.tutorial.guide === null, 'not in the middle of the first lessons');
+  const q = grown();
+  const r2 = rig(q, 'high_street' as never, 'left');
+  r2.t.feed({ type: 'station', id: 'contact' });
+  assert(guideAt(q) === 'jobs/contacts', guideAt(q));
+  r2.t.skipStep();
+  assert(!q.save.tutorial.guide && q.save.tutorial.skipped.includes('jobs'), 'Not now');
+  r2.t.feed({ type: 'station', id: 'contact' });
+  assert(!q.save.tutorial.guide, 'doesn’t nag');
+  assert(r2.t.startGuide('jobs', true) && guideAt(q) === 'jobs/contacts', 'but Pause → Tutorials can start it');
+});
+
+test('hotbar guide: starts when you’re hurt with something to heal with, and finishes on a real use', () => {
+  const p = grown();
+  p.giveItem('plasters', 3);
+  const r = rig(p, 'estate' as never, 'home');
+  for (const e of r.world.encounters) e.status = 'cleared';
+  r.frames(70);
+  assert(!p.save.tutorial.guide, 'not while you’re fine');
+  r.world.player.vitals.health = r.world.player.vitals.maxHealth * 0.4;
+  r.frames(70);
+  assert(guideAt(p) === 'hotbar/slots', guideAt(p));
+  r.read();
+  assert(guideAt(p) === 'hotbar/use', guideAt(p));
+  assert(r.world.useHotbar('medic').ok, 'used the medical slot');
+  r.frames(2);
+  assert(guideAt(p) === 'hotbar/refill', guideAt(p));
+  r.read();
+  assert(p.save.tutorial.completed.includes('hotbar') && !p.save.tutorial.guide, 'done');
+});
+
+test('a job that goes wrong brings up its hint; a guide in progress survives a reload', () => {
+  const p = grown();
+  const r = rig(p, 'high_street' as never, 'left');
+  p.save.tutorial.completed.push('jobs');
+  acceptJob(p, boardOf(p, 'bev')[0]);
+  failJob(p, 'dropped');
+  r.t.feed({ type: 'job', stage: 'failed' });
+  assert(p.save.tutorial.hints.includes('job-failed'), 'queued');
+  const q = grown();
+  q.save.tutorial.guide = { chapter: 'hotbar', step: 1 };
+  assert(JSON.stringify(sanitiseSave(JSON.parse(JSON.stringify(q.save)))!.tutorial.guide) === JSON.stringify({ chapter: 'hotbar', step: 1 }), 'kept');
+  q.save.tutorial.guide = { chapter: 'nonsense', step: 1 };
+  assert(sanitiseSave(JSON.parse(JSON.stringify(q.save)))!.tutorial.guide === null, 'junk dropped');
 });
 
 void LEVELS;

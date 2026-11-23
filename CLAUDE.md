@@ -57,7 +57,8 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 - `controls.ts`: prompts read from `KEY_BINDINGS`, `MENU_KEYS`, `PAD_BUTTONS` and `PAD_EXTRA`, so they can't name a key the game doesn't use.
 - `overlay.ts`: the card in the HUD column, and the rings over the HUD.
 - `library.ts`: Pause → Tutorials.
-- A new feature should add a hint to `HINTS`, or a step to a chapter.
+- `GUIDES`: lessons for things you meet later (06 Jobs, 07 The hotbar), each started the first time you meet its thing once the first-run lessons are done (`start`; `TutorialManager.startGuide`), kept in `save.tutorial.guide`, and in Pause → Tutorials to start or replay. `GUIDE_CHAPTERS` in `state.ts` must match.
+- A new feature should add a hint to `HINTS`, a guide to `GUIDES` (for anything with a few steps to learn), or a step to a chapter.
 
 **Hotbar.** `src/items/hotbar.ts`: four slots (1 medical, 2 food, 3 drink, 4 weapon) in `save.hotbar` by item id; a slot uses the next of its item and, when that runs out, pulls in the next suitable thing in your pockets (`hotbarStack`, `refillHotbar`). `World.useHotbar` applies it, in a fight too, with `HOTBAR_COOLDOWN` between heals (weapons never wait); `Game.updateHotbar` takes presses (1–4, Back + X / Y / A / B on a pad, the HUD slots) and holds one briefly while you're reeling. Changed in Pockets & bag (`inventoryUI.ts`). `tests/hotbar.test.ts`.
 

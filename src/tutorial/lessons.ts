@@ -37,7 +37,11 @@ export type TutEvent =
   | { type: 'held' }
   | { type: 'injury' }
   | { type: 'police' }
-  | { type: 'levelup' };
+  | { type: 'levelup' }
+  /** A job (src/jobs): taken, its hard part done (`step`: go back for your money), paid, or gone wrong. */
+  | { type: 'job'; stage: 'taken' | 'step' | 'done' | 'failed' }
+  /** A hotbar slot used. */
+  | { type: 'hotbar' };
 
 /** What a check can look at. */
 export interface Ctx {
@@ -85,6 +89,11 @@ export interface ChapterDef {
   steps: StepDef[];
   /** Done already, so the chapter can be passed over (an old save, or a fight already won). */
   already?: (p: Progress) => boolean;
+  /**
+   * Guides only (GUIDES): what starts it, the first time you meet the thing, once the first-run lessons are done
+   * and with Settings → Tutorial hints on. An event, or a check made every so often (never in a fight).
+   */
+  start?: { on: TutEvent['type']; test?: (e: TutEvent) => boolean } | { poll: (p: Progress, w: World) => boolean };
 }
 
 export type Category = 'Getting started' | 'Combat' | 'Fighting styles' | 'Progression' | 'Inventory' | 'Exploration' | 'Gyms' | 'Money and survival' | 'Police and crime' | 'Crew' | 'Advanced';
@@ -164,6 +173,43 @@ export const CHAPTERS: readonly ChapterDef[] = [
 
 export const ESSENTIAL: readonly string[] = CHAPTERS.map((c) => c.id);
 
+/** Something to heal with in your pockets (the hotbar's medical, food or drink slots would take it). */
+const canHeal = (p: Progress) => p.save.inventory.some((st) => { const d = ITEMS[st.id]; const s = d ? slotFor(d) : null; return s === 'medic' || s === 'food' || s === 'drink'; });
+
+/**
+ * Guides: short lessons for things you meet later, run on real events like the chapters. Each starts itself the
+ * first time you meet its thing (`start`), once the first-run lessons are done, and every one is in Pause →
+ * Tutorials to start or replay. Skip any step, or the lot.
+ */
+export const GUIDES: readonly ChapterDef[] = [
+  {
+    id: 'jobs', num: '06', title: 'Jobs', category: 'Money and survival',
+    blurb: 'Contacts and their work: taking a job, doing it, getting paid, and standing.',
+    start: { on: 'station', test: (e) => e.type === 'station' && e.id === 'contact' },
+    steps: [
+      { id: 'contacts', text: 'That’s a contact. They’ve always got work for someone who can handle themselves.', why: 'Sorting people out, collecting debts, deliveries, getting things back, buying and selling. There are five of them about town.', done: { read: true } },
+      { id: 'board', text: 'Their board shows what’s going: each card says where, what it pays, and what could go wrong.', why: 'Their own special job is at the top. One job at a time.', done: { read: true } },
+      // A poll, not the event: the guide starts as their screen opens, so you may have taken one already.
+      { id: 'take', text: 'Use them again and take a job.', keys: ['use'], why: 'A deal costs you the package up front. A delivery is against the clock.', done: { poll: (c) => !!c.progress.save.jobs.active } },
+      { id: 'objective', text: 'The job’s your objective now, with a clock if it’s against time.', why: 'Who you’re after has a red mark over their head when you get there.', focus: ['.objective'], done: { read: true } },
+      { id: 'phone', text: 'Jobs on your phone has Directions: it puts the route on your map.', keys: ['phone'], why: 'You can drop a job there too, but they’ll trust you less.', focus: ['.phone-btn'], done: { read: true } },
+      { id: 'do', text: 'Go and do it.', why: 'Some square up when you get close. A debtor might pay, or might fight. Deliveries pay on the doorstep.', done: { poll: (c) => { const j = c.progress.save.jobs.active; return !j || j.stage === 'back'; } } },
+      { id: 'back', text: (c) => { const j = c.progress.save.jobs.active; return j ? `Take it back to ${j.giver.split(' ')[0]} and hand it over.` : 'That’s the job done.'; }, why: 'Go down on the way with the money or the goods and they’re gone, and so is the job.', done: { poll: (c) => !c.progress.save.jobs.active } },
+      { id: 'standing', text: 'Every job done raises your standing with whoever gave it.', why: 'Known, Trusted, then Inner circle: better pay, and their own special jobs open up. GraftWiki on your phone has the lot.', done: { read: true } },
+    ],
+  },
+  {
+    id: 'hotbar', num: '07', title: 'The hotbar', category: 'Inventory',
+    blurb: 'Four slots ready to use, in a fight too: medical, food, a drink and a weapon.',
+    start: { poll: (p, w) => w.player.vitals.health < w.player.vitals.maxHealth * 0.6 && canHeal(p) },
+    steps: [
+      { id: 'slots', text: 'Your hotbar: 1 medical, 2 food, 3 drink, 4 weapon.', keys: ['hotbar'], why: 'Each slot uses what’s in your pockets, so you don’t have to open your bag in a fight.', focus: ['.hotbar'], done: { read: true } },
+      { id: 'use', text: 'You’re hurt. Use your medical, food or drink slot.', keys: ['hotbar'], why: 'There’s a short wait between heals. Weapons never wait.', focus: ['.hotbar'], done: { on: 'hotbar' } },
+      { id: 'refill', text: 'When one runs out, the next suitable thing in your pockets takes its place.', why: 'Change what’s in a slot in Pockets & bag: tap its row to cycle, or “Put on the hotbar”.', keys: ['bag'], done: { read: true } },
+    ],
+  },
+];
+
 /** One-off cards the first time you meet something (Settings → Tutorial hints turns them off). */
 export interface HintDef {
   id: string;
@@ -179,8 +225,6 @@ export interface HintDef {
 
 export const HINTS: readonly HintDef[] = [
   { id: 'pockets', title: 'Pockets and bag', category: 'Inventory', text: 'You picked something up. It’s in your pockets: four slots, more with a bag.', why: 'Open your bag to use, wear or drop things. Threads sells bags.', keys: ['bag'], focus: ['.bag-btn'], when: { on: 'picked' } },
-  // The first time you're hurt with something to heal with on you: that's when the hotbar earns its place.
-  { id: 'hotbar', title: 'The hotbar', category: 'Inventory', text: 'You’re hurt. Your hotbar has medical, food, a drink and a weapon ready to use, in a fight too.', why: 'When one runs out, the next suitable thing in your pockets takes its place. Change a slot in your bag.', keys: ['hotbar'], focus: ['.hotbar'], when: { poll: (p, w) => w.player.vitals.health < w.player.vitals.maxHealth * 0.6 && p.save.inventory.some((st) => { const d = ITEMS[st.id]; const s = d ? slotFor(d) : null; return s === 'medic' || s === 'food' || s === 'drink'; }) } },
   { id: 'weapons', title: 'Weapons', category: 'Inventory', text: 'You’ve picked up a weapon. Your attacks use it until it breaks.', why: 'Press grab to throw it (or drop it, if it won’t throw). The bar under its name is how much it’s got left.', keys: ['grab'], when: { on: 'held' } },
   { id: 'streets', title: 'Getting about', category: 'Exploration', text: 'The streets run on into each other. Doors with a board over them go somewhere worth going.', why: 'Maps on your phone shows where everything is. Dave’s Cabs take you anywhere you’ve been.', keys: ['map'], when: { poll: (_p, w) => !w.level.deep && w.level.id !== 'home' && w.level.id !== 'estate' } },
   { id: 'shops', title: 'Shops and the pawn', category: 'Money and survival', text: 'Shops buy and sell. Pawn & Gold, on Market Square, gives the best money for valuables.', why: 'Stolen goods fetch less, and the police take them if you’re nicked.', when: { on: 'station', test: (e) => e.type === 'station' && ['clothes_counter', 'pawn_counter', 'cash_hatch', 'bar', 'jeweller_counter', 'furniture_counter', 'bike_counter', 'car_counter'].includes(e.id) } },
@@ -194,8 +238,13 @@ export const HINTS: readonly HintDef[] = [
   { id: 'swap', title: 'Swapping styles', category: 'Fighting styles', text: 'You know two styles now. Swap between them in a fight.', why: 'Each has its own moves and its own strengths: swap when one isn’t working.', keys: ['swap'], when: { poll: (p) => p.save.styles.learned.length > 1 } },
   { id: 'heat', title: 'Heat', category: 'Police and crime', text: 'The police know about you here. That’s heat.', why: 'High enough, they’re waiting when you arrive, and losing any fight gets you nicked. It cools as you move about. The Heat app shows it all.', focus: ['.status-chip.heat'], when: { poll: (p) => p.save.heat > 0 } },
   { id: 'police', title: 'The Old Bill', category: 'Police and crime', text: 'Get nicked and you’re booked in at the station: bail, or a night in the cells.', why: 'Some coppers can be bought. GraftWiki on your phone has the lot.', when: { on: 'police' } },
-  // Jobs (src/jobs): the first time you talk to a contact.
-  { id: 'jobs', title: 'Jobs', category: 'Money and survival', text: 'Contacts give out work: sorting people out, debts, deliveries, getting things back, buying and selling.', why: 'One job at a time. Do their work and they trust you more, and pay more. The Jobs app on your phone tracks it.', when: { on: 'station', test: (e) => e.type === 'station' && e.id === 'contact' } },
+  // Jobs (src/jobs): the Jobs guide covers contacts; these are the bits you meet on your own.
+  { id: 'street-job', title: 'Someone needs a hand', category: 'Money and survival', text: 'A yellow ! over someone: they’ve got a one-off job for you.', why: 'Walk up and USE. They pay when it’s done, wherever that is.', keys: ['use'], when: { poll: (_p, w) => !!w.jobGiver && Math.abs(w.jobGiver.f.pos.x - w.player.pos.x) < 8 } },
+  { id: 'job-failed', title: 'A job gone wrong', category: 'Money and survival', text: 'The job’s off. Too slow, or what you were carrying is gone.', why: 'It costs standing with whoever gave it. Their board has more work: just don’t make a habit of it.', when: { on: 'job', test: (e) => e.type === 'job' && e.stage === 'failed' } },
+  // The fridge and cupboards (#88).
+  { id: 'kitchen', title: 'The kitchen', category: 'Money and survival', text: 'The fridge and cupboards keep what you buy. Eat or drink it here, take one with you, or cook.', why: 'Cooking turns raw food into proper meals that fill you up more. Hunger is one of your needs.', when: { on: 'station', test: (e) => e.type === 'station' && (e.id === 'fridge' || e.id === 'cupboard') } },
+  // The Red Lion's lock-in (#86) and the Snug (#87).
+  { id: 'pub', title: 'The Red Lion', category: 'Crew', text: 'Ray’s bar sells food, drink and plasters. The Snug at the back has fighters for hire.', why: 'Now and then the regulars start a lock-in: a fight for some cash. Hire someone and they leave their seat and come with you.', when: { poll: (_p, w) => w.level.id === 'pub' } },
   { id: 'crew', title: 'Your crew', category: 'Crew', text: 'You’ve someone on your side now. They follow you and fight with you.', why: 'Crew on your phone: who follows you, who rests at home, and their kit.', when: { poll: (p) => p.save.companions.recruited.length > 0 } },
   { id: 'property', title: 'Property', category: 'Advanced', text: 'Keys & Co sell property: live in it, let it out for rent, or sell when prices rise.', why: 'Rent comes in while you’re out. CaliBank on your phone shows it.', when: { on: 'station', test: (e) => e.type === 'station' && (e.id === 'agent_desk' || e.id === 'agent_window') } },
   { id: 'bikes', title: 'Bikes', category: 'Advanced', text: 'You’re on a bike. Quicker than walking, but you’re off it if you take a hit.', why: 'Mudlark Moto sells your own; hire bikes and scooters wait at the kerb.', when: { poll: (p) => !!p.save.property.riding } },
