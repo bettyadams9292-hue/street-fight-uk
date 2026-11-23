@@ -1,3 +1,4 @@
+import { BODY_RADIUS } from './constants';
 import { resolveCombat } from '../combat/CombatSystem';
 import { updateGrapples } from '../combat/Grapple';
 import type { Fighter } from '../fighter/Fighter';
@@ -50,6 +51,8 @@ export class Simulation {
     for (const f of this.fighters) if (!f.anchored) this.arena.clamp(f.pos, undefined, f.team === 'neutral');
 
     resolveCombat(this.fighters, this.frame, this.bus, this.rng, this.arena);
+    // A throw or a big hit can carry someone a metre in one step: never leave them stood inside a bin or a box.
+    for (const f of this.fighters) if (!f.anchored && this.arena.blocked(f.pos.x, f.pos.z, BODY_RADIUS * 0.7)) this.arena.clamp(f.pos, undefined, f.team === 'neutral');
 
     for (const f of this.fighters) f.updateVitals(this.frame, this.bus);
   }

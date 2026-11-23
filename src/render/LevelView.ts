@@ -4225,6 +4225,8 @@ export class LevelView {
       else if (it.kind === 'item') this.marker.hide();
       // Someone you could mug: a ring round their feet, red (it's a crime).
       else if (it.kind === 'mug') this.marker.show(it.x, it.z, 0.32, 0.26, true);
+      // Someone with a job, or at the far end of yours: a ring round their feet.
+      else if (it.kind === 'job') this.marker.show(it.x, it.z, 0.32, 0.26, false);
       else {
         const p = this.nearestProp(it.x, it.z);
         if (p) {

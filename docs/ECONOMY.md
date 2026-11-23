@@ -23,6 +23,7 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 - **Medicine is the fighter's heal; food is for hunger.** Food heals about 0.6 health per point of hunger it fills, and you can't eat at hunger 95 or more. Plasters (£3, +35, treats bruising) and first aid (£10, 60%, treats your worst injury) work whenever, and heal more per pound than any food.
 - **Being nicked costs, but it can't ruin you.** The fine is 15% of the cash on you plus 5% of the bank, at least £25. It's capped at £500 + £100 a level, and never more than you have.
 - **The casino is a place to spend money, never to make it.** Every game pays back less than it takes (`tests/economy.test.ts` works out each one). Slots return about 81%, roulette 97%, the prize draw about 78%, and the motor competition 75% (`HOUSE_RETURN`): its odds are set by the prize's value, so the Phantom is 1 in about 4,900.
+- **Jobs pay like a few fights, for the trip.** An ordinary job pays about £70–£150 at level 1 (sort someone out £70 + £9 a level, getting something back £80, a delivery £50; a debt pays 30% of what's owed plus £20; a deal buys at £90 + £15 a level and sells at 1.55–1.8 times that), times 1.3 per point of a town's threat, times your standing with the contact (1, 1.15, 1.3, 1.5). A contact's own chain jobs pay 2–3 times as much and give an item. One job at a time and a walk or cab each way keep it below farming fights.
 - **Only your biggest bag counts.** Shops won't sell you a bag no bigger than one you already own.
 
 ## Where the numbers live
@@ -41,3 +42,4 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 | Bail, court fines, settling up at the front counter | `src/progress/record.ts` |
 | Bungs, Kerrigan's paperwork and favours, what you owe crew who bail you out | `src/progress/cops.ts` |
 | Casino | `src/property/casino.ts` |
+| Jobs: pay, heat, standing, boards and chains | `jobPay`, `jobHeat`, `TIERS` in `src/jobs/jobs.ts`; chains in `src/jobs/contacts.ts` |

@@ -230,7 +230,9 @@ export type StationId =
   | 'computer' | 'train' | 'style_coach' | 'style_drill' | 'recruit' | 'gym_counter'
   | 'fridge' | 'cupboard' | 'cooker' | 'sink' | 'dining' | 'tv' | 'shower' | 'toilet' | 'basin' | 'bed' | 'bath_cabinet'
   // Jewellery and property
-  | 'jeweller_counter' | 'jeweller_case' | 'agent_desk' | 'agent_window' | 'prop_info' | 'prop_rest';
+  | 'jeweller_counter' | 'jeweller_case' | 'agent_desk' | 'agent_window' | 'prop_info' | 'prop_rest'
+  // Someone who gives out jobs (`tab` is their id, src/jobs/contacts.ts)
+  | 'contact';
 
 /** A non-hostile character standing at a station (shopkeepers, barmen). */
 export interface NpcDef {

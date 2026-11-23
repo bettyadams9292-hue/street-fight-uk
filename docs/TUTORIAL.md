@@ -52,6 +52,7 @@ Inputs are keyboard / pad / touch. Unless a row says "(info)" or "(hint)", the l
 | Injuries | `injury` event | none | after a fight | any | B: Injuries (hint) | first injury | B |
 | Heat, police, custody, bail | `progress/heat.ts`, `cops.ts`, `custody.ts` | none | police heat > 0 | any | C: Heat (hint on first heat), C: Old Bill (on the first police arrival) | read | C |
 | Crew | `companions/` | USE in the pub | a hire is open | the Red Lion | C: Crew (hint when first hired) | read | C |
+| Jobs | `src/jobs/`, `ui/jobsUI.ts` | USE at a contact | a contact | the Red Lion, High Street, Hollins, Back Alleys | B: Jobs (hint at the first contact) | read | B |
 | Property | `realty/` | USE at Keys & Co | Riverside Centre | later | C: Property (hint at the agent) | read | C |
 | Bikes | `world/streetBikes.ts` | USE on a bike | bike racks | streets | C: Bikes (hint on the first bike) | read | C |
 | Business | `business/` | the basement | basement unlocked | later | C: The basement (hint on the first visit) | read | C |

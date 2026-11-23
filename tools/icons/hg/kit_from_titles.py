@@ -7,7 +7,7 @@ owner's cut-out sheets (cut1/, cut3/) aren't to hand, then set new buttons in it
 
 Each slug is written to public/art/titles/<slug>.webp at the set's height (144 px); add it to TITLE_SLUGS in
 src/ui/titles.ts. Look at the result: the letters are cut automatically, and PICK below says which cut of each
-letter reads best (checked by eye on 21 Nov 2026). B, F, K, Q, Z and ! are put together by hgtype.py.
+letter reads best (checked by eye on 21 Nov 2026). B, F, J, K, Q, Z and ! are put together by hgtype.py.
 """
 import os
 import shutil

@@ -106,7 +106,8 @@ export function audit(area: AreaId, level: number, who: keyof typeof PLAYERS, se
       }
       w.step(cmd);
       f++;
-      const foes = w.sim.fighters.filter((x: Fighter) => x !== me && x.team !== me.team && !x.isKO);
+      // Who you're fighting: not passers-by, shopkeepers or contacts stood about (they're neutral).
+      const foes = w.sim.fighters.filter((x: Fighter) => x !== me && x.team !== me.team && x.team !== 'neutral' && !x.isKO);
       let attacking = 0;
       for (const x of foes) {
         enemyFrames++;

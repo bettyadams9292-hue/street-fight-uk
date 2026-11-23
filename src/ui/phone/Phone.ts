@@ -18,6 +18,7 @@ import { ARREST_HEAT } from '../../world/robbery';
 import { coolPrice, gearBackPrice } from '../../progress/cops';
 import { kerriganCool, kerriganGearBack, seizedValue, type Favour } from '../../world/custody';
 import { wikiApp, type WikiDeps, type WikiPage } from './wikiApp';
+import { CONTACT_IDS, CONTACTS, contactOpen, failJob, objectiveOf, standingWith, tierOf, timeLeft, type ActiveJob } from '../../jobs/jobs';
 import type { Device } from '../moveList';
 
 export interface PhoneMessage {
@@ -582,22 +583,77 @@ export class Phone {
     return out;
   }
 
+  /** Armed by the first tap on "Drop the job" (the second drops it). */
+  private dropArmed = false;
+
   private jobs(): HTMLElement[] {
     const p = this.d.progress()!;
     const dest = p.save.destination;
-    const out: HTMLElement[] = [
-      h('div', { class: 'ph-sec', text: 'Now' }),
-      h('div', { class: 'ph-card ph-job' }, h('b', { text: this.d.objective() || 'Nothing on. Have a look round.' })),
-      h('div', { class: 'ph-sec', text: 'Mo says' }),
-      h('div', { class: 'ph-bubble solo' }, h('p', { text: moHint(p) })),
-    ];
+    const j = p.save.jobs.active;
+    const out: HTMLElement[] = [];
+    if (j) {
+      const left = timeLeft(p);
+      const to = this.jobArea(j);
+      out.push(
+        h('div', { class: 'ph-sec', text: 'On a job' }),
+        h('div', { class: 'ph-card ph-job' },
+          h('b', { text: j.title }),
+          h('span', { text: `For ${j.giver}` }),
+          h('p', { text: `${objectiveOf(j)}${left !== null ? `. ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} left.` : '.'}` }),
+          h('div', { class: 'ph-actions' },
+            h('button', { class: 'ph-btn', onclick: () => {
+              this.d.setDestination(to);
+              this.go('map');
+            } }, 'Directions'),
+            h('button', { class: `ph-btn${this.dropArmed ? ' danger' : ''}`, onclick: () => {
+              if (!this.dropArmed) {
+                this.dropArmed = true;
+                return this.go('jobs');
+              }
+              this.dropArmed = false;
+              failJob(p, 'dropped');
+              this.d.saved();
+              this.go('jobs');
+            } }, this.dropArmed ? 'Tap again to drop it' : 'Drop the job'),
+          ),
+        ),
+      );
+    }
+    out.push(
+      h('div', { class: 'ph-sec', text: j ? 'The story' : 'Now' }),
+      h('div', { class: 'ph-card ph-job' }, h('b', { text: j ? moHint(p) : this.d.objective() || 'Nothing on. Have a look round.' })),
+    );
+    if (!j) out.push(h('div', { class: 'ph-sec', text: 'Mo says' }), h('div', { class: 'ph-bubble solo' }, h('p', { text: moHint(p) })));
     if (dest && LEVELS[dest]) {
       out.push(h('div', { class: 'ph-sec', text: 'Heading to' }), h('div', { class: 'ph-row' },
         h('div', { class: 'ph-what' }, h('b', { text: place(dest).name }), h('span', { text: place(dest).district })),
         h('button', { class: 'ph-btn', onclick: () => this.go('map') }, 'Map'),
       ));
     }
+    // Who gives out work, where to find them, and how you stand with them.
+    out.push(h('div', { class: 'ph-sec', text: 'Contacts' }));
+    for (const id of CONTACT_IDS) {
+      const c = CONTACTS[id];
+      const open = contactOpen(p, id);
+      const met = p.save.jobs.met.includes(id);
+      const tier = tierOf(standingWith(p, id));
+      out.push(h('div', { class: 'ph-row ph-contact' },
+        h('div', { class: 'ph-what' }, h('b', { text: `${c.name} · ${c.role}` }), h('span', { text: open ? c.where : `${c.where}. Not open to you yet.` })),
+        open ? h('span', { class: 'ph-standing', text: met ? tier.name : 'Not met' }) : null,
+        open ? h('button', { class: 'ph-btn', onclick: () => {
+          this.d.setDestination(c.area);
+          this.go('map');
+        } }, 'Map') : null,
+      ));
+    }
+    out.push(h('p', { class: 'ph-empty', text: 'Walk up to a contact and press USE to see their work. Now and then someone on the street needs a hand too: look for the yellow mark.' }));
     return out;
+  }
+
+  /** Where the job takes you next: the target's street, or back to whoever gave it. */
+  private jobArea(j: ActiveJob): AreaId {
+    if (j.stage === 'back' && j.from !== 'street') return CONTACTS[j.from].area;
+    return j.area;
   }
 
   private house(): HTMLElement[] {

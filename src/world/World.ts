@@ -37,6 +37,8 @@ import { TutorialBrain, type LessonMode } from '../ai/TutorialBrain';
 import type { ItemStack } from '../items/Inventory';
 import { ITEMS, weaponItemId } from '../items/items';
 import { hash01 } from '../realty/catalogue';
+import { checkJob, completeJob, jobStep, objectiveOf, spotIn, streetJob, STREET_CHANCE, TARGET_ARCH, timeLeft, type ActiveJob, type Job, type JobPaid } from '../jobs/jobs';
+import { onStrip } from './strip';
 import { HOTBAR_COOLDOWN, hotbarView, refillHotbar, type HotbarSlot } from '../items/hotbar';
 import { bossDropValue, lootTableFor, rollLoot } from '../items/loot';
 import type { AreaId, Progress } from '../progress/Progress';
@@ -118,6 +120,13 @@ export interface WorldEvents {
   'gang:beaten': { district: string; gang: number };
   /** You walked into a district where people know your face from muggings. */
   'known:face': { district: string };
+  /** Someone on the street has a job for you (src/jobs): Game shows what it is. */
+  'job:offer': { job: Job; name: string };
+  /** The job's moved on: you've done the hard part, now go back (`back`), or it's on the clock. */
+  'job:step': { job: ActiveJob; text: string };
+  /** Done and paid where it happened (a delivery, a deal, a street job). */
+  'job:done': { paid: JobPaid; text: string };
+  'job:failed': { text: string };
   'duel:start': { kind: 'spar' | 'challenge'; name: string };
   'duel:end': { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
 }
@@ -245,7 +254,9 @@ export type Interactable =
   | { kind: 'station'; x: number; z: number; label: string; station: StationDef; closed: boolean }
   | { kind: 'item'; x: number; z: number; label: string; item: GroundItem }
   | { kind: 'container'; x: number; z: number; label: string; container: ContainerDef; empty: boolean }
-  | { kind: 'mug'; x: number; z: number; label: string; target: Fighter };
+  | { kind: 'mug'; x: number; z: number; label: string; target: Fighter }
+  /** The passer-by with a job, or the person at the far end of yours (the debtor, the recipient, the buyer). */
+  | { kind: 'job'; x: number; z: number; label: string; f: Fighter; role: 'giver' | 'target' };
 
 /**
  * One area of the world running live: the level's collision, the player,
@@ -324,6 +335,239 @@ export class World {
 
   /** Mo, in the home gym. */
   sparPartner: Fighter | null = null;
+
+  // ---- jobs (src/jobs) ----------------------------------------------------------------------------------------
+
+  /** Who's at the far end of the job you're on, here: the one you're after and their mates. */
+  readonly jobFolk: { f: Fighter; role: 'target' | 'mate'; arch: ArchetypeId; hostile: boolean }[] = [];
+  /** Someone on the street with a job for you (and whether they've said hello yet). */
+  jobGiver: { f: Fighter; said: boolean } | null = null;
+  private jobDone = false;
+  private jobCheckAt = 0;
+
+  /** Somewhere to stand along the back of the street, clear of what's there. */
+  private standSpot(x: number, i: number): { x: number; z: number } {
+    const b = this.arena.bounds;
+    return this.freeSpot(x + (i === 0 ? 0 : (i % 2 ? 1 : -1) * (0.8 + Math.floor((i - 1) / 2) * 0.8)), b.minZ + 0.45 + (i ? 0.25 : 0));
+  }
+
+  /** Someone stood waiting: neutral, still, not in the fight (yet). */
+  private standStill(f: Fighter): void {
+    f.team = 'neutral';
+    this.enemies = this.enemies.filter((e) => e !== f);
+    this.tokens.release(f);
+    const brain = new DummyBrain(f, this.sim.rng);
+    brain.mode = 'stand';
+    this.brains.set(f, brain);
+  }
+
+  /** The job you're on is here and not done: put them where they're meant to be. */
+  setUpJob(): void {
+    const j = this.progress.save.jobs.active;
+    if (!j || j.stage !== 'go' || j.area !== this.level.id || this.jobFolk.length) return;
+    this.jobDone = false;
+    const rng = new Rng(j.seed);
+    const pick = <T,>(l: readonly T[]) => l[Math.floor(rng.next() * l.length) % l.length];
+    const fighter = j.kind === 'sort' || j.kind === 'recover';
+    const arch: ArchetypeId = fighter ? pick(TARGET_ARCH.sort) : j.kind === 'deliver' ? 'casual' : 'thug';
+    const spot = this.standSpot(j.x, 0);
+    const look = j.body === 'female' || !fighter ? { ...randomAppearance(() => rng.next(), j.body), accessories: [] } : undefined;
+    const t = this.spawnEnemy(arch, spot.x, spot.z, undefined, j.target, look);
+    t.tag = j.kind === 'deliver' ? 'Waiting for a parcel' : j.kind === 'deal' ? 'Buyer' : j.kind === 'debt' ? `Owes £${j.owed}` : 'Your target';
+    this.standStill(t);
+    t.facing = t.pos.x > this.player.pos.x ? -1 : 1;
+    this.jobFolk.push({ f: t, role: 'target', arch, hostile: false });
+    if (j.kind === 'deliver') return;
+    for (let i = 0; i < j.mates; i++) {
+      const a = pick(TARGET_ARCH.mate);
+      const sp = this.standSpot(j.x, i + 1);
+      const m = this.spawnEnemy(a, sp.x, sp.z);
+      this.standStill(m);
+      m.facing = t.facing;
+      this.jobFolk.push({ f: m, role: 'mate', arch: a, hostile: false });
+    }
+  }
+
+  /** On a street (not inside, not home), sometimes: someone with a job, stood against the wall, waving you over. */
+  private setUpStreetGiver(): void {
+    const id = this.level.id;
+    const p = this.progress;
+    if (!onStrip(id) || this.level.deep || p.save.jobs.active || p.has(`streetjob:${id}:${p.save.trips}`)) return;
+    // Not while you're still learning the ropes.
+    if (!p.save.tutorial.essentialDone) return;
+    if (hash01(`streetgiver:${id}:${p.save.trips}`) >= STREET_CHANCE) return;
+    const r = new Rng(Math.floor(hash01(`giverlook:${id}:${p.save.trips}`) * 1e6) + 3);
+    const body = r.next() < 0.4 ? 'female' : 'male';
+    const names = body === 'female' ? GRUNT_NAMES.female : GRUNT_NAMES.male;
+    const name = names[Math.floor(r.next() * names.length) % names.length];
+    const spot = this.standSpot(spotIn(id, () => r.next()), 0);
+    const look: CharacterAppearance = { ...randomAppearance(() => r.next(), body), accessories: [] };
+    const f = new Fighter({ id: this.nextId++, name, team: 'neutral', attributes: defaultAttributes(5), style: getStyle('street'), x: spot.x, z: spot.z, appearance: look });
+    f.tag = 'Needs a hand';
+    f.facing = f.pos.x > this.player.pos.x ? -1 : 1;
+    this.sim.add(f);
+    this.standStill(f);
+    this.jobGiver = { f, said: false };
+  }
+
+  /** Who to put a badge over: someone with a job, and who you're after (till they're down or it's done). */
+  jobMarks(): { f: Fighter; kind: 'giver' | 'target' }[] {
+    const out: { f: Fighter; kind: 'giver' | 'target' }[] = [];
+    const g = this.jobGiver;
+    if (g && !this.leaving.has(g.f) && !g.f.isKO) out.push({ f: g.f, kind: 'giver' });
+    const t = this.jobFolk.find((x) => x.role === 'target');
+    if (t && !this.jobDone && !t.f.isKO && !this.leaving.has(t.f) && this.progress.save.jobs.active) out.push({ f: t.f, kind: 'target' });
+    return out;
+  }
+
+  /** The people in a job you can talk to right now. */
+  private jobOptions(): Interactable[] {
+    const out: Interactable[] = [];
+    const g = this.jobGiver;
+    if (g && !g.f.isKO && g.f.team === 'neutral' && !this.leaving.has(g.f)) out.push({ kind: 'job', x: g.f.pos.x, z: g.f.pos.z, label: `Talk to ${g.f.name}: needs a hand`, f: g.f, role: 'giver' });
+    const j = this.progress.save.jobs.active;
+    const t = this.jobFolk.find((x) => x.role === 'target');
+    if (j && t && !t.hostile && !t.f.isKO && !this.jobDone && !this.leaving.has(t.f)) {
+      const label = j.kind === 'debt' ? `Lean on ${j.target}: owes £${j.owed}` : j.kind === 'deliver' ? `Hand ${j.target} the parcel` : j.kind === 'deal' ? `Sell ${j.target} the package: £${j.cash}` : null;
+      if (label) out.push({ kind: 'job', x: t.f.pos.x, z: t.f.pos.z, label, f: t.f, role: 'target' });
+    }
+    return out;
+  }
+
+  private say(f: Fighter, lines: readonly string[]): void {
+    this.events.emit('enemy:say', { fighter: f, text: lines[Math.floor(this.lootRng.next() * lines.length) % lines.length], kind: 'taunt' });
+  }
+
+  /** They've had enough talking: everyone at the far end of the job squares up. */
+  private jobSquareUp(): void {
+    for (const x of this.jobFolk) {
+      if (x.hostile || x.f.isKO) continue;
+      x.hostile = true;
+      x.f.team = 'enemy';
+      this.brains.set(x.f, this.enemyBrain(x.f, { ...ARCHETYPES[x.arch] }));
+      this.archetypeOf.set(x.f, x.arch);
+      this.enemies.push(x.f);
+      if (x.role === 'target') x.f.tag = 'Your target';
+    }
+    for (const c of this.civilians) c.brain.react(this.player.pos.x, this.sim.frame);
+  }
+
+  private talkJob(f: Fighter, role: 'giver' | 'target'): void {
+    const p = this.progress;
+    if (role === 'giver') {
+      this.events.emit('job:offer', { job: streetJob(p, this.level.id, f.name), name: f.name });
+      return;
+    }
+    const j = p.save.jobs.active;
+    if (!j || this.jobDone) return;
+    f.facing = this.player.pos.x < f.pos.x ? -1 : 1;
+    if (j.kind === 'deliver') {
+      this.say(f, ['About time. Here, for your trouble.', 'Lovely. Nobody followed you?', 'Cheers. Now forget my face.']);
+      this.finishJob();
+      this.walkOff(f);
+      return;
+    }
+    if (j.kind === 'debt') {
+      if (j.fights) {
+        this.say(f, ['I’m not paying a penny. Lads!', 'You and whose army?', 'Tell Bev she can whistle for it.', 'Get him!']);
+        this.jobSquareUp();
+        return;
+      }
+      this.say(f, ['Alright, alright! Here, it’s all there.', 'I was going to pay, honest! Take it.', 'Don’t hurt me. Here.']);
+      this.collected();
+      this.walkOff(f);
+      return;
+    }
+    if (j.kind === 'deal') {
+      if (j.fights) {
+        this.say(f, ['Tell you what: I’ll have it for free.', 'Nice. Now hand it over, and you walk away.', 'Lads, he’s on his own.']);
+        this.jobSquareUp();
+        return;
+      }
+      this.say(f, ['Sound. Pleasure doing business.', 'Cash is all there. Count it if you like.', 'Same again next week, yeah?']);
+      this.finishJob();
+      this.walkOff(f);
+    }
+  }
+
+  /** The debt's in your hand: back to whoever's owed it (or paid now, for a street job). */
+  private collected(): void {
+    const j = this.progress.save.jobs.active;
+    if (!j) return;
+    this.jobDone = true;
+    if (jobStep(this.progress) === 'back') this.events.emit('job:step', { job: j, text: `Got the £${j.owed}. Take it back to ${j.giver.split(' ')[0]}.` });
+    else this.finishJob();
+  }
+
+  /** Paid where it happened. Anything you've no room for is left at your feet. */
+  private finishJob(): void {
+    const p = this.progress;
+    const j = p.save.jobs.active;
+    if (!j) return;
+    this.jobDone = true;
+    const paid = completeJob(p);
+    if (!paid) return;
+    for (const o of paid.over) this.dropOnGround(p.newStack(o.id, o.qty), this.player.pos.x, this.player.pos.z + 0.2);
+    if (paid.levels > 0) {
+      this.player.stats.level = p.save.level;
+      this.events.emit('level:up', { level: p.save.level });
+    }
+    this.events.emit('job:done', { paid, text: `${paid.title}: done. £${paid.cash} and ${paid.xp} XP${paid.items.length ? `, plus ${paid.items.map((id) => ITEMS[id]?.name ?? id).join(', ')}` : ''}.` });
+  }
+
+  /** A street job taken: they're off, and they won't be back on this trip. */
+  giverTook(): void {
+    const g = this.jobGiver;
+    this.progress.set(`streetjob:${this.level.id}:${this.progress.save.trips}`);
+    if (g) {
+      this.say(g.f, ['Cheers. I owe you one.', 'Nice one. Don’t let me down.', 'Brilliant. I’ll be waiting.']);
+      this.walkOff(g.f);
+    }
+    this.jobGiver = null;
+    this.setUpJob();
+  }
+
+  /** Every frame: the job's people react to you, and what happens to them moves the job on. */
+  private updateJob(): void {
+    const p = this.player;
+    const g = this.jobGiver;
+    if (g && !g.said && !this.inFight && Math.abs(g.f.pos.x - p.pos.x) < 6) {
+      g.said = true;
+      g.f.facing = p.pos.x < g.f.pos.x ? -1 : 1;
+      this.say(g.f, ['Oi! You look like you can handle yourself.', 'Here, mate. Got a minute? I’ll pay.', 'Excuse me! You look like you could help me out.']);
+    }
+    const frame = this.sim.frame;
+    if (frame >= this.jobCheckAt) {
+      this.jobCheckAt = frame + 30;
+      const before = this.progress.save.jobs.active;
+      const stage = before?.stage;
+      const failed = checkJob(this.progress);
+      if (failed) this.events.emit('job:failed', { text: failed });
+      const j = this.progress.save.jobs.active;
+      // Picked up what you came for: back you go (or paid, for a street job).
+      if (j && stage === 'go' && j.stage === 'back') this.events.emit('job:step', { job: j, text: `Got the ${ITEMS[j.item!]?.name.toLowerCase()}. Take it back to ${j.giver.split(' ')[0]}.` });
+      if (j && j.kind === 'recover' && j.from === 'street' && p && this.progress.save.inventory.some((x) => x.id === j.item)) this.finishJob();
+    }
+    const j = this.progress.save.jobs.active;
+    if (!j || !this.jobFolk.length || this.jobDone) return;
+    const t = this.jobFolk.find((x) => x.role === 'target');
+    if (!t) return;
+    // Sorting someone out, or taking something off them: they see you coming.
+    if ((j.kind === 'sort' || j.kind === 'recover') && !t.hostile && !p.isKO && Math.abs(t.f.pos.x - p.pos.x) < 5.5 && Math.abs(t.f.pos.z - p.pos.z) < 3) {
+      this.say(t.f, j.kind === 'sort' ? ['Who sent you? Come on then!', 'You’ve got the wrong street, pal.', 'Here he is. Get him, lads!'] : ['It’s mine now. Want it? Come and get it.', 'Finders keepers, mate.', 'Not a chance. Lads!']);
+      this.jobSquareUp();
+    }
+    if (!t.f.isKO || !t.hostile) return;
+    this.jobDone = true;
+    if (j.kind === 'sort') {
+      if (jobStep(this.progress) === 'back') this.events.emit('job:step', { job: j, text: `${j.target}’s sorted. Go back to ${j.giver.split(' ')[0]} for your money.` });
+      else this.finishJob();
+    } else if (j.kind === 'recover' && j.item) {
+      this.dropOnGround(this.progress.newStack(j.item, 1), t.f.pos.x, t.f.pos.z + 0.3);
+      this.events.emit('job:step', { job: j, text: `${j.target} dropped the ${ITEMS[j.item]?.name.toLowerCase()}. Pick it up.` });
+    } else if (j.kind === 'debt') this.collected();
+    else if (j.kind === 'deal') this.finishJob();
+  }
 
   // ---- your crew ---------------------------------------------------------------------
 
@@ -904,6 +1148,9 @@ export class World {
       if (s.id === 'sparring') this.spawnSparringPartner(s);
       if (s.npc) this.spawnNpc(s);
     }
+    // Jobs: the people at the far end of the one you're on, and maybe someone on the street with one for you.
+    this.setUpJob();
+    if (opts.civilians !== false) this.setUpStreetGiver();
 
     if (opts.home) {
       this.homeLife = new HomeLife(level, this.arena, () => this.crewRng.next(), (f, text) => {
@@ -1108,6 +1355,12 @@ export class World {
       if (a.bossDef) return `Beat ${a.bossDef.name}`;
       return a.def.lock ? 'Clear the area' : 'Deal with them';
     }
+    // On a job: that's what you're doing (the phone's Jobs app still shows the story).
+    const job = this.progress.save.jobs.active;
+    if (job) {
+      const t = timeLeft(this.progress);
+      return `${objectiveOf(job)}${t !== null ? ` (${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')})` : ''}`;
+    }
     const next = this.encounters.find((e) => e.status === 'waiting' && !e.def.optional && e.def.objective);
     if (next) return next.def.objective!;
     // Every fight here is won. If the way on needs more than that, say what, instead of the old "beat the boss" line.
@@ -1228,6 +1481,7 @@ export class World {
     this.updateEncounters();
     this.updatePolice();
     this.updateHunt();
+    this.updateJob();
     this.cleanUpKOs();
     this.updateCompanion();
     this.updateInjuries();
@@ -1831,7 +2085,7 @@ export class World {
     };
   }
 
-  spawnEnemy(id: ArchetypeId, x: number, z: number, weapon?: WeaponId, name?: string): Fighter {
+  spawnEnemy(id: ArchetypeId, x: number, z: number, weapon?: WeaponId, name?: string, look?: CharacterAppearance): Fighter {
     ({ x, z } = this.freeSpot(x, z));
     const a = this.toughened(ARCHETYPES[id], id);
     // Grunts get a first name (picked from their id, so the same fight names the same lads), with
@@ -1848,7 +2102,7 @@ export class World {
       secondaryStyle: a.secondaryStyle ? getStyle(a.secondaryStyle) : null,
       x,
       z,
-      appearance: archetypeAppearance(a, this.nextId * 7919 + this.level.id.length),
+      appearance: look ?? archetypeAppearance(a, this.nextId * 7919 + this.level.id.length),
       weapon: weapon ?? a.weapon ?? null,
     });
     if (named) f.tag = a.name;
@@ -2095,6 +2349,7 @@ export class World {
       if (npc && (npc.team !== 'neutral' || npc.isKO)) continue;
       options.push({ kind: 'station', x: s.x, z: s.z, label: s.label, station: s, closed: !!s.shop && !this.progress.isShopOpen(s.shop) });
     }
+    for (const o of this.jobOptions()) options.push(o);
     for (const it of this.items) {
       const d = ITEMS[it.stack.id];
       options.push({ kind: 'item', x: it.x, z: it.z, label: `Pick up ${d.name.toLowerCase()}${it.stack.qty > 1 ? ` ×${it.stack.qty}` : ''}`, item: it });
@@ -2110,6 +2365,7 @@ export class World {
       const oz = o.kind === 'exit' ? Math.max(this.arena.bounds.minZ, Math.min(o.z, p.pos.z)) : o.z;
       let d = Math.hypot(ox - p.pos.x, (oz - p.pos.z) * 1.2);
       if (o.kind === 'container' && o.empty) d += 0.4; // prefer something useful
+      if (o.kind === 'job') d -= 0.25; // the person you came to see, over a door behind them
       if (d > range || d >= bestD) continue;
       // No using things through walls.
       if (d > 0.05 && this.arena.lineBlocked(p.pos.x, p.pos.z, ox, oz)) continue;
@@ -2257,6 +2513,9 @@ export class World {
         return;
       case 'mug':
         this.mug(it.target);
+        return;
+      case 'job':
+        this.talkJob(it.f, it.role);
         return;
       case 'container':
         if (it.container.requires && !this.progress.has(it.container.requires)) {

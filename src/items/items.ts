@@ -93,6 +93,8 @@ export interface ItemDef {
   store?: 'fridge' | 'cupboard';
   /** A cooking ingredient (not eaten on its own). */
   ingredient?: boolean;
+  /** Carried for a job (src/jobs): can't be sold, dropped or stashed, and goes when the job does. */
+  jobItem?: boolean;
 }
 
 const defs: ItemDef[] = [];
@@ -356,6 +358,16 @@ quest('lockup_key', 'Lock-up key', 'key', 'Opens a garage lock-up on the estate.
 quest('vip_pass', 'VIP pass', 'card', 'Gets you past the door of the Neon Mile clubs.', 'has_vip_pass');
 quest('dunc_phone', 'Dunc’s burner phone', 'phone', 'One contact saved: "THE BOSS". Big Dunc wasn’t at the top.', 'has_dunc_phone');
 quest('stadium_key', 'Stadium service key', 'key', 'Opens the service tunnel under the football ground.', 'has_stadium_key');
+
+// ---- carried for a job (src/jobs): `questFlag` keeps them out of shops, the floor and the stash ------------
+const job = (id: string, name: string, icon: IconKind, colour: string, text: string) =>
+  add({ id, name, text, category: 'quest', rarity: 'uncommon', value: 0, icon, colour, questFlag: 'job_item', unsellable: true, jobItem: true });
+job('job_parcel', 'Taped-up parcel', 'bag', '#b08a5a', 'Brown paper and a lot of tape. Don’t shake it, don’t open it, don’t be late.');
+job('job_package', 'Wrapped package', 'bag', '#3a3a3a', 'Bought off Kez to sell on. If the police find it on you, it’s gone and so are you.');
+job('job_phones', 'Box of phones', 'phone', '#2a2a2e', 'A box of brand-new phones, still sealed. Not yours.');
+job('job_ledger', 'Little black book', 'document', '#1b1b1b', 'Names, numbers and amounts. Someone would very much like it back.');
+job('job_ring', 'Gold ring', 'ring', '#d4af37', 'An old gold band, worn thin. It means a lot to someone.');
+job('job_keys', 'Van keys', 'key', '#c9ccd2', 'Keys to a van that somebody wants back, with whatever’s in it.');
 
 // ---- misc ------------------------------------------------------------------------------------
 add({ id: 'scrap_metal', name: 'Scrap metal', text: 'Copper pipe and bits. The pawn shop takes it by weight.', category: 'misc', rarity: 'common', value: 6, stack: 10, icon: 'scrap', colour: '#b87333' });
