@@ -15,7 +15,7 @@ import type { InputSource } from '../input/InputManager';
 import type { Progress } from '../progress/Progress';
 import type { World } from '../world/World';
 import { control, controlTarget, type Action } from './controls';
-import { CHAPTERS, HINTS, type ChapterDef, type Ctx, type HintDef, type StepDef, type TutEvent } from './lessons';
+import { CHAPTERS, GUIDES, HINTS, type ChapterDef, type Ctx, type HintDef, type StepDef, type TutEvent } from './lessons';
 import { LessonOverlay, type LessonView } from './overlay';
 import { ALL_HINTS, type TutorialSave } from './state';
 
@@ -65,9 +65,9 @@ export class TutorialManager {
 
   /** The chapter and step running now (a replay first, then the save's own run), or null. */
   private current(): { chapter: ChapterDef; step: StepDef; index: number } | null {
-    const at = this.replay ?? this.save?.active ?? null;
+    const at = this.replay ?? this.save?.active ?? this.save?.guide ?? null;
     if (!at) return null;
-    const chapter = CHAPTERS.find((c) => c.id === at.chapter);
+    const chapter = CHAPTERS.find((c) => c.id === at.chapter) ?? GUIDES.find((c) => c.id === at.chapter);
     const step = chapter?.steps[at.step];
     return chapter && step ? { chapter, step, index: at.step } : null;
   }
@@ -115,6 +115,10 @@ export class TutorialManager {
       ev.on('injury', ({ who }) => who === 'you' && this.feed({ type: 'injury' })),
       ev.on('level:up', () => this.feed({ type: 'levelup' })),
       ev.on('police:arrive', () => this.feed({ type: 'police' })),
+      ev.on('hotbar:used', () => this.feed({ type: 'hotbar' })),
+      ev.on('job:step', () => this.feed({ type: 'job', stage: 'step' })),
+      ev.on('job:done', () => this.feed({ type: 'job', stage: 'done' })),
+      ev.on('job:failed', () => this.feed({ type: 'job', stage: 'failed' })),
     ];
   }
 
@@ -123,7 +127,25 @@ export class TutorialManager {
     const c = this.current();
     const ctx = this.ctx();
     if (c && ctx && 'on' in c.step.done && c.step.done.on === e.type && this.ready(c.step, ctx) && (!c.step.done.test || c.step.done.test(e, ctx))) this.complete();
+    else if (!c) for (const g of GUIDES) if (g.start && 'on' in g.start && g.start.on === e.type && (!g.start.test || g.start.test(e)) && this.startGuide(g.id, false)) break;
     this.offerHints(e);
+  }
+
+  /**
+   * Start a guide: on its own the first time you meet its thing (once the first-run lessons are done, hints on, and
+   * not already done or skipped), or from Pause → Tutorials (`asked`). False if it didn't start.
+   */
+  startGuide(id: string, asked: boolean): boolean {
+    const s = this.save;
+    const g = GUIDES.find((x) => x.id === id);
+    if (!s || !g) return false;
+    if (!asked && (!s.essentialDone || s.active || s.guide || this.replay || !this.host.hintsOn() || s.completed.includes(id) || s.skipped.includes(id))) return false;
+    if (asked && (s.active || this.replay)) return false;
+    s.guide = { chapter: id, step: 0 };
+    this.hint = null;
+    this.resetStep();
+    this.host.save();
+    return true;
   }
 
   // ---- each frame --------------------------------------------------------------------------
@@ -203,6 +225,16 @@ export class TutorialManager {
     const c = this.current();
     if (!c) return;
     if (!this.replay && c.chapter.id === 'first-steps' && c.index === 0) return this.skipAll();
+    // A guide's first card: not now, thanks (it's in Pause → Tutorials if you want it later).
+    const s = this.save;
+    if (!this.replay && s?.guide?.chapter === c.chapter.id && c.index === 0) {
+      if (!s.skipped.includes(c.chapter.id)) s.skipped.push(c.chapter.id);
+      s.guide = null;
+      this.resetStep();
+      this.overlay.clear();
+      this.host.save();
+      return;
+    }
     this.advance(false);
   }
 
@@ -215,7 +247,7 @@ export class TutorialManager {
   private advance(done: boolean): void {
     const c = this.current();
     if (!c) return;
-    const at = this.replay ?? this.save!.active!;
+    const at = this.replay ?? this.save!.active ?? this.save!.guide!;
     const s = this.save!;
     const id = `${c.chapter.id}/${c.step.id}`;
     if (!this.replay) (done ? s.completed : s.skipped).includes(id) || (done ? s.completed : s.skipped).push(id);
@@ -240,6 +272,12 @@ export class TutorialManager {
     }
     const s = this.save!;
     if (!s.completed.includes(ch.id)) s.completed.push(ch.id);
+    // A guide: done, and play carries on (nothing follows it).
+    if (s.guide?.chapter === ch.id) {
+      s.guide = null;
+      this.host.save();
+      return;
+    }
     // The old first-fight prompts aren't needed once Mo's taught you.
     if (ch.id === 'learning-to-fight') p?.set('coach:done');
     const i = CHAPTERS.findIndex((c) => c.id === ch.id);
@@ -289,7 +327,7 @@ export class TutorialManager {
 
   /** Go through a chapter again (from Pause → Tutorials). Replays never pay anything and change nothing kept. */
   replayChapter(id: string): void {
-    if (!CHAPTERS.some((c) => c.id === id)) return;
+    if (!CHAPTERS.some((c) => c.id === id) && !GUIDES.some((c) => c.id === id)) return;
     this.replay = { chapter: id, step: 0 };
     this.resetStep();
   }
@@ -332,6 +370,8 @@ export class TutorialManager {
     this.pollAt = this.time + 1;
     const s = this.save;
     if (!s || !s.essentialDone || !this.host.hintsOn()) return;
+    // A guide whose moment has come (never in a fight: it waits till it's over).
+    if (!ctx.world.fightOn && !this.hint) for (const g of GUIDES) if (g.start && 'poll' in g.start && !s.completed.includes(g.id) && !s.skipped.includes(g.id) && g.start.poll(ctx.progress, ctx.world) && this.startGuide(g.id, false)) return;
     for (const def of HINTS) if ('poll' in def.when && !this.seen(def.id) && def.when.poll(ctx.progress, ctx.world)) this.queue(def);
     if (!this.hint && this.hintQueue.length && !ctx.world.fightOn) {
       const def = this.hintQueue.shift()!;
@@ -361,6 +401,7 @@ export class TutorialManager {
       const why = typeof s.why === 'function' ? s.why(ctx) : s.why;
       const read = 'read' in s.done;
       const first = !this.replay && c.chapter.id === 'first-steps' && c.index === 0;
+      const guideFirst = !this.replay && this.save?.guide?.chapter === c.chapter.id && c.index === 0;
       return {
         kind: 'step',
         head: `${c.chapter.num} · ${c.chapter.title}${this.replay ? ' (replay)' : ''}`,
@@ -370,7 +411,7 @@ export class TutorialManager {
         progress: { at: c.index + 1, of: c.chapter.steps.length },
         pointer: this.pointer(s, ctx),
         next: read ? (first ? 'Start' : c.index === c.chapter.steps.length - 1 ? 'Done' : 'Next') : null,
-        skip: !read || first ? (first ? 'Skip the tutorial' : 'Skip') : null,
+        skip: !read || first || guideFirst ? (first ? 'Skip the tutorial' : guideFirst ? 'Not now' : 'Skip') : null,
         focus: [...(s.focus ?? []), ...this.targets(s.keys, device)],
       };
     }

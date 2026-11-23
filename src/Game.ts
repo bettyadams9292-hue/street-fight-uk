@@ -659,6 +659,10 @@ export class Game {
           this.tutorial.showHint(id);
           play();
         },
+        guide: (id) => {
+          this.tutorial.startGuide(id, true);
+          play();
+        },
         resume: () => {
           this.tutorial.resumeAll();
           play();
@@ -1240,6 +1244,7 @@ export class Game {
         const job = p.save.jobs.active;
         if (job && (job.kind === 'deliver' || job.kind === 'deal' || job.stage === 'back')) {
           failJob(p, 'failed');
+          this.tutorial.feed({ type: 'job', stage: 'failed' });
           this.hud.toast(`Job failed: they took ${job.kind === 'deliver' ? 'the parcel' : job.kind === 'deal' ? 'the package' : job.kind === 'debt' ? 'the money' : 'it'} off you. ${job.giver.split(' ')[0]} won’t be pleased.`, 'warn');
         }
         if (byPolice || p.save.heat >= ARREST_HEAT) {
@@ -2432,11 +2437,13 @@ export class Game {
         close();
         this.world?.setUpJob();
         this.hud.toast(`Job: ${objectiveOf(p.save.jobs.active!)}`, 'info');
+        this.tutorial.feed({ type: 'job', stage: 'taken' });
         return { ok: true };
       },
       handIn: () => {
         const paid = completeJob(p);
         if (!paid) return null;
+        this.tutorial.feed({ type: 'job', stage: 'done' });
         const w = this.world;
         if (w) {
           for (const o of paid.over) w.dropOnGround(p.newStack(o.id, o.qty), w.player.pos.x, w.player.pos.z + 0.2);
@@ -2451,6 +2458,7 @@ export class Game {
       },
       drop: () => {
         const j = failJob(p, 'dropped');
+        if (j) this.tutorial.feed({ type: 'job', stage: 'failed' });
         this.saveGame();
         return j ? `Dropped: ${j.title}. ${j.giver.split(' ')[0]} isn’t impressed.` : null;
       },
@@ -2476,6 +2484,7 @@ export class Game {
       w.giverTook();
       this.saveGame();
       close();
+      this.tutorial.feed({ type: 'job', stage: 'taken' });
       this.hud.toast(`Job: ${objectiveOf(p.save.jobs.active!)}`, 'info');
       return { ok: true };
     }, close));
