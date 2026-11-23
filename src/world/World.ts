@@ -12,7 +12,7 @@ import { kerbFor } from '../city/street';
 import { randomAppearance, sparringPartnerAppearance, type CharacterAppearance, type TopStyle } from '../character/Appearance';
 import { CivilianBrain, CIVILIAN_DENSITY, DESPAWN, SPAWN_MAX, SPAWN_MIN, type Hotspot } from './civilians';
 import { CompanionBrain } from '../companions/brain';
-import { companionGainXp, crewState, type CompanionDef } from '../companions/companions';
+import { COMPANIONS, companionGainXp, crewState, type CompanionDef } from '../companions/companions';
 import type { CrewOrder } from '../companions/brain';
 import { HomeBrain, HomeLife } from '../companions/home';
 import { FIGHT_STYLES, PERSONALITIES, lineFor, type LineKind } from '../companions/personality';
@@ -347,9 +347,9 @@ export class World {
   }
 
   /** Bring a crew member in: next to you, or (at home) through the door / already settled. */
-  private spawnCrew(def: CompanionDef, how: 'beside' | 'door' | 'settled', index: number): void {
+  private spawnCrew(def: CompanionDef, how: 'beside' | 'door' | 'settled', index: number, from?: { x: number; z: number }): void {
     const p = this.player;
-    const spot = how === 'beside'
+    const spot = from ? this.freeSpot(from.x, from.z) : how === 'beside'
       ? this.freeSpot(p.pos.x - p.facing * (1.3 + index * 0.7), Math.max(this.arena.bounds.minZ + 0.3, p.pos.z + (index % 2 ? 0.45 : -0.4)))
       : { x: p.pos.x, z: p.pos.z };
     // Same build as the crew screen shows: look, style, level, injuries, health carried over, their weapon.
@@ -823,10 +823,18 @@ export class World {
       home?: { residents: CompanionDef[]; arriving: CompanionDef[] };
       /** Ambient pedestrians (off in tests unless asked for). */
       civilians?: boolean;
+      /**
+       * Someone just hired (or won over) at their seat in the bar: they get up from there and walk over to you,
+       * or, with no room in your crew, walk out of the door on their way home.
+       */
+      justHired?: string | null;
     },
   ) {
     progress.enterDistrict(level.district);
-    this.stations = [...(level.stations ?? [])];
+    // Fighters for hire wait at their seats only until they're on your side: then they're with you, or at home.
+    const hired = new Set(progress.save.companions.recruited);
+    const seats = (level.stations ?? []).filter((st) => st.id === 'recruit' && !!st.tab && hired.has(st.tab));
+    this.stations = (level.stations ?? []).filter((st) => !seats.includes(st));
     const obstacles: Obstacle[] = [];
     for (const p of level.props) {
       const box = propBox(p);
@@ -906,7 +914,15 @@ export class World {
       opts.home.arriving.forEach((d, i) => this.spawnCrew(d, 'door', i));
     } else {
       const list = opts.companions ?? (opts.companion ? [opts.companion] : []);
-      list.forEach((d, i) => this.spawnCrew(d, 'beside', i));
+      // Just hired: up from their seat (where you hired them), not out of thin air beside you.
+      const seat = opts.justHired ? seats.find((st) => st.tab === opts.justHired) : undefined;
+      const seatSpot = seat ? { x: seat.x, z: seat.z + (seat.npc?.dz ?? -0.9) } : undefined;
+      list.forEach((d, i) => this.spawnCrew(d, 'beside', i, d.id === opts.justHired ? seatSpot : undefined));
+      // No room in your crew: they finish their drink and head home, out of the door.
+      if (seat && seatSpot && opts.justHired && !list.some((d) => d.id === opts.justHired)) {
+        const def = COMPANIONS[opts.justHired];
+        if (def) this.headHome(def, seatSpot);
+      }
     }
     // Counter-fighters answer blocks and parries.
     this.sim.bus.on('hit:blocked', ({ target }) => this.memberOf(target)?.brain.onBlocked(this.sim.frame));
@@ -1986,6 +2002,24 @@ export class World {
     return 'refused';
   }
 
+  /** Hired with no room in your crew: they get up and walk out of the door, home, and are gone. */
+  private headHome(def: CompanionDef, from: { x: number; z: number }): void {
+    const door = this.level.exits.find((e) => e.kind === 'door') ?? this.level.exits[0];
+    const f = companionFighter(this.progress, def, this.nextId++, from.x, from.z);
+    f.team = 'neutral';
+    const doorX = door ? door.x : this.arena.bounds.minX;
+    const dir = doorX < from.x ? -1 : 1;
+    f.facing = dir;
+    this.sim.add(f);
+    this.brains.set(f, new LeaveBrain(dir));
+    // Gone at the door, or after long enough to have got there.
+    this.leaving.set(f, this.sim.frame + Math.ceil(SIM_HZ * (Math.abs(doorX - from.x) / 1.2 + 2)));
+    this.exitAt.set(f, doorX);
+  }
+
+  /** Where someone walking out is heading (they go when they reach it). */
+  private readonly exitAt = new Map<Fighter, number>();
+
   /** Off they go, the way they're facing away from you, and out of the fight. */
   private walkOff(f: Fighter): void {
     const dir = f.pos.x >= this.player.pos.x ? 1 : -1;
@@ -2000,8 +2034,11 @@ export class World {
 
   private updateLeaving(): void {
     for (const [f, until] of this.leaving) {
-      if (this.sim.frame < until) continue;
+      const door = this.exitAt.get(f);
+      const there = door !== undefined && Math.abs(f.pos.x - door) < 0.7;
+      if (this.sim.frame < until && !there) continue;
       this.leaving.delete(f);
+      this.exitAt.delete(f);
       this.brains.delete(f);
       this.sim.remove(f);
     }
