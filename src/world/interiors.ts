@@ -73,6 +73,50 @@ const clothesShop: LevelDef = {
   objective: 'Browse, try things on, pay at the counter',
 };
 
+// ---- Sharp Kutz: the barber on the High Street (barber/barber.ts) ------------------------------------
+const barberShop: LevelDef = {
+  id: 'barber_shop',
+  name: 'Sharp Kutz',
+  district: 'High Street',
+  theme: 'shop',
+  bounds: { minX: 0, maxX: 14, ...ROOM },
+  entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
+  exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'barber', label: 'Back out to the High Street' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'SHARP KUTZ — WALK-INS WELCOME', colour: '#f2efe8' }],
+  props: [
+    // Three chairs, each at its own station under a mirror (the mirrors are dressing: DECOR below), the
+    // wash basin at the end, the till by the door. The middle (z -0.6 to 0.6) stays clear.
+    F('plant_tall', 1.9, -1.85),
+    { kind: 'barber_station', x: 4.4, z: -1.42 },
+    { kind: 'barber_chair', x: 4.4, z: -0.9 },
+    { kind: 'barber_station', x: 7.4, z: -1.42 },
+    { kind: 'barber_chair', x: 7.4, z: -0.9 },
+    { kind: 'barber_station', x: 10.4, z: -1.42 },
+    { kind: 'barber_chair', x: 10.4, z: -0.9 },
+    { kind: 'basin', x: 12.6, z: -1.35 },
+    { kind: 'shop_shelf', x: 13.5, z: -1.4, size: [0.6, 0.25] },
+    F('poster_frame', 5.9, -2.0, { wallY: 1.95 }),
+    F('wall_clock', 8.9, -2.0, { wallY: 2.35 }),
+    F('poster_frame', 11.9, -2.0, { wallY: 1.95 }),
+    F('rug_long', 7.4, 0.0, { colour: '#1b1d22', solid: false }),
+  ],
+  stations: [
+    {
+      id: 'barber_chair', x: 8.2, z: 0.1, label: 'Get a cut (Rio, the barber)',
+      npc: { name: 'Rio', seed: 7340, body: 'male', top: 'tshirt', topColour: '#1b1d22', dz: -0.95 },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    { x: 4.4, y: 2.7, z: -0.8, colour: 0xfff8f0, intensity: 9, range: 7 },
+    { x: 7.4, y: 2.7, z: -0.8, colour: 0xfff8f0, intensity: 9, range: 7 },
+    { x: 10.4, y: 2.7, z: -0.8, colour: 0xfff8f0, intensity: 9, range: 7 },
+  ],
+  weather: 'indoors',
+  objective: 'Sit in Rio’s chair: haircuts, beards, colour',
+};
+
 // ---- Pawn & Gold: pawn shop in the City Centre --------------------------------------------------
 const pawnShop: LevelDef = {
   id: 'pawn_shop',
@@ -570,6 +614,8 @@ const FRONT: Record<string, PropDef[]> = {
     P('roulette_table', 5.5, 3.2), P('blackjack_table', 11.5, 3.4), P('blackjack_table', 16.8, 3.0),
     ...[20.6, 21.5, 22.4, 23.3, 24.2].map((x) => P('slot_machine', x, 4.8)), ...[20.6, 21.5, 22.4, 23.3, 24.2].map((x) => P('slot_machine', x, 2.4, { rot: 2 })),
   ],
+  // Somewhere to wait your turn, and the price board.
+  barber_shop: [P('shop_counter', 3.0, 4.6, { size: [0.9, 0.4] }), F('plant_tall', 13.2, 4.8)],
   clothes_shop: [P('shop_rail', 3.4, 2.6), P('shop_rail', 6.6, 3.8), P('shop_rail', 9.8, 2.6), P('mannequin', 12.8, 2.2), P('mannequin', 13.8, 4.2), P('mannequin', 1.4, 4.6), P('shop_shelf', 9.8, 5.0, { size: [1.2, 0.3] })],
   pawn_shop: [P('glass_counter', 5.0, 3.0), P('display_cabinet', 9.4, 3.8), P('shop_shelf', 12.2, 4.8, { size: [1.0, 0.3] }), P('tv', 2.6, 4.4)],
   furniture_shop: [
@@ -620,6 +666,8 @@ const DECOR: Record<string, PropDef[]> = {
     D('f04_19', 21.0, 2.7), D('f03_08', 1.2, 5.0), D('f05_20', 6.9, 4.95), D('f05_11', 15.6, 2.5),
     D('f02_06', 15.6, 4.9), D('f04_05', 14.6, 4.9, { rot: 3 }), D('f04_05', 16.6, 4.9, { rot: 1 }), D('f03_28', 20.6, 5.0),
   ],
+  // A mirror over each chair's station, chairs to wait on, the price board.
+  barber_shop: [W('gymMirror', 4.4, 0.55), W('gymMirror', 7.4, 0.55), W('gymMirror', 10.4, 0.55), D('waitingSofa', 7.6, 5.0), D('waitingSofa', 9.4, 5.0), D('chalkboardMenu', 1.6, 2.4)],
   clothes_shop: [D('f01_19', 15.0, 4.8), D('f06_12', 4.8, 4.8), D('pottedTree', 1.2, 2.2)],
   pawn_shop: [D('f03_30', 1.6, 2.4), D('arcadeCabinet', 12.8, 2.3), D('f01_07', 6.8, 5.0), D('poorSafe', 10.4, 2.3)],
   // Gyms (the approved expansion): mirrors on the back wall, a dumbbell rack and squat rack out on the floor, a bike.
@@ -772,7 +820,7 @@ export const INTERIORS = {
   karate_dojo: deepRoom(karateDojo),
   wrestling_club: deepRoom(wrestlingClub),
   grow_shop: deepRoom(fitOut(growShop)),
-  clothes_shop: deepRoom(fitOut(clothesShop)), pawn_shop: deepRoom(fitOut(pawnShop)), pub: deepRoom(fitOut(pub)),
+  clothes_shop: deepRoom(fitOut(clothesShop)), barber_shop: deepRoom(fitOut(barberShop)), pawn_shop: deepRoom(fitOut(pawnShop)), pub: deepRoom(fitOut(pub)),
   police_station: deepRoom(policeStation),
   fight_club: deepRoom(fightClub),
   furniture_shop: deepRoom(fitOut(furnitureShop)), car_dealer: deepRoom(fitOut(carDealer)), bike_shop: deepRoom(fitOut(bikeShop)), casino: deepRoom(fitOut(casino)),

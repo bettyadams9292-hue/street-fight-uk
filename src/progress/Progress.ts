@@ -53,6 +53,8 @@ export const CORE_AREA_IDS = [
   'home', 'estate', 'high_street', 'alleys', 'industrial', 'subway', 'city', 'territory',
   // Stage 5: interiors
   'clothes_shop', 'pawn_shop', 'pub', 'police_station',
+  // Sharp Kutz, the barber on the High Street
+  'barber_shop',
   // The Arches fight club, under Kane's Boxing
   'fight_club',
   // Stage 6: furniture shop, car dealer, bike shop, casino

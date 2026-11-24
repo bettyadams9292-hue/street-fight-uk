@@ -163,12 +163,14 @@ const highStreet: LevelDef = {
     { id: 'pub', x: 30.5, z: -1.0, facing: 1 },
     { id: 'clothes', x: 49, z: -1.0, facing: 1 },
     { id: 'furniture', x: 58, z: -1.0, facing: 1 },
+    { id: 'barber', x: 71, z: -1.0, facing: -1 },
   ],
   exits: [
     { id: 'to_estate', kind: 'edge', side: 'left', x: 0, z: 0, to: 'estate', toEntry: 'right', label: 'Estate' },
     { id: 'pub_door', kind: 'door', x: 30.5, z: -1.6, to: 'pub', toEntry: 'door', shop: 'pub', label: 'Into the Red Lion' },
     { id: 'threads_door', kind: 'door', x: 49, z: -1.6, to: 'clothes_shop', toEntry: 'door', shop: 'threads', label: 'Into Threads (clothes shop)' },
     { id: 'furniture_door', kind: 'door', x: 58, z: -1.6, to: 'furniture_shop', toEntry: 'door', label: 'Into Home & Hearth (furniture)' },
+    { id: 'barber_door', kind: 'door', x: 71, z: -1.6, to: 'barber_shop', toEntry: 'door', label: 'Into Sharp Kutz (barber)' },
     { id: 'to_alleys', kind: 'edge', side: 'right', x: 92, z: 0, to: 'alleys', toEntry: 'left', label: 'Back alleys', requires: 'boss_gaffer', lockedText: 'Gaffer’s lads block the way. Deal with him first.' },
   ],
   facades: [
@@ -178,7 +180,8 @@ const highStreet: LevelDef = {
     { kind: 'shop', x0: 34, x1: 44, label: 'VAPE & PHONE', colour: '#6b2d82' },
     { kind: 'shop', x0: 44, x1: 54, label: 'THREADS', colour: '#101012' },
     { kind: 'showroom', x0: 54, x1: 62, label: 'HOME & HEARTH', colour: '#2a4a3a' },
-    { kind: 'shop', x0: 62, x1: 74, label: 'KEBAB HOUSE', colour: '#9a2a1a' },
+    { kind: 'shop', x0: 62, x1: 68, label: 'KEBAB HOUSE', colour: '#9a2a1a' },
+    { kind: 'shop', x0: 68, x1: 74, label: 'SHARP KUTZ BARBERS', colour: '#1f2a44' },
     { kind: 'pub', x0: 74, x1: 92, label: 'THE GAFFER’S ARMS', colour: '#2a1a12' },
   ],
   // Bev Okafor, the money lender, outside the bookies: jobs (src/jobs).
@@ -191,6 +194,8 @@ const highStreet: LevelDef = {
     { kind: 'bench', x: 50, z: -1.65 },
     { kind: 'van', x: 58, z: 1.2 },
     { kind: 'planter', x: 66, z: -1.5 },
+    // Sharp Kutz's pole, on the wall by its door.
+    { kind: 'barber_pole', x: 69.6, z: -1.88, solid: false },
     { kind: 'barrier', x: 71, z: 1.6 },
     { kind: 'crates', x: 84, z: -1.5 },
   ],
