@@ -28,8 +28,17 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
   return new Promise((res) => {
     const img = new Image();
     img.decoding = 'async';
-    img.onload = () => res(img);
-    img.onerror = () => res(null);
+    const finish = (value: HTMLImageElement | null): void => {
+      clearTimeout(timer);
+      img.onload = img.onerror = null;
+      res(value);
+    };
+    const timer = setTimeout(() => {
+      finish(null);
+      img.removeAttribute('src');
+    }, 30000);
+    img.onload = () => finish(img);
+    img.onerror = () => finish(null);
     img.src = url;
   });
 }
