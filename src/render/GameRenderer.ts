@@ -577,7 +577,14 @@ export class GameRenderer {
   render(dt: number, time: number, focus: Fighter | null): void {
     if (this.sim) {
       if (this.world || this.views.size !== this.sim.fighters.length) this.syncFighters();
-      for (const v of this.views.values()) v.update(dt, time);
+      for (const v of this.views.values()) {
+        const f = v.fighter;
+        const background = !!this.world && !!focus && !this.studio && !this.deterministicStream
+          && f !== focus && f.team !== 'player' && f.team !== 'enemy'
+          && Math.abs(f.pos.x - focus.pos.x) > 12
+          && Math.abs(f.pos.x - this.cameraRig.focusX) > 12;
+        v.update(dt, time, background);
+      }
       if (this.studio) {
         this.updateStudioCamera(dt);
       } else {
