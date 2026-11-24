@@ -42,6 +42,8 @@ export type GarmentKind =
   | 'beanie'
   | 'cap'
   | 'bucket_hat'
+  // Hair built like a hat: the afro, a rounded mass over the scalp (fromAppearance)
+  | 'afro'
   // Shoes, cut from the feet
   | 'trainers'
   | 'runners'
@@ -101,6 +103,8 @@ interface Style {
   brim?: 'peak' | 'round';
   /** Hats: how far down the head the hat comes (0 = the crown .. 1 = the chin). */
   depth?: number;
+  /** Hair as a mass (the afro): full `gap` out over the crown and sides, tapering to the hairline. */
+  puff?: boolean;
 }
 
 export const GARMENTS: Record<GarmentKind, Style> = {
@@ -135,6 +139,9 @@ export const GARMENTS: Record<GarmentKind, Style> = {
   beanie: { drape: 6, part: 'head', gap: 0.03, fabric: 'knit', rib: true, depth: 0.36 },
   cap: { drape: 5, part: 'head', gap: 0.022, fabric: 'cotton', brim: 'peak', depth: 0.3 },
   bucket_hat: { drape: 6, part: 'head', gap: 0.026, fabric: 'canvas', brim: 'round', depth: 0.3 },
+  // About 7 cm of hair at its fullest, rounded off by the drape, down to a hairline over the forehead, the ears
+  // and the nape.
+  afro: { drape: 9, part: 'head', gap: 0.065, fabric: 'fleece', depth: 0.3, puff: true },
   trainers: { drape: 10, part: 'feet', gap: 0.012, fabric: 'leather', collarT: 0.0, sole: [0.9, 0.89, 0.86], soleH: 0.03, sidePanel: true },
   runners: { drape: 10, part: 'feet', gap: 0.011, fabric: 'nylon', collarT: 0.0, sole: [0.92, 0.92, 0.9], soleH: 0.036, sidePanel: true },
   hitops: { drape: 10, part: 'feet', gap: 0.013, fabric: 'leather', collarT: 0.14, sole: [0.9, 0.89, 0.86], soleH: 0.03, sidePanel: true },
@@ -736,6 +743,11 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
       sp[v * 3 + 1] = pos[v * 3 + 1] + normals[v * 3 + 1] * gp;
       sp[v * 3 + 2] = pos[v * 3 + 2] + normals[v * 3 + 2] * gp;
     }
+  // The afro: a rounded mass, not the scalp pushed out (that's a mushroom). Every point goes out to an
+  // egg-shaped surface centred over the forehead (wider and taller than the head by `gap`, curving back in
+  // below its middle so it meets the skin round the ears), easing in to the skin over the last stretch
+  // before the hairline.
+  if (st.puff && hd) puffOut(f, st, hd, pos, normals, inside, sp);
   // Fall from the widest point first, then let the smoothing blend the result.
   if (st.part === 'top' && HANG) hang(data, pos, f, st, list, sp);
   const adj = neighbours(data);
@@ -1019,10 +1031,56 @@ function headFrame(f: Frame, pos: Float32Array): HeadFrame {
   return { top, height, cz, rx: 0, front: cz, back: cz, hemY: top };
 }
 
+/** The afro's shape (see where it's called in the garment build). */
+function puffOut(f: Frame, st: Style, hd: HeadFrame, pos: Float32Array, normals: Float32Array, inside: Uint8Array, sp: Float32Array): void {
+  // The head's half-width and front and back, above the jaw.
+  let hw = 0, zf = -Infinity, zb = Infinity;
+  for (let v = 0; v < f.group.length; v++) {
+    if (f.group[v] !== 'head' || (hd.top - pos[v * 3 + 1]) / hd.height > 0.55) continue;
+    hw = Math.max(hw, Math.abs(pos[v * 3]));
+    zf = Math.max(zf, pos[v * 3 + 2]);
+    zb = Math.min(zb, pos[v * 3 + 2]);
+  }
+  const g = st.gap;
+  const cy = hd.top - hd.height * 0.32;
+  // Set back a little and taller than wide, so it rises off the forehead rather than hanging over it.
+  const cz = (zf + zb) / 2 - g * 0.45;
+  const rx = hw + g * 0.9;
+  const rz = (zf - zb) / 2 + g * 0.75;
+  const up = hd.top - cy + g * 1.6;
+  // Below its middle it curves in to meet the head about where the hair stops at the sides.
+  const down = hd.height * 0.21;
+  for (let v = 0; v < inside.length; v++) {
+    if (!inside[v]) continue;
+    const x = pos[v * 3], y = pos[v * 3 + 1], z = pos[v * 3 + 2];
+    const dx = x, dy = y - cy, dz = z - cz;
+    const e = Math.hypot(dx / rx, dy / (dy > 0 ? up : down), dz / rz);
+    const skin = 0.005;
+    let ox = x + normals[v * 3] * skin, oy = y + normals[v * 3 + 1] * skin, oz = z + normals[v * 3 + 2] * skin;
+    if (e > 0 && e < 1) {
+      ox = dx / e;
+      oy = cy + dy / e;
+      oz = cz + dz / e;
+    }
+    const rel = (hd.top - y) / hd.height;
+    const s = clamp01((hatLimit(st, hd, x, z) - rel) / 0.2);
+    const k = s * s * (3 - 2 * s);
+    sp[v * 3] = x + normals[v * 3] * skin + (ox - x - normals[v * 3] * skin) * k;
+    sp[v * 3 + 1] = y + normals[v * 3 + 1] * skin + (oy - y - normals[v * 3 + 1] * skin) * k;
+    sp[v * 3 + 2] = z + normals[v * 3 + 2] * skin + (oz - z - normals[v * 3 + 2] * skin) * k;
+  }
+}
+
 /** How far down the head (0 crown .. 1 chin) the hat comes at this point: lowest at the back, clear of the ears. */
 function hatLimit(st: Style, hd: HeadFrame, x: number, z: number): number {
   const fz = Math.max(-1, Math.min(1, (z - hd.cz) / 0.08));
   const d = st.depth ?? 0.3;
+  // The afro's hairline: over the forehead at the front, down past the tops of the ears at the sides, to the
+  // nape at the back.
+  if (st.puff) {
+    const side = 1 - Math.abs(fz);
+    return d + 0.2 * side + 0.28 * Math.max(0, -fz);
+  }
   // A round-brimmed hat sits level; a beanie or cap dips at the back.
   if (st.brim === 'round') return d + 0.05;
   const side = 1 - Math.abs(fz);

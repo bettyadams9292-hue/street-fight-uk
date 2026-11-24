@@ -192,7 +192,7 @@ Items: Groceries & materials,Gym holdall,bag_holdall,Inventory icon + 3D pickup 
 Character: hair,Buzz cut,buzz,3D hair model,No model of its own: uses the crop model,FALSE
 Character: hair,Quiff,quiff,3D hair model,No model of its own: uses the swept model,FALSE
 Character: hair,Curly,curly,3D hair model,No model of its own: uses short messy / shaggy,FALSE
-Character: hair,Afro,afro,3D hair model,No model of its own: uses short messy / shaggy,FALSE
+Character: hair,Afro,afro,3D hair model,Built in code from the scalp like a hat (garments.ts afro): a rounded shell in the hair colour,FALSE
 Character: hair,Cornrows,cornrows,3D hair model,No model of its own: uses crop / braid,FALSE
 Character: hair,Mohawk,mohawk,3D hair model,No model of its own: uses the swept model,FALSE
 Character: hair,Ponytail,ponytail,3D hair model,No model of its own: uses the braid model,FALSE

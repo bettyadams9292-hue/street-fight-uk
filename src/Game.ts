@@ -2548,7 +2548,7 @@ export class Game {
     );
   }
 
-  /** Sharp Kutz: in Rio's chair on the studio set, close on the face, trying cuts on before you pay. */
+  /** NeXo Cutz: in Vinny's chair on the studio set, close on the face, trying cuts on before you pay. */
   private openBarber(): void {
     const w = this.world;
     const p = this.progress;

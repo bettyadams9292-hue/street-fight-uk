@@ -142,7 +142,7 @@ const BLURB: Record<AreaId, string> = {
   territory: 'The Pit. Big Dunc’s patch, past the city.',
   hq: 'Hale House. Where it ends.',
   clothes_shop: 'Clothes, shoes, accessories and bags. Priya runs it.',
-  barber_shop: 'Sharp Kutz: haircuts, beards shaped or shaved, colour. Rio’s chair, walk-ins welcome.',
+  barber_shop: 'NeXo Cutz: haircuts, beards shaped or shaved, colour. Vinny’s chair, walk-ins welcome.',
   pawn_shop: 'Sell valuables and collectibles. Mr Kaur doesn’t ask questions.',
   police_station: 'The front counter: see what they’ve got on you and settle fines. Where you end up when you’re nicked.',
   fight_club: 'The Arches: bare-knuckle fights in the cellar under Kane’s Boxing. Fight for purses, then for the title.',

@@ -185,7 +185,10 @@ export function appearanceToHuman(a: CharacterAppearance, skins: readonly SkinCh
   const hat = a.accessories.find((x): x is 'beanie' | 'cap' | 'bucket_hat' => x === 'beanie' || x === 'cap' || x === 'bucket_hat');
   const hair = HAIR[a.hair][female ? 'f' : 'm'];
   const shortHair = ['buzz', 'crop', 'quiff', 'curly', 'afro', 'cornrows', 'mohawk'].includes(a.hair);
-  if (hair && !a.accessories.includes('headguard') && !(hat && shortHair)) items.push({ id: hair, colour: hairColour });
+  // The afro is built like a hat from the scalp (garments.ts), in the hair's colour; under a hat it's tucked away.
+  if (a.hair === 'afro') {
+    if (!hat && !a.accessories.includes('headguard')) garments.push({ kind: 'afro', colour: hairColour });
+  } else if (hair && !a.accessories.includes('headguard') && !(hat && shortHair)) items.push({ id: hair, colour: hairColour });
   if (hat) garments.push({ kind: hat, colour: a.headColour ?? '#2b2e35' });
   if (!female) {
     if (a.facialHair === 'moustache') items.push({ id: 'moustache_viking', colour: hairColour });

@@ -75,9 +75,10 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 - Jewellery (`jewelBonus`): XP by rarity and metal (a diamond adds more), and a buff by kind (rings damage, watches stamina back, necklaces poise, bracelets attack speed, earrings Technique, grills less damage taken) and by stone; four or six pieces on is drip (more XP). All together capped at `XP_BONUS_CAP` (30%).
 - `Progress.buffs()` and `Progress.xpBonus`; `applyModifiers` puts the buffs on the fighter (source `buff`), `addXp` adds the XP bonus (`raw` to skip it). Shown on the Me screen (Buffs), the jeweller's card and the jewellery box, the item details (tier), and GraftWiki's Clothes and jewellery. `tests/gearBonus.test.ts`.
 
-**The barber.** `src/barber/barber.ts`: Sharp Kutz on the High Street (frontage x 68–74, door at x 71, `barber_shop` in `world/interiors.ts`), Rio's chair (station `barber_chair`).
+**The barber.** `src/barber/barber.ts`: NeXo Cutz on the High Street (frontage x 68–74, door at x 71, `barber_shop` in `world/interiors.ts`), Vinny's chair (station `barber_chair`).
 - Prices: `HAIRCUTS` (£10–£45), `BEARDS` (£8–£18, male body only, as in the creator), `COLOUR_PRICE` (£30, the 12 `HAIR_COLOURS`, named in `COLOUR_NAMES`), `GREYS` (£20). `quote` charges only what changes; `getCut` pays pocket then tin and writes `save.character.appearance` in place.
 - `ui/barberUI.ts`: tabs Haircut / Beard / Colour on the studio set (`Game.openBarber`, face framing, hats off for the preview). Props `barber_chair`, `barber_station`, `barber_pole` are code-built (`LevelView`; rows in the asset sheet). GraftWiki's The barber, `barber` hint. `tests/barber.test.ts`.
+- Vinny's look is fixed on his station's NPC (`skinTone`, `hair`, `hairColour` on `NpcDef`, applied in `World.spawnNpc`): tanned, black afro.
 
 **Dealing.** `src/business/dealing.ts`: opens after the Ratcatcher (`DEALING_FLAG`), when Kez gets in touch (`Game.dealingNews`).
 - Kez sells bulk weed, cocaine and pills (`DRUG_DEFS`, `buyBulk`; his contact screen's Wholesale section, `ui/dealingUI.ts` `wholesaleRows`) and buys it back at 70%. Bulk and deals are `contraband` items, always given as stolen, so the police take them and the pawn shop won't.
@@ -123,7 +124,7 @@ The main gaps:
 - Jewellery (#20, #36): 68 pieces with no model or icon (rings, watches, necklaces, bracelets, earrings, grills), plus metal and gem materials.
 - Property (#20): four mansion styles, 20 listing photos, a staircase, the estate agent boards, and rooms with no proper fittings (swimming pool, cinema, conservatory, roof terrace, dressing room).
 - Caps and beanies show a flat cap as a stand-in.
-- Hairstyles that borrow another style's model: afro, cornrows, mohawk, quiff, buzz, curly and ponytail.
+- Hairstyles that borrow another style's model: cornrows, mohawk, quiff, buzz, curly and ponytail. The afro is built in code (`afro` in `characters/human/garments.ts`, a rounded shell from the scalp) until it has a model.
 - Fight moves: 22 are keyed in code (hook, uppercut and so on).
 - Music: three synthesised loops exist (`tools/audio/make_music.py`: menu, street, boss). Recorded or commissioned tracks would still be better.
 

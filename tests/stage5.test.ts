@@ -559,7 +559,7 @@ console.log('Stage 5: the campaign');
 
 test('every area (24 + Stage 6 and 7 buildings), every exit resolves, every new district has a boss or is an interior', () => {
   // 36 hand-built areas (the police station since the police work, the Arches fight club since #95), plus the
-  // jeweller, the estate agent, Ashcombe Park and the inside of a property, and Sharp Kutz the barber.
+  // jeweller, the estate agent, Ashcombe Park and the inside of a property, and NeXo Cutz the barber.
   assert(AREA_IDS.length === 41 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const l = LEVELS[id];

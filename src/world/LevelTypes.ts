@@ -248,6 +248,10 @@ export interface NpcDef {
   body?: 'male' | 'female';
   top?: string;
   topColour?: string;
+  /** A fixed look where the seed won't do (Vinny the barber's tan and afro). */
+  skinTone?: string;
+  hair?: string;
+  hairColour?: string;
   /** Offset from the station point (they stand behind the counter). */
   dz?: number;
 }

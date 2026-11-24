@@ -9,7 +9,7 @@ import { DummyBrain } from '../ai/DummyBrain';
 import { FighterAI } from '../ai/FighterAI';
 import { npc } from '../characters/npcs';
 import { kerbFor } from '../city/street';
-import { randomAppearance, sparringPartnerAppearance, type CharacterAppearance, type TopStyle } from '../character/Appearance';
+import { randomAppearance, sparringPartnerAppearance, type CharacterAppearance, type HairStyle, type TopStyle } from '../character/Appearance';
 import { CivilianBrain, CIVILIAN_DENSITY, DESPAWN, SPAWN_MAX, SPAWN_MIN, type Hotspot } from './civilians';
 import { CompanionBrain } from '../companions/brain';
 import { COMPANIONS, companionGainXp, crewState, type CompanionDef } from '../companions/companions';
@@ -2285,6 +2285,9 @@ export class World {
     const look: CharacterAppearance = { ...randomAppearance(() => rng.next(), n.body ?? 'male'), accessories: [] };
     if (n.top) look.top = n.top as TopStyle;
     if (n.topColour) look.topColour = n.topColour;
+    if (n.skinTone) look.skinTone = n.skinTone;
+    if (n.hair) look.hair = n.hair as HairStyle;
+    if (n.hairColour) look.hairColour = n.hairColour;
     // Sully runs the Arches: he looks like himself, not a stranger with his name.
     if (s.id === 'fight_club') Object.assign(look, BOSSES.sully.appearance);
     const f = new Fighter({

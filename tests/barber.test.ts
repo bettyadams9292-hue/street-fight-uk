@@ -1,7 +1,7 @@
 /**
- * Sharp Kutz (src/barber/barber.ts): you pay only for what changes, line by line; paying changes your own look
+ * NeXo Cutz (src/barber/barber.ts): you pay only for what changes, line by line; paying changes your own look
  * and saves; no money, nothing on the chart, or no change means no cut; beards only where the creator allows them;
- * the shop is on the High Street with its door and Rio's chair.
+ * the shop is on the High Street with its door and Vinny's chair.
  */
 import assert from 'node:assert/strict';
 import { BEARDS, COLOUR_PRICE, GREYS, HAIRCUTS, cutOf, getCut, menuFor, quote } from '../src/barber/barber';
@@ -77,14 +77,14 @@ ok('beards on a male body only; colours only from the chart', () => {
   assert.equal(getCut(f, { ...cutOf(f.save.character.appearance), hairColour: '#00ff00' }).ok, false);
 });
 
-ok('Sharp Kutz is on the High Street, with Rio in the chair', () => {
+ok('NeXo Cutz is on the High Street, with Vinny in the chair', () => {
   const hs = LEVELS.high_street;
   const door = hs.exits.find((e) => e.to === 'barber_shop');
   assert.ok(door, 'a door from the High Street');
   assert.ok(hs.entries.some((e) => e.id === door!.toEntry || e.id === 'barber'));
   const shop = LEVELS.barber_shop;
   assert.ok(shop.exits.some((e) => e.to === 'high_street' && hs.entries.some((x) => x.id === e.toEntry)), 'and back out');
-  assert.ok(shop.stations.some((s) => s.id === 'barber_chair' && s.npc?.name === 'Rio'));
+  assert.ok(shop.stations.some((s) => s.id === 'barber_chair' && s.npc?.name === 'Vinny'));
 });
 
 console.log(`${passed} passed, 0 failed`);
