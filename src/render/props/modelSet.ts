@@ -55,7 +55,15 @@ export function modelSet<Id extends string>(name: string, base: string, ids: rea
         await loadAssetQueue(
           ids.map((id) => async () => {
             try {
-              const g = await loader.loadAsync(`${base}${id}.glb`);
+              const controller = new AbortController();
+              const timer = setTimeout(() => controller.abort(), 30000);
+              let data: ArrayBuffer;
+              try {
+                const response = await fetch(`${base}${id}.glb`, { signal: controller.signal });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                data = await response.arrayBuffer();
+              } finally { clearTimeout(timer); }
+              const g = await loader.parseAsync(data, base);
               g.scene.traverse((o: THREE.Object3D) => {
                 const mesh = o as THREE.Mesh;
                 if (!mesh.isMesh) return;
