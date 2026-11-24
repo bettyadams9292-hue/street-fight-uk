@@ -158,7 +158,7 @@ export class LevelView {
     return true;
   }
 
-  constructor(readonly level: LevelDef, private readonly progress: Progress) {
+  constructor(readonly level: LevelDef, private readonly progress: Progress, deferBuild = false) {
     this.back = backWallZ(level);
     const classic = new URLSearchParams(window.location.search).get('world') === 'classic';
     this.street = !classic && kitStreet(level) && polyKitReady() ? planStreet(level) : null;
@@ -171,8 +171,23 @@ export class LevelView {
     this.rnd = seeded(hash(level.id));
     this.group.add(this.marker.root);
     this.sun = new THREE.DirectionalLight(0x9fb0e0, 0.55);
-    this.build();
+    this.buildSteps = this.build();
+    if (!deferBuild) this.finishBuild();
   }
+
+  private buildSteps: Generator<void, void, unknown> | null;
+
+  /** Advance construction without exposing a partially built district. */
+  advanceBuild(budgetMs = 3): boolean {
+    const deadline = performance.now() + budgetMs;
+    while (this.buildSteps) {
+      if (this.buildSteps.next().done) { this.buildSteps = null; return true; }
+      if (performance.now() >= deadline) return false;
+    }
+    return true;
+  }
+
+  finishBuild(): void { while (!this.advanceBuild(Infinity)) { /* drain */ } }
 
   // ---- helpers ------------------------------------------------------------------
 
@@ -268,7 +283,7 @@ export class LevelView {
 
   // ---- building the area -----------------------------------------------------------
 
-  private build(): void {
+  private *build(): Generator<void, void, unknown> {
     const lvl = this.level;
     if (this.street) {
       // Ground, buildings, shop interiors, street furniture and vehicles all come from the kit plan.
@@ -278,9 +293,12 @@ export class LevelView {
         for (const f of this.kitView.faders) this.foreCars.push({ car: f.group, x: f.x, z: f.z, hx: f.hx, hz: f.hz });
       }
       this.kitDoors = this.street.doors;
+      yield;
       this.buildShopGoods(this.street.goods);
+      yield;
       this.buildApproved(this.street.approved);
     } else this.buildGround();
+    yield;
     // Carry the end facades on past the edges so the camera never sees a gap.
     const fac = this.street ? [] : [...lvl.facades].sort((a, b) => a.x0 - b.x0);
     if (fac.length) {
@@ -296,6 +314,7 @@ export class LevelView {
         if (!kit || !KIT_KINDS.has(f.kind)) {
           this.buildFacade(f);
           recent = [];
+          yield;
           continue;
         }
         const doors = lvl.exits.filter((e) => e.kind === 'door' && e.x >= f.x0 && e.x <= f.x1).map((e) => e.x);
@@ -328,9 +347,11 @@ export class LevelView {
       this.buildProp(p);
       this.building = '';
       this.propObjects.set(p, this.group.children.slice(before));
+      yield;
     }
     if (decor.length) this.buildApproved(decor);
-    for (const ex of lvl.exits) this.buildExit(ex);
+    yield;
+    for (const ex of lvl.exits) { this.buildExit(ex); yield; }
     if (lvl.deep) this.buildPartitions();
     for (const g of lvl.gates ?? []) this.buildGate(g.id, g.x, g.z0, g.z1);
     for (const l of lvl.levers ?? []) this.buildLever(l.id, l.x);
@@ -341,6 +362,7 @@ export class LevelView {
       this.group.add(this.dressing.group);
     }
     // Normal maps for every texture that came from a file (public/textures).
+    yield;
     attachNormals(this.group);
     if (this.lowPoly && themeProfile(lvl.theme).interior) flattenTextures(this.group);
     // Library textures repeat at their real size on whatever they were put on.
@@ -4450,6 +4472,8 @@ export class LevelView {
   }
 
   dispose(): void {
+    this.buildSteps?.return();
+    this.buildSteps = null;
     this.dressing?.dispose();
     this.kitView?.dispose();
     disposeGroup(this.group);
