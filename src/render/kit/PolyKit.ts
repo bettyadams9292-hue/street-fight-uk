@@ -431,6 +431,13 @@ export interface KitFader {
  * windows and lamps glow.
  */
 export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): KitStreetView | null {
+  const steps = buildKitStreetSteps(plan, o);
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+export function* buildKitStreetSteps(plan: StreetPlan, o: { night?: boolean } = {}): Generator<void, KitStreetView | null, unknown> {
   if (!polyKitReady()) return null;
   // The street is baked in chunks along x, so the camera (and the shadow camera) can cull what's off screen.
   // One mesh per district used to be drawn whole, twice (shadow pass and colour), for each of three districts.
@@ -473,10 +480,12 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     }
     if (m.glass) into.glass.add(m.glass, pl, null);
     if (m.lit) into.lit.add(m.lit, pl, null);
+    yield;
   }
   for (const b of plan.blocks) {
     const c = chunk(b.x);
     (b.glow ? c.lit : c.solid).block(b);
+    yield;
   }
 
   const group = new THREE.Group();
