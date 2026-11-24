@@ -179,9 +179,16 @@ export class FighterView {
     this.flashTime = 0.09;
   }
 
-  update(dt: number, time: number): void {
+  private poseElapsed = 0;
+
+  update(dt: number, time: number, background = false): void {
     const f = this.fighter;
     this.root.position.set(f.pos.x, f.pos.y, f.pos.z);
+    this.poseElapsed += dt;
+    // Only distant, non-combat idle characters qualify. Keep root motion at full rate.
+    if (background && f.state === 'idle' && !this.mount && !f.grapple && this.flashTime <= 0 && this.poseElapsed < 1 / 30) return;
+    dt = this.poseElapsed;
+    this.poseElapsed = 0;
 
     let riding: Pose | null = null;
     let roll = 0;
