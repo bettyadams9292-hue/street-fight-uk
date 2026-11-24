@@ -1,3 +1,4 @@
+import { BACKGROUND_POSE_DISTANCE } from '../performance/FrameBudget';
 import { humanSpecFor, humansOn } from './human/HumanRig';
 import { buildHumanLater, humanBuilt } from './human/HumanBuilder';
 import * as THREE from 'three';
@@ -581,8 +582,8 @@ export class GameRenderer {
         const f = v.fighter;
         const background = !!this.world && !!focus && !this.studio && !this.deterministicStream
           && f !== focus && f.team !== 'player' && f.team !== 'enemy'
-          && Math.abs(f.pos.x - focus.pos.x) > 12
-          && Math.abs(f.pos.x - this.cameraRig.focusX) > 12;
+          && Math.abs(f.pos.x - focus.pos.x) > BACKGROUND_POSE_DISTANCE
+          && Math.abs(f.pos.x - this.cameraRig.focusX) > BACKGROUND_POSE_DISTANCE;
         v.update(dt, time, background);
       }
       if (this.studio) {
