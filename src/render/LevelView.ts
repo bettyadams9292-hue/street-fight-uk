@@ -31,7 +31,7 @@ import { themeProfile } from './themes';
 import { kitStreet, planStreet, type ApprovedPlacement, type ShopGood, type StreetPlan } from '../city/street';
 import { bakeApproved, prototype, type ApprovedCopy } from './approved/prototype';
 import { bakeStatic } from './bakeStatic';
-import { buildKitStreet, hasKitPiece, kitFloor, kitPiece, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
+import { buildKitStreetSteps, hasKitPiece, kitFloor, kitPiece, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
 import { exitLocked, type World } from '../world/World';
 import { isSubwayStairs, SUBWAY_GAP } from '../world/strip';
 import {
@@ -287,7 +287,7 @@ export class LevelView {
     const lvl = this.level;
     if (this.street) {
       // Ground, buildings, shop interiors, street furniture and vehicles all come from the kit plan.
-      this.kitView = buildKitStreet(this.street);
+      this.kitView = yield* buildKitStreetSteps(this.street);
       if (this.kitView) {
         this.group.add(this.kitView.group);
         for (const f of this.kitView.faders) this.foreCars.push({ car: f.group, x: f.x, z: f.z, hx: f.hx, hz: f.hz });
