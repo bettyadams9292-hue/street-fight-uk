@@ -116,7 +116,8 @@ function cssRgb(g: CanvasRenderingContext2D, css: string): [number, number, numb
 }
 
 /** One Source per file canvas, so every texture cut from it shares one upload to the GPU. */
-const sources = new Map<HTMLCanvasElement, THREE.Source>();
+// A source must not keep transient atlas canvases alive after their textures are disposed.
+const sources = new WeakMap<HTMLCanvasElement, THREE.Source>();
 
 function wrap(c: HTMLCanvasElement, name: string, repeatX: number, repeatY: number): THREE.CanvasTexture {
   const t = new THREE.CanvasTexture(c);
