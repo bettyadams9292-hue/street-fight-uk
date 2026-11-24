@@ -144,9 +144,12 @@ export class GameRenderer {
     if (lights.length) {
       for (const l of lights) {
         l.castShadow = q !== 'low';
-        l.shadow.mapSize.set(q === 'high' ? 2048 : 1024, q === 'high' ? 2048 : 1024);
-        l.shadow.map?.dispose();
-        l.shadow.map = null;
+        const size = q === 'high' ? 2048 : 1024;
+        if (l.shadow.mapSize.x !== size || l.shadow.mapSize.y !== size) {
+          l.shadow.mapSize.set(size, size);
+          l.shadow.map?.dispose();
+          l.shadow.map = null;
+        }
       }
     }
     this.resize();
@@ -258,7 +261,12 @@ export class GameRenderer {
       v.group.position.x = side === 'left' ? here.bounds.minX - v.level.bounds.maxX : here.bounds.maxX - v.level.bounds.minX;
       this.near[side] = v;
       this.scene.add(v.group);
-      this.applyQuality(this.quality);
+      // Configure only the new district's lights; avoid resizing all render targets.
+      for (const l of v.shadowLights) {
+        l.castShadow = this.quality !== 'low';
+        const size = this.quality === 'high' ? 2048 : 1024;
+        l.shadow.mapSize.set(size, size);
+      }
       // Its shaders, before you walk into it.
       this.precompile(v.group, true);
     };
@@ -439,9 +447,9 @@ export class GameRenderer {
   /** Add views for new fighters and drop views of fighters that left the simulation. */
   syncFighters(): void {
     if (!this.sim) return;
-    const ids = new Set(this.sim.fighters.map((f) => f.id));
+    const fightersById = new Map(this.sim.fighters.map((f) => [f.id, f]));
     for (const [id, v] of this.views) {
-      if (!ids.has(id) || v.fighter !== this.sim.fighters.find((f) => f.id === id)) {
+      if (v.fighter !== fightersById.get(id)) {
         this.scene.remove(v.root);
         v.dispose();
         this.views.delete(id);
@@ -458,7 +466,7 @@ export class GameRenderer {
       this.lookState.delete(f.id);
       if (f.team !== 'player') built++;
     }
-    if (this.lookState.size > 64) for (const id of this.lookState.keys()) if (!ids.has(id)) this.lookState.delete(id);
+    if (this.lookState.size > 64) for (const id of this.lookState.keys()) if (!fightersById.has(id)) this.lookState.delete(id);
   }
 
   /** People arriving mid-play whose look is being built in the background ('wait'), or is ready ('now'). */
