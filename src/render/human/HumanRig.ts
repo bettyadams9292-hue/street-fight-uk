@@ -44,6 +44,11 @@ export function setHumansEnabled(on: boolean): void {
   enabled = on;
 }
 
+/** The MakeHuman characters are in use (not low graphics, and loaded). */
+export function humansOn(): boolean {
+  return enabled && humansReady();
+}
+
 export function buildHumanRig(a: CharacterAppearance, lite = false): Rig | null {
   if (!enabled || !humansReady()) return null;
   const spec = humanSpecFor(a, lite);

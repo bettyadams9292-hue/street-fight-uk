@@ -131,7 +131,7 @@ const estate: LevelDef = {
   breakables: [
     { id: 'crates1', kind: 'crate', x: 20, z: -1.5, hp: 2, drops: 'plank', loot: 'crate' },
   ],
-  weather: 'rain',
+  weather: 'clear',
   encounters: [
     {
       id: 'lads', triggerX: 18, lock: [10, 34], optional: false,
@@ -208,7 +208,7 @@ const highStreet: LevelDef = {
     { id: 'van', kind: 'car', x: 58, z: 0.0, label: 'Search the van', loot: 'car' },
     { id: 'crates', kind: 'crate', x: 84, z: -0.85, label: 'Search the beer crates', loot: 'crate' },
   ],
-  weather: 'rain',
+  weather: 'clear',
   encounters: [
     {
       id: 'pub_door', triggerX: 28, lock: [18, 42], optional: false,
@@ -286,7 +286,7 @@ const alleys: LevelDef = {
     { id: 'pallets1', kind: 'pallet', x: 28, z: 1.1, hp: 2, drops: 'plank' },
     { id: 'boxes1', kind: 'boxes', x: 55, z: -1.2, hp: 1, loot: 'dumpster' },
   ],
-  weather: 'rain',
+  weather: 'clear',
   encounters: [
     {
       id: 'ambush', triggerX: 26, lock: [16, 40], optional: false,
@@ -358,7 +358,7 @@ const industrial: LevelDef = {
   breakables: [
     { id: 'pallets', kind: 'pallet', x: 33, z: 1.2, hp: 2, drops: 'plank' },
   ],
-  weather: 'mist',
+  weather: 'clear',
   encounters: [
     {
       id: 'yard', triggerX: 30, lock: [20, 46], optional: false,
@@ -524,7 +524,7 @@ const city: LevelDef = {
     { id: 'car', kind: 'car', x: 52, z: 0.2, label: 'Search the parked car', loot: 'car' },
     { id: 'clubbins', kind: 'dumpster', x: 44, z: -1.3, label: 'Search the club bins', loot: 'dumpster' },
   ],
-  weather: 'rain',
+  weather: 'clear',
   encounters: [
     {
       id: 'square', triggerX: 32, lock: [20, 46], optional: false,
@@ -591,7 +591,7 @@ const territory: LevelDef = {
   breakables: [
     { id: 'crate1', kind: 'crate', x: 56, z: 1.3, hp: 2, drops: 'plank', loot: 'crate' },
   ],
-  weather: 'rain',
+  weather: 'clear',
   encounters: [
     {
       id: 'gauntlet', triggerX: 22, lock: [10, 38], optional: false,

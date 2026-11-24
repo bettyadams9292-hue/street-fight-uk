@@ -45,17 +45,33 @@ export class AudioManager {
     if (this.ctx) this.decode(id);
   }
 
+  /**
+   * A song decoded is about 60 MB of samples (two and a half minutes of 48 kHz stereo): only the one that's
+   * wanted is decoded, and the others are let go (their small MP3 stays, to decode again if they come back),
+   * so a phone isn't holding every song at once.
+   */
+  private static isSong(id: string): boolean {
+    return id.startsWith('sfx_music_');
+  }
+  private decoding = new Set<string>();
+
   private decode(id: string): void {
     const data = this.raw.get(id);
-    if (!data || !this.ctx || this.decoded.has(id)) return;
+    if (!data || !this.ctx || this.decoded.has(id) || this.decoding.has(id)) return;
+    if (AudioManager.isSong(id) && id !== `sfx_music_${this.musicWant}`) return;
+    this.decoding.add(id);
     // decodeAudioData takes ownership of the buffer: give it a copy.
     this.ctx.decodeAudioData(data.slice(0)).then(
       (b) => {
+        this.decoding.delete(id);
         this.decoded.set(id, b);
         if (id === 'sfx_amb_night_0') this.upgradeAmbience();
         if (id === `sfx_music_${this.musicWant}`) this.syncMusic();
       },
-      () => this.raw.delete(id),
+      () => {
+        this.decoding.delete(id);
+        this.raw.delete(id);
+      },
     );
   }
 
@@ -515,10 +531,18 @@ export class AudioManager {
   private syncMusic(): void {
     if (!this.ctx) return;
     if (this.musicNow?.track === this.musicWant) return;
-    const buf = this.musicWant ? this.decoded.get(`sfx_music_${this.musicWant}`) : null;
-    if (this.musicWant && !buf) return; // not loaded yet: decode() calls back here
+    const want = this.musicWant ? `sfx_music_${this.musicWant}` : null;
+    const buf = want ? this.decoded.get(want) : null;
+    if (want && !buf) {
+      // Not decoded (or not downloaded) yet: decode() calls back here once it is.
+      this.decode(want);
+      return;
+    }
     if (this.musicNow) this.musicLeft.set(this.musicNow.track, { at: this.musicNow.stop(), when: this.ctx.currentTime });
     this.musicNow = null;
+    // Let go of the songs that aren't playing (the one fading out keeps its own reference till it's done). Not
+    // for silence (going indoors): the street's song is kept for when you come back out.
+    if (want) for (const id of [...this.decoded.keys()]) if (AudioManager.isSong(id) && id !== want) this.decoded.delete(id);
     if (this.musicWant && buf) {
       const song = MUSIC_LOOPS[this.musicWant];
       let play: { loopStart: number; loopEnd: number; from: number } | undefined;

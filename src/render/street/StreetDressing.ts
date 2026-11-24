@@ -1,9 +1,9 @@
 /**
- * Phase 3 street pass: everything that makes a street read as a wet British
- * street at night without changing where anything is or how it plays.
+ * Phase 3 street pass: everything that makes a street read as a British street
+ * at night without changing where anything is or how it plays (no weather: the
+ * rain, splashes and puddles were taken out for phones).
  *
- *   light pools and beams under the lamps      irregular puddles
- *   rain splashes on the ground                drainpipes, grime, weeds, litter
+ *   light pools and beams under the lamps      drainpipes, grime, weeds, litter
  *   soft contact shadows under street furniture
  *
  * Nothing here collides, moves a prop or is read by the simulation.
@@ -23,13 +23,10 @@ function canvasTexture(size: number, paint: (ctx: CanvasRenderingContext2D, s: n
   return t;
 }
 
-const SPLASHES = 150;
 
 export class StreetDressing {
   readonly group = new THREE.Group();
   private readonly disposables: { dispose(): void }[] = [];
-  private splash: THREE.Points | null = null;
-  private splashSeed = new Float32Array(SPLASHES * 3);
 
   constructor(
     private readonly level: LevelDef,
@@ -41,11 +38,9 @@ export class StreetDressing {
   ) {
     this.group.name = 'street-dressing';
     this.lightPools();
-    this.puddles();
     this.wall();
     this.contactShadows();
     this.litter();
-    if (level.weather === 'rain') this.rainSplashes();
   }
 
   private keep<T extends { dispose(): void }>(x: T): T {
@@ -103,40 +98,6 @@ export class StreetDressing {
       shaft.position.set(l.x, l.y / 2, l.z);
       this.group.add(shaft);
     }
-  }
-
-  /** Standing water in uneven patches: they mirror the lamps where the paving dips. */
-  private puddles(): void {
-    const water = this.keep(new THREE.MeshStandardMaterial({ color: 0x1c2028, roughness: 0.03, metalness: 0.5, transparent: true, opacity: 0.6, depthWrite: false }));
-    const W = this.X1 - this.X0;
-    const count = Math.floor(W / 6);
-    for (let i = 0; i < count; i++) {
-      const shape = new THREE.Shape();
-      const lobes = 9;
-      const wob = Array.from({ length: lobes }, () => 0.62 + this.rnd() * 0.5);
-      for (let k = 0; k <= lobes; k++) {
-        const a = (k / lobes) * Math.PI * 2;
-        const rad = wob[k % lobes];
-        if (k === 0) shape.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
-        else {
-          const am = ((k - 0.5) / lobes) * Math.PI * 2;
-          const rm = (wob[(k - 1) % lobes] + rad) / 2 + 0.08;
-          shape.quadraticCurveTo(Math.cos(am) * rm, Math.sin(am) * rm, Math.cos(a) * rad, Math.sin(a) * rad);
-        }
-      }
-      const p = new THREE.Mesh(this.keep(new THREE.ShapeGeometry(shape, 5)), water);
-      p.rotation.x = -Math.PI / 2;
-      p.rotation.z = this.rnd() * Math.PI;
-      p.scale.set(0.5 + this.rnd() * 0.9, 0.22 + this.rnd() * 0.3, 1);
-      const onRoad = this.rnd() < 0.35;
-      const z = onRoad ? this.front + 0.9 + this.rnd() * 2.5 : this.back + 0.9 + this.rnd() * (this.front - this.back - 1.4);
-      p.position.set(this.X0 + this.rnd() * W, onRoad ? -0.012 : 0.006, z);
-      p.receiveShadow = true;
-      this.group.add(p);
-    }
-    // The gutter runs wet along the kerb.
-    const gutter = this.keep(new THREE.MeshStandardMaterial({ color: 0x14171c, roughness: 0.05, metalness: 0.45, transparent: true, opacity: 0.5, depthWrite: false }));
-    this.flat(W, 0.42, (this.X0 + this.X1) / 2, -0.014, this.front + 0.48, gutter);
   }
 
   /** The wall stops being one clean sheet: pipes at the party walls, damp at its foot, weeds in the joint. */
@@ -243,49 +204,8 @@ export class StreetDressing {
     }
   }
 
-  /** Rings where raindrops land. One draw call; positions come from the clock, so they need no state. */
-  private rainSplashes(): void {
-    const ring = this.keep(
-      canvasTexture(32, (ctx, s) => {
-        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-        ctx.lineWidth = 2.2;
-        ctx.beginPath();
-        ctx.ellipse(s / 2, s / 2, s * 0.38, s * 0.2, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }),
-    );
-    for (let i = 0; i < SPLASHES * 3; i++) this.splashSeed[i] = this.rnd();
-    const geo = this.keep(new THREE.BufferGeometry());
-    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SPLASHES * 3), 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(SPLASHES * 3), 3));
-    const mat = this.keep(new THREE.PointsMaterial({ map: ring, size: 0.2, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
-    this.splash = new THREE.Points(geo, mat);
-    this.splash.frustumCulled = false;
-    this.group.add(this.splash);
-  }
-
-  update(time: number, camX: number): void {
-    if (!this.splash) return;
-    const pos = this.splash.geometry.getAttribute('position') as THREE.BufferAttribute;
-    const col = this.splash.geometry.getAttribute('color') as THREE.BufferAttribute;
-    const zSpan = this.front + 3.5 - (this.back + 0.4);
-    for (let i = 0; i < SPLASHES; i++) {
-      const period = 0.35 + this.splashSeed[i * 3] * 0.3;
-      const t = time / period + this.splashSeed[i * 3 + 1] * 10;
-      const cycle = Math.floor(t);
-      const age = t - cycle;
-      // A cheap hash of (drop, cycle): every landing is somewhere new.
-      const hx = Math.sin(i * 12.9898 + cycle * 78.233) * 43758.5453;
-      const hz = Math.sin(i * 39.3468 + cycle * 11.135) * 24634.6345;
-      const fx = hx - Math.floor(hx);
-      const fz = hz - Math.floor(hz);
-      pos.setXYZ(i, camX + (fx - 0.5) * 24, 0.03, this.back + 0.4 + fz * zSpan);
-      const k = (1 - age) * (1 - age) * 0.5;
-      col.setXYZ(i, k * 0.75, k * 0.85, k);
-    }
-    pos.needsUpdate = true;
-    col.needsUpdate = true;
-  }
+  /** Nothing moves now the rain's gone; kept so callers needn't change. */
+  update(_time: number, _camX: number): void {}
 
   dispose(): void {
     for (const d of this.disposables) d.dispose();

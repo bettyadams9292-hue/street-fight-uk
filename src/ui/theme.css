@@ -2307,3 +2307,9 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .club-rung.next { box-shadow: inset 0 0 0 2px var(--red); }
 .club-rung.beaten b { color: var(--concrete); text-decoration: line-through; }
 .club-rules { margin: 10px 0 0; font-family: var(--ui); font-size: 13px; color: var(--concrete); }
+
+/* Waiting for the 3D the first time you start play (Game.whenLoaded): the boot screen's look. */
+.load-wait { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: radial-gradient(ellipse at 50% 40%, #18213a, #0b0f1c 70%); }
+.load-bar { width: min(280px, 62vw); height: 10px; background: #0c101c; box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.6), 0 0 0 2px #1b2133; }
+.load-bar-fill { height: 100%; width: 6%; background: repeating-linear-gradient(-45deg, #e8333a 0 8px, #f5f6fa 8px 16px); transition: width 0.2s linear; }
+.load-text { font-family: var(--head); font-size: 16px; font-weight: 700; letter-spacing: 0.02em; color: #9aa1b4; }

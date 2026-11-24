@@ -6,12 +6,13 @@
  * Packs load once (loadHumanAssets); textures load on first use and are shared.
  * Origin at the feet, facing +z, in the rest pose (arms in an A).
  */
+import { fetchBinary } from '../../core/fetchBinary';
 import { detail, type LibraryName } from '../materials/library';
 import * as THREE from 'three';
-import { BodyData, footY, morph, placeBones, type BodyMeta, type BodyShape } from '../../characters/human/body';
-import { ProxyData, fitProxy, proxySkin, type ProxyMeta } from '../../characters/human/proxy';
-import { cutBrows, cutLashes, type BrowMesh } from '../../characters/human/brows';
-import { cutGarment, type Fabric, type GarmentKind } from '../../characters/human/garments';
+import { BodyData, type placeBones, type BodyMeta } from '../../characters/human/body';
+import { ProxyData, type ProxyMeta } from '../../characters/human/proxy';
+import type { Fabric } from '../../characters/human/garments';
+import { computeHuman, type ComputeDeps, type HumanData, type HumanSpec, type PartData } from '../../characters/human/compute';
 
 /**
  * Skinned meshes can't use their geometry's bounds (the bones move the vertices), so they used to have culling
@@ -36,44 +37,10 @@ export interface SkinInfo {
   normal: string | null;
 }
 
-export interface HumanItem {
-  id: string;
-  /** Multiplies the item's texture or sets its colour. */
-  colour?: string;
-}
-
-export interface HumanGarment {
-  kind: GarmentKind;
-  colour: string;
-  trim?: string;
-}
-
-export interface HumanSpec {
-  /** Clothes cut from the body (garments.ts), under or instead of pack items. */
-  garments?: HumanGarment[];
-  shape: BodyShape;
-  skin: string;
-  /** Tints the skin texture (for the plain skin, or to adjust a tone). */
-  skinTint?: string;
-  /** Eyebrow colour (default: dark brown); `browWeight` 0 fine .. 1 heavy. */
-  browColour?: string;
-  browWeight?: number;
-  /** The skin colour wanted: the texture is tinted so its average comes out this colour. */
-  skinColour?: string;
-  eyeColour?: string;
-  items: HumanItem[];
-  /** Background person: the lighter body (and lighter clothes cut from it), no eyelashes. */
-  lite?: boolean;
-}
+export type { HumanItem, HumanGarment, HumanSpec } from '../../characters/human/compute';
 
 const BASE = '/models/human/';
 
-/**
- * How far each kind of item sits out from the skin, in metres. Clothes are pushed out along their
- * normals by their layer so skin never pokes through, and outer layers (a jumper) cover inner ones
- * (the waistband of trousers).
- */
-const LAYER_GAP: Record<string, number> = { socks: 0.002, bottoms: 0.004, shoes: 0.004, top: 0.007, suit: 0.006, gloves: 0.003, beard: 0.001 };
 
 interface Assets {
   body: BodyData;
@@ -102,7 +69,7 @@ export function loadHumanAssets(): Promise<Assets | null> {
     try {
       const [meta, bin, catalogue, skins, lod] = await Promise.all([
         fetch(BASE + 'body.json').then((r) => r.json() as Promise<BodyMeta>),
-        fetch(BASE + 'body.bin').then((r) => r.arrayBuffer()),
+        fetchBinary(BASE + 'body.bin'),
         fetch(BASE + 'proxies/catalogue.json').then((r) => r.json() as Promise<Record<string, ProxyMeta>>),
         fetch(BASE + 'skins.json').then((r) => r.json() as Promise<SkinInfo[]>),
         fetch(BASE + 'body_lod.bin').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null),
@@ -435,34 +402,6 @@ function irisColour(mat: THREE.MeshStandardMaterial, colour: THREE.Color): void 
 }
 
 /** Smooth normals for points indexed by base vertex, so UV seams don't show as creases. */
-function smoothNormals(pos: Float32Array, nBase: number, tris: ArrayLike<number>, toBase: ArrayLike<number>): Float32Array {
-  const n = new Float32Array(nBase * 3);
-  const a = new THREE.Vector3();
-  const b = new THREE.Vector3();
-  const c = new THREE.Vector3();
-  for (let i = 0; i < tris.length; i += 3) {
-    const i0 = toBase[tris[i]];
-    const i1 = toBase[tris[i + 1]];
-    const i2 = toBase[tris[i + 2]];
-    a.fromArray(pos, i0 * 3);
-    b.fromArray(pos, i1 * 3).sub(a);
-    c.fromArray(pos, i2 * 3).sub(a);
-    b.cross(c);
-    for (const v of [i0, i1, i2]) {
-      n[v * 3] += b.x;
-      n[v * 3 + 1] += b.y;
-      n[v * 3 + 2] += b.z;
-    }
-  }
-  for (let v = 0; v < nBase; v++) {
-    const l = Math.hypot(n[v * 3], n[v * 3 + 1], n[v * 3 + 2]) || 1;
-    n[v * 3] /= l;
-    n[v * 3 + 1] /= l;
-    n[v * 3 + 2] /= l;
-  }
-  return n;
-}
-
 /** The colour to multiply a skin texture by so it averages out at spec.skinColour. */
 function skinTintFor(spec: HumanSpec, skin: SkinInfo): THREE.Color {
   if (spec.skinTint) return new THREE.Color(spec.skinTint);
@@ -550,28 +489,97 @@ function skeletonFrom(placed: ReturnType<typeof placeBones>): { bones: THREE.Bon
  * Build a character. Call after preloadHuman(spec); anything not loaded is left out. A spec built
  * before shares its meshes (morphing and cutting clothes take tens of milliseconds).
  */
+/** Keep a freshly built person for reuse, forgetting the least recently used ones nobody is wearing. */
+function keepTemplate(key: string, fresh: BuiltHuman & { placed: ReturnType<typeof placeBones> }): Template {
+  const parts: Template['parts'] = [];
+  fresh.root.traverse((o: THREE.Object3D) => {
+    const m = o as THREE.SkinnedMesh;
+    if (m.isSkinnedMesh) parts.push({ geometry: m.geometry, material: m.material as THREE.Material, name: m.name, order: m.renderOrder, cast: m.castShadow });
+  });
+  const t: Template = { placed: fresh.placed, parts, height: fresh.height, refs: 0, dispose: fresh.dispose };
+  templates.set(key, t);
+  if (templates.size > MAX_TEMPLATES)
+    for (const [k, old] of templates) {
+      if (templates.size <= MAX_TEMPLATES) break;
+      if (old.refs === 0 && old !== t) {
+        old.dispose();
+        templates.delete(k);
+      }
+    }
+  return t;
+}
+
+/** Already built: buildHuman will be quick. */
+export function humanBuilt(spec: HumanSpec): boolean {
+  return templates.has(JSON.stringify(spec));
+}
+
+// ---- building in the background (buildWorker.ts) ----
+
+let worker: Worker | null = null;
+let workerBroken = typeof Worker === 'undefined';
+let nextJob = 1;
+const jobs = new Map<number, { key: string; spec: HumanSpec; done: (ok: boolean) => void }>();
+const building = new Map<string, Promise<boolean>>();
+
+function buildWorker(): Worker | null {
+  if (worker || workerBroken) return worker;
+  try {
+    worker = new Worker(new URL('./buildWorker.ts', import.meta.url), { type: 'module' });
+  } catch {
+    workerBroken = true;
+    return null;
+  }
+  worker.onmessage = (e: MessageEvent<{ id: number; data?: HumanData; error?: string }>) => {
+    const job = jobs.get(e.data.id);
+    if (!job) return;
+    jobs.delete(e.data.id);
+    if (!e.data.data) return job.done(false);
+    if (!templates.has(job.key)) {
+      const fresh = assemble(job.spec, e.data.data);
+      if (!fresh) return job.done(false);
+      keepTemplate(job.key, fresh);
+    }
+    job.done(true);
+  };
+  // A worker that can't start (an old browser, a build without it): everything is built where it's asked for.
+  worker.onerror = () => {
+    workerBroken = true;
+    worker?.terminate();
+    worker = null;
+    for (const j of jobs.values()) j.done(false);
+    jobs.clear();
+  };
+  return worker;
+}
+
+/**
+ * Build a person in the background. Resolves true once buildHuman(spec) will be instant; false if it couldn't
+ * (no worker): build it the ordinary way then.
+ */
+export function buildHumanLater(spec: HumanSpec): Promise<boolean> {
+  const key = JSON.stringify(spec);
+  if (templates.has(key)) return Promise.resolve(true);
+  const had = building.get(key);
+  if (had) return had;
+  const w = ready ? buildWorker() : null;
+  if (!w) return Promise.resolve(false);
+  const p = new Promise<boolean>((done) => {
+    const id = nextJob++;
+    jobs.set(id, { key, spec, done });
+    w.postMessage({ id, spec });
+  }).finally(() => building.delete(key));
+  building.set(key, p);
+  return p;
+}
+
 export function buildHuman(spec: HumanSpec): BuiltHuman | null {
   const key = JSON.stringify(spec);
   let t = templates.get(key);
   if (!t) {
     const fresh = buildHumanFresh(spec);
     if (!fresh) return null;
-    const parts: Template['parts'] = [];
-    fresh.root.traverse((o: THREE.Object3D) => {
-      const m = o as THREE.SkinnedMesh;
-      if (m.isSkinnedMesh) parts.push({ geometry: m.geometry, material: m.material as THREE.Material, name: m.name, order: m.renderOrder, cast: m.castShadow });
-    });
-    t = { placed: fresh.placed, parts, height: fresh.height, refs: 0, dispose: fresh.dispose };
-    templates.set(key, t);
-    // Forget the least recently used ones no character is wearing.
-    if (templates.size > MAX_TEMPLATES)
-      for (const [k, old] of templates) {
-        if (templates.size <= MAX_TEMPLATES) break;
-        if (old.refs === 0 && old !== t) {
-          old.dispose();
-          templates.delete(k);
-        }
-      }
+    t = keepTemplate(key, fresh);
   } else {
     templates.delete(key);
     templates.set(key, t);
@@ -603,300 +611,112 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
   };
 }
 
+/** What the geometry step reads, on this thread. */
+function computeDeps(a: Assets): ComputeDeps {
+  return { body: a.body, lite: a.lite, proxy: (id) => proxyReady.get(id) };
+}
+
 function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<typeof placeBones> }) | null {
   const a = ready;
   if (!a) return null;
-  const body = spec.lite ? a.lite : a.body;
-  const pos = morph(body, spec.shape);
-  const ground = footY(body, pos);
-  for (let i = 1; i < pos.length; i += 3) pos[i] -= ground;
+  return assemble(spec, computeHuman(spec, computeDeps(a)));
+}
 
-  // ---- skeleton: bones at their joints, frames aligned with the world ----
-  const placed = placeBones(body, pos);
-  const bones = placed.map((p) => {
-    const b = new THREE.Bone();
-    b.name = p.name;
-    return b;
-  });
-  placed.forEach((p, i) => {
-    const b = bones[i];
-    if (p.parent >= 0) {
-      const ph = placed[p.parent].head;
-      b.position.set(p.head[0] - ph[0], p.head[1] - ph[1], p.head[2] - ph[2]);
-      bones[p.parent].add(b);
-    } else b.position.set(p.head[0], p.head[1], p.head[2]);
-  });
-  const skeleton = new THREE.Skeleton(bones);
-  const root = new THREE.Group();
-  root.name = 'human';
-  root.add(bones[0]);
-  root.updateMatrixWorld(true);
+/** Meshes and materials round the arrays (made here, or in the build worker). */
+function assemble(spec: HumanSpec, data: HumanData): (BuiltHuman & { placed: ReturnType<typeof placeBones> }) | null {
+  const a = ready;
+  if (!a) return null;
+  const { bones, skeleton, root } = skeletonFrom(data.placed);
   const disposables: { dispose(): void }[] = [];
-
-  const items = spec.items.map((it) => ({ it, data: proxyReady.get(it.id) })).filter((x) => x.data) as { it: HumanItem; data: ProxyData }[];
-  const eyes = proxyReady.get('eyes');
-
-  // ---- body, minus what clothes cover ----
-  const hidden = new Uint8Array(body.meta.baseCount);
-  for (const { data } of items) for (const v of data.hides) hidden[v] = 1;
-  // Normals from the full body even for the lighter one: its fewer triangles still shade as smoothly.
-  const nb = smoothNormals(pos, body.meta.baseCount, a.body.index, body.renderBase);
-  const cut = (spec.garments ?? []).map((g) => {
-    const lin = (hex: string): [number, number, number] => {
-      const c = new THREE.Color(hex);
-      return [c.r, c.g, c.b];
-    };
-    return { g, mesh: cutGarment(body, pos, nb, g.kind, { main: lin(g.colour), trim: g.trim ? lin(g.trim) : undefined }) };
-  });
-  // Skin under a garment: hidden if any corner is covered (the cloth's cut edge sits over it).
-  const under = new Uint8Array(body.meta.baseCount);
-  for (const { mesh } of cut) for (let v = 0; v < mesh.covers.length; v++) if (mesh.covers[v]) under[v] = 1;
-  const edgeTrim = (a: number, b: number, c: number) => (under[a] ? 1 : 0) + (under[b] ? 1 : 0) + (under[c] ? 1 : 0) >= 2;
-  const keep: number[] = [];
-  const idx = body.index;
-  for (let i = 0; i < idx.length; i += 3) {
-    const b0 = body.renderBase[idx[i]];
-    const b1 = body.renderBase[idx[i + 1]];
-    const b2 = body.renderBase[idx[i + 2]];
-    if (!(hidden[b0] && hidden[b1] && hidden[b2]) && !edgeTrim(b0, b1, b2)) keep.push(idx[i], idx[i + 1], idx[i + 2]);
-  }
-  // Only the vertices the kept triangles use (skin under clothes, and most of the lighter body's, aren't): the
-  // built person is kept for reuse, so this is memory saved for as long as they're about.
-  const rc = body.meta.renderCount;
-  const remap = new Int32Array(rc).fill(-1);
-  let used = 0;
-  for (const r of keep) if (remap[r] < 0) remap[r] = used++;
-  const P = new Float32Array(used * 3);
-  const N = new Float32Array(used * 3);
-  const UV = new Float32Array(used * 2);
-  const SI = new Uint16Array(used * 4);
-  const SW = new Float32Array(used * 4);
-  for (let r = 0; r < rc; r++) {
-    const o = remap[r];
-    if (o < 0) continue;
-    const v = body.renderBase[r];
-    for (let k = 0; k < 3; k++) {
-      P[o * 3 + k] = pos[v * 3 + k];
-      N[o * 3 + k] = nb[v * 3 + k];
-    }
-    UV[o * 2] = body.uv[r * 2];
-    UV[o * 2 + 1] = body.uv[r * 2 + 1];
-    for (let k = 0; k < 4; k++) {
-      SI[o * 4 + k] = body.skinIndex[v * 4 + k];
-      SW[o * 4 + k] = body.skinWeight[v * 4 + k] / 255;
-    }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(P, 3));
-  g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
-  g.setAttribute('uv', new THREE.BufferAttribute(UV, 2));
-  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4));
-  g.setAttribute('skinWeight', new THREE.BufferAttribute(SW, 4));
-  g.setIndex(keep.map((r) => remap[r]));
-  disposables.push(g);
-  const skin = a.skins.find((s) => s.id === spec.skin) ?? a.skins[0];
-  const skinMat = new THREE.MeshStandardMaterial({
-    map: textures.get(skin.diffuse) ?? null,
-    normalMap: skin.normal ? textures.get(skin.normal) ?? null : null,
-    color: skinTintFor(spec, skin),
-    roughness: 0.62,
-    metalness: 0,
-  });
-  disposables.push(skinMat);
-  const bodyMesh = new THREE.SkinnedMesh(g, skinMat);
-  bodyMesh.name = 'body';
-  root.add(bodyMesh);
-  bodyMesh.bind(skeleton);
-  bodyMesh.castShadow = true;
-  bodyMesh.receiveShadow = true;
-  cullAsCharacter(bodyMesh);
-
-  // ---- eyes and items ----
-  const addProxy = (data: ProxyData, colour?: string) => {
-    const fp = fitProxy(data, pos, body.meta.scale);
-    const sk = proxySkin(data, body);
-    const n = data.meta.renderCount;
-    const p2 = new Float32Array(n * 3);
-    const si = new Uint16Array(n * 4);
-    const sw = new Float32Array(n * 4);
-    const pn = smoothNormals(fp, data.meta.count, data.index, data.renderProxy);
-    const gap = LAYER_GAP[data.meta.slot] ?? 0;
-    for (let r = 0; r < n; r++) {
-      const v = data.renderProxy[r];
-      p2[r * 3] = fp[v * 3] + pn[v * 3] * gap;
-      p2[r * 3 + 1] = fp[v * 3 + 1] + pn[v * 3 + 1] * gap;
-      p2[r * 3 + 2] = fp[v * 3 + 2] + pn[v * 3 + 2] * gap;
-      for (let k = 0; k < 4; k++) {
-        si[r * 4 + k] = sk.index[v * 4 + k];
-        sw[r * 4 + k] = sk.weight[v * 4 + k] / 255;
-      }
-    }
-    const n2 = new Float32Array(n * 3);
-    for (let r = 0; r < n; r++) for (let k = 0; k < 3; k++) n2[r * 3 + k] = pn[data.renderProxy[r] * 3 + k];
-    const pg = new THREE.BufferGeometry();
-    pg.setAttribute('position', new THREE.BufferAttribute(p2, 3));
-    pg.setAttribute('normal', new THREE.BufferAttribute(n2, 3));
-    pg.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(data.uv), 2));
-    pg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
-    pg.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
-    pg.setIndex(new THREE.BufferAttribute(data.index.slice(), 1));
-    disposables.push(pg);
-    const m = data.meta.material;
-    const map = m.diffuse ? textures.get(m.diffuse) ?? null : null;
-    const dye = colour && m.tint && data.meta.slot !== 'eyes' ? new THREE.Color(colour) : null;
-    const mat = new THREE.MeshStandardMaterial({
-      map,
-      normalMap: m.normal ? textures.get(m.normal) ?? null : null,
-      color: map ? new THREE.Color(1, 1, 1) : dye ?? new THREE.Color(m.colour[0], m.colour[1], m.colour[2]),
-      roughness: data.meta.slot === 'eyes' ? 0.15 : 0.8,
-      transparent: m.alpha,
-      alphaTest: m.alpha ? 0.35 : 0,
-      side: m.alpha ? THREE.DoubleSide : THREE.FrontSide,
-      depthWrite: !m.alpha || data.meta.slot === 'hair',
-    });
-    if (dye && map) dyed(mat, dye, meanLum.get(m.diffuse!) ?? 0.5);
-    if (data.meta.slot === 'eyes') irisColour(mat, new THREE.Color(colour ?? '#5a3a22'));
-    disposables.push(mat);
-    const mesh = new THREE.SkinnedMesh(pg, mat);
-    mesh.name = data.id;
-    mesh.renderOrder = data.meta.zDepth;
+  const geometryOf = (p: PartData): THREE.BufferGeometry => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(p.attrs.position, 3));
+    if (p.attrs.normal) g.setAttribute('normal', new THREE.BufferAttribute(p.attrs.normal, 3));
+    if (p.attrs.color) g.setAttribute('color', new THREE.BufferAttribute(p.attrs.color, 3));
+    if (p.attrs.uv) g.setAttribute('uv', new THREE.BufferAttribute(p.attrs.uv, 2));
+    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(p.attrs.skinIndex, 4));
+    g.setAttribute('skinWeight', new THREE.BufferAttribute(p.attrs.skinWeight, 4));
+    g.setIndex(new THREE.BufferAttribute(p.index, 1));
+    if (p.computeNormals) g.computeVertexNormals();
+    disposables.push(g);
+    return g;
+  };
+  const add = (p: PartData, mat: THREE.Material, o: { cast?: boolean; receive?: boolean; order?: number } = {}) => {
+    const mesh = new THREE.SkinnedMesh(geometryOf(p), mat);
+    mesh.name = p.name;
+    if (o.order !== undefined) mesh.renderOrder = o.order;
     root.add(mesh);
     mesh.bind(skeleton);
-    mesh.castShadow = data.meta.slot !== 'eyes';
-    mesh.receiveShadow = true;
+    mesh.castShadow = !!o.cast;
+    mesh.receiveShadow = !!o.receive;
     cullAsCharacter(mesh);
   };
-  if (eyes) {
-    addProxy(eyes, spec.eyeColour);
-    // ---- eyebrows, painted on a shell cut from the brow skin ----
-    const fe = fitProxy(eyes, pos, body.meta.scale);
-    const centre = (sgn: number): [number, number, number] => {
-      let x = 0, y = 0, z = 0, c = 0;
-      for (let i = 0; i < fe.length; i += 3)
-        if (Math.sign(fe[i]) === sgn) {
-          x += fe[i];
-          y += fe[i + 1];
-          z += fe[i + 2];
-          c++;
-        }
-      return c ? [x / c, y / c, z / c] : [0, 0, 0];
-    };
-    const painted = (band: BrowMesh, map: THREE.Texture | null, colour: string, name: string) => {
-      if (!band.index.length) return;
-      const m = band.render.length;
-      const bg = new THREE.BufferGeometry();
-      const si = new Uint16Array(m * 4);
-      const sw = new Float32Array(m * 4);
-      for (let l = 0; l < m; l++) {
-        const v = body.renderBase[band.render[l]];
-        for (let k = 0; k < 4; k++) {
-          si[l * 4 + k] = body.skinIndex[v * 4 + k];
-          sw[l * 4 + k] = body.skinWeight[v * 4 + k] / 255;
-        }
-      }
-      bg.setAttribute('position', new THREE.BufferAttribute(band.position, 3));
-      bg.setAttribute('uv', new THREE.BufferAttribute(band.uv, 2));
-      bg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
-      bg.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
-      bg.setIndex(new THREE.BufferAttribute(band.index, 1));
-      bg.computeVertexNormals();
-      disposables.push(bg);
-      const bm = new THREE.MeshStandardMaterial({ map, color: new THREE.Color(colour), transparent: true, alphaTest: 0.08, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 });
+  const garmentMats = new Map<number, THREE.MeshStandardMaterial>();
+  for (const p of data.parts) {
+    if (p.kind === 'body') {
+      const skin = a.skins.find((s) => s.id === spec.skin) ?? a.skins[0];
+      const skinMat = new THREE.MeshStandardMaterial({
+        map: textures.get(skin.diffuse) ?? null,
+        normalMap: skin.normal ? textures.get(skin.normal) ?? null : null,
+        color: skinTintFor(spec, skin),
+        roughness: 0.62,
+        metalness: 0,
+      });
+      disposables.push(skinMat);
+      add(p, skinMat, { cast: true, receive: true });
+    } else if (p.kind === 'proxy') {
+      const prox = proxyReady.get(p.name);
+      if (!prox) continue;
+      const m = prox.meta.material;
+      const slot = prox.meta.slot;
+      const map = m.diffuse ? textures.get(m.diffuse) ?? null : null;
+      const dye = p.colour && m.tint && slot !== 'eyes' ? new THREE.Color(p.colour) : null;
+      const mat = new THREE.MeshStandardMaterial({
+        map,
+        normalMap: m.normal ? textures.get(m.normal) ?? null : null,
+        color: map ? new THREE.Color(1, 1, 1) : dye ?? new THREE.Color(m.colour[0], m.colour[1], m.colour[2]),
+        roughness: slot === 'eyes' ? 0.15 : 0.8,
+        transparent: m.alpha,
+        alphaTest: m.alpha ? 0.35 : 0,
+        side: m.alpha ? THREE.DoubleSide : THREE.FrontSide,
+        depthWrite: !m.alpha || slot === 'hair',
+      });
+      if (dye && map) dyed(mat, dye, meanLum.get(m.diffuse!) ?? 0.5);
+      if (slot === 'eyes') irisColour(mat, new THREE.Color(p.colour ?? '#5a3a22'));
+      disposables.push(mat);
+      add(p, mat, { cast: slot !== 'eyes', receive: true, order: prox.meta.zDepth });
+    } else if (p.kind === 'band') {
+      const map = p.name === 'eyebrows' ? browTexture() : lashTexture();
+      const bm = new THREE.MeshStandardMaterial({ map, color: new THREE.Color(p.colour), transparent: true, alphaTest: 0.08, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 });
       attachNormal(bm);
       if (bm.normalMap) disposables.push(bm.normalMap);
       disposables.push(bm);
-      const bmesh = new THREE.SkinnedMesh(bg, bm);
-      bmesh.name = name;
-      bmesh.renderOrder = 2;
-      root.add(bmesh);
-      bmesh.bind(skeleton);
-      cullAsCharacter(bmesh);
-    };
-    const eyesAt: [number, number, number][] = [centre(1), centre(-1)];
-    painted(cutBrows(a.body, pos, nb, eyesAt, spec.browWeight ?? 0.5), browTexture(), spec.browColour ?? '#2a1c12', 'eyebrows');
-    // Lashes are a few millimetres: nobody sees them on someone across the street.
-    if (!spec.lite) painted(cutLashes(body, pos, nb, eyesAt), lashTexture(), '#120c08', 'eyelashes');
-  }
-
-  // ---- clothes cut from the body ----
-  for (const { g, mesh } of cut) {
-    const m = mesh.render.length;
-    const gg = new THREE.BufferGeometry();
-    const uv = new Float32Array(m * 2);
-    const si = new Uint16Array(m * 4);
-    const sw = new Float32Array(m * 4);
-    for (let l = 0; l < m; l++) {
-      const r = mesh.render[l];
-      const v = body.renderBase[r];
-      uv[l * 2] = body.uv[r * 2];
-      uv[l * 2 + 1] = body.uv[r * 2 + 1];
-      for (let k = 0; k < 4; k++) {
-        si[l * 4 + k] = body.skinIndex[v * 4 + k];
-        sw[l * 4 + k] = body.skinWeight[v * 4 + k] / 255;
+      add(p, bm, { order: 2 });
+    } else {
+      let mat = garmentMats.get(p.garment!);
+      if (!mat) {
+        const fabric = p.fabric!;
+        // A shoe's upper is smooth leather or mesh: the drawn weave would streak over the foot's small patch of the atlas.
+        mat = new THREE.MeshStandardMaterial({ map: p.part === 'feet' ? null : fabricTexture(fabric), vertexColors: true, roughness: FABRIC_ROUGH[fabric], side: THREE.DoubleSide });
+        attachNormal(mat);
+        if (mat.normalMap) disposables.push(mat.normalMap);
+        disposables.push(mat);
+        // The cloth's real weave and sheen from the texture library (the colour stays per vertex).
+        const cloth = FABRIC_LIBRARY[fabric];
+        // Hats and shoes cover a small patch of the body's texture atlas: tile the weave finer there.
+        const fine = p.part === 'head' ? 10 : p.part === 'feet' ? 8 : 1;
+        detail(mat, cloth[0], cloth[1] * fine, cloth[2] * (p.part === 'feet' || p.part === 'head' ? 0.2 : 1));
+        garmentMats.set(p.garment!, mat);
       }
-    }
-    gg.setAttribute('position', new THREE.BufferAttribute(mesh.position, 3));
-    gg.setAttribute('normal', new THREE.BufferAttribute(mesh.normal, 3));
-    gg.setAttribute('color', new THREE.BufferAttribute(mesh.colour, 3));
-    gg.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-    gg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
-    gg.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
-    gg.setIndex(new THREE.BufferAttribute(mesh.index, 1));
-    disposables.push(gg);
-    // A shoe's upper is smooth leather or mesh: the drawn weave would streak over the foot's small patch of the atlas.
-    const mat = new THREE.MeshStandardMaterial({ map: mesh.part === 'feet' ? null : fabricTexture(mesh.fabric), vertexColors: true, roughness: FABRIC_ROUGH[mesh.fabric], side: THREE.DoubleSide });
-    attachNormal(mat);
-    if (mat.normalMap) disposables.push(mat.normalMap);
-    disposables.push(mat);
-    // The cloth's real weave and sheen from the texture library (the colour stays per vertex).
-    const cloth = FABRIC_LIBRARY[mesh.fabric];
-    // Hats and shoes cover a small patch of the body's texture atlas: tile the weave finer there.
-    const fine = mesh.part === 'head' ? 10 : mesh.part === 'feet' ? 8 : 1;
-    detail(mat, cloth[0], cloth[1] * fine, cloth[2] * (mesh.part === 'feet' || mesh.part === 'head' ? 0.2 : 1));
-    const gm = new THREE.SkinnedMesh(gg, mat);
-    gm.name = g.kind;
-    root.add(gm);
-    gm.bind(skeleton);
-    gm.castShadow = true;
-    gm.receiveShadow = true;
-    cullAsCharacter(gm);
-    // A cap's peak or a hat's brim: a rigid sheet on the head bone, in the same cloth.
-    for (const e of mesh.extra ?? []) {
-      if (!e.index.length) continue;
-      const bi = bones.findIndex((b) => b.name === e.bone);
-      const cnt = e.position.length / 3;
-      const eg = new THREE.BufferGeometry();
-      eg.setAttribute('position', new THREE.BufferAttribute(e.position, 3));
-      eg.setAttribute('color', new THREE.BufferAttribute(e.colour, 3));
-      const si = new Uint16Array(cnt * 4);
-      const sw = new Float32Array(cnt * 4);
-      for (let i = 0; i < cnt; i++) {
-        si[i * 4] = Math.max(0, bi);
-        sw[i * 4] = 1;
-      }
-      eg.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
-      eg.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
-      eg.setIndex(new THREE.BufferAttribute(e.index, 1));
-      eg.computeVertexNormals();
-      disposables.push(eg);
-      const em = new THREE.SkinnedMesh(eg, mat);
-      em.name = `${g.kind}_${e.bone === 'head' ? 'brim' : 'sole'}`;
-      root.add(em);
-      em.bind(skeleton);
-      em.castShadow = true;
-      cullAsCharacter(em);
+      add(p, mat, { cast: true, receive: p.kind === 'garment' });
     }
   }
-  for (const { it, data } of items) addProxy(data, it.colour);
-
-  let top = 0;
-  for (let i = 1; i < pos.length; i += 3) top = Math.max(top, pos[i]);
   return {
-    placed,
+    placed: data.placed,
     root,
     skeleton,
     bones: new Map(bones.map((b) => [b.name, b])),
-    height: top,
+    height: data.height,
     dispose: () => {
       for (const d of disposables) d.dispose();
     },
