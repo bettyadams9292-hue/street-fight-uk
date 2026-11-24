@@ -28,11 +28,11 @@ interface Follow {
   limb?: string;
 }
 
-export function humanSpecFor(a: CharacterAppearance): HumanSpec | null {
+export function humanSpecFor(a: CharacterAppearance, lite = false): HumanSpec | null {
   const assets = humanAssets();
   if (!assets) return null;
   const d = appearanceToHuman(a, assets.skins);
-  return { shape: d.shape, skin: d.skin, skinColour: d.skinColour, browColour: d.browColour, browWeight: d.browWeight, eyeColour: d.eyeColour, items: d.items, garments: d.garments };
+  return { shape: d.shape, skin: d.skin, skinColour: d.skinColour, browColour: d.browColour, browWeight: d.browWeight, eyeColour: d.eyeColour, items: d.items, garments: d.garments, ...(lite ? { lite: true } : {}) };
 }
 
 let enabled = true;
@@ -44,9 +44,9 @@ export function setHumansEnabled(on: boolean): void {
   enabled = on;
 }
 
-export function buildHumanRig(a: CharacterAppearance): Rig | null {
+export function buildHumanRig(a: CharacterAppearance, lite = false): Rig | null {
   if (!enabled || !humansReady()) return null;
-  const spec = humanSpecFor(a);
+  const spec = humanSpecFor(a, lite);
   if (!spec) return null;
   const built = buildHuman(spec);
   if (!built) return null;

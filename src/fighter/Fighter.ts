@@ -107,6 +107,11 @@ export class Fighter {
   readonly name: string;
   /** What they are, shown under their bar when the name is a person's ("Street Thug" under "KYLE"). */
   tag?: string;
+  /**
+   * Someone in the background (a passer-by, the crowd, a shopkeeper, a regular in the pub): drawn with the
+   * lighter body (HumanBuilder `lite`), which costs about a fifth of the triangles. Set before they're added.
+   */
+  background?: boolean;
   team: Team;
   readonly appearance: CharacterAppearance;
   readonly stats: Stats;

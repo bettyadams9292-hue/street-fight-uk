@@ -62,6 +62,8 @@ export interface HumanSpec {
   skinColour?: string;
   eyeColour?: string;
   items: HumanItem[];
+  /** Background person: the lighter body (and lighter clothes cut from it), no eyelashes. */
+  lite?: boolean;
 }
 
 const BASE = '/models/human/';
@@ -75,6 +77,12 @@ const LAYER_GAP: Record<string, number> = { socks: 0.002, bottoms: 0.004, shoes:
 
 interface Assets {
   body: BodyData;
+  /**
+   * The same body with about a sixth of its triangles (tools/human/lod.mjs, `body_lod.bin`): for people in the
+   * background (passers-by, the crowd, shopkeepers). Same vertices, so morphs, skin weights and UVs are shared,
+   * and clothes cut from it come out lighter too. The full body if the file's missing.
+   */
+  lite: BodyData;
   catalogue: Record<string, ProxyMeta>;
   skins: SkinInfo[];
 }
@@ -92,13 +100,15 @@ const meanRgb = new Map<string, [number, number, number]>();
 export function loadHumanAssets(): Promise<Assets | null> {
   assets ??= (async () => {
     try {
-      const [meta, bin, catalogue, skins] = await Promise.all([
+      const [meta, bin, catalogue, skins, lod] = await Promise.all([
         fetch(BASE + 'body.json').then((r) => r.json() as Promise<BodyMeta>),
         fetch(BASE + 'body.bin').then((r) => r.arrayBuffer()),
         fetch(BASE + 'proxies/catalogue.json').then((r) => r.json() as Promise<Record<string, ProxyMeta>>),
         fetch(BASE + 'skins.json').then((r) => r.json() as Promise<SkinInfo[]>),
+        fetch(BASE + 'body_lod.bin').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null),
       ]);
-      ready = { body: new BodyData(meta, bin), catalogue, skins };
+      const body = new BodyData(meta, bin);
+      ready = { body, lite: lod ? body.withIndex(new Uint32Array(new Uint16Array(lod))) : body, catalogue, skins };
       return ready;
     } catch (e) {
       console.warn('[human] assets failed to load', e);
@@ -157,6 +167,12 @@ async function loadTexture(file: string, srgb: boolean): Promise<THREE.Texture> 
   const t = await new THREE.TextureLoader().loadAsync(BASE + 'tex/' + file);
   t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
   t.anisotropy = 4;
+  // Decoded off the main thread before it's measured or uploaded: otherwise both pay for it, mid-game.
+  try {
+    await (t.image as HTMLImageElement | undefined)?.decode?.();
+  } catch {
+    /* drawn anyway */
+  }
   if (srgb) {
     const m = measure(t.image as CanvasImageSource & { width: number; height: number });
     meanLum.set(file, m.lum);
@@ -506,7 +522,8 @@ interface Template {
 
 /** Recently built characters, by spec: the same person (NPCs come from a fixed pool) reuses the geometry. */
 const templates = new Map<string, Template>();
-const MAX_TEMPLATES = 48;
+// Two districts' regulars (World NPC_POOL) plus the fighters about.
+const MAX_TEMPLATES = 64;
 
 function skeletonFrom(placed: ReturnType<typeof placeBones>): { bones: THREE.Bone[]; skeleton: THREE.Skeleton; root: THREE.Group } {
   const bones = placed.map((p) => {
@@ -589,7 +606,7 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
 function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<typeof placeBones> }) | null {
   const a = ready;
   if (!a) return null;
-  const body = a.body;
+  const body = spec.lite ? a.lite : a.body;
   const pos = morph(body, spec.shape);
   const ground = footY(body, pos);
   for (let i = 1; i < pos.length; i += 3) pos[i] -= ground;
@@ -622,7 +639,8 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
   // ---- body, minus what clothes cover ----
   const hidden = new Uint8Array(body.meta.baseCount);
   for (const { data } of items) for (const v of data.hides) hidden[v] = 1;
-  const nb = smoothNormals(pos, body.meta.baseCount, body.index, body.renderBase);
+  // Normals from the full body even for the lighter one: its fewer triangles still shade as smoothly.
+  const nb = smoothNormals(pos, body.meta.baseCount, a.body.index, body.renderBase);
   const cut = (spec.garments ?? []).map((g) => {
     const lin = (hex: string): [number, number, number] => {
       const c = new THREE.Color(hex);
@@ -642,29 +660,39 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
     const b2 = body.renderBase[idx[i + 2]];
     if (!(hidden[b0] && hidden[b1] && hidden[b2]) && !edgeTrim(b0, b1, b2)) keep.push(idx[i], idx[i + 1], idx[i + 2]);
   }
+  // Only the vertices the kept triangles use (skin under clothes, and most of the lighter body's, aren't): the
+  // built person is kept for reuse, so this is memory saved for as long as they're about.
   const rc = body.meta.renderCount;
-  const P = new Float32Array(rc * 3);
-  const N = new Float32Array(rc * 3);
-  const SI = new Uint16Array(rc * 4);
-  const SW = new Float32Array(rc * 4);
+  const remap = new Int32Array(rc).fill(-1);
+  let used = 0;
+  for (const r of keep) if (remap[r] < 0) remap[r] = used++;
+  const P = new Float32Array(used * 3);
+  const N = new Float32Array(used * 3);
+  const UV = new Float32Array(used * 2);
+  const SI = new Uint16Array(used * 4);
+  const SW = new Float32Array(used * 4);
   for (let r = 0; r < rc; r++) {
+    const o = remap[r];
+    if (o < 0) continue;
     const v = body.renderBase[r];
     for (let k = 0; k < 3; k++) {
-      P[r * 3 + k] = pos[v * 3 + k];
-      N[r * 3 + k] = nb[v * 3 + k];
+      P[o * 3 + k] = pos[v * 3 + k];
+      N[o * 3 + k] = nb[v * 3 + k];
     }
+    UV[o * 2] = body.uv[r * 2];
+    UV[o * 2 + 1] = body.uv[r * 2 + 1];
     for (let k = 0; k < 4; k++) {
-      SI[r * 4 + k] = body.skinIndex[v * 4 + k];
-      SW[r * 4 + k] = body.skinWeight[v * 4 + k] / 255;
+      SI[o * 4 + k] = body.skinIndex[v * 4 + k];
+      SW[o * 4 + k] = body.skinWeight[v * 4 + k] / 255;
     }
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(P, 3));
   g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
-  g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(body.uv), 2));
+  g.setAttribute('uv', new THREE.BufferAttribute(UV, 2));
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4));
   g.setAttribute('skinWeight', new THREE.BufferAttribute(SW, 4));
-  g.setIndex(keep);
+  g.setIndex(keep.map((r) => remap[r]));
   disposables.push(g);
   const skin = a.skins.find((s) => s.id === spec.skin) ?? a.skins[0];
   const skinMat = new THREE.MeshStandardMaterial({
@@ -785,8 +813,9 @@ function buildHumanFresh(spec: HumanSpec): (BuiltHuman & { placed: ReturnType<ty
       cullAsCharacter(bmesh);
     };
     const eyesAt: [number, number, number][] = [centre(1), centre(-1)];
-    painted(cutBrows(body, pos, nb, eyesAt, spec.browWeight ?? 0.5), browTexture(), spec.browColour ?? '#2a1c12', 'eyebrows');
-    painted(cutLashes(body, pos, nb, eyesAt), lashTexture(), '#120c08', 'eyelashes');
+    painted(cutBrows(a.body, pos, nb, eyesAt, spec.browWeight ?? 0.5), browTexture(), spec.browColour ?? '#2a1c12', 'eyebrows');
+    // Lashes are a few millimetres: nobody sees them on someone across the street.
+    if (!spec.lite) painted(cutLashes(body, pos, nb, eyesAt), lashTexture(), '#120c08', 'eyelashes');
   }
 
   // ---- clothes cut from the body ----

@@ -41,10 +41,11 @@ function darken(hex: string, amount: number): string {
   return '#' + new THREE.Color(hex).multiplyScalar(1 - amount).getHexString();
 }
 
-export function buildCharacterRig(a: CharacterAppearance): Rig {
+/** `lite`: someone in the background (a passer-by, the crowd): the lighter body (HumanBuilder `lite`). */
+export function buildCharacterRig(a: CharacterAppearance, lite = false): Rig {
   if (!HUMANS_OFF) {
     try {
-      const human = buildHumanRig(a);
+      const human = buildHumanRig(a, lite);
       if (human) return human;
     } catch (e) {
       console.warn('[human] rig failed, using the older model', e);

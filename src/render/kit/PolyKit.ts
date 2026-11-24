@@ -488,7 +488,10 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     disposables.push(g);
     const mesh = new THREE.Mesh(g, mat);
     mesh.name = name;
-    mesh.castShadow = shadows;
+    // The street's buildings and ground take shadows but don't cast them: the light comes from in front, so a
+    // frontage only ever shadowed itself, unseen, and drawing it into the shadow map was about half that pass
+    // (the street's people, cars, bikes and furniture still cast).
+    mesh.castShadow = false;
     mesh.receiveShadow = shadows;
     mesh.renderOrder = order;
     group.add(mesh);

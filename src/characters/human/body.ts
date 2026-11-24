@@ -77,6 +77,14 @@ export class BodyData {
     this.skinWeight = new Uint8Array(bin, L.skinWeight, meta.baseCount * 4);
   }
 
+  /** The same body drawn with other triangles over the same vertices (a lighter level of detail). */
+  withIndex(index: Uint32Array): BodyData {
+    const b = Object.create(BodyData.prototype) as BodyData;
+    Object.assign(b, this);
+    (b as { index: Uint32Array }).index = index;
+    return b;
+  }
+
   target(name: string): { idx: Uint16Array; d: Int16Array } | null {
     let t = this.targetCache.get(name);
     if (t) return t;
