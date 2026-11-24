@@ -1,3 +1,4 @@
+import { advanceWork, DISTRICT_BUILD_BUDGET_MS } from '../performance/FrameBudget';
 import * as THREE from 'three';
 import { biscuitTin } from './props/biscuitTin';
 import { furniture, produceHeap, type FurnitureId, type ProduceId } from './props/KenneyLibrary';
@@ -178,12 +179,10 @@ export class LevelView {
   private buildSteps: Generator<void, void, unknown> | null;
 
   /** Advance construction without exposing a partially built district. */
-  advanceBuild(budgetMs = 3): boolean {
-    const deadline = performance.now() + budgetMs;
-    while (this.buildSteps) {
-      if (this.buildSteps.next().done) { this.buildSteps = null; return true; }
-      if (performance.now() >= deadline) return false;
-    }
+  advanceBuild(budgetMs = DISTRICT_BUILD_BUDGET_MS): boolean {
+    if (!this.buildSteps) return true;
+    if (!advanceWork(this.buildSteps, budgetMs).done) return false;
+    this.buildSteps = null;
     return true;
   }
 
