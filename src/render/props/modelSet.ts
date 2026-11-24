@@ -1,3 +1,4 @@
+import { loadAssetQueue } from '../../performance/AssetQueue';
 /**
  * A folder of low-poly .glb models (gym, shop): loads them once, and hands out
  * fitted copies. Glow parts light up in their own colour; glass is see-through.
@@ -51,8 +52,8 @@ export function modelSet<Id extends string>(name: string, base: string, ids: rea
     load() {
       loading ??= (async () => {
         const loader = new GLTFLoader();
-        await Promise.all(
-          ids.map(async (id) => {
+        await loadAssetQueue(
+          ids.map((id) => async () => {
             try {
               const g = await loader.loadAsync(`${base}${id}.glb`);
               g.scene.traverse((o: THREE.Object3D) => {
@@ -76,8 +77,8 @@ export function modelSet<Id extends string>(name: string, base: string, ids: rea
             } catch (e) {
               console.warn(`[${name}] ${id} failed`, e);
             }
-          }),
-        );
+          }), 3,
+        ).ready;
       })();
       return loading;
     },
