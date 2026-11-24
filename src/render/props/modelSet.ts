@@ -47,6 +47,7 @@ export interface ModelSet<Id extends string> {
 export function modelSet<Id extends string>(name: string, base: string, ids: readonly Id[]): ModelSet<Id> {
   const models = new Map<string, THREE.Object3D>();
   const tinted = new Map<string, THREE.MeshStandardMaterial>();
+  const bounds = new Map<string, THREE.Box3>();
   let loading: Promise<void> | null = null;
   return {
     load() {
@@ -131,8 +132,18 @@ export function modelSet<Id extends string>(name: string, base: string, ids: rea
         out.add(inner);
         return out;
       }
-      inner.updateMatrixWorld(true);
-      const box = new THREE.Box3().setFromObject(inner);
+      const boundsKey = `${id}|${o.turn ?? 0}`;
+      let box = bounds.get(boundsKey);
+      if (!box) {
+        inner.updateMatrixWorld(true);
+        box = new THREE.Box3().setFromObject(inner);
+        bounds.set(boundsKey, box);
+        // Bound unusual rotations without affecting live instances.
+        if (bounds.size > 512) {
+          const oldest = bounds.keys().next();
+          if (!oldest.done) bounds.delete(oldest.value);
+        }
+      }
       const size = box.getSize(new THREE.Vector3());
       let sx = w / Math.max(1e-3, size.x);
       let sy = h / Math.max(1e-3, size.y);
