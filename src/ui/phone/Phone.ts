@@ -9,7 +9,7 @@
 import { h } from '../dom';
 import type { AreaId, Progress } from '../../progress/Progress';
 import { cabStop, onMap, place, places, travelOptions, unlocked, type TravelOption } from '../../map/worldMap';
-import { TAXI_COST, moHint } from '../hub';
+import { CAB_FLAG, CAB_PER_MILE, moHint } from '../hub';
 import { LEVELS } from '../../world/levels';
 import { embedPortraitRules, markNarrow } from './embedCss';
 import { mapApp } from './mapApp';
@@ -450,7 +450,7 @@ export class Phone {
     const here = this.d.here();
     if (!here) return [];
     const out: HTMLElement[] = [
-      h('div', { class: 'ph-hero' }, h('img', { src: ICON('car_hatch'), alt: '' }), h('div', {}, h('b', { text: `£${TAXI_COST} a ride` }), h('span', { text: `Paid from the tin. ${money(p.save.cash.bank)} in it.` }))),
+      h('div', { class: 'ph-hero' }, h('img', { src: ICON('car_hatch'), alt: '' }), h('div', {}, h('b', { text: `On the meter: £${CAB_FLAG.toFixed(2)} + £${CAB_PER_MILE.toFixed(2)} a mile` }), h('span', { text: `Paid from the tin. ${money(p.save.cash.bank)} in it.` }))),
     ];
     if (!here.calm) out.push(h('p', { class: 'ph-warn', text: 'Not with a fight on. Sort it out first.' }));
     // Home first, then everywhere a cab stops that you know.
@@ -460,7 +460,7 @@ export class Phone {
     for (const pl of places()) {
       if (pl.id === here.area || seen.has(pl.id) || !onMap(pl.id) || !cabStop(pl.id) || !unlocked(p, pl.id)) continue;
       seen.add(pl.id);
-      const opt = travelOptions(p, here.area, pl.id, here.calm).find((o) => o.kind === 'cab');
+      const opt = travelOptions(p, here.area, pl.id, here.calm, here.x).find((o) => o.kind === 'cab');
       if (opt) out.push(this.ride(pl.name, pl.district, opt, pl.id));
     }
     return out;
@@ -468,7 +468,7 @@ export class Phone {
 
   private ride(name: string, where: string, opt: TravelOption, area: AreaId): HTMLElement {
     return h('div', { class: 'ph-row' },
-      h('div', { class: 'ph-what' }, h('b', { text: name }), h('span', { text: opt.ok ? where : opt.why ?? where })),
+      h('div', { class: 'ph-what' }, h('b', { text: name }), h('span', { text: opt.ok ? (opt.miles !== undefined ? `${where} · ${opt.miles.toFixed(1)} mi` : where) : opt.why ?? where })),
       h('button', { class: 'ph-btn', disabled: !opt.ok, onclick: () => this.leave(() => this.d.travel(area, opt)) }, opt.kind === 'home' ? 'Go' : `£${opt.cost}`),
     );
   }

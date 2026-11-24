@@ -2191,7 +2191,7 @@ export class Game {
     this.state = 'playing';
     // The bike stays parked where you got off it.
     if (p.save.property.riding) this.dismount();
-    this.hud.toast(`Dave’s Cabs: £${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
+    this.hud.toast(`Dave’s Cabs: ${opt.miles !== undefined ? `${opt.miles.toFixed(1)} miles, ` : ''}£${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
     this.changeArea(area, opt.entry, w.carry());
   }
 

@@ -489,12 +489,12 @@ export function mapScreen(o: MapOptions): Screen {
     if (pl.activities.length) body.push(h('div', { class: 'mp-sub', text: 'Things to do' }), h('ul', { class: 'mp-list' }, ...pl.activities.map((a) => h('li', { text: a }))));
     if (pl.people.length) body.push(h('div', { class: 'mp-sub', text: 'People' }), h('ul', { class: 'mp-list' }, ...pl.people.map((a) => h('li', { text: a }))));
     // Travel.
-    const opts = travelOptions(p, o.here.area, selected, o.calm);
+    const opts = travelOptions(p, o.here.area, selected, o.calm, o.here.x);
     const acts: HTMLElement[] = [];
     if (confirm) {
       const c = confirm;
       acts.push(
-        h('div', { class: 'mp-confirm', text: c.kind === 'cab' ? `Take a cab to ${pl.name} for £${c.cost}?` : `Head home to 14 Tanner Road?` }),
+        h('div', { class: 'mp-confirm', text: c.kind === 'cab' ? `Take a cab to ${pl.name}? ${c.miles?.toFixed(1) ?? ''} miles on the meter: £${c.cost}.` : `Head home to 14 Tanner Road?` }),
         h('div', { class: 'mp-confirm-row' },
           actionBtn('Go', c.kind === 'cab' ? 'cab' : 'home', () => o.travel(selected!, c), 'primary'),
           actionBtn('Cancel', 'back', () => { confirm = null; renderPanel(); }),

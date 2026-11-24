@@ -29,7 +29,13 @@ import type { Screen } from './UIManager';
  */
 
 export const MEAL_COST = 15;
-export const TAXI_COST = 5;
+/**
+ * Dave's Cabs run on the meter, like a real black cab or private hire: a flag fall when you get in, then so much a
+ * mile, never under the minimum. A hop to the pub is a fiver; the far side of town about £20.
+ */
+export const CAB_FLAG = 3.6;
+export const CAB_PER_MILE = 2.4;
+export const CAB_MIN = 5;
 /** Total secrets hidden around the neighbourhood. */
 export const SECRET_COUNT = Object.values(LEVELS).reduce((n, l) => n + l.pickups.filter((p) => p.kind === 'secret').length, 0);
 
@@ -277,7 +283,7 @@ export function contactsScreen(progress: Progress, close: () => void, openMap: (
     const next = DISTRICT_ORDER.find((d) => !d.optional && !progress.has(d.flag));
     return [
       h('div', { class: 'phone-msg' }, h('b', { text: 'Mo' }), h('p', { text: next ? `“${hintFor(next.flag)}”` : '“You did it. Nobody runs these streets now. Mad.”' })),
-      shopRow('Dave’s Cabs', `£${TAXI_COST} a ride from the tin. Pick where on the map.`, 'Open map', openMap),
+      shopRow('Dave’s Cabs', `On the meter: £${CAB_FLAG.toFixed(2)} and £${CAB_PER_MILE.toFixed(2)} a mile, from the tin. Pick where on the map.`, 'Open map', openMap),
       ...(crew ? [shopRow('Your crew', s.companions.following.length ? `Following you: ${s.companions.following.map((id) => COMPANIONS[id]?.nickname ?? id).join(', ')}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage (H)', crew)] : []),
     ];
   }, close);
