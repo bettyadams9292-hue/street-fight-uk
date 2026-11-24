@@ -2970,6 +2970,8 @@ export class Game {
   }
 
   /** Arrows on the screen edge for enemies closing in from outside the view (tight in portrait). */
+  private readonly projectHud = (x: number, y: number, z: number) => this.renderer.screenOf(x, y, z);
+
   private updateEdgeMarkers(player: Fighter): void {
     const out: { y: number; side: -1 | 1; near: boolean }[] = [];
     const foes = this.world ? [...this.world.enemies, ...this.world.police] : [];
@@ -3362,8 +3364,8 @@ export class Game {
       const enemy = this.world ? this.world.focusEnemy : this.mode!.focusEnemy;
       // In story mode the boss has its own bar along the bottom.
       this.hud.update(realDt, player, this.world?.activeBoss && enemy === this.world.activeBoss ? null : enemy);
-      this.hud.updateBubbles((x, y, z) => this.renderer.screenOf(x, y, z));
-      this.hud.updateJobMarks(this.world ? this.world.jobMarks() : [], (x, y, z) => this.renderer.screenOf(x, y, z));
+      this.hud.updateBubbles(this.projectHud);
+      this.hud.updateJobMarks(this.world ? this.world.jobMarks() : [], this.projectHud);
       this.updateEdgeMarkers(player);
       document.body.classList.toggle('fight-on', !!this.world?.fightOn);
       // Out and about in the story with no fight near: the touch pad drops to PUNCH, KICK and JUMP.
