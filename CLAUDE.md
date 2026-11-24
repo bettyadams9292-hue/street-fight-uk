@@ -87,6 +87,15 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 
 **Heat.** `src/progress/heat.ts`: police, locals and gang heat per district, what raises it (`HEAT`), how fast it cools, and the thresholds. Raise it with `Progress.addHeatOf`, never by writing `save.heat`.
 
+**Loading and performance** (`src/performance/`, PR #98).
+- `requests.ts`: every asset download goes through one limit (6) with priorities (`now`, `soon`, `later`, `background`) and `bump`. Download with `assetFetch.ts` (`fetchBytes`, `loadGlb`, `loadTextureFile`, `fetchJson`; 30 s timeout), never `fetch` or a three.js loader directly.
+- `levelAssets.ts`: what each location needs from the model sets (`modelSet.ts`, registered in `SETS`). The lists are made by `npx tsx tools/assets/levelDeps.ts` into `levelAssets.generated.ts`. Rerun it after changing what a level draws: `tests/levelAssets.test.ts` fails if they're stale. Home, the basement and the estate are recorded at arrival (`recordLevel`). Play starts once what every location uses is in; `Game.enterArea` holds behind the loading bar until the area's models are in, and `prepareAround` loads the doors' and neighbours' models next.
+- `scheduler.ts`: one per-frame budget for background work (`addJob`; districts next door build there through `LevelView.buildUntil`). Don't start your own rAF loops for building.
+- People are posed by tier (`FighterView.update`): off camera means not posed at all.
+- `LevelView.mergeStatic` merges boxes and cylinders by parent and material once a level's built. Keep anything you'll change later in a LevelView field, and it's left alone.
+- Resolution drops only when frames are GPU-bound (`GameRenderer.adaptResolution`). The HUD writes through `ui/dirty.ts`.
+- No profiler, FPS counter or debug overlay in the game (the owner's rule). Measure from scripts, e.g. `renderer.info` on a `?debug` page.
+
 **Economy.** `docs/ECONOMY.md` has the targets and where every number lives. Run `npx tsx tools/economy/model.ts` after changing a price or reward; `tests/economy.test.ts` fails if the curve breaks.
 
 **Old docs.** `docs/ASSET_REGISTER.md` is out of date (it predates the asset packs). For what's still missing, use the asset list below.

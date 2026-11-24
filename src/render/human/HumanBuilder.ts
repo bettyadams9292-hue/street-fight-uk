@@ -610,6 +610,9 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
       if (released) return;
       released = true;
       tpl.refs--;
+      // This copy's own bone texture (the meshes are the template's, kept for the next copy). Left undisposed,
+      // every person who'd gone left one on the GPU: dozens more each visit to the pub.
+      skeleton.dispose();
     },
   };
 }
@@ -722,6 +725,7 @@ function assemble(spec: HumanSpec, data: HumanData): (BuiltHuman & { placed: Ret
     height: data.height,
     dispose: () => {
       for (const d of disposables) d.dispose();
+      skeleton.dispose();
     },
   };
 }
