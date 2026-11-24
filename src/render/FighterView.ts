@@ -275,6 +275,9 @@ export class FighterView {
   private gear: THREE.Object3D[] = [];
   /** Where each fist is: a point on each forearm, where the weapon grip sits. */
   private fists: [THREE.Object3D, THREE.Object3D] | null = null;
+  private readonly gearA = new THREE.Vector3();
+  private readonly gearB = new THREE.Vector3();
+  private readonly gearAxis = new THREE.Vector3(1, 0, 0);
 
   /**
    * Curls and front raises hold a dumbbell in each fist; squats and presses hold the gym's barbell,
@@ -291,13 +294,13 @@ export class FighterView {
     if (this.gearKind !== 'barbell' || !this.fists) return;
     const bar = this.gear[0];
     this.root.updateMatrixWorld(true);
-    const a = this.fists[0].getWorldPosition(new THREE.Vector3());
-    const b = this.fists[1].getWorldPosition(new THREE.Vector3());
+    const a = this.fists[0].getWorldPosition(this.gearA);
+    const b = this.fists[1].getWorldPosition(this.gearB);
     this.root.worldToLocal(a);
     this.root.worldToLocal(b);
     bar.position.copy(a).add(b).multiplyScalar(0.5);
     const dir = b.sub(a);
-    if (dir.lengthSq() > 1e-6) bar.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), dir.normalize());
+    if (dir.lengthSq() > 1e-6) bar.quaternion.setFromUnitVectors(this.gearAxis, dir.normalize());
   }
 
   private buildGear(kind: 'dumbbells' | 'barbell'): boolean {
