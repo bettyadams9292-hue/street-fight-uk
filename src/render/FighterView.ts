@@ -1,3 +1,4 @@
+import { BACKGROUND_POSE_INTERVAL } from '../performance/FrameBudget';
 import * as THREE from 'three';
 import { approvedAt } from './props/approvedFit';
 import type { CharacterAppearance } from '../character/Appearance';
@@ -188,7 +189,7 @@ export class FighterView {
     this.root.position.set(f.pos.x, f.pos.y, f.pos.z);
     this.poseElapsed += dt;
     // Only distant, non-combat idle characters qualify. Keep root motion at full rate.
-    if (background && f.background && f.state === 'idle' && !f.activity && !this.mount && !f.grapple && this.flashTime <= 0 && this.poseElapsed < 1 / 30) {
+    if (background && f.background && f.state === 'idle' && !f.activity && !this.mount && !f.grapple && this.flashTime <= 0 && this.poseElapsed < BACKGROUND_POSE_INTERVAL) {
       // Equipment changes must remain responsive even when the skeletal pose is deferred.
       this.syncWeapon();
       this.syncGear();
