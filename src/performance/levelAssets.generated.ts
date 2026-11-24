@@ -21,6 +21,14 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "post_medium"
   ]
  },
+ "basement": {
+  "doors": [
+   "door_worn"
+  ],
+  "security": [
+   "electric_box_broken"
+  ]
+ },
  "bike_shop": {
   "doors": [
    "door_bathroom",
@@ -104,6 +112,11 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
   ]
  },
  "docks": {},
+ "estate": {
+  "gym": [
+   "punch_bag"
+  ]
+ },
  "estate_agent": {
   "doors": [
    "door_bathroom"
@@ -176,6 +189,17 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "clothes_rail",
    "display_cabinet",
    "mannequin"
+  ]
+ },
+ "home": {
+  "doors": [
+   "door_wooden"
+  ],
+  "gym": [
+   "punch_bag"
+  ],
+  "shop": [
+   "workbench"
   ]
  },
  "hq": {},
@@ -271,6 +295,14 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  "precinct": {
   "gym": [
    "punch_bag"
+  ]
+ },
+ "property": {
+  "doors": [
+   "door_panel"
+  ],
+  "property": [
+   "staircase"
   ]
  },
  "pub": {

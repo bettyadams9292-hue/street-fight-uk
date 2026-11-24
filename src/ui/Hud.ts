@@ -1,4 +1,5 @@
 import { ARCHETYPES, type ArchetypeId } from '../ai/archetypes';
+import { setStyle, setText } from './dirty';
 import { TRAINING_MODE_LABELS, type TrainingOpponent } from '../core/TrainingMode';
 import type { Fighter } from '../fighter/Fighter';
 import { hasTitle, titleArt, titleFor } from './titles';
@@ -712,12 +713,12 @@ export class Hud {
     this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.2);
     const v = player.vitals;
     const low = !player.isKO && v.health < v.maxHealth * 0.25 ? 0.22 + 0.12 * Math.sin(this.clock * 4) : 0;
-    this.hurtEdge.style.opacity = Math.max(this.hurtFlash, low).toFixed(3);
+    setStyle(this.hurtEdge, 'opacity', Math.max(this.hurtFlash, low).toFixed(2));
     this.updateBars(this.player, player, dt);
     const was = this.enemy.root.style.visibility;
-    this.enemy.root.style.visibility = enemy ? 'visible' : 'hidden';
+    setStyle(this.enemy.root, 'visibility', enemy ? 'visible' : 'hidden');
     if (was !== this.enemy.root.style.visibility) this.layout();
-    this.vs.style.visibility = enemy ? 'visible' : 'hidden';
+    setStyle(this.vs, 'visibility', enemy ? 'visible' : 'hidden');
     if (enemy) this.updateBars(this.enemy, enemy, dt);
 
     if (this.comboTimer > 0) {
@@ -728,7 +729,7 @@ export class Hud {
     this.fpsAcc += dt;
     this.fpsFrames++;
     if (this.fpsAcc >= 0.5) {
-      this.fps.textContent = `${Math.round(this.fpsFrames / this.fpsAcc)} fps`;
+      setText(this.fps, `${Math.round(this.fpsFrames / this.fpsAcc)} fps`);
       this.fpsAcc = 0;
       this.fpsFrames = 0;
     }
@@ -749,22 +750,22 @@ export class Hud {
       if (b.trailHold > 0.45) b.trail = Math.max(hp, b.trail - dt * 0.6);
     }
 
-    b.name.textContent = f.name.toUpperCase();
+    setText(b.name, f.name.toUpperCase());
     const second = f.secondaryStyle ? ` \u00b7 swap: ${(f.usingSecondary ? f.primaryStyle : f.secondaryStyle).name}` : '';
     // Named grunts show what they are ("Street Thug") where everyone else shows their style.
     const styleText = (f.tag ?? f.style.name) + second;
-    if (b.style.textContent !== styleText) b.style.textContent = styleText;
-    b.hpFill.style.width = `${hp * 100}%`;
+    setText(b.style, styleText);
+    setStyle(b.hpFill, 'width', `${(hp * 100).toFixed(1)}%`);
     // The recoverable segment sits just past the current health, on whichever side the bar fills from.
-    b.hpRecover.style[b.side === 'left' ? 'left' : 'right'] = `${hp * 100}%`;
-    b.hpRecover.style.width = `${rec * 100}%`;
-    b.hpTrail.style.width = `${b.trail * 100}%`;
-    b.hpText.textContent = `${Math.ceil(v.health)} / ${Math.round(v.maxHealth)}`;
-    b.stFill.style.width = `${st * 100}%`;
-    b.stText.textContent = `${Math.floor(v.stamina)}`;
+    setStyle(b.hpRecover, b.side === 'left' ? 'left' : 'right', `${(hp * 100).toFixed(1)}%`);
+    setStyle(b.hpRecover, 'width', `${(rec * 100).toFixed(1)}%`);
+    setStyle(b.hpTrail, 'width', `${(b.trail * 100).toFixed(1)}%`);
+    setText(b.hpText, `${Math.ceil(v.health)} / ${Math.round(v.maxHealth)}`);
+    setStyle(b.stFill, 'width', `${(st * 100).toFixed(1)}%`);
+    setText(b.stText, `${Math.floor(v.stamina)}`);
     b.root.classList.toggle('exhausted', v.fatigue === 'exhausted');
     b.root.classList.toggle('tired', v.fatigue === 'tired');
     b.root.classList.toggle('ko', f.isKO);
-    b.fatigue.textContent = f.isKO ? 'K.O.' : v.fatigue === 'exhausted' ? 'EXHAUSTED' : v.fatigue === 'tired' ? 'TIRED' : '';
+    setText(b.fatigue, f.isKO ? 'K.O.' : v.fatigue === 'exhausted' ? 'EXHAUSTED' : v.fatigue === 'tired' ? 'TIRED' : '');
   }
 }

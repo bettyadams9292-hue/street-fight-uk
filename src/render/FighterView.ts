@@ -184,18 +184,27 @@ export class FighterView {
 
   private poseElapsed = 0;
 
-  update(dt: number, time: number, background = false): void {
+  /**
+   * `tier` (GameRenderer decides it each frame): 0 everyone near the action, posed every frame; 1 a distant
+   * bystander standing idle, posed at 30 Hz; 2 well off screen and not in anything that matters (not the
+   * player, not in the fight, not riding or held), not posed at all until it comes back into view. Where they
+   * are is kept up to date at every tier, so nobody jumps when they reappear.
+   */
+  update(dt: number, time: number, tier: 0 | 1 | 2 = 0): void {
     const f = this.fighter;
     this.root.position.set(f.pos.x, f.pos.y, f.pos.z);
     this.poseElapsed += dt;
+    const hidden = tier === 2 && !this.mount && !f.grapple && this.flashTime <= 0;
     // Only distant, non-combat idle characters qualify. Keep root motion at full rate.
-    if (background && f.background && f.state === 'idle' && !f.activity && !this.mount && !f.grapple && this.flashTime <= 0 && this.poseElapsed < BACKGROUND_POSE_INTERVAL) {
+    const reduced = tier >= 1 && f.background && f.state === 'idle' && !f.activity && !this.mount && !f.grapple && this.flashTime <= 0 && this.poseElapsed < BACKGROUND_POSE_INTERVAL;
+    if (hidden || reduced) {
       // Equipment changes must remain responsive even when the skeletal pose is deferred.
       this.syncWeapon();
       this.syncGear();
       return;
     }
-    dt = this.poseElapsed;
+    // Back in view after a while unposed: carry on from a short step, not the whole gap (they were out of sight).
+    dt = Math.min(this.poseElapsed, 0.1);
     this.poseElapsed = 0;
 
     let riding: Pose | null = null;

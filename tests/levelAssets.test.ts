@@ -17,14 +17,16 @@ import { SETS } from '../src/render/props/modelSet';
 const now = await recordLevelDeps();
 assert.deepEqual(LEVEL_MODELS, now, 'levelAssets.generated.ts is stale: run npx tsx tools/assets/levelDeps.ts');
 for (const [level, deps] of Object.entries(LEVEL_MODELS)) {
-  assert.ok(!DYNAMIC_LEVELS.has(level), `${level} is built from the save, so it isn't listed`);
   for (const [set, ids] of Object.entries(deps)) {
     const s = SETS.get(set);
     assert.ok(s, `${level}: no model set ${set}`);
     for (const id of ids) assert.ok(s!.ids.includes(id), `${level}: ${set} has no ${id}`);
   }
 }
-for (const id of DYNAMIC_LEVELS) assert.equal(levelModels(id), null, `${id} waits for every set`);
+for (const id of DYNAMIC_LEVELS) {
+  assert.equal(levelModels(id), null, `${id} (arriving, not yet recorded) waits for every set`);
+  if (LEVEL_MODELS[id]) assert.equal(levelModels(id, true), LEVEL_MODELS[id], `${id} streamed next door uses its plain definition`);
+}
 // Home, the basement and the estate are listed in the game from this visit's version (Game.enterArea).
 const p = new Progress(newSave(createCharacter({ name: 'A', appearance: defaultAppearance('male'), background: 'estate_scrapper', allocated: emptyAllocation() })));
 for (const id of ['home', 'basement', 'estate'] as const) {

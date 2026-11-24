@@ -1,4 +1,5 @@
 import { advanceWork, DISTRICT_BUILD_BUDGET_MS } from '../performance/FrameBudget';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import * as THREE from 'three';
 import { biscuitTin } from './props/biscuitTin';
 import { furniture, produceHeap, type FurnitureId, type ProduceId } from './props/KenneyLibrary';
@@ -186,6 +187,16 @@ export class LevelView {
     return true;
   }
 
+  /** Build until `deadline` (performance.now() time), at least one step; true once it's all built. */
+  buildUntil(deadline: number): boolean {
+    if (!this.buildSteps) return true;
+    let r = this.buildSteps.next();
+    while (!r.done && performance.now() < deadline) r = this.buildSteps.next();
+    if (!r.done) return false;
+    this.buildSteps = null;
+    return true;
+  }
+
   finishBuild(): void { while (!this.advanceBuild(Infinity)) { /* drain */ } }
 
   // ---- helpers ------------------------------------------------------------------
@@ -210,6 +221,7 @@ export class LevelView {
     mesh.castShadow = cast;
     mesh.receiveShadow = true;
     parent.add(mesh);
+    this.made.add(mesh);
     return mesh;
   }
 
@@ -219,7 +231,45 @@ export class LevelView {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     parent.add(mesh);
+    this.made.add(mesh);
     return mesh;
+  }
+
+  /** Every box and cylinder built for this level (`mergeStatic` merges the ones nothing else holds on to). */
+  private made = new Set<THREE.Mesh>();
+
+  /**
+   * Rooms, counters, tables and shelving are built from dozens of boxes and cylinders, each its own draw. Once
+   * the level's built, the ones that share a parent, a material and shadow settings become one mesh in that
+   * parent: the picture is the same, with fewer draws (and fewer shadow draws). Left alone: anything the view
+   * keeps hold of to change later (doors, gates, levers, signs, breakables: found in its own fields, with
+   * everything inside them), and the top-level pieces each prop is hidden by.
+   */
+  private mergeStatic(): void {
+    const keep = new Set<THREE.Object3D>();
+    const seen = new Set<unknown>();
+    const visit = (v: unknown, depth: number): void => {
+      if (!v || typeof v !== 'object' || seen.has(v) || depth > 5) return;
+      seen.add(v);
+      if (v instanceof THREE.Object3D) {
+        if (v === this.group) return;
+        v.traverse((o) => keep.add(o));
+        return;
+      }
+      if (v instanceof THREE.Material || v instanceof THREE.BufferGeometry || v instanceof THREE.Texture) return;
+      if (Array.isArray(v) || v instanceof Set) for (const x of v) visit(x, depth + 1);
+      else if (v instanceof Map) for (const x of v.values()) visit(x, depth + 1);
+      else if (Object.getPrototypeOf(v) === Object.prototype) for (const x of Object.values(v)) visit(x, depth + 1);
+    };
+    for (const [k, v] of Object.entries(this)) {
+      if (k === 'made' || k === 'group' || k === 'level' || k === 'propObjects') continue;
+      visit(v, 0);
+    }
+    for (const list of this.propObjects.values()) for (const o of list) keep.add(o);
+    const parts = new Set<THREE.Mesh>();
+    for (const m of this.made) if (!keep.has(m)) parts.add(m);
+    mergeParts(parts);
+    this.made.clear();
   }
 
   /** A flat panel on the back wall, slightly in front of it. */
@@ -366,6 +416,9 @@ export class LevelView {
     if (this.lowPoly && themeProfile(lvl.theme).interior) flattenTextures(this.group);
     // Library textures repeat at their real size on whatever they were put on.
     fitUVs(this.group);
+    yield;
+    // Then the plain parts become a few meshes (after the UVs are fitted to each part's own size).
+    this.mergeStatic();
   }
 
   /**
@@ -4584,4 +4637,59 @@ export function isPoiExit(ex: ExitDef): boolean {
   if (ex.to === 'property') return false;
   if (ex.shop || ex.requires || ex.requiresAll?.length) return true;
   return /^(Into |Upstairs: |Through |Walkway |Down to )/.test(ex.label);
+}
+
+/**
+ * Merge plain parts (`box` / `cyl` meshes) that share a parent, a material and shadow settings into one mesh in
+ * that parent. Parts something else changes later (scaled, hidden, swapped material) are left alone: only
+ * visible meshes with one material and their parent's default render order are merged.
+ */
+function mergeParts(parts: Set<THREE.Mesh>): void {
+  const buckets = new Map<string, THREE.Mesh[]>();
+  for (const m of parts) {
+    if (!m.parent || !m.visible || Array.isArray(m.material) || m.renderOrder !== 0 || m.userData.keep) continue;
+    const mat = m.material as THREE.Material;
+    if (mat.transparent) continue;
+    const key = `${m.parent.id}|${mat.id}|${m.castShadow ? 1 : 0}${m.receiveShadow ? 1 : 0}`;
+    let b = buckets.get(key);
+    if (!b) buckets.set(key, (b = []));
+    b.push(m);
+  }
+  const inv = new THREE.Matrix4();
+  const rel = new THREE.Matrix4();
+  for (const list of buckets.values()) {
+    if (list.length < 2) continue;
+    const parent = list[0].parent!;
+    parent.updateMatrixWorld(true);
+    inv.copy(parent.matrixWorld).invert();
+    const geos: THREE.BufferGeometry[] = [];
+    for (const m of list) {
+      m.updateMatrixWorld(true);
+      rel.multiplyMatrices(inv, m.matrixWorld);
+      const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
+      for (const name of Object.keys(g.attributes)) if (name !== 'position' && name !== 'normal' && name !== 'uv') g.deleteAttribute(name);
+      g.clearGroups();
+      g.applyMatrix4(rel);
+      geos.push(g);
+    }
+    if (geos.some((g) => !g.getAttribute('normal') || !g.getAttribute('uv'))) {
+      for (const g of geos) g.dispose();
+      continue;
+    }
+    const merged = mergeGeometries(geos, false);
+    for (const g of geos) g.dispose();
+    if (!merged) continue;
+    // Its UVs were already fitted part by part (fitUVs): don't fit them again as one.
+    merged.userData.fitted = true;
+    const out = new THREE.Mesh(merged, list[0].material);
+    out.castShadow = list[0].castShadow;
+    out.receiveShadow = list[0].receiveShadow;
+    parent.add(out);
+    for (const m of list) {
+      parent.remove(m);
+      m.geometry.dispose();
+      parts.delete(m);
+    }
+    parts.add(out);
+  }
 }

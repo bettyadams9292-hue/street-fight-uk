@@ -1,6 +1,7 @@
 import { BACKGROUND_POSE_DISTANCE } from '../performance/FrameBudget';
 import { levelReady, prepareLevel } from '../performance/levelAssets';
 import { PRIORITY } from '../performance/requests';
+import { addJob, BACKGROUND_BUDGET_MS, runBackground, type JobHandle } from '../performance/scheduler';
 import { humanSpecFor, humansOn } from './human/HumanRig';
 import { buildHumanLater, humanBuilt } from './human/HumanBuilder';
 import * as THREE from 'three';
@@ -22,6 +23,13 @@ import { LEVELS } from '../world/levels';
 import { stripNeighbours } from '../world/strip';
 import { resolveLook, type Look } from './look/looks';
 import { PostFX } from './look/PostFX';
+
+/** Background milliseconds a frame while the district you're walking towards isn't built yet. */
+const URGENT_BUDGET_MS = 8;
+/** How near an end of the street counts as walking towards the next district (about a screen's width). */
+const URGENT_SEAM_M = 14;
+/** Nearer than this to an end whose district isn't built yet, it's finished at once. */
+const FINISH_SEAM_M = 5;
 
 const BG = 0x0a0c12;
 
@@ -205,8 +213,11 @@ export class GameRenderer {
     const prev = r.getRenderTarget();
     r.setRenderTarget(this.postfx ? this.postfx.sceneTarget : null);
     try {
-      if (later) void r.compileAsync(root, this.cameraRig.camera, this.scene).catch(() => undefined);
-      else r.compile(root, this.cameraRig.camera, this.scene);
+      // compileAsync is the same work up front plus a poll for readiness that we never waited on, and the poll
+      // throws (uncaught, from a timer) if the district is disposed first, as when you walk straight through it.
+      // The browser still finishes linking in parallel where it can (KHR_parallel_shader_compile).
+      void later;
+      r.compile(root, this.cameraRig.camera, this.scene);
     } catch (e) {
       console.warn('[render] precompile failed', e);
     } finally {
@@ -232,10 +243,14 @@ export class GameRenderer {
   /** One fixed set of lamp lights shared by every district of the street (see LevelView.lampSpecs). */
   private lampPool: THREE.PointLight[] = [];
   private streamJob = 0;
-  private pendingDistricts = new Set<LevelView>();
+  /** Districts still being built, and their background jobs. */
+  private pendingDistricts = new Map<LevelView, JobHandle>();
 
   private cancelPendingDistricts(): void {
-    for (const v of this.pendingDistricts) v.dispose();
+    for (const [v, h] of this.pendingDistricts) {
+      h.cancel();
+      v.dispose();
+    }
     this.pendingDistricts.clear();
   }
 
@@ -269,18 +284,26 @@ export class GameRenderer {
       if (!id || this.near[side]) return;
       const immediate = this.deterministicStream || /[?&](shot|human)=/.test(window.location.search);
       // Its models first (usually in already): a district built without them would keep the stand-ins.
-      if (!immediate && !levelReady(id)) {
-        void prepareLevel(id, PRIORITY.soon).then(() => build(side));
+      if (!immediate && !levelReady(id, true)) {
+        void prepareLevel(id, PRIORITY.soon, true).then(() => build(side));
         return;
       }
       const v = new LevelView(LEVELS[id], world.progress, !immediate);
-      this.pendingDistricts.add(v);
-      const advance = (): void => {
-        if (job !== this.streamJob || this.world !== world || !this.pendingDistricts.has(v)) return;
-        if (!v.advanceBuild()) { window.requestAnimationFrame(advance); return; }
-        this.pendingDistricts.delete(v);
-        publish();
-      };
+      // Built a few milliseconds a frame, in the one background budget all such work shares (performance/scheduler.ts).
+      const handle = addJob({
+        priority: PRIORITY.soon,
+        step: (deadline) => v.buildUntil(deadline),
+        done: () => {
+          this.pendingDistricts.delete(v);
+          if (job !== this.streamJob || this.world !== world) {
+            v.dispose();
+            return;
+          }
+          publish();
+        },
+      });
+      this.pendingDistricts.set(v, handle);
+      if (immediate) runBackground(Infinity);
       const publish = (): void => {
       v.setActive(false);
       v.group.position.x = side === 'left' ? here.bounds.minX - v.level.bounds.maxX : here.bounds.maxX - v.level.bounds.minX;
@@ -295,7 +318,6 @@ export class GameRenderer {
       // Its shaders, before you walk into it.
       this.precompile(v.group, true);
       };
-      advance();
     };
     // Whichever end you are nearer comes first.
     const mid = (here.bounds.minX + here.bounds.maxX) / 2;
@@ -583,15 +605,25 @@ export class GameRenderer {
 
   /** @param focus the player fighter (camera follows), or null for the menu drift */
   render(dt: number, time: number, focus: Fighter | null): void {
+    const start = performance.now();
     if (this.sim) {
       if (this.world || this.views.size !== this.sim.fighters.length) this.syncFighters();
+      // Who gets posed how often (FighterView.update): the camera's view, widened so a shadow or a step back into
+      // frame never shows a stale pose.
+      const cam = this.cameraRig.camera;
+      cam.updateMatrixWorld();
+      this.viewProj.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+      this.frustum.setFromProjectionMatrix(this.viewProj);
+      const tiered = !!this.world && !!focus && !this.studio && !this.deterministicStream;
       for (const v of this.views.values()) {
         const f = v.fighter;
-        const background = !!this.world && !!focus && !this.studio && !this.deterministicStream
-          && f !== focus && f.team !== 'player' && f.team !== 'enemy'
-          && Math.abs(f.pos.x - focus.pos.x) > BACKGROUND_POSE_DISTANCE
-          && Math.abs(f.pos.x - this.cameraRig.focusX) > BACKGROUND_POSE_DISTANCE;
-        v.update(dt, time, background);
+        let tier: 0 | 1 | 2 = 0;
+        if (tiered && f !== focus && f.team !== 'player' && f.team !== 'enemy') {
+          this.tierSphere.center.set(f.pos.x, f.pos.y + 0.9, f.pos.z);
+          if (!this.frustum.intersectsSphere(this.tierSphere)) tier = 2;
+          else if (Math.abs(f.pos.x - focus!.pos.x) > BACKGROUND_POSE_DISTANCE && Math.abs(f.pos.x - this.cameraRig.focusX) > BACKGROUND_POSE_DISTANCE) tier = 1;
+        }
+        v.update(dt, time, tier);
       }
       if (this.studio) {
         this.updateStudioCamera(dt);
@@ -617,8 +649,35 @@ export class GameRenderer {
       if (this.postfx) this.postfx.render(this.cameraRig.camera, time);
       else this.renderer.render(this.scene, this.cameraRig.camera);
     }
+    // Background work (the districts next door): a few milliseconds a frame, more when you're close enough to
+    // an end of the street to see past it, so the next district is never missing when you get there.
+    const urgency = this.districtUrgency(focus);
+    runBackground(urgency === 2 ? Infinity : urgency === 1 ? URGENT_BUDGET_MS : BACKGROUND_BUDGET_MS);
+    this.cpuAvg += (this.frameCpuMs + (performance.now() - start) - this.cpuAvg) * 0.05;
+    this.frameCpuMs = 0;
     this.adaptResolution(dt);
   }
+
+  private readonly frustum = new THREE.Frustum();
+  private readonly viewProj = new THREE.Matrix4();
+  /** A person's reach for the visibility test: about 4 m, so shadows and arms near the edge count as in view. */
+  private readonly tierSphere = new THREE.Sphere(new THREE.Vector3(), 4);
+
+  /**
+   * A district next door is still being built: 1 while you're within sight of that end of the street, 2 when
+   * you're about to see past it (it's finished at once: one longer frame is better than walking into nothing).
+   */
+  private districtUrgency(focus: Fighter | null): 0 | 1 | 2 {
+    if (!this.pendingDistricts.size || !this.world || !focus) return 0;
+    const b = this.world.level.bounds;
+    const d = Math.min(focus.pos.x - b.minX, b.maxX - focus.pos.x);
+    return d < FINISH_SEAM_M ? 2 : d < URGENT_SEAM_M ? 1 : 0;
+  }
+
+  /** Milliseconds the game spent on this frame before drawing it (Game.frame: input, simulation, HUD). */
+  frameCpuMs = 0;
+  /** Smoothed main-thread milliseconds a frame (the game's own work plus building and submitting the picture). */
+  private cpuAvg = 0;
 
   // ---- dynamic resolution -------------------------------------------------------------
   /** 1 = the quality setting's pixel ratio; drops in steps when frames run long, recovers when there's headroom. */
@@ -648,6 +707,14 @@ export class GameRenderer {
     } else {
       this.slowTime = 0;
       this.fastTime = 0;
+    }
+    // Slow frames with the main thread busy most of the frame are the CPU's doing (scripts, the simulation, scenery
+    // being built): fewer pixels wouldn't help them, and would only blur the picture. Only frames where the main
+    // thread finishes well inside the frame and still waits on the GPU drop resolution.
+    const gpuBound = this.cpuAvg < this.frameAvg * 1000 * 0.7;
+    if (!gpuBound && this.slowTime > 1.5) {
+      this.slowTime = 0;
+      return;
     }
     if (this.slowTime > 1.5 && this.resScale > 0.55) {
       // Slow again soon after going up: that rise was too far.

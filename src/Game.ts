@@ -343,6 +343,10 @@ export class Game {
 
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.state === 'playing') this.pause();
+      this.audio.setPageHidden(document.hidden);
+      // Back from another tab: the first frame counts as one normal frame, not the time away (which would
+      // read as a slow frame and could drop the resolution).
+      if (!document.hidden) this.last = 0;
     });
     // Closing the tab mid-trip: keep the save current (area and entry were saved on arrival).
     window.addEventListener('pagehide', () => {
@@ -3367,6 +3371,7 @@ export class Game {
       requestAnimationFrame((n) => this.frame(n));
       return;
     }
+    const frameStart = performance.now();
     const realDt = this.last === 0 ? 1 / 60 : Math.max(0, Math.min(0.1, (t - this.last) / 1000));
     this.last = t;
     // Slow motion: hold the slow speed, then ease back to normal over about a third of a second.
@@ -3432,7 +3437,10 @@ export class Game {
       player.activity = sess.routine[Math.floor(sess.clock / ROUTINE_SECONDS) % sess.routine.length];
     }
     // The main menu's painted streets cover the whole screen: nothing 3D is drawn behind them.
-    if (this.state !== 'menu') this.renderer.render(dt, this.time, inFight ? player : null);
+    if (this.state !== 'menu') {
+      this.renderer.frameCpuMs = performance.now() - frameStart;
+      this.renderer.render(dt, this.time, inFight ? player : null);
+    }
     this.trackBossRun();
     if (this.koShotAt && this.time >= this.koShotAt) {
       this.koShotAt = 0;

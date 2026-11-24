@@ -7,8 +7,9 @@
  *   npx tsx tools/assets/levelDeps.ts          rewrite the file
  *   npx tsx tools/assets/levelDeps.ts --check  exit 1 if the file is out of date (tests/levelAssets.test.ts)
  *
- * Levels built from the save (home, basement, property, and the estate with your car) aren't listed:
- * the game waits for every model set before building those.
+ * Levels built from the save (home, basement, property, the estate with your car) are listed as their
+ * plain definitions, which is what a district streamed in next door is built from; arriving in one, the
+ * game records that visit's own version instead (levelAssets.ts recordLevel).
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -44,7 +45,6 @@ export async function recordLevelDeps(): Promise<Record<string, Record<string, s
   const { Progress, newSave } = await import('../../src/progress/Progress');
   const { createCharacter, emptyAllocation } = await import('../../src/character/Character');
   const { defaultAppearance } = await import('../../src/character/Appearance');
-  const { DYNAMIC_LEVELS } = await import('../../src/performance/levelAssets');
   // Every set registers itself when its library module loads.
   await Promise.all(['GymLibrary', 'ShopLibrary', 'HydroLibrary', 'SecurityLibrary', 'VehicleLibrary', 'PropertyLibrary', 'DoorLibrary'].map((m) => import(`../../src/render/props/${m}.ts`)));
   if (!(await loadPolyKit())) throw new Error('the street kit did not load');
@@ -54,7 +54,6 @@ export async function recordLevelDeps(): Promise<Record<string, Record<string, s
   recorder.on = true;
   try {
     for (const id of Object.keys(LEVELS).sort()) {
-      if (DYNAMIC_LEVELS.has(id)) continue;
       recorder.used.clear();
       const v = new LevelView(LEVELS[id as keyof typeof LEVELS] as any, p);
       v.dispose();

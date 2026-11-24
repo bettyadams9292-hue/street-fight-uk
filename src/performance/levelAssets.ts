@@ -14,16 +14,20 @@ export const DYNAMIC_LEVELS: ReadonlySet<string> = new Set(['home', 'basement', 
 /** Lists recorded in the game for levels built from the save (`recordLevel`), by level id. */
 const recorded = new Map<string, Record<string, readonly string[]>>();
 
-/** The models a level needs, by set; `null` means every set (a level built from the save, or one not listed). */
-export function levelModels(id: string): Record<string, readonly string[]> | null {
+/**
+ * The models a level needs, by set; `null` means every set (a level built from the save that hasn't been
+ * recorded, or one not listed). `streamed`: the plain definition a district next door is built from.
+ */
+export function levelModels(id: string, streamed = false): Record<string, readonly string[]> | null {
+  if (streamed) return LEVEL_MODELS[id] ?? null;
   const r = recorded.get(id);
   if (r) return r;
   if (DYNAMIC_LEVELS.has(id)) return null;
   return LEVEL_MODELS[id] ?? null;
 }
 
-function eachNeed(id: string, fn: (set: string, ids: readonly string[]) => void): void {
-  const deps = levelModels(id);
+function eachNeed(id: string, fn: (set: string, ids: readonly string[]) => void, streamed = false): void {
+  const deps = levelModels(id, streamed);
   if (deps) {
     for (const [set, ids] of Object.entries(deps)) fn(set, ids);
   } else {
@@ -32,23 +36,23 @@ function eachNeed(id: string, fn: (set: string, ids: readonly string[]) => void)
 }
 
 /** Load what a level needs, ahead of everything else at `priority`. Never rejects (failed pieces fall back). */
-export function prepareLevel(id: string, priority: Priority = PRIORITY.now): Promise<void> {
+export function prepareLevel(id: string, priority: Priority = PRIORITY.now, streamed = false): Promise<void> {
   const jobs: Promise<void>[] = [];
   eachNeed(id, (set, ids) => {
     const s = SETS.get(set);
     if (s) jobs.push(s.prepare(ids, priority));
-  });
+  }, streamed);
   return Promise.all(jobs).then(() => undefined);
 }
 
 /** Everything the level needs has loaded or given up: building it now won't leave a piece out. */
-export function levelReady(id: string): boolean {
+export function levelReady(id: string, streamed = false): boolean {
   let ok = true;
   eachNeed(id, (set, ids) => {
     const s = SETS.get(set);
     if (!s) return;
     for (const m of ids) if (!s.settled(m)) ok = false;
-  });
+  }, streamed);
   return ok;
 }
 
