@@ -98,7 +98,7 @@ const residential: LevelDef = {
     { x: 40, y: 4.2, z: 0.6, colour: 0xffb060, intensity: 13, range: 12 },
     { x: 68, y: 4.2, z: 0.6, colour: 0xffb060, intensity: 13, range: 12 },
   ],
-  weather: 'rain',
+  weather: 'clear',
   objective: 'Head west through Hollins',
 };
 
@@ -164,7 +164,7 @@ const leisure: LevelDef = {
     { x: 48, y: 4.6, z: 0.4, colour: 0xffd8a0, intensity: 14, range: 13 },
     { x: 70, y: 4.6, z: 0.4, colour: 0xffb060, intensity: 13, range: 12 },
   ],
-  weather: 'mist',
+  weather: 'clear',
   objective: 'The football ground is through the gate to the west',
 };
 
@@ -223,7 +223,7 @@ const stadium: LevelDef = {
     { x: 45, y: 6, z: 0.3, colour: 0xf0f8ff, intensity: 20, range: 18 },
     { x: 76, y: 4.4, z: 0.4, colour: 0xffb060, intensity: 13, range: 12 },
   ],
-  weather: 'mist',
+  weather: 'clear',
   objective: 'Find the firm’s top boy',
 };
 
@@ -356,7 +356,7 @@ const docks: LevelDef = {
     { x: 56, y: 4.2, z: 0.4, colour: 0xd8e8ff, intensity: 10, range: 11 },
     { x: 70, y: 6, z: 0.2, colour: 0xffc070, intensity: 18, range: 16 },
   ],
-  weather: 'mist',
+  weather: 'clear',
   objective: 'Take the docks off Big Lenny',
 };
 
@@ -430,7 +430,7 @@ const indEstate: LevelDef = {
     { x: 44, y: 5, z: 0.4, colour: 0xd0ffe0, intensity: 14, range: 14 },
     { x: 76, y: 5, z: 0.4, colour: 0xd0ffe0, intensity: 14, range: 14 },
   ],
-  weather: 'rain',
+  weather: 'clear',
   objective: 'The old factory is at the far end of the estate',
 };
 
@@ -491,7 +491,7 @@ const factory: LevelDef = {
     { x: 56, y: 4.0, z: 0.3, colour: 0xffc890, intensity: 9, range: 11 },
     { x: 70, y: 4.5, z: 0, colour: 0xff8040, intensity: 16, range: 14 },
   ],
-  weather: 'mist',
+  weather: 'clear',
   objective: 'Find Kasia Nowak',
 };
 
@@ -560,7 +560,7 @@ const precinct: LevelDef = {
     { x: 40, y: 4, z: 0.4, colour: 0xf4f0d8, intensity: 13, range: 12 },
     { x: 70, y: 4, z: 0.4, colour: 0xf4f0d8, intensity: 13, range: 12 },
   ],
-  weather: 'rain',
+  weather: 'clear',
   objective: 'Find Dean Pryce',
 };
 
@@ -735,7 +735,7 @@ const nightlife: LevelDef = {
     { x: 60, y: 4, z: 0.6, colour: 0xa070ff, intensity: 16, range: 13 },
     { x: 80, y: 4, z: 0.6, colour: 0xff4080, intensity: 16, range: 13 },
   ],
-  weather: 'rain',
+  weather: 'clear',
   objective: 'Find the owner of Velvet',
 };
 
@@ -850,7 +850,7 @@ const hq: LevelDef = {
     { x: 48, y: 4.6, z: 0.4, colour: 0xfff0d0, intensity: 15, range: 14 },
     { x: 82, y: 4.6, z: 0.4, colour: 0xff5030, intensity: 18, range: 16 },
   ],
-  weather: 'rain',
+  weather: 'clear',
   objective: 'Find Victor Hale',
 };
 

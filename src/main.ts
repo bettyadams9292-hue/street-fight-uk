@@ -41,9 +41,12 @@ const hideBoot = (): void => {
   setTimeout(() => boot.remove(), shot ? 0 : 280);
 };
 
-const start = (): void => {
+const start = (assets: { ready: Promise<unknown>; progress: () => number }): void => {
   try {
     const game = new Game(gameRoot, uiRoot);
+    game.assets = assets;
+    // The old blocky character models are only for Low graphics (8 MB): fetched only if that's the setting.
+    if (game.lowGraphics) void loadCharacterModels();
     // Recorded sound effects load in the background; until they arrive, sounds are synthesised.
     if (query.get('assets') !== 'builtin') void import('./audio/recorded').then((m) => m.loadRecordedSounds(game.audio));
     // ?debug exposes the game to the console for testing.
@@ -73,23 +76,13 @@ const begin = async (): Promise<void> => {
   }
   // The visual tests need every run to be identical: fixed random numbers and a fixed clock.
   if (shot) (await import('./debug/deterministic')).makeDeterministic();
-  // The city kit loads alongside the characters (about 3 MB); without it streets keep their built-in frontages.
-  const kit = new URLSearchParams(location.search).get('city') === 'classic' ? Promise.resolve(null) : loadCityKit();
-  const models = loadCharacterModels((p) => {
-    if (bootBar) bootBar.style.width = `${Math.round(4 + p.fraction * 96)}%`;
-    if (bootText) bootText.textContent = p.done < p.total ? 'Loading characters' : 'Ready';
-  });
-  // Load the character models first, but never hold the game up for long: without them fighters use the
-  // classic rig. (The visual tests wait for however long it takes, so their pictures don't depend on the network.)
-  const humans = query.get('humans') === 'off' ? Promise.resolve(false) : preloadAllHumans();
-  // The low-poly street kits (about 2 MB over the wire): without them the streets keep their older look.
-  const polyKit = query.get('world') === 'classic' ? Promise.resolve(false) : loadPolyKit();
-  // One loader per line, so packages adding a loader don't conflict.
-  const assets = Promise.all([
-    models,
-    kit,
+  // Everything 3D loads in the background: the menu (painted art) shows at once, and starting play waits for it
+  // with a loading bar (Game.whenLoaded). One loader per line, so packages adding a loader don't conflict.
+  const loaders: Promise<unknown>[] = [
+    // The city kit (about 3 MB): without it streets keep their built-in frontages.
+    query.get('city') === 'classic' ? Promise.resolve(null) : loadCityKit(),
     loadProps(),
-    humans,
+    query.get('humans') === 'off' ? Promise.resolve(false) : preloadAllHumans(),
     loadAraMocap(),
     loadRokoko(),
     import('./render/anim/ual').then((u) => u.loadUal()),
@@ -102,12 +95,22 @@ const begin = async (): Promise<void> => {
     loadVehicles(),
     loadDoors(),
     loadProperty(),
-    polyKit,
+    // The low-poly street kits: without them the streets keep their older look.
+    query.get('world') === 'classic' ? Promise.resolve(false) : loadPolyKit(),
     loadPickups(),
     loadTextureFiles(),
-  ]);
-  await (shot ? assets : Promise.race([assets, new Promise((r) => setTimeout(r, 6000))]));
-  start();
+  ];
+  let settled = 0;
+  for (const l of loaders) void l.then(() => settled++, () => settled++);
+  const ready = Promise.all(loaders.map((l) => l.catch(() => null)));
+  if (shot) {
+    // The visual tests wait for however long it takes, so their pictures don't depend on the network.
+    if (bootText) bootText.textContent = 'Loading';
+    const tick = setInterval(() => bootBar && (bootBar.style.width = `${Math.round(4 + (settled / loaders.length) * 96)}%`), 150);
+    await ready;
+    clearInterval(tick);
+  }
+  start({ ready, progress: () => settled / loaders.length });
 };
 
 void begin();

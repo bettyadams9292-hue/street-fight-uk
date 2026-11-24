@@ -181,7 +181,7 @@ const TOWNS: TownSeed[] = [
     },
   },
   {
-    name: 'Ashby Moor', streets: ['terraces', 'works', 'high', 'towers'], weather: 'rain', lamp: 'nyc/prop-street-lamp', light: 0xffb070,
+    name: 'Ashby Moor', streets: ['terraces', 'works', 'high', 'towers'], weather: 'clear', lamp: 'nyc/prop-street-lamp', light: 0xffb070,
     tints: ['#c9a08a', '#b88a74', '#a8826e', '#d2b49c', '#9c7a68'], skyline: 'low', trees: false,
     solid: { terrace: ['nyc/bldg-brownstone', 'nyc/bldg-walkup-infill'], warehouse: ['nyc/bldg-loft-warehouse', 'nyc/bldg-brick-church'], tower: ['nyc/bldg-prewar-apartment', 'nyc/bldg-tenement'], garages: ['hood/detached-garage'], shop: ['nyc/bldg-corner-shop', 'nyc/bldg-walkup-infill'], pub: ['nyc/bldg-brownstone', 'nyc/bldg-corner-shop'] },
     enemies: ['tooled', 'casual', 'docker', 'grappler', 'kickboxer', 'bruiser'], weapons: ['wrench', 'hammer', 'pipe'],
@@ -192,7 +192,7 @@ const TOWNS: TownSeed[] = [
     },
   },
   {
-    name: 'Northgate', streets: ['towers', 'plaza', 'high', 'civic'], weather: 'mist', lamp: 'hood/cobra-head-street-light', light: 0xe6f0ff,
+    name: 'Northgate', streets: ['towers', 'plaza', 'high', 'civic'], weather: 'clear', lamp: 'hood/cobra-head-street-light', light: 0xe6f0ff,
     tints: ['#dfe4e6', '#c8d0d4', '#eceff0', '#b8c2c8', '#d6dcd8'], skyline: 'city', trees: true, shell: 'cafe/corner-restaurant-unit',
     solid: { tower: ['nyc/bldg-postwar-apartment', 'nyc/bldg-postwar-apartment', 'nyc/bldg-public-school'], mall: ['nyc/bldg-department-store', 'nyc/bldg-parking-garage'], fortress: ['nyc/bldg-setback-tower', 'nyc/bldg-office-tower', 'nyc/bldg-public-school'], office: ['nyc/bldg-office-tower', 'nyc/bldg-postwar-apartment'], garages: ['nyc/bldg-parking-garage'] },
     enemies: ['security', 'runner', 'boxer', 'bouncer', 'elite', 'defender'], weapons: ['torch', 'baseball_bat'],
@@ -214,7 +214,7 @@ const TOWNS: TownSeed[] = [
     },
   },
   {
-    name: 'Ironbridge', streets: ['works', 'terraces', 'quay', 'works'], weather: 'rain', lamp: 'hood/cobra-head-street-light', light: 0xff9858,
+    name: 'Ironbridge', streets: ['works', 'terraces', 'quay', 'works'], weather: 'clear', lamp: 'hood/cobra-head-street-light', light: 0xff9858,
     tints: ['#8e8884', '#7a746e', '#9a9088', '#6e6864', '#a09488'], skyline: 'low', trees: false,
     solid: { warehouse: ['nyc/bldg-parking-garage', 'nyc/bldg-firehouse', 'nyc/bldg-public-school', 'nyc/bldg-auto-garage'], terrace: ['nyc/bldg-corner-tenement', 'hood/townhouse-row-unit', 'nyc/bldg-postwar-apartment'], dock: ['nyc/bldg-parking-garage', 'nyc/bldg-firehouse', 'nyc/bldg-auto-garage'], gym_front: ['nyc/bldg-firehouse'] },
     enemies: ['docker', 'tooled', 'bruiser', 'grappler', 'gang_enforcer', 'elite'], weapons: ['crowbar', 'chain', 'metal_bar', 'hammer'],
@@ -226,7 +226,7 @@ const TOWNS: TownSeed[] = [
     },
   },
   {
-    name: 'Crown Heights', streets: ['high', 'strip', 'plaza', 'civic'], weather: 'rain', lamp: 'nyc/prop-street-lamp', light: 0xd0b0ff,
+    name: 'Crown Heights', streets: ['high', 'strip', 'plaza', 'civic'], weather: 'clear', lamp: 'nyc/prop-street-lamp', light: 0xd0b0ff,
     tints: ['#c8ccd8', '#b4b8c8', '#d8d4e0', '#a8aec0', '#c0c8d0'], skyline: 'city', trees: false,
     solid: { fortress: ['nyc/bldg-setback-tower', 'nyc/bldg-office-tower', 'nyc/bldg-prewar-apartment'], office: ['nyc/bldg-office-tower', 'nyc/bldg-setback-tower'], mall: ['nyc/bldg-department-store', 'nyc/bldg-movie-palace'] },
     enemies: ['bouncer', 'elite', 'rival', 'gang_enforcer', 'kickboxer', 'defender'], weapons: ['baseball_bat', 'crowbar', 'machete'],

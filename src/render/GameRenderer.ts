@@ -1,3 +1,5 @@
+import { humanSpecFor, humansOn } from './human/HumanRig';
+import { buildHumanLater, humanBuilt } from './human/HumanBuilder';
 import * as THREE from 'three';
 import { themeProfile } from './themes';
 import type { Simulation } from '../core/Simulation';
@@ -211,9 +213,7 @@ export class GameRenderer {
     const street = !!this.levelView?.street;
     const bg = prof.interior ? 0x07080b : prof.roofed && !street ? prof.bg : street || world.level.theme === 'estate' || world.level.theme === 'high_street' ? BG : prof.bg;
     this.scene.background = new THREE.Color(bg);
-    // Mist on a kit street is kept light: the flat colours wash out quickly.
-    const mist = world.level.weather === 'mist' ? (street ? 1.25 : 1.8) : 1;
-    this.scene.fog = prof.interior || (!prof.fog && !street) ? null : new THREE.FogExp2(bg, (street ? 0.016 : prof.fog) * mist);
+    this.scene.fog = prof.interior || (!prof.fog && !street) ? null : new THREE.FogExp2(bg, street ? 0.016 : prof.fog);
     this.interior = !!prof.interior;
     this.postfx?.setInterior(this.interior);
   }
@@ -453,9 +453,32 @@ export class GameRenderer {
     for (const f of this.sim.fighters) {
       if (this.views.has(f.id)) continue;
       if (f.team !== 'player' && built >= 1) break;
+      if (f.team !== 'player' && !this.readyToShow(f)) continue;
       this.addFighter(f);
+      this.lookState.delete(f.id);
       if (f.team !== 'player') built++;
     }
+    if (this.lookState.size > 64) for (const id of this.lookState.keys()) if (!ids.has(id)) this.lookState.delete(id);
+  }
+
+  /** People arriving mid-play whose look is being built in the background ('wait'), or is ready ('now'). */
+  private lookState = new Map<number, 'wait' | 'now'>();
+
+  /**
+   * Someone who turns up mid-play (a passer-by walking on, the police, a gang) is built in the background
+   * (HumanBuilder.buildHumanLater, a worker) and drawn once they're ready, a moment later and off-screen:
+   * building them here was a stall of a tenth of a second or more on a phone. You and your crew never wait,
+   * and nor does anyone already there when an area opens (built during the fade, in attachWorld).
+   */
+  private readyToShow(f: Fighter): boolean {
+    const st = this.lookState.get(f.id);
+    if (st) return st === 'now';
+    const spec = humansOn() ? humanSpecFor(f.appearance, !!f.background) : null;
+    if (!spec || humanBuilt(spec)) return true;
+    this.lookState.set(f.id, 'wait');
+    // Built or not (no worker: built here after all), they're shown next time round.
+    void buildHumanLater(spec).then(() => this.lookState.set(f.id, 'now'));
+    return false;
   }
 
   /** Props that come and go during a visit (a parked bike). */

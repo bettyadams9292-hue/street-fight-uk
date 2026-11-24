@@ -13,7 +13,7 @@ export const TEXTURE_NAMES = [
   'character/fabric_fleece', 'character/fabric_knit', 'character/fabric_nylon', 'character/fabric_denim', 'character/fabric_leather', 'character/fabric_cotton', 'character/fabric_canvas',
   'home/f_oak', 'home/f_walnut', 'home/f_grey_carpet', 'home/f_cream_carpet', 'home/f_plum_carpet', 'home/f_red_carpet', 'home/f_check_tiles', 'home/f_stone_tiles', 'home/f_slate_tiles',
   'home/w_magnolia', 'home/w_white', 'home/w_sage', 'home/w_navy', 'home/w_charcoal', 'home/w_blush', 'home/w_slate_blue', 'home/w_stone', 'home/w_stripes', 'home/w_brick', 'home/w_panelling', 'home/w_tiles',
-  'fx/particles', 'fx/rain',
+  'fx/particles',
 ] as const;
 export type TextureName = (typeof TEXTURE_NAMES)[number];
 

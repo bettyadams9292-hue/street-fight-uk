@@ -97,8 +97,6 @@ export class LevelView {
   private flicker: { light: THREE.PointLight; base: number }[] = [];
   private sun: THREE.DirectionalLight;
   private water: THREE.Mesh | null = null;
-  private rain: THREE.LineSegments | THREE.Points | null = null;
-  private rainBase: Float32Array | null = null;
   /** Phase 3 street pass (`?street=classic` turns it off). */
   private readonly streetPass = streetPassEnabled(window.location.search);
   private dressing: StreetDressing | null = null;
@@ -338,7 +336,6 @@ export class LevelView {
     for (const l of lvl.levers ?? []) this.buildLever(l.id, l.x);
     if (!this.street) this.buildGraffiti();
     this.buildLights();
-    this.buildWeather();
     if (!this.street && this.streetPass && SLICE_LEVELS.includes(lvl.id)) {
       this.dressing = new StreetDressing(lvl, this.back, lvl.bounds.maxZ + 0.4, this.X0, this.X1, seeded(hash(`${lvl.id}:dressing`)));
       this.group.add(this.dressing.group);
@@ -649,7 +646,8 @@ export class LevelView {
     const depth = front - this.back;
     void depth;
     // Surfaces from the city kit's textures (street/Flooring.ts): each district has its own.
-    const wet = (this.level.weather ?? 'clear') === 'rain' ? 0.75 : 0.25;
+    // Dry: no rain any more, just the slight sheen of a city night.
+    const wet = 0.25;
     const seed = hash(this.level.id) % 97;
     const surf = (kind: Surface, tint?: string, extra: Partial<SurfaceOptions> = {}) =>
       surfaceMaterial(kind, { tint, wallZ: this.back, kerbZ: prof.road ? front : 1e4, wet, seed, ...extra });
@@ -697,15 +695,6 @@ export class LevelView {
     this.kerb(X0, X1, front + 0.12, 0.12);
     this.ground(X0, X1, front + 0.25, front + 14, surfaceMaterial('asphalt', { wet, seed, patches: true, kerbZ: front + 0.3 }), -0.02);
     this.roadMarkings(X0, X1, front + 0.25);
-    // Puddles pick up the lamps.
-    const puddle = this.mat('#2a2e36', 0.05, 0.4, { transparent: true, opacity: 0.55 });
-    for (let i = 0; i < Math.floor(W / 12); i++) {
-      const p = new THREE.Mesh(new THREE.CircleGeometry(1, 20), puddle);
-      p.rotation.x = -Math.PI / 2;
-      p.scale.set(0.4 + this.rnd() * 0.5, 0.2 + this.rnd() * 0.2, 1);
-      p.position.set(X0 + this.rnd() * W, 0.004, this.back + 0.8 + this.rnd() * (front - this.back - 1));
-      this.group.add(p);
-    }
     // Pedestrian guard rails on the busy roads, with gaps.
     if (theme === 'high_street' || theme === 'city') {
       const rail = this.mat('#2b2e33', 0.4, 0.7);
@@ -825,65 +814,10 @@ export class LevelView {
     }
   }
 
-  /** Rain streaks that follow the camera. */
-  private buildWeather(): void {
-    const weather = this.level.weather ?? (themeProfile(this.level.theme).interior ? 'indoors' : 'clear');
-    if (weather !== 'rain' || themeProfile(this.level.theme).roofed) return;
-    const N = 900;
-    const pos = new Float32Array(N * 6);
-    const base = new Float32Array(N * 3);
-    for (let i = 0; i < N; i++) {
-      base[i * 3] = (this.rnd() - 0.5) * 36;
-      base[i * 3 + 1] = this.rnd() * 9;
-      base[i * 3 + 2] = this.back + this.rnd() * 12;
-    }
-    const geo = new THREE.BufferGeometry();
-    const sprite = rainSprite();
-    if (sprite) {
-      // Drops as point sprites (a tapered streak from public/textures/fx/rain.webp), one per drop.
-      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
-      const drops = new THREE.Points(geo, new THREE.PointsMaterial({ map: sprite, color: 0xb4c4e0, size: 0.6, sizeAttenuation: true, transparent: true, opacity: 0.5, depthWrite: false }));
-      drops.frustumCulled = false;
-      this.group.add(drops);
-      this.rain = drops;
-      this.rainBase = base;
-      return;
-    }
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x9ab0d0, transparent: true, opacity: 0.32, depthWrite: false }));
-    lines.frustumCulled = false;
-    this.group.add(lines);
-    this.rain = lines;
-    this.rainBase = base;
+  private updateWeather(time: number): void {
+    if (this.water) (this.water.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.35 + Math.sin(time * 0.8) * 0.08;
   }
 
-  private updateWeather(time: number, camX: number): void {
-    if (this.water) (this.water.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.35 + Math.sin(time * 0.8) * 0.08;
-    if (!this.rain || !this.rainBase) return;
-    const attr = this.rain.geometry.getAttribute('position') as THREE.BufferAttribute;
-    const a = attr.array as Float32Array;
-    const b = this.rainBase;
-    const n = b.length / 3;
-    const points = (this.rain as THREE.Points).isPoints;
-    for (let i = 0; i < n; i++) {
-      const x = camX + ((((b[i * 3] + 18) % 36) + 36) % 36) - 18;
-      const y = 9 - ((((9 - b[i * 3 + 1]) + time * 14) % 9) + 9) % 9;
-      const z = b[i * 3 + 2];
-      if (points) {
-        a[i * 3] = x;
-        a[i * 3 + 1] = y;
-        a[i * 3 + 2] = z;
-        continue;
-      }
-      a[i * 6] = x;
-      a[i * 6 + 1] = y;
-      a[i * 6 + 2] = z;
-      a[i * 6 + 3] = x - 0.04;
-      a[i * 6 + 4] = y - 0.35;
-      a[i * 6 + 5] = z;
-    }
-    attr.needsUpdate = true;
-  }
 
   private buildSkyline(): void {
     const theme = this.level.theme;
@@ -4184,7 +4118,7 @@ export class LevelView {
     }
 
     this.syncDynamic(world, time);
-    this.updateWeather(time, camX);
+    this.updateWeather(time);
 
     // Gates slide up when open.
     for (const g of this.level.gates ?? []) {
@@ -4574,19 +4508,6 @@ function flattenTextures(root: THREE.Object3D): void {
       sm.needsUpdate = true;
     }
   });
-}
-
-/** The rain streak sprite (shared), or null without the file. */
-let rainTex: THREE.Texture | null = null;
-function rainSprite(): THREE.Texture | null {
-  if (rainTex) return rainTex;
-  const img = textureImage('fx/rain');
-  if (!img) return null;
-  rainTex = new THREE.Texture(img);
-  rainTex.colorSpace = THREE.SRGBColorSpace;
-  rainTex.needsUpdate = true;
-  rainTex.userData.shared = true;
-  return rainTex;
 }
 
 /** A lit room seen through a window: warm light, a lampshade glow, curtains each side. */

@@ -62,6 +62,7 @@ import { Phone } from './ui/phone/Phone';
 import { barScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
+import { loadCharacterModels } from './render/characterModels';
 import { resolveLevel } from './property/levels';
 import { BIKES, FURNITURE, ROOMS, bikeHandling, type RoomId } from './property/catalogue';
 import { STAIRWELL, checkPlacement, suggestSpot, wallZ } from './property/home';
@@ -361,14 +362,41 @@ export class Game {
     const cont = p ? `${p.save.character.name} \u00b7 level ${p.save.level} \u00b7 ${LEVELS[p.save.area].district}` : null;
     this.ui.replaceAll(
       mainMenu(!!this.character, cont, {
-        newGame: () => this.newGame(),
-        continue: () => this.continueStory(),
-        training: () => this.startTraining(),
-        character: () => this.openSheet(),
+        newGame: () => this.whenLoaded(() => this.newGame()),
+        continue: () => this.whenLoaded(() => this.continueStory()),
+        training: () => this.whenLoaded(() => this.startTraining()),
+        character: () => this.whenLoaded(() => this.openSheet()),
         settings: () => this.ui.push(settingsScreen(this.settings, this.ui)),
         controls: () => this.ui.push(controlsScreen(this.ui)),
       }),
     );
+  }
+
+  /**
+   * The 3D (characters, the street kits, props, animation) loads in the background while the menu's up, so the
+   * menu shows at once (main.ts). Anything that needs it waits here, with a loading bar, the first time.
+   */
+  assets: { ready: Promise<unknown>; progress: () => number } = { ready: Promise.resolve(), progress: () => 1 };
+
+  get lowGraphics(): boolean {
+    return this.settings.get().quality === 'low';
+  }
+  private assetsDone = false;
+
+  private whenLoaded(go: () => void): void {
+    if (this.assetsDone) return go();
+    const bar = h('div', { class: 'load-bar-fill' });
+    const text = h('div', { class: 'load-text', text: 'Loading the streets' });
+    const wait = h('div', { class: 'load-wait', role: 'status', 'aria-live': 'polite' }, h('div', { class: 'load-bar' }, bar), text);
+    document.body.append(wait);
+    const tick = setInterval(() => (bar.style.width = `${Math.round(6 + this.assets.progress() * 94)}%`), 120);
+    // Never stuck: whatever hasn't come after 25 s is drawn without (older models, plainer streets).
+    void Promise.race([this.assets.ready, new Promise((r) => setTimeout(r, 25000))]).then(() => {
+      clearInterval(tick);
+      this.assetsDone = true;
+      wait.remove();
+      go();
+    });
   }
 
   private newGame(): void {
@@ -2867,6 +2895,8 @@ export class Game {
     this.input.vibration = s.vibration;
     this.renderer.applyQuality(s.quality);
     setHumansEnabled(s.quality !== 'low');
+    // Low graphics draws people with the older, lighter models: fetched the first time they're wanted.
+    if (s.quality === 'low') void loadCharacterModels();
     this.renderer.setLighting(s.lighting);
     this.renderer.hitboxes.visible = s.showHitboxes;
     this.hud.setFpsVisible(s.showFps);
@@ -3321,7 +3351,8 @@ export class Game {
       sess.clock = (sess.clock ?? 0) + dt;
       player.activity = sess.routine[Math.floor(sess.clock / ROUTINE_SECONDS) % sess.routine.length];
     }
-    this.renderer.render(dt, this.time, inFight ? player : null);
+    // The main menu's painted streets cover the whole screen: nothing 3D is drawn behind them.
+    if (this.state !== 'menu') this.renderer.render(dt, this.time, inFight ? player : null);
     this.trackBossRun();
     if (this.koShotAt && this.time >= this.koShotAt) {
       this.koShotAt = 0;

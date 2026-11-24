@@ -293,8 +293,8 @@ export interface LevelDef {
   breakables?: BreakableDef[];
   encounters: EncounterDef[];
   stations?: StationDef[];
-  /** Weather and time of day. */
-  weather?: 'clear' | 'rain' | 'mist' | 'indoors';
+  /** Indoors or out. There's no weather: rain and mist were taken out (they cost frames on phones). */
+  weather?: 'clear' | 'indoors';
   lights: LightDef[];
   /** Objective when nothing else is going on. */
   objective: string;

@@ -6,6 +6,7 @@
  * so the facade builder can instance every piece-and-material pair and colour
  * each instance (paint, brick tone, lit or dark windows) without new materials.
  */
+import { fetchBinary } from '../../core/fetchBinary';
 import * as THREE from 'three';
 import { weather } from '../look/weathering';
 
@@ -63,10 +64,7 @@ export class CityKit {
         if (!r.ok) throw new Error(`kit.json: ${r.status}`);
         return r.json() as Promise<KitJson>;
       }),
-      fetch(`${base}kit.bin`).then((r) => {
-        if (!r.ok) throw new Error(`kit.bin: ${r.status}`);
-        return r.arrayBuffer();
-      }),
+      fetchBinary(`${base}kit.bin`),
     ]);
     const loader = new THREE.TextureLoader();
     const cache = new Map<string, Promise<THREE.Texture>>();
