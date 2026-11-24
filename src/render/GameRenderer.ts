@@ -229,6 +229,12 @@ export class GameRenderer {
   /** One fixed set of lamp lights shared by every district of the street (see LevelView.lampSpecs). */
   private lampPool: THREE.PointLight[] = [];
   private streamJob = 0;
+  private pendingDistricts = new Set<LevelView>();
+
+  private cancelPendingDistricts(): void {
+    for (const v of this.pendingDistricts) v.dispose();
+    this.pendingDistricts.clear();
+  }
 
   private ensureLampPool(): void {
     if (this.lampPool.length) return;
@@ -250,6 +256,7 @@ export class GameRenderer {
   /** Build whichever neighbouring districts are not standing yet. Done a moment later, so it never lands on the frame you cross a seam. */
   private streamNeighbours(world: World): void {
     const job = ++this.streamJob;
+    this.cancelPendingDistricts();
     const here = world.level;
     const ids = stripNeighbours(here.id);
     const build = (side: 'left' | 'right'): void => {
@@ -257,7 +264,16 @@ export class GameRenderer {
       const id = ids[side];
       if (this.near[side] && this.near[side]!.level.id !== id) this.dropNear(side);
       if (!id || this.near[side]) return;
-      const v = new LevelView(LEVELS[id], world.progress);
+      const immediate = this.deterministicStream || /[?&](shot|human)=/.test(window.location.search);
+      const v = new LevelView(LEVELS[id], world.progress, !immediate);
+      this.pendingDistricts.add(v);
+      const advance = (): void => {
+        if (job !== this.streamJob || this.world !== world || !this.pendingDistricts.has(v)) return;
+        if (!v.advanceBuild()) { window.requestAnimationFrame(advance); return; }
+        this.pendingDistricts.delete(v);
+        publish();
+      };
+      const publish = (): void => {
       v.setActive(false);
       v.group.position.x = side === 'left' ? here.bounds.minX - v.level.bounds.maxX : here.bounds.maxX - v.level.bounds.minX;
       this.near[side] = v;
@@ -270,6 +286,8 @@ export class GameRenderer {
       }
       // Its shaders, before you walk into it.
       this.precompile(v.group, true);
+      };
+      advance();
     };
     // Whichever end you are nearer comes first.
     const mid = (here.bounds.minX + here.bounds.maxX) / 2;
@@ -419,6 +437,7 @@ export class GameRenderer {
       this.arenaView = null;
     }
     this.streamJob++;
+    this.cancelPendingDistricts();
     this.dropNear('left');
     this.dropNear('right');
     for (const l of this.lampPool) l.intensity = 0;
