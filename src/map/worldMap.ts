@@ -283,8 +283,17 @@ export function doorOf(area: AreaId): { street: AreaId; x: number } | null {
   return null;
 }
 
+/** Marker spots never move: worked out once each (the cab meter and the map ask for them over and over). */
+const placeCache = new Map<AreaId, Pt>();
+
 /** Where an area's marker goes. */
 export function placePoint(area: AreaId): Pt {
+  let pt = placeCache.get(area);
+  if (!pt) placeCache.set(area, (pt = placePointOf(area)));
+  return pt;
+}
+
+function placePointOf(area: AreaId): Pt {
   if (LAYOUT[area]) {
     const b = LEVELS[area].bounds;
     return streetPoint(area, (b.minX + b.maxX) / 2)!;
