@@ -1,3 +1,4 @@
+import { loadAssetQueue } from '../performance/AssetQueue';
 /**
  * Texture files (public/textures/, made by tools/textures/gen_textures.py): colour maps, normal
  * maps, atlases and particle sprites that replace the canvas textures drawn in code.
@@ -36,13 +37,13 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
 /** Load every texture file once. Never rejects: a file that fails keeps its canvas version. */
 export function loadTextureFiles(): Promise<void> {
   if (typeof document === 'undefined' || typeof Image === 'undefined') return Promise.resolve();
-  loading ??= Promise.all(
-    TEXTURE_NAMES.flatMap((n) => [n, ...(hasNormal(n) ? [`${n}_n`] : [])]).map(async (n) => {
+  loading ??= loadAssetQueue(
+    TEXTURE_NAMES.flatMap((n) => [n, ...(hasNormal(n) ? [`${n}_n`] : [])]).map((n) => async () => {
       const img = await loadImage(`${BASE}${n}.webp`);
       if (img) images.set(n, img);
       else console.info(`[textures] ${n} not loaded: using the canvas version`);
-    }),
-  ).then(() => undefined);
+    }), 4,
+  ).ready.then(() => undefined);
   return loading;
 }
 
