@@ -1,5 +1,5 @@
 /**
- * Sharp Kutz, the barber on the High Street: a new hairstyle, a beard shaped, trimmed or shaved off,
+ * NeXo Cutz, the barber on the High Street: a new hairstyle, a beard shaped, trimmed or shaved off,
  * a colour, the grey covered or put in. Pure rules (prices, what's allowed, paying and applying it);
  * the screen is ui/barberUI.ts and the shop is `barber_shop` in world/interiors.ts.
  *
@@ -9,9 +9,9 @@
 import { FACIAL_HAIR, HAIR_COLOURS, HAIR_STYLES, LABELS, type BodyType, type CharacterAppearance, type FacialHair, type HairStyle } from '../character/Appearance';
 import type { Progress } from '../progress/Progress';
 
-export const BARBER = { shop: 'Sharp Kutz', barber: 'Rio' } as const;
+export const BARBER = { shop: 'NeXo Cutz', barber: 'Vinny' } as const;
 
-/** What a cut costs, and the line Rio says about it. */
+/** What a cut costs, and the line Vinny says about it. */
 export interface Job {
   price: number;
   blurb: string;
@@ -28,7 +28,7 @@ export const HAIRCUTS: Record<HairStyle, Job> = {
   mohawk: { price: 22, blurb: 'Sides shaved off, a strip left down the middle.' },
   bun: { price: 24, blurb: 'Grown long and tied up on top.' },
   ponytail: { price: 24, blurb: 'Long, pulled back and tied.' },
-  long: { price: 30, blurb: 'Past the shoulders. Rio swears it’s all yours.' },
+  long: { price: 30, blurb: 'Past the shoulders. Vinny swears it’s all yours.' },
   bob: { price: 28, blurb: 'Cut to the jaw, blunt at the ends.' },
 };
 
@@ -107,7 +107,7 @@ export type CutResult = { ok: true; total: number } | { ok: false; reason: strin
 export function getCut(p: Progress, wanted: Cut): CutResult {
   const a = p.save.character.appearance;
   const menu = menuFor(a.body);
-  if (!menu.hair.includes(wanted.hair)) return { ok: false, reason: 'Rio doesn’t do that one.' };
+  if (!menu.hair.includes(wanted.hair)) return { ok: false, reason: 'Vinny doesn’t do that one.' };
   if (wanted.facialHair !== 'none' && !menu.beard.includes(wanted.facialHair)) return { ok: false, reason: 'Nothing there to shape.' };
   if (!menu.colours.some((c) => c.toLowerCase() === wanted.hairColour.toLowerCase())) return { ok: false, reason: 'That’s not on the colour chart.' };
   const now = cutOf(a);

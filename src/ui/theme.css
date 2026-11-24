@@ -2314,7 +2314,7 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .load-bar-fill { height: 100%; width: 6%; background: repeating-linear-gradient(-45deg, #e8333a 0 8px, #f5f6fa 8px 16px); transition: width 0.2s linear; }
 .load-text { font-family: var(--head); font-size: 16px; font-weight: 700; letter-spacing: 0.02em; color: #9aa1b4; }
 
-/* ---- Sharp Kutz, the barber (ui/barberUI.ts): a board of cuts beside the fighter in the chair ---- */
+/* ---- NeXo Cutz, the barber (ui/barberUI.ts): a board of cuts beside the fighter in the chair ---- */
 .barber-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 6px; align-content: start; max-height: 50vh; overflow-y: auto; padding-right: 4px; }
 .barber-tile {
   display: flex; flex-direction: column; justify-content: center; gap: 2px; text-align: left; position: relative;
@@ -2350,6 +2350,7 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
   .barber-price { font-size: 11px; }
   .barber-blurb, .barber-bill { display: none; }
   .barber-sum { display: block; }
+  .barber-acts .menu-btn .sub { display: none; }
   .barber-screen .panel-actions { margin-top: 6px; }
 }
 

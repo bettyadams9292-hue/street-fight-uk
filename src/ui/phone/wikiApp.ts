@@ -34,7 +34,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
   { id: 'dealing', title: 'Dealing', blurb: 'Bulk, the prep table in your garage, punters, prices and the risks.' },
   { id: 'club', title: 'The Arches', blurb: 'The fight club under Kane’s Boxing: the card, the title and defending it.' },
-  { id: 'barber', title: 'The barber', blurb: 'Sharp Kutz on the High Street: haircuts, beards and colour, and what they cost.' },
+  { id: 'barber', title: 'The barber', blurb: 'NeXo Cutz on the High Street: haircuts, beards and colour, and what they cost.' },
   { id: 'gear', title: 'Clothes and jewellery', blurb: 'Tiers, what each kind of clothing does, outfit buffs, and jewellery’s XP bonus.' },
   { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
 ];

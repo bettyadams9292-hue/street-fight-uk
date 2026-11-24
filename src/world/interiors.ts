@@ -73,16 +73,16 @@ const clothesShop: LevelDef = {
   objective: 'Browse, try things on, pay at the counter',
 };
 
-// ---- Sharp Kutz: the barber on the High Street (barber/barber.ts) ------------------------------------
+// ---- NeXo Cutz: the barber on the High Street (barber/barber.ts) ------------------------------------
 const barberShop: LevelDef = {
   id: 'barber_shop',
-  name: 'Sharp Kutz',
+  name: 'NeXo Cutz',
   district: 'High Street',
   theme: 'shop',
   bounds: { minX: 0, maxX: 14, ...ROOM },
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'barber', label: 'Back out to the High Street' }],
-  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'SHARP KUTZ — WALK-INS WELCOME', colour: '#f2efe8' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'NeXo CUTZ — WALK-INS WELCOME', colour: '#f2efe8' }],
   props: [
     // Three chairs, each at its own station under a mirror (the mirrors are dressing: DECOR below), the
     // wash basin at the end, the till by the door. The middle (z -0.6 to 0.6) stays clear.
@@ -102,8 +102,8 @@ const barberShop: LevelDef = {
   ],
   stations: [
     {
-      id: 'barber_chair', x: 8.2, z: 0.1, label: 'Get a cut (Rio, the barber)',
-      npc: { name: 'Rio', seed: 7340, body: 'male', top: 'tshirt', topColour: '#1b1d22', dz: -0.95 },
+      id: 'barber_chair', x: 8.2, z: 0.1, label: 'Get a cut (Vinny, the barber)',
+      npc: { name: 'Vinny', seed: 7340, body: 'male', top: 'tshirt', topColour: '#1b1d22', skinTone: '#b07752', hair: 'afro', hairColour: '#0e0b09', dz: -0.95 },
     },
   ],
   pickups: [],
@@ -114,7 +114,7 @@ const barberShop: LevelDef = {
     { x: 10.4, y: 2.7, z: -0.8, colour: 0xfff8f0, intensity: 9, range: 7 },
   ],
   weather: 'indoors',
-  objective: 'Sit in Rio’s chair: haircuts, beards, colour',
+  objective: 'Sit in Vinny’s chair: haircuts, beards, colour',
 };
 
 // ---- Pawn & Gold: pawn shop in the City Centre --------------------------------------------------
