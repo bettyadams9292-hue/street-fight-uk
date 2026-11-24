@@ -124,6 +124,7 @@ export class GameRenderer {
    * layout each time made the browser lay the page out again for each one, a real cost on phones.
    */
   private canvasRect: DOMRect | null = null;
+  private readonly screenPoint = new THREE.Vector3();
 
   applyQuality(q: Quality): void {
     const changed = q !== this.quality;
@@ -318,6 +319,7 @@ export class GameRenderer {
       }
     }
     this.views.clear();
+    this.lookState.clear();
     this.sim = world.sim;
     this.world = world;
     this.applyAtmosphere(world);
@@ -433,6 +435,7 @@ export class GameRenderer {
       v.dispose();
     }
     this.views.clear();
+    this.lookState.clear();
     this.sim = null;
   }
 
@@ -485,7 +488,11 @@ export class GameRenderer {
     if (!spec || humanBuilt(spec)) return true;
     this.lookState.set(f.id, 'wait');
     // Built or not (no worker: built here after all), they're shown next time round.
-    void buildHumanLater(spec).then(() => this.lookState.set(f.id, 'now'));
+    const sim = this.sim;
+    const ready = (): void => {
+      if (this.sim === sim && sim?.fighters.includes(f)) this.lookState.set(f.id, 'now');
+    };
+    void buildHumanLater(spec).then(ready, ready);
     return false;
   }
 
@@ -529,7 +536,7 @@ export class GameRenderer {
 
   /** Where a point in the world is on screen (CSS pixels), or null if it's behind the camera. */
   screenOf(x: number, y: number, z: number): { x: number; y: number } | null {
-    const v = new THREE.Vector3(x, y, z).project(this.cameraRig.camera);
+    const v = this.screenPoint.set(x, y, z).project(this.cameraRig.camera);
     if (v.z > 1) return null;
     const r = (this.canvasRect ??= this.renderer.domElement.getBoundingClientRect());
     return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height };
