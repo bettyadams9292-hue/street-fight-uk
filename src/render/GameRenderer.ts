@@ -359,30 +359,42 @@ export class GameRenderer {
   }
 
   /** Point the shared lamp lights at the street lamps nearest the camera, across the district you are in and the ones beside it. */
+  private readonly nearestLamps: { x: number; y: number; z: number; colour: number; intensity: number; range: number; d: number }[] = [];
+
   private updateLamps(): void {
     if (!this.lampPool.length) return;
     const cx = this.cameraRig.focusX;
-    const all: { x: number; y: number; z: number; colour: number; intensity: number; range: number; d: number }[] = [];
+    const nearest = this.nearestLamps;
+    let count = 0;
+    const limit = this.lampPool.length;
+    // Keep only the closest lamps, in stable distance order, reusing the six records.
     for (const v of [this.levelView, this.near.left, this.near.right]) {
       if (!v?.street) continue;
       for (const l of v.lampSpecs) {
         const x = l.x + v.group.position.x;
-        all.push({ ...l, x, d: Math.abs(x - cx) });
+        const d = Math.abs(x - cx);
+        let i = count;
+        while (i > 0 && nearest[i - 1].d > d) i--;
+        if (i >= limit) continue;
+        const end = Math.min(count, limit - 1);
+        if (!nearest[end]) nearest[end] = { x: 0, y: 0, z: 0, colour: 0, intensity: 0, range: 0, d: 0 };
+        const slot = nearest[end];
+        for (let j = end; j > i; j--) nearest[j] = nearest[j - 1];
+        nearest[i] = slot;
+        slot.x = x; slot.y = l.y; slot.z = l.z;
+        slot.colour = l.colour; slot.intensity = l.intensity; slot.range = l.range; slot.d = d;
+        count = Math.min(count + 1, limit);
       }
     }
-    all.sort((a, b) => a.d - b.d);
-    this.lampPool.forEach((light, i) => {
-      const l = all[i];
-      if (!l) {
-        light.intensity = 0;
-        return;
-      }
+    for (let i = 0; i < limit; i++) {
+      const light = this.lampPool[i];
+      if (i >= count) { light.intensity = 0; continue; }
+      const l = nearest[i];
       light.position.set(l.x, l.y, l.z);
       light.color.setHex(l.colour);
       light.distance = l.range;
-      // Fade out towards the edge of what the camera can see, so a lamp never pops as the pool moves on.
       light.intensity = l.intensity * Math.max(0, Math.min(1, (30 - l.d) / 8));
-    });
+    }
   }
 
   /** Character creator / sheet: one fighter on the studio set. */
