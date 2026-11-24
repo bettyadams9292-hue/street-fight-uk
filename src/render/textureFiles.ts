@@ -82,7 +82,11 @@ const toned = new Map<string, HTMLCanvasElement>();
 export function toneCanvas(name: string, c1: string, c2: string | undefined): HTMLCanvasElement | null {
   const key = `${name}|${c1}|${c2 ?? ''}`;
   const hit = toned.get(key);
-  if (hit) return hit;
+  if (hit) {
+    toned.delete(key);
+    toned.set(key, hit);
+    return hit;
+  }
   const src = plainCanvas(name);
   const cg = src && canvasOf(src.width, src.height);
   if (!src || !cg) return null;
@@ -102,6 +106,12 @@ export function toneCanvas(name: string, c1: string, c2: string | undefined): HT
   }
   g.putImageData(data, 0, 0);
   toned.set(key, c);
+  // Evict only cache references, never dispose textures still owned by a scene.
+  while (toned.size > 64) {
+    const oldest = toned.keys().next();
+    if (oldest.done) break;
+    toned.delete(oldest.value);
+  }
   return c;
 }
 
