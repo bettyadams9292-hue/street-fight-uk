@@ -263,6 +263,7 @@ export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: st
   { area: 'police_station', entry: 'door', where: 'Your record, settle fines. Market Square, City Centre' },
   { area: 'fight_club', entry: 'door', where: 'The fight club under Kane’s Boxing. Canal Side Works' },
   { area: 'clothes_shop', entry: 'door', where: 'Clothes and bags. High Street', shop: 'threads' },
+  { area: 'barber_shop', entry: 'door', where: 'NeXo Cutz: haircuts, beards and colour. High Street' },
   { area: 'pub', entry: 'door', where: 'Food, drink, pool. High Street', shop: 'pub' },
   { area: 'furniture_shop', entry: 'door', where: 'Furniture, floors and walls. High Street' },
   { area: 'car_dealer', entry: 'door', where: 'Cars. Brackley Trading Estate' },

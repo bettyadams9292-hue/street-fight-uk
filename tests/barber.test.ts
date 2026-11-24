@@ -10,6 +10,8 @@ import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { defaultAppearance } from '../src/character/Appearance';
 import { Progress, newSave } from '../src/progress/Progress';
 import { LEVELS } from '../src/world/levels';
+import { SHOP_STOPS } from '../src/ui/hub';
+import { cabFare, cabMiles, placePoint } from '../src/map/worldMap';
 
 let passed = 0;
 const ok = (name: string, fn: () => void) => { fn(); passed++; console.log(`  ok   ${name}`); };
@@ -85,6 +87,17 @@ ok('NeXo Cutz is on the High Street, with Vinny in the chair', () => {
   const shop = LEVELS.barber_shop;
   assert.ok(shop.exits.some((e) => e.to === 'high_street' && hs.entries.some((x) => x.id === e.toEntry)), 'and back out');
   assert.ok(shop.stations.some((s) => s.id === 'barber_chair' && s.npc?.name === 'Vinny'));
+});
+
+ok('Dave’s Cabs stops at NeXo Cutz, on the High Street, at a fare', () => {
+  const stop = SHOP_STOPS.find((s) => s.area === 'barber_shop');
+  assert.ok(stop, 'a cab stop');
+  assert.ok(LEVELS.barber_shop.entries.some((e) => e.id === stop!.entry), 'arriving at the door');
+  const pt = placePoint('barber_shop');
+  assert.ok(Number.isFinite(pt.x) && Number.isFinite(pt.y), 'on the map');
+  const miles = cabMiles('residential', 'barber_shop');
+  assert.ok(miles > 0, `some miles from Hollins (${miles})`);
+  assert.ok(cabFare(miles) >= 5, 'at least the minimum fare');
 });
 
 console.log(`${passed} passed, 0 failed`);
