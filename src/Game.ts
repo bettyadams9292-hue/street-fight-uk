@@ -382,20 +382,29 @@ export class Game {
     return this.settings.get().quality === 'low';
   }
   private assetsDone = false;
+  private assetsWaiting = false;
 
   private whenLoaded(go: () => void): void {
     if (this.assetsDone) return go();
+    if (this.assetsWaiting) return;
+    this.assetsWaiting = true;
     const bar = h('div', { class: 'load-bar-fill' });
     const text = h('div', { class: 'load-text', text: 'Loading the streets' });
     const wait = h('div', { class: 'load-wait', role: 'status', 'aria-live': 'polite' }, h('div', { class: 'load-bar' }, bar), text);
     document.body.append(wait);
     const tick = setInterval(() => (bar.style.width = `${Math.round(6 + this.assets.progress() * 94)}%`), 120);
-    // Never stuck: whatever hasn't come after 25 s is drawn without (older models, plainer streets).
-    void Promise.race([this.assets.ready, new Promise((r) => setTimeout(r, 25000))]).then(() => {
+    // A bounded queue may legitimately take longer on a slow connection.
+    // Do not enter the world with packages still queued and missing from the scenery.
+    void this.assets.ready.then(() => {
       clearInterval(tick);
       this.assetsDone = true;
+      this.assetsWaiting = false;
       wait.remove();
       go();
+    }, () => {
+      clearInterval(tick);
+      this.assetsWaiting = false;
+      wait.remove();
     });
   }
 
