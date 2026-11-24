@@ -492,6 +492,8 @@ export function* buildKitStreetSteps(plan: StreetPlan, o: { night?: boolean } = 
   group.name = `kit-street:${plan.area}`;
   const disposables: { dispose(): void }[] = [];
   let triangles = 0;
+  let complete = false;
+  try {
   const add = (b: Bucket, mat: THREE.Material, shadows: boolean, order = 0, name = ''): void => {
     const g = b.geometry();
     if (!g) return;
@@ -520,6 +522,7 @@ export function* buildKitStreetSteps(plan: StreetPlan, o: { night?: boolean } = 
     add(c.solid, street, true, 0, 'solid');
     add(c.lit, litMat, false, 0, 'lit');
     add(c.glass, glassMat, false, 2, 'glass');
+    yield;
   }
 
   // Vehicles of their own: one mesh each (bodywork plus glass), with their own materials so they can fade.
@@ -551,6 +554,7 @@ export function* buildKitStreetSteps(plan: StreetPlan, o: { night?: boolean } = 
     const bb = g.boundingBox!;
     faders.push({ group: v, x: (bb.min.x + bb.max.x) / 2, z: (bb.min.z + bb.max.z) / 2, hx: (bb.max.x - bb.min.x) / 2, hz: (bb.max.z - bb.min.z) / 2 });
     group.add(v);
+    yield;
   }
 
   for (const s of plan.signs) {
@@ -559,7 +563,9 @@ export function* buildKitStreetSteps(plan: StreetPlan, o: { night?: boolean } = 
     const map = (board.material as THREE.MeshStandardMaterial).map;
     if (map) disposables.push(map);
     group.add(board);
+    yield;
   }
+  complete = true;
   return {
     group,
     triangles,
@@ -567,6 +573,12 @@ export function* buildKitStreetSteps(plan: StreetPlan, o: { night?: boolean } = 
     missing: [...missing],
     dispose: () => disposables.forEach((d) => d.dispose()),
   };
+  } finally {
+    if (!complete) {
+      for (const resource of disposables) resource.dispose();
+      group.clear();
+    }
+  }
 }
 
 /**
