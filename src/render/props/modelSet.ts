@@ -121,6 +121,8 @@ export function modelSet<Id extends string>(name: string, base: string, ids: rea
           if (!m || !m.emissive || m.emissive.getHex() === 0) return;
           const off = m.clone();
           off.emissiveIntensity = 0.05;
+          off.userData.shared = false;
+          off.userData.instanceOwned = true;
           mesh.material = off; // not shared: disposed with the level
         });
       }
