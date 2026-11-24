@@ -153,9 +153,12 @@ export function fadeCar(g: THREE.Object3D, target: number, dt: number): void {
       m.needsUpdate = true;
     }
   }
-  g.traverse((o: THREE.Object3D) => {
-    if (!(o as THREE.Mesh).isMesh) return;
-    if (o.userData.cast0 === undefined) o.userData.cast0 = o.castShadow;
-    o.castShadow = isSolid && o.userData.cast0 === true;
-  });
+  // Shadow eligibility changes only when crossing the opaque boundary.
+  if (wasSolid !== isSolid) {
+    g.traverse((o: THREE.Object3D) => {
+      if (!(o as THREE.Mesh).isMesh) return;
+      if (o.userData.cast0 === undefined) o.userData.cast0 = o.castShadow;
+      o.castShadow = isSolid && o.userData.cast0 === true;
+    });
+  }
 }
