@@ -156,11 +156,17 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
       const wear = q.get('wear') ? (JSON.parse(q.get('wear')!) as Partial<CharacterAppearance>[]) : null;
       let seed = 7;
       const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-      const t0 = performance.now();
+      // The shot pages freeze performance.now: time the builds on the real clock.
+      const now = (window as unknown as { __realNow?: () => number }).__realNow ?? (() => performance.now());
+      const t0 = now();
       clips.forEach((id, i) => {
         // &wear=<JSON list of looks> dresses them (cycled), for checking clothes in motion.
         const look = wear ? { ...defaultAppearance(wear[i % wear.length].body ?? 'male'), ...wear[i % wear.length] } : null;
-        const rig = buildHumanRig(look ?? (crowd ? npc(crowd, i).appearance : randomAppearance(rnd)));
+        // &lite=1 draws everyone with the background body; &lite=pairs shows each look full then lite, side by side.
+        const liteQ = q.get('lite');
+        const lite = liteQ === '1' || (liteQ === 'pairs' && i % 2 === 1);
+        const app = look ?? (crowd ? npc(crowd, liteQ === 'pairs' ? i >> 1 : i).appearance : randomAppearance(rnd));
+        const rig = buildHumanRig(app, lite);
         if (!rig) throw new Error('could not build a rig');
         const pose = araPose(id, t, rig.metrics);
         if (!pose) throw new Error(`no clip ${id}`);
@@ -176,7 +182,7 @@ export async function runHumanShot(root: HTMLElement, mode = 'humans'): Promise<
         rig.root.rotation.y = q.get('side') ? Math.PI / 2 : 0;
         scene.add(rig.root);
       });
-      (out as ShotState & { buildMs?: number }).buildMs = (performance.now() - t0) / clips.length;
+      (out as ShotState & { buildMs?: number }).buildMs = (now() - t0) / clips.length;
     } else
       LINEUP.forEach((spec, i) => {
         const hum = buildHuman(spec);

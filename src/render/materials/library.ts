@@ -37,7 +37,10 @@ function load(url: string, srgb: boolean): Promise<THREE.Texture | null> {
         t.wrapS = t.wrapT = THREE.RepeatWrapping;
         t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
         t.anisotropy = 4;
-        res(t);
+        // Decode the picture off the main thread now, not on the frame it's first drawn (a stall on phones).
+        const img = t.image as HTMLImageElement | undefined;
+        if (img && typeof img.decode === 'function') img.decode().then(() => res(t), () => res(t));
+        else res(t);
       },
       undefined,
       () => res(null),

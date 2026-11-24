@@ -113,7 +113,15 @@ export class GameRenderer {
     this.postfx?.setSize(w, h, this.renderer.getPixelRatio());
     this.cameraRig.setAspect(w / h);
     this.cameraRig.compact = Math.min(w, h) < 520;
+    this.canvasRect = null;
   }
+
+  /**
+   * Where the canvas is on the page, read once and kept till the next resize. screenOf is asked for every
+   * speech bubble, job badge and edge arrow every frame, between the HUD's style changes: reading the page's
+   * layout each time made the browser lay the page out again for each one, a real cost on phones.
+   */
+  private canvasRect: DOMRect | null = null;
 
   applyQuality(q: Quality): void {
     const changed = q !== this.quality;
@@ -122,6 +130,14 @@ export class GameRenderer {
     const dpr = window.devicePixelRatio || 1;
     this.renderer.setPixelRatio((q === 'low' ? Math.min(dpr, 1) : q === 'medium' ? Math.min(dpr, 1.5) : Math.min(dpr, 2)) * (this.resScale ?? 1));
     this.renderer.shadowMap.enabled = q !== 'low';
+    // Soft shadows filter every shadowed pixel many times over: high only. Medium (phones) gets plain PCF,
+    // a few lookups, edges a touch harder.
+    const shadowType = q === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+    if (this.renderer.shadowMap.type !== shadowType) {
+      this.renderer.shadowMap.type = shadowType;
+      this.renderer.shadowMap.needsUpdate = true;
+    }
+    if (changed) this.resCeiling = 1;
     const lights = [...(this.arenaView?.shadowLights ?? []), ...(this.levelView?.shadowLights ?? []), ...(this.near.left?.shadowLights ?? []), ...(this.near.right?.shadowLights ?? [])];
     if (lights.length) {
       for (const l of lights) {
@@ -165,7 +181,28 @@ export class GameRenderer {
       this.streamNeighbours(world);
     }
     // Compile every shader the area needs now, during the fade, instead of mid-fight.
-    this.renderer.compile(this.scene, this.cameraRig.camera);
+    this.precompile(this.scene, false);
+  }
+
+  /**
+   * Compile the shaders for whatever's in `root` before it's drawn. Shaders drawn through the look (into its
+   * buffer) are built differently from ones drawn straight to the screen, so they're compiled for whichever this
+   * frame will really use: compiled for the wrong one they'd all be built again on the first frame, which is
+   * the stall this is meant to save. `later`: in the background where the browser can (a district streamed in
+   * next door), so walking into it doesn't hitch.
+   */
+  private precompile(root: THREE.Object3D, later: boolean): void {
+    const r = this.renderer;
+    const prev = r.getRenderTarget();
+    r.setRenderTarget(this.postfx ? this.postfx.sceneTarget : null);
+    try {
+      if (later) void r.compileAsync(root, this.cameraRig.camera, this.scene).catch(() => undefined);
+      else r.compile(root, this.cameraRig.camera, this.scene);
+    } catch (e) {
+      console.warn('[render] precompile failed', e);
+    } finally {
+      r.setRenderTarget(prev);
+    }
   }
 
   /** Sky colour and fog for the district you are in. */
@@ -222,6 +259,8 @@ export class GameRenderer {
       this.near[side] = v;
       this.scene.add(v.group);
       this.applyQuality(this.quality);
+      // Its shaders, before you walk into it.
+      this.precompile(v.group, true);
     };
     // Whichever end you are nearer comes first.
     const mid = (here.bounds.minX + here.bounds.maxX) / 2;
@@ -461,8 +500,7 @@ export class GameRenderer {
   screenOf(x: number, y: number, z: number): { x: number; y: number } | null {
     const v = new THREE.Vector3(x, y, z).project(this.cameraRig.camera);
     if (v.z > 1) return null;
-    const el = this.renderer.domElement;
-    const r = el.getBoundingClientRect();
+    const r = (this.canvasRect ??= this.renderer.domElement.getBoundingClientRect());
     return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height };
   }
 
@@ -501,12 +539,21 @@ export class GameRenderer {
   // ---- dynamic resolution -------------------------------------------------------------
   /** 1 = the quality setting's pixel ratio; drops in steps when frames run long, recovers when there's headroom. */
   private resScale = 1;
+  /**
+   * The highest it may go back up to. Going up and straight back down again (a phone sitting just at the edge)
+   * means rebuilding the picture's buffers every few seconds, which is its own stutter: so once a rise has to be
+   * taken back, the rise stops there (till the quality setting changes).
+   */
+  private resCeiling = 1;
+  private lastRise = -1e9;
+  private clock = 0;
   private slowTime = 0;
   private fastTime = 0;
   private frameAvg = 1 / 60;
 
   private adaptResolution(dt: number): void {
     if (dt <= 0 || dt > 0.25) return; // tab switches and pauses aren't lag
+    this.clock += dt;
     this.frameAvg += (dt - this.frameAvg) * 0.05;
     if (this.frameAvg > 1 / 45) {
       this.slowTime += dt;
@@ -519,6 +566,8 @@ export class GameRenderer {
       this.fastTime = 0;
     }
     if (this.slowTime > 1.5 && this.resScale > 0.55) {
+      // Slow again soon after going up: that rise was too far.
+      if (this.clock - this.lastRise < 20) this.resCeiling = Math.max(0.55, this.resScale - 0.15);
       this.setResScale(this.resScale - 0.15);
       this.slowTime = 0;
     } else if (this.slowTime > 3 && this.postfx) {
@@ -526,8 +575,9 @@ export class GameRenderer {
       this.lookDropped = true;
       this.setLook(this.wantedLook);
       this.slowTime = 0;
-    } else if (this.fastTime > 6 && this.resScale < 1) {
-      this.setResScale(this.resScale + 0.1);
+    } else if (this.fastTime > 6 && this.resScale < this.resCeiling - 0.001) {
+      this.setResScale(Math.min(this.resCeiling, this.resScale + 0.1));
+      this.lastRise = this.clock;
       this.fastTime = 0;
     }
   }

@@ -866,7 +866,12 @@ export class World {
   private civMaxZ = Infinity;
 
   private spawnCivilian(): void {
-    const NPC_POOL = 400;
+    /**
+     * How many regulars a district has. Every new look is a person built from scratch (morphing the body and
+     * cutting their clothes: a stall of a tenth of a second or more on a phone), and built people are kept
+     * (HumanBuilder's templates), so a district's crowd stops costing anything once you've seen them all.
+     */
+    const NPC_POOL = 28;
     const p = this.player;
     const b = this.arena.bounds;
     const rng = this.lootRng;
@@ -892,6 +897,7 @@ export class World {
     // One of the district's regulars (a stable pool of people: the same one always looks the same).
     const look: CharacterAppearance = npc(this.level.id, seed % NPC_POOL).appearance;
     const f = new Fighter({ id: this.nextId++, name: 'Passer-by', team: 'neutral', attributes: defaultAttributes(4), style: getStyle('street'), x, z, appearance: look });
+    f.background = true;
     f.stats.addModifier({ id: 'stroll', source: 'civilian', stat: 'moveSpeedMult', mul: 0.42 + r.next() * 0.3 });
     this.sim.add(f);
     const brain = new CivilianBrain(f, this.arena, r, this.civLanes, 'walk', () => this.sim.fighters, this.civMaxZ);
@@ -1099,6 +1105,7 @@ export class World {
       const look: CharacterAppearance = { ...randomAppearance(() => r.next(), body), accessories: [] };
       const f = new Fighter({ id: this.nextId++, name: '', team: 'neutral', attributes: defaultAttributes(5), style: getStyle('street'), x: sp.x, z: sp.z, appearance: look });
       f.facing = sp.x < PIT.x ? 1 : -1;
+      f.background = true;
       this.sim.add(f);
       const brain = new DummyBrain(f, this.sim.rng);
       brain.mode = 'stand';
@@ -2291,6 +2298,8 @@ export class World {
       appearance: look,
     });
     f.facing = 1;
+    // Behind a counter or in a corner: background people, except someone you might hire (they'll fight beside you).
+    f.background = s.id !== 'recruit';
     this.sim.add(f);
     const brain = new DummyBrain(f, this.sim.rng);
     brain.mode = 'stand';

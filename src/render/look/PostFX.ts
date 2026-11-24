@@ -124,6 +124,13 @@ export class PostFX {
     this.composer = new EffectComposer(renderer, target);
     this.renderPass = new RenderPass(scene, camera);
     this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), look.bloom.strength, look.bloom.radius, look.bloom.threshold);
+    if (!antialias) {
+      // Below high quality the glow is worked out at half the size (its own blur chain halves it again): a soft
+      // glow looks the same, and its eleven passes cost about a quarter as much, which phones feel most.
+      const setSize = this.bloom.setSize.bind(this.bloom);
+      this.bloom.setSize = (w: number, h: number) => setSize(Math.max(2, Math.round(w / 2)), Math.max(2, Math.round(h / 2)));
+      this.bloom.setSize(size.x, size.y);
+    }
     this.grade = new ShaderPass(GradeShader);
     this.composer.addPass(this.renderPass);
     this.composer.addPass(this.bloom);
@@ -184,6 +191,11 @@ export class PostFX {
       if (mesh.material) (mesh.material as THREE.Material).dispose();
     });
     return tex;
+  }
+
+  /** Where the scene is drawn before the look goes over it (shaders are compiled differently for it than for the screen). */
+  get sceneTarget(): THREE.WebGLRenderTarget {
+    return this.composer.readBuffer;
   }
 
   setSize(width: number, height: number, pixelRatio: number): void {

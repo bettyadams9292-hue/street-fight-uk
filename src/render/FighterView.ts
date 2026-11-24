@@ -154,7 +154,7 @@ export class FighterView {
 
   constructor(public fighter: Fighter, appearance: CharacterAppearance = fighter.appearance) {
     this.root = new THREE.Group();
-    this.rig = buildCharacterRig(appearance);
+    this.rig = buildCharacterRig(appearance, !!fighter.background);
     this.root.add(this.rig.root);
     this.animator = new FighterAnimator(fighter, this.rig.metrics, traitsOf(fighter, appearance), appearance.height ?? 1);
     this.animator.onStep = () => this.onStep?.();
@@ -168,7 +168,7 @@ export class FighterView {
     this.weaponId = null;
     this.root.remove(this.rig.root);
     this.rig.dispose();
-    this.rig = buildCharacterRig(appearance);
+    this.rig = buildCharacterRig(appearance, !!this.fighter.background);
     this.root.add(this.rig.root);
     this.animator.setMetrics(this.rig.metrics, traitsOf(this.fighter, appearance), appearance.height ?? 1);
     this.update(1 / 60, 0);
