@@ -1,3 +1,4 @@
+import { loadAssetQueue, type AssetTask } from './performance/AssetQueue';
 import './ui/styles.css';
 import './ui/theme.css';
 import { Game } from './Game';
@@ -78,39 +79,43 @@ const begin = async (): Promise<void> => {
   if (shot) (await import('./debug/deterministic')).makeDeterministic();
   // Everything 3D loads in the background: the menu (painted art) shows at once, and starting play waits for it
   // with a loading bar (Game.whenLoaded). One loader per line, so packages adding a loader don't conflict.
-  const loaders: Promise<unknown>[] = [
+  const loaders: AssetTask[] = [
     // The city kit (about 3 MB): without it streets keep their built-in frontages.
-    query.get('city') === 'classic' ? Promise.resolve(null) : loadCityKit(),
-    loadProps(),
-    query.get('humans') === 'off' ? Promise.resolve(false) : preloadAllHumans(),
-    loadAraMocap(),
-    loadRokoko(),
-    import('./render/anim/ual').then((u) => u.loadUal()),
-    loadFlooring(),
-    loadKenney(),
-    loadGym(),
-    loadShop(),
-    loadHydro(),
-    loadSecurity(),
-    loadVehicles(),
-    loadDoors(),
-    loadProperty(),
+    () => query.get('city') === 'classic' ? Promise.resolve(null) : loadCityKit(),
+    () => loadProps(),
+    () => query.get('humans') === 'off' ? Promise.resolve(false) : preloadAllHumans(),
+    () => loadAraMocap(),
+    () => loadRokoko(),
+    () => import('./render/anim/ual').then((u) => u.loadUal()),
+    () => loadFlooring(),
+    () => loadKenney(),
     // The low-poly street kits: without them the streets keep their older look.
-    query.get('world') === 'classic' ? Promise.resolve(false) : loadPolyKit(),
-    loadPickups(),
-    loadTextureFiles(),
+    () => query.get('world') === 'classic' ? Promise.resolve(false) : loadPolyKit(),
+    () => loadPickups(),
+    () => loadTextureFiles(),
   ];
-  let settled = 0;
-  for (const l of loaders) void l.then(() => settled++, () => settled++);
-  const ready = Promise.all(loaders.map((l) => l.catch(() => null)));
+  // The model sets (gym, shop, grow, security, cars, doors, property) aren't waited for here: each location
+  // loads what it uses before it's built (performance/levelAssets.ts, Game.enterArea), and the rest come in
+  // behind everything else. One request limit covers all of it (performance/requests.ts).
+  const sets: AssetTask[] = [
+    () => loadGym(),
+    () => loadShop(),
+    () => loadHydro(),
+    () => loadSecurity(),
+    () => loadVehicles(),
+    () => loadDoors(),
+    () => loadProperty(),
+  ];
+  const { ready, progress } = loadAssetQueue(loaders, loaders.length);
+  const everything = loadAssetQueue(sets, sets.length).ready;
   if (shot) {
     // The visual tests wait for however long it takes, so their pictures don't depend on the network.
     if (bootText) bootText.textContent = 'Loading';
-    const tick = setInterval(() => bootBar && (bootBar.style.width = `${Math.round(4 + (settled / loaders.length) * 96)}%`), 150);
-    await ready;
+    const tick = setInterval(() => bootBar && (bootBar.style.width = `${Math.round(4 + progress() * 96)}%`), 150);
+    await Promise.all([ready, everything]);
     clearInterval(tick);
   }
-  start({ ready, progress: () => settled / loaders.length });
+  start({ ready, progress });
 };
 
 void begin();

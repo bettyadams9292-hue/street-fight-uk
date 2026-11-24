@@ -1,3 +1,4 @@
+import { BACKGROUND_POSE_INTERVAL } from '../performance/FrameBudget';
 import * as THREE from 'three';
 import { approvedAt } from './props/approvedFit';
 import type { CharacterAppearance } from '../character/Appearance';
@@ -150,6 +151,7 @@ export class FighterView {
   rebind(f: Fighter): void {
     this.animator.retarget(f);
     this.fighter = f;
+    this.poseElapsed = 0;
   }
 
   constructor(public fighter: Fighter, appearance: CharacterAppearance = fighter.appearance) {
@@ -171,6 +173,7 @@ export class FighterView {
     this.rig = buildCharacterRig(appearance, !!this.fighter.background);
     this.root.add(this.rig.root);
     this.animator.setMetrics(this.rig.metrics, traitsOf(this.fighter, appearance), appearance.height ?? 1);
+    this.poseElapsed = 0;
     this.update(1 / 60, 0);
   }
 
@@ -179,9 +182,30 @@ export class FighterView {
     this.flashTime = 0.09;
   }
 
-  update(dt: number, time: number): void {
+  private poseElapsed = 0;
+
+  /**
+   * `tier` (GameRenderer decides it each frame): 0 everyone near the action, posed every frame; 1 a distant
+   * bystander standing idle, posed at 30 Hz; 2 well off screen and not in anything that matters (not the
+   * player, not in the fight, not riding or held), not posed at all until it comes back into view. Where they
+   * are is kept up to date at every tier, so nobody jumps when they reappear.
+   */
+  update(dt: number, time: number, tier: 0 | 1 | 2 = 0): void {
     const f = this.fighter;
     this.root.position.set(f.pos.x, f.pos.y, f.pos.z);
+    this.poseElapsed += dt;
+    const hidden = tier === 2 && !this.mount && !f.grapple && this.flashTime <= 0;
+    // Only distant, non-combat idle characters qualify. Keep root motion at full rate.
+    const reduced = tier >= 1 && f.background && f.state === 'idle' && !f.activity && !this.mount && !f.grapple && this.flashTime <= 0 && this.poseElapsed < BACKGROUND_POSE_INTERVAL;
+    if (hidden || reduced) {
+      // Equipment changes must remain responsive even when the skeletal pose is deferred.
+      this.syncWeapon();
+      this.syncGear();
+      return;
+    }
+    // Back in view after a while unposed: carry on from a short step, not the whole gap (they were out of sight).
+    dt = Math.min(this.poseElapsed, 0.1);
+    this.poseElapsed = 0;
 
     let riding: Pose | null = null;
     let roll = 0;
@@ -228,15 +252,20 @@ export class FighterView {
     rig.pitch.position.y = out.lift;
     rig.sync?.();
 
-    // Hit flash.
+    // Hit flash and attack telegraphs retain their original timing. Avoid writing
+    // identical emissive colours to every material on every idle frame.
     this.flashTime = Math.max(0, this.flashTime - dt);
+    let red = 0, green = 0, blue = 0;
     if (this.flashTime > 0) {
-      for (const m of this.rig.flashMaterials) m.emissive.setScalar(0.6);
+      red = green = blue = 0.6;
     } else if (this.telegraphs && this.isWindingUpHeavy()) {
       const pulse = 0.25 + 0.2 * Math.sin(time * 40);
-      for (const m of this.rig.flashMaterials) m.emissive.setRGB(pulse * 1.6, pulse * 0.25, 0);
-    } else {
-      for (const m of this.rig.flashMaterials) m.emissive.setScalar(0);
+      red = pulse * 1.6;
+      green = pulse * 0.25;
+    }
+    for (const m of this.rig.flashMaterials) {
+      const e = m.emissive;
+      if (e.r !== red || e.g !== green || e.b !== blue) e.setRGB(red, green, blue);
     }
     this.syncWeapon();
     this.syncGear();
@@ -275,6 +304,9 @@ export class FighterView {
   private gear: THREE.Object3D[] = [];
   /** Where each fist is: a point on each forearm, where the weapon grip sits. */
   private fists: [THREE.Object3D, THREE.Object3D] | null = null;
+  private readonly gearA = new THREE.Vector3();
+  private readonly gearB = new THREE.Vector3();
+  private readonly gearAxis = new THREE.Vector3(1, 0, 0);
 
   /**
    * Curls and front raises hold a dumbbell in each fist; squats and presses hold the gym's barbell,
@@ -291,13 +323,13 @@ export class FighterView {
     if (this.gearKind !== 'barbell' || !this.fists) return;
     const bar = this.gear[0];
     this.root.updateMatrixWorld(true);
-    const a = this.fists[0].getWorldPosition(new THREE.Vector3());
-    const b = this.fists[1].getWorldPosition(new THREE.Vector3());
+    const a = this.fists[0].getWorldPosition(this.gearA);
+    const b = this.fists[1].getWorldPosition(this.gearB);
     this.root.worldToLocal(a);
     this.root.worldToLocal(b);
     bar.position.copy(a).add(b).multiplyScalar(0.5);
     const dir = b.sub(a);
-    if (dir.lengthSq() > 1e-6) bar.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), dir.normalize());
+    if (dir.lengthSq() > 1e-6) bar.quaternion.setFromUnitVectors(this.gearAxis, dir.normalize());
   }
 
   private buildGear(kind: 'dumbbells' | 'barbell'): boolean {

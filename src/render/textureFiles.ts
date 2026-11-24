@@ -12,6 +12,7 @@
  * map in `userData.normal`; attachNormals() puts the normal maps on the materials afterwards.
  */
 import * as THREE from 'three';
+import { request } from '../performance/requests';
 
 const BASE = '/textures/';
 
@@ -24,13 +25,22 @@ const images = new Map<string, HTMLImageElement>();
 let loading: Promise<void> | null = null;
 
 function loadImage(url: string): Promise<HTMLImageElement | null> {
-  return new Promise((res) => {
+  return request(url, () => new Promise<HTMLImageElement | null>((res) => {
     const img = new Image();
     img.decoding = 'async';
-    img.onload = () => res(img);
-    img.onerror = () => res(null);
+    const finish = (value: HTMLImageElement | null): void => {
+      clearTimeout(timer);
+      img.onload = img.onerror = null;
+      res(value);
+    };
+    const timer = setTimeout(() => {
+      finish(null);
+      img.removeAttribute('src');
+    }, 30000);
+    img.onload = () => finish(img);
+    img.onerror = () => finish(null);
     img.src = url;
-  });
+  }));
 }
 
 /** Load every texture file once. Never rejects: a file that fails keeps its canvas version. */
@@ -81,7 +91,11 @@ const toned = new Map<string, HTMLCanvasElement>();
 export function toneCanvas(name: string, c1: string, c2: string | undefined): HTMLCanvasElement | null {
   const key = `${name}|${c1}|${c2 ?? ''}`;
   const hit = toned.get(key);
-  if (hit) return hit;
+  if (hit) {
+    toned.delete(key);
+    toned.set(key, hit);
+    return hit;
+  }
   const src = plainCanvas(name);
   const cg = src && canvasOf(src.width, src.height);
   if (!src || !cg) return null;
@@ -101,6 +115,12 @@ export function toneCanvas(name: string, c1: string, c2: string | undefined): HT
   }
   g.putImageData(data, 0, 0);
   toned.set(key, c);
+  // Evict only cache references, never dispose textures still owned by a scene.
+  while (toned.size > 64) {
+    const oldest = toned.keys().next();
+    if (oldest.done) break;
+    toned.delete(oldest.value);
+  }
   return c;
 }
 
@@ -115,7 +135,8 @@ function cssRgb(g: CanvasRenderingContext2D, css: string): [number, number, numb
 }
 
 /** One Source per file canvas, so every texture cut from it shares one upload to the GPU. */
-const sources = new Map<HTMLCanvasElement, THREE.Source>();
+// A source must not keep transient atlas canvases alive after their textures are disposed.
+const sources = new WeakMap<HTMLCanvasElement, THREE.Source>();
 
 function wrap(c: HTMLCanvasElement, name: string, repeatX: number, repeatY: number): THREE.CanvasTexture {
   const t = new THREE.CanvasTexture(c);

@@ -7,8 +7,8 @@
  * PropLibrary.lootModel() shows them on the ground. Anything that fails to load falls
  * back to the floating icon card.
  */
+import { loadGlb } from '../../performance/assetFetch';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import { PICKUP_FILES, PICKUP_IDS } from './pickupList';
 
@@ -20,11 +20,10 @@ let loading: Promise<void> | null = null;
 /** Load every pickup model (once). Never rejects; one that fails just isn't available. */
 export function loadPickups(base = '/models/pickups/'): Promise<void> {
   loading ??= (async () => {
-    const loader = new GLTFLoader();
     await Promise.all(
       PICKUP_IDS.map(async (id) => {
         try {
-          const gltf = await loader.loadAsync(base + PICKUP_FILES[id]);
+          const gltf = await loadGlb(base + PICKUP_FILES[id]);
           gltf.scene.traverse((c: THREE.Object3D) => {
             c.userData.shared = true;
             if ((c as THREE.Mesh).isMesh) c.castShadow = c.receiveShadow = true;

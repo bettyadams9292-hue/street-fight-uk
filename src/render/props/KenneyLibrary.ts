@@ -6,8 +6,8 @@
  * wood gets grain, upholstery a weave, metal a brush, so no piece is one plain
  * colour. Models are fitted to the space the level gives them.
  */
+import { loadGlb } from '../../performance/assetFetch';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { attachNormal, fileTexture, loadTextureFiles, type TextureName } from '../textureFiles';
 import { CLOTHS, WOODS } from '../materials/assign';
 import { dress, nearest, type LibraryName } from '../materials/library';
@@ -214,10 +214,9 @@ export function loadKenney(): Promise<void> {
   loading ??= (async () => {
     // The surfaces use the texture files when they're in (never rejects; canvases without them).
     await loadTextureFiles();
-    const loader = new GLTFLoader();
     const one = async (dir: string, id: string) => {
       try {
-        const g = await loader.loadAsync(`${BASE}${dir}/${id}.glb`);
+        const g = await loadGlb(`${BASE}${dir}/${id}.glb`);
         const root = g.scene;
         root.traverse((o: THREE.Object3D) => {
           const mesh = o as THREE.Mesh;

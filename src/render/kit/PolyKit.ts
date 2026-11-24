@@ -7,6 +7,7 @@
  * hundred pieces costs a few dozen draw calls, and the chunks off screen (or
  * outside the shadow camera) are culled.
  */
+import { request } from '../../performance/requests';
 import { fetchBinary } from '../../core/fetchBinary';
 import { streetDetail } from '../materials/streetDetail';
 import * as THREE from 'three';
@@ -96,7 +97,7 @@ export function loadPolyKit(): Promise<boolean> {
   if (loading) return loading;
   loading = (async () => {
     try {
-      const [j, b] = await Promise.all([fetch(`${BASE}kit.json`), fetchBinary(`${BASE}kit.bin`)]);
+      const [j, b] = await Promise.all([request(`${BASE}kit.json`, () => fetch(`${BASE}kit.json`)), fetchBinary(`${BASE}kit.bin`)]);
       if (!j.ok) return false;
       index = ((await j.json()) as { models: Record<string, ModelInfo> }).models;
       blob = b;
@@ -431,6 +432,13 @@ export interface KitFader {
  * windows and lamps glow.
  */
 export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): KitStreetView | null {
+  const steps = buildKitStreetSteps(plan, o);
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+export function* buildKitStreetSteps(plan: StreetPlan, o: { night?: boolean } = {}): Generator<void, KitStreetView | null, unknown> {
   if (!polyKitReady()) return null;
   // The street is baked in chunks along x, so the camera (and the shadow camera) can cull what's off screen.
   // One mesh per district used to be drawn whole, twice (shadow pass and colour), for each of three districts.
@@ -473,16 +481,20 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     }
     if (m.glass) into.glass.add(m.glass, pl, null);
     if (m.lit) into.lit.add(m.lit, pl, null);
+    yield;
   }
   for (const b of plan.blocks) {
     const c = chunk(b.x);
     (b.glow ? c.lit : c.solid).block(b);
+    yield;
   }
 
   const group = new THREE.Group();
   group.name = `kit-street:${plan.area}`;
   const disposables: { dispose(): void }[] = [];
   let triangles = 0;
+  let complete = false;
+  try {
   const add = (b: Bucket, mat: THREE.Material, shadows: boolean, order = 0, name = ''): void => {
     const g = b.geometry();
     if (!g) return;
@@ -511,6 +523,7 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     add(c.solid, street, true, 0, 'solid');
     add(c.lit, litMat, false, 0, 'lit');
     add(c.glass, glassMat, false, 2, 'glass');
+    yield;
   }
 
   // Vehicles of their own: one mesh each (bodywork plus glass), with their own materials so they can fade.
@@ -542,6 +555,7 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     const bb = g.boundingBox!;
     faders.push({ group: v, x: (bb.min.x + bb.max.x) / 2, z: (bb.min.z + bb.max.z) / 2, hx: (bb.max.x - bb.min.x) / 2, hz: (bb.max.z - bb.min.z) / 2 });
     group.add(v);
+    yield;
   }
 
   for (const s of plan.signs) {
@@ -550,7 +564,9 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     const map = (board.material as THREE.MeshStandardMaterial).map;
     if (map) disposables.push(map);
     group.add(board);
+    yield;
   }
+  complete = true;
   return {
     group,
     triangles,
@@ -558,6 +574,12 @@ export function buildKitStreet(plan: StreetPlan, o: { night?: boolean } = {}): K
     missing: [...missing],
     dispose: () => disposables.forEach((d) => d.dispose()),
   };
+  } finally {
+    if (!complete) {
+      for (const resource of disposables) resource.dispose();
+      group.clear();
+    }
+  }
 }
 
 /**

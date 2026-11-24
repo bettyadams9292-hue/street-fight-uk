@@ -271,6 +271,12 @@ export function buildWeaponMesh(w: WeaponData): THREE.Group {
 export function disposeGroup(g: THREE.Object3D): void {
   g.traverse((o: THREE.Object3D) => {
     // Shared prop geometry and cached materials (propModels.ts) outlive any one level.
+    if (o instanceof THREE.Mesh && o.userData.shared) {
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of mats) {
+        if (m.userData.instanceOwned && !m.userData.shared) m.dispose();
+      }
+    }
     if (o instanceof THREE.Mesh && !o.userData.shared) {
       o.geometry.dispose();
       const mats = Array.isArray(o.material) ? o.material : [o.material];

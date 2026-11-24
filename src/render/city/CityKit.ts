@@ -6,6 +6,8 @@
  * so the facade builder can instance every piece-and-material pair and colour
  * each instance (paint, brick tone, lit or dark windows) without new materials.
  */
+import { request } from '../../performance/requests';
+import { loadTextureFile } from '../../performance/assetFetch';
 import { fetchBinary } from '../../core/fetchBinary';
 import * as THREE from 'three';
 import { weather } from '../look/weathering';
@@ -60,13 +62,12 @@ export class CityKit {
 
   static async load(base = '/models/city/'): Promise<CityKit> {
     const [json, bin] = await Promise.all([
-      fetch(`${base}kit.json`).then((r) => {
+      request(`${base}kit.json`, () => fetch(`${base}kit.json`)).then((r) => {
         if (!r.ok) throw new Error(`kit.json: ${r.status}`);
         return r.json() as Promise<KitJson>;
       }),
       fetchBinary(`${base}kit.bin`),
     ]);
-    const loader = new THREE.TextureLoader();
     const cache = new Map<string, Promise<THREE.Texture>>();
     const tex = (file: string | null, srgb: boolean): Promise<THREE.Texture> | null => {
       if (!file) return null;
@@ -74,7 +75,7 @@ export class CityKit {
       if (!cache.has(key))
         cache.set(
           key,
-          loader.loadAsync(`${base}tex/${file}`).then((t: THREE.Texture) => {
+          loadTextureFile(`${base}tex/${file}`).then((t: THREE.Texture) => {
             // glTF texture convention: no vertical flip.
             t.flipY = false;
             t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;

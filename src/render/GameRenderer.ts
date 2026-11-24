@@ -1,3 +1,7 @@
+import { BACKGROUND_POSE_DISTANCE } from '../performance/FrameBudget';
+import { levelReady, prepareLevel } from '../performance/levelAssets';
+import { PRIORITY } from '../performance/requests';
+import { addJob, BACKGROUND_BUDGET_MS, runBackground, type JobHandle } from '../performance/scheduler';
 import { humanSpecFor, humansOn } from './human/HumanRig';
 import { buildHumanLater, humanBuilt } from './human/HumanBuilder';
 import * as THREE from 'three';
@@ -19,6 +23,13 @@ import { LEVELS } from '../world/levels';
 import { stripNeighbours } from '../world/strip';
 import { resolveLook, type Look } from './look/looks';
 import { PostFX } from './look/PostFX';
+
+/** Background milliseconds a frame while the district you're walking towards isn't built yet. */
+const URGENT_BUDGET_MS = 8;
+/** How near an end of the street counts as walking towards the next district (about a screen's width). */
+const URGENT_SEAM_M = 14;
+/** Nearer than this to an end whose district isn't built yet, it's finished at once. */
+const FINISH_SEAM_M = 5;
 
 const BG = 0x0a0c12;
 
@@ -124,6 +135,7 @@ export class GameRenderer {
    * layout each time made the browser lay the page out again for each one, a real cost on phones.
    */
   private canvasRect: DOMRect | null = null;
+  private readonly screenPoint = new THREE.Vector3();
 
   applyQuality(q: Quality): void {
     const changed = q !== this.quality;
@@ -144,9 +156,12 @@ export class GameRenderer {
     if (lights.length) {
       for (const l of lights) {
         l.castShadow = q !== 'low';
-        l.shadow.mapSize.set(q === 'high' ? 2048 : 1024, q === 'high' ? 2048 : 1024);
-        l.shadow.map?.dispose();
-        l.shadow.map = null;
+        const size = q === 'high' ? 2048 : 1024;
+        if (l.shadow.mapSize.x !== size || l.shadow.mapSize.y !== size) {
+          l.shadow.mapSize.set(size, size);
+          l.shadow.map?.dispose();
+          l.shadow.map = null;
+        }
       }
     }
     this.resize();
@@ -198,8 +213,11 @@ export class GameRenderer {
     const prev = r.getRenderTarget();
     r.setRenderTarget(this.postfx ? this.postfx.sceneTarget : null);
     try {
-      if (later) void r.compileAsync(root, this.cameraRig.camera, this.scene).catch(() => undefined);
-      else r.compile(root, this.cameraRig.camera, this.scene);
+      // compileAsync is the same work up front plus a poll for readiness that we never waited on, and the poll
+      // throws (uncaught, from a timer) if the district is disposed first, as when you walk straight through it.
+      // The browser still finishes linking in parallel where it can (KHR_parallel_shader_compile).
+      void later;
+      r.compile(root, this.cameraRig.camera, this.scene);
     } catch (e) {
       console.warn('[render] precompile failed', e);
     } finally {
@@ -225,6 +243,16 @@ export class GameRenderer {
   /** One fixed set of lamp lights shared by every district of the street (see LevelView.lampSpecs). */
   private lampPool: THREE.PointLight[] = [];
   private streamJob = 0;
+  /** Districts still being built, and their background jobs. */
+  private pendingDistricts = new Map<LevelView, JobHandle>();
+
+  private cancelPendingDistricts(): void {
+    for (const [v, h] of this.pendingDistricts) {
+      h.cancel();
+      v.dispose();
+    }
+    this.pendingDistricts.clear();
+  }
 
   private ensureLampPool(): void {
     if (this.lampPool.length) return;
@@ -246,6 +274,7 @@ export class GameRenderer {
   /** Build whichever neighbouring districts are not standing yet. Done a moment later, so it never lands on the frame you cross a seam. */
   private streamNeighbours(world: World): void {
     const job = ++this.streamJob;
+    this.cancelPendingDistricts();
     const here = world.level;
     const ids = stripNeighbours(here.id);
     const build = (side: 'left' | 'right'): void => {
@@ -253,14 +282,42 @@ export class GameRenderer {
       const id = ids[side];
       if (this.near[side] && this.near[side]!.level.id !== id) this.dropNear(side);
       if (!id || this.near[side]) return;
-      const v = new LevelView(LEVELS[id], world.progress);
+      const immediate = this.deterministicStream || /[?&](shot|human)=/.test(window.location.search);
+      // Its models first (usually in already): a district built without them would keep the stand-ins.
+      if (!immediate && !levelReady(id, true)) {
+        void prepareLevel(id, PRIORITY.soon, true).then(() => build(side));
+        return;
+      }
+      const v = new LevelView(LEVELS[id], world.progress, !immediate);
+      // Built a few milliseconds a frame, in the one background budget all such work shares (performance/scheduler.ts).
+      const handle = addJob({
+        priority: PRIORITY.soon,
+        step: (deadline) => v.buildUntil(deadline),
+        done: () => {
+          this.pendingDistricts.delete(v);
+          if (job !== this.streamJob || this.world !== world) {
+            v.dispose();
+            return;
+          }
+          publish();
+        },
+      });
+      this.pendingDistricts.set(v, handle);
+      if (immediate) runBackground(Infinity);
+      const publish = (): void => {
       v.setActive(false);
       v.group.position.x = side === 'left' ? here.bounds.minX - v.level.bounds.maxX : here.bounds.maxX - v.level.bounds.minX;
       this.near[side] = v;
       this.scene.add(v.group);
-      this.applyQuality(this.quality);
+      // Configure only the new district's lights; avoid resizing all render targets.
+      for (const l of v.shadowLights) {
+        l.castShadow = this.quality !== 'low';
+        const size = this.quality === 'high' ? 2048 : 1024;
+        l.shadow.mapSize.set(size, size);
+      }
       // Its shaders, before you walk into it.
       this.precompile(v.group, true);
+      };
     };
     // Whichever end you are nearer comes first.
     const mid = (here.bounds.minX + here.bounds.maxX) / 2;
@@ -310,6 +367,7 @@ export class GameRenderer {
       }
     }
     this.views.clear();
+    this.lookState.clear();
     this.sim = world.sim;
     this.world = world;
     this.applyAtmosphere(world);
@@ -331,30 +389,42 @@ export class GameRenderer {
   }
 
   /** Point the shared lamp lights at the street lamps nearest the camera, across the district you are in and the ones beside it. */
+  private readonly nearestLamps: { x: number; y: number; z: number; colour: number; intensity: number; range: number; d: number }[] = [];
+
   private updateLamps(): void {
     if (!this.lampPool.length) return;
     const cx = this.cameraRig.focusX;
-    const all: { x: number; y: number; z: number; colour: number; intensity: number; range: number; d: number }[] = [];
+    const nearest = this.nearestLamps;
+    let count = 0;
+    const limit = this.lampPool.length;
+    // Keep only the closest lamps, in stable distance order, reusing the six records.
     for (const v of [this.levelView, this.near.left, this.near.right]) {
       if (!v?.street) continue;
       for (const l of v.lampSpecs) {
         const x = l.x + v.group.position.x;
-        all.push({ ...l, x, d: Math.abs(x - cx) });
+        const d = Math.abs(x - cx);
+        let i = count;
+        while (i > 0 && nearest[i - 1].d > d) i--;
+        if (i >= limit) continue;
+        const end = Math.min(count, limit - 1);
+        if (!nearest[end]) nearest[end] = { x: 0, y: 0, z: 0, colour: 0, intensity: 0, range: 0, d: 0 };
+        const slot = nearest[end];
+        for (let j = end; j > i; j--) nearest[j] = nearest[j - 1];
+        nearest[i] = slot;
+        slot.x = x; slot.y = l.y; slot.z = l.z;
+        slot.colour = l.colour; slot.intensity = l.intensity; slot.range = l.range; slot.d = d;
+        count = Math.min(count + 1, limit);
       }
     }
-    all.sort((a, b) => a.d - b.d);
-    this.lampPool.forEach((light, i) => {
-      const l = all[i];
-      if (!l) {
-        light.intensity = 0;
-        return;
-      }
+    for (let i = 0; i < limit; i++) {
+      const light = this.lampPool[i];
+      if (i >= count) { light.intensity = 0; continue; }
+      const l = nearest[i];
       light.position.set(l.x, l.y, l.z);
       light.color.setHex(l.colour);
       light.distance = l.range;
-      // Fade out towards the edge of what the camera can see, so a lamp never pops as the pool moves on.
       light.intensity = l.intensity * Math.max(0, Math.min(1, (30 - l.d) / 8));
-    });
+    }
   }
 
   /** Character creator / sheet: one fighter on the studio set. */
@@ -409,6 +479,7 @@ export class GameRenderer {
       this.arenaView = null;
     }
     this.streamJob++;
+    this.cancelPendingDistricts();
     this.dropNear('left');
     this.dropNear('right');
     for (const l of this.lampPool) l.intensity = 0;
@@ -425,6 +496,7 @@ export class GameRenderer {
       v.dispose();
     }
     this.views.clear();
+    this.lookState.clear();
     this.sim = null;
   }
 
@@ -439,9 +511,9 @@ export class GameRenderer {
   /** Add views for new fighters and drop views of fighters that left the simulation. */
   syncFighters(): void {
     if (!this.sim) return;
-    const ids = new Set(this.sim.fighters.map((f) => f.id));
+    const fightersById = new Map(this.sim.fighters.map((f) => [f.id, f]));
     for (const [id, v] of this.views) {
-      if (!ids.has(id) || v.fighter !== this.sim.fighters.find((f) => f.id === id)) {
+      if (v.fighter !== fightersById.get(id)) {
         this.scene.remove(v.root);
         v.dispose();
         this.views.delete(id);
@@ -458,7 +530,7 @@ export class GameRenderer {
       this.lookState.delete(f.id);
       if (f.team !== 'player') built++;
     }
-    if (this.lookState.size > 64) for (const id of this.lookState.keys()) if (!ids.has(id)) this.lookState.delete(id);
+    if (this.lookState.size > 64) for (const id of this.lookState.keys()) if (!fightersById.has(id)) this.lookState.delete(id);
   }
 
   /** People arriving mid-play whose look is being built in the background ('wait'), or is ready ('now'). */
@@ -477,7 +549,11 @@ export class GameRenderer {
     if (!spec || humanBuilt(spec)) return true;
     this.lookState.set(f.id, 'wait');
     // Built or not (no worker: built here after all), they're shown next time round.
-    void buildHumanLater(spec).then(() => this.lookState.set(f.id, 'now'));
+    const sim = this.sim;
+    const ready = (): void => {
+      if (this.sim === sim && sim?.fighters.includes(f)) this.lookState.set(f.id, 'now');
+    };
+    void buildHumanLater(spec).then(ready, ready);
     return false;
   }
 
@@ -521,7 +597,7 @@ export class GameRenderer {
 
   /** Where a point in the world is on screen (CSS pixels), or null if it's behind the camera. */
   screenOf(x: number, y: number, z: number): { x: number; y: number } | null {
-    const v = new THREE.Vector3(x, y, z).project(this.cameraRig.camera);
+    const v = this.screenPoint.set(x, y, z).project(this.cameraRig.camera);
     if (v.z > 1) return null;
     const r = (this.canvasRect ??= this.renderer.domElement.getBoundingClientRect());
     return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height };
@@ -529,9 +605,26 @@ export class GameRenderer {
 
   /** @param focus the player fighter (camera follows), or null for the menu drift */
   render(dt: number, time: number, focus: Fighter | null): void {
+    const start = performance.now();
     if (this.sim) {
       if (this.world || this.views.size !== this.sim.fighters.length) this.syncFighters();
-      for (const v of this.views.values()) v.update(dt, time);
+      // Who gets posed how often (FighterView.update): the camera's view, widened so a shadow or a step back into
+      // frame never shows a stale pose.
+      const cam = this.cameraRig.camera;
+      cam.updateMatrixWorld();
+      this.viewProj.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+      this.frustum.setFromProjectionMatrix(this.viewProj);
+      const tiered = !!this.world && !!focus && !this.studio && !this.deterministicStream;
+      for (const v of this.views.values()) {
+        const f = v.fighter;
+        let tier: 0 | 1 | 2 = 0;
+        if (tiered && f !== focus && f.team !== 'player' && f.team !== 'enemy') {
+          this.tierSphere.center.set(f.pos.x, f.pos.y + 0.9, f.pos.z);
+          if (!this.frustum.intersectsSphere(this.tierSphere)) tier = 2;
+          else if (Math.abs(f.pos.x - focus!.pos.x) > BACKGROUND_POSE_DISTANCE && Math.abs(f.pos.x - this.cameraRig.focusX) > BACKGROUND_POSE_DISTANCE) tier = 1;
+        }
+        v.update(dt, time, tier);
+      }
       if (this.studio) {
         this.updateStudioCamera(dt);
       } else {
@@ -556,8 +649,35 @@ export class GameRenderer {
       if (this.postfx) this.postfx.render(this.cameraRig.camera, time);
       else this.renderer.render(this.scene, this.cameraRig.camera);
     }
+    // Background work (the districts next door): a few milliseconds a frame, more when you're close enough to
+    // an end of the street to see past it, so the next district is never missing when you get there.
+    const urgency = this.districtUrgency(focus);
+    runBackground(urgency === 2 ? Infinity : urgency === 1 ? URGENT_BUDGET_MS : BACKGROUND_BUDGET_MS);
+    this.cpuAvg += (this.frameCpuMs + (performance.now() - start) - this.cpuAvg) * 0.05;
+    this.frameCpuMs = 0;
     this.adaptResolution(dt);
   }
+
+  private readonly frustum = new THREE.Frustum();
+  private readonly viewProj = new THREE.Matrix4();
+  /** A person's reach for the visibility test: about 4 m, so shadows and arms near the edge count as in view. */
+  private readonly tierSphere = new THREE.Sphere(new THREE.Vector3(), 4);
+
+  /**
+   * A district next door is still being built: 1 while you're within sight of that end of the street, 2 when
+   * you're about to see past it (it's finished at once: one longer frame is better than walking into nothing).
+   */
+  private districtUrgency(focus: Fighter | null): 0 | 1 | 2 {
+    if (!this.pendingDistricts.size || !this.world || !focus) return 0;
+    const b = this.world.level.bounds;
+    const d = Math.min(focus.pos.x - b.minX, b.maxX - focus.pos.x);
+    return d < FINISH_SEAM_M ? 2 : d < URGENT_SEAM_M ? 1 : 0;
+  }
+
+  /** Milliseconds the game spent on this frame before drawing it (Game.frame: input, simulation, HUD). */
+  frameCpuMs = 0;
+  /** Smoothed main-thread milliseconds a frame (the game's own work plus building and submitting the picture). */
+  private cpuAvg = 0;
 
   // ---- dynamic resolution -------------------------------------------------------------
   /** 1 = the quality setting's pixel ratio; drops in steps when frames run long, recovers when there's headroom. */
@@ -587,6 +707,14 @@ export class GameRenderer {
     } else {
       this.slowTime = 0;
       this.fastTime = 0;
+    }
+    // Slow frames with the main thread busy most of the frame are the CPU's doing (scripts, the simulation, scenery
+    // being built): fewer pixels wouldn't help them, and would only blur the picture. Only frames where the main
+    // thread finishes well inside the frame and still waits on the GPU drop resolution.
+    const gpuBound = this.cpuAvg < this.frameAvg * 1000 * 0.7;
+    if (!gpuBound && this.slowTime > 1.5) {
+      this.slowTime = 0;
+      return;
     }
     if (this.slowTime > 1.5 && this.resScale > 0.55) {
       // Slow again soon after going up: that rise was too far.

@@ -6,6 +6,9 @@
  * Packs load once (loadHumanAssets); textures load on first use and are shared.
  * Origin at the feet, facing +z, in the rest pose (arms in an A).
  */
+import { PRIORITY } from '../../performance/requests';
+import { fetchBytes, fetchJson } from '../../performance/assetFetch';
+import { loadTextureFile } from '../../performance/assetFetch';
 import { fetchBinary } from '../../core/fetchBinary';
 import { detail, type LibraryName } from '../materials/library';
 import * as THREE from 'three';
@@ -68,11 +71,11 @@ export function loadHumanAssets(): Promise<Assets | null> {
   assets ??= (async () => {
     try {
       const [meta, bin, catalogue, skins, lod] = await Promise.all([
-        fetch(BASE + 'body.json').then((r) => r.json() as Promise<BodyMeta>),
-        fetchBinary(BASE + 'body.bin'),
-        fetch(BASE + 'proxies/catalogue.json').then((r) => r.json() as Promise<Record<string, ProxyMeta>>),
-        fetch(BASE + 'skins.json').then((r) => r.json() as Promise<SkinInfo[]>),
-        fetch(BASE + 'body_lod.bin').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null),
+        fetchJson<BodyMeta>(BASE + 'body.json', PRIORITY.now),
+        fetchBinary(BASE + 'body.bin', PRIORITY.now),
+        fetchJson<Record<string, ProxyMeta>>(BASE + 'proxies/catalogue.json', PRIORITY.now),
+        fetchJson<SkinInfo[]>(BASE + 'skins.json', PRIORITY.now),
+        fetchBytes(BASE + 'body_lod.bin', PRIORITY.now).catch(() => null),
       ]);
       const body = new BodyData(meta, bin);
       ready = { body, lite: lod ? body.withIndex(new Uint32Array(new Uint16Array(lod))) : body, catalogue, skins };
@@ -114,7 +117,7 @@ function loadProxy(id: string): Promise<ProxyData | null> {
       const meta = a?.catalogue[id];
       if (!meta) return null;
       try {
-        const bin = await fetch(`${BASE}proxies/${id}.bin`).then((r) => r.arrayBuffer());
+        const bin = await fetchBytes(`${BASE}proxies/${id}.bin`, PRIORITY.soon);
         const data = new ProxyData(id, meta, bin);
         proxyReady.set(id, data);
         return data;
@@ -131,7 +134,7 @@ function loadProxy(id: string): Promise<ProxyData | null> {
 async function loadTexture(file: string, srgb: boolean): Promise<THREE.Texture> {
   const hit = textures.get(file);
   if (hit) return hit;
-  const t = await new THREE.TextureLoader().loadAsync(BASE + 'tex/' + file);
+  const t = await loadTextureFile(BASE + 'tex/' + file);
   t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
   t.anisotropy = 4;
   // Decoded off the main thread before it's measured or uploaded: otherwise both pay for it, mid-game.
@@ -607,6 +610,9 @@ export function buildHuman(spec: HumanSpec): BuiltHuman | null {
       if (released) return;
       released = true;
       tpl.refs--;
+      // This copy's own bone texture (the meshes are the template's, kept for the next copy). Left undisposed,
+      // every person who'd gone left one on the GPU: dozens more each visit to the pub.
+      skeleton.dispose();
     },
   };
 }
@@ -719,6 +725,7 @@ function assemble(spec: HumanSpec, data: HumanData): (BuiltHuman & { placed: Ret
     height: data.height,
     dispose: () => {
       for (const d of disposables) d.dispose();
+      skeleton.dispose();
     },
   };
 }

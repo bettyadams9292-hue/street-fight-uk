@@ -10,6 +10,8 @@
  *
  * No Three.js here: tests read it directly.
  */
+import { PRIORITY } from '../../performance/requests';
+import { fetchJson } from '../../performance/assetFetch';
 import type { StyleId } from '../../styles/StyleData';
 import { araMocapPose, mocapClip, registerMocap } from './araPose';
 import { onFloor } from './ual';
@@ -59,11 +61,8 @@ let ready = false;
 /** Fetch the clips (about 180 KB). Resolves false, and the hand-made poses carry on, if they aren't there. */
 export function loadRokoko(url = '/anim/rokoko_mocap.json'): Promise<boolean> {
   // The Mixamo takes are optional extras: without them, every move keeps its Rokoko take or keyed pose.
-  const extra = fetch(url.replace('rokoko_mocap', 'mixamo_mocap'))
-    .then((r) => (r.ok ? r.json() : null))
-    .catch(() => null);
-  loading ??= fetch(url)
-    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
+  const extra = fetchJson<Parameters<typeof registerMocap>[0]>(url.replace('rokoko_mocap', 'mixamo_mocap'), PRIORITY.now).catch(() => null);
+  loading ??= fetchJson<Parameters<typeof registerMocap>[0]>(url, PRIORITY.now)
     .then(async (d) => {
       registerMocap(d);
       const mx = await extra;

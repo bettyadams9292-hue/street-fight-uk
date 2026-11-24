@@ -101,6 +101,20 @@ export class AudioManager {
     return true;
   }
 
+  /** Tab hidden or phone locked: stop the audio clock (music, loops and the synthesised beds), so nothing plays
+   * or burns battery out of sight; picked up where it was when the page comes back. */
+  private hiddenStop = false;
+  setPageHidden(hidden: boolean): void {
+    if (!this.ctx) return;
+    if (hidden && this.ctx.state === 'running') {
+      this.hiddenStop = true;
+      void this.ctx.suspend();
+    } else if (!hidden && this.hiddenStop) {
+      this.hiddenStop = false;
+      void this.ctx.resume();
+    }
+  }
+
   /** Browsers only allow audio after a user gesture; call from the first click/tap/key. */
   unlock(): void {
     if (this.ctx) {
