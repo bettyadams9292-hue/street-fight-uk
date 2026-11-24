@@ -3286,6 +3286,51 @@ export class LevelView {
         g.add(board);
         break;
       }
+      case 'barber_chair': {
+        // A barber's chair facing its mirror (the back wall): chrome pedestal and footrest, red leather seat,
+        // arms and back, a headrest on a post.
+        const chrome = this.mat('#c8ccd2', 0.25, 0.9);
+        const leather = this.mat(c ?? '#8a1418', 0.45);
+        C(0.26, 0.3, 0.05, 0, 0.025, 0, chrome, 24);
+        C(0.06, 0.08, 0.38, 0, 0.24, 0, chrome, 12);
+        B(0.5, 0.12, 0.5, 0, 0.48, 0, leather);
+        B(0.5, 0.62, 0.1, 0, 0.82, 0.24, leather);
+        for (const sx of [-1, 1]) {
+          B(0.07, 0.06, 0.44, sx * 0.27, 0.66, 0.02, leather);
+          B(0.04, 0.16, 0.04, sx * 0.27, 0.57, -0.16, chrome);
+        }
+        B(0.4, 0.03, 0.14, 0, 0.16, -0.34, chrome);
+        B(0.03, 0.3, 0.03, 0, 1.24, 0.27, chrome);
+        B(0.28, 0.14, 0.08, 0, 1.4, 0.26, leather);
+        break;
+      }
+      case 'barber_station': {
+        // The worktop under the mirror: a cabinet, a shelf of products, clippers and a spray bottle.
+        B(W, 0.82, D, 0, 0.41, 0, this.mat(c ?? '#1b1d22', 0.6));
+        B(W + 0.04, 0.04, D + 0.04, 0, 0.84, 0, this.mat('#e8e6e1', 0.3));
+        const tubs = ['#2f6fa8', '#b3121b', '#d4a017', '#e8e6e1', '#2f4a2d'];
+        for (let i = 0; i < 5; i++) C(0.035, 0.035, 0.09 + (i % 2) * 0.05, -W / 2 + 0.14 + i * 0.12, 0.9 + (i % 2) * 0.025, -D / 2 + 0.08, this.mat(tubs[i], 0.4), 10);
+        B(0.06, 0.04, 0.14, W / 2 - 0.16, 0.88, 0.02, this.mat('#2a2a2e', 0.4, 0.3));
+        C(0.03, 0.035, 0.18, W / 2 - 0.32, 0.95, 0.04, this.mat('#9ac8e8', 0.2), 10);
+        break;
+      }
+      case 'barber_pole': {
+        // The striped pole by a barber's door, its stripes turning (spinners), in a glass case with chrome caps.
+        const chrome = this.mat('#c8ccd2', 0.25, 0.9);
+        B(0.06, 0.06, 0.12, 0, 1.9, -0.05, chrome, false);
+        C(0.07, 0.07, 0.06, 0, 2.38, 0, chrome, 16);
+        C(0.07, 0.07, 0.06, 0, 1.42, 0, chrome, 16);
+        const parts = barberPole();
+        const pole = new THREE.Mesh(parts.geo, parts.mat);
+        // Its geometry, material and stripes are shared by every pole (disposeGroup leaves them).
+        pole.userData.shared = true;
+        pole.position.y = 1.9;
+        g.add(pole);
+        this.spinners.push(pole);
+        const glass = this.mat('#ffffff', 0.05, 0, { transparent: true, opacity: 0.18, depthWrite: false });
+        C(0.065, 0.065, 0.9, 0, 1.9, 0, glass, 20);
+        break;
+      }
       case 'jewel_bust': {
         // A velvet display bust with a chain on it, on a small plinth.
         const velvet = this.mat(c ?? '#1a1a22', 0.95);
@@ -4692,4 +4737,42 @@ function mergeParts(parts: Set<THREE.Mesh>): void {
     }
     parts.add(out);
   }
+}
+
+/** The barber's pole: red, white and blue bands slanting round it, one geometry and material for every pole. */
+let poleParts: { geo: THREE.CylinderGeometry; mat: THREE.MeshStandardMaterial } | null = null;
+function barberPole(): { geo: THREE.CylinderGeometry; mat: THREE.MeshStandardMaterial } {
+  if (poleParts) return poleParts;
+  const map = barberStripes();
+  const mat = new THREE.MeshStandardMaterial({ map, roughness: 0.35, emissive: 0xffffff, emissiveIntensity: 0.25, emissiveMap: map });
+  mat.userData.shared = true;
+  poleParts = { geo: new THREE.CylinderGeometry(0.055, 0.055, 0.9, 20, 1, true), mat };
+  return poleParts;
+}
+
+function barberStripes(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 64;
+  c.height = 128;
+  const g = c.getContext('2d');
+  if (g) {
+    g.fillStyle = '#f4f2ee';
+    g.fillRect(0, 0, 64, 128);
+    const bands = ['#c8141e', '#f4f2ee', '#1f3f8a', '#f4f2ee'];
+    for (let i = -4; i < 12; i++) {
+      g.fillStyle = bands[((i % 4) + 4) % 4];
+      g.beginPath();
+      g.moveTo(0, i * 16);
+      g.lineTo(64, i * 16 - 32);
+      g.lineTo(64, i * 16 - 16);
+      g.lineTo(0, i * 16 + 16);
+      g.closePath();
+      g.fill();
+    }
+  }
+  const stripes = new THREE.CanvasTexture(c);
+  stripes.colorSpace = THREE.SRGBColorSpace;
+  stripes.wrapS = stripes.wrapT = THREE.RepeatWrapping;
+  stripes.repeat.set(1, 3);
+  return stripes;
 }

@@ -55,7 +55,7 @@ export class GameRenderer {
     framing: StudioFraming;
     yaw: number;
     /** Where the menu panel sits, so the model is framed in the free space. */
-    panel: 'left' | 'bottom' | 'none';
+    panel: 'left' | 'bottom' | 'chair' | 'none';
     camY: number;
     camDist: number;
   } | null = null;
@@ -442,7 +442,7 @@ export class GameRenderer {
     if (this.studio) this.studio.framing = framing;
   }
 
-  setStudioPanel(panel: 'left' | 'bottom' | 'none'): void {
+  setStudioPanel(panel: 'left' | 'bottom' | 'chair' | 'none'): void {
     if (this.studio) this.studio.panel = panel;
   }
 
@@ -583,14 +583,15 @@ export class GameRenderer {
     const k = 1 - Math.exp(-6 * dt);
     st.camY += (target.y - st.camY) * k;
     // Portrait phones show the model in the top half only, so step back further.
-    const dist = target.distance * (st.panel === 'bottom' ? 1.4 : 1);
+    // The barber's chair on an upright phone: the board covers more, so the head goes higher still.
+    const dist = target.distance * (st.panel === 'bottom' ? 1.4 : st.panel === 'chair' ? 1.3 : 1);
     st.camDist += (dist - st.camDist) * k;
     const cam = this.cameraRig.camera;
     // Shift the view so the model sits in the space not covered by the menu panel.
     const halfH = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * st.camDist;
     const halfW = halfH * cam.aspect;
     const offX = st.panel === 'left' ? -halfW * 0.38 : 0;
-    const offY = st.panel === 'bottom' ? -halfH * 0.56 : 0;
+    const offY = st.panel === 'bottom' ? -halfH * 0.56 : st.panel === 'chair' ? -halfH * 0.66 : 0;
     cam.position.set(offX, st.camY + 0.05 + offY, st.camDist);
     cam.lookAt(offX, st.camY + offY, 0);
   }

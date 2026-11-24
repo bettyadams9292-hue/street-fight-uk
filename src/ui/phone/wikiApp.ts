@@ -1,4 +1,5 @@
 import { BUY_IN, CHAMPION, DEFENCE_TRIPS, LADDER, NIGHT_SECONDS, STRIP_TRIPS, defencePurse } from '../../fightclub/club';
+import { BARBER, BEARDS, COLOUR_PRICE, GREYS, HAIRCUTS } from '../../barber/barber';
 import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
 import { BAG_PACK, BAG_PACK_PRICE, BULK_BUYBACK, bulkWorth, DRUG_DEFS, DRUGS, GROW_PER_BULK, TABLES } from '../../business/dealing';
 import { DRIP_LIST, JEWEL_BUFF_LIST, OUTFIT_LIST, STONE_BUFF_LIST, TIER_NAMES, XP_BONUS_CAP } from '../../items/gearBonus';
@@ -16,7 +17,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club' | 'barber';
 
 export interface WikiDeps {
   device: () => Device;
@@ -33,6 +34,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
   { id: 'dealing', title: 'Dealing', blurb: 'Bulk, the prep table in your garage, punters, prices and the risks.' },
   { id: 'club', title: 'The Arches', blurb: 'The fight club under Kane’s Boxing: the card, the title and defending it.' },
+  { id: 'barber', title: 'The barber', blurb: 'Sharp Kutz on the High Street: haircuts, beards and colour, and what they cost.' },
   { id: 'gear', title: 'Clothes and jewellery', blurb: 'Tiers, what each kind of clothing does, outfit buffs, and jewellery’s XP bonus.' },
   { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
 ];
@@ -197,6 +199,25 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
         'Each challenger is harder than the last, and keeps up with you as you level.',
         'Lose and the challenger takes the title. Get it back in a rematch.',
         `Keep a challenger waiting ${STRIP_TRIPS} nights past the date and you’re stripped.`,
+      ]),
+    );
+  }
+
+  if (page === 'barber') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('The barber', `${BARBER.shop}, between the Kebab House and the Gaffer’s Arms on the High Street. ${BARBER.barber} cuts hair, shapes or shaves beards, and does colour. Sit in his chair and every look is tried on you before you pay.`,
+      infobox('Prices', [
+        ['Haircuts', `£${Math.min(...Object.values(HAIRCUTS).map((j) => j.price))}–£${Math.max(...Object.values(HAIRCUTS).map((j) => j.price))}`],
+        ['Beards', `£${Math.min(...Object.values(BEARDS).map((j) => j.price))}–£${Math.max(...Object.values(BEARDS).map((j) => j.price))}`],
+        ['Colour', `£${COLOUR_PRICE}`],
+        ['Grey', `£${GREYS[0].price}`],
+      ]),
+      sec('Getting a cut'),
+      list([
+        'Pick a haircut, a beard and a colour: each one shows on you as you tap it. Turn and Zoom to look from every side.',
+        'The bill only counts what’s changing. Picking what you’ve already got is free.',
+        'Pay from your pocket first, then the tin at home, like any shop. Keep my look puts you back how you came in.',
+        'Hats come off in the chair. The cut is your own hair, so it stays whatever you wear on top.',
       ]),
     );
   }

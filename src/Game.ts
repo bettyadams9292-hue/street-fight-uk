@@ -89,6 +89,7 @@ const ROUTINE_SECONDS = 6;
 import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, type FightGym } from './training/styleGyms';
 import { themeProfile } from './render/themes';
 import { TutorialManager } from './tutorial/TutorialManager';
+import { barberScreen } from './ui/barberUI';
 import { DYNAMIC_LEVELS, everySetSettled, levelProgress, levelReady, prepareLevel, recordLevel } from './performance/levelAssets';
 import { LevelView } from './render/LevelView';
 import { PRIORITY } from './performance/requests';
@@ -109,6 +110,9 @@ import {
 
 /** How long a hotbar press waits for you to be free to act (ms). */
 const HOTBAR_BUFFER_MS = 650;
+
+/** What comes off your head in the barber's chair. */
+const HATS: ReadonlySet<string> = new Set(['cap', 'beanie', 'bucket_hat', 'flat_cap', 'headguard']);
 
 /** Longest an arrival waits for its area's models before the built-in versions stand in. */
 const LEVEL_WAIT_MS = 20000;
@@ -448,6 +452,7 @@ export class Game {
   // ---- studio: character creator and sheet ------------------------------------
 
   private enterStudio(appearance: CharacterAppearance): void {
+    this.inChair = false;
     const sim = new Simulation(new Arena({ minX: -0.5, maxX: 0.5, minZ: -0.3, maxZ: 0.3 }, 'Studio'), 99);
     const fighter = sim.add(
       new Fighter({
@@ -474,8 +479,11 @@ export class Game {
   private updateStudioPanel(): void {
     if (!this.studio) return;
     const portrait = window.innerHeight > window.innerWidth && window.innerWidth < 760;
-    this.renderer.setStudioPanel(portrait ? 'bottom' : 'left');
+    this.renderer.setStudioPanel(portrait ? (this.inChair ? 'chair' : 'bottom') : 'left');
   }
+
+  /** In the barber's chair: on an upright phone the face sits higher, above the board of cuts. */
+  private inChair = false;
 
   /** @param back where 'edit' returns to: the character sheet, or home (the wardrobe). */
   private openCreator(mode: 'new' | 'edit', back: 'sheet' | 'home' = 'sheet', at?: { x: number; z: number }): void {
@@ -1447,6 +1455,7 @@ export class Game {
     if (id === 'wardrobe') return this.openCreator('edit', 'home', at);
     if (id === 'mirror') return this.openSheet('home', at);
     if (id === 'clothes_counter' || id === 'changing') return this.openClothesShop();
+    if (id === 'barber_chair') return this.openBarber();
     if (id === 'bike') return this.mountParkedBike();
     // The house: the fridge, the cooker, the bathroom, the bed... (they freeze nothing until a list opens).
     if (this.house.handles(id) && w.level.id === 'home') return this.house.open(id, station);
@@ -2533,6 +2542,46 @@ export class Game {
           changed: () => this.saveGame(),
           rob: () => this.robShop('threads', at),
           priceMult: shop.priceMult,
+        },
+        back,
+      ),
+    );
+  }
+
+  /** Sharp Kutz: in Rio's chair on the studio set, close on the face, trying cuts on before you pay. */
+  private openBarber(): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    const at = { x: w.player.pos.x, z: w.player.pos.z };
+    const carry = w.carry();
+    const area = w.level.id;
+    this.enterStudio(p.appearance());
+    this.inChair = true;
+    this.updateStudioPanel();
+    let framing: StudioFraming = 'face';
+    this.renderer.setStudioFraming(framing);
+    if (this.studio) this.studio.framing = framing;
+    const back = () => this.enterArea(area, 'door', { at, carry });
+    this.ui.replaceAll(
+      barberScreen(
+        p,
+        this.ui,
+        {
+          preview: (cut) => {
+            if (!this.studio) return;
+            // Hat off in the chair, so the cut shows.
+            const look = { ...p.appearance(), ...cut };
+            look.accessories = look.accessories.filter((x) => !HATS.has(x));
+            this.studio.pending = look;
+          },
+          rotate: (d) => this.renderer.rotateStudio(d),
+          zoom: () => {
+            framing = framing === 'face' ? 'upper' : framing === 'upper' ? 'full' : 'face';
+            if (this.studio) this.studio.framing = framing;
+            this.renderer.setStudioFraming(framing);
+          },
+          changed: () => this.saveGame(),
         },
         back,
       ),

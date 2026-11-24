@@ -241,7 +241,7 @@ export function interiorFor(kind: FacadeKind, label: string): InteriorKind {
   if (/VAPE|PHONE|TECH/.test(t)) return 'gadgets';
   if (/THREADS|FASHION|SPORTS|CLUB SHOP|DEPARTMENT/.test(t)) return 'clothes';
   if (/BOOZE|OFF LICENCE/.test(t)) return 'offlicence';
-  if (/NAILS|BEAUTY|HAIR/.test(t)) return 'salon';
+  if (/NAILS|BEAUTY|HAIR|BARBER|KUTZ/.test(t)) return 'salon';
   if (kind === 'office') return 'office';
   return 'general';
 }

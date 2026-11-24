@@ -21,6 +21,14 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "post_medium"
   ]
  },
+ "barber_shop": {
+  "doors": [
+   "door_wooden"
+  ],
+  "security": [
+   "wall_dome"
+  ]
+ },
  "basement": {
   "doors": [
    "door_worn"
