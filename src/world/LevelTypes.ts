@@ -233,6 +233,8 @@ export type StationId =
   | 'jeweller_counter' | 'jeweller_case' | 'agent_desk' | 'agent_window' | 'prop_info' | 'prop_rest'
   // Someone who gives out jobs (`tab` is their id, src/jobs/contacts.ts)
   | 'contact'
+  // Sully at the Arches fight club: the card, the title (fightclub/club.ts)
+  | 'fight_club'
   // The dealing prep table in the garage (business/dealing.ts)
   | 'prep';
 

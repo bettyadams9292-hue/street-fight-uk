@@ -3417,7 +3417,7 @@ export class LevelView {
       case 'dojo_mat':
       case 'wrestling_mat': {
         const dojo = p.kind === 'dojo_mat';
-        B(W, 0.05, D, 0, 0.025, 0, this.mat(dojo ? '#c8b070' : '#1f4fa8', 0.9), false);
+        B(W, 0.05, D, 0, 0.025, 0, this.mat(dojo ? '#c8b070' : p.colour ?? '#1f4fa8', 0.9), false);
         if (dojo) {
           for (let x = -W / 2 + 0.9; x < W / 2; x += 0.9) B(0.02, 0.052, D, x, 0.026, 0, this.mat('#9a8450', 0.9), false);
           B(W, 0.054, 0.08, 0, 0.027, -D / 2 + 0.04, this.mat('#7a1414', 0.9), false);

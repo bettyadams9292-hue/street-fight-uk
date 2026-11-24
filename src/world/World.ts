@@ -26,6 +26,8 @@ import type { WeaponData, WeaponId } from '../combat/Weapons';
 import { SIM_HZ } from '../core/constants';
 import { EventBus } from '../core/EventBus';
 import { Rng } from '../core/Rng';
+import { clubTick, foughtTonight, nextBout, type Bout } from '../fightclub/club';
+import { PIT, PIT_CORNERS, PIT_WAIT } from './interiors';
 import { gangMods, HEAT, huntChance, KNOWN_FACE_HEAT } from '../progress/heat';
 import { BRIBERY_HEAT, BUNG_COOL, bungPrice, copFor, REFUSED_DEALT, REFUSED_TAKEN, TIPOFF_SECONDS, type Cop } from '../progress/cops';
 import { ARREST_HEAT } from './robbery';
@@ -131,8 +133,8 @@ export interface WorldEvents {
   'job:failed': { text: string };
   /** A deal sold on the street (business/dealing.ts); `undercover`: the punter was police. */
   'deal:sold': { drug: Drug; qty: number; price: number; undercover: boolean };
-  'duel:start': { kind: 'spar' | 'challenge'; name: string };
-  'duel:end': { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
+  'duel:start': { kind: 'spar' | 'challenge' | 'club'; name: string };
+  'duel:end': { kind: 'spar' | 'challenge' | 'club'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
 }
 
 interface EncounterState {
@@ -941,7 +943,7 @@ export class World {
 
   // ---- sparring and challenge fights -----------------------------------------------------
 
-  duel: { f: Fighter; kind: 'spar' | 'challenge'; id: string; landed: number; blocked: number; started: number } | null = null;
+  duel: { f: Fighter; kind: 'spar' | 'challenge' | 'club'; id: string; landed: number; blocked: number; started: number } | null = null;
 
   /** Mo puts his gloves up. He hits softly and stops before anyone gets hurt. */
   startSpar(): boolean {
@@ -1019,6 +1021,16 @@ export class World {
       if (Math.abs(p.pos.x - them.pos.x) > 7) this.endDuel(false, true);
       return;
     }
+    // The Arches: to the stoppage. Down and out (or walk out of the pit) loses; put them down to win.
+    if (d.kind === 'club') {
+      if (them.isKO || them.vitals.health <= 0) this.endDuel(true, false);
+      else if (p.isKO || p.vitals.health <= 0) {
+        if (this.clubDownAt < 0) this.clubDownAt = this.sim.frame;
+        // Let the knockdown land before the doctor's in.
+        if (this.sim.frame - this.clubDownAt > SIM_HZ * 1.5) this.endDuel(false, false);
+      } else if (Math.abs(p.pos.x - PIT.x) > PIT.w / 2 + 3) this.endDuel(false, true);
+      return;
+    }
     const pLow = p.isKO || p.vitals.health <= p.vitals.maxHealth * 0.25;
     const tLow = them.isKO || them.vitals.health <= them.vitals.maxHealth * 0.2;
     // Walked well away: it's over.
@@ -1047,9 +1059,125 @@ export class World {
       x.vitals.health = Math.max(x.vitals.health, Math.round(x.vitals.maxHealth * 0.6));
     }
     this.tokens.release(f);
+    // The Arches: their fight's over, they're off out of the pit (and off the fight list).
+    if (d.kind === 'club') {
+      this.clubDownAt = -1;
+      this.enemies = this.enemies.filter((e) => e !== f);
+      this.koAt.delete(f);
+      this.clubFoe = null;
+    }
     const frames = this.sim.frame - d.started;
     this.duel = null;
     this.events.emit('duel:end', { kind: d.kind, id: d.id, won, stopped, landed: d.landed, blocked: d.blocked, seconds: Math.round(frames / SIM_HZ) });
+  }
+
+  // ---- the Arches fight club (fightclub/club.ts) -----------------------------------------
+
+  /** The next opponent, waiting at the side of the pit (not in the fight list till the bell). */
+  clubFoe: { f: Fighter; bout: Bout } | null = null;
+  private clubDownAt = -1;
+  /** The crowd round the pit. */
+  private clubCrowd: Fighter[] = [];
+
+  /** The fight's on in the pit now. */
+  get clubBout(): boolean {
+    return this.duel?.kind === 'club';
+  }
+
+  /** Into the Arches: the crowd round the pit, and tonight's opponent if you've a fight to have. */
+  private setUpClub(): void {
+    if (this.level.id !== 'fight_club') return;
+    const p = this.progress;
+    const r = new Rng(31 + p.save.trips * 7);
+    // The crowd: along the back wall and either end of the pit, never on it.
+    const spots = [
+      { x: 8.4, z: -1.0 }, { x: 10.0, z: -1.15 }, { x: 11.7, z: -1.0 }, { x: 13.4, z: -1.15 }, { x: 15.1, z: -1.0 }, { x: 16.7, z: -1.1 },
+      { x: PIT.x - PIT.w / 2 - 0.9, z: PIT.z + 0.6 }, { x: PIT.x - PIT.w / 2 - 1.1, z: PIT.z + 1.8 }, { x: PIT.x + PIT.w / 2 + 0.9, z: PIT.z + 1.4 },
+    ];
+    for (const sp of spots) {
+      const body = r.next() < 0.25 ? 'female' : 'male';
+      const look: CharacterAppearance = { ...randomAppearance(() => r.next(), body), accessories: [] };
+      const f = new Fighter({ id: this.nextId++, name: '', team: 'neutral', attributes: defaultAttributes(5), style: getStyle('street'), x: sp.x, z: sp.z, appearance: look });
+      f.facing = sp.x < PIT.x ? 1 : -1;
+      this.sim.add(f);
+      const brain = new DummyBrain(f, this.sim.rng);
+      brain.mode = 'stand';
+      this.brains.set(f, brain);
+      this.clubCrowd.push(f);
+    }
+    clubTick(p);
+    const bout = nextBout(p);
+    if (!bout || foughtTonight(p)) return;
+    const who = bout.who;
+    const rr = new Rng(Math.floor(hash01(`club:${who.id}`) * 1e6) + 5);
+    const a = ARCHETYPES[who.arch];
+    const look: CharacterAppearance = { ...archetypeAppearance(a, Math.floor(rr.next() * 1e6)), body: who.body, accessories: ['wraps'] };
+    if (who.body === 'female') Object.assign(look, randomAppearance(() => rr.next(), 'female'), { top: 'vest', bottoms: 'shorts', accessories: ['wraps'] });
+    const f = new Fighter({
+      id: this.nextId++,
+      name: who.name,
+      team: 'neutral',
+      attributes: { strength: who.attr, speed: who.attr, endurance: who.attr, agility: who.attr, defence: who.attr, technique: who.attr },
+      level: Math.max(1, who.attr - 5),
+      style: getStyle(who.style),
+      x: PIT_WAIT.x,
+      z: PIT_WAIT.z,
+      appearance: look,
+      weapon: null,
+    });
+    f.tag = bout.kind === 'defence' ? 'Wants your belt' : bout.kind === 'title' ? (bout.rematch ? 'Has your belt' : 'Champion') : `“${who.nick}”`;
+    f.facing = -1;
+    this.sim.add(f);
+    const brain = new DummyBrain(f, this.sim.rng);
+    brain.mode = 'stand';
+    this.brains.set(f, brain);
+    this.clubFoe = { f, bout };
+  }
+
+  /**
+   * The bell: you and them to your corners, and it's on. No weapons in the pit (yours goes in your pocket), no
+   * crew (they watch). The buy-in's already paid (club.ts enterBout).
+   */
+  startClubFight(): { ok: boolean; reason?: string } {
+    const c = this.clubFoe;
+    if (!c || this.duel || this.activeEncounter) return { ok: false, reason: 'Nobody to fight' };
+    if (this.player.weapon && !this.putAwayWeapon()) return { ok: false, reason: 'No weapons in the pit, and your pockets are full' };
+    const { f, bout } = c;
+    const who = bout.who;
+    const p = this.player;
+    p.pos = { x: PIT_CORNERS.you.x, y: 0, z: PIT_CORNERS.you.z };
+    p.facing = 1;
+    p.vitals.reset();
+    f.pos = { x: PIT_CORNERS.them.x, y: 0, z: PIT_CORNERS.them.z };
+    f.facing = -1;
+    f.team = 'enemy';
+    f.stats.addModifier({ id: 'club_health', source: 'club', flat: 'maxHealth', add: who.health });
+    f.vitals.reset();
+    const base = ARCHETYPES[who.arch];
+    const a: Archetype = {
+      ...base,
+      style: who.style,
+      weapon: undefined,
+      cashDrop: 0,
+      xp: 0,
+      reactionFrames: Math.max(6, base.reactionFrames - Math.max(0, who.attr - 9)),
+      blockChance: Math.min(0.6, base.blockChance + (who.attr - 9) * 0.02),
+      aggression: Math.min(0.85, base.aggression + 0.1),
+      // Champions and challengers fight like bosses: their whole bag of tricks.
+      comboLength: Math.min(5, base.comboLength + (bout.kind === 'ladder' ? 0 : 1)),
+    };
+    this.enemies.push(f);
+    this.brains.set(f, this.enemyBrain(f, a));
+    this.duel = { f, kind: 'club', id: bout.kind === 'ladder' ? `ladder:${bout.rank}` : bout.kind, landed: 0, blocked: 0, started: this.sim.frame };
+    this.clubDownAt = -1;
+    this.say(f, [who.line]);
+    this.events.emit('duel:start', { kind: 'club', name: who.name });
+    return { ok: true };
+  }
+
+  /** XP from the fight club, levelling you up like any other (World.pay). */
+  clubXp(xp: number): void {
+    this.pay(0, xp);
   }
 
   constructor(
@@ -1156,6 +1284,7 @@ export class World {
     }
     // Jobs: the people at the far end of the one you're on, and maybe someone on the street with one for you.
     this.setUpJob();
+    this.setUpClub();
     if (opts.civilians !== false) this.setUpStreetGiver();
 
     if (opts.home) {
@@ -1234,7 +1363,8 @@ export class World {
     });
 
     // Heat: if you're wanted, the police might be waiting for you on the street.
-    const street = !['home', 'shop', 'pawn', 'pub'].includes(level.theme);
+    // Not down the Arches: the police don't know it's there.
+    const street = !['home', 'shop', 'pawn', 'pub'].includes(level.theme) && level.id !== 'fight_club';
     if (street && progress.save.heat >= 40 && this.lootRng.next() < progress.save.heat / 120) {
       // Kerrigan rings ahead: they'll be a while, and you know they're coming.
       const tipped = progress.save.police.contact;
@@ -2148,6 +2278,8 @@ export class World {
     const look: CharacterAppearance = { ...randomAppearance(() => rng.next(), n.body ?? 'male'), accessories: [] };
     if (n.top) look.top = n.top as TopStyle;
     if (n.topColour) look.topColour = n.topColour;
+    // Sully runs the Arches: he looks like himself, not a stranger with his name.
+    if (s.id === 'fight_club') Object.assign(look, BOSSES.sully.appearance);
     const f = new Fighter({
       id: this.nextId++,
       name: n.name,

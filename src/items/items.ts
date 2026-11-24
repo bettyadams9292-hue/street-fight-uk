@@ -238,6 +238,12 @@ acc('watch_basic', 'Digital watch', 'wrist', 'watch', 20, 'watch', '#1b1d22', 'D
 acc('earring_silver', 'Silver earring', 'ears', 'earring', 25, 'earring', '#c9ccd2', 'Small hoop.');
 acc('ring_signet', 'Signet ring', 'finger', 'ring', 90, 'ring', '#d4af37', 'Heavy gold signet. Adds weight to a punch.', 'uncommon', [{ stat: 'damageMult', mul: 1.03, text: '+3% damage' }]);
 acc('belt_leather', 'Leather belt', 'waist', 'belt', 20, 'belt', '#3a2414', 'Brown leather, brass buckle.');
+// Won, never bought: the Arches fight club's title belt (fightclub/club.ts). Only one in the game.
+acc('title_belt', 'The Arches title belt', 'waist', 'belt', 0, 'belt', '#d4af37', 'Gold plate on black leather. Champion of the Arches: nobody else has one.', 'legendary', [
+  { stat: 'damageMult', mul: 1.08, text: '+8% damage' },
+  { flat: 'maxHealth', add: 40, text: '+40 max health' },
+  { flat: 'maxPoise', add: 20, text: '+20 poise' },
+]);
 
 // ---- consumables -------------------------------------------------------------------------
 const needsText = (n: UseSpec['needs']) => (n ? `, fills ${n.fill}% hunger` : '');
@@ -418,6 +424,8 @@ add({ id: 'bag_holdall', name: 'Gym holdall', text: 'Over the shoulder. 12 more 
 add({ id: 'bag_hiking', name: 'Big rucksack', text: 'A 65-litre hiking pack. 20 more slots: 24 with your pockets.', category: 'misc', rarity: 'epic', value: 520, icon: 'bag', colour: '#3a2f22', wear: { slot: 'back' } });
 
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(defs.map((d) => [d.id, d]));
+// The title belt is won, not bought, and nobody will buy it off you.
+ITEMS.title_belt.unsellable = true;
 export const ITEM_LIST: readonly ItemDef[] = defs;
 
 /** What each bag adds to your 4 pockets while you wear it. */

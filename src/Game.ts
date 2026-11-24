@@ -1,6 +1,8 @@
 import { setHumansEnabled } from './render/human/HumanRig';
 import { DRUG_DEFS, dealingOpen, tickPrep } from './business/dealing';
 import { prepScreen, wholesaleRows } from './ui/dealingUI';
+import { clubScreen } from './ui/fightClubUI';
+import { canFight, clubOpen, enterBout, settleBout, type Bout } from './fightclub/club';
 import { acceptJob, completeJob, failJob, objectiveOf, type ContactId, type Job } from './jobs/jobs';
 import { contactScreen, offerScreen, type JobActions } from './ui/jobsUI';
 import { slugify } from './ui/titles';
@@ -842,6 +844,7 @@ export class Game {
     this.updateTouchVisibility();
     if (area !== from || !opts.at) this.hud.showBanner(level.district, level.name);
     this.dealingNews(area);
+    this.clubNews();
     // First time here: one line pointing out what's on the street (the map has the rest).
     const firstVisit = !p.save.visited.includes(area);
     if (firstVisit) {
@@ -1450,6 +1453,9 @@ export class Game {
       case 'contact':
         screen = contactScreen(p, (station?.tab ?? 'terry') as ContactId, close, this.jobActions(close), station?.tab === 'kez' && dealingOpen(p) ? (msg, rebuild) => wholesaleRows(p, msg, rebuild, saved) : undefined);
         break;
+      case 'fight_club':
+        screen = clubScreen(p, close, (b) => this.clubFight(w, b, close));
+        break;
       case 'prep':
         screen = prepScreen(p, close, saved, changed);
         break;
@@ -1659,11 +1665,25 @@ export class Game {
   }
 
   /** Sparring and challenge fights finishing. */
-  private duelEnded(w: World, e: { kind: 'spar' | 'challenge'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number }): void {
+  private duelEnded(w: World, e: { kind: 'spar' | 'challenge' | 'club'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number }): void {
     const p = this.progress;
     if (!p) return;
     // A tutorial lesson with Mo pays nothing, so replaying one never earns anything.
     if (e.id === 'lesson') return;
+    if (e.kind === 'club') {
+      const b = this.clubBooked;
+      this.clubBooked = null;
+      if (!b) return;
+      const r = settleBout(p, b, e.won && !e.stopped);
+      w.clubXp(r.xp);
+      if (r.crowned) this.hud.notify('CHAMPION!', 'big', ['you-win']);
+      else if (r.won) this.hud.notify('YOU WIN', 'big', ['you-win']);
+      this.hud.toast(e.stopped && !e.won ? `You walked out of the pit. ${r.text}` : r.text, r.won ? 'cash' : 'warn');
+      if (r.won) this.audio.coins();
+      this.saveGame();
+      this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
+      return;
+    }
     if (e.kind === 'spar') {
       // Defence training from what you landed and blocked, worth less the shorter it was.
       const reps = Math.min(10, Math.floor((e.landed + e.blocked * 1.5) / 2));
@@ -2444,6 +2464,40 @@ export class Game {
    * Dealing (business/dealing.ts): the first time it's open, Kez gets in touch; back home, what the prep table's
    * bagged up while you were out.
    */
+  /** Sully, once you've beaten him: there's money in fighting, under his old gym. */
+  private clubNews(): void {
+    const p = this.progress;
+    if (!p || !clubOpen(p) || p.save.club.told) return;
+    p.save.club.told = true;
+    this.hud.remember('Sully: You’ve got hands, kid. There’s fights every night in the cellar under my old gym: the Arches. Real purses, and a belt if you’re good enough. Come down.', 'item');
+    this.hud.toast('Sully: Fights every night under my old gym. Come down.', 'item');
+    this.saveGame();
+  }
+
+  /** The bout booked at the Arches, for settling up when it's over. */
+  private clubBooked: Bout | null = null;
+
+  /** Ring the bell at the Arches: a reason if you can't. */
+  private clubFight(w: World, b: Bout, close: () => void): string | null {
+    const p = this.progress!;
+    const can = canFight(p, b);
+    if (!can.ok) return can.reason;
+    if (!w.clubFoe) return 'Nobody’s waiting for you tonight.';
+    const r = w.startClubFight();
+    if (!r.ok) return r.reason ?? 'Not now';
+    enterBout(p, b);
+    this.clubBooked = b;
+    this.saveGame();
+    close();
+    if (b.kind === 'ladder') this.hud.notify('FIGHT!', 'big', ['fight']);
+    else {
+      this.hud.notify(b.who.name.toUpperCase(), 'big', ['fight']);
+      if (this.settings.get().screenShake) this.renderer.cameraRig.addShake(0.15);
+    }
+    this.audio.guardBreak();
+    return null;
+  }
+
   private dealingNews(area: string): void {
     const p = this.progress;
     if (!p || !dealingOpen(p)) return;
@@ -2904,7 +2958,7 @@ export class Game {
     let want: MusicTrack | null = null;
     if (this.state === 'menu' || this.state === 'studio') want = 'menu';
     else if (this.world) {
-      if (this.world.activeBoss) want = 'boss';
+      if (this.world.activeBoss || this.world.clubBout) want = 'boss';
       else if (!INDOOR_THEMES.has(this.world.level.theme) && this.world.level.weather !== 'indoors') want = 'street';
     } else if (this.mode) want = 'street';
     this.audio.setMusic(want);

@@ -2290,3 +2290,20 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .deal-row b { font-family: var(--head); font-weight: 900; font-size: 18px; color: var(--sign-white); }
 .deal-row small { font-family: var(--ui); font-size: 13px; color: var(--concrete); }
 .deal-actions { flex-wrap: wrap; }
+
+/* The Arches (ui/fightClubUI.ts): where you stand, tonight's fight, the card */
+.club-standing { padding: 10px 12px; margin: 0 0 10px; background: var(--asphalt-2); border-left: 4px solid var(--red); display: flex; flex-direction: column; gap: 2px; }
+.club-standing b { font-family: var(--head); font-weight: 900; font-size: 20px; color: var(--sign-white); letter-spacing: 0.02em; }
+.club-standing small { font-family: var(--ui); font-size: 13px; color: var(--concrete); }
+.club-bout.title { box-shadow: inset 0 0 0 2px #ffd23d; }
+.club-pay { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 8px; font-family: var(--ui); font-size: 15px; color: var(--sign-white); }
+.club-belt { color: #ffd23d; font-weight: 700; flex-basis: 100%; }
+.club-rung { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 8px; padding: 6px 10px; margin: 0 0 4px; background: var(--asphalt-2); }
+.club-rung b { font-family: var(--head); font-weight: 800; font-size: 16px; color: var(--sign-white); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.club-rung small { font-family: var(--ui); font-size: 12px; color: var(--concrete); white-space: nowrap; }
+.club-no { font-family: var(--head); font-weight: 900; font-size: 16px; text-align: center; color: var(--concrete); }
+.club-rung.champ .club-no, .club-rung.champ b { color: #ffd23d; }
+.club-rung.you { box-shadow: inset 0 0 0 2px #ffd23d; }
+.club-rung.next { box-shadow: inset 0 0 0 2px var(--red); }
+.club-rung.beaten b { color: var(--concrete); text-decoration: line-through; }
+.club-rules { margin: 10px 0 0; font-family: var(--ui); font-size: 13px; color: var(--concrete); }
