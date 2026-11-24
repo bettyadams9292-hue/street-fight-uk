@@ -228,15 +228,20 @@ export class FighterView {
     rig.pitch.position.y = out.lift;
     rig.sync?.();
 
-    // Hit flash.
+    // Hit flash and attack telegraphs retain their original timing. Avoid writing
+    // identical emissive colours to every material on every idle frame.
     this.flashTime = Math.max(0, this.flashTime - dt);
+    let red = 0, green = 0, blue = 0;
     if (this.flashTime > 0) {
-      for (const m of this.rig.flashMaterials) m.emissive.setScalar(0.6);
+      red = green = blue = 0.6;
     } else if (this.telegraphs && this.isWindingUpHeavy()) {
       const pulse = 0.25 + 0.2 * Math.sin(time * 40);
-      for (const m of this.rig.flashMaterials) m.emissive.setRGB(pulse * 1.6, pulse * 0.25, 0);
-    } else {
-      for (const m of this.rig.flashMaterials) m.emissive.setScalar(0);
+      red = pulse * 1.6;
+      green = pulse * 0.25;
+    }
+    for (const m of this.rig.flashMaterials) {
+      const e = m.emissive;
+      if (e.r !== red || e.g !== green || e.b !== blue) e.setRGB(red, green, blue);
     }
     this.syncWeapon();
     this.syncGear();
