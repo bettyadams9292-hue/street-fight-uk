@@ -9,6 +9,8 @@
  *
  * No Three.js here: tests read it directly.
  */
+import { PRIORITY } from '../../performance/requests';
+import { fetchJson } from '../../performance/assetFetch';
 import type { JointName, Pose, Vec3 } from '../poses';
 import { araMocapPose, mocapClip, registerMocap } from './araPose';
 import { solveBody, type Metrics } from './skeleton';
@@ -85,8 +87,7 @@ let ready = false;
 
 /** Fetch the clips (about 240 KB). Resolves false, and the keyed poses carry on, if they aren't there. */
 export function loadUal(url = '/anim/ual_mocap.json'): Promise<boolean> {
-  loading ??= fetch(url)
-    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
+  loading ??= fetchJson<Parameters<typeof registerMocap>[0]>(url, PRIORITY.now)
     .then((d) => {
       registerMocap(d);
       ready = true;

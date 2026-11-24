@@ -1,3 +1,5 @@
+import { ASSET_TIMEOUT_MS } from '../../performance/assetFetch';
+import { request, withTimeout } from '../../performance/requests';
 /**
  * Ground surfaces built from the city kit's own textures (concrete, asphalt,
  * dirt, marble, red brick, metal-edged concrete, street decals), laid out by a
@@ -49,7 +51,15 @@ export function loadFlooring(): Promise<void> {
       ([n, srgb]) =>
         new Promise<void>((res) => {
           if (cache.has(n)) return res();
-          const t = loader.load(url(n), () => res(), undefined, () => res());
+          // Through the game's request limit, and given up on after a while (the ground keeps its plain look).
+          const t = new THREE.Texture();
+          void request(url(n), () => withTimeout(loader.loadAsync(url(n)), ASSET_TIMEOUT_MS, url(n)))
+            .then((img) => {
+              t.image = img.image;
+              t.needsUpdate = true;
+            })
+            .catch(() => undefined)
+            .finally(res);
           t.wrapS = t.wrapT = THREE.RepeatWrapping;
           t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
           t.anisotropy = 8;

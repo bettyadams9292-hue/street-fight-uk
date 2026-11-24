@@ -7,6 +7,7 @@
  * hundred pieces costs a few dozen draw calls, and the chunks off screen (or
  * outside the shadow camera) are culled.
  */
+import { request } from '../../performance/requests';
 import { fetchBinary } from '../../core/fetchBinary';
 import { streetDetail } from '../materials/streetDetail';
 import * as THREE from 'three';
@@ -96,7 +97,7 @@ export function loadPolyKit(): Promise<boolean> {
   if (loading) return loading;
   loading = (async () => {
     try {
-      const [j, b] = await Promise.all([fetch(`${BASE}kit.json`), fetchBinary(`${BASE}kit.bin`)]);
+      const [j, b] = await Promise.all([request(`${BASE}kit.json`, () => fetch(`${BASE}kit.json`)), fetchBinary(`${BASE}kit.bin`)]);
       if (!j.ok) return false;
       index = ((await j.json()) as { models: Record<string, ModelInfo> }).models;
       blob = b;

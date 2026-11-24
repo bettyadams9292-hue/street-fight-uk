@@ -1,4 +1,3 @@
-import { loadAssetQueue } from '../performance/AssetQueue';
 /**
  * Texture files (public/textures/, made by tools/textures/gen_textures.py): colour maps, normal
  * maps, atlases and particle sprites that replace the canvas textures drawn in code.
@@ -13,6 +12,7 @@ import { loadAssetQueue } from '../performance/AssetQueue';
  * map in `userData.normal`; attachNormals() puts the normal maps on the materials afterwards.
  */
 import * as THREE from 'three';
+import { request } from '../performance/requests';
 
 const BASE = '/textures/';
 
@@ -25,7 +25,7 @@ const images = new Map<string, HTMLImageElement>();
 let loading: Promise<void> | null = null;
 
 function loadImage(url: string): Promise<HTMLImageElement | null> {
-  return new Promise((res) => {
+  return request(url, () => new Promise<HTMLImageElement | null>((res) => {
     const img = new Image();
     img.decoding = 'async';
     const finish = (value: HTMLImageElement | null): void => {
@@ -40,19 +40,19 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
     img.onload = () => finish(img);
     img.onerror = () => finish(null);
     img.src = url;
-  });
+  }));
 }
 
 /** Load every texture file once. Never rejects: a file that fails keeps its canvas version. */
 export function loadTextureFiles(): Promise<void> {
   if (typeof document === 'undefined' || typeof Image === 'undefined') return Promise.resolve();
-  loading ??= loadAssetQueue(
-    TEXTURE_NAMES.flatMap((n) => [n, ...(hasNormal(n) ? [`${n}_n`] : [])]).map((n) => async () => {
+  loading ??= Promise.all(
+    TEXTURE_NAMES.flatMap((n) => [n, ...(hasNormal(n) ? [`${n}_n`] : [])]).map(async (n) => {
       const img = await loadImage(`${BASE}${n}.webp`);
       if (img) images.set(n, img);
       else console.info(`[textures] ${n} not loaded: using the canvas version`);
-    }), 4,
-  ).ready.then(() => undefined);
+    }),
+  ).then(() => undefined);
   return loading;
 }
 

@@ -6,8 +6,8 @@
  * materials (marked `userData.shared`, so disposeGroup leaves them alone).
  * Anything that fails to load falls back to the game's built-in version.
  */
+import { loadGlb } from '../../performance/assetFetch';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { pickupSize, pickupSource } from './pickups';
 import { bagModel, WORN_BAGS, type WornBagId } from './wornBags';
 
@@ -100,11 +100,10 @@ function share(o: THREE.Object3D): THREE.Object3D {
 /** Load every prop (once). Never rejects; a prop that fails just isn't available. */
 export function loadProps(base = '/models/props/', weaponBase = '/models/weapons/'): Promise<void> {
   loading ??= (async () => {
-    const loader = new GLTFLoader();
     await Promise.all([
       ...(Object.entries(PROP_FILES) as [PropId, string][]).map(async ([id, file]) => {
         try {
-          const gltf = await loader.loadAsync(base + file);
+          const gltf = await loadGlb(base + file);
           loaded.set(id, share(gltf.scene));
         } catch (e) {
           console.warn(`[props] ${file} failed to load; using the built-in version`, e);
@@ -112,7 +111,7 @@ export function loadProps(base = '/models/props/', weaponBase = '/models/weapons
       }),
       ...Object.entries(WEAPON_FILES).map(async ([id, file]) => {
         try {
-          const gltf = await loader.loadAsync(weaponBase + file);
+          const gltf = await loadGlb(weaponBase + file);
           const len = Number(gltf.scene.userData?.length);
           const length = len > 0 ? len : new THREE.Box3().setFromObject(gltf.scene).max.y;
           weapons.set(id, { model: share(gltf.scene), length });

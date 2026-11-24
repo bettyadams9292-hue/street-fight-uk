@@ -89,6 +89,10 @@ const ROUTINE_SECONDS = 6;
 import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, type FightGym } from './training/styleGyms';
 import { themeProfile } from './render/themes';
 import { TutorialManager } from './tutorial/TutorialManager';
+import { DYNAMIC_LEVELS, everySetSettled, levelProgress, levelReady, prepareLevel, recordLevel } from './performance/levelAssets';
+import { LevelView } from './render/LevelView';
+import { PRIORITY } from './performance/requests';
+import type { LevelDef } from './world/LevelTypes';
 import { tutorialLibrary } from './tutorial/library';
 import {
   bikeShopScreen,
@@ -105,6 +109,9 @@ import {
 
 /** How long a hotbar press waits for you to be free to act (ms). */
 const HOTBAR_BUFFER_MS = 650;
+
+/** Longest an arrival waits for its area's models before the built-in versions stand in. */
+const LEVEL_WAIT_MS = 20000;
 
 type GameState = 'menu' | 'studio' | 'playing' | 'paused' | 'transition' | 'editing' | 'training';
 const MAX_STEPS_PER_FRAME = 5;
@@ -388,24 +395,33 @@ export class Game {
     if (this.assetsDone) return go();
     if (this.assetsWaiting) return;
     this.assetsWaiting = true;
-    const bar = h('div', { class: 'load-bar-fill' });
-    const text = h('div', { class: 'load-text', text: 'Loading the streets' });
-    const wait = h('div', { class: 'load-wait', role: 'status', 'aria-live': 'polite' }, h('div', { class: 'load-bar' }, bar), text);
-    document.body.append(wait);
-    const tick = setInterval(() => (bar.style.width = `${Math.round(6 + this.assets.progress() * 94)}%`), 120);
-    // A bounded queue may legitimately take longer on a slow connection.
-    // Do not enter the world with packages still queued and missing from the scenery.
+    const overlay = this.loadingOverlay('Loading the streets', () => this.assets.progress());
+    // Only what every location uses is waited for here; each area's own models load as you go to it (enterArea).
+    // Every download gives up after a while (performance/assetFetch.ts), so this always finishes.
     void this.assets.ready.then(() => {
-      clearInterval(tick);
+      overlay.remove();
       this.assetsDone = true;
       this.assetsWaiting = false;
-      wait.remove();
       go();
     }, () => {
-      clearInterval(tick);
+      overlay.remove();
       this.assetsWaiting = false;
-      wait.remove();
     });
+  }
+
+  /** The loading bar over the screen (`progress` 0–1). `remove()` takes it away. */
+  private loadingOverlay(label: string, progress: () => number): { remove(): void } {
+    const bar = h('div', { class: 'load-bar-fill' });
+    const text = h('div', { class: 'load-text', text: label });
+    const wait = h('div', { class: 'load-wait', role: 'status', 'aria-live': 'polite' }, h('div', { class: 'load-bar' }, bar), text);
+    document.body.append(wait);
+    const tick = setInterval(() => (bar.style.width = `${Math.round(6 + progress() * 94)}%`), 120);
+    return {
+      remove: () => {
+        clearInterval(tick);
+        wait.remove();
+      },
+    };
   }
 
   private newGame(): void {
@@ -777,7 +793,57 @@ export class Game {
   }
 
   /** Build an area and drop the player in. Saves where you are so a closed tab resumes here. */
-  private enterArea(area: AreaId, entry: string, opts: { carry?: { health: number; stamina: number } | null; at?: { x: number; z: number } } = {}): void {
+  /**
+   * Go to an area once its models are in. Usually they already are (the area you're in loads its doors' and
+   * neighbours' models in the background, `prepareAround`); if not, play holds behind the loading bar until they
+   * are (or LEVEL_WAIT_MS passes and the built-in versions stand in), so a room is never built with pieces missing.
+   * `then` runs once you're there.
+   */
+  private enterArea(area: AreaId, entry: string, opts: { carry?: { health: number; stamina: number } | null; at?: { x: number; z: number } } = {}, then?: () => void): void {
+    // Home, the basement and the estate depend on what you own: list what this visit's version needs, so it
+    // waits for those models only (a property interior still waits for every set).
+    if (this.progress && area !== 'property' && DYNAMIC_LEVELS.has(area) && !everySetSettled()) {
+      const p = this.progress;
+      recordLevel(area, () => new LevelView(resolveLevel(area, p.save), p).dispose());
+    }
+    if (levelReady(area)) {
+      this.enterAreaNow(area, entry, opts);
+      then?.();
+      return;
+    }
+    const token = ++this.arrivalToken;
+    const was = this.state;
+    // From the menus the menu stays up (nothing 3D is drawn there); from play, play stops while it waits.
+    if (was !== 'menu' && was !== 'studio') this.state = 'transition';
+    this.touch.release();
+    const overlay = this.loadingOverlay('Loading', () => levelProgress(area));
+    const timer = window.setTimeout(() => go(), LEVEL_WAIT_MS);
+    const go = (): void => {
+      window.clearTimeout(timer);
+      overlay.remove();
+      if (token !== this.arrivalToken) return;
+      this.arrivalToken++;
+      if (!this.progress) {
+        this.state = was;
+        return;
+      }
+      this.enterAreaNow(area, entry, opts);
+      then?.();
+    };
+    void prepareLevel(area, PRIORITY.now).then(go);
+  }
+
+  /** Bumped when a held arrival goes ahead (or another replaces it), so each one happens once. */
+  private arrivalToken = 0;
+
+  /** The models for every door and both ends of this area, loaded next, so walking on rarely waits. */
+  private prepareAround(level: LevelDef): void {
+    const next = new Set<string>();
+    for (const x of level.exits) if (x.to) next.add(x.to);
+    for (const id of next) if (!levelReady(id)) void prepareLevel(id, PRIORITY.soon);
+  }
+
+  private enterAreaNow(area: AreaId, entry: string, opts: { carry?: { health: number; stamina: number } | null; at?: { x: number; z: number } } = {}): void {
     // Reloading the area (new clothes, a crew change, a cab): the phone goes away first, no animation.
     if (this.phone?.isOpen) {
       this.ui.setHost(null);
@@ -869,6 +935,7 @@ export class Game {
     this.saveGame();
 
     this.renderer.attachWorld(world);
+    this.prepareAround(level);
     this.wire(world.sim);
     this.wireWorld(world);
     this.applyRiding();
@@ -918,8 +985,9 @@ export class Game {
     const x = entry === 'left' ? there.minX + 0.08 : there.maxX - 0.08;
     const z = Math.max(there.minZ, Math.min(there.maxZ, pl.pos.z));
     const facing = pl.facing;
-    this.enterArea(to, entry, { carry: w.carry(), at: { x, z } });
-    if (this.world) this.world.player.facing = facing;
+    this.enterArea(to, entry, { carry: w.carry(), at: { x, z } }, () => {
+      if (this.world) this.world.player.facing = facing;
+    });
   }
 
   /** Fade out, swap area, fade in. */
@@ -930,8 +998,7 @@ export class Game {
     this.fadeEl.classList.add('on');
     window.setTimeout(() => {
       if (!this.progress) return;
-      this.enterArea(area, entry, { carry });
-      window.setTimeout(() => this.fadeEl.classList.remove('on'), 60);
+      this.enterArea(area, entry, { carry }, () => window.setTimeout(() => this.fadeEl.classList.remove('on'), 60));
     }, 380);
   }
 
@@ -1769,7 +1836,7 @@ export class Game {
       done: () => {
         window.setTimeout(() => {
           if (!this.progress) return;
-          this.enterArea(to, entry, { carry });
+          this.enterArea(to, entry, { carry }, () => {
           // Arrive on the stairs and step off them.
           const nw = this.world!;
           const q = nw.player;
@@ -1781,6 +1848,7 @@ export class Game {
           this.state = 'transition';
           this.stairAnim = { t: 0, dur: 0.8, from: start, to: land, done: () => (this.state = 'playing') };
           window.setTimeout(() => this.fadeEl.classList.remove('on'), 60);
+          });
         }, 260);
       },
     };
@@ -2475,7 +2543,8 @@ export class Game {
   private robShop(shopId: 'threads' | 'pawn' | 'pub', at: { x: number; z: number }): void {
     const p = this.progress!;
     const spec = ROBBABLE[shopId];
-    this.enterArea(spec.area, 'door', { at });
+    // The shop you're standing in, rebuilt in place: its models are already in.
+    this.enterAreaNow(spec.area, 'door', { at });
     const w = this.world!;
     const keeper = [...w.npcs.entries()].find(([st]) => st.id === spec.counter)?.[1] ?? null;
     const r = robShop(p, w, shopId, keeper);

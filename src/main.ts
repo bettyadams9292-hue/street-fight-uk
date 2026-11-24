@@ -89,6 +89,15 @@ const begin = async (): Promise<void> => {
     () => import('./render/anim/ual').then((u) => u.loadUal()),
     () => loadFlooring(),
     () => loadKenney(),
+    // The low-poly street kits: without them the streets keep their older look.
+    () => query.get('world') === 'classic' ? Promise.resolve(false) : loadPolyKit(),
+    () => loadPickups(),
+    () => loadTextureFiles(),
+  ];
+  // The model sets (gym, shop, grow, security, cars, doors, property) aren't waited for here: each location
+  // loads what it uses before it's built (performance/levelAssets.ts, Game.enterArea), and the rest come in
+  // behind everything else. One request limit covers all of it (performance/requests.ts).
+  const sets: AssetTask[] = [
     () => loadGym(),
     () => loadShop(),
     () => loadHydro(),
@@ -96,20 +105,14 @@ const begin = async (): Promise<void> => {
     () => loadVehicles(),
     () => loadDoors(),
     () => loadProperty(),
-    // The low-poly street kits: without them the streets keep their older look.
-    () => query.get('world') === 'classic' ? Promise.resolve(false) : loadPolyKit(),
-    () => loadPickups(),
-    () => loadTextureFiles(),
   ];
-  // Keep visual fixtures deterministic and avoid saturating mobile devices with package decoders.
-  const cores = navigator.hardwareConcurrency || 4;
-  const concurrency = shot ? loaders.length : cores <= 4 ? 2 : 4;
-  const { ready, progress } = loadAssetQueue(loaders, concurrency);
+  const { ready, progress } = loadAssetQueue(loaders, loaders.length);
+  const everything = loadAssetQueue(sets, sets.length).ready;
   if (shot) {
     // The visual tests wait for however long it takes, so their pictures don't depend on the network.
     if (bootText) bootText.textContent = 'Loading';
     const tick = setInterval(() => bootBar && (bootBar.style.width = `${Math.round(4 + progress() * 96)}%`), 150);
-    await ready;
+    await Promise.all([ready, everything]);
     clearInterval(tick);
   }
   start({ ready, progress });

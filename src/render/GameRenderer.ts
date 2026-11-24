@@ -1,4 +1,6 @@
 import { BACKGROUND_POSE_DISTANCE } from '../performance/FrameBudget';
+import { levelReady, prepareLevel } from '../performance/levelAssets';
+import { PRIORITY } from '../performance/requests';
 import { humanSpecFor, humansOn } from './human/HumanRig';
 import { buildHumanLater, humanBuilt } from './human/HumanBuilder';
 import * as THREE from 'three';
@@ -266,6 +268,11 @@ export class GameRenderer {
       if (this.near[side] && this.near[side]!.level.id !== id) this.dropNear(side);
       if (!id || this.near[side]) return;
       const immediate = this.deterministicStream || /[?&](shot|human)=/.test(window.location.search);
+      // Its models first (usually in already): a district built without them would keep the stand-ins.
+      if (!immediate && !levelReady(id)) {
+        void prepareLevel(id, PRIORITY.soon).then(() => build(side));
+        return;
+      }
       const v = new LevelView(LEVELS[id], world.progress, !immediate);
       this.pendingDistricts.add(v);
       const advance = (): void => {

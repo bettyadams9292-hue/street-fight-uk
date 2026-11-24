@@ -11,6 +11,8 @@
  *
  * Pure maths, no Three.js.
  */
+import { PRIORITY } from '../../performance/requests';
+import { fetchJson } from '../../performance/assetFetch';
 import type { JointName, Pose, Vec3 } from '../poses';
 import { apply, euler, mul, solveBody, solveLimb, toEuler, transpose, type M3, type Metrics } from './skeleton';
 import type { Ch, Clip, HandTarget, Sample } from './ara/types';
@@ -202,8 +204,7 @@ export function mocapClip(id: string): MocapClip | undefined {
 let loading: Promise<void> | null = null;
 /** Fetch the motion capture once (about 230 KB). Never rejects. */
 export function loadAraMocap(url = '/anim/ara_mocap.json'): Promise<void> {
-  loading ??= fetch(url)
-    .then((r) => r.json())
+  loading ??= fetchJson<Record<string, MocapRaw>>(url, PRIORITY.now)
     .then((d) => registerMocap(d))
     .catch((e) => console.warn('[anim] motion capture not loaded', e));
   return loading;
