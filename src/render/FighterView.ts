@@ -150,6 +150,7 @@ export class FighterView {
   rebind(f: Fighter): void {
     this.animator.retarget(f);
     this.fighter = f;
+    this.poseElapsed = 0;
   }
 
   constructor(public fighter: Fighter, appearance: CharacterAppearance = fighter.appearance) {
@@ -171,6 +172,7 @@ export class FighterView {
     this.rig = buildCharacterRig(appearance, !!this.fighter.background);
     this.root.add(this.rig.root);
     this.animator.setMetrics(this.rig.metrics, traitsOf(this.fighter, appearance), appearance.height ?? 1);
+    this.poseElapsed = 0;
     this.update(1 / 60, 0);
   }
 
@@ -186,7 +188,12 @@ export class FighterView {
     this.root.position.set(f.pos.x, f.pos.y, f.pos.z);
     this.poseElapsed += dt;
     // Only distant, non-combat idle characters qualify. Keep root motion at full rate.
-    if (background && f.state === 'idle' && !this.mount && !f.grapple && this.flashTime <= 0 && this.poseElapsed < 1 / 30) return;
+    if (background && f.background && f.state === 'idle' && !f.activity && !this.mount && !f.grapple && this.flashTime <= 0 && this.poseElapsed < 1 / 30) {
+      // Equipment changes must remain responsive even when the skeletal pose is deferred.
+      this.syncWeapon();
+      this.syncGear();
+      return;
+    }
     dt = this.poseElapsed;
     this.poseElapsed = 0;
 
