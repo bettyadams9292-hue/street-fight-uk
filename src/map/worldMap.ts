@@ -144,6 +144,7 @@ const BLURB: Record<AreaId, string> = {
   clothes_shop: 'Clothes, shoes, accessories and bags. Priya runs it.',
   pawn_shop: 'Sell valuables and collectibles. Mr Kaur doesn’t ask questions.',
   police_station: 'The front counter: see what they’ve got on you and settle fines. Where you end up when you’re nicked.',
+  fight_club: 'The Arches: bare-knuckle fights in the cellar under Kane’s Boxing. Fight for purses, then for the title.',
   pub: 'Food, drink and first aid at the bar. Fighters for hire in the Snug.',
   furniture_shop: 'Furniture, floors and walls for your house.',
   car_dealer: 'New and used cars.',
@@ -185,7 +186,7 @@ export const MARKER_LABELS: Record<MarkerKind, string> = {
 };
 
 const INTERIOR_KIND: Partial<Record<AreaId, MarkerKind>> = {
-  home: 'home', basement: 'property', clothes_shop: 'clothes', pawn_shop: 'pawn', police_station: 'police', pub: 'pub', furniture_shop: 'shop', car_dealer: 'cars',
+  home: 'home', basement: 'property', clothes_shop: 'clothes', pawn_shop: 'pawn', police_station: 'police', fight_club: 'gym', pub: 'pub', furniture_shop: 'shop', car_dealer: 'cars',
   bike_shop: 'bikes', casino: 'casino', grow_shop: 'shop', gym_store: 'shop', boxing_gym: 'gym', karate_dojo: 'gym', wrestling_club: 'gym',
   jeweller: 'shop', estate_agent: 'property', ashcombe: 'property', property: 'property',
 };

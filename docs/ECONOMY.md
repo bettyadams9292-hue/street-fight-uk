@@ -46,4 +46,5 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 | Dealing: bulk prices, deals a lot, street prices, table costs, grow link | `DRUG_DEFS`, `TABLES`, `GROW_PER_BULK` in `src/business/dealing.ts` |
 | Clothes tiers and stats, outfit buffs, jewellery XP bonus | `src/items/gearBonus.ts` (`XP_BONUS_CAP` 30%) |
 | Jobs: pay, heat, standing, boards and chains | `jobPay`, `jobHeat`, `TIERS` in `src/jobs/jobs.ts`; chains in `src/jobs/contacts.ts` |
+| The Arches fight club: ladder purses £150–£800 (buy-in 20%), title £3,000 and the belt, defences £1,000 + £400 each up to £5,000 every 3 nights (a night is 10 minutes of play) | `LADDER`, `CHAMPION`, `DEFENCE_*`, `NIGHT_SECONDS` in `src/fightclub/club.ts` |
 | Cab fares (on the meter: £3.60 flag fall, £2.40 a mile, £5 minimum; about £5–£19 across town) | `CAB_FLAG`, `CAB_PER_MILE`, `CAB_MIN` in `src/ui/hub.ts`; distance `cabMiles` (`MAP_PER_MILE`, `ROAD_FACTOR`) in `src/map/worldMap.ts` |

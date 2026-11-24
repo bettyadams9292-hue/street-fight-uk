@@ -315,10 +315,12 @@ const industrial: LevelDef = {
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 90, z: 0, facing: -1 },
     { id: 'towpath', x: 61, z: -0.8, facing: 1 },
+    { id: 'club', x: 84, z: -1.0, facing: -1 },
   ],
   exits: [
     { id: 'to_alleys', kind: 'edge', side: 'left', x: 0, z: 0, to: 'alleys', toEntry: 'right', label: 'Back alleys' },
     { id: 'towpath', kind: 'door', x: 61, z: -1.6, to: 'docks', toEntry: 'left', label: 'Down to the canal towpath', requires: 'boss_sully', lockedText: 'Sully\u2019s lads guard the towpath gate.' },
+    { id: 'club_door', kind: 'door', x: 84, z: -1.6, to: 'fight_club', toEntry: 'door', label: 'Down to the Arches (fight club)', requires: 'boss_sully', lockedText: 'A bouncer on the cellar door: “Members only. Sully says who’s a member.”' },
     { id: 'to_subway', kind: 'edge', side: 'right', x: 92, z: 0, to: 'subway', toEntry: 'left', label: 'Subway', requires: 'boss_sully', lockedText: 'Sully’s gym runs this yard. Beat him first.' },
   ],
   facades: [

@@ -1,3 +1,4 @@
+import { BUY_IN, CHAMPION, DEFENCE_TRIPS, LADDER, NIGHT_SECONDS, STRIP_TRIPS, defencePurse } from '../../fightclub/club';
 import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
 import { BAG_PACK, BAG_PACK_PRICE, BULK_BUYBACK, bulkWorth, DRUG_DEFS, DRUGS, GROW_PER_BULK, TABLES } from '../../business/dealing';
 import { DRIP_LIST, JEWEL_BUFF_LIST, OUTFIT_LIST, STONE_BUFF_LIST, TIER_NAMES, XP_BONUS_CAP } from '../../items/gearBonus';
@@ -15,7 +16,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club';
 
 export interface WikiDeps {
   device: () => Device;
@@ -31,6 +32,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'police', title: 'Getting nicked', blurb: 'Your record, the charge sheet, bail, a night in the cells, and the front counter.' },
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
   { id: 'dealing', title: 'Dealing', blurb: 'Bulk, the prep table in your garage, punters, prices and the risks.' },
+  { id: 'club', title: 'The Arches', blurb: 'The fight club under Kane’s Boxing: the card, the title and defending it.' },
   { id: 'gear', title: 'Clothes and jewellery', blurb: 'Tiers, what each kind of clothing does, outfit buffs, and jewellery’s XP bonus.' },
   { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
 ];
@@ -173,6 +175,28 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
         'Every sale is police heat where you are, and dealing goes on your record.',
         'Now and then a punter is plain clothes: more often where police heat is high. Then they’re on their way.',
         'Get nicked with bulk or deals on you and the police take the lot.',
+      ]),
+    );
+  }
+
+  if (page === 'club') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('The Arches', 'An unlicensed fight club in the cellar under Kane’s Boxing, Canal Side Works. Once you’ve beaten Sully Kane he runs the card for you: one fight a night, for money, all the way up to the title.',
+      infobox('The card', [...LADDER.map((f, i) => [`No. ${LADDER.length - i}`, `${f.name}: £${f.purse}`] as [string, string]).reverse(), ['Champion', `${CHAMPION.name}: £${CHAMPION.purse}`]]),
+      sec('Fighting'),
+      list([
+        `Talk to Sully and take tonight’s fight. You pay a buy-in (${Math.round(BUY_IN * 100)}% of the purse) and win the purse if you put them down.`,
+        'To the stoppage, one on one in the pit: no weapons, no crew. Go down and it’s over. Walk out of the pit and you lose.',
+        `One fight a night, win or lose (a night is about ${NIGHT_SECONDS / 60} minutes of play). Win and you take their place on the card.`,
+      ]),
+      sec('The title'),
+      p(`Beat the number one contender and you get a shot at ${CHAMPION.name}. Win and you’re the champion: a £${CHAMPION.purse} purse and the Arches title belt, a one-of-a-kind belt (+8% damage, +40 max health, +20 poise) you can’t buy anywhere.`),
+      sec('Defending it'),
+      list([
+        `Every ${DEFENCE_TRIPS} nights a challenger wants your belt. No buy-in for the champ, and the purse grows every time you keep it: £${defencePurse(0)} for the first, up to £${defencePurse(99)}.`,
+        'Each challenger is harder than the last, and keeps up with you as you level.',
+        'Lose and the challenger takes the title. Get it back in a rematch.',
+        `Keep a challenger waiting ${STRIP_TRIPS} nights past the date and you’re stripped.`,
       ]),
     );
   }

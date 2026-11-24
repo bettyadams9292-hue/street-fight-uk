@@ -714,6 +714,57 @@ const policeStation: LevelDef = {
   weather: 'indoors',
 };
 
+// ---- The Arches: the fight club in the cellar under Kane's Boxing (fightclub/club.ts) --------------------
+
+/** The pit: where the fight happens, out on the cellar floor. */
+export const PIT = { x: 12.5, z: 2.9, w: 7.2, d: 4.4 };
+/** Where you and your opponent start a bout, either side of the pit. */
+export const PIT_CORNERS = { you: { x: PIT.x - 2.4, z: PIT.z }, them: { x: PIT.x + 2.4, z: PIT.z } };
+/** Where the next opponent waits before their fight, at the pit's far side. */
+export const PIT_WAIT = { x: PIT.x + 4.4, z: PIT.z - 1.2 };
+
+const fightClub: LevelDef = {
+  id: 'fight_club',
+  name: 'The Arches',
+  district: 'Industrial Quarter',
+  theme: 'basement',
+  bounds: { minX: 0, maxX: 22, ...ROOM },
+  entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
+  exits: [
+    { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'industrial', toEntry: 'club', label: 'Up the steps to Canal Side Works' },
+    { id: 'cab_home', kind: 'door', x: 21.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Back stairs: a lift home' },
+  ],
+  facades: [{ kind: 'basement', x0: 0, x1: 22, label: 'THE ARCHES' }],
+  props: [
+    // The pit: a stained canvas floor with its circles, out in the middle of the cellar. You walk on it.
+    { kind: 'wrestling_mat', x: PIT.x, z: PIT.z, size: [PIT.w / 2, PIT.d / 2], solid: false, colour: '#3a1616' },
+    // Where the crowd stands and the money changes hands.
+    { kind: 'crates', x: 5.2, z: -1.2 },
+    { kind: 'drum', x: 7.0, z: -1.25 },
+    { kind: 'pallets', x: 18.6, z: -1.2 },
+    { kind: 'drum', x: 20.2, z: 4.9 },
+    { kind: 'bench', x: 3.0, z: 5.0, size: [1.0, 0.25] },
+    { kind: 'vending', x: 2.0, z: -1.2 },
+  ],
+  stations: [
+    {
+      id: 'fight_club', x: 4.6, z: 0.4, label: 'Talk to Sully Kane (the card)',
+      npc: { name: 'Sully Kane', seed: 4410, body: 'male', top: 'vest', topColour: '#b3121b', dz: -1.0 },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    // Bare bulbs over the pit, and one by the door.
+    { x: PIT.x - 1.5, y: 2.9, z: PIT.z - 2.2, colour: 0xffe2b0, intensity: 12, range: 8 },
+    { x: PIT.x + 1.5, y: 2.9, z: PIT.z - 2.2, colour: 0xffe2b0, intensity: 12, range: 8 },
+    { x: 3.5, y: 2.8, z: -0.6, colour: 0xffc890, intensity: 6, range: 7 },
+    { x: 19, y: 2.8, z: -0.6, colour: 0xff9a70, intensity: 5, range: 7 },
+  ],
+  weather: 'indoors',
+  objective: 'Sully runs the card. Fight your way up to the title.',
+};
+
 // Every room at its real depth (world/rooms.ts), its front floor filled.
 export const INTERIORS = {
   gym_store: deepRoom(fitOut(gymStore)),
@@ -723,5 +774,6 @@ export const INTERIORS = {
   grow_shop: deepRoom(fitOut(growShop)),
   clothes_shop: deepRoom(fitOut(clothesShop)), pawn_shop: deepRoom(fitOut(pawnShop)), pub: deepRoom(fitOut(pub)),
   police_station: deepRoom(policeStation),
+  fight_club: deepRoom(fightClub),
   furniture_shop: deepRoom(fitOut(furnitureShop)), car_dealer: deepRoom(fitOut(carDealer)), bike_shop: deepRoom(fitOut(bikeShop)), casino: deepRoom(fitOut(casino)),
 };

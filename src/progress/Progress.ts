@@ -1,3 +1,4 @@
+import { newClub, sanitiseClub, type ClubSave } from '../fightclub/club';
 import { sanitiseCharacter, finalAttributes, BACKGROUNDS, type PlayerCharacter } from '../character/Character';
 import { newDealing, sanitiseDealing, type DealingSave } from '../business/dealing';
 import { jewelBuffs, outfitBuffs, xpBonusOf, type Buff, type WornJewels } from '../items/gearBonus';
@@ -52,6 +53,8 @@ export const CORE_AREA_IDS = [
   'home', 'estate', 'high_street', 'alleys', 'industrial', 'subway', 'city', 'territory',
   // Stage 5: interiors
   'clothes_shop', 'pawn_shop', 'pub', 'police_station',
+  // The Arches fight club, under Kane's Boxing
+  'fight_club',
   // Stage 6: furniture shop, car dealer, bike shop, casino
   'furniture_shop', 'car_dealer', 'bike_shop', 'casino',
   // Stage 7: the basement and the grow shop
@@ -118,6 +121,8 @@ export interface GameSave {
   jobs: JobsSave;
   /** Dealing: the garage prep table, what's on it, and sales (business/dealing.ts). */
   dealing: DealingSave;
+  /** The Arches fight club: your place on the card, the title (fightclub/club.ts). */
+  club: ClubSave;
   /** Counts area changes: the game's clock for shop closures and heat. */
   trips: number;
   shops: Record<string, ShopState>;
@@ -203,6 +208,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     hotbar: newHotbar(),
     jobs: newJobs(),
     dealing: newDealing(),
+    club: newClub(),
     trips: 0,
     shops: {},
     pawn: { itemsSold: 0, earned: 0 },
@@ -289,6 +295,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     hotbar: sanitiseHotbar(r.hotbar),
     jobs: sanitiseJobs(r.jobs, AREA_IDS),
     dealing: sanitiseDealing(r.dealing),
+    club: sanitiseClub(r.club),
     trips: num(r.trips, 0),
     shops: sanitiseShops(r.shops),
     pawn: { itemsSold: num(r.pawn?.itemsSold, 0), earned: num(r.pawn?.earned, 0) },
