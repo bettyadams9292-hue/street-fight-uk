@@ -17,6 +17,7 @@
  * Numbers and save state only.
  */
 import type { Progress, PurchaseResult } from '../progress/Progress';
+import type { CornerSave } from './streetDealers';
 
 export type Drug = 'weed' | 'coke' | 'pills';
 export const DRUGS: Drug[] = ['weed', 'coke', 'pills'];
@@ -93,6 +94,8 @@ export interface DealingSave {
   local: { trip: number; n: Record<string, number> };
   /** Kez has told you about it. */
   told: boolean;
+  /** The street dealers (business/streetDealers.ts): corners taken, taxed, bought from. Made when first needed. */
+  corners?: CornerSave;
 }
 
 const zero = (): Record<Drug, number> => ({ weed: 0, coke: 0, pills: 0 });
@@ -123,6 +126,7 @@ export function sanitiseDealing(r: unknown): DealingSave {
   out.earned = Math.floor(num(x.earned));
   if (x.local && typeof x.local === 'object') out.local = { trip: Math.floor(num(x.local.trip, -1, -1)), n: Object.fromEntries(Object.entries(x.local.n ?? {}).filter(([, v]) => typeof v === 'number').map(([k, v]) => [k, Math.floor(num(v))])) };
   out.told = x.told === true;
+  if (x.corners && typeof x.corners === 'object') out.corners = x.corners;
   return out;
 }
 
@@ -277,12 +281,13 @@ export function takeDeals(p: Progress, drug: Drug): number {
 export const SATURATE = 0.04;
 export const FLOOR = 0.6;
 
-/** One deal's price on this street now: by product, how far east, and how many you've sold here this trip. */
-export function streetPrice(p: Progress, drug: Drug, district: string, east: number): number {
+/** One deal's price on this street now: by product, how far east, how many you've sold here this trip, and who else deals here. */
+export function streetPrice(p: Progress, drug: Drug, district: string, east: number, competition = 1): number {
   const s = p.save.dealing;
   const n = s.local.trip === p.save.trips ? s.local.n[district] ?? 0 : 0;
   const d = DRUG_DEFS[drug];
-  const m = Math.max(FLOOR, 1 - SATURATE * n) * (1 + d.eastward * Math.max(0, east));
+  // `competition`: less with a rival dealer working the district, more where the corner's yours (streetDealers.ts).
+  const m = Math.max(FLOOR, 1 - SATURATE * n) * (1 + d.eastward * Math.max(0, east)) * competition;
   return Math.max(1, Math.round(d.street * m));
 }
 

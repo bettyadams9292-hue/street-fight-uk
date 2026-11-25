@@ -447,6 +447,11 @@ export class GameRenderer {
   }
 
   /** Turntable rotation (radians). */
+  /** Turn the model on the studio set to face this way (radians; 0 faces the camera). */
+  setStudioYaw(yaw: number): void {
+    if (this.studio) this.studio.yaw = yaw;
+  }
+
   rotateStudio(delta: number): void {
     if (this.studio) this.studio.yaw += delta;
   }

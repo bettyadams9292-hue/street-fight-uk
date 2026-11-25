@@ -4,7 +4,7 @@
  * skin, hair, clothes. Pure and deterministic: the same appearance always gives
  * the same character.
  */
-import type { CharacterAppearance, TopStyle, BottomStyle, HairStyle } from '../../character/Appearance';
+import { TATTOO_SLOTS, type CharacterAppearance, type TopStyle, type BottomStyle, type HairStyle, type TattooDesign, type TattooSlot } from '../../character/Appearance';
 import { DEFAULT_SHAPE, type BodyShape } from './body';
 import type { GarmentKind } from './garments';
 
@@ -28,6 +28,9 @@ export interface HumanSpecData {
   eyeColour: string;
   items: SpecItem[];
   garments: SpecGarment[];
+  /** Tattoos to ink onto the skin texture (render/human/tattooSkin.ts), and the ink colour. */
+  tattoos?: { slot: TattooSlot; design: TattooDesign }[];
+  ink?: string;
 }
 
 export interface SkinChoice {
@@ -125,7 +128,8 @@ export function chooseSkin(skins: readonly SkinChoice[], female: boolean, tone: 
   const score = (s: SkinChoice) => {
     let d = Math.abs(s.tone - tone);
     if (s.gender !== want) d += 0.25;
-    if (s.id.includes('tattooed') !== tattooed) d += 0.4;
+    // Skins with tattoos baked in (m_tattooed, and m_viking's chest and shoulders) only for someone heavily inked.
+    if ((s.id.includes('tattooed') || !!s.tags?.includes('tattoos')) !== tattooed) d += 0.4;
     if (s.id.includes('old') !== older) d += 0.15;
     return d;
   };
@@ -134,7 +138,11 @@ export function chooseSkin(skins: readonly SkinChoice[], female: boolean, tone: 
   return best?.id ?? 'm_light';
 }
 
-export function appearanceToHuman(a: CharacterAppearance, skins: readonly SkinChoice[]): HumanSpecData {
+/**
+ * @param ink paint the look's own tattoos onto the skin (everyone but background people, who take the pack's
+ *   tattooed skin for a heavily inked look instead: a texture each would cost too much in a crowd).
+ */
+export function appearanceToHuman(a: CharacterAppearance, skins: readonly SkinChoice[], ink = false): HumanSpecData {
   const female = a.body === 'female';
   const tone = toneOf(a.skinTone);
   const inked = Object.values(a.tattoos).filter((t) => t !== 'none').length;
@@ -205,5 +213,7 @@ export function appearanceToHuman(a: CharacterAppearance, skins: readonly SkinCh
   // Eye colour: browns for darker skin, otherwise picked steadily from the face (same face, same eyes).
   const pickEye = Math.abs(Math.sin((a.face.headWidth + 2) * 12.9898 + (a.face.nose + 2) * 78.233 + (a.face.jaw + 2) * 37.719)) % 1;
   const eyeColour = tone > 0.55 ? (pickEye < 0.7 ? '#3a2416' : '#5a3a22') : ['#3a2416', '#5a3a22', '#6a5a2a', '#3d6a8a', '#5a7da0', '#4a6a4a', '#6a7078'][Math.floor(pickEye * 7)];
-  return { shape, eyeColour, skin: chooseSkin(skins, female, tone, inked >= 3 && !female, older), skinColour: a.skinTone, browColour, browWeight, items, garments };
+  const tattoos = ink ? TATTOO_SLOTS.filter((slot) => a.tattoos[slot] !== 'none').map((slot) => ({ slot, design: a.tattoos[slot] })) : [];
+  const skin = chooseSkin(skins, female, tone, !ink && inked >= 3 && !female, older);
+  return { shape, eyeColour, skin, skinColour: a.skinTone, browColour, browWeight, items, garments, ...(tattoos.length ? { tattoos, ink: a.inkColour } : {}) };
 }

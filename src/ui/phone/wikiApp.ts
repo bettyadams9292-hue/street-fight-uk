@@ -1,5 +1,8 @@
 import { BUY_IN, CHAMPION, DEFENCE_TRIPS, LADDER, NIGHT_SECONDS, STRIP_TRIPS, defencePurse } from '../../fightclub/club';
 import { BARBER, BEARDS, COLOUR_PRICE, GREYS, HAIRCUTS } from '../../barber/barber';
+import { DESIGNS, LASER_PRICE, REINK_PRICE, SLOT_NAMES, SLOT_ORDER, STUDIO, designPrice } from '../../tattoo/tattoo';
+import { ATM_MAX, PAY_FEE } from '../../money/atm';
+import { CORNER_BONUS, CORNER_TRIPS, RIVAL_CUT, TRADE_SHARE } from '../../business/streetDealers';
 import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
 import { BAG_PACK, BAG_PACK_PRICE, BULK_BUYBACK, bulkWorth, DRUG_DEFS, DRUGS, GROW_PER_BULK, TABLES } from '../../business/dealing';
 import { DRIP_LIST, JEWEL_BUFF_LIST, OUTFIT_LIST, STONE_BUFF_LIST, TIER_NAMES, XP_BONUS_CAP } from '../../items/gearBonus';
@@ -17,7 +20,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club' | 'barber';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club' | 'barber' | 'tattoo' | 'cash';
 
 export interface WikiDeps {
   device: () => Device;
@@ -35,6 +38,8 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'dealing', title: 'Dealing', blurb: 'Bulk, the prep table in your garage, punters, prices and the risks.' },
   { id: 'club', title: 'The Arches', blurb: 'The fight club under Kane’s Boxing: the card, the title and defending it.' },
   { id: 'barber', title: 'The barber', blurb: 'NeXo Cutz on the High Street: haircuts, beards and colour, and what they cost.' },
+  { id: 'tattoo', title: 'Tattoos', blurb: 'Ink & Iron on Hollins Estate: designs, where they go, laser removal and re-inking.' },
+  { id: 'cash', title: 'Cashpoints', blurb: 'Paying cash in and taking it out on the street, and which machines charge.' },
   { id: 'gear', title: 'Clothes and jewellery', blurb: 'Tiers, what each kind of clothing does, outfit buffs, and jewellery’s XP bonus.' },
   { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
 ];
@@ -171,6 +176,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
         'Weed sells most; coke sells better and for more the further east you go; pills are cheap and quick.',
         'Every sale in a district on one trip knocks the price there down a little: spread it about.',
         `Kez buys bulk back at ${Math.round(BULK_BUYBACK * 100)}% if you change your mind.`,
+        `On rough streets someone else may be dealing (a purple £): your price there is ${Math.round((1 - RIVAL_CUT) * 100)}% lower till you run him off. Buy off him at ${Math.round(TRADE_SHARE * 100)}% of street price, tax him for a cut, or run him off: then the corner’s yours for ${CORNER_TRIPS} trips and pays ${Math.round((CORNER_BONUS - 1) * 100)}% more.`,
       ]),
       sec('The risks'),
       list([
@@ -218,6 +224,43 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
         'The bill only counts what’s changing. Picking what you’ve already got is free.',
         'Pay from your pocket first, then the tin at home, like any shop. Keep my look puts you back how you came in.',
         'Hats come off in the chair. The cut is your own hair, so it stays whatever you wear on top.',
+      ]),
+    );
+  }
+
+  if (page === 'tattoo') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    const prices = Object.entries(DESIGNS).map(([, d]) => d.price);
+    return article('Tattoos', `${STUDIO.shop}, on Hollins Estate next to the garages, where Kez stands (Dave’s Cabs stops at the door). ${STUDIO.artist} does the work: pick a design for any place and it’s drawn on you before you pay.`,
+      infobox('Prices', [
+        ['Designs', `£${Math.min(...prices)}–£${Math.max(...prices)}, more on the chest and neck`],
+        ['Full sleeve', `£${designPrice('sleeve', 'rightUpperArm')} an arm`],
+        ['Laser removal', `£${LASER_PRICE} a piece`],
+        ['Re-inking', `£${REINK_PRICE} a piece`],
+      ]),
+      sec('Where'),
+      p(`${SLOT_ORDER.map((s) => SLOT_NAMES[s]).join(', ')}. A full sleeve goes on an arm only.`),
+      sec('Getting one'),
+      list([
+        'Your top comes off on the set, and you turn to show the place you’re looking at. Turn and Zoom to see the rest.',
+        'Over something already there? It’s lasered off first, and the bill says so.',
+        'The Ink tab redoes every piece in a new colour. A colour picked with nothing to re-ink comes free with your next piece.',
+        'It’s your own skin: the ink shows wherever your clothes don’t cover it, so a vest or a bare chest shows the most.',
+      ]),
+    );
+  }
+
+  if (page === 'cash') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('Cashpoints', 'CaliBank cash machines on the High Street, Hollins, Market Square, the precincts and in Pawn & Gold. Your balance is the same money as the tin at home.',
+      infobox('The machines', [
+        ['Paying in', 'Free'],
+        ['Taking out', `Free in town, £${PAY_FEE} on the rough estates`],
+        ['Most at once', `£${ATM_MAX}`],
+      ]),
+      list([
+        'Cash on you is what goes if you get battered, mugged or run. Pay it in and it’s safe.',
+        'Shops take pocket money first, then the bank, so you rarely need to take any out. Some things want cash in hand.',
       ]),
     );
   }

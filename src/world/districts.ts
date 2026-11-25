@@ -30,10 +30,12 @@ const residential: LevelDef = {
   entries: [
     { id: 'left', x: 2, z: 0, facing: 1 },
     { id: 'right', x: 84, z: 0, facing: -1 },
+    { id: 'tattoo', x: 50.6, z: -1.0, facing: 1 },
   ],
   exits: [
     { id: 'to_leisure', kind: 'edge', side: 'left', x: 0, z: 0, to: 'leisure', toEntry: 'right', label: 'Leisure Park' },
     { id: 'to_estate', kind: 'edge', side: 'right', x: 86, z: 0, to: 'estate', toEntry: 'left', label: 'Tanner Road' },
+    { id: 'tattoo_door', kind: 'door', x: 50.6, z: -1.6, to: 'tattoo_studio', toEntry: 'door', label: 'Into Ink & Iron (tattoos)' },
   ],
   // Cash 4 U: a pawn hatch on the estate, the worst rates in the game (PAWN_HATCH_RATE).
   stations: [
@@ -46,7 +48,8 @@ const residential: LevelDef = {
     { kind: 'tower', x0: 20, x1: 34, label: 'HOLLINS HOUSE 1-64' },
     { kind: 'shop', x0: 34, x1: 41, label: 'CASH 4 U PAWN', colour: '#6b2d82' },
     { kind: 'garages', x0: 41, x1: 46 },
-    { kind: 'semi', x0: 46, x1: 62 },
+    { kind: 'shop', x0: 46, x1: 53, label: 'INK & IRON TATTOO', colour: '#141418' },
+    { kind: 'semi', x0: 53, x1: 62 },
     { kind: 'tower', x0: 62, x1: 76, label: 'FAIRCLOUGH COURT' },
     { kind: 'terrace', x0: 76, x1: 86 },
   ],
@@ -55,6 +58,7 @@ const residential: LevelDef = {
     { kind: 'bin', x: 15, z: -1.55 },
     { kind: 'bin', x: 15.8, z: -1.55, colour: '#2a3f7a' },
     { kind: 'abandoned_car', x: 30, z: 1.3 },
+    { kind: 'atm', x: 40.6, z: -2.05, solid: false },
     { kind: 'rubbish_bags', x: 42.5, z: -1.5 },
     { kind: 'trolley', x: 44, z: -0.46 },
     { kind: 'lamp_post', x: 50, z: -1.85 },

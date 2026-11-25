@@ -37,6 +37,9 @@ export interface HumanSpec {
   items: HumanItem[];
   /** Background person: the lighter body (and lighter clothes cut from it), no eyelashes. */
   lite?: boolean;
+  /** Tattoos inked onto the skin texture (render/human/tattooSkin.ts). */
+  tattoos?: { slot: string; design: string }[];
+  ink?: string;
 }
 
 /**

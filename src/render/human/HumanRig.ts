@@ -31,8 +31,8 @@ interface Follow {
 export function humanSpecFor(a: CharacterAppearance, lite = false): HumanSpec | null {
   const assets = humanAssets();
   if (!assets) return null;
-  const d = appearanceToHuman(a, assets.skins);
-  return { shape: d.shape, skin: d.skin, skinColour: d.skinColour, browColour: d.browColour, browWeight: d.browWeight, eyeColour: d.eyeColour, items: d.items, garments: d.garments, ...(lite ? { lite: true } : {}) };
+  const d = appearanceToHuman(a, assets.skins, !lite);
+  return { shape: d.shape, skin: d.skin, skinColour: d.skinColour, browColour: d.browColour, browWeight: d.browWeight, eyeColour: d.eyeColour, items: d.items, garments: d.garments, ...(d.tattoos ? { tattoos: d.tattoos, ink: d.ink } : {}), ...(lite ? { lite: true } : {}) };
 }
 
 let enabled = true;

@@ -12,6 +12,7 @@ import { loadTextureFile } from '../../performance/assetFetch';
 import { fetchBinary } from '../../core/fetchBinary';
 import { detail, type LibraryName } from '../materials/library';
 import * as THREE from 'three';
+import { inkedSkin, type InkSpot } from './tattooSkin';
 import { BodyData, type placeBones, type BodyMeta } from '../../characters/human/body';
 import { ProxyData, type ProxyMeta } from '../../characters/human/proxy';
 import type { Fabric } from '../../characters/human/garments';
@@ -661,8 +662,9 @@ function assemble(spec: HumanSpec, data: HumanData): (BuiltHuman & { placed: Ret
   for (const p of data.parts) {
     if (p.kind === 'body') {
       const skin = a.skins.find((s) => s.id === spec.skin) ?? a.skins[0];
+      const plain = textures.get(skin.diffuse) ?? null;
       const skinMat = new THREE.MeshStandardMaterial({
-        map: textures.get(skin.diffuse) ?? null,
+        map: plain && spec.tattoos?.length ? inkedSkin(plain, skin.id, spec.ink ?? '#1a2230', spec.tattoos as InkSpot[]) : plain,
         normalMap: skin.normal ? textures.get(skin.normal) ?? null : null,
         color: skinTintFor(spec, skin),
         roughness: 0.62,

@@ -970,6 +970,7 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
 .job-mark { position: absolute; left: 0; top: 0; width: 26px; height: 26px; display: grid; place-items: center; font-family: var(--head); font-weight: 900; font-size: 20px; line-height: 1; color: var(--ink); background: #ffd23d; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5)); animation: job-bob 1.4s ease-in-out infinite; }
 .job-mark.target { background: var(--accent); width: 20px; height: 20px; }
 .job-mark.target::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--sign-white); }
+.job-mark.dealer { background: #8a3fd1; color: var(--sign-white); width: 22px; height: 22px; font-size: 15px; clip-path: none; border-radius: 4px; }
 .job-mark.punter { background: #2fbf5a; color: var(--ink); width: 22px; height: 22px; font-size: 15px; clip-path: none; border-radius: 50%; }
 @keyframes job-bob { 50% { margin-top: -5px; } }
 @media (prefers-reduced-motion: reduce) { .job-mark { animation: none; } }
@@ -2371,4 +2372,57 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
   .barber-acts > * { flex: 1 1 0; min-width: 0; }
   .barber-acts .menu-btn .sub { display: none; }
   .barber-screen .panel-actions { margin-top: 4px; }
+}
+
+/* ---- A cashpoint (ui/atmUI.ts): the machine's screen, keys either side of the balance ---- */
+.screen.atm-screen { justify-content: center; align-items: center; }
+.atm-face {
+  width: min(520px, 92vw); padding: 14px 16px 12px; background: linear-gradient(180deg, #0f2a3a, #0a1a26);
+  box-shadow: inset 0 0 0 2px #2b4c62, 0 0 0 6px #1a1d24, 0 0 0 8px #3a3f4a, 0 10px 30px rgba(0, 0, 0, 0.6);
+  color: #d8f1ff; font-family: var(--ui);
+}
+.atm-brand { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 1px solid #2b4c62; padding-bottom: 6px; margin-bottom: 8px; }
+.atm-brand b { font-family: var(--head); font-weight: 900; font-size: 22px; letter-spacing: 0.02em; color: #8fe3ff; }
+.atm-brand span { font-size: 12px; color: #7fa6bc; }
+.atm-bal { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
+.atm-bal div { display: flex; flex-direction: column; padding: 6px 10px; background: rgba(0, 0, 0, 0.3); }
+.atm-bal span { font-size: 12px; color: #7fa6bc; }
+.atm-bal b { font-family: var(--head); font-weight: 900; font-size: 24px; color: #fff; }
+.atm-sec { font-family: var(--head); font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: #8fe3ff; margin: 8px 0 4px; }
+.atm-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px; }
+.atm-keys.one { grid-template-columns: 1fr; margin-top: 6px; }
+.atm-key {
+  display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 6px; border: 0; cursor: pointer; font: inherit;
+  background: linear-gradient(180deg, #d9dde4, #a9afba); color: #10141c; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+}
+.atm-key b { font-family: var(--head); font-weight: 900; font-size: 18px; }
+.atm-key span { font-size: 11px; color: #3a4250; }
+.atm-key:disabled { opacity: 0.35; cursor: default; }
+.atm-key:focus-visible, .atm-key.focused { outline: 3px solid var(--yellow); outline-offset: 1px; }
+.atm-face .hub-msg { margin-top: 8px; min-height: 1.3em; color: #cfeeff; }
+.atm-screen .panel-actions { width: min(520px, 92vw); margin-top: 10px; }
+@media (max-height: 520px) and (orientation: landscape) {
+  .atm-face { width: min(640px, 80vw); padding: 8px 12px; }
+  .atm-bal b { font-size: 18px; }
+  .atm-keys { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .atm-key { padding: 4px; }
+  .atm-key b { font-size: 15px; }
+  .atm-sec { margin: 4px 0 2px; }
+  .atm-screen .panel-actions { width: min(640px, 80vw); margin-top: 4px; }
+}
+@media (orientation: portrait) and (max-width: 700px) {
+  .atm-keys { grid-template-columns: repeat(3, 1fr); }
+  .atm-bal b { font-size: 20px; }
+}
+
+/* ---- Ink & Iron (ui/tattooUI.ts): the barber's board, with seven places as one scrolling row of tabs ---- */
+.tattoo-screen .inv-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+.tattoo-screen .inv-tabs::-webkit-scrollbar { display: none; }
+.tattoo-screen .inv-tab { flex: 0 0 auto; white-space: nowrap; }
+@media (max-height: 520px) and (orientation: landscape) {
+  .tattoo-screen .inv-tab { padding: 3px 9px; font-size: 13px; }
+  .tattoo-screen .barber-grid { max-height: 52vh; }
+}
+@media (orientation: portrait) and (max-width: 700px) {
+  .tattoo-screen .inv-tab { padding: 4px 9px; font-size: 13px; }
 }
