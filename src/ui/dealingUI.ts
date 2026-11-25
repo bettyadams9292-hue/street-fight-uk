@@ -10,6 +10,7 @@ import {
   BAG_PACK, BAG_PACK_PRICE, batchSeconds, BULK_BUYBACK, bulkWorth, buyBags, buyBulk, buyTable, DRUG_DEFS, DRUGS, fromGrow, GROW_PER_BULK,
   loadBulk, sellBulk, tableDef, takeDeals, tickPrep, type Drug,
 } from '../business/dealing';
+import { buyOff, CORNER_BONUS, CORNER_TRIPS, dealerIn, RIVAL_CUT, stockList, taxedNow, tradeLeft, tradePrice } from '../business/streetDealers';
 
 const money = (n: number) => `£${n.toLocaleString('en-GB')}`;
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
@@ -155,4 +156,61 @@ export function wholesaleRows(p: Progress, msg: (t: string, bad?: boolean) => vo
     ));
   }
   return rows;
+}
+
+/**
+ * A street dealer (business/streetDealers.ts): buy a few off him at trade, lean on him for a cut, or run him off his
+ * corner. `act` closes the screen and starts the World's side of it (a fight, or his cut handed over).
+ */
+export function streetDealerScreen(
+  p: Progress,
+  district: string,
+  saved: () => void,
+  act: (what: 'tax' | 'run') => void,
+  close: () => void,
+): Screen {
+  const d = dealerIn(p, district);
+  return panelScreen(`${d.name}, ${district}`, p, (msg, rebuild) => {
+    const left = tradeLeft(p, district);
+    const rows: HTMLElement[] = [
+      h('p', { class: 'quote', text: `“What you after? Or are you just looking.” He’s working this corner: punters round here have someone else to buy off, so your deals fetch ${Math.round((1 - RIVAL_CUT) * 100)}% less in ${district} while he’s here.` }),
+      h('div', { class: 'job-sec', text: 'Buy off him' }),
+      h('p', { class: 'job-brief', text: left ? `He’ll sell you ${left} more this week, at trade. Handy when you’re out and the table’s at home.` : 'He’s sold you all he will for now.' }),
+    ];
+    for (const { drug, n } of stockList(d)) {
+      const def = DRUG_DEFS[drug];
+      const each = tradePrice(drug);
+      rows.push(
+        h('div', { class: 'job-card' },
+          h('div', { class: 'job-head' }, h('b', { class: 'job-title', text: def.dealName }), h('span', { class: 'job-kind', text: `${money(each)} each` })),
+          h('p', { class: 'job-brief', text: `He’s carrying ${n}. About ${money(def.street)} on the street.` }),
+          h('div', { class: 'row-actions deal-actions' },
+            ...[1, 3].filter((k) => k <= Math.max(1, left)).map((k) =>
+              menuButton(`Buy ${k}`, () => {
+                const r = buyOff(p, district, drug, k);
+                if (!r.ok) return msg(r.reason, true), rebuild();
+                saved();
+                msg(`${r.text} Stolen goods, as far as the police are concerned.`);
+                rebuild();
+              }, money(each * k), k === 1 ? 'primary' : '', undefined, undefined, `buy-${k}`),
+            ),
+          ),
+        ),
+      );
+    }
+    rows.push(h('div', { class: 'job-sec', text: 'His corner' }));
+    rows.push(
+      h('div', { class: 'job-card' },
+        h('div', { class: 'job-head' }, h('b', { class: 'job-title', text: 'Tax him' }), h('span', { class: 'job-kind', text: taxedNow(p, district) ? 'Done this week' : 'A cut' })),
+        h('p', { class: 'job-brief', text: 'Tell him it costs to work round here. He might pay up; he might call his mates. Heat either way.' }),
+        h('div', { class: 'row-actions' }, menuButton('Tax him', () => (taxedNow(p, district) ? (msg('You’ve had your cut off him this week.', true), rebuild()) : act('tax')), 'Pays, or fights', '', undefined, undefined, 'tax-him')),
+      ),
+      h('div', { class: 'job-card' },
+        h('div', { class: 'job-head' }, h('b', { class: 'job-title', text: 'Run him off' }), h('span', { class: 'job-kind', text: `${CORNER_TRIPS} trips` })),
+        h('p', { class: 'job-brief', text: `A fight with him and his ${d.mates === 1 ? 'mate' : `${d.mates} mates`}. Put him down and his stash and cash are yours, and so is the corner: no rival here and ${Math.round((CORNER_BONUS - 1) * 100)}% more for your deals in ${district}.` }),
+        h('div', { class: 'row-actions' }, menuButton('Run him off', () => act('run'), 'Fight', 'primary', undefined, undefined, 'run-him-off')),
+      ),
+    );
+    return rows;
+  }, close);
 }

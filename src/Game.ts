@@ -1,6 +1,6 @@
 import { setHumansEnabled } from './render/human/HumanRig';
 import { DRUG_DEFS, dealingOpen, tickPrep } from './business/dealing';
-import { prepScreen, wholesaleRows } from './ui/dealingUI';
+import { prepScreen, streetDealerScreen, wholesaleRows } from './ui/dealingUI';
 import { clubScreen } from './ui/fightClubUI';
 import { canFight, clubOpen, enterBout, settleBout, type Bout } from './fightclub/club';
 import { acceptJob, completeJob, failJob, objectiveOf, type ContactId, type Job } from './jobs/jobs';
@@ -29,7 +29,7 @@ import { characterCreator } from './ui/CharacterCreator';
 import { characterSheet, confirmScreen } from './ui/CharacterSheet';
 import { CharacterStore } from './save/CharacterStore';
 import type { PlayerCharacter } from './character/Character';
-import { randomAppearance, type CharacterAppearance } from './character/Appearance';
+import { randomAppearance, type CharacterAppearance, type TattooSlot } from './character/Appearance';
 import { Simulation } from './core/Simulation';
 import { Fighter } from './fighter/Fighter';
 import { Arena } from './world/Arena';
@@ -90,6 +90,8 @@ import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, 
 import { themeProfile } from './render/themes';
 import { TutorialManager } from './tutorial/TutorialManager';
 import { barberScreen } from './ui/barberUI';
+import { atmScreen } from './ui/atmUI';
+import { tattooScreen } from './ui/tattooUI';
 import { DYNAMIC_LEVELS, everySetSettled, levelProgress, levelReady, prepareLevel, recordLevel } from './performance/levelAssets';
 import { LevelView } from './render/LevelView';
 import { PRIORITY } from './performance/requests';
@@ -113,6 +115,9 @@ const HOTBAR_BUFFER_MS = 650;
 
 /** What comes off your head in the barber's chair. */
 const HATS: ReadonlySet<string> = new Set(['cap', 'beanie', 'bucket_hat', 'flat_cap', 'headguard']);
+
+/** The tattoo studio turns you to show the place being inked (radians on the studio set). */
+const TATTOO_YAW: Record<TattooSlot, number> = { rightUpperArm: 1.1, rightForearm: 1.1, leftUpperArm: -1.1, leftForearm: -1.1, chest: 0, neck: 0 };
 
 /** Longest an arrival waits for its area's models before the built-in versions stand in. */
 const LEVEL_WAIT_MS = 20000;
@@ -1346,6 +1351,12 @@ export class Game {
       ev.on('station', ({ id, station }) => this.openStation(id, station)),
       // Jobs (src/jobs): a passer-by's offer, the job moving on, paid, or gone wrong.
       ev.on('job:offer', ({ job, name }) => this.jobOffer(job, name)),
+      // A street dealer (business/streetDealers.ts): buy off him, tax him or run him off.
+      ev.on('dealer:talk', ({ district }) => this.streetDealer(district)),
+      ev.on('dealer:down', ({ name, district }) => {
+        this.hud.toast(`${name}’s down. His stash is on the floor, and ${district} is your corner now.`, 'cash');
+        this.saveGame();
+      }),
       ev.on('job:step', ({ text }) => {
         this.hud.toast(`Job: ${text}`, 'info');
         this.saveGame();
@@ -1456,6 +1467,7 @@ export class Game {
     if (id === 'mirror') return this.openSheet('home', at);
     if (id === 'clothes_counter' || id === 'changing') return this.openClothesShop();
     if (id === 'barber_chair') return this.openBarber();
+    if (id === 'tattoo_chair') return this.openTattoo();
     if (id === 'bike') return this.mountParkedBike();
     // The house: the fridge, the cooker, the bathroom, the bed... (they freeze nothing until a list opens).
     if (this.house.handles(id) && w.level.id === 'home') return this.house.open(id, station);
@@ -1563,6 +1575,9 @@ export class Game {
           this.enterArea('home', 'start', { at: { x: w.player.pos.x, z: w.player.pos.z } });
           this.hud.toast('Savings moved into the new tin', 'item');
         });
+        break;
+      case 'atm':
+        screen = atmScreen(p, this.ui, w.level.district, saved, close);
         break;
       case 'front_desk':
         screen = this.frontDesk(close);
@@ -2589,6 +2604,56 @@ export class Game {
   }
 
   /**
+   * Ink & Iron: on the studio set with your top off, trying designs on before Shaz does them. The fighter turns to
+   * show the place you're looking at; the hat and gloves come off too, so nothing hides the ink.
+   */
+  private openTattoo(): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    const at = { x: w.player.pos.x, z: w.player.pos.z };
+    const carry = w.carry();
+    const area = w.level.id;
+    this.enterStudio(p.appearance());
+    this.inChair = true;
+    this.updateStudioPanel();
+    let framing: StudioFraming = 'upper';
+    const frame = (f: StudioFraming) => {
+      framing = f;
+      if (this.studio) this.studio.framing = f;
+      this.renderer.setStudioFraming(f);
+    };
+    frame('upper');
+    let lastSlot: TattooSlot | null | undefined;
+    const back = () => this.enterArea(area, 'door', { at, carry });
+    this.ui.replaceAll(
+      tattooScreen(
+        p,
+        this.ui,
+        {
+          preview: (ink, slot) => {
+            if (!this.studio) return;
+            const base = p.appearance();
+            const look = { ...base, ...ink, top: base.body === 'female' ? ('vest' as const) : ('none' as const) };
+            look.accessories = look.accessories.filter((x) => !HATS.has(x) && x !== 'wraps' && x !== 'snood');
+            this.studio.pending = look;
+            // Turn to the place being looked at, once per change of place (Turn still works in between).
+            if (slot !== lastSlot) {
+              lastSlot = slot;
+              this.renderer.setStudioYaw(slot ? TATTOO_YAW[slot] : 0);
+              frame(slot === 'neck' ? 'face' : 'upper');
+            }
+          },
+          rotate: (d) => this.renderer.rotateStudio(d),
+          zoom: () => frame(framing === 'face' ? 'upper' : framing === 'upper' ? 'full' : 'face'),
+          changed: () => this.saveGame(),
+        },
+        back,
+      ),
+    );
+  }
+
+  /**
    * Robbing Threads. Priya either empties the till or fights back; either
    * way the alarm goes, the police come, your heat goes up, the shop shuts
    * for a while and she charges you more afterwards. Each robbery pays less.
@@ -2735,6 +2800,32 @@ export class Game {
       this.tutorial.feed({ type: 'job', stage: 'taken' });
       this.hud.toast(`Job: ${objectiveOf(p.save.jobs.active!)}`, 'info');
       return { ok: true };
+    }, close));
+  }
+
+  /** USE on a street dealer: the screen, and the World's side of what you pick. */
+  private streetDealer(district: string): void {
+    const p = this.progress;
+    const w = this.world;
+    if (!p || !w) return;
+    this.state = 'paused';
+    this.touch.release();
+    this.input.flush();
+    this.updateTouchVisibility();
+    const close = () => {
+      this.ui.replaceAll(null);
+      this.resume();
+    };
+    this.ui.replaceAll(streetDealerScreen(p, district, () => this.saveGame(), (what) => {
+      close();
+      if (what === 'run') {
+        w.runOffDealer();
+        this.hud.toast('He’s calling his mates over.', 'warn');
+      } else {
+        const r = w.taxDealer();
+        if (r && 'fights' in r) this.hud.toast('He’s not paying. His mates are coming over.', 'warn');
+      }
+      this.saveGame();
     }, close));
   }
 

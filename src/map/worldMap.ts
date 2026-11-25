@@ -143,6 +143,7 @@ const BLURB: Record<AreaId, string> = {
   hq: 'Hale House. Where it ends.',
   clothes_shop: 'Clothes, shoes, accessories and bags. Priya runs it.',
   barber_shop: 'NeXo Cutz: haircuts, beards shaped or shaved, colour. Vinny’s chair, walk-ins welcome.',
+  tattoo_studio: 'Ink & Iron: tattoos on arms, chest and neck, laser removal, re-inking. Shaz does the work.',
   pawn_shop: 'Sell valuables and collectibles. Mr Kaur doesn’t ask questions.',
   police_station: 'The front counter: see what they’ve got on you and settle fines. Where you end up when you’re nicked.',
   fight_club: 'The Arches: bare-knuckle fights in the cellar under Kane’s Boxing. Fight for purses, then for the title.',
@@ -187,7 +188,7 @@ export const MARKER_LABELS: Record<MarkerKind, string> = {
 };
 
 const INTERIOR_KIND: Partial<Record<AreaId, MarkerKind>> = {
-  home: 'home', basement: 'property', clothes_shop: 'clothes', barber_shop: 'shop', pawn_shop: 'pawn', police_station: 'police', fight_club: 'gym', pub: 'pub', furniture_shop: 'shop', car_dealer: 'cars',
+  home: 'home', basement: 'property', clothes_shop: 'clothes', barber_shop: 'shop', tattoo_studio: 'shop', pawn_shop: 'pawn', police_station: 'police', fight_club: 'gym', pub: 'pub', furniture_shop: 'shop', car_dealer: 'cars',
   bike_shop: 'bikes', casino: 'casino', grow_shop: 'shop', gym_store: 'shop', boxing_gym: 'gym', karate_dojo: 'gym', wrestling_club: 'gym',
   jeweller: 'shop', estate_agent: 'property', ashcombe: 'property', property: 'property',
 };
@@ -197,7 +198,7 @@ const STATION_ACTIVITY: Record<string, string> = {
   wardrobe: 'Wardrobe', garage: 'Workbench', gym: 'Coach’s board', computer: 'Computer', train: 'Home gym', sparring: 'Sparring', shop_counter: 'Shop',
   furniture: 'Furniture', cars: 'Cars', bikes: 'Bikes', casino: 'Gambling', grow: 'Basement kit', terminal: 'Business terminal', gym_counter: 'Gym kit',
   style_coach: 'Style lessons', style_drill: 'Drills', recruit: 'Hire fighters', pawn: 'Sell valuables',
-  clothes_counter: 'Buy clothes, shoes and bags', changing: 'Try things on', barber_chair: 'Haircuts and beards', pawn_counter: 'Sell valuables and collectibles',
+  clothes_counter: 'Buy clothes, shoes and bags', changing: 'Try things on', barber_chair: 'Haircuts and beards', tattoo_chair: 'Tattoos', atm: 'Cashpoint', pawn_counter: 'Sell valuables and collectibles',
   furniture_counter: 'Buy furniture, floors and walls', car_counter: 'Buy and sell cars', bike_counter: 'Buy and sell bikes',
   casino_cashier: 'Chips and prizes', casino_slots: 'Slots', casino_roulette: 'Roulette', casino_blackjack: 'Blackjack',
   grow_counter: 'Buy basement equipment', grow_display: 'Look at the kit', mirror: 'Mirror', bike_rack: 'Bikes and cars',

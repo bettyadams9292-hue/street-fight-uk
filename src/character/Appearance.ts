@@ -25,7 +25,7 @@ export type ShoeStyle = (typeof SHOE_STYLES)[number];
 export const TATTOO_SLOTS = ['leftUpperArm', 'rightUpperArm', 'leftForearm', 'rightForearm', 'chest', 'neck'] as const;
 export type TattooSlot = (typeof TATTOO_SLOTS)[number];
 
-export const TATTOO_DESIGNS = ['none', 'tribal', 'rose', 'swallow', 'crown', 'geometric', 'sleeve'] as const;
+export const TATTOO_DESIGNS = ['none', 'tribal', 'rose', 'swallow', 'crown', 'geometric', 'sleeve', 'skull', 'anchor', 'star', 'dagger', 'lettering'] as const;
 export type TattooDesign = (typeof TATTOO_DESIGNS)[number];
 
 export const FACE_SCARS = ['none', 'brow', 'cheek', 'chin'] as const;
@@ -311,7 +311,7 @@ export const LABELS: Record<string, string> = {
   polo: 'Polo shirt', shirt: 'Shirt', jumper: 'Jumper', quarter_zip: 'Quarter-zip', gilet: 'Gilet', windbreaker: 'Windbreaker', harrington: 'Harrington jacket',
   trackies: 'Trackies', joggers: 'Joggers', jeans: 'Jeans', cargos: 'Cargos', shorts: 'Fight shorts', chinos: 'Chinos', cargo_shorts: 'Cargo shorts', denim_shorts: 'Denim shorts',
   trainers: 'Trainers', runners: 'Running trainers', hitops: 'High-tops', boots: 'Boots',
-  tribal: 'Tribal', rose: 'Rose', swallow: 'Swallow', crown: 'Crown', geometric: 'Geometric', sleeve: 'Full sleeve',
+  tribal: 'Tribal', rose: 'Rose', swallow: 'Swallow', crown: 'Crown', geometric: 'Geometric', sleeve: 'Full sleeve', skull: 'Skull', anchor: 'Anchor', star: 'Nautical star', dagger: 'Dagger', lettering: 'Lettering',
   brow: 'Split eyebrow', cheek: 'Cheek slash', chin: 'Chin', left: 'Left arm', right: 'Right arm', both: 'Both arms',
   wraps: 'Hand wraps', chain: 'Chain', cap: 'Cap', beanie: 'Beanie', watch: 'Watch', earring: 'Earring', headguard: 'Head guard',
   sunglasses: 'Sunglasses', snood: 'Face covering', ring: 'Ring', belt: 'Belt', mouthguard: 'Gumshield',

@@ -117,6 +117,46 @@ const barberShop: LevelDef = {
   objective: 'Sit in Vinny’s chair: haircuts, beards, colour',
 };
 
+// ---- Ink & Iron: the tattoo studio on Hollins Estate (tattoo/tattoo.ts) ----------------------------
+const tattooStudio: LevelDef = {
+  id: 'tattoo_studio',
+  name: 'Ink & Iron',
+  district: 'Hollins',
+  theme: 'shop',
+  bounds: { minX: 0, maxX: 14, ...ROOM },
+  entries: [{ id: 'door', x: 12.6, z: 0.4, facing: -1 }],
+  exits: [{ id: 'out', kind: 'door', x: 13.4, z: 0.9, to: 'residential', toEntry: 'tattoo', label: 'Back out to Hollins Estate' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'INK & IRON — WALK-INS, NO UNDER 18s', colour: '#2a2522' }],
+  props: [
+    // Two artists' beds against the back wall, each with a worktop; the flash wall between them; the till by the
+    // door. The middle (z -0.6 to 0.6) stays clear.
+    F('plant_tall', 0.8, -1.85),
+    { kind: 'barber_station', x: 2.6, z: -1.42, colour: '#2a2522' },
+    { kind: 'tattoo_bed', x: 3.8, z: -1.05 },
+    { kind: 'flash_wall', x: 7.0, z: -1.95, solid: false },
+    { kind: 'barber_station', x: 9.4, z: -1.42, colour: '#2a2522' },
+    { kind: 'tattoo_bed', x: 10.6, z: -1.05, colour: '#5a1418' },
+    { kind: 'shop_shelf', x: 13.4, z: -1.4, size: [0.6, 0.25] },
+    F('rug_long', 7.0, 0.0, { colour: '#3a1418', solid: false }),
+  ],
+  stations: [
+    {
+      id: 'tattoo_chair', x: 10.6, z: -0.2, label: 'Get inked (Shaz, the tattooist)',
+      npc: { name: 'Shaz', seed: 8812, body: 'female', top: 'vest', topColour: '#141418', skinTone: '#e8c0a0', hair: 'bun', hairColour: '#1c1612', dz: -0.95,
+        tattoos: { leftUpperArm: 'sleeve', rightUpperArm: 'rose', leftForearm: 'tribal', rightForearm: 'swallow', chest: 'none', neck: 'star' } },
+    },
+  ],
+  pickups: [],
+  encounters: [],
+  lights: [
+    { x: 3.8, y: 2.7, z: -0.8, colour: 0xfff4e8, intensity: 9, range: 7 },
+    { x: 7.0, y: 2.7, z: -0.6, colour: 0xffd8b0, intensity: 7, range: 7 },
+    { x: 10.6, y: 2.7, z: -0.8, colour: 0xfff4e8, intensity: 9, range: 7 },
+  ],
+  weather: 'indoors',
+  objective: 'Sit down with Shaz: tattoos, laser removal, re-inking',
+};
+
 // ---- Pawn & Gold: pawn shop in the City Centre --------------------------------------------------
 const pawnShop: LevelDef = {
   id: 'pawn_shop',
@@ -616,6 +656,7 @@ const FRONT: Record<string, PropDef[]> = {
   ],
   // Somewhere to wait your turn, and the price board.
   barber_shop: [P('shop_counter', 3.0, 4.6, { size: [0.9, 0.4] }), F('plant_tall', 13.2, 4.8)],
+  tattoo_studio: [P('shop_counter', 11.4, 4.6, { size: [0.9, 0.4] }), F('plant_tall', 0.8, 4.8)],
   clothes_shop: [P('shop_rail', 3.4, 2.6), P('shop_rail', 6.6, 3.8), P('shop_rail', 9.8, 2.6), P('mannequin', 12.8, 2.2), P('mannequin', 13.8, 4.2), P('mannequin', 1.4, 4.6), P('shop_shelf', 9.8, 5.0, { size: [1.2, 0.3] })],
   pawn_shop: [P('glass_counter', 5.0, 3.0), P('display_cabinet', 9.4, 3.8), P('shop_shelf', 12.2, 4.8, { size: [1.0, 0.3] }), P('tv', 2.6, 4.4)],
   furniture_shop: [
@@ -667,6 +708,7 @@ const DECOR: Record<string, PropDef[]> = {
     D('f02_06', 15.6, 4.9), D('f04_05', 14.6, 4.9, { rot: 3 }), D('f04_05', 16.6, 4.9, { rot: 1 }), D('f03_28', 20.6, 5.0),
   ],
   // A mirror over each chair's station, chairs to wait on, the price board.
+  tattoo_studio: [D('waitingSofa', 4.6, 5.0), D('chalkboardMenu', 1.6, 2.4)],
   barber_shop: [W('gymMirror', 4.4, 0.55), W('gymMirror', 7.4, 0.55), W('gymMirror', 10.4, 0.55), D('waitingSofa', 7.6, 5.0), D('waitingSofa', 9.4, 5.0), D('chalkboardMenu', 1.6, 2.4)],
   clothes_shop: [D('f01_19', 15.0, 4.8), D('f06_12', 4.8, 4.8), D('pottedTree', 1.2, 2.2)],
   pawn_shop: [D('f03_30', 1.6, 2.4), D('arcadeCabinet', 12.8, 2.3), D('f01_07', 6.8, 5.0), D('poorSafe', 10.4, 2.3)],
@@ -820,7 +862,7 @@ export const INTERIORS = {
   karate_dojo: deepRoom(karateDojo),
   wrestling_club: deepRoom(wrestlingClub),
   grow_shop: deepRoom(fitOut(growShop)),
-  clothes_shop: deepRoom(fitOut(clothesShop)), barber_shop: deepRoom(fitOut(barberShop)), pawn_shop: deepRoom(fitOut(pawnShop)), pub: deepRoom(fitOut(pub)),
+  clothes_shop: deepRoom(fitOut(clothesShop)), barber_shop: deepRoom(fitOut(barberShop)), tattoo_studio: deepRoom(fitOut(tattooStudio)), pawn_shop: deepRoom(fitOut(pawnShop)), pub: deepRoom(fitOut(pub)),
   police_station: deepRoom(policeStation),
   fight_club: deepRoom(fightClub),
   furniture_shop: deepRoom(fitOut(furnitureShop)), car_dealer: deepRoom(fitOut(carDealer)), bike_shop: deepRoom(fitOut(bikeShop)), casino: deepRoom(fitOut(casino)),

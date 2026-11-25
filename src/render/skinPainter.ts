@@ -71,9 +71,15 @@ function paint(p: SkinPaint): HTMLCanvasElement {
 
   if (p.tattoo && p.tattoo !== 'none') {
     const ink = p.ink ?? '#1a2230';
+    // On a layer of its own: some designs cut detail back out of the ink, which mustn't cut the skin.
+    const layer = document.createElement('canvas');
+    layer.width = W;
+    layer.height = H;
+    const lg = layer.getContext('2d')!;
     for (const u of p.tattooAt ?? [0.25, 0.75]) {
-      for (const off of [-W, 0, W]) drawDesign(g, p.tattoo, u * W + off, H / 2, W, H, ink);
+      for (const off of [-W, 0, W]) drawDesign(lg, p.tattoo, u * W + off, H / 2, W, H, ink);
     }
+    g.drawImage(layer, 0, 0);
   }
 
   for (const s of p.scars ?? []) {
@@ -100,8 +106,8 @@ function paint(p: SkinPaint): HTMLCanvasElement {
   return c;
 }
 
-/** Original simple tattoo designs, drawn in code. */
-function drawDesign(g: CanvasRenderingContext2D, design: TattooDesign, cx: number, cy: number, W: number, H: number, ink: string): void {
+/** Original simple tattoo designs, drawn in code (about 80 × 90 units of `H / 128` round the centre). */
+export function drawDesign(g: CanvasRenderingContext2D, design: TattooDesign, cx: number, cy: number, W: number, H: number, ink: string): void {
   g.save();
   g.translate(cx, cy);
   g.fillStyle = ink;
@@ -219,6 +225,121 @@ function drawDesign(g: CanvasRenderingContext2D, design: TattooDesign, cx: numbe
         g.arc(((i * 37) % W) + 10, ((i * 23) % H) + 6, 6, 0, Math.PI * 2);
         g.fill();
       }
+      break;
+    }
+    case 'skull': {
+      g.beginPath();
+      g.arc(0, -8 * s, 24 * s, Math.PI * 0.85, Math.PI * 2.15);
+      g.lineTo(14 * s, 20 * s);
+      g.lineTo(-14 * s, 20 * s);
+      g.closePath();
+      g.fill();
+      g.fillRect(-12 * s, 20 * s, 24 * s, 10 * s);
+      // Eyes, nose and teeth cut back out.
+      g.globalCompositeOperation = 'destination-out';
+      g.beginPath();
+      g.ellipse(-10 * s, -6 * s, 7 * s, 8 * s, 0, 0, Math.PI * 2);
+      g.ellipse(10 * s, -6 * s, 7 * s, 8 * s, 0, 0, Math.PI * 2);
+      g.fill();
+      g.beginPath();
+      g.moveTo(0, 4 * s);
+      g.lineTo(-4 * s, 12 * s);
+      g.lineTo(4 * s, 12 * s);
+      g.closePath();
+      g.fill();
+      for (const x of [-6, 0, 6]) g.fillRect((x - 1) * s, 21 * s, 2 * s, 9 * s);
+      g.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'anchor': {
+      g.lineWidth = 5 * s;
+      g.lineCap = 'round';
+      g.beginPath();
+      g.arc(0, -32 * s, 7 * s, 0, Math.PI * 2);
+      g.moveTo(0, -25 * s);
+      g.lineTo(0, 34 * s);
+      g.moveTo(-18 * s, -14 * s);
+      g.lineTo(18 * s, -14 * s);
+      g.moveTo(-30 * s, 14 * s);
+      g.quadraticCurveTo(-24 * s, 38 * s, 0, 36 * s);
+      g.quadraticCurveTo(24 * s, 38 * s, 30 * s, 14 * s);
+      g.stroke();
+      for (const k of [-1, 1]) {
+        g.beginPath();
+        g.moveTo(k * 30 * s, 6 * s);
+        g.lineTo(k * 36 * s, 18 * s);
+        g.lineTo(k * 24 * s, 16 * s);
+        g.closePath();
+        g.fill();
+      }
+      break;
+    }
+    case 'star': {
+      // A nautical star: five points, half of each filled.
+      const R = 34 * s;
+      const r = 14 * s;
+      const pt = (i: number, rad: number) => [Math.cos(-Math.PI / 2 + (i * Math.PI) / 5) * rad, Math.sin(-Math.PI / 2 + (i * Math.PI) / 5) * rad] as const;
+      for (let i = 0; i < 10; i += 2) {
+        const [ax, ay] = pt(i, R);
+        const [bx, by] = pt(i + 1, r);
+        const [cx2, cy2] = pt(i - 1, r);
+        g.beginPath();
+        g.moveTo(0, 0);
+        g.lineTo(ax, ay);
+        g.lineTo(bx, by);
+        g.closePath();
+        g.fill();
+        g.beginPath();
+        g.moveTo(0, 0);
+        g.lineTo(ax, ay);
+        g.lineTo(cx2, cy2);
+        g.closePath();
+        g.lineWidth = 2.5 * s;
+        g.stroke();
+      }
+      break;
+    }
+    case 'dagger': {
+      g.beginPath();
+      g.moveTo(0, 44 * s);
+      g.lineTo(-7 * s, 2 * s);
+      g.lineTo(7 * s, 2 * s);
+      g.closePath();
+      g.lineWidth = 2.5 * s;
+      g.stroke();
+      g.beginPath();
+      g.moveTo(0, 40 * s);
+      g.lineTo(0, 4 * s);
+      g.stroke();
+      g.fillRect(-20 * s, -4 * s, 40 * s, 6 * s);
+      g.fillRect(-3.5 * s, -28 * s, 7 * s, 24 * s);
+      g.beginPath();
+      g.arc(0, -32 * s, 6 * s, 0, Math.PI * 2);
+      g.fill();
+      // A banner across the blade.
+      g.beginPath();
+      g.moveTo(-26 * s, 14 * s);
+      g.quadraticCurveTo(0, 6 * s, 26 * s, 14 * s);
+      g.lineTo(26 * s, 22 * s);
+      g.quadraticCurveTo(0, 14 * s, -26 * s, 22 * s);
+      g.closePath();
+      g.stroke();
+      break;
+    }
+    case 'lettering': {
+      // Old-school script on a scroll: "LOYALTY".
+      g.font = `900 ${Math.round(17 * s)}px Georgia, 'Times New Roman', serif`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.lineWidth = 2 * s;
+      g.beginPath();
+      g.moveTo(-42 * s, -12 * s);
+      g.quadraticCurveTo(0, -20 * s, 42 * s, -12 * s);
+      g.lineTo(42 * s, 12 * s);
+      g.quadraticCurveTo(0, 4 * s, -42 * s, 12 * s);
+      g.closePath();
+      g.stroke();
+      g.fillText('LOYALTY', 0, -3 * s);
       break;
     }
     case 'none':

@@ -425,6 +425,14 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  "t6d2": {},
  "t6d3": {},
  "t6d4": {},
+ "tattoo_studio": {
+  "doors": [
+   "door_panel"
+  ],
+  "security": [
+   "wall_dome"
+  ]
+ },
  "territory": {},
  "underground": {},
  "wrestling_club": {

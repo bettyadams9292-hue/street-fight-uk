@@ -39,6 +39,7 @@ import { TutorialBrain, type LessonMode } from '../ai/TutorialBrain';
 import type { ItemStack } from '../items/Inventory';
 import { ITEMS, weaponItemId } from '../items/items';
 import { hash01 } from '../realty/catalogue';
+import { competition, dealerIn, rivalIn, takeCorner, taxOffer, type Dealer } from '../business/streetDealers';
 import { DRUG_DEFS, DRUGS, dealingOpen, dealsOnYou, recordSale, SALE_HEAT, streetPrice, takeFromPockets, undercoverChance, type Drug } from '../business/dealing';
 import { stripAreaOf } from '../jobs/jobs';
 import { checkJob, completeJob, jobStep, objectiveOf, spotIn, streetJob, STREET_CHANCE, TARGET_ARCH, timeLeft, type ActiveJob, type Job, type JobPaid } from '../jobs/jobs';
@@ -133,6 +134,10 @@ export interface WorldEvents {
   'job:failed': { text: string };
   /** A deal sold on the street (business/dealing.ts); `undercover`: the punter was police. */
   'deal:sold': { drug: Drug; qty: number; price: number; undercover: boolean };
+  /** USE on a street dealer (business/streetDealers.ts): Game shows what you can do. */
+  'dealer:talk': { name: string; district: string };
+  /** You've put the street dealer down: his stash is on the floor and the corner's yours. */
+  'dealer:down': { name: string; district: string };
   'duel:start': { kind: 'spar' | 'challenge' | 'club'; name: string };
   'duel:end': { kind: 'spar' | 'challenge' | 'club'; id: string; won: boolean; stopped: boolean; landed: number; blocked: number; seconds: number };
 }
@@ -263,6 +268,7 @@ export type Interactable =
   | { kind: 'mug'; x: number; z: number; label: string; target: Fighter }
   /** The passer-by with a job, or the person at the far end of yours (the debtor, the recipient, the buyer). */
   | { kind: 'job'; x: number; z: number; label: string; f: Fighter; role: 'giver' | 'target' }
+  | { kind: 'dealer'; x: number; z: number; label: string; f: Fighter }
   /** A punter who'll buy deals off you (business/dealing.ts). */
   | { kind: 'deal'; x: number; z: number; label: string; target: Fighter; drug: Drug; qty: number; price: number };
 
@@ -419,8 +425,10 @@ export class World {
   }
 
   /** Who to put a badge over: someone with a job, and who you're after (till they're down or it's done). */
-  jobMarks(): { f: Fighter; kind: 'giver' | 'target' | 'punter' }[] {
-    const out: { f: Fighter; kind: 'giver' | 'target' | 'punter' }[] = this.punters().map((f) => ({ f, kind: 'punter' as const }));
+  jobMarks(): { f: Fighter; kind: 'giver' | 'target' | 'punter' | 'dealer' }[] {
+    const out: { f: Fighter; kind: 'giver' | 'target' | 'punter' | 'dealer' }[] = this.punters().map((f) => ({ f, kind: 'punter' as const }));
+    const r = this.rival;
+    if (r && !r.f.isKO && !this.leaving.has(r.f)) out.push({ f: r.f, kind: 'dealer' });
     const g = this.jobGiver;
     if (g && !this.leaving.has(g.f) && !g.f.isKO) out.push({ f: g.f, kind: 'giver' });
     const t = this.jobFolk.find((x) => x.role === 'target');
@@ -431,6 +439,8 @@ export class World {
   /** The people in a job you can talk to right now. */
   private jobOptions(): Interactable[] {
     const out: Interactable[] = [];
+    const r = this.rival;
+    if (r && !r.hostile && !r.f.isKO && r.f.team === 'neutral' && !this.leaving.has(r.f) && !this.inFight) out.push({ kind: 'dealer', x: r.f.pos.x, z: r.f.pos.z, label: `Talk to ${r.f.name}: deals on this corner`, f: r.f });
     const g = this.jobGiver;
     if (g && !g.f.isKO && g.f.team === 'neutral' && !this.leaving.has(g.f)) out.push({ kind: 'job', x: g.f.pos.x, z: g.f.pos.z, label: `Talk to ${g.f.name}: needs a hand`, f: g.f, role: 'giver' });
     const j = this.progress.save.jobs.active;
@@ -575,6 +585,87 @@ export class World {
       this.events.emit('job:step', { job: j, text: `${j.target} dropped the ${ITEMS[j.item]?.name.toLowerCase()}. Pick it up.` });
     } else if (j.kind === 'debt') this.collected();
     else if (j.kind === 'deal') this.finishJob();
+  }
+
+  // ---- street dealers (business/streetDealers.ts) ------------------------------------------------------------
+
+  /** Whoever's dealing on this street: him, his mates once he's called them, and how it's going. */
+  rival: { f: Fighter; d: Dealer; mates: { f: Fighter; arch: ArchetypeId }[]; hostile: boolean; done: boolean } | null = null;
+
+  /** A rough street with a rival dealer working it: he stands against a wall, a purple £ over his head. */
+  private setUpDealer(): void {
+    const id = this.level.id;
+    const p = this.progress;
+    if (!onStrip(id) || this.level.deep || !p.save.tutorial.essentialDone || !rivalIn(p, this.level.district)) return;
+    const d = dealerIn(p, this.level.district);
+    const r = new Rng(Math.floor(hash01(`dealerlook:${this.level.district}:${p.save.trips >> 2}`) * 1e6) + 11);
+    let x = spotIn(id, () => r.next());
+    // Not on top of someone with a job.
+    if (this.jobGiver && Math.abs(this.jobGiver.f.pos.x - x) < 4) x += x > this.jobGiver.f.pos.x ? 4 : -4;
+    const spot = this.standSpot(x, 0);
+    const look: CharacterAppearance = { ...randomAppearance(() => r.next(), 'male'), top: r.next() < 0.6 ? 'hoodie' : 'puffer', topColour: r.next() < 0.5 ? '#1b1d22' : '#2b2e35', accessories: r.next() < 0.6 ? ['cap'] : [] };
+    const f = new Fighter({ id: this.nextId++, name: d.name, team: 'neutral', attributes: defaultAttributes(Math.min(14, 4 + Math.floor(p.save.level / 2))), style: getStyle('street'), x: spot.x, z: spot.z, appearance: look });
+    f.tag = 'Dealer';
+    f.facing = f.pos.x > this.player.pos.x ? -1 : 1;
+    this.sim.add(f);
+    this.standStill(f);
+    this.rival = { f, d, mates: [], hostile: false, done: false };
+  }
+
+  /** Lean on him: he pays a cut, or squares up. */
+  taxDealer(): { paid: number } | { fights: true } | null {
+    const r = this.rival;
+    if (!r || r.hostile || r.f.isKO) return null;
+    const out = taxOffer(this.progress, this.level.district, this.lootRng.next());
+    if ('paid' in out) {
+      this.say(r.f, ['Alright, alright. Here. Now leave it.', 'Fine. Same time next week, yeah?', 'Take it. Don’t make a habit of it.']);
+      this.events.emit('cash', { amount: out.paid });
+    } else this.dealerSquareUp(['Tax? From me? Lads!', 'You’re having a laugh. Get him.', 'Wrong corner, mate.']);
+    return out;
+  }
+
+  /** Run him off: he and his mates have it out with you. */
+  runOffDealer(): void {
+    const r = this.rival;
+    if (!r || r.hostile || r.f.isKO) return;
+    this.progress.addHeatOf({ street: 2 });
+    this.dealerSquareUp(['My corner. Always has been. Lads!', 'Come on then!', 'You want it? Take it off me.']);
+  }
+
+  private dealerSquareUp(lines: readonly string[]): void {
+    const r = this.rival;
+    if (!r || r.hostile) return;
+    r.hostile = true;
+    this.say(r.f, lines);
+    const arches: ArchetypeId[] = ['thug', 'hooded', 'runner'];
+    for (let i = 0; i < r.d.mates; i++) {
+      const sp = this.standSpot(r.f.pos.x + (i ? 1.4 : -1.4), i + 1);
+      // His mates come out of the doorway behind him.
+      const m = this.spawnEnemy(arches[i % arches.length], sp.x, sp.z);
+      r.mates.push({ f: m, arch: arches[i % arches.length] });
+    }
+    r.f.team = 'enemy';
+    this.brains.set(r.f, this.enemyBrain(r.f, { ...ARCHETYPES.brawler }));
+    this.archetypeOf.set(r.f, 'brawler');
+    this.enemies.push(r.f);
+    for (const c of this.civilians) c.brain.react(this.player.pos.x, this.sim.frame);
+  }
+
+  /** He's down: the stash and his cash on the floor, the corner yours. */
+  private updateDealer(): void {
+    const r = this.rival;
+    if (!r || !r.hostile || r.done || !r.f.isKO) return;
+    r.done = true;
+    const at = r.f.pos;
+    let k = 0;
+    for (const drug of DRUGS) {
+      const n = r.d.stock[drug];
+      if (n > 0) this.dropOnGround(this.progress.newStack(DRUG_DEFS[drug].dealItem, n, { stolen: true }), at.x + (k++ - 1) * 0.35, at.z + 0.2);
+    }
+    this.cash.push({ key: `c${this.itemSeq++}`, x: at.x, z: at.z - 0.15, amount: r.d.cash, def: null });
+    takeCorner(this.progress, this.level.district);
+    this.progress.logCrime('assault');
+    this.events.emit('dealer:down', { name: r.f.name, district: this.level.district });
   }
 
   // ---- your crew ---------------------------------------------------------------------
@@ -1220,6 +1311,9 @@ export class World {
     const hired = new Set(progress.save.companions.recruited);
     const seats = (level.stations ?? []).filter((st) => st.id === 'recruit' && !!st.tab && hired.has(st.tab));
     this.stations = (level.stations ?? []).filter((st) => !seats.includes(st));
+    // Every cashpoint is a cashpoint (money/atm.ts): stand in front of it to use it. The street ones are set into the
+    // wall (not solid), so passers-by walk past them as they would the wall.
+    for (const pr of level.props) if (pr.kind === 'atm') this.stations.push({ id: 'atm', x: pr.x, z: Math.min(level.bounds.maxZ - 0.3, pr.z + 0.6), label: 'Use the cashpoint' });
     const obstacles: Obstacle[] = [];
     for (const p of level.props) {
       const box = propBox(p);
@@ -1292,7 +1386,10 @@ export class World {
     // Jobs: the people at the far end of the one you're on, and maybe someone on the street with one for you.
     this.setUpJob();
     this.setUpClub();
-    if (opts.civilians !== false) this.setUpStreetGiver();
+    if (opts.civilians !== false) {
+      this.setUpStreetGiver();
+      this.setUpDealer();
+    }
 
     if (opts.home) {
       this.homeLife = new HomeLife(level, this.arena, () => this.crewRng.next(), (f, text) => {
@@ -1625,6 +1722,7 @@ export class World {
     this.updatePolice();
     this.updateHunt();
     this.updateJob();
+    this.updateDealer();
     this.cleanUpKOs();
     this.updateCompanion();
     this.updateInjuries();
@@ -2288,6 +2386,7 @@ export class World {
     if (n.skinTone) look.skinTone = n.skinTone;
     if (n.hair) look.hair = n.hair as HairStyle;
     if (n.hairColour) look.hairColour = n.hairColour;
+    if (n.tattoos) look.tattoos = { ...look.tattoos, ...(n.tattoos as Partial<CharacterAppearance['tattoos']>) };
     // Sully runs the Arches: he looks like himself, not a stranger with his name.
     if (s.id === 'fight_club') Object.assign(look, BOSSES.sully.appearance);
     const f = new Fighter({
@@ -2302,7 +2401,7 @@ export class World {
     });
     f.facing = 1;
     // Behind a counter or in a corner: background people, except someone you might hire (they'll fight beside you).
-    f.background = s.id !== 'recruit';
+    f.background = s.id !== 'recruit' && !n.tattoos;
     this.sim.add(f);
     const brain = new DummyBrain(f, this.sim.rng);
     brain.mode = 'stand';
@@ -2586,7 +2685,7 @@ export class World {
       bd = d;
     }
     if (!best) return null;
-    const each = streetPrice(this.progress, best.drug, this.level.district, this.east());
+    const each = streetPrice(this.progress, best.drug, this.level.district, this.east(), competition(this.progress, this.level.district));
     const dd = DRUG_DEFS[best.drug];
     const what = best.qty > 1 ? `${best.qty} ${dd.dealPlural}` : dd.dealName.toLowerCase();
     return { kind: 'deal', x: best.f.pos.x, z: best.f.pos.z, label: `Sell: ${what} £${each * best.qty}`, target: best.f, drug: best.drug, qty: best.qty, price: each * best.qty };
@@ -2765,6 +2864,10 @@ export class World {
         return;
       case 'job':
         this.talkJob(it.f, it.role);
+        return;
+      case 'dealer':
+        it.f.facing = this.player.pos.x < it.f.pos.x ? -1 : 1;
+        this.events.emit('dealer:talk', { name: it.f.name, district: this.level.district });
         return;
       case 'deal':
         this.sellTo(it);

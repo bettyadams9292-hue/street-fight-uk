@@ -1,6 +1,8 @@
 import { advanceWork, DISTRICT_BUILD_BUDGET_MS } from '../performance/FrameBudget';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import * as THREE from 'three';
+import { drawDesign } from './skinPainter';
+import { TATTOO_DESIGNS } from '../character/Appearance';
 import { biscuitTin } from './props/biscuitTin';
 import { furniture, produceHeap, type FurnitureId, type ProduceId } from './props/KenneyLibrary';
 import { gymPiece, type GymModelId } from './props/GymLibrary';
@@ -3314,6 +3316,31 @@ export class LevelView {
         C(0.03, 0.035, 0.18, W / 2 - 0.32, 0.95, 0.04, this.mat('#9ac8e8', 0.2), 10);
         break;
       }
+      case 'tattoo_bed': {
+        // A tattoo artist's adjustable bed: black padded top on a chrome column and base, the back raised, an arm
+        // rest out to one side.
+        const chrome = this.mat('#c8ccd2', 0.25, 0.9);
+        const pad = this.mat(c ?? '#141418', 0.5);
+        B(W * 0.5, 0.05, D * 0.8, 0, 0.025, 0, chrome);
+        C(0.06, 0.08, 0.44, 0, 0.27, 0, chrome, 12);
+        B(W * 0.62, 0.12, D, -W * 0.19, 0.56, 0, pad);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(W * 0.4, 0.12, D), pad);
+        back.rotation.z = -0.5;
+        back.position.set(W * 0.26, 0.72, 0);
+        back.castShadow = true;
+        g.add(back);
+        B(0.5, 0.06, 0.16, 0.05, 0.7, D / 2 + 0.12, pad);
+        B(0.04, 0.16, 0.04, 0.05, 0.62, D / 2 + 0.12, chrome);
+        break;
+      }
+      case 'flash_wall': {
+        // Flash sheets pinned to the wall: the studio's own designs (render/skinPainter.ts), in a grid of sheets.
+        const t = flashTexture();
+        const board = new THREE.Mesh(new THREE.PlaneGeometry(W, 1.1), new THREE.MeshStandardMaterial({ map: t, roughness: 0.85 }));
+        board.position.set(0, 1.55, -D / 2 + 0.02);
+        g.add(board);
+        break;
+      }
       case 'barber_pole': {
         // The striped pole by a barber's door, its stripes turning (spinners), in a glass case with chrome caps.
         const chrome = this.mat('#c8ccd2', 0.25, 0.9);
@@ -4775,4 +4802,30 @@ function barberStripes(): THREE.CanvasTexture {
   stripes.wrapS = stripes.wrapT = THREE.RepeatWrapping;
   stripes.repeat.set(1, 3);
   return stripes;
+}
+
+/** The flash wall's sheets: every tattoo design, black ink on cream card, three rows. */
+function flashTexture(): THREE.CanvasTexture {
+  const designs = TATTOO_DESIGNS.filter((d) => d !== 'none' && d !== 'sleeve');
+  const cols = Math.ceil(designs.length / 2);
+  const c = document.createElement('canvas');
+  c.width = cols * 96;
+  c.height = 2 * 112;
+  const g = c.getContext('2d');
+  if (g) {
+    g.fillStyle = '#1a1612';
+    g.fillRect(0, 0, c.width, c.height);
+    designs.forEach((d, i) => {
+      const x = (i % cols) * 96;
+      const y = Math.floor(i / cols) * 112;
+      g.fillStyle = '#efe6d2';
+      g.fillRect(x + 6, y + 6, 84, 100);
+      g.save();
+      drawDesign(g, d, x + 48, y + 56, 96, 96, i % 3 === 1 ? '#7a1418' : '#141418');
+      g.restore();
+    });
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }
