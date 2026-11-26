@@ -248,6 +248,10 @@ test('clothes shop: buying costs money, fails cleanly when broke, full pockets d
   const r = buyItem(p, 'leather_jacket', 1);
   assert(!r.ok && !p.owns('leather_jacket') && p.save.cash.pocket === 30, 'bought with no money');
   p.save.cash.bank = 500;
+  // Designer labels come in after Sully (items/shopTiers.ts).
+  assert(!buyItem(p, 'leather_jacket', 1).ok && p.save.cash.bank === 500, 'sold a Designer piece before Sully');
+  p.save.flags.boss_sully = true;
+  assert(!buyItem(p, 'iconic_hoodie', 1).ok, 'sold an Iconic piece before Big Dunc');
   const price = shopPrice(ITEMS.leather_jacket, 1);
   const r2 = buyItem(p, 'leather_jacket', 1);
   assert(r2.ok && r2.where === 'pocket' && p.owns('leather_jacket'), 'buy');

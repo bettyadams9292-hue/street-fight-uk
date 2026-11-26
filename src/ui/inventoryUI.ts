@@ -12,6 +12,7 @@ import {
 } from '../items/items';
 import { BASE_INVENTORY_SLOTS, STORAGE_UPGRADE, type Progress } from '../progress/Progress';
 import { buyItem, pawnOffer, SHOP_STOCK, shopPrice } from '../items/shops';
+import { itemShopTier, SHOP_TIER_NAMES, SHOP_TIER_UNLOCK, shopTier, tierLock } from '../items/shopTiers';
 export { pawnOffer, SHOP_STOCK, shopPrice };
 import { MATERIAL_IDS } from '../workshop/workshop';
 import type { AreaId } from '../progress/Progress';
@@ -692,9 +693,10 @@ export function clothesShopScreen(progress: Progress, ui: UIManager, a: ShopActi
     const current = wornSlot ? s.worn[wornSlot] : null;
     const tiles = stock.map((id) => {
       const st: ItemStack = { uid: id, id, qty: 1 };
-      return itemTile(st, { selected: id === selected, tag: owned(id) ? 'OWNED' : undefined, price: `£${shopPrice(ITEMS[id], a.priceMult)}`, onClick: () => { selected = id; confirmRob = false; a.preview(id); build(true); } });
+      return itemTile(st, { selected: id === selected, tag: owned(id) ? 'OWNED' : tierLock(progress, ITEMS[id]) ? 'SOON' : undefined, price: `£${shopPrice(ITEMS[id], a.priceMult)}`, onClick: () => { selected = id; confirmRob = false; a.preview(id); build(true); } });
     });
     const canAfford = s.cash.pocket + s.cash.bank >= price;
+    const lock = tierLock(progress, d);
     const acts: HTMLElement[] = [
       menuButton(owned(selected) ? `Buy another (£${price})` : `Buy (£${price})`, () => {
         const r = buyItem(progress, selected, a.priceMult);
@@ -707,7 +709,7 @@ export function clothesShopScreen(progress: Progress, ui: UIManager, a: ShopActi
         bad = false;
         a.changed();
         build();
-      }, canAfford ? 'Pays from your pocket, then the tin' : 'Not enough money', canAfford ? 'primary' : ''),
+      }, lock ? `${SHOP_TIER_NAMES[itemShopTier(d)]}: ${lock}` : canAfford ? 'Pays from your pocket, then the tin' : 'Not enough money', canAfford && !lock ? 'primary' : ''),
     ];
     if (d.wear && owned(selected)) {
       const carriedSt = s.inventory.find((x) => x.id === selected) ?? s.storage.find((x) => x.id === selected);
@@ -724,6 +726,7 @@ export function clothesShopScreen(progress: Progress, ui: UIManager, a: ShopActi
     const compare = current && current.id !== selected ? h('div', { class: 'compare' }, h('div', { class: 'compare-title', text: `You’re wearing: ${defOf(current).name}` })) : null;
     el.replaceChildren(
       h('div', { class: 'shop-head' }, h('h2', { text: 'JD Streets' }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` })),
+      h('p', { class: 'hint', text: shopTier(progress) < 3 ? `On the rails now: ${SHOP_TIER_NAMES[shopTier(progress)].toLowerCase()} lines. ${SHOP_TIER_UNLOCK[(shopTier(progress) + 1) as 2 | 3].text}: ${SHOP_TIER_NAMES[(shopTier(progress) + 1) as 2 | 3].toLowerCase()}.` : 'Every line in stock, up to the Iconic pieces.' }),
       h('p', { class: 'warn-line', text: a.priceMult > 1 ? `Priya remembers you. Everything’s ${Math.round((a.priceMult - 1) * 100)}% dearer for you now.` : '' }),
       h('div', { class: 'inv-tabs' }, ...SHOP_SECTIONS.map((x) => h('button', { class: `inv-tab${x.id === section ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => { section = x.id; selected = SHOP_STOCK.find((id) => ITEMS[id] && x.test(ITEMS[id]))!; a.preview(selected); build(); } }, x.label))),
       h('div', { class: 'shop-body' }, h('div', { class: 'item-grid' }, ...tiles), h('div', { class: 'inv-right' }, detailPanel(d, null, acts, compare), h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message }))),

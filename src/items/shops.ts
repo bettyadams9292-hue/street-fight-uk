@@ -5,6 +5,7 @@
 import type { Progress } from '../progress/Progress';
 import type { ItemStack } from './Inventory';
 import { BAG_SLOTS, ITEMS, type ItemDef } from './items';
+import { tierLock } from './shopTiers';
 
 export const SHOP_STOCK: string[] = [
   'hoodie_grey', 'hoodie_black', 'designer_hoodie', 'tracksuit_top', 'tracksuit_top_red', 'tshirt_white', 'tshirt_black', 'football_home', 'football_away',
@@ -44,6 +45,9 @@ export type BuyResult = { ok: true; price: number; where: 'pocket' | 'storage' |
 export function buyItem(p: Progress, id: string, mult: number, stock: readonly string[] = SHOP_STOCK): BuyResult {
   const d = ITEMS[id];
   if (!d || !stock.includes(id)) return { ok: false, reason: 'They don’t sell that.' };
+  // The better labels come in as the story goes on (items/shopTiers.ts).
+  const lock = tierLock(p, d);
+  if (lock) return { ok: false, reason: `Not in stock yet. ${lock}.` };
   // A bag: one of each is plenty. A bigger one than you've got on goes straight on your back.
   const bag = BAG_SLOTS[id];
   const worn = p.save.worn.back;
