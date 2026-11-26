@@ -526,6 +526,9 @@ const SKYLINE: Record<'low' | 'city', string[]> = {
 /** Sign colours for named buildings with solid fronts. */
 const PLAIN_SIGN: [string, string] = ['#20242c', '#e8e2d4'];
 
+/** Bank branches: drawn by their own props (LevelView bank_front), on the kit's bank building. */
+const BANK_FRONTS = new Set(['CALIFAX', 'LLOYD’S THC']);
+
 // ---- kit models standing in for props -------------------------------------------------------
 
 interface PropModel {
@@ -614,7 +617,7 @@ const APPROVED_STREET: Partial<Record<PropKind, { ids: readonly string[]; repeat
   bollard: { ids: ['bollard'] },
   bollard_dock: { ids: ['bollard'] },
   bollard_row: { ids: ['bollard'], repeat: 4 },
-  atm: { ids: ['cashMachine'] },
+  // atm: none. A cash machine is set into the wall (LevelView's through-the-wall build), not the approved kiosk.
   vending: { ids: ['vendingMachine'] },
   market_stall: { ids: ['marketStall'] },
   skip: { ids: ['skipBin'] },
@@ -844,11 +847,18 @@ export function planStreet(level: LevelDef): StreetPlan {
 
   /** A run of buildings with solid fronts, stretched slightly so they fill the frontage exactly. */
   function solid(f: FacadeDef, label: string, frng: Rng, prev: string): string {
-    const palette = d!.solid?.[f.kind] ?? SOLID[f.kind] ?? ['nyc/bldg-tenement', 'nyc/bldg-walkup-infill'];
+    // A bank branch is the kit's bank building; its ground floor, fascia and cash machine are the bank_front and
+    // atm props (money/atm.ts), so it carries no plain sign of its own.
+    const bank = BANK_FRONTS.has(label);
+    const palette = bank ? ['nyc/bldg-bank'] : d!.solid?.[f.kind] ?? SOLID[f.kind] ?? ['nyc/bldg-tenement', 'nyc/bldg-walkup-infill'];
     const span = f.x1 - f.x0;
     const chosen: string[] = [];
     let left = span;
     let guard = 0;
+    if (bank) {
+      chosen.push('nyc/bldg-bank');
+      left = 0;
+    }
     while (left > 1.6 && guard++ < 40) {
       let options = palette.filter((m) => size(m).w <= left * 1.3);
       if (!options.length) options = [[...palette].sort((a, b) => size(a).w - size(b).w)[0]];
@@ -874,7 +884,7 @@ export function planStreet(level: LevelDef): StreetPlan {
       if (dark && s.w * k > 7 && frng.chance(0.6)) put('nyc/prop-scaffold', x + (s.w * k) / 2, 0, back - 0.9, { sx: Math.min(1.6, (s.w * k) / 5), tint: '#8a8680' });
       x += s.w * k;
     }
-    if (label) {
+    if (label && !bank) {
       const [bg, fg] = PLAIN_SIGN;
       const w = Math.min(span - 0.8, Math.max(3.2, label.length * 0.36));
       plan.signs.push({ x: (f.x0 + f.x1) / 2, y: 3.5, z: back + 0.08, w, h: 0.6, text: label, bg: f.colour ?? bg, fg: f.colour ? readable(f.colour) : fg });

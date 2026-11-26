@@ -183,7 +183,9 @@ const highStreet: LevelDef = {
     { kind: 'showroom', x0: 54, x1: 62, label: 'SOFA SO GOOD', colour: '#2a4a3a' },
     { kind: 'shop', x0: 62, x1: 68, label: 'ABRA KEBABRA', colour: '#9a2a1a' },
     { kind: 'shop', x0: 68, x1: 74, label: 'PEAKY BARBERS', colour: '#1f2a44' },
-    { kind: 'pub', x0: 74, x1: 92, label: 'THE DODGY ARMS', colour: '#2a1a12' },
+    // The Califax branch (money/atm.ts): its front is the bank_front prop below.
+    { kind: 'office', x0: 74, x1: 80, label: 'CALIFAX' },
+    { kind: 'pub', x0: 80, x1: 92, label: 'THE DODGY ARMS', colour: '#2a1a12' },
   ],
   // Bev Okafor, the money lender, outside the bookies: jobs (src/jobs).
   stations: [contactStation('bev', 4.2, -1.0, -0.65)],
@@ -192,8 +194,6 @@ const highStreet: LevelDef = {
     { kind: 'phonebox', x: 18, z: -1.4 },
     { kind: 'postbox', x: 33, z: -1.6 },
     { kind: 'bin', x: 40, z: -1.6 },
-    // Califax cash machine set into JD Streets' wall (money/atm.ts ATM_SITES).
-    { kind: 'atm', x: 44.6, z: -2.05, solid: false, label: 'califax' },
     { kind: 'bench', x: 50, z: -1.65 },
     { kind: 'van', x: 58, z: 1.2 },
     { kind: 'planter', x: 66, z: -1.5 },
@@ -201,6 +201,9 @@ const highStreet: LevelDef = {
     { kind: 'barber_pole', x: 69.6, z: -1.88, solid: false },
     { kind: 'barrier', x: 71, z: 1.6 },
     { kind: 'crates', x: 84, z: -1.5 },
+    // The Califax branch, its cash machine in the wall at its right end (money/atm.ts ATM_SITES).
+    { kind: 'bank_front', x: 77, z: -2.05, solid: false, label: 'califax' },
+    { kind: 'atm', x: 79.25, z: -2.05, solid: false, label: 'califax' },
   ],
   pickups: [
     { id: 'pop', kind: 'item', item: 'can_of_pop', x: 24, z: -1.1 },
@@ -490,7 +493,9 @@ const city: LevelDef = {
     { id: 'to_territory', kind: 'edge', side: 'right', x: 92, z: 0, to: 'territory', toEntry: 'left', label: 'The Pit', requires: 'boss_ratcatcher', lockedText: 'The Ratcatcher’s crew won’t let you past' },
   ],
   facades: [
-    { kind: 'office', x0: 0, x1: 18, label: 'MERIDIAN FINANCIAL' },
+    { kind: 'office', x0: 0, x1: 11, label: 'MERIDIAN FINANCIAL' },
+    // The Lloyd's THC branch (money/atm.ts): its front is the bank_front prop below.
+    { kind: 'office', x0: 11, x1: 18, label: 'LLOYD’S THC' },
     { kind: 'office', x0: 18, x1: 30, label: 'KIRKGATE CONSTABULARY', colour: '#16243f' },
     { kind: 'club', x0: 30, x1: 46, label: 'AFTER HOURS' },
     { kind: 'casino', x0: 46, x1: 62, label: 'THE GRAND GAMBLE' },
@@ -513,8 +518,9 @@ const city: LevelDef = {
     { kind: 'vending', x: 34.2, z: -1.98 },
     { kind: 'security_post', item: 'post_high', x: 47, z: -1.95, solid: false },
     { kind: 'bin', x: 62, z: -1.98 },
-    // Lloyd's THC cash machine in the wall beside Cash Degenerator.
-    { kind: 'atm', x: 64.4, z: -2.05, solid: false, label: 'lloyds' },
+    // The Lloyd's THC branch, its cash machine in the wall at its right end.
+    { kind: 'bank_front', x: 14.5, z: -2.05, solid: false, label: 'lloyds', size: [3.5, 0.2] },
+    { kind: 'atm', x: 17.25, z: -2.05, solid: false, label: 'lloyds' },
     { kind: 'security_post', item: 'post_medium', x: 74.5, z: -1.95, solid: false },
     { kind: 'bin', x: 88, z: -1.98 },
     { kind: 'bench', x: 27, z: -1.98 },
