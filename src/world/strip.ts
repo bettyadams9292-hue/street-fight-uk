@@ -56,7 +56,9 @@ const KEPT_STREET_DOORS = new Set(['subway_steps', 'estate_stairs']);
 /** A door that is the stairs down to the subway (or back up out of it): drawn as a stairwell, not a door in a building. */
 export function isSubwayStairs(level: LevelDef, e: ExitDef): boolean {
   if (e.kind !== 'door') return false;
-  if (e.to === 'subway' || e.to === 'underground') return true;
+  // A station's own way out is its stairs, drawn by the station (render/metroStation.ts), not a stairwell.
+  if (level.id.startsWith('metro_')) return false;
+  if (e.to === 'subway' || e.to === 'underground' || e.to.startsWith('metro_')) return true;
   return (level.id === 'subway' || level.id === 'underground') && /stair|steps/i.test(`${e.id} ${e.label}`);
 }
 

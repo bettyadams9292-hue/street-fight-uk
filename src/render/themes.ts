@@ -62,6 +62,7 @@ export const THEMES: Record<Theme, ThemeProfile> = {
   nightlife: { ...STREET, ground: 'paving', skyline: 'city', graffiti: 9, neon: '#ff4ac0' },
   underground: { interior: false, roofed: true, ground: 'concrete', road: false, skyline: 'none', bg: 0x080809, fog: 0.035, graffiti: 5 },
   hq: { ...STREET, road: false, ground: 'hard', skyline: 'city', graffiti: 0, neon: '#ff3a2a' },
+  metro: { interior: false, roofed: true, ground: 'tiles', road: false, skyline: 'none', bg: 0x050608, fog: 0.012, graffiti: 0 },
 };
 
 export function themeProfile(t: Theme): ThemeProfile {

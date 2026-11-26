@@ -1,3 +1,4 @@
+import { defaultMetro, sanitiseMetro, type MetroSave } from '../travel/metro';
 import { newClub, sanitiseClub, type ClubSave } from '../fightclub/club';
 import { sanitiseCharacter, finalAttributes, BACKGROUNDS, type PlayerCharacter } from '../character/Character';
 import { newDealing, sanitiseDealing, type DealingSave } from '../business/dealing';
@@ -53,6 +54,8 @@ export const CORE_AREA_IDS = [
   'home', 'estate', 'high_street', 'alleys', 'industrial', 'subway', 'city', 'territory',
   // Stage 5: interiors
   'clothes_shop', 'pawn_shop', 'pub', 'police_station',
+  // The Brack Metro's stations (world/metroLevels.ts, travel/metro.ts)
+  'metro_tanner_road', 'metro_high_street', 'metro_market_square', 'metro_canal_docks', 'metro_riverside', 'metro_neon_mile', 'metro_deep_line',
   // Ink & Iron, the tattoo studio on Hollins Estate
   'tattoo_studio',
   // Peaky Barbers, the barber on the High Street
@@ -128,6 +131,8 @@ export interface GameSave {
   record: CrimeEntry[];
   /** Bent and straight cops you know, Kerrigan, what's in the property store, crew you owe, your phone at the desk (`progress/cops.ts`). */
   police: PoliceSave;
+  /** The Metro: visits (each rolls whether a train's in), rides, and a tap-in waiting for its tap-out (travel/metro.ts). */
+  metro: MetroSave;
   /** The tutorial: lessons done and skipped, hints shown, an unfinished lesson (src/tutorial). */
   tutorial: TutorialSave;
   /** What's in the four hotbar slots (medical, food, drink, weapon), by item id; null picks for you (items/hotbar.ts). */
@@ -221,6 +226,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     districtHeat: {},
     record: [],
     police: defaultPolice(),
+    metro: defaultMetro(),
     tutorial: newTutorial(),
     hotbar: newHotbar(),
     jobs: newJobs(),
@@ -313,6 +319,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     districtHeat: sanitiseHeatMap(r.districtHeat),
     record: sanitiseRecord(r.record),
     police: defaultPolice(),
+    metro: sanitiseMetro(r.metro),
     tutorial: sanitiseTutorial(r.tutorial),
     hotbar: sanitiseHotbar(r.hotbar),
     jobs: sanitiseJobs(r.jobs, AREA_IDS),

@@ -566,7 +566,7 @@ console.log('Stage 5: the campaign');
 test('every area (24 + Stage 6 and 7 buildings), every exit resolves, every new district has a boss or is an interior', () => {
   // 36 hand-built areas (the police station since the police work, the Scrap Yard fight club since #95), plus the
   // jeweller, the estate agent, Ashcombe Park and the inside of a property, and Peaky Barbers the barber.
-  assert(AREA_IDS.length === 42 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
+  assert(AREA_IDS.length === 49 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const l = LEVELS[id];
     assert(l, `no level ${id}`);
@@ -575,7 +575,8 @@ test('every area (24 + Stage 6 and 7 buildings), every exit resolves, every new 
   // Plus the jeweller, the estate agent, the inside of a property, and Ashcombe Park (a gated private road: no fights).
   const interiors = ['home', 'clothes_shop', 'pawn_shop', 'police_station', 'pub', 'furniture_shop', 'car_dealer', 'bike_shop', 'casino', 'basement', 'grow_shop', 'gym_store', 'boxing_gym', 'karate_dojo', 'wrestling_club', 'jeweller', 'estate_agent', 'property', 'ashcombe', 'fight_club', 'barber_shop', 'tattoo_studio'];
   for (const id of AREA_IDS) {
-    if (interiors.includes(id)) continue;
+    // Metro stations: platform and carriage scraps are the Metro's next step (docs/SUBWAY_PLAN.md).
+    if (interiors.includes(id) || id.startsWith('metro_')) continue;
     assert(LEVELS[id].encounters.length > 0, `${id} has no fights`);
   }
   const bossAreas = AREA_IDS.filter((id) => LEVELS[id].encounters.some((e) => e.boss));

@@ -27,7 +27,7 @@ test('every station stands on a real street, inside it, and away from that stree
     const l = LEVELS[s.area];
     assert(l, `${s.id}: no area ${s.area}`);
     assert(s.x > l.bounds.minX + 2 && s.x < l.bounds.maxX - 2, `${s.id} at ${s.x} is off ${s.area}`);
-    for (const e of l.exits) if (e.kind === 'door' && e.to !== 'subway') assert(Math.abs(e.x - s.x) > 1.5, `${s.id} is on top of ${e.id}`);
+    for (const e of l.exits) if (e.kind === 'door' && e.to !== 'subway' && !e.to.startsWith('metro_')) assert(Math.abs(e.x - s.x) > 1.5, `${s.id} is on top of ${e.id}`);
   }
   assert(new Set(STATIONS.map((s) => s.id)).size === STATIONS.length, 'ids are unique');
 });

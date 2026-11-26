@@ -47,6 +47,7 @@ export const VENUE_THEMES = {
   club: { bg: '#0b0b0c', panel: '#161617', ink: '#f2f2f2', accent: '#c81d25', band: 'linear-gradient(90deg, #2b0a0c, #c81d25 50%, #2b0a0c)' },
   street: { bg: '#0f1014', panel: '#1a1b21', ink: '#f1f1f4', accent: '#7c5cff', band: 'linear-gradient(90deg, #3c2a8a, #7c5cff)' },
   home: { bg: '#15120f', panel: '#211c17', ink: '#f3ebe0', accent: '#e8b04b', band: 'linear-gradient(90deg, #7b5a2e, #e8b04b 50%, #7b5a2e)' },
+  metro: { bg: '#0c0e13', panel: '#171a22', ink: '#f4f4f6', accent: '#e8601c', band: 'linear-gradient(90deg, #e8601c 0 30%, #1d2230 30% 70%, #e8601c 70%)' },
   police: { bg: '#0b0f18', panel: '#121826', ink: '#f2f3f6', accent: '#ffd200', band: chequer('#1a43c8', '#ffd200') },
   plain: { bg: '#121317', panel: '#1b1c22', ink: '#f2f3f6', accent: '#e2342b', band: 'linear-gradient(90deg, #e2342b, rgba(226, 52, 43, 0))' },
 } satisfies Record<string, VenueTheme>;

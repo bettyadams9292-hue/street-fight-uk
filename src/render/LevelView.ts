@@ -1,3 +1,6 @@
+import { buildMetroStation, type MetroView } from './metroStation';
+import { stationAt } from '../travel/metro';
+import { stationOf, type StationId as MetroStop } from '../travel/subway';
 import { glassLettering } from './brandArt';
 import { bankOf } from '../money/atm';
 import { advanceWork, DISTRICT_BUILD_BUDGET_MS } from '../performance/FrameBudget';
@@ -718,6 +721,8 @@ export class LevelView {
   }
 
   private buildGround(): void {
+    // A station lays its own floors, platform and track (render/metroStation.ts).
+    if (this.level.theme === 'metro') return;
     const { minX, maxX, maxZ } = this.level.bounds;
     const X0 = this.X0;
     const X1 = this.X1;
@@ -1039,6 +1044,8 @@ export class LevelView {
         return this.ruin(f);
       case 'platform':
         return this.platform(f);
+      case 'metro':
+        return this.metroStation();
       case 'fortress':
         return this.fortress(f);
       case 'interior':
@@ -1280,6 +1287,15 @@ export class LevelView {
   }
 
   /** Disused underground platform: curved tiled tunnel, roundel, track bed in front. */
+  /** A Brack Metro station: the whole room is one build (render/metroStation.ts). */
+  private metro: MetroView | null = null;
+  private metroStation(): void {
+    const id = stationAt(this.level.id);
+    if (!id) return;
+    this.metro = buildMetroStation(id, this.back);
+    this.group.add(this.metro.group);
+  }
+
   private platform(f: FacadeDef): void {
     const w = f.x1 - f.x0;
     const cx = (f.x0 + f.x1) / 2;
@@ -4124,7 +4140,7 @@ export class LevelView {
    * walls to a lit tunnel mouth, green railings along the top, and a SUBWAY sign on a frame
    * over the entrance. Fills the gap the street plan leaves in the buildings.
    */
-  private subwayEntrance(x: number): void {
+  private subwayEntrance(x: number, metro: MetroStop | null = null): void {
     const z0 = this.back + 0.02; // the top step, on the building line
     const W = SUBWAY_GAP * 2;
     const len = 5.2;
@@ -4176,10 +4192,25 @@ export class LevelView {
     // A frame over the top of the steps carrying the SUBWAY sign.
     for (const side of [-1, 1]) this.box(0.12, 3.1, 0.12, x + side * (stepW / 2 + 0.12), 1.55, z0 + 0.05, rail, false);
     this.box(stepW + 0.4, 0.12, 0.12, x, 3.1, z0 + 0.05, rail, false);
-    const t = signTexture('SUBWAY', '#1f4fd1', '#ffffff', { w: 512, h: 128 });
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(stepW - 0.1, (stepW - 0.1) / 4), new THREE.MeshStandardMaterial({ map: t, roughness: 0.5, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.35 }));
-    sign.position.set(x, 2.62, z0 + 0.12);
-    this.group.add(sign);
+    if (metro) {
+      // A station's stairs: the station's name on the line's charcoal, and the roundel on a post at the kerb side.
+      const name = stationOf(metro).name.toUpperCase();
+      const t = signTexture(`${name} STATION`, '#1d2230', '#ffffff', { w: 768, h: 128 });
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(stepW - 0.1, (stepW - 0.1) / 6), new THREE.MeshStandardMaterial({ map: t, roughness: 0.5, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.3 }));
+      sign.position.set(x, 2.75, z0 + 0.12);
+      this.group.add(sign);
+      const rt = new THREE.TextureLoader().load('/art/metro/roundel.webp');
+      rt.colorSpace = THREE.SRGBColorSpace;
+      const disc = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), new THREE.MeshStandardMaterial({ map: rt, transparent: true, roughness: 0.5, emissive: 0xffffff, emissiveMap: rt, emissiveIntensity: 0.35 }));
+      disc.position.set(x - stepW / 2 - 0.4, 2.55, z0 + 0.25);
+      this.group.add(disc);
+      this.box(0.08, 2.1, 0.08, x - stepW / 2 - 0.4, 1.05, z0 + 0.2, rail, false);
+    } else {
+      const t = signTexture('SUBWAY', '#1f4fd1', '#ffffff', { w: 512, h: 128 });
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(stepW - 0.1, (stepW - 0.1) / 4), new THREE.MeshStandardMaterial({ map: t, roughness: 0.5, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.35 }));
+      sign.position.set(x, 2.62, z0 + 0.12);
+      this.group.add(sign);
+    }
     const lamp = new THREE.PointLight(0xfff0cc, 1.4, 6, 1.6);
     lamp.position.set(x, -1.2, z0 - 2.4);
     this.group.add(lamp);
@@ -4264,7 +4295,7 @@ export class LevelView {
       const z = this.back + 0.05;
       // Stairs down to the subway: a stairwell in a gap in the buildings, not a door in a garage.
       if (isSubwayStairs(this.level, ex)) {
-        this.subwayEntrance(ex.x);
+        this.subwayEntrance(ex.x, stationAt(ex.to));
         this.exitSign(ex, ex.x, 3.35, this.back + 0.4);
         return;
       }
@@ -4428,6 +4459,8 @@ export class LevelView {
         // Ceiling lampshade.
         this.cyl(0.01, 0.01, 0.4, l.x, 2.8, l.z, this.mat('#222'), 6);
         this.cyl(0.12, 0.25, 0.22, l.x, 2.5, l.z, this.mat('#f0e0c0', 0.8, 0, { emissive: l.colour, emissiveIntensity: 0.45 }), 16);
+      } else if (theme === 'metro') {
+        // A station draws its own strip lights (render/metroStation.ts).
       } else if (prof.roofed) {
         // Strip light hanging from the ceiling.
         this.box(1.4, 0.06, 0.2, l.x, Math.min(l.y + 0.6, 3.25), l.z, this.mat('#ffffff', 0.4, 0, { emissive: l.colour, emissiveIntensity: 1.1 }), false);
@@ -4452,6 +4485,7 @@ export class LevelView {
 
   update(dt: number, time: number, world: World, camX: number): void {
     for (const sp of this.spinners) sp.rotation.y = time * 0.25;
+    this.metro?.update(dt);
     for (const b of this.seamBlocks) b.group.visible = exitLocked(b.exit, world.progress);
     this.dressing?.update(time, camX);
     if (this.foreCars.length) {

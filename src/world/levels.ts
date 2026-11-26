@@ -1,3 +1,4 @@
+import { METRO_LEVELS, addMetroEntrances } from './metroLevels';
 import { contactStation } from '../jobs/contacts';
 import type { AreaId } from '../progress/Progress';
 import { DISTRICTS } from './districts';
@@ -654,7 +655,10 @@ export const LEVELS: Record<AreaId, LevelDef> = {
   estate_agent: deepRoom(fitOut(ESTATE_AGENT)),
   ashcombe: ASHCOMBE,
   property: propertyPlaceholder(),
+  // The Brack Metro's stations.
+  ...METRO_LEVELS,
 } as Record<AreaId, LevelDef>;
+addMetroEntrances(LEVELS as Record<string, LevelDef>);
 // Every property's front door on its street, and the doors into the new places.
 addPropertyDoors(LEVELS);
 // East of Hale House the street carries on through the generated towns, each shut until the boss before it is beaten.

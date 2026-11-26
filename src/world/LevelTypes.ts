@@ -16,7 +16,9 @@ export type Theme =
   | 'furniture_store' | 'car_showroom' | 'bike_shop' | 'casino'
   | 'basement' | 'grow_shop'
   | 'gym_store' | 'boxing_gym' | 'karate_dojo' | 'wrestling_club'
-  | 'jeweller' | 'estate_agent' | 'ashcombe';
+  | 'jeweller' | 'estate_agent' | 'ashcombe'
+  // The Brack Metro's stations (world/metroLevels.ts)
+  | 'metro';
 
 /** Solid things on the ground. Size comes from the kind unless given. */
 export type PropKind =
@@ -93,7 +95,7 @@ export interface PropDef {
 /** Back-wall scenery along the street. */
 export type FacadeKind =
   | 'terrace' | 'shop' | 'pub' | 'tower' | 'garages' | 'warehouse' | 'fence' | 'hoarding' | 'subway' | 'office' | 'club' | 'house_front' | 'room'
-  | 'semi' | 'precinct' | 'mall' | 'stand' | 'leisure' | 'dock' | 'containers' | 'market' | 'car_park' | 'ruin' | 'platform' | 'fortress'
+  | 'semi' | 'precinct' | 'mall' | 'stand' | 'leisure' | 'dock' | 'containers' | 'market' | 'car_park' | 'ruin' | 'platform' | 'metro' | 'fortress'
   | 'interior' | 'showroom' | 'casino' | 'basement' | 'gym_front'
   // A big house set back behind gates and railings (Ashcombe Park); `label` is its name, `flags` its style
   | 'mansion';
@@ -236,7 +238,7 @@ export interface EncounterDef {
 
 export type StationId =
   | 'wardrobe' | 'mirror' | 'gym' | 'sparring' | 'kitchen' | 'garage' | 'sofa' | 'contacts' | 'tin' | 'storage'
-  | 'clothes_counter' | 'changing' | 'barber_chair' | 'tattoo_chair' | 'atm' | 'bank_counter' | 'pawn_counter' | 'cash_hatch' | 'front_desk' | 'bar'
+  | 'clothes_counter' | 'changing' | 'barber_chair' | 'tattoo_chair' | 'atm' | 'bank_counter' | 'metro_gates' | 'metro_board' | 'metro_train' | 'pawn_counter' | 'cash_hatch' | 'front_desk' | 'bar'
   | 'planner' | 'bike_rack' | 'car' | 'bike' | 'furniture_counter' | 'car_counter' | 'bike_counter'
   | 'casino_slots' | 'casino_roulette' | 'casino_blackjack' | 'casino_cashier'
   | 'terminal' | 'grow_counter' | 'grow_display'
