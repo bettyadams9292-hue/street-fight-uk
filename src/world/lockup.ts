@@ -6,7 +6,7 @@
  * world/levels.ts; what's in it and that it's once only are the container's (`fixed`, World.containerKey).
  */
 export const LOCKUP_ID = 'lockup';
-/** Half its width: the gap in the frontage. Fills the garage row from the tower block (x 32) to the subway gap. */
+/** Half its width: the gap in the frontage. The far end of the garage row (x 40–44), garages between it and the subway (x 33.9). */
 export const LOCKUP_HALF = 2.0;
 /** How far it runs back into the building, and its height. */
 export const LOCKUP_DEPTH = 3.2;

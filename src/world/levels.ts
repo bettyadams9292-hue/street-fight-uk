@@ -84,14 +84,14 @@ const estate: LevelDef = {
     { id: 'home', x: -6, z: -1.0, facing: 1 },
     { id: 'left', x: -10, z: 0, facing: 1 },
     { id: 'right', x: 54, z: 0, facing: -1 },
-    { id: 'subway', x: 38, z: -1.0, facing: -1 },
+    { id: 'subway', x: 33.9, z: -1.0, facing: -1 },
   ],
   exits: [
     { id: 'boxing_door', kind: 'door', x: 50, z: -1.6, to: 'boxing_gym', toEntry: 'door', label: 'Into Punch & Crunch' },
     { id: 'home_door', kind: 'door', x: -6, z: -1.6, to: 'home', toEntry: 'door', label: 'Go home' },
     { id: 'to_residential', kind: 'edge', side: 'left', x: -12, z: 0, to: 'residential', toEntry: 'right', label: 'Hollins Estate' },
     { id: 'to_high_street', kind: 'edge', side: 'right', x: 56, z: 0, to: 'high_street', toEntry: 'left', label: 'High Street' },
-    { id: 'subway_steps', kind: 'door', x: 38, z: -1.6, to: 'subway', toEntry: 'estate', label: 'Subway steps', requires: 'shortcut_subway', lockedText: 'The subway gate’s chained from the other side' },
+    { id: 'subway_steps', kind: 'door', x: 33.9, z: -1.6, to: 'subway', toEntry: 'estate', label: 'Subway steps', requires: 'shortcut_subway', lockedText: 'The subway gate’s chained from the other side' },
   ],
   facades: [
     { kind: 'house_front', x0: -12, x1: 0, label: '14' },
@@ -109,8 +109,8 @@ const estate: LevelDef = {
     { kind: 'bench', x: 14, z: -1.6 },
     { kind: 'trolley', x: 22, z: -0.46 },
     { kind: 'skip', x: 28, z: -1.2 },
-    { kind: 'bollard', x: 34, z: -0.28 },
-    { kind: 'bollard', x: 35.5, z: -0.28 },
+    { kind: 'bollard', x: 36.4, z: -0.28 },
+    { kind: 'bollard', x: 37.6, z: -0.28 },
     { kind: 'cone', x: 42, z: 0.4 },
     { kind: 'car', x: 48, z: 1.4, colour: '#7a1f1f' },
   ],
@@ -120,14 +120,15 @@ const estate: LevelDef = {
     { id: 'bottle', kind: 'item', item: 'w_bottle', x: 24, z: -0.6 },
     { id: 'cone', kind: 'item', item: 'w_cone', x: 41, z: 1.1 },
     { id: 'brick', kind: 'item', item: 'w_brick', x: 31, z: -0.4 },
-    { id: 'garages_stash', kind: 'secret', x: 43, z: -1.8, label: 'Behind the garages', reward: { cash: 40, items: ['cap_black'] } },
+    { id: 'garages_stash', kind: 'secret', x: 37.9, z: -1.8, label: 'Behind the garages', reward: { cash: 40, items: ['cap_black'] } },
   ],
   containers: [
     { id: 'bins', kind: 'bin', x: -2.2, z: -0.55, label: 'Search the wheelie bins', loot: 'bin' },
     { id: 'skip', kind: 'skip', x: 28, z: -0.25, label: 'Search the skip', loot: 'skip' },
     { id: 'car', kind: 'car', x: 6, z: 0.3, label: 'Search the parked car', loot: 'car' },
-    // The Estate King's lock-up: its own garage at the end of the row (world/lockup.ts), clear of the subway steps.
-    { id: 'lockup', kind: 'locker', x: 34.0, z: -1.45, label: 'Open the lock-up', fixed: [{ id: 'w_crowbar' }, { id: 'console' }, { id: 'cash_bundle' }], requires: 'has_lockup_key', lockedText: 'Padlocked. Somebody on Hollins has the key.' },
+    // The Estate King's lock-up: its own garage at the far end of the row (world/lockup.ts), with ordinary garages
+    // between it and the subway steps (x 33.9), so it reads as a lock-up of its own and not part of the stairwell.
+    { id: 'lockup', kind: 'locker', x: 42.0, z: -1.45, label: 'Open the lock-up', fixed: [{ id: 'w_crowbar' }, { id: 'console' }, { id: 'cash_bundle' }], requires: 'has_lockup_key', lockedText: 'Padlocked. Somebody on Hollins has the key.' },
   ],
   breakables: [
     { id: 'crates1', kind: 'crate', x: 20, z: -1.5, hp: 2, drops: 'plank', loot: 'crate' },
