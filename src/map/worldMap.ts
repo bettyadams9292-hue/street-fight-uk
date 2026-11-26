@@ -6,7 +6,7 @@ import { AREA_IDS, type AreaId, type Progress } from '../progress/Progress';
 import { CAB_FLAG, CAB_MIN, CAB_PER_MILE, SHOP_STOPS, TAXI_STOPS } from '../ui/hub';
 import { DISTRICT_ORDER, LEVELS } from '../world/levels';
 import type { ExitDef, LevelDef } from '../world/LevelTypes';
-import { STRIP, stripLength, stripOffsets } from '../world/strip';
+import { STRIP } from '../world/strip';
 import { GENERATED_TOWNS } from '../world/towns';
 import { PROPERTIES } from '../realty/catalogue';
 import { statusOf } from '../realty/portfolio';
@@ -19,18 +19,18 @@ import { LOCKUP_ID } from '../world/lockup';
 /**
  * The town map's data. Places, doors, links, locks, bosses, shops and people
  * all come from the game's own levels and progress; this file only adds
- * where each street sits on the drawn map (the streets are side-scrollers,
- * so each one is a road from its left end to its right end) and a line of
- * description for the info card.
+ * where each street sits on the drawn map (each a road from its left end to
+ * its right end, laid out as a real street plan: LAYOUT), the city round them
+ * (FEATURES), and a line of description for the info card.
  */
 
 export type Pt = { x: number; y: number };
 
-/** Map canvas size (SVG units). */
-export const MAP_W = 2600;
-export const MAP_H = 1700;
+/** Map canvas size (SVG units): the city on the left, the six towns out east along the A-roads. */
+export const MAP_W = 4400;
+export const MAP_H = 2200;
 
-/** A street drawn as a road: the points it runs through, west end to east end. */
+/** A street drawn as a road: the points it runs through, from its west (left-hand, x = minX) end. */
 interface RoadLayout {
   pts: Pt[];
   /** District shading colour. */
@@ -49,7 +49,7 @@ const TINTS: Partial<Record<AreaId, { tint: string; road: RoadLayout['road'] }>>
   industrial: { tint: '#5a5f66', road: 'main' },
   ind_estate: { tint: '#5a6068', road: 'main' },
   market: { tint: '#7a6a3a', road: 'side' },
-  subway: { tint: '#4a4f5c', road: 'main' },
+  subway: { tint: '#4a4f5c', road: 'tunnel' },
   city: { tint: '#8a6a30', road: 'main' },
   docks: { tint: '#3a5a70', road: 'side' },
   precinct: { tint: '#6a5a7a', road: 'main' },
@@ -57,57 +57,223 @@ const TINTS: Partial<Record<AreaId, { tint: string; road: RoadLayout['road'] }>>
   car_park: { tint: '#555a62', road: 'side' },
   nightlife: { tint: '#7a3a6a', road: 'main' },
   factory: { tint: '#4a4a4a', road: 'side' },
-  underground: { tint: '#3a3a4a', road: 'side' },
+  underground: { tint: '#3a3a4a', road: 'tunnel' },
   territory: { tint: '#6a3030', road: 'side' },
   hq: { tint: '#4a2a2a', road: 'main' },
 };
 
 /**
- * The town is one long street (world/strip.ts), so the map is one long road.
- * It is drawn folded into rows so it fits the sheet: west to east along the
- * top, round the bend, back along the middle, and east again along the bottom.
+ * The town as a real street plan. The game is one long street (world/strip.ts), and on the map it still is, each
+ * street running on from the last, but it winds through a city the way real roads do: round corners, past the
+ * canal and the railway, through the centre, with the back streets drawn round it. Each street is a run of moves on
+ * a grid of CELL units (E, W, N, S and a number of cells), roughly as long as the street is in the game.
  */
-const ROW_X0 = 260;
-const ROW_X1 = MAP_W - 260;
-const ROW_Y = [210, 530, 850, 1170, 1490];
-const ROW_LEN = ROW_X1 - ROW_X0;
-const BEND_LEN = ROW_Y[1] - ROW_Y[0];
-const SNAKE_LEN = ROW_LEN * ROW_Y.length + BEND_LEN * (ROW_Y.length - 1);
+const CELL = 60;
+type Move = [dir: 'E' | 'W' | 'N' | 'S', cells: number];
+const CITY_AT = { x: 150, y: 100 };
+const CITY_START: Pt = { x: 2, y: 3 };
+const CITY: [AreaId, Move[]][] = [
+  ['stadium', [['E', 4], ['S', 1], ['E', 2]]],
+  ['leisure', [['E', 3], ['N', 2], ['E', 2]]],
+  ['residential', [['E', 2], ['S', 3], ['E', 2]]],
+  ['estate', [['S', 3], ['E', 3]]],
+  ['high_street', [['E', 8]]],
+  ['alleys', [['N', 2], ['E', 2], ['N', 2]]],
+  ['industrial', [['E', 6], ['S', 2]]],
+  ['ind_estate', [['S', 4], ['E', 2], ['S', 2]]],
+  ['market', [['W', 3], ['S', 3]]],
+  ['subway', [['W', 6]]],
+  ['city', [['W', 2], ['S', 2], ['W', 4]]],
+  ['docks', [['S', 3], ['W', 5]]],
+  ['precinct', [['W', 3], ['N', 3], ['W', 1]]],
+  ['mall', [['W', 4], ['S', 4]]],
+  ['car_park', [['S', 2], ['W', 3], ['S', 2]]],
+  ['nightlife', [['E', 8]]],
+  ['factory', [['E', 5], ['S', 2]]],
+  ['underground', [['E', 7]]],
+  ['territory', [['E', 3], ['N', 4]]],
+  ['hq', [['E', 4], ['N', 2], ['E', 2]]],
+];
+/** Each other town: four streets knotted together, the same shape turned and placed (top-left cell of each). */
+const TOWN: Move[][] = [
+  [['E', 3], ['S', 2], ['E', 3]],
+  [['S', 3], ['W', 2], ['S', 2]],
+  [['E', 4], ['N', 2], ['E', 2]],
+  [['N', 3], ['E', 2], ['N', 2]],
+];
+const TOWN_AT: Pt[] = [{ x: 2780, y: 160 }, { x: 3560, y: 160 }, { x: 2780, y: 800 }, { x: 3560, y: 800 }, { x: 2780, y: 1440 }, { x: 3560, y: 1440 }];
 
-/** The corners of the folded road, in order, with how far along each one is. */
-const SNAKE: { at: number; p: Pt }[] = (() => {
-  const out: { at: number; p: Pt }[] = [];
-  let at = 0;
-  ROW_Y.forEach((y, row) => {
-    const eastward = row % 2 === 0;
-    out.push({ at, p: { x: eastward ? ROW_X0 : ROW_X1, y } });
-    at += ROW_LEN;
-    out.push({ at, p: { x: eastward ? ROW_X1 : ROW_X0, y } });
-    at += BEND_LEN;
-  });
-  return out;
-})();
-
-function snakePoint(d: number): Pt {
-  const t = Math.max(0, Math.min(SNAKE_LEN, d));
-  for (let i = 1; i < SNAKE.length; i++) {
-    if (t <= SNAKE[i].at) return lerp(SNAKE[i - 1].p, SNAKE[i].p, (t - SNAKE[i - 1].at) / Math.max(1e-6, SNAKE[i].at - SNAKE[i - 1].at));
+const STEP: Record<Move[0], Pt> = { E: { x: 1, y: 0 }, W: { x: -1, y: 0 }, N: { x: 0, y: -1 }, S: { x: 0, y: 1 } };
+function walk(at: Pt, from: Pt, moves: Move[]): Pt[] {
+  const out = [{ x: at.x + from.x * CELL, y: at.y + from.y * CELL }];
+  let c = { ...from };
+  for (const [d, n] of moves) {
+    c = { x: c.x + STEP[d].x * n, y: c.y + STEP[d].y * n };
+    out.push({ x: at.x + c.x * CELL, y: at.y + c.y * CELL });
   }
-  return SNAKE[SNAKE.length - 1].p;
+  return out;
+}
+const cityPt = (x: number, y: number): Pt => ({ x: CITY_AT.x + x * CELL, y: CITY_AT.y + y * CELL });
+
+/**
+ * Real streets aren't ruled lines: every road on the map is drawn through a gentle, smooth warp of the plane (the
+ * same for everything, so what meets still meets) with its corners rounded off, like an old town's.
+ */
+function warp(q: Pt): Pt {
+  const { x, y } = q;
+  return {
+    x: x + 34 * Math.sin(y / 260 + 0.7) + 20 * Math.sin((x + y) / 410 + 2.1) + 10 * Math.sin(y / 97 + x / 300),
+    y: y + 30 * Math.sin(x / 300 + 1.3) + 18 * Math.sin((x - y) / 370 + 0.4) + 9 * Math.sin(x / 110 - y / 340),
+  };
+}
+/** Corners rounded (Chaikin), the ends kept where they are, then every point put through the warp. */
+function organic(line: Pt[], rounds = 3, r = 0.22): Pt[] {
+  let pts = line;
+  for (let n = 0; n < rounds; n++) {
+    const out: Pt[] = [pts[0]];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      if (i > 0) out.push(lerp(a, b, r));
+      if (i < pts.length - 2) out.push(lerp(a, b, 1 - r));
+    }
+    out.push(pts[pts.length - 1]);
+    pts = out;
+  }
+  // Long straights get points along them, so the warp can bend them too.
+  const dense: Pt[] = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const n = Math.max(1, Math.ceil(Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y) / 30));
+    for (let k = 1; k <= n; k++) dense.push(lerp(pts[i - 1], pts[i], k / n));
+  }
+  return dense.map(warp);
+}
+/** A smooth closed blob (a park, a lake) round a middle, its edge wandering by `wobble`. */
+function blob(c: Pt, rx: number, ry: number, seed: number, wobble = 0.22): Pt[] {
+  const out: Pt[] = [];
+  for (let i = 0; i < 28; i++) {
+    const a = (i / 28) * Math.PI * 2;
+    const k = 1 + wobble * (Math.sin(a * 3 + seed) * 0.6 + Math.sin(a * 5 + seed * 2.3) * 0.4);
+    out.push(warp({ x: c.x + Math.cos(a) * rx * k, y: c.y + Math.sin(a) * ry * k }));
+  }
+  return out;
 }
 
 const LAYOUT: Partial<Record<AreaId, RoadLayout>> = (() => {
   const out: Partial<Record<AreaId, RoadLayout>> = {};
-  const total = stripLength(LEVELS);
-  const offs = stripOffsets(LEVELS);
-  for (const id of STRIP) {
-    const b = LEVELS[id].bounds;
-    const d0 = (offs[id]! / total) * SNAKE_LEN;
-    const d1 = ((offs[id]! + b.maxX - b.minX) / total) * SNAKE_LEN;
-    const pts = [snakePoint(d0), ...SNAKE.filter((c) => c.at > d0 + 1 && c.at < d1 - 1).map((c) => c.p), snakePoint(d1)];
-    out[id] = { pts, ...(TINTS[id] ?? { tint: '#5a5a5a', road: 'main' as const }) };
+  const style = (id: AreaId) => TINTS[id] ?? { tint: '#5a5a5a', road: 'main' as const };
+  let c = { ...CITY_START };
+  for (const [id, moves] of CITY) {
+    const pts = walk(CITY_AT, c, moves);
+    c = { x: (pts[pts.length - 1].x - CITY_AT.x) / CELL, y: (pts[pts.length - 1].y - CITY_AT.y) / CELL };
+    out[id] = { pts: organic(pts), ...style(id) };
   }
+  // The generated towns, in the strip's order, four streets each.
+  const rest = STRIP.filter((id) => !out[id]);
+  rest.forEach((id, i) => {
+    const town = Math.floor(i / 4);
+    const at = TOWN_AT[town % TOWN_AT.length];
+    let tc = { x: 0, y: 0 };
+    for (let k = 0; k < i % 4; k++) for (const [d, n] of TOWN[k]) tc = { x: tc.x + STEP[d].x * n, y: tc.y + STEP[d].y * n };
+    out[id] = { pts: organic(walk(at, tc, TOWN[i % 4])), ...style(id) };
+  });
   return out;
+})();
+
+/**
+ * The rest of the map, drawn round the streets you play, the way a city map looks: the river winding through the
+ * middle and the canal, parks, the railway, the A-roads out to the other towns, a few through-roads, and the dense
+ * web of back streets (a jittered lattice of junctions with most links built and a few diagonals, all through the
+ * same warp, so blocks come out irregular).
+ */
+export interface MapFeatures {
+  water: Pt[][];
+  parks: Pt[][];
+  rail: Pt[][];
+  links: Pt[][];
+  /** Through-roads: wider than the back streets, not streets you play. */
+  arterial: Pt[][];
+  minor: Pt[][];
+  labels: { text: string; at: Pt; ang: number; kind: 'water' | 'park' | 'rail' | 'link' }[];
+}
+export const FEATURES: MapFeatures = (() => {
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const water = [
+    // The River Brack, wide and winding through the middle, under the bridges, past the docks.
+    organic([cityPt(-4, 21.4), cityPt(4, 19.6), cityPt(10, 23.2), cityPt(16, 21.6), cityPt(21, 21.4), cityPt(25.2, 19), cityPt(27.4, 14.6), cityPt(31.6, 13.6), cityPt(36, 16), cityPt(41, 14.4), { x: 2700, y: 1000 }, { x: 3200, y: 1230 }, { x: 3600, y: 1180 }, { x: 4400, y: 1300 }], 4, 0.25),
+    // The Grand Union Canal, past Canal Side Works, down to meet the river.
+    organic([cityPt(42, 2.6), cityPt(33, 4.5), cityPt(30.4, 6.4), cityPt(27.8, 9.6), cityPt(27.4, 14.4)], 3, 0.25),
+  ];
+  const parks = [
+    blob(cityPt(4.4, 1.4), 150, 70, 1), blob(cityPt(9.7, 4.2), 60, 110, 2), blob(cityPt(16.6, 10.8), 140, 100, 3, 0.3),
+    blob(cityPt(32.8, 18.4), 110, 70, 4), blob(cityPt(2.4, 14.6), 120, 110, 5, 0.3), blob(cityPt(21.6, 3.6), 70, 50, 6),
+    blob(cityPt(12.4, 14.2), 50, 40, 7), blob(cityPt(37.6, 8.2), 60, 70, 8), blob(cityPt(25.6, 24.6), 90, 50, 9),
+  ];
+  const rail = [organic([cityPt(-3, 12.2), cityPt(12, 11.6), cityPt(22, 12.4), cityPt(31, 11.2), cityPt(42, 10.4), { x: 4300, y: 760 }], 2, 0.3)];
+  // A-roads: Hale House out to Saltmere, and on from each town's last street to the next town's first.
+  const links: Pt[][] = [];
+  const order = STRIP.filter((id) => LAYOUT[id]);
+  for (let i = 1; i < order.length; i++) {
+    const a = LAYOUT[order[i - 1]]!.pts;
+    const from = a[a.length - 1];
+    const to = LAYOUT[order[i]]!.pts[0];
+    if (Math.hypot(from.x - to.x, from.y - to.y) < 2) continue;
+    const mid = { x: (from.x + to.x) / 2 + (rnd() - 0.5) * 120, y: (from.y + to.y) / 2 + (rnd() - 0.5) * 120 };
+    links.push(organic([from, mid, to], 3, 0.3).map((q, j, all) => (j === 0 ? from : j === all.length - 1 ? to : q)));
+  }
+  // Through-roads radiating from the centre and a ring, as old towns grew.
+  const mid = cityPt(20, 13);
+  const arterial: Pt[][] = [];
+  for (let i = 0; i < 6; i++) {
+    const ang = (i / 6) * Math.PI * 2 + 0.5 + (rnd() - 0.5) * 0.4;
+    const len = 1250 + rnd() * 250;
+    const pts: Pt[] = [];
+    // From the ring road outwards: the middle is the old town's own tangle.
+    for (let t = 0.42; t <= 1.0001; t += 0.116) pts.push({ x: mid.x + Math.cos(ang + Math.sin(t * 3 + i) * 0.12) * len * t, y: mid.y + Math.sin(ang + Math.sin(t * 3 + i) * 0.12) * len * t * 0.72 });
+    arterial.push(organic(pts, 2, 0.3));
+  }
+  const ring: Pt[] = [];
+  for (let i = 0; i <= 24; i++) {
+    const a = (i / 24) * Math.PI * 2;
+    ring.push({ x: mid.x + Math.cos(a) * 560 * (1 + 0.08 * Math.sin(a * 3)), y: mid.y + Math.sin(a) * 400 * (1 + 0.08 * Math.cos(a * 2)) });
+  }
+  arterial.push(organic(ring, 2, 0.3));
+  // The back streets: a jittered lattice, each junction nudged, most links built, a few diagonals.
+  const minor: Pt[][] = [];
+  const web = (x0: number, y0: number, x1: number, y1: number, step: number) => {
+    const nx = Math.ceil((x1 - x0) / step);
+    const ny = Math.ceil((y1 - y0) / step);
+    const node: Pt[][] = [];
+    for (let i = 0; i <= nx; i++) {
+      node.push([]);
+      for (let j = 0; j <= ny; j++) node[i].push({ x: x0 + i * step + (rnd() - 0.5) * step * 0.55, y: y0 + j * step + (rnd() - 0.5) * step * 0.55 });
+    }
+    const add = (a: Pt, b: Pt) => {
+      // A slight bow in each street.
+      const m = lerp(a, b, 0.5);
+      const bow = (rnd() - 0.5) * step * 0.25;
+      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      minor.push(organic([a, { x: m.x - ((b.y - a.y) / len) * bow, y: m.y + ((b.x - a.x) / len) * bow }, b], 1, 0.25));
+    };
+    for (let i = 0; i <= nx; i++) for (let j = 0; j <= ny; j++) {
+      if (i < nx && rnd() < 0.8) add(node[i][j], node[i + 1][j]);
+      if (j < ny && rnd() < 0.8) add(node[i][j], node[i][j + 1]);
+      if (i < nx && j < ny && rnd() < 0.12) add(node[i][j], rnd() < 0.5 ? node[i + 1][j + 1] : node[i + 1][j]);
+    }
+  };
+  web(CITY_AT.x - CELL * 3, CITY_AT.y - CELL * 3, CITY_AT.x + 42 * CELL, CITY_AT.y + 30 * CELL, 78);
+  for (const t of TOWN_AT) web(t.x - CELL * 3, t.y - CELL * 3, t.x + CELL * 15, t.y + CELL * 10, 72);
+  const labels: MapFeatures['labels'] = [
+    { text: 'River Brack', at: warp(cityPt(13, 22.8)), ang: 8, kind: 'water' },
+    { text: 'River Brack', at: warp(cityPt(33.8, 14.4)), ang: 22, kind: 'water' },
+    { text: 'Grand Union Canal', at: warp(cityPt(31.4, 5.6)), ang: -32, kind: 'water' },
+    { text: 'Kirkgate Park', at: warp(cityPt(4.4, 1.5)), ang: 0, kind: 'park' },
+    { text: 'Hollins Rec', at: warp(cityPt(9.7, 4.2)), ang: -80, kind: 'park' },
+    { text: 'Victoria Park', at: warp(cityPt(16.6, 10.9)), ang: 0, kind: 'park' },
+    { text: 'Brackley Line', at: warp(cityPt(7, 11.5)), ang: -2, kind: 'rail' },
+  ];
+  return { water, parks, rail, links, arterial, minor, labels };
 })();
 
 /** The card text for a place: written by hand for the home town, made from the town's own facts for the generated ones. */
@@ -547,7 +713,7 @@ export function cabStop(id: AreaId): { entry: string } | null {
 }
 
 /** Map units to a mile: the town is about five miles end to end. */
-export const MAP_PER_MILE = 250;
+export const MAP_PER_MILE = 440;
 /** Roads wind: a cab goes about 1.3 times the straight-line distance, the usual ratio for a British town. */
 export const ROAD_FACTOR = 1.3;
 

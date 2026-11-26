@@ -10,6 +10,7 @@ import { AREA_IDS, newSave, Progress, sanitiseSave, type AreaId } from '../src/p
 import { LEVELS, DISTRICT_ORDER } from '../src/world/levels';
 import { CAB_MIN, SHOP_STOPS, TAXI_STOPS } from '../src/ui/hub';
 import {
+  FEATURES,
   MAP_H,
   MAP_W,
   cabFare,
@@ -72,6 +73,21 @@ test('every area in the game is on the map, inside the map, and has a descriptio
   }
 });
 
+test('the map is a street plan: no street crosses another', () => {
+  const segs = roads().flatMap((r) => r.pts.slice(1).map((q, i) => ({ id: r.id, a: r.pts[i], b: q })));
+  type P = { x: number; y: number };
+  const cross = (p: P, q: P, r: P, s: P) => {
+    const d = (q.x - p.x) * (s.y - r.y) - (q.y - p.y) * (s.x - r.x);
+    if (Math.abs(d) < 1e-9) return false;
+    const t = ((r.x - p.x) * (s.y - r.y) - (r.y - p.y) * (s.x - r.x)) / d;
+    const u = ((r.x - p.x) * (q.y - p.y) - (r.y - p.y) * (q.x - p.x)) / d;
+    return t > 0.001 && t < 0.999 && u > 0.001 && u < 0.999;
+  };
+  for (let i = 0; i < segs.length; i++) for (let j = i + 1; j < segs.length; j++) {
+    if (segs[i].id !== segs[j].id) assert(!cross(segs[i].a, segs[i].b, segs[j].a, segs[j].b), `${segs[i].id} crosses ${segs[j].id}`);
+  }
+});
+
 test('streets that join end to end meet on the map; places sit by their own front door', () => {
   for (const r of roads()) {
     const lvl = LEVELS[r.id];
@@ -81,7 +97,10 @@ test('streets that join end to end meet on the map; places sit by their own fron
       const back = LEVELS[ex.to].exits.find((e) => e.to === r.id && e.kind === 'edge');
       if (!back) continue;
       const b = playerPoint(ex.to, back.x);
-      assert(Math.hypot(a.x - b.x, a.y - b.y) < 30, `${r.id} → ${ex.to} don’t meet (${Math.round(Math.hypot(a.x - b.x, a.y - b.y))})`);
+      // Out of town the two ends meet by an A-road instead (FEATURES.links).
+      const near = (q: { x: number; y: number }, c: { x: number; y: number }) => Math.hypot(q.x - c.x, q.y - c.y) < 30;
+      const linked = FEATURES.links.some((l) => (near(l[0], a) && near(l[l.length - 1], b)) || (near(l[0], b) && near(l[l.length - 1], a)));
+      assert(linked || near(a, b), `${r.id} → ${ex.to} don’t meet (${Math.round(Math.hypot(a.x - b.x, a.y - b.y))})`);
     }
   }
   const pub = placePoint('pub');
@@ -167,8 +186,8 @@ test('cabs: on the meter, so further costs more', () => {
   assert(cabFare(0) === CAB_MIN && cabFare(0.1) === CAB_MIN, 'a hop round the corner is the minimum');
   assert(cabFare(10) > cabFare(5) && cabFare(5) > cabFare(2), 'the meter goes up with the miles');
   const pub = fare('estate', 'pub');
-  const far = fare('estate', 'subway');
-  assert(far.miles! > pub.miles! && far.cost > pub.cost, `across town costs more: pub £${pub.cost} (${pub.miles} mi), subway £${far.cost} (${far.miles} mi)`);
+  const far = fare('estate', 'territory');
+  assert(far.miles! > pub.miles! && far.cost > pub.cost, `across town costs more: pub £${pub.cost} (${pub.miles} mi), the Pit £${far.cost} (${far.miles} mi)`);
   assert(pub.cost >= CAB_MIN && pub.cost <= 12, `the pub from the estate is a short fare: £${pub.cost}`);
   assert(far.cost >= 12 && far.cost <= 30, `the far end of town is a real fare: £${far.cost}`);
   // Where you stand on the street counts: the far end of the estate is further from the subway.
@@ -178,7 +197,7 @@ test('cabs: on the meter, so further costs more', () => {
   assert(far.ok, 'the far end is open once the story has opened it');
   const skint = fresh(far.cost - 1);
   allFlags(skint);
-  const t = travelOptions(skint, 'estate', 'subway', true).find((t) => t.kind === 'cab')!;
+  const t = travelOptions(skint, 'estate', 'territory', true).find((t) => t.kind === 'cab')!;
   assert(!t.ok, 'can’t take a fare you can’t pay');
 });
 
