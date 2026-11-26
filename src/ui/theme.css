@@ -2921,7 +2921,7 @@ body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) *
 .vn-themed .menu-btn.danger { background: #d8241a; color: #fff; border-left: 0; }
 .vn-themed .menu-btn[disabled] { opacity: 0.42; }
 .vn-themed .menu-btn.focused, .vn-themed .menu-btn:hover, .vn-themed .menu-btn:focus-visible { outline: 2px solid var(--vn-ink); outline-offset: 2px; background: var(--vn-accent); color: color-mix(in srgb, var(--vn-bg) 92%, black); }
-.vn-themed .panel-actions .menu-btn.focused, .vn-themed .panel-actions .menu-btn:hover { background: color-mix(in srgb, var(--vn-ink) 10%, transparent); color: var(--vn-ink); }
+.vn-themed .panel-actions .menu-btn.focused, .vn-themed .panel-actions .menu-btn:hover, .vn-themed .panel-actions .menu-btn:focus-visible { background: color-mix(in srgb, var(--vn-ink) 10%, transparent); color: var(--vn-ink); }
 /* -- Rows, lists and tabs -- */
 .vn-themed .shop-row { gap: 12px; padding: 10px 12px; margin-bottom: 6px; border: 1px solid var(--vn-line); border-radius: 12px; background: var(--vn-panel); }
 .vn-themed .shop-row .what b, .vn-themed .prop-item b, .vn-themed .rt-item b, .vn-themed .job-title { font: 700 15px/1.25 var(--disp); color: var(--vn-ink); letter-spacing: 0; text-transform: none; }
@@ -3011,3 +3011,24 @@ body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) *
 .biz-strain.on .biz-strain-tag { background: #3fae5a; color: #08140b; }
 .biz-strain .menu-btn, .biz-strain button { align-self: flex-start; white-space: normal; }
 .vn-themed .biz-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
+
+/* ---- shop screens wear their shopfront's fascia as the logo (ui/shopBrand.ts) ---- */
+.screen.vn-themed.vn-logo .hub-head h2::before, .screen.vn-themed.vn-logo .shop-head h2::before {
+  content: '' !important; display: block !important; height: clamp(34px, 7vw, 46px) !important; width: calc(clamp(34px, 7vw, 46px) * var(--vn-logo-ar, 4)) !important;
+  max-width: 100%; margin: 0 0 6px !important; background: var(--vn-logo) left center / contain no-repeat !important; border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35); font-size: 0 !important;
+}
+.screen.vn-themed.vn-logo.vn-light .hub-head h2::before, .screen.vn-themed.vn-logo.vn-light .shop-head h2::before { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); }
+/* The logo says the name: the title's words give way to the kind of place under it. */
+.screen.vn-themed.vn-logo-swap .hub-head h2, .screen.vn-themed.vn-logo-swap .shop-head h2 { font-size: 0 !important; line-height: 0 !important; color: transparent !important; }
+.screen.vn-themed.vn-logo-swap .hub-head h2 > *, .screen.vn-themed.vn-logo-swap .shop-head h2 > * { display: none !important; }
+.screen.vn-themed.vn-logo-swap.vn-kicked .hub-head h2::after, .screen.vn-themed.vn-logo-swap.vn-kicked .shop-head h2::after {
+  content: var(--vn-kicker); display: block; font: 700 11px/1.2 var(--ui2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--vn-dim); margin: 0;
+}
+.screen.vn-themed.vn-logo .hub-head h2, .screen.vn-themed.vn-logo .shop-head h2 { border-bottom: 0 !important; text-decoration: none; background: none; }
+
+/* Cash Degenerator's own screen wears its fascia for a title too. */
+.inv-screen.pawn.vn-own-logo .inv-top h2 { font-size: 0 !important; color: transparent; width: calc(clamp(34px, 7vw, 46px) * var(--vn-logo-ar, 4)); max-width: 70%; height: clamp(34px, 7vw, 46px); background: var(--vn-logo) left center / contain no-repeat; border-radius: 4px; }
+/* Back is a quiet outline button on every themed screen (painted-button rules were filling it with the accent). */
+.screen.vn-themed .panel-actions .menu-btn { background: transparent !important; color: var(--vn-ink) !important; border: 1px solid var(--vn-line) !important; }
+.screen.vn-themed .panel-actions .menu-btn.focused, .screen.vn-themed .panel-actions .menu-btn:hover, .screen.vn-themed .panel-actions .menu-btn:focus-visible { background: color-mix(in srgb, var(--vn-ink) 12%, transparent) !important; }

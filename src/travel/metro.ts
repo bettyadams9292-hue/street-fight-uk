@@ -7,12 +7,11 @@
  * doors open, sometimes not, and then the board says how long, and the only way to see if one's in is to go back
  * up and come down again (`rollTrain`). Arriving by train, it's always there (you've just got off it).
  *
- * The gates: tap in (your card or cash on you must cover the most a ride can cost; nothing is taken yet) and the
- * fare is charged when you get off at the other end (`tapOut`), or hop them (`hop`: caught, it's the penalty
- * fare, police heat and fare evasion on your record). Going out through the gates is always free.
+ * No barriers: the hall is open to the platform, and you pay for a ride as you board (`payRide`: cash, then card).
+ * Each station stays shuttered until its district's boss is beaten (`Station.opens` in travel/subway.ts).
  */
 import type { Progress, AreaId } from '../progress/Progress';
-import { HOP_CAUGHT, STATIONS, fare, hopCaught, stationOf, type StationId } from './subway';
+import { STATIONS, fare, stationOf, type StationId } from './subway';
 
 export const metroArea = (id: StationId): AreaId => `metro_${id}` as AreaId;
 
@@ -27,8 +26,6 @@ export interface MetroVisit {
   train: boolean;
   /** Minutes till the next one, on the board (no train). */
   minutes: number;
-  /** Past the gates (tapped in, hopped, or off a train). */
-  through: boolean;
   /** Just off a train: it pulls out a few seconds after you arrive. */
   arrived: boolean;
 }
@@ -43,19 +40,18 @@ export function setMetroVisit(v: MetroVisit | null): void {
 /** About half the time a train's in when you come down. */
 export const TRAIN_CHANCE = 0.5;
 
-/** Saved: how many times you've come down (so each visit rolls afresh, and a reload keeps the answer), rides, and a tap-in waiting for its tap-out. */
+/** Saved: how many times you've come down (so each visit rolls afresh, and a reload keeps the answer), and rides. */
 export interface MetroSave {
   visits: number;
   rides: number;
-  tappedIn: StationId | null;
 }
 
-export const defaultMetro = (): MetroSave => ({ visits: 0, rides: 0, tappedIn: null });
+export const defaultMetro = (): MetroSave => ({ visits: 0, rides: 0 });
 
 export function sanitiseMetro(raw: unknown): MetroSave {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Partial<MetroSave>;
   const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
-  return { visits: n(r.visits), rides: n(r.rides), tappedIn: STATIONS.some((s) => s.id === r.tappedIn) ? (r.tappedIn as StationId) : null };
+  return { visits: n(r.visits), rides: n(r.rides) };
 }
 
 const hash01 = (s: string): number => {
@@ -70,55 +66,22 @@ export function rollTrain(p: Progress, station: StationId): MetroVisit {
   m.visits++;
   const r = hash01(`${station}:${m.visits}`);
   const train = r < TRAIN_CHANCE;
-  return { station, train, minutes: train ? 0 : 2 + Math.floor(hash01(`${station}:${m.visits}:wait`) * 7), through: false, arrived: false };
+  return { station, train, minutes: train ? 0 : 2 + Math.floor(hash01(`${station}:${m.visits}:wait`) * 7), arrived: false };
 }
 
-/** Off a train at `station`: it's there, and you're past the gates. */
-export const arriveBy = (station: StationId): MetroVisit => ({ station, train: true, minutes: 0, through: true, arrived: true });
+/** Off a train at `station`: it's there. */
+export const arriveBy = (station: StationId): MetroVisit => ({ station, train: true, minutes: 0, arrived: true });
 
 /** Open stations you can ride to from here. */
 export function destinations(p: Progress, here: StationId): StationId[] {
-  return STATIONS.filter((s) => s.id !== here && (!s.opens || p.has(s.opens))).map((s) => s.id);
+  return STATIONS.filter((s) => s.id !== here && p.has(s.opens)).map((s) => s.id);
 }
 
-/** The most a single ride can cost from here (what tapping in needs to cover). */
-export function maxFare(p: Progress, here: StationId): number {
-  return Math.max(0, ...destinations(p, here).map((d) => fare(here, d)));
-}
-
-export type GateResult = { ok: true; caught?: boolean; fine?: number } | { ok: false; reason: string };
-
-/** Tap in: you need enough to cover the dearest ride; nothing's taken till you tap out. */
-export function tapIn(p: Progress, here: StationId): GateResult {
-  const need = maxFare(p, here);
-  if (!p.canAfford(need)) return { ok: false, reason: `Seek assistance. You need £${need.toFixed(2)} to travel: cash or your card.` };
-  p.save.metro.tappedIn = here;
-  return { ok: true };
-}
-
-/** Off at `to`: the fare for the ride from where you tapped in. Returns what was charged (0 if you hopped). */
-export function tapOut(p: Progress, to: StationId): number {
-  const from = p.save.metro.tappedIn;
-  p.save.metro.tappedIn = null;
+/** Pay for a ride on the train (cash, then your card). No barriers: you pay as you board. */
+export function payRide(p: Progress, from: StationId, to: StationId): { ok: true; paid: number } | { ok: false; reason: string } {
+  const paid = Math.ceil(fare(from, to));
+  if (!p.canAfford(paid)) return { ok: false, reason: `It's £${paid} to ${stationOf(to).name}: not enough cash on you or on your card.` };
+  p.pay(paid);
   p.save.metro.rides++;
-  if (!from) return 0;
-  const f = fare(from, to);
-  // Pennies: the fare's in pounds and pence, money is whole pounds; round up like any shop.
-  const charge = Math.ceil(f);
-  p.pay(charge);
-  return f;
-}
-
-/** Hop the barriers: `roll` 0–1 against the odds of being caught. */
-export function hop(p: Progress, here: StationId, roll: number): GateResult {
-  const st = stationOf(here);
-  const dodged = p.save.record.filter((c) => c.crime === 'fare_evasion').length;
-  const caught = roll < hopCaught(st.zone, dodged, p.heatIn().police);
-  p.save.metro.tappedIn = null;
-  if (!caught) return { ok: true, caught: false };
-  const fine = Math.min(HOP_CAUGHT.fine, p.spendable());
-  p.pay(fine);
-  p.addHeatOf({ police: HOP_CAUGHT.police });
-  p.logCrime(HOP_CAUGHT.record);
-  return { ok: true, caught: true, fine };
+  return { ok: true, paid };
 }

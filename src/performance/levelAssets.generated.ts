@@ -39,8 +39,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  },
  "bike_shop": {
   "doors": [
-   "door_bathroom",
-   "door_wooden"
+   "door_bathroom"
   ],
   "security": [
    "wall_dome"
@@ -51,7 +50,6 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  },
  "boxing_gym": {
   "doors": [
-   "door_bathroom",
    "door_wooden"
   ],
   "gym": [
@@ -80,7 +78,6 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  "car_park": {},
  "casino": {
   "doors": [
-   "door_bathroom",
    "door_panel"
   ],
   "security": [
@@ -147,7 +144,6 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  },
  "furniture_shop": {
   "doors": [
-   "door_bathroom",
    "door_panel"
   ],
   "security": [
@@ -156,7 +152,6 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  },
  "grow_shop": {
   "doors": [
-   "door_panel",
    "door_wooden"
   ],
   "hydro": [
@@ -177,8 +172,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  },
  "gym_store": {
   "doors": [
-   "door_bathroom",
-   "door_wooden"
+   "door_bathroom"
   ],
   "gym": [
    "incline_bench",
@@ -244,8 +238,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  },
  "karate_dojo": {
   "doors": [
-   "door_bathroom",
-   "door_wooden"
+   "door_bathroom"
   ],
   "gym": [
    "flat_bench",
@@ -443,7 +436,6 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  "underground": {},
  "wrestling_club": {
   "doors": [
-   "door_bathroom",
    "door_wooden"
   ],
   "gym": [

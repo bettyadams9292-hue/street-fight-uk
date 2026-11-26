@@ -262,7 +262,7 @@ export const TAXI_STOPS: { area: AreaId; entry: string; requires?: string; requi
   { area: 'mall', entry: 'left', requires: 'boss_precinct', requiresText: 'Beat Dean Pryce first' },
 ];
 
-/** Straight to the shop door. Cash Degenerator has a back door with a cab home, so it's safe to visit early. */
+/** Straight to the shop door (only once its street is open: worldMap `unlocked`). */
 export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: string }[] = [
   { area: 'pawn_shop', entry: 'door', where: 'Sell valuables. Market Square, City Centre', shop: 'pawn' },
   { area: 'police_station', entry: 'door', where: 'Your record, settle fines. Market Square, City Centre' },
@@ -281,7 +281,7 @@ export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: st
   { area: 'grow_shop', entry: 'door', where: 'Basement equipment. Brackley Trading Estate' },
   { area: 'casino', entry: 'door', where: 'Slots, roulette, blackjack, prize motors. Market Square' },
   { area: 'jeweller', entry: 'door', where: 'Rings, watches, chains and grills. Riverside Centre', shop: 'jeweller' },
-  { area: 'estate_agent', entry: 'door', where: 'Buy, sell and let property. Meridian Financial, City Centre' },
+  { area: 'estate_agent', entry: 'door', where: 'Buy, sell and let property. Wrongmove, Market Square' },
   { area: 'ashcombe', entry: 'gate', where: 'Mansions and penthouses for sale. Off Leisure Park' },
 ];
 

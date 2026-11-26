@@ -4,7 +4,7 @@
  *
  * - The stairs up to the street at the left, tiled, with a yellow WAY OUT sign over them.
  * - The ticket hall: granite floor, cream tiles with the station's band, ticket machines, the line map, a help
- *   point, and the gate line: stainless cabinets with readers on top and paddles that open once you're through.
+ *   point, and an open hall straight through to the platform.
  * - The platform: the edge coping, a yellow line and MIND THE GAP, then the drop to the track (ballast, sleepers,
  *   running rails and the two conductor rails on their pots), and the tunnel's far wall: cream tiles, the band,
  *   the name frieze, roundels and posters, curving up into the vault. Tunnel mouths at both ends.
@@ -347,25 +347,7 @@ export function buildMetroStation(id: StationId, back: number): MetroView {
   box(1.4, 2.3, 0.9, 13.6, 1.15, back + 0.45, lib('Metal061A', 1, 2, '#2c3038', 0.5), group, true);
   box(1.2, 0.9, 0.04, 13.6, 1.55, back + 0.91, flat('#0c1218', 0.1, 0.5, 0x223344, 0.4));
   plane(1.2, 0.26, 13.6, 2.15, back + 0.92, lit(signTex('Help', '#1d2230', '#ffffff'), 0.3));
-  // The gate line: cabinets across the hall, readers on top, paddles between.
-  const paddles: THREE.Mesh[] = [];
-  // Brushed stainless: a flat light grey reads truer than the metal set with nothing to reflect down here.
-  const cab = flat('#b4b9c0', 0.35, 0.25);
-  const zs = [-1.75, -0.95, -0.15, 0.65, 1.45];
-  for (const z of zs) {
-    box(1.25, 1.0, 0.22, GATE_X, 0.5, z, cab, group, true);
-    box(0.24, 0.04, 0.16, GATE_X - 0.4, 1.02, z, flat('#f2c200', 0.4, 0, 0xffd400, 0.4));
-    box(1.25, 0.06, 0.22, GATE_X, 1.03, z, flat('#1d2230', 0.5));
-  }
-  for (let i = 0; i < zs.length - 1; i++) {
-    const zc = (zs[i] + zs[i + 1]) / 2;
-    for (const s of [-1, 1]) {
-      const p = box(0.04, 0.62, 0.3, GATE_X + 0.1, 0.72, zc + s * 0.18, new THREE.MeshStandardMaterial({ color: 0xc4202b, roughness: 0.3, transparent: true, opacity: 0.85 }));
-      p.userData.closedZ = zc + s * 0.18;
-      p.userData.side = s;
-      paddles.push(p);
-    }
-  }
+  // No gate line: the hall is open through to the platform (you pay as you board).
   plane(3.0, 0.42, GATE_X, 2.95, -2.0 + 0.4, lit(signTex('Way out', '#f2c200', '#111111', '←'), 0.08), 0);
   plane(3.0, 0.42, GATE_X + 3.1, 2.95, -2.0 + 0.4, lit(signTex(`Trains  →  ${eastOf(id)}`, '#1d2230', '#ffffff'), 0.1), 0);
   // The passage to the platform: the hall wall ends in a tiled pier.
@@ -400,12 +382,6 @@ export function buildMetroStation(id: StationId, back: number): MetroView {
     update(dt: number): void {
       t += dt;
       const v = metroVisit();
-      // The gates open once you're through.
-      const open = !!v?.through;
-      for (const p of paddles) {
-        const want = open ? p.userData.closedZ + p.userData.side * 0.16 : p.userData.closedZ;
-        p.position.z += (want - p.position.z) * Math.min(1, dt * 8);
-      }
       if (!train) return;
       // Off a train: the doors close after a few seconds and it pulls out east into the tunnel.
       if (v?.arrived) {
