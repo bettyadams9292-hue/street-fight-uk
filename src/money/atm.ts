@@ -17,6 +17,8 @@ import { record } from '../progress/finance';
 /** Districts whose machines are free to take money out of; everywhere else charges `PAY_FEE`. */
 const FREE: ReadonlySet<string> = new Set([...CLEAN_DISTRICTS, 'High Street']);
 export const PAY_FEE = 2;
+/** What another bank's machine charges a customer (money/banking.ts). */
+export const OTHER_BANK_FEE = 2;
 /** What the machine will hand out in one go (banks cap it). */
 export const ATM_MAX = 500;
 /** Machines dispense notes: withdrawals are whole multiples of this. */
@@ -88,16 +90,21 @@ export const ATM_SITES: Readonly<Record<string, BankId>> = {
   mall: 'lloyds',
 };
 
-export function atmFee(district: string): number {
+/**
+ * What a withdrawal costs here. Your own bank's machines are always free; the other bank's charge
+ * `OTHER_BANK_FEE`; with no bank chosen yet, free in town (`FREE`) and `PAY_FEE` elsewhere.
+ */
+export function atmFee(district: string, machine?: BankId, mine?: BankId): number {
+  if (machine && mine) return machine === mine ? 0 : OTHER_BANK_FEE;
   return FREE.has(district) ? 0 : PAY_FEE;
 }
 
 export type AtmResult = { ok: true; amount: number; fee: number } | { ok: false; reason: string };
 
 /** Take `amount` out of the bank into your pocket; the fee comes off the balance on top. */
-export function withdraw(p: Progress, amount: number, district: string): AtmResult {
+export function withdraw(p: Progress, amount: number, district: string, machine?: BankId): AtmResult {
   const c = p.save.cash;
-  const fee = atmFee(district);
+  const fee = atmFee(district, machine, p.save.bank);
   const n = Math.floor(amount);
   if (!Number.isFinite(amount) || n <= 0) return { ok: false, reason: 'Please enter an amount.' };
   if (n % NOTE) return { ok: false, reason: `This machine can only dispense multiples of £${NOTE}.` };
@@ -106,7 +113,7 @@ export function withdraw(p: Progress, amount: number, district: string): AtmResu
   c.bank -= n + fee;
   c.pocket += n;
   record(p.save.finance, p.save.playTime, 'cash', `Cash withdrawal, ${district}`, -n);
-  if (fee) record(p.save.finance, p.save.playTime, 'fees', `Cashpoint fee, ${district}`, -fee);
+  if (fee) record(p.save.finance, p.save.playTime, 'fees', machine && p.save.bank && machine !== p.save.bank ? `${BANKS[machine].name} machine fee` : `Cashpoint fee, ${district}`, -fee);
   return { ok: true, amount: n, fee };
 }
 

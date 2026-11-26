@@ -1,3 +1,5 @@
+import { bankPrompt } from './ui/bankPrompt';
+import { custodyRecord, frontCounter, policeStop } from './ui/policeUI';
 import { setHumansEnabled } from './render/human/HumanRig';
 import { DRUG_DEFS, dealingOpen, tickPrep } from './business/dealing';
 import { prepScreen, streetDealerScreen, wholesaleRows } from './ui/dealingUI';
@@ -1098,6 +1100,7 @@ export class Game {
   private updateStoryHud(dt: number): void {
     const w = this.world!;
     const s = this.progress!.save;
+    this.bankNudge(dt);
     const boss = w.activeBoss;
     const def = w.activeEncounter?.bossDef ?? null;
     let objective = w.objective;
@@ -2905,6 +2908,41 @@ export class Game {
     return null;
   }
 
+  /**
+   * No bank on the phone yet (a new game once its first lessons are done, or a save from before banks): once a
+   * session, when nothing else is going on, ask them to pick one in CaliStore (money/banking.ts).
+   */
+  private bankAsked = false;
+  private bankWait = 0;
+  private bankNudge(dt: number): void {
+    const p = this.progress;
+    if (this.bankAsked || !p || p.save.bank || this.state !== 'playing' || this.ui.isOpen || this.phone.isOpen) return;
+    if (!p.save.tutorial.essentialDone || this.tutorial.active || !this.calm() || this.phoneHeld()) {
+      this.bankWait = 0;
+      return;
+    }
+    this.bankWait += dt;
+    if (this.bankWait < 4) return;
+    this.bankAsked = true;
+    this.state = 'paused';
+    const back = () => {
+      this.ui.replaceAll(null);
+      this.state = 'playing';
+      this.updateTouchVisibility();
+    };
+    this.ui.replaceAll(bankPrompt(
+      () => {
+        back();
+        this.phone.open('store');
+      },
+      () => {
+        back();
+        this.hud.toast('Pick a bank any time: CaliStore on your phone.', 'info');
+      },
+    ));
+    this.updateTouchVisibility();
+  }
+
   private dealingNews(area: string): void {
     const p = this.progress;
     if (!p || !dealingOpen(p)) return;
@@ -3040,7 +3078,12 @@ export class Game {
       });
     }
     buttons.push({ label: 'Leave', go: close });
-    return rewardScreen('FRONT COUNTER', lines, buttons, ['front-counter']);
+    return frontCounter({
+      sergeant: 'Sgt Hollis, front counter',
+      empty: !s.record.length,
+      file: lines.slice(1).map((l) => l.text),
+      choices: buttons.map((b) => ({ ...b, tone: b.label === 'Leave' ? 'calm' : 'cost' })),
+    });
   }
 
   /** Nicked: booked in at the Kirkgate Constabulary, with a charge sheet and a choice. */
@@ -3111,7 +3154,15 @@ export class Game {
       },
       { label: 'Have it out', sub: 'Fight your way out', go: resume },
     ];
-    return rewardScreen('OLD BILL', lines, buttons, ['old-bill']);
+    const tones: ('cost' | 'calm' | 'danger')[] = ['cost', 'calm', 'danger'];
+    return policeStop({
+      lead,
+      count,
+      said: '“Right, you. Stay where you are.”',
+      know: lines[1].text,
+      facts: lines.slice(2).map((l) => l.text),
+      choices: buttons.map((b, i) => ({ ...b, tone: tones[i] })),
+    });
   }
 
   /**
@@ -3174,7 +3225,16 @@ export class Game {
         out(`${taken ? `A night on a plastic mattress. The court fined you \u00a3${taken}.` : 'A night on a plastic mattress. The court let you off: you\u2019ve got nothing.'} The cell door\u2019s open: walk out when you\u2019re ready.`, 'cell');
       },
     });
-    return rewardScreen('NICKED', lines, buttons, ['nicked']);
+    const notes = lines.filter((l) => /would pay it|on the desk/.test(l.text)).map((l) => l.text);
+    return custodyRecord({
+      ref: `KC/${String(p.save.trips).padStart(4, '0')}/${String(p.save.record.length + 1).padStart(2, '0')}`,
+      charges: b.charges.map((c) => ({ what: CRIME_NAME[c.crime], where: c.district })),
+      seized: `${b.seized ? `${b.seized} stolen item${b.seized === 1 ? '' : 's'} (£${b.seizedValue})` : 'Nothing stolen'}; your phone, till you walk out`,
+      bail: b.bail,
+      fine: b.fine,
+      notes,
+      choices: buttons.map((x) => ({ ...x, tone: /paperwork/i.test(x.label) ? 'danger' : /cells/i.test(x.label) ? 'calm' : 'cost' })),
+    });
   }
 
   // ---- input -----------------------------------------------------------------
@@ -3422,6 +3482,7 @@ export class Game {
     document.body.classList.toggle('in-fight', this.state === 'playing' || this.state === 'transition');
     this.touch.visible = this.state === 'playing' && this.touchWanted();
     this.uiRoot.classList.toggle('touch-ui', this.touchWanted());
+    this.uiRoot.classList.toggle('tc-on', this.touchWanted());
   }
 
   // ---- events from the fight -----------------------------------------------------
@@ -3595,6 +3656,7 @@ export class Game {
     }
     if (!text) text = this.coachText(p, k);
     let interact = false;
+    let useLabel = "";
     const it = this.world?.interactable;
     // Nothing to use while a panel (the fridge, a shop, the map) is open over the game.
     if (this.house.active || this.ui.isOpen) text = '';
@@ -3607,10 +3669,12 @@ export class Game {
         // "THING" on the plate, the key, then what it does; locked doors say so.
         text = `${what ? `${what}\u0001` : ''}${k('E', 'LB', 'USE')} ${how}${locked ? ' (locked)' : ''}`;
         interact = true;
+        useLabel = `${how}${locked ? ' (locked)' : ''}`;
       }
     }
     this.hud.setPrompt(text, sub, interact);
     document.body.classList.toggle('can-use', interact);
+    this.touch.setUse(interact ? useLabel : null);
   }
 
   // ---- the first fight teaches the buttons ------------------------------------------

@@ -3,9 +3,11 @@
  * the same way. It slides up from the bottom right like a phone out of a pocket, and slides back down.
  *
  * Apps that live on the phone: Messages (Mo, your needs, what's happened), Cabs (Duber and walking home),
- * CaliBank (your money and where it went), Jobs (what to do next) and Home (edit your house, when you're in it).
+ * your bank's app (Califax or Lloyd's THC, picked in CaliStore: your money and where it went), Jobs (what to do next) and Home (edit your house, when you're in it).
  * Map, Me and Crew and Settings open inside it (your pockets and bag are on you, not on the phone), like the bigger apps on a real phone.
  */
+import { BANKS, OTHER_BANK_FEE } from '../../money/atm';
+import { BANK_PITCH, chooseBank, myBank } from '../../money/banking';
 import { h } from '../dom';
 import type { AreaId, Progress } from '../../progress/Progress';
 import { cabStop, onMap, place, places, travelOptions, unlocked, type TravelOption } from '../../map/worldMap';
@@ -71,7 +73,7 @@ export interface PhoneDeps {
   sound(kind: 'open' | 'close' | 'tap'): void;
 }
 
-type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'jobs' | 'heat' | 'house' | 'embed' | 'map' | 'wiki';
+export type AppId = 'home' | 'messages' | 'cabs' | 'bank' | 'store' | 'jobs' | 'heat' | 'house' | 'embed' | 'map' | 'wiki';
 
 interface AppDef {
   id: string;
@@ -79,6 +81,9 @@ interface AppDef {
   icon: string;
   open: () => void;
   badge?: () => number;
+  /** A picture for the icon in place of the painted one (the bank's logo), on its own colour. */
+  img?: string;
+  tint?: string;
 }
 
 const ICON = (f: string) => `/icons/hg/${f}.webp`;
@@ -137,10 +142,17 @@ export class Phone {
         h('div', { class: 'ph-bezel' },
           h('div', { class: 'ph-status' }, this.clock, h('span', { class: 'ph-island' }), h('span', { class: 'ph-sig' }, h('i'), h('i'), h('i'), h('i')), h('span', { class: 'ph-batt' }, h('i'))),
           this.screen,
+          // The Duo's fold, down the middle of the unfolded screen (only drawn when it's unfolded: .phone.duo).
+          h('span', { class: 'ph-crease', 'aria-hidden': 'true' }),
           h('button', { class: 'ph-homebar', 'aria-label': 'Home screen', onclick: () => this.go('home') }),
         ),
       ),
     );
+    // Wider than tall (a desktop, or a phone held sideways): the phone is a CaliLabs Duo, unfolded.
+    const fold = () => this.el.classList.toggle('duo', window.innerWidth > window.innerHeight);
+    fold();
+    window.addEventListener('resize', fold);
+    window.addEventListener('orientationchange', fold);
   }
 
   get isOpen(): boolean {
@@ -371,7 +383,7 @@ export class Phone {
       { id: 'messages', name: 'Messages', icon: 'bell', open: () => this.go('messages'), badge: unread },
       { id: 'map', name: 'Maps', icon: 'map', open: () => this.go('map') },
       { id: 'cabs', name: 'Cabs', icon: 'car_hatch', open: () => this.go('cabs') },
-      { id: 'bank', name: 'CaliBank', icon: 'coins', open: () => this.go('bank') },
+      ...this.bankApp(),
       { id: 'jobs', name: 'Jobs', icon: 'target_skull', open: () => this.go('jobs') },
       { id: 'heat', name: 'Heat', icon: 'police', open: () => ((this.kerriganSaid = ''), this.go('heat')) },
       { id: 'crew', name: 'Crew', icon: 'crew', open: () => this.launch(() => this.d.openMe('crew'), 'Crew') },
@@ -379,7 +391,15 @@ export class Phone {
       { id: 'house', name: 'Home', icon: 'house', open: () => this.go('house') },
       { id: 'wiki', name: 'GraftWiki', icon: 'info', open: () => ((this.wikiPage = 'index'), this.go('wiki')) },
       { id: 'settings', name: 'Settings', icon: 'gear', open: () => this.launch(() => this.d.openSettings(), 'Settings') },
+      // The store, with a dot until there's a bank on the phone.
+      { id: 'store', name: 'CaliStore', icon: 'download', open: () => this.go('store'), badge: () => (this.d.progress()?.save.bank ? 0 : 1) },
     ];
+  }
+
+  /** Your bank's own app, once you've picked one in the store. */
+  private bankApp(): AppDef[] {
+    const b = myBank(this.d.progress()!);
+    return b ? [{ id: 'bank', name: b.name, icon: 'coins', img: b.logo, tint: b.bg, open: () => this.go('bank') }] : [];
   }
 
   private homeScreen(): HTMLElement {
@@ -397,7 +417,7 @@ export class Phone {
         ...this.apps().map((a) => {
           const n = a.badge?.() ?? 0;
           return h('button', { class: `ph-app app-${a.id}`, onclick: a.open },
-            h('span', { class: 'ph-appicon' }, h('img', { src: ICON(a.icon), alt: '', draggable: 'false' }), n ? h('span', { class: 'ph-badge', text: String(Math.min(n, 9)) }) : null),
+            h('span', { class: `ph-appicon${a.img ? ' logo' : ''}`, style: a.tint ? `background:${a.tint}` : '' }, h('img', { src: a.img ?? ICON(a.icon), alt: '', draggable: 'false' }), n ? h('span', { class: 'ph-badge', text: String(Math.min(n, 9)) }) : null),
             h('span', { class: 'ph-appname', text: a.name }),
           );
         }),
@@ -409,8 +429,8 @@ export class Phone {
   // ---- apps --------------------------------------------------------------------------------------
 
   private appScreen(app: AppId): HTMLElement {
-    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Duber', bank: 'CaliBank', jobs: 'Jobs', heat: 'Heat', house: 'Home', embed: '', map: 'Maps', wiki: 'GraftWiki' };
-    const body = app === 'messages' ? this.messages() : app === 'cabs' ? this.cabs() : app === 'bank' ? this.bank() : app === 'jobs' ? this.jobs() : app === 'heat' ? this.heat() : this.house();
+    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Duber', bank: myBank(this.d.progress()!)?.name ?? 'Bank', store: 'CaliStore', jobs: 'Jobs', heat: 'Heat', house: 'Home', embed: '', map: 'Maps', wiki: 'GraftWiki' };
+    const body = app === 'messages' ? this.messages() : app === 'cabs' ? this.cabs() : app === 'bank' ? this.bank() : app === 'store' ? this.store() : app === 'jobs' ? this.jobs() : app === 'heat' ? this.heat() : this.house();
     return h(
       'div',
       { class: `ph-appview view-${app}` },
@@ -552,19 +572,52 @@ export class Phone {
     return out;
   }
 
+  /** CaliStore: the two banks' apps. Getting one opens your account there (or moves it). */
+  private store(): HTMLElement[] {
+    const p = this.d.progress()!;
+    const mine = p.save.bank;
+    const out: HTMLElement[] = [
+      h('div', { class: 'ph-store-head' }, h('b', { text: mine ? 'Banking' : 'Pick your bank' }), h('span', { text: mine ? 'Move your account any time. It’s free.' : 'Your money, your machines. One account, on your phone.' })),
+    ];
+    for (const id of ['califax', 'lloyds'] as const) {
+      const b = BANKS[id];
+      const pitch = BANK_PITCH[id];
+      const yours = mine === id;
+      out.push(h('div', { class: `ph-storeapp${yours ? ' yours' : ''}` },
+        h('span', { class: 'ph-appicon logo', style: `background:${b.bg}` }, h('img', { src: b.logo ?? ICON('coins'), alt: '', draggable: 'false' })),
+        h('div', { class: 'ph-what' }, h('b', { text: b.name }), h('span', { text: pitch.tagline })),
+        h('button', { class: 'ph-btn get', onclick: () => {
+          if (yours) return this.go('bank');
+          if (!chooseBank(p, id)) return;
+          this.d.saved();
+          this.d.sound('tap');
+          this.app = 'bank';
+          this.render();
+        } }, yours ? 'Open' : mine ? 'Switch' : 'Get'),
+        h('ul', { class: 'ph-perks' }, ...pitch.perks.map((t) => h('li', { text: t }))),
+      ));
+    }
+    return out;
+  }
+
   private bank(): HTMLElement[] {
     const p = this.d.progress()!;
     const s = p.save;
     const f = s.finance;
     const rent = f.totals.rent.in;
-    const out: HTMLElement[] = [
-      h('div', { class: 'ph-card' },
+    const b = myBank(p);
+    if (!b) return this.store();
+    const card = h('div', { class: `ph-card ph-bankcard bank-${b.id}`, style: `--bk-bg:${b.bg};--bk-panel:${b.panel};--bk-accent:${b.accent}` },
         h('span', { text: 'Total' }), h('b', { class: 'ph-total', text: money(s.cash.pocket + s.cash.bank) }),
         h('div', { class: 'ph-split' },
           h('div', {}, h('span', { text: 'In the tin' }), h('b', { text: money(s.cash.bank) })),
           h('div', {}, h('span', { text: 'On you' }), h('b', { text: money(s.cash.pocket) })),
         ),
-      ),
+      );
+    if (b.logo) card.prepend(h('img', { class: 'ph-banklogo', src: b.logo, alt: b.name, draggable: 'false' }));
+    const out: HTMLElement[] = [
+      card,
+      h('p', { class: 'ph-small', text: `Free at any ${b.name} machine. Other banks’ machines charge £${OTHER_BANK_FEE} a withdrawal.` }),
     ];
     const atHome = this.d.atHome();
     out.push(h('div', { class: 'ph-row' },
@@ -578,7 +631,7 @@ export class Phone {
     const lines = f.ledger.slice(-8).reverse();
     if (lines.length) {
       out.push(h('div', { class: 'ph-sec', text: 'Statement' }));
-      for (const l of lines) out.push(h('div', { class: 'ph-line' }, h('span', { text: l.what }), h('b', { class: l.amount >= 0 ? 'ph-in' : 'ph-out', text: `${l.amount >= 0 ? '+' : '−'}${money(Math.abs(l.amount))}` })));
+      for (const l of lines) out.push(h('div', { class: 'ph-line' }, h('span', { text: l.what }), l.amount ? h('b', { class: l.amount > 0 ? 'ph-in' : 'ph-out', text: `${l.amount > 0 ? '+' : '−'}${money(Math.abs(l.amount))}` }) : null));
     }
     return out;
   }

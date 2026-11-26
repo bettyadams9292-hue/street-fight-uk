@@ -91,6 +91,8 @@ export interface GameSave {
   character: PlayerCharacter;
   /** Cash on you is at risk; banked cash at home is safe and pays for upgrades. */
   cash: { pocket: number; bank: number };
+  /** Your bank, picked in the phone's CaliStore (money/banking.ts); none yet on a new game or an old save. */
+  bank?: 'califax' | 'lloyds';
   xp: number;
   level: number;
   /** Earned by levelling up; each gym upgrade needs one. */
@@ -279,6 +281,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
   const out: GameSave = {
     ...base,
     cash: { pocket: num(r.cash?.pocket, 0), bank: num(r.cash?.bank, base.cash.bank) },
+    bank: r.bank === 'califax' || r.bank === 'lloyds' ? r.bank : undefined,
     xp: num(r.xp, 0),
     level: num(r.level, 1, 1, LEVEL_CAP),
     trainingPoints: num(r.trainingPoints, 1, 0, 99),

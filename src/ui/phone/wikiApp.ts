@@ -2,7 +2,7 @@ import { CAB_FLAG, CAB_PER_MILE } from '../hub';
 import { BUY_IN, CHAMPION, DEFENCE_TRIPS, LADDER, NIGHT_SECONDS, STRIP_TRIPS, defencePurse } from '../../fightclub/club';
 import { BARBER, BEARDS, COLOUR_PRICE, GREYS, HAIRCUTS } from '../../barber/barber';
 import { DESIGNS, LASER_PRICE, REINK_PRICE, SLOT_NAMES, SLOT_ORDER, STUDIO, designPrice } from '../../tattoo/tattoo';
-import { ATM_MAX, PAY_FEE } from '../../money/atm';
+import { ATM_MAX, PAY_FEE, OTHER_BANK_FEE } from '../../money/atm';
 import { CORNER_BONUS, CORNER_TRIPS, RIVAL_CUT, TRADE_SHARE } from '../../business/streetDealers';
 import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
 import { BAG_PACK, BAG_PACK_PRICE, BULK_BUYBACK, bulkWorth, DRUG_DEFS, DRUGS, GROW_PER_BULK, TABLES } from '../../business/dealing';
@@ -271,13 +271,16 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
 
   if (page === 'cash') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
-    return article('Cashpoints', 'Califax and Lloyd’s THC cash machines, set into the walls of a few shops: the High Street, the City Centre, Kingsway and the Riverside Centre. They’re out of service until you’ve dealt with Sully. Both banks reach the same account, the same money as the tin at home.',
+    return article('Cashpoints', 'Califax and Lloyd’s THC cash machines, set into the walls of a few shops: the High Street, the City Centre, Kingsway and the Riverside Centre. They’re out of service until you’ve dealt with Sully. Pick your bank in CaliStore on your phone: its app shows your money, and its machines are free.',
       infobox('The machines', [
         ['Paying in', 'Free'],
-        ['Taking out', `Free in town, £${PAY_FEE} on the rough estates`],
+        ['Your bank’s machines', 'Free'],
+        ['The other bank’s', `£${OTHER_BANK_FEE} a withdrawal`],
+        ['No bank picked yet', `Free in town, £${PAY_FEE} on the rough estates`],
         ['Most at once', `£${ATM_MAX}`],
       ]),
       list([
+        'Califax has the High Street and Kingsway, Lloyd’s THC the City Centre and the Riverside Centre. Switch banks in CaliStore any time, for nothing.',
         'Cash on you is what goes if you get battered, mugged or run. Pay it in and it’s safe.',
         'Shops take pocket money first, then the bank, so you rarely need to take any out. Some things want cash in hand.',
         `Withdrawals come in £10 notes, up to £${ATM_MAX} at a time. Ask for a receipt or a mini statement on the screen.`,

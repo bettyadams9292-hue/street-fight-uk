@@ -54,7 +54,8 @@ Nothing about the phone's look, sizes, icons, wallpaper, animations or sounds ch
 | Messages | `Phone.messages` | own screen | opens, lists Mo, needs and messages, Back | none | passes |
 | Maps | `mapApp.ts` | own screen | filter chip, a place's card, close card, Directions sets the route, pan/zoom by pointer, Back | none | passes |
 | Cabs | `Phone.cabs` | own screen | rows and fares; a fare puts the phone away and travels | none | passes (travel not pressed in the test) |
-| CaliBank | `Phone.bank` | own screen | balances card, Pay in (only at home with cash) | none | passes |
+| Your bank (Califax or Lloyd’s THC) | `Phone.bank` | own screen | balances card, Pay in (only at home with cash) | none | passes |
+| CaliStore | `Phone.store` | own screen | the two bank apps, Get / Switch / Open (money/banking.ts) | none | new |
 | Jobs | `Phone.jobs` | own screen | objective, Mo's hint, the route's Map button opens Maps | none | passes |
 | Heat | `Phone.heat` | own screen | districts' bars, "How heat works" opens GraftWiki's article | none | passes |
 | Crew | `profileUI.ts` (hosted) | game screen | one column, nothing past the phone's sides | big-screen layout | **fixed** |
