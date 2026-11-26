@@ -1,3 +1,4 @@
+import { priceTier, SHOP_TIER_NAMES, tierLockFor, type ShopTier } from '../items/shopTiers';
 import type { AreaId, Progress } from '../progress/Progress';
 import {
   BIKES,
@@ -107,6 +108,14 @@ function statBar(label: string, value: number, max: number, compare?: number): H
 
 // ---- furniture shop -------------------------------------------------------------------------------
 
+/** A locked piece's line in a shop list, and the note in place of its Buy button (items/shopTiers.ts). */
+const soonTag = (lock: string | null) => (lock ? ' · SOON' : '');
+function lockedBuy(tier: ShopTier, lock: string, msg: (t: string, bad?: boolean) => void): HTMLElement {
+  return h('div', { class: 'tier-lock' },
+    h('p', { class: 'hint', text: `${SHOP_TIER_NAMES[tier]}: ${lock}` }),
+    menuButton('SOON', () => msg(lock, true), undefined, 'small'));
+}
+
 export function furnitureShopBody(progress: Progress, saved: () => void) {
   let cat: FurnitureCategory | 'finishes' = 'living';
   let sel = FURNITURE_LIST.find((f) => f.cat === cat)!.id;
@@ -136,10 +145,12 @@ export function furnitureShopBody(progress: Progress, saved: () => void) {
     const list = h('div', { class: 'prop-list' }, ...FURNITURE_LIST.filter((f) => f.cat === cat).map((f) => {
       const n = owned(f.id);
       const b = h('button', { class: `prop-item${f.id === sel ? ' on' : ''}`, 'data-nav': true, onclick: () => ((sel = f.id), (colour = f.colours[0]), (qty = 1), rebuild()) },
-        h('b', { text: f.name }), h('span', { text: `${money(f.price)}${n ? ` · own ${n}` : ''}` }));
+        h('b', { text: f.name }), h('span', { text: `${money(f.price)}${n ? ` · own ${n}` : ''}${soonTag(tierLockFor(progress, priceTier('furniture', f.price)))}` }));
       return b;
     }));
     const total = def.price * qty;
+    const fTier = priceTier('furniture', def.price);
+    const fLock = tierLockFor(progress, fTier);
     const detail = h('div', { class: 'prop-detail' },
       previewCanvas(def.id, colour),
       h('h3', { text: def.name }),
@@ -149,7 +160,7 @@ export function furnitureShopBody(progress: Progress, saved: () => void) {
         menuButton('−', () => ((qty = Math.max(1, qty - 1)), rebuild()), undefined, 'small'),
         h('span', { text: `× ${qty}` }),
         menuButton('+', () => ((qty = Math.min(10, qty + 1)), rebuild()), undefined, 'small'),
-        menuButton(`Buy ${money(total)}`, () => result(buyFurniture(progress, def.id, colour, qty), `${qty > 1 ? `${qty} × ` : ''}${def.name} on the van to Tanner Road`, msg, saved)),
+        fLock ? lockedBuy(fTier, fLock, msg) : menuButton(`Buy ${money(total)}`, () => result(buyFurniture(progress, def.id, colour, qty), `${qty > 1 ? `${qty} × ` : ''}${def.name} on the van to Tanner Road`, msg, saved)),
       ),
     );
     rows.push(h('div', { class: 'prop-shop' }, list, detail));
@@ -275,7 +286,7 @@ export function carDealerScreen(progress: Progress, close: () => void, saved: ()
     ];
     const list = h('div', { class: 'prop-list' }, ...CAR_LIST.filter((c) => c.cls === cls).map((c) =>
       h('button', { class: `prop-item${c.id === sel ? ' on' : ''}`, 'data-nav': true, onclick: () => ((sel = c.id), (colour = c.colours[0]), rebuild()) },
-        h('b', { text: c.name }), h('span', { text: `${money(c.price)}${prop.cars.some((o) => o.id === c.id) ? ' · owned' : ''}` }))));
+        h('b', { text: c.name }), h('span', { text: `${money(c.price)}${prop.cars.some((o) => o.id === c.id) ? ' · owned' : ''}${soonTag(tierLockFor(progress, priceTier('cars', c.price)))}` }))));
     const detail = h('div', { class: 'prop-detail' },
       previewCanvas(def.id, colour),
       h('h3', { text: `${def.name} — ${money(def.price)}` }),
@@ -285,7 +296,11 @@ export function carDealerScreen(progress: Progress, close: () => void, saved: ()
       statBar('Handling', def.handling, 10),
       statBar('Seats', def.seats, 7),
       swatches(def.colours, colour, (c) => ((colour = c), rebuild())),
-      menuButton(`Buy ${money(def.price)}`, () => result(buyCar(progress, def.id, colour), `${def.name} is on your drive`, msg, saved)),
+      (() => {
+        const t = priceTier('cars', def.price);
+        const lock = tierLockFor(progress, t);
+        return lock ? lockedBuy(t, lock, msg) : menuButton(`Buy ${money(def.price)}`, () => result(buyCar(progress, def.id, colour), `${def.name} is on your drive`, msg, saved));
+      })(),
     );
     rows.push(h('div', { class: 'prop-shop' }, list, detail));
     if (prop.cars.length) {
@@ -327,7 +342,7 @@ export function bikeShopScreen(progress: Progress, close: () => void, saved: () 
     ];
     const list = h('div', { class: 'prop-list' }, ...BIKE_LIST.filter((b) => b.cls === cls).map((b) =>
       h('button', { class: `prop-item${b.id === sel ? ' on' : ''}`, 'data-nav': true, onclick: () => ((sel = b.id), (colour = b.colours[0]), rebuild()) },
-        h('b', { text: b.name }), h('span', { text: `${money(b.price)} · ${b.cc ? `${b.cc}cc` : b.electric ? 'electric' : 'pedal'}${prop.bikes.some((o) => o.id === b.id) ? ' · owned' : ''}` }))));
+        h('b', { text: b.name }), h('span', { text: `${money(b.price)} · ${b.cc ? `${b.cc}cc` : b.electric ? 'electric' : 'pedal'}${prop.bikes.some((o) => o.id === b.id) ? ' · owned' : ''}${soonTag(tierLockFor(progress, priceTier('bikes', b.price)))}` }))));
     const detail = h('div', { class: 'prop-detail' },
       previewCanvas(def.id, colour),
       h('h3', { text: `${def.name} — ${money(def.price)}` }),
@@ -340,7 +355,11 @@ export function bikeShopScreen(progress: Progress, close: () => void, saved: () 
       swatches(def.colours, colour, (c) => ((colour = c), rebuild())),
       h('div', { class: 'row-actions' },
         menuButton(compare === sel ? 'Comparing…' : 'Compare with this', () => ((compare = compare === sel ? null : sel), rebuild()), compare && compare !== sel ? `vs ${BIKES[compare].name}` : 'then pick another', 'small'),
-        menuButton(`Buy ${money(def.price)}`, () => result(buyBike(progress, def.id, colour), `${def.name} delivered to your garage`, msg, saved)),
+        (() => {
+          const t = priceTier('bikes', def.price);
+          const lock = tierLockFor(progress, t);
+          return lock ? lockedBuy(t, lock, msg) : menuButton(`Buy ${money(def.price)}`, () => result(buyBike(progress, def.id, colour), `${def.name} delivered to your garage`, msg, saved));
+        })(),
       ),
     );
     rows.push(h('div', { class: 'prop-shop' }, list, detail));

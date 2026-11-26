@@ -1,3 +1,4 @@
+import { tierLockFor } from '../items/shopTiers';
 import { deepRoom } from '../world/rooms';
 import type { Progress, PurchaseResult } from '../progress/Progress';
 import type { LevelDef, LightDef, PropDef, StationDef } from '../world/LevelTypes';
@@ -306,6 +307,8 @@ export function logLedger(p: Progress, what: string, amount: number): void {
 export function buyEquipment(p: Progress, id: string, qty = 1): PurchaseResult {
   const def = EQUIPMENT[id];
   if (!def) return fail('Not stocked');
+  const lock = tierLockFor(p, def.tier); // B&THC's own grades: Starter, Intermediate, Professional
+  if (lock) return fail(lock);
   const n = Math.max(1, Math.min(10, Math.floor(qty)));
   const total = def.price * n;
   if (B(p).equipment.length + n > 200) return fail('No more room in the basement');

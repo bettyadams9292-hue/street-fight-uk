@@ -1,3 +1,4 @@
+import { SHOP_TIER_NAMES, tierLockFor } from '../items/shopTiers';
 import type { Progress } from '../progress/Progress';
 import {
   BUSINESS_UPGRADES,
@@ -121,11 +122,12 @@ export function growShopScreen(progress: Progress, close: () => void, saved: () 
     const list = h('div', { class: 'prop-list' }, ...EQUIPMENT_LIST.filter((e) => e.cat === tab).map((e) => {
       const o = owned(e.id);
       return h('button', { class: `prop-item${e.id === sel ? ' on' : ''}`, 'data-nav': true, onclick: () => ((sel = e.id), (qty = 1), (armed = null), rebuild()) },
-        h('b', { text: e.name }), h('span', { text: `${money(e.price)} · ${tierName[e.tier]}${o.length ? ` · own ${o.length} (${o.filter((x) => x.at).length} installed)` : ''}` }));
+        h('b', { text: e.name }), h('span', { text: `${money(e.price)} · ${tierName[e.tier]}${o.length ? ` · own ${o.length} (${o.filter((x) => x.at).length} installed)` : tierLockFor(progress, e.tier) ? ' · SOON' : ''}` }));
     }));
     const mine = owned(def.id);
     const spare = mine.find((x) => !x.at);
     const total = def.price * qty;
+    const lock = tierLockFor(progress, def.tier);
     const short = progress.save.cash.pocket + progress.save.cash.bank < total;
     const detail = h('div', { class: 'prop-detail' },
       previewCanvas(def.id, ''),
@@ -139,8 +141,10 @@ export function growShopScreen(progress: Progress, close: () => void, saved: () 
         menuButton('−', () => ((qty = Math.max(1, qty - 1)), (armed = null), rebuild()), undefined, 'small'),
         h('span', { text: `× ${qty}` }),
         menuButton('+', () => ((qty = Math.min(10, qty + 1)), (armed = null), rebuild()), undefined, 'small'),
-        confirmButton(`Buy ${money(total)}`, `Confirm ${money(total)}`, armed === `buy:${def.id}`, () => ((armed = `buy:${def.id}`), rebuild()),
-          () => done(buyEquipment(progress, def.id, qty), `${qty > 1 ? `${qty} × ` : ''}${def.name} delivered to the basement`)),
+        lock
+          ? menuButton('SOON', () => msg(lock, true), `${SHOP_TIER_NAMES[def.tier]}: ${lock}`, 'small')
+          : confirmButton(`Buy ${money(total)}`, `Confirm ${money(total)}`, armed === `buy:${def.id}`, () => ((armed = `buy:${def.id}`), rebuild()),
+            () => done(buyEquipment(progress, def.id, qty), `${qty > 1 ? `${qty} × ` : ''}${def.name} delivered to the basement`)),
         spare ? menuButton(`Sell one ${money(equipmentResale(def.price))}`, () => {
           const r = sellEquipment(progress, spare.uid);
           if (r.ok) {

@@ -1,3 +1,4 @@
+import { priceTier, tierLockFor } from '../items/shopTiers';
 import { sanitiseMods, type CarMods } from './carMods';
 import type { AreaId, Progress, PurchaseResult } from '../progress/Progress';
 import {
@@ -200,6 +201,8 @@ const fail = (reason: string): PurchaseResult => ({ ok: false, reason });
 export function buyFurniture(p: Progress, id: string, colour: string, qty = 1): PurchaseResult {
   const def = FURNITURE[id];
   if (!def) return fail('Not in the catalogue');
+  const lock = tierLockFor(p, priceTier('furniture', def.price));
+  if (lock) return fail(lock);
   const n = Math.max(1, Math.min(10, Math.floor(qty)));
   if (!def.colours.includes(colour)) colour = def.colours[0];
   const total = def.price * n;
@@ -279,6 +282,8 @@ export function addBike(p: Progress, id: string, colour: string, from: OwnedVehi
 export function buyCar(p: Progress, id: string, colour: string): PurchaseResult {
   const def = CARS[id];
   if (!def) return fail('Not on the forecourt');
+  const carLock = tierLockFor(p, priceTier('cars', def.price));
+  if (carLock) return fail(carLock);
   if (P(p).cars.length >= MAX_CARS) return fail(`You’ve got ${MAX_CARS} cars already. Sell one first.`);
   if (!p.pay(def.price)) return fail(`Need £${def.price.toLocaleString('en-GB')}`);
   addCar(p, id, colour, 'bought');
@@ -288,6 +293,8 @@ export function buyCar(p: Progress, id: string, colour: string): PurchaseResult 
 export function buyBike(p: Progress, id: string, colour: string): PurchaseResult {
   const def = BIKES[id];
   if (!def) return fail('Not in the shop');
+  const bikeLock = tierLockFor(p, priceTier('bikes', def.price));
+  if (bikeLock) return fail(bikeLock);
   if (P(p).bikes.length >= GARAGE_SPACES) return fail(`The garage only holds ${GARAGE_SPACES} bikes. Sell one first.`);
   if (!p.pay(def.price)) return fail(`Need £${def.price.toLocaleString('en-GB')}`);
   addBike(p, id, colour, 'bought');

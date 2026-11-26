@@ -127,6 +127,7 @@ test('riding past a side fight doesn’t start it; walking past still does', () 
 
 test('get on and off the bike many times: one bike, right place, right state', () => {
   const p = fresh();
+  p.save.flags.boss_dunc = true; // the big bikes are Premium stock (items/shopTiers.ts)
   buyBike(p, 'b24_petrol_mx', '#1f4fa8');
   const uid = p.save.property.bikes[0].uid;
   takeOutBike(p, uid);
@@ -262,6 +263,7 @@ test('companions: seven fighters for hire in Weatherspoons snug, each different,
   const pub = LEVELS.pub;
   assert(COMPANION_LIST.every((c) => pub.stations!.some((s) => s.id === 'recruit' && s.tab === c.id && s.npc)), 'all in the pub');
   const p = fresh(5000);
+  p.save.flags.boss_dunc = true; // the treadmill is Premium stock
   const before = wallet(p);
   assert(hireCompanion(p, 'shaz').ok && wallet(p) === before - COMPANIONS.shaz.fee, 'hired, fee paid');
   assert(p.save.companions.following[0] === 'shaz', 'first hire follows you');
@@ -377,6 +379,7 @@ test('upgrades really change the weapon in your hands; limits per weapon; each l
   const c3 = upgradeQuote('pipe', 'power', 3).cash;
   assert(c1 < c2 && c2 < c3 && upgradeQuote('pipe', 'power', 3).materials.spring_steel, 'steeper and rarer');
   const p = fresh(5000);
+  p.save.flags.boss_dunc = true; // the treadmill is Premium stock
   const st = p.newStack(weaponItemId('pipe'), 1, {});
   p.save.storage.push(st);
   assert(!upgradeWeapon(p, st, 'power').ok, 'no materials, no upgrade');
@@ -407,6 +410,7 @@ test('PureGraft: a real shop in Leisure Park; buying kit puts it in your gym; on
   assert(door && store.exits.some((e) => e.to === 'leisure'), 'door both ways');
   assert(SHOP_STOPS.some((s) => s.area === 'gym_store'), 'cab stop');
   const p = fresh(5000);
+  p.save.flags.boss_dunc = true; // the treadmill is Premium stock
   const w0 = wallet(p);
   assert(buyGymKit(p, 'treadmill').ok && wallet(p) === w0 - GYM_KIT.treadmill.price, 'bought');
   assert(!buyGymKit(p, 'treadmill').ok, 'one of each');
