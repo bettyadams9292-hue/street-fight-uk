@@ -86,11 +86,20 @@ export interface ShopState {
 }
 
 /** Everything that persists between sessions. */
+/** How a payment can be made: any way you can here, or only cash on you. */
+export type PayHow = 'any' | 'cash';
+
 export interface GameSave {
   version: 3;
   character: PlayerCharacter;
-  /** Cash on you is at risk; banked cash at home is safe and pays for upgrades. */
-  cash: { pocket: number; bank: number };
+  /**
+   * Your money, in three places (money/banking.ts has the rules):
+   * - `pocket`: cash on you. Pays anywhere; mugged, battered and seized with you.
+   * - `tin`: the biscuit tin at home. Safe from everyone; in and out only in the house.
+   * - `bank`: your account with Califax or Lloyd's THC. Your card pays from it anywhere; cash in and out only at
+   *   a branch (both) or a cash machine (out only). Rent and businesses pay into it.
+   */
+  cash: { pocket: number; bank: number; tin: number };
   /** Your bank, picked in the phone's CaliStore (money/banking.ts); none yet on a new game or an old save. */
   bank?: 'califax' | 'lloyds';
   xp: number;
@@ -195,7 +204,7 @@ export function newSave(character: PlayerCharacter): GameSave {
   const s: GameSave = {
     version: 3,
     character,
-    cash: { pocket: 0, bank: character.money },
+    cash: { pocket: 0, bank: 0, tin: character.money },
     xp: 0,
     level: 1,
     trainingPoints: 1,
@@ -283,7 +292,10 @@ export function sanitiseSave(raw: unknown): GameSave | null {
   const st = (r.stats ?? {}) as Partial<GameSave['stats']>;
   const out: GameSave = {
     ...base,
-    cash: { pocket: num(r.cash?.pocket, 0), bank: num(r.cash?.bank, base.cash.bank) },
+    // Saves from before the tin and the account were split had one balance, called the tin: it stays in the tin.
+    cash: r.cash && typeof (r.cash as { tin?: unknown }).tin === 'number'
+      ? { pocket: num(r.cash.pocket, 0), bank: num(r.cash.bank, 0), tin: num((r.cash as { tin: number }).tin, 0) }
+      : { pocket: num(r.cash?.pocket, 0), bank: 0, tin: num(r.cash?.bank, base.cash.tin) },
     bank: r.bank === 'califax' || r.bank === 'lloyds' ? r.bank : undefined,
     xp: num(r.xp, 0),
     level: num(r.level, 1, 1, LEVEL_CAP),
@@ -425,6 +437,9 @@ export type PurchaseResult = { ok: true } | { ok: false; reason: string };
 export const STUFFED = 95;
 
 export class Progress {
+  /** In your own house (home or the basement): the tin is within reach. Set by the World on arrival. */
+  inHouse = false;
+
   constructor(public save: GameSave) {
     this.adoptLooseJewellery();
   }
@@ -465,12 +480,50 @@ export class Progress {
     this.save.cash.pocket += Math.max(0, Math.round(amount));
   }
 
-  /** Pay pocket money into the tin at home. */
+  /** Pay pocket money into the tin. Only in the house; returns what went in. */
   bankAll(): number {
-    const n = this.save.cash.pocket;
-    this.save.cash.bank += n;
-    this.save.cash.pocket = 0;
+    return this.toTin(this.save.cash.pocket);
+  }
+
+  /** Pocket into the tin (in the house only). */
+  toTin(amount: number): number {
+    const c = this.save.cash;
+    const n = Math.min(Math.floor(amount), c.pocket);
+    if (!this.inHouse || n <= 0) return 0;
+    c.pocket -= n;
+    c.tin += n;
     return n;
+  }
+
+  /** Tin into your pocket (in the house only). */
+  fromTin(amount: number): number {
+    const c = this.save.cash;
+    const n = Math.min(Math.floor(amount), c.tin);
+    if (!this.inHouse || n <= 0) return 0;
+    c.tin -= n;
+    c.pocket += n;
+    return n;
+  }
+
+  /** Money paid to you by transfer (rent, a sale, the business): into your account, or the tin with no account. */
+  credit(amount: number): void {
+    const n = Math.max(0, Math.round(amount));
+    if (this.save.bank) this.save.cash.bank += n;
+    else this.save.cash.tin += n;
+  }
+
+  /**
+   * What you can pay with here: cash on you, then the tin if you're in the house, then your card if you've an
+   * account. `cash` counts only what's on you (bungs, dealers, buy-ins: nobody takes a card).
+   */
+  spendable(how: PayHow = 'any'): number {
+    const c = this.save.cash;
+    if (how === 'cash') return c.pocket;
+    return c.pocket + (this.inHouse ? c.tin : 0) + (this.save.bank ? c.bank : 0);
+  }
+
+  canAfford(amount: number, how: PayHow = 'any'): boolean {
+    return this.spendable(how) >= amount;
   }
 
   /** Lose a share of the cash you're carrying (getting battered). */
@@ -523,8 +576,7 @@ export class Progress {
     if (rank >= def.maxRank) return { ok: false, reason: 'Maxed out' };
     if (this.save.trainingPoints < 1) return { ok: false, reason: 'Need a training point (level up)' };
     const cost = def.cost(rank);
-    if (this.save.cash.bank < cost) return { ok: false, reason: `Need £${cost} in the bank` };
-    this.save.cash.bank -= cost;
+    if (!this.pay(cost)) return { ok: false, reason: `Need £${cost}` };
     this.save.trainingPoints--;
     this.save.upgrades[id] = rank + 1;
     return { ok: true };
@@ -534,8 +586,7 @@ export class Progress {
     const def = MOVE_UNLOCKS[id];
     if (this.save.moves.includes(id)) return { ok: false, reason: 'Already learned' };
     if (def.requires && !this.has(def.requires)) return { ok: false, reason: def.requiresText ?? 'Locked' };
-    if (this.save.cash.bank < def.cost) return { ok: false, reason: `Need £${def.cost} in the bank` };
-    this.save.cash.bank -= def.cost;
+    if (!this.pay(def.cost)) return { ok: false, reason: `Need £${def.cost}` };
     this.save.moves.push(id);
     return { ok: true };
   }
@@ -545,8 +596,7 @@ export class Progress {
     if (!lesson) return { ok: false, reason: 'Nobody teaches that here' };
     if (this.save.styles.learned.includes(style)) return { ok: false, reason: 'Already learned' };
     if (lesson.requires && !this.has(lesson.requires)) return { ok: false, reason: lesson.requiresText ?? 'Locked' };
-    if (this.save.cash.bank < lesson.cost) return { ok: false, reason: `Need £${lesson.cost} in the bank` };
-    this.save.cash.bank -= lesson.cost;
+    if (!this.pay(lesson.cost)) return { ok: false, reason: `Need £${lesson.cost}` };
     this.save.styles.learned.push(style);
     return { ok: true };
   }
@@ -561,8 +611,7 @@ export class Progress {
   // ---- kitchen ----------------------------------------------------------------------
   buyMeal(cost: number): PurchaseResult {
     if (this.save.mealBuff) return { ok: false, reason: 'Already full' };
-    if (this.save.cash.bank < cost) return { ok: false, reason: `Need £${cost} in the bank` };
-    this.save.cash.bank -= cost;
+    if (!this.pay(cost)) return { ok: false, reason: `Need £${cost}` };
     this.save.mealBuff = true;
     return { ok: true };
   }
@@ -807,21 +856,27 @@ export class Progress {
     return { ok: true };
   }
 
-  /** Buy from a shop with pocket money first, then banked money. */
-  pay(amount: number): boolean {
+  /** Pay: cash on you first, then the tin (in the house), then your card. `cash`: only what's on you. */
+  pay(amount: number, how: PayHow = 'any'): boolean {
     const c = this.save.cash;
-    if (c.pocket + c.bank < amount) return false;
-    const fromPocket = Math.min(c.pocket, amount);
-    c.pocket -= fromPocket;
-    c.bank -= amount - fromPocket;
+    const n = Math.max(0, Math.round(amount));
+    if (!this.canAfford(n, how)) return false;
+    let left = n;
+    const take = (have: number) => {
+      const t = Math.min(have, left);
+      left -= t;
+      return t;
+    };
+    c.pocket -= take(c.pocket);
+    if (how === 'any' && this.inHouse) c.tin -= take(c.tin);
+    if (how === 'any' && this.save.bank) c.bank -= take(c.bank);
     return true;
   }
 
   buyStorageUpgrade(): PurchaseResult {
     const s = this.save;
     if (s.storageCap >= STORAGE_UPGRADE.max) return { ok: false, reason: 'No room for more shelving' };
-    if (s.cash.bank < STORAGE_UPGRADE.cost) return { ok: false, reason: `Need \u00a3${STORAGE_UPGRADE.cost} in the tin` };
-    s.cash.bank -= STORAGE_UPGRADE.cost;
+    if (!this.pay(STORAGE_UPGRADE.cost)) return { ok: false, reason: `Need \u00a3${STORAGE_UPGRADE.cost}` };
     s.storageCap += STORAGE_UPGRADE.slots;
     return { ok: true };
   }

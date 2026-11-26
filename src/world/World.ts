@@ -1358,6 +1358,8 @@ export class World {
     },
   ) {
     progress.enterDistrict(level.district);
+    // The tin's on the bedroom desk: in reach anywhere in your own house.
+    progress.inHouse = level.id === 'home' || level.id === 'basement';
     // Fighters for hire wait at their seats only until they're on your side: then they're with you, or at home.
     const hired = new Set(progress.save.companions.recruited);
     const seats = (level.stations ?? []).filter((st) => st.id === 'recruit' && !!st.tab && hired.has(st.tab));
@@ -1369,6 +1371,11 @@ export class World {
       if (pr.kind === 'atm') {
         const bank = bankOf(pr.label);
         this.stations.push({ id: 'atm', x: pr.x, z: Math.min(level.bounds.maxZ - 0.3, pr.z + 0.6), label: atmOpen(progress) ? `Use the ${bank.name} cash machine` : `${bank.name} cash machine (out of service)`, tab: bank.id });
+      } else if (pr.kind === 'bank_front') {
+        // The branch: its counter is through the door at the left end of the front (LevelView bank_front), where
+        // you pay in and take out (money/banking.ts). Open from the start, unlike the machines.
+        const bank = bankOf(pr.label);
+        this.stations.push({ id: 'bank_counter', x: pr.x - propHalf(pr)[0] + 0.9, z: Math.min(level.bounds.maxZ - 0.3, pr.z + 0.6), label: `Into ${bank.name}`, tab: bank.id });
       }
     const obstacles: Obstacle[] = [];
     // On a kit street, what's drawn can be bigger than a prop's box (a kit car, a skip): collide with what you see.
@@ -2578,7 +2585,7 @@ export class World {
   /**
    * Have a word: offer the lead officer a bung. A bent one takes it, they all walk off and the district cools; a
    * straight one won't have it (bribery on your record, more heat, and they come at you harder). 'broke': you
-   * haven't got it on you or in the tin (nothing happens).
+   * haven't got it on you in cash (nothing happens).
    */
   bung(): 'taken' | 'refused' | 'broke' {
     const cops = this.standingPolice();
@@ -2587,10 +2594,11 @@ export class World {
     if (!lead || !cop) return 'refused';
     const p = this.progress;
     const price = this.bungPrice();
-    if (p.save.cash.pocket + p.save.cash.bank < price) return 'broke';
+    // A bung is cash in hand.
+    if (!p.canAfford(price, 'cash')) return 'broke';
     p.save.police.known[cop.name] = cop.bent ? 'bent' : 'straight';
     if (cop.bent) {
-      p.pay(price);
+      p.pay(price, 'cash');
       p.setHeat('police', Math.max(0, p.heatIn().police - BUNG_COOL), this.level.district);
       for (const f of cops) this.walkOff(f);
       this.policeDue = null;

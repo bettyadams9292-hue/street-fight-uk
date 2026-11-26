@@ -1,3 +1,4 @@
+import { walletLine } from '../money/banking';
 import type { AreaId, Progress } from '../progress/Progress';
 import {
   MAP_H,
@@ -569,11 +570,10 @@ export function mapScreen(o: MapOptions): Screen {
     } }, icon(f.icon), h('span', { text: f.label }));
     return b;
   }));
-  const s = p.save;
   el.append(
     h('header', { class: 'map-head' },
       h('div', { class: 'map-title' }, icon('map'), h('h2', { text: 'Map' }), h('span', { class: 'map-where', text: `${place(o.here.area).name}, ${place(o.here.area).district}` })),
-      h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` }),
+      h('span', { class: 'wallet', text: walletLine(p) }),
       h('button', { class: 'icon-btn close', 'aria-label': 'Close map', title: 'Close (Esc / M)', onclick: () => o.close() }, icon('close')),
     ),
     h('div', { class: 'map-body' },

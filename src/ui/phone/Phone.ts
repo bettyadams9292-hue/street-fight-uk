@@ -7,7 +7,7 @@
  * Map, Me and Crew and Settings open inside it (your pockets and bag are on you, not on the phone), like the bigger apps on a real phone.
  */
 import { BANKS, OTHER_BANK_FEE } from '../../money/atm';
-import { BANK_PITCH, chooseBank, myBank } from '../../money/banking';
+import { BANK_PITCH, BRANCH_OF, accountNumber, chooseBank, myBank } from '../../money/banking';
 import { h } from '../dom';
 import type { AreaId, Progress } from '../../progress/Progress';
 import { cabStop, onMap, place, places, travelOptions, unlocked, type TravelOption } from '../../map/worldMap';
@@ -52,10 +52,9 @@ export interface PhoneDeps {
   markRead(): void;
   unread(): number;
   travel(area: AreaId, opt: TravelOption): void;
-  payIn(): number;
   /** Something changed that should be saved now (a favour from Kerrigan). */
   saved(): void;
-  /** In your own house (Home app, paying into the tin). */
+  /** In your own house (the Home app). */
   atHome(): boolean;
   editHome(): void;
   openMap(): void;
@@ -411,7 +410,7 @@ export class Phone {
       h('div', { class: 'ph-lock' },
         h('div', { class: 'ph-bigtime', text: `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}` }),
         h('div', { class: 'ph-date', text: t.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) }),
-        h('div', { class: 'ph-widget' }, h('span', { text: 'On you' }), h('b', { text: money(p.save.cash.pocket) }), h('span', { text: 'Tin' }), h('b', { text: money(p.save.cash.bank) })),
+        h('div', { class: 'ph-widget' }, h('span', { text: 'On you' }), h('b', { text: money(p.save.cash.pocket) }), ...(p.save.bank ? [h('span', { text: 'Bank' }), h('b', { text: money(p.save.cash.bank) })] : [])),
       ),
       h('div', { class: 'ph-grid' },
         ...this.apps().map((a) => {
@@ -470,7 +469,7 @@ export class Phone {
     const here = this.d.here();
     if (!here) return [];
     const out: HTMLElement[] = [
-      h('div', { class: 'ph-hero' }, h('img', { src: ICON('car_hatch'), alt: '' }), h('div', {}, h('b', { text: `On the meter: £${CAB_FLAG.toFixed(2)} + £${CAB_PER_MILE.toFixed(2)} a mile` }), h('span', { text: `Paid from the tin. ${money(p.save.cash.bank)} in it.` }))),
+      h('div', { class: 'ph-hero' }, h('img', { src: ICON('car_hatch'), alt: '' }), h('div', {}, h('b', { text: `On the meter: £${CAB_FLAG.toFixed(2)} + £${CAB_PER_MILE.toFixed(2)} a mile` }), h('span', { text: `Cash or card. ${money(p.spendable())} you can pay with here.` }))),
     ];
     if (!here.calm) out.push(h('p', { class: 'ph-warn', text: 'Not with a fight on. Sort it out first.' }));
     // Home first, then everywhere a cab stops that you know.
@@ -551,7 +550,7 @@ export class Phone {
       this.d.saved();
       this.render();
     };
-    const have = p.save.cash.pocket + p.save.cash.bank;
+    const have = p.spendable();
     for (const d of districts) {
       const heat = p.heatIn(d).police;
       if (heat <= 0) continue;
@@ -607,26 +606,19 @@ export class Phone {
     const rent = f.totals.rent.in;
     const b = myBank(p);
     if (!b) return this.store();
+    // Balance only: money goes in at a branch, comes out at a branch or a cash machine (money/banking.ts).
     const card = h('div', { class: `ph-card ph-bankcard bank-${b.id}`, style: `--bk-bg:${b.bg};--bk-panel:${b.panel};--bk-accent:${b.accent}` },
-        h('span', { text: 'Total' }), h('b', { class: 'ph-total', text: money(s.cash.pocket + s.cash.bank) }),
+        h('span', { text: 'Available balance' }), h('b', { class: 'ph-total', text: money(s.cash.bank) }),
         h('div', { class: 'ph-split' },
-          h('div', {}, h('span', { text: 'In the tin' }), h('b', { text: money(s.cash.bank) })),
-          h('div', {}, h('span', { text: 'On you' }), h('b', { text: money(s.cash.pocket) })),
+          h('div', {}, h('span', { text: 'Account' }), h('b', { text: accountNumber(s.character.name, b.id) })),
+          h('div', {}, h('span', { text: 'Card' }), h('b', { text: 'Debit, contactless' })),
         ),
       );
     if (b.logo) card.prepend(h('img', { class: 'ph-banklogo', src: b.logo, alt: b.name, draggable: 'false' }));
     const out: HTMLElement[] = [
       card,
-      h('p', { class: 'ph-small', text: `Free at any ${b.name} machine. Other banks’ machines charge £${OTHER_BANK_FEE} a withdrawal.` }),
+      h('p', { class: 'ph-small', text: `Pay in and take out at the ${b.name} branch (${BRANCH_OF[b.id]}). ${b.name} cash machines are free; other banks’ charge £${OTHER_BANK_FEE}. Shops take your card when your cash runs out.` }),
     ];
-    const atHome = this.d.atHome();
-    out.push(h('div', { class: 'ph-row' },
-      h('div', { class: 'ph-what' }, h('b', { text: 'Pay into the tin' }), h('span', { text: atHome ? 'Safe in the tin. Pocket money goes if you get battered.' : 'The tin’s at home. Pay in there.' })),
-      h('button', { class: 'ph-btn', disabled: !atHome || s.cash.pocket <= 0, onclick: () => {
-        const n = this.d.payIn();
-        if (n) this.render();
-      } }, s.cash.pocket > 0 ? money(s.cash.pocket) : 'Nothing'),
-    ));
     if (rent) out.push(h('div', { class: 'ph-row' }, h('div', { class: 'ph-what' }, h('b', { text: 'Rent in so far' }), h('span', { text: 'From the places you let out' })), h('b', { class: 'ph-in', text: money(rent) })));
     const lines = f.ledger.slice(-8).reverse();
     if (lines.length) {

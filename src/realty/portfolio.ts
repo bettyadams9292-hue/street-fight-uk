@@ -138,7 +138,7 @@ export function buyProperty(p: Progress, id: string): PurchaseResult {
   const s = p.save;
   if (owns(s, id)) return fail('You already own it.');
   const price = valueNow(d, s.playTime);
-  const have = s.cash.pocket + s.cash.bank;
+  const have = p.spendable();
   if (have < price) return fail(`Not enough money. It’s ${fmt(price)} and you’ve got ${fmt(have)}: you’re ${fmt(price - have)} short.`);
   p.pay(price);
   const m = monthAt(s.playTime);
@@ -160,7 +160,7 @@ export function sellProperty(p: Progress, id: string): { ok: true; net: number; 
   const rent = h.owed;
   s.portfolio.holdings = s.portfolio.holdings.filter((x) => x.id !== id);
   if (s.portfolio.inside === id) s.portfolio.inside = null;
-  s.cash.bank += offer.net + rent;
+  p.credit(offer.net + rent);
   record(s.finance, s.playTime, 'property', `Sold ${d.name}`, offer.gross);
   record(s.finance, s.playTime, 'fees', `Agent’s fee on ${d.name}`, -offer.fee);
   if (rent > 0) record(s.finance, s.playTime, 'rent', `Rent collected on sale of ${d.name}`, rent);
@@ -228,7 +228,7 @@ export function collectRent(p: Progress, id?: string): number {
     record(s.finance, s.playTime, 'rent', `Rent from ${PROPERTIES[h.id].name}`, h.owed);
     h.owed = 0;
   }
-  s.cash.bank += total;
+  p.credit(total);
   return total;
 }
 

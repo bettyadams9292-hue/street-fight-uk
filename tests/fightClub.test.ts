@@ -35,6 +35,7 @@ function assert(c: unknown, msg: string): asserts c {
 
 const fresh = (cash = 20000) => {
   const p = new Progress(newSave(createCharacter({ name: 'T', appearance: defaultAppearance(), background: 'estate_scrapper', allocated: emptyAllocation() })));
+  p.save.bank = 'califax';
   p.save.cash.pocket = cash;
   return p;
 };

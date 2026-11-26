@@ -3,6 +3,7 @@
  * tried on as you tap it; lasering one off is a tile too, and the Ink tab re-inks everything in a colour. The bill
  * adds up what's changing, and paying makes it yours.
  */
+import { walletLine } from '../money/banking';
 import { INK_COLOURS, LABELS } from '../character/Appearance';
 import { DESIGNS, INK_NAMES, LASER_PRICE, REINK_PRICE, SLOT_NAMES, SLOT_ORDER, STUDIO, designPrice, designsFor, getInk, inkOf, quote, type Ink } from '../tattoo/tattoo';
 import type { TattooSlot } from '../character/Appearance';
@@ -70,7 +71,7 @@ export function tattooScreen(progress: Progress, ui: UIManager, a: TattooActions
       blurb = want === 'none' ? (has === 'none' ? 'Nothing here yet. Pick a design to try it on.' : 'A few sessions with the laser. It fades right out.') : DESIGNS[want].blurb;
     }
     const q = quote(now, wanted);
-    const canAfford = s.cash.pocket + s.cash.bank >= q.total;
+    const canAfford = progress.canAfford(q.total);
     const bill = h(
       'div',
       { class: 'barber-bill' },
@@ -100,7 +101,7 @@ export function tattooScreen(progress: Progress, ui: UIManager, a: TattooActions
     );
     const reset = menuButton('Keep my skin', () => choose(inkOf(progress.save.character.appearance)), 'Back to how you came in');
     el.replaceChildren(
-      h('div', { class: 'shop-head' }, h('h2', { text: STUDIO.shop }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` })),
+      h('div', { class: 'shop-head' }, h('h2', { text: STUDIO.shop }), h('span', { class: 'wallet', text: walletLine(progress) })),
       h(
         'div',
         { class: 'inv-tabs' },

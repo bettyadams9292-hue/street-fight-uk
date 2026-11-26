@@ -30,6 +30,7 @@ const ok = (name: string, fn: () => void) => {
 
 function fresh(flags: string[] = []): Progress {
   const p = new Progress(newSave(createCharacter({ name: 'Tester', appearance: defaultAppearance(), background: 'estate_scrapper', allocated: emptyAllocation() })));
+  p.save.bank = 'califax';
   p.save.cash.bank = 10_000_000;
   for (const f of flags) p.save.flags[f] = true;
   return p;

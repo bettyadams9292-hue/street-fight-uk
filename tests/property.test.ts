@@ -38,6 +38,8 @@ import { LEVELS } from '../src/world/levels';
 import { resolveLevel } from '../src/property/levels';
 import { FURNITURE } from '../src/property/catalogue';
 import { propBox, propHalf } from '../src/world/LevelTypes';
+/** Tests here pay as a player with a bank account would (money/banking.ts): card after cash. */
+const account = (p: Progress): Progress => ((p.save.bank = 'califax'), p);
 
 let passed = 0;
 let failed = 0;
@@ -61,7 +63,7 @@ function fresh(bank = 0, pocket = 0): Progress {
   s.cash.pocket = pocket;
   // Every shop tier open (items/shopTiers.ts): these tests are about the shops' own rules.
   for (const f of ['boss_sully', 'boss_dunc']) s.flags[f] = true;
-  return new Progress(s);
+  return account(new Progress(s));
 }
 const reload = (p: Progress): Progress => new Progress(sanitiseSave(JSON.parse(JSON.stringify(p.save)) as GameSave)!);
 

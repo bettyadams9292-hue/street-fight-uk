@@ -1,12 +1,10 @@
 /**
- * Cash machines: the `atm` props set into shop and bank walls. Take cash out of your account (the same money as the
- * tin at home, `save.cash.bank`) or pay what's on you in, so it's safe if you get battered.
+ * Cash machines: the `atm` props set into shop and bank walls. With your bank card they show your balance and pay
+ * cash out of your account (`save.cash.bank`); they don't take deposits (that's a branch counter, money/banking.ts).
  *
- * Banking is a progression unlock: no machine works until the second story boss (Sully) is down (`ATM_FLAG`), and
- * there are only a handful in the whole town (`ATM_SITES`, about one for every four districts). Each machine belongs
- * to one of the two banks (`BANKS`, Califax or Lloyd's THC) by its prop's `label`; both reach the same account.
- *
- * Paying in is free everywhere. Taking out is free in town (`FREE`); machines elsewhere charge a fee each time.
+ * No machine works until the second story boss (Sully) is down (`ATM_FLAG`), and there are only a handful in the
+ * whole town (`ATM_SITES`). Each belongs to one of the two banks (`BANKS`, Califax or Lloyd's THC) by its prop's
+ * `label`: your own bank's are free, the other's charge `OTHER_BANK_FEE`.
  *
  * Numbers and save state only (the machine's software is ui/atmUI.ts).
  */
@@ -104,6 +102,7 @@ export type AtmResult = { ok: true; amount: number; fee: number } | { ok: false;
 /** Take `amount` out of the bank into your pocket; the fee comes off the balance on top. */
 export function withdraw(p: Progress, amount: number, district: string, machine?: BankId): AtmResult {
   const c = p.save.cash;
+  if (!p.save.bank) return { ok: false, reason: 'Card not recognised. Open an account first (CaliStore, on your phone).' };
   const fee = atmFee(district, machine, p.save.bank);
   const n = Math.floor(amount);
   if (!Number.isFinite(amount) || n <= 0) return { ok: false, reason: 'Please enter an amount.' };
@@ -117,7 +116,10 @@ export function withdraw(p: Progress, amount: number, district: string, machine?
   return { ok: true, amount: n, fee };
 }
 
-/** Pay cash in: up to `amount` of what's on you (Infinity for all of it). */
+/**
+ * Pay cash in: up to `amount` of what's on you (Infinity for all of it). Cash machines don't take deposits: this is
+ * the counter's (money/banking.ts `branchDeposit` checks it's your bank first).
+ */
 export function deposit(p: Progress, amount: number, district = ''): AtmResult {
   const c = p.save.cash;
   if (Number.isNaN(amount) || amount <= 0) return { ok: false, reason: 'Please enter an amount.' };

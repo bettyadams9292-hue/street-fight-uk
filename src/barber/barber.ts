@@ -113,7 +113,7 @@ export function getCut(p: Progress, wanted: Cut): CutResult {
   const now = cutOf(a);
   const q = quote(now, wanted);
   if (!q.lines.length) return { ok: false, reason: 'That’s what you’ve already got.' };
-  if (!p.pay(q.total)) return { ok: false, reason: `That’s £${q.total}. Pocket money first, then the tin at home.` };
+  if (!p.pay(q.total)) return { ok: false, reason: `That’s £${q.total}. Cash on you first, then your card.` };
   // In place: the save and the fighter the game holds share this object.
   a.hair = wanted.hair;
   a.facialHair = wanted.facialHair;

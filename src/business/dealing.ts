@@ -138,7 +138,8 @@ export function tableDef(tier: number): (typeof TABLES)[number] | null {
   return TABLES[tier - 1] ?? null;
 }
 
-const pay = (p: Progress, n: number) => p.pay(n);
+// Kez deals in cash only.
+const pay = (p: Progress, n: number) => p.pay(n, 'cash');
 
 /** Take `n` of an item out of your pockets (from any of its stacks). False if you haven't got that many. */
 export function takeFromPockets(p: Progress, id: string, n = 1): boolean {

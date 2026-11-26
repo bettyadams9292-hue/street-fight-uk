@@ -19,6 +19,8 @@ import { LEVELS } from '../src/world/levels';
 import { arrest, arrestFine, ARREST_HEAT, robShop, ROBBERY_CLOSED_TRIPS } from '../src/world/robbery';
 import { exitLocked, World } from '../src/world/World';
 import { TOWN_AREA_IDS } from '../src/world/townIds';
+/** Tests here pay as a player with a bank account would (money/banking.ts): card after cash. */
+const account = (p: Progress): Progress => ((p.save.bank = 'califax'), p);
 
 let passed = 0;
 let failed = 0;
@@ -37,7 +39,7 @@ function assert(cond: unknown, msg: string): void {
 }
 function fresh(): Progress {
   const c = createCharacter({ name: 'Tester', appearance: defaultAppearance(), background: 'estate_scrapper', allocated: emptyAllocation() });
-  return new Progress(newSave(c));
+  return account(new Progress(newSave(c)));
 }
 function cmd(press: (keyof CommandFrame['pressed'])[] = [], moveX = 0): CommandFrame {
   const c = emptyCommand();
@@ -549,7 +551,7 @@ test('a Stage 4 (v2) save migrates: money, flags, gear, weapons and cosmetics al
   const loaded = new SaveStore(kv).load()!;
   assert(loaded.migrated, 'not flagged as migrated');
   const m = new Progress(loaded.save);
-  assert(m.save.version === 3 && m.save.cash.bank === 900 && m.save.cash.pocket === 40 && m.has('boss_sully'), 'lost money or flags');
+  assert(m.save.version === 3 && m.save.cash.tin === 900 && m.save.cash.bank === 0 && m.save.cash.pocket === 40 && m.has('boss_sully'), 'lost money or flags');
   assert(m.save.worn.top?.id === 'leather_jacket', 'equipped gear not worn');
   assert(m.owns('wraps') && m.owns('steel_toecaps'), 'gear lost');
   assert(m.save.held?.id === 'w_crowbar' && m.owns('w_baseball_bat') === false && m.owns('w_bat'), 'weapons lost');

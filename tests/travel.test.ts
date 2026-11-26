@@ -18,6 +18,8 @@ import { AMBUSH_MAX, ambushChance, jumped, journeyRisk } from '../src/travel/onF
 import { World } from '../src/world/World';
 import { fitMod, fitted, optionFor, paintOf } from '../src/property/carMods';
 import { route } from '../src/map/worldMap';
+/** Tests here pay as a player with a bank account would (money/banking.ts): card after cash. */
+const account = (p: Progress): Progress => ((p.save.bank = 'califax'), p);
 
 let passed = 0;
 let failed = 0;
@@ -31,7 +33,7 @@ const ok = (name: string, fn: () => void) => {
     console.log(`  FAIL ${name}\n${(e as Error).stack}`);
   }
 };
-const fresh = () => new Progress(newSave(createCharacter({ name: 'A', appearance: defaultAppearance('male'), background: 'estate_scrapper', allocated: emptyAllocation() })));
+const fresh = () => account(new Progress(newSave(createCharacter({ name: 'A', appearance: defaultAppearance('male'), background: 'estate_scrapper', allocated: emptyAllocation() }))));
 const openAll = (p: Progress) => {
   for (const f of ['boss_gaffer', 'boss_sully', 'boss_ratcatcher', 'boss_dunc', 'boss_estate_king', 'boss_market', 'boss_docks', 'boss_factory', 'boss_precinct', 'boss_nightclub', 'boss_stadium', 'boss_underground']) p.save.flags[f] = true;
 };

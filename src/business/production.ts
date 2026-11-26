@@ -247,15 +247,16 @@ export function sellStock(p: Progress): { ok: true; units: number; value: number
   return { ok: true, units, value };
 }
 
-/** Take the business's money: into your pocket, or straight into the tin. */
+/** Take the business's money: cash into your pocket, or paid into your account (the tin with no account). */
 export function withdraw(p: Progress, to: 'pocket' | 'bank'): { ok: true; amount: number } | { ok: false; reason: string } {
   const b = p.save.basement;
   tickBusiness(b, p.save.playTime, p.wanted);
   const amount = b.business.balance;
   if (amount <= 0) return { ok: false, reason: 'Nothing to take' };
   b.business.balance = 0;
-  p.save.cash[to] += amount;
-  logLedger(p, `Took earnings (${to === 'bank' ? 'tin' : 'pocket'})`, amount);
+  if (to === 'bank') p.credit(amount);
+  else p.save.cash.pocket += amount;
+  logLedger(p, `Took earnings (${to === 'pocket' ? 'cash' : p.save.bank ? 'paid into your account' : 'tin'})`, amount);
   return { ok: true, amount };
 }
 

@@ -53,7 +53,7 @@ export function buyItem(p: Progress, id: string, mult: number, stock: readonly s
   const worn = p.save.worn.back;
   if (bag && [...p.save.inventory, ...p.save.storage, ...(worn ? [worn] : [])].some((s) => s.id === id)) return { ok: false, reason: 'You’ve already got one of those.' };
   const price = shopPrice(d, mult);
-  if (!p.pay(price)) return { ok: false, reason: `You need £${price}. Pocket money first, then the tin at home.` };
+  if (!p.pay(price)) return { ok: false, reason: `You need £${price}. Cash on you first, then your card.` };
   if (bag && (!worn || (BAG_SLOTS[worn.id] ?? 0) < bag)) {
     // The old bag goes in your pockets, or home to the stash if there's no room.
     p.wearNew(id);

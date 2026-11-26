@@ -213,7 +213,7 @@ export function foughtTonight(p: Progress): boolean {
 export function canFight(p: Progress, b: Bout): { ok: true } | { ok: false; reason: string } {
   if (foughtTonight(p)) return { ok: false, reason: `You’ve had your fight tonight. Come back in about ${Math.ceil((NIGHT_SECONDS - ((p.save.playTime ?? 0) % NIGHT_SECONDS)) / 60)} minutes.` };
   const buy = buyInOf(b);
-  if (buy > 0 && p.save.cash.pocket + p.save.cash.bank < buy) return { ok: false, reason: `The buy-in’s £${buy}. You haven’t got it.` };
+  if (buy > 0 && !p.canAfford(buy, 'cash')) return { ok: false, reason: `The buy-in’s £${buy}. You haven’t got it.` };
   return { ok: true };
 }
 
@@ -221,7 +221,7 @@ export function canFight(p: Progress, b: Bout): { ok: true } | { ok: false; reas
 export function enterBout(p: Progress, b: Bout): boolean {
   if (!canFight(p, b).ok) return false;
   const buy = buyInOf(b);
-  if (buy > 0 && !p.pay(buy)) return false;
+  if (buy > 0 && !p.pay(buy, 'cash')) return false;
   p.save.club.lastTrip = nightOf(p);
   return true;
 }

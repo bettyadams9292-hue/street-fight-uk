@@ -822,9 +822,9 @@ export function travelOptions(p: Progress, here: AreaId, to: AreaId, calm: boole
     const shut = SHOP_STOPS.find((x) => x.area === to && x.shop && !p.isShopOpen(x.shop));
     const miles = cabMiles(here, to, x);
     const fare = cabFare(miles);
-    const ok = open && calm && !shut && p.save.cash.bank >= fare;
-    const why = !open ? lock! : shut ? 'Shutters down after the robbery' : busy ?? (p.save.cash.bank < fare ? `Need £${fare} in the tin` : undefined);
-    out.push({ kind: 'cab', label: `Duber: ${miles.toFixed(1)} miles, £${fare} from the tin`, cost: fare, miles, entry: stop.entry, ok, why });
+    const ok = open && calm && !shut && p.canAfford(fare);
+    const why = !open ? lock! : shut ? 'Shutters down after the robbery' : busy ?? (!p.canAfford(fare) ? `Need £${fare}` : undefined);
+    out.push({ kind: 'cab', label: `Duber: ${miles.toFixed(1)} miles, £${fare}`, cost: fare, miles, entry: stop.entry, ok, why });
   }
   const r = route(p, here, to);
   // On foot: free, along the streets, with a small chance of trouble on each one crossed (travel/onFoot.ts).
