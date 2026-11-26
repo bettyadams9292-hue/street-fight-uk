@@ -12,6 +12,7 @@ import { PROPERTIES } from '../realty/catalogue';
 import { statusOf } from '../realty/portfolio';
 import { CARS } from '../property/catalogue';
 import { DRIVE_HOME, parkingSpot, type ParkingSpot } from '../property/parking';
+import { journeyRisk, riskWord } from '../travel/onFoot';
 
 /**
  * The town map's data. Places, doors, links, locks, bosses, shops and people
@@ -500,6 +501,8 @@ export interface TravelOption {
   /** A cab's distance in miles, for the meter. */
   miles?: number;
   entry?: string;
+  /** On foot: the chance of being jumped somewhere on the way (travel/onFoot.ts). */
+  risk?: number;
   /** Driving: where the car will be left (null: back on the drive at home). */
   park?: ParkingSpot | null;
   ok: boolean;
@@ -582,7 +585,10 @@ export function travelOptions(p: Progress, here: AreaId, to: AreaId, calm: boole
     out.push({ kind: 'cab', label: `Duber: ${miles.toFixed(1)} miles, £${fare} from the tin`, cost: fare, miles, entry: stop.entry, ok, why });
   }
   const r = route(p, here, to);
-  out.push({ kind: 'walk', label: r ? `Walk: ${r.length} stop${r.length > 1 ? 's' : ''} away` : 'Walk', cost: 0, ok: !!r, why: r ? undefined : lock ?? 'No way through from here yet' });
+  // On foot: free, along the streets, with a small chance of trouble on each one crossed (travel/onFoot.ts).
+  // Rolled on each street crossed on the way (not where you start, and you stop as you reach the last).
+  const risk = r ? journeyRisk(p, r.slice(0, -1)) : 0;
+  out.push({ kind: 'walk', label: r ? `Walk: ${r.length} stop${r.length > 1 ? 's' : ''} away, free, ${riskWord(risk)}` : 'Walk', cost: 0, risk, ok: !!r, why: r ? undefined : lock ?? 'No way through from here yet' });
   return out;
 }
 

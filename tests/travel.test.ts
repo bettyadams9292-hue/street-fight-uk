@@ -14,6 +14,9 @@ import { driveOption, travelOptions } from '../src/map/worldMap';
 import { SHOP_STOPS, TAXI_STOPS } from '../src/ui/hub';
 import { LEVELS } from '../src/world/levels';
 import { propHalf } from '../src/world/LevelTypes';
+import { AMBUSH_MAX, ambushChance, jumped, journeyRisk } from '../src/travel/onFoot';
+import { World } from '../src/world/World';
+import { route } from '../src/map/worldMap';
 
 let passed = 0;
 let failed = 0;
@@ -106,6 +109,46 @@ ok('Drive respects locked districts', () => {
   const locked = (Object.keys(LEVELS) as AreaId[]).find((a) => a === 'hq')!;
   const d = driveOption(p, 'estate', locked, true)!;
   assert.equal(d.ok, false);
+});
+
+// ---- on foot ------------------------------------------------------------------------------------------------
+
+ok('on foot: no ambushes while learning, indoors or at home; rough streets riskier than clean ones', () => {
+  const p = fresh();
+  assert.equal(ambushChance(p, 'high_street'), 0, 'not before the first lessons are done');
+  p.save.tutorial.essentialDone = true;
+  assert.ok(ambushChance(p, 'high_street') > 0);
+  assert.equal(ambushChance(p, 'pub'), 0, 'not inside');
+  assert.equal(ambushChance(p, 'home'), 0);
+  assert.ok(ambushChance(p, 'alleys') > ambushChance(p, 'high_street'), 'Back Alleys are rough');
+  assert.ok(ambushChance(p, 'city') < ambushChance(p, 'high_street'), 'the City Centre is clean');
+  for (const a of Object.keys(LEVELS) as AreaId[]) assert.ok(ambushChance(p, a) <= AMBUSH_MAX);
+});
+
+ok('on foot: longer journeys through rough streets carry more risk, but walking stays worth it', () => {
+  const p = fresh();
+  p.save.tutorial.essentialDone = true;
+  openAll(p);
+  const short = route(p, 'estate', 'high_street')!;
+  const long = route(p, 'estate', 'docks')!;
+  assert.ok(long.length > short.length);
+  assert.ok(journeyRisk(p, long.slice(0, -1)) > journeyRisk(p, short.slice(0, -1)));
+  assert.ok(journeyRisk(p, long.slice(0, -1)) < 0.6, `even a long run is usually clear (${journeyRisk(p, long.slice(0, -1)).toFixed(2)})`);
+  // Fixed for a journey: asking again doesn't re-roll.
+  assert.equal(jumped(p, 'alleys', 123), jumped(p, 'alleys', 123));
+  let hits = 0;
+  for (let j = 0; j < 2000; j++) if (jumped(p, 'alleys', j)) hits++;
+  const c = ambushChance(p, 'alleys');
+  assert.ok(Math.abs(hits / 2000 - c) < 0.04, `rolls land near the chance (${hits / 2000} vs ${c})`);
+});
+
+ok('on foot: an ambush is an ordinary street fight, never on top of another', () => {
+  const p = fresh();
+  const w = new World(LEVELS.high_street, p, { entry: 'left', seed: 5, civilians: false });
+  const before = w.enemies.length;
+  assert.ok(w.ambush(2));
+  assert.equal(w.enemies.length - before, 2);
+  assert.equal(w.ambush(2), false, 'not while they are still up');
 });
 
 console.log(`\ntravel: ${passed} passed, ${failed} failed`);

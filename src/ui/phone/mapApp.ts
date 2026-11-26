@@ -3,6 +3,7 @@
  * places, a search bar and filter chips on top, and a sheet at the bottom you pull up: places to search, or the
  * place you tapped with Directions (the route shows on the map in blue), a cab, or the way home.
  */
+import { riskWord } from '../../travel/onFoot';
 import { h } from '../dom';
 import type { AreaId, Progress } from '../../progress/Progress';
 import {
@@ -240,7 +241,9 @@ export function mapApp(d: MapAppDeps): HTMLElement {
         if (dest) fitRoute();
         fillPlace(m);
         if (dest) setSheet(false);
-      } }, on ? 'End route' : 'Directions', h('small', { text: on ? '' : walk.label.replace('Walk: ', '') })));
+      } }, on ? 'End route' : 'Directions', h('small', { text: on ? '' : walk.label.replace('Walk: ', '').replace(/, free, .*$/, '') })));
+      // Or run it on your own (Game.startRun): free, along the streets; move to take over.
+      actions.push(h('button', { class: 'pm-act', disabled: !d.calm, onclick: () => d.travel(m.area, walk) }, 'Run there', h('small', { text: d.calm ? `Free · ${riskWord(walk.risk ?? 0)}` : 'Not with a fight on' })));
     }
     if (home) actions.push(h('button', { class: 'pm-act', disabled: !home.ok, onclick: () => d.travel(m.area, home) }, 'Go home', h('small', { text: home.ok ? 'On foot' : home.why ?? '' })));
     if (drive && !isHere) actions.push(h('button', { class: 'pm-act', disabled: !drive.ok, onclick: () => d.travel(m.area, drive) }, 'Drive', h('small', { text: drive.ok ? 'Your car · free' : drive.why ?? '' })));

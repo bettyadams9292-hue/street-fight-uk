@@ -1531,6 +1531,27 @@ export class World {
     this.events.emit('gang:hunt', { district: this.level.district, count: n, gang });
   }
 
+  /**
+   * Jumped on the way somewhere (the run-there autopilot, travel/onFoot.ts): a few lads off the street come at you
+   * from one side, an ordinary street fight. False if something's already going on.
+   */
+  ambush(n: number): boolean {
+    const p = this.player;
+    if (this.activeEncounter || this.locked || this.duel || p.isKO || this.policeActive || this.progress.save.property.riding) return false;
+    if (this.enemies.some((e) => !e.isKO)) return false;
+    const side = this.lootRng.next() < 0.5 ? -1 : 1;
+    const ids: ArchetypeId[] = ['hooded', 'thug', 'runner'];
+    const out: Fighter[] = [];
+    for (let i = 0; i < n; i++) {
+      const f = this.spawnEnemy(ids[i % ids.length], this.spawnX(null, i), this.spawnZ(i));
+      f.pos.x = Math.max(this.arena.bounds.minX + 0.5, Math.min(this.arena.bounds.maxX - 0.5, p.pos.x + side * (7 + i * 1.4)));
+      out.push(f);
+    }
+    this.events.emit('enemy:say', { fighter: out[0], text: ['Oi! Where d’you think you’re going?', 'Empty your pockets, mate.', 'Wrong street, pal.', 'You lost or something?'][Math.floor(this.lootRng.next() * 4)], kind: 'taunt' });
+    for (const c of this.civilians) c.brain.react(p.pos.x, this.sim.frame);
+    return true;
+  }
+
   private clearedKey(def: EncounterDef): string {
     return `cleared:${this.level.id}:${def.id}`;
   }

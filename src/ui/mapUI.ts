@@ -512,6 +512,8 @@ export function mapScreen(o: MapOptions): Screen {
             apply();
             renderPanel();
           }, '', t.ok || isDest ? undefined : t.why, !t.ok && !isDest, t.ok ? t.label : undefined));
+          // Or run it: your fighter runs the route on their own (Game.startRun); move to take over.
+          if (t.ok) acts.push(actionBtn('Run there', 'walk', () => o.travel(selected!, t), 'primary', o.calm ? undefined : 'Not with a fight on', !o.calm, 'Free. Runs the streets for you; you might get jumped on the way.'));
           continue;
         }
         acts.push(actionBtn(t.kind === 'cab' ? 'Take a cab' : t.kind === 'drive' ? 'Drive' : 'Head home', t.kind === 'home' ? 'home' : 'cab', () => { confirm = t; renderPanel(); }, t.ok ? 'primary' : '', t.ok ? undefined : t.why, !t.ok, t.ok ? t.label : undefined));

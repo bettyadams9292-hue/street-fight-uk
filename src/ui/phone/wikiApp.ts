@@ -1,3 +1,4 @@
+import { CAB_FLAG, CAB_PER_MILE } from '../hub';
 import { BUY_IN, CHAMPION, DEFENCE_TRIPS, LADDER, NIGHT_SECONDS, STRIP_TRIPS, defencePurse } from '../../fightclub/club';
 import { BARBER, BEARDS, COLOUR_PRICE, GREYS, HAIRCUTS } from '../../barber/barber';
 import { DESIGNS, LASER_PRICE, REINK_PRICE, SLOT_NAMES, SLOT_ORDER, STUDIO, designPrice } from '../../tattoo/tattoo';
@@ -20,7 +21,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club' | 'barber' | 'tattoo' | 'cash';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club' | 'barber' | 'tattoo' | 'cash' | 'travel';
 
 export interface WikiDeps {
   device: () => Device;
@@ -39,6 +40,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'club', title: 'The Scrap Yard', blurb: 'The fight club under Hard Knocks: the card, the title and defending it.' },
   { id: 'barber', title: 'The barber', blurb: 'Peaky Barbers on the High Street: haircuts, beards and colour, and what they cost.' },
   { id: 'tattoo', title: 'Tattoos', blurb: 'Ink & Iron on Hollins Estate: designs, where they go, laser removal and re-inking.' },
+  { id: 'travel', title: 'Getting about', blurb: 'Running there on foot, Duber cabs, and driving your own car.' },
   { id: 'cash', title: 'Cashpoints', blurb: 'Paying cash in and taking it out on the street, and which machines charge.' },
   { id: 'gear', title: 'Clothes and jewellery', blurb: 'Tiers, what each kind of clothing does, outfit buffs, and jewellery’s XP bonus.' },
   { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
@@ -246,6 +248,23 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
         'Over something already there? It’s lasered off first, and the bill says so.',
         'The Ink tab redoes every piece in a new colour. A colour picked with nothing to re-ink comes free with your next piece.',
         'It’s your own skin: the ink shows wherever your clothes don’t cover it, so a vest or a bare chest shows the most.',
+      ]),
+    );
+  }
+
+  if (page === 'travel') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('Getting about', 'Pick a place on Maps and choose how to get there.',
+      infobox('Ways to travel', [
+        ['On foot', 'Free, any time'],
+        ['Duber', `£${CAB_FLAG.toFixed(2)} + £${CAB_PER_MILE.toFixed(2)} a mile`],
+        ['Your own car', 'Free once you own one'],
+      ]),
+      list([
+        'Run there: your fighter runs the real streets on their own, through the doors and round the corners. Move or press anything to take over; pick Run there again to carry on.',
+        'On foot you can get jumped. Each street you cross is a small chance, more in rough districts and where a gang is after you, less in the City Centre. Short trips are safer than long ones. Win the fight and you’re straight back on your way.',
+        'Duber drops you at the door for a fare from your bank. No trouble on the way.',
+        'Your own car is free and nobody jumps you. You drive it from wherever it’s parked: on the drive at home, or where you last left it. It’s left parked in the road when you get there, and shows on Maps.',
       ]),
     );
   }
