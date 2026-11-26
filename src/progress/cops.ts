@@ -30,10 +30,12 @@ export interface PoliceSave {
   owed: { id: string; left: number } | null;
   /** Booked in and not out of the station yet: they've got your phone. */
   custody: boolean;
+  /** Doing time in the cell because you couldn't pay (world/custody.ts): out when play time reaches `until`. */
+  serving: { until: number; total: number } | null;
 }
 
 export function defaultPolice(): PoliceSave {
-  return { known: {}, contact: false, burned: false, seized: [], owed: null, custody: false };
+  return { known: {}, contact: false, burned: false, seized: [], owed: null, custody: false, serving: null };
 }
 
 // ---- the officers --------------------------------------------------------------------------------
@@ -164,5 +166,9 @@ export function sanitisePolice(raw: unknown, stack: (s: unknown) => ItemStack | 
     seized: Array.isArray(r.seized) ? r.seized.map(stack).filter((x): x is ItemStack => !!x).slice(0, 40) : [],
     owed,
     custody: r.custody === true,
+    serving: (() => {
+      const s = r.serving as { until?: unknown; total?: unknown } | null | undefined;
+      return s && typeof s.until === 'number' && Number.isFinite(s.until) && typeof s.total === 'number' && s.total > 0 ? { until: s.until, total: Math.min(600, s.total) } : null;
+    })(),
   };
 }

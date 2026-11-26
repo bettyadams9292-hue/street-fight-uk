@@ -5,6 +5,7 @@ import { DESIGNS, LASER_PRICE, REINK_PRICE, SLOT_NAMES, SLOT_ORDER, STUDIO, desi
 import { ATM_MAX, OTHER_BANK_FEE } from '../../money/atm';
 import { CORNER_BONUS, CORNER_TRIPS, RIVAL_CUT, TRADE_SHARE } from '../../business/streetDealers';
 import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
+import { STRAINS, WEEK } from '../../business/catalogue';
 import { BAG_PACK, BAG_PACK_PRICE, BULK_BUYBACK, bulkWorth, DRUG_DEFS, DRUGS, GROW_PER_BULK, TABLES } from '../../business/dealing';
 import { DRIP_LIST, JEWEL_BUFF_LIST, OUTFIT_LIST, STONE_BUFF_LIST, TIER_NAMES, XP_BONUS_CAP } from '../../items/gearBonus';
 import { BOARD_TRIPS, CONTACT_IDS, CONTACTS } from '../../jobs/jobs';
@@ -21,7 +22,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club' | 'barber' | 'tattoo' | 'cash' | 'travel';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'grow' | 'club' | 'barber' | 'tattoo' | 'cash' | 'travel';
 
 export interface WikiDeps {
   device: () => Device;
@@ -37,6 +38,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'police', title: 'Getting nicked', blurb: 'Your record, the charge sheet, bail, a night in the cells, and the front counter.' },
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
   { id: 'dealing', title: 'Dealing', blurb: 'Bulk, the prep table in your garage, punters, prices and the risks.' },
+  { id: 'grow', title: 'The grow', blurb: 'The basement: tents, lights, extraction, heat, strains and how a crop runs.' },
   { id: 'club', title: 'The Scrap Yard', blurb: 'The fight club under Hard Knocks: the card, the title and defending it.' },
   { id: 'barber', title: 'The barber', blurb: 'Peaky Barbers on the High Street: haircuts, beards and colour, and what they cost.' },
   { id: 'tattoo', title: 'Tattoos', blurb: 'Ink & Iron on Hollins Estate: designs, where they go, laser removal and re-inking.' },
@@ -163,6 +165,25 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       p('What it costs you is heat with the police and the locals: see Heat.'),
       sec('Weapons'),
       p('Pick a weapon up with GRAB when nobody’s in reach. It wears out with every hit; the workbench at home mends it.'),
+    );
+  }
+
+  if (page === 'grow') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('The grow', 'The basement under your house can grow. Kit comes from B&THC Hydroponics on the trading estate and goes in from the terminal by the stairs.',
+      infobox('Strains', STRAINS.map((sd) => [sd.name, `${sd.type}: ${sd.veg ? `${sd.veg} + ${sd.flower}` : sd.flower} weeks, ${sd.wpp} W a plant${sd.level > 1 ? `, level ${sd.level}` : ''}`] as [string, string])),
+      sec('What a grow needs'),
+      list([
+        'A tent. Its floor sets the plants: a 2×2 holds 2, a 3×3 4, a 4×4 6, a 5×5 9, the twin tent 10 and the walk-in room 24.',
+        'Light, in watts: about 100 W a plant (75 W for an autoflower, 130 W for a haze). LED gives the most per watt and runs cool; HPS is cheap and hot; CMH sits between. Each strain does 10% better under the lamps it likes.',
+        'Extraction through a carbon filter, in CFM: a 2×2 needs 60, a 4×4 200, more again for every HPS lamp. Short on air and only some plants grow.',
+        'A clip fan in every tent, or the buds rot (10% less).',
+        'Lamp heat out of the room: the extraction carries some, air con the rest. Too hot and the crop suffers.',
+        'Power: the house gives 4 kW until the electrics are upgraded.',
+      ]),
+      sec('A crop'),
+      p(`Seedlings and veg under 18 hours of light, then flowering under 12/12 (autos flower on their own), a week drying and curing, then clean down and replant. A grow week is ${WEEK} seconds of play, and it only grows while you play. Timers and drippers cut the turnaround. Changing strain pulls the crop and starts again.`),
+      p('Stock goes on your shelves: sell it from the terminal into the business account, or bring it up for the prep table as bulk weed. Better security keeps thieves and raids off it; Skunk #1 smells, so raids are likelier.'),
     );
   }
 

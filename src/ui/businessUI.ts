@@ -6,7 +6,9 @@ import {
   EQUIPMENT_CATEGORIES,
   EQUIPMENT_LIST,
   IMPROVEMENTS,
+  LIGHT_KINDS,
   MAX_UPGRADE,
+  STRAINS,
   OWED_LIMIT,
   STARTUP_FEE,
   TIERS,
@@ -29,7 +31,10 @@ import {
   STATUS_TEXT,
   businessStats,
   businessStatus,
+  businessLevel,
+  growStage,
   payBills,
+  setStrain,
   sellStock,
   setPaused,
   startBusiness,
@@ -61,9 +66,11 @@ function tabs<T extends string>(items: { id: T; name: string }[], current: T, pi
 /** What this piece would change, in the numbers the business cares about. */
 function effectLine(def: EquipmentDef, st: BusinessStats): string {
   const bits: string[] = [];
-  if (def.cap) bits.push(`capacity ${st.capacity} → ${st.capacity + def.cap}`);
-  if (def.light) bits.push(`light ${st.light} → ${st.light + def.light}`);
-  if (def.air) bits.push(`air ${st.air} → ${st.air + def.air}`);
+  if (def.plants) bits.push(`${def.plants} plants, needs ${def.needCfm} CFM · plant room ${st.capacity} → ${st.capacity + def.plants}`);
+  if (def.watts && def.lamp) bits.push(`${def.watts} W ${LIGHT_KINDS[def.lamp].name} · lights ${Math.floor(def.watts / st.strain.wpp)} ${st.strain.name} plants${st.strain.likes.includes(def.lamp) ? ' (it likes this lamp: +10%)' : ''} · light ${st.watts} → ${st.watts + def.watts} W`);
+  if (def.cfm) bits.push(`air ${st.cfm} → ${st.cfm + def.cfm} of ${st.needCfm} CFM needed`);
+  if (def.circ) bits.push(`clip fans ${st.clipFans} → ${st.clipFans + def.circ} for ${st.tents} tent${st.tents === 1 ? '' : 's'}`);
+  if (def.cool) bits.push(`cooling ${st.cooling} → ${Math.round((st.cooling + def.cool) * 100) / 100} kW for ${st.heat} kW of lamp heat`);
   if (def.eff) bits.push(`+${Math.round(def.eff * 100)}% efficiency`);
   if (def.auto) bits.push(`automation ${st.automation} → ${Math.min(4, st.automation + def.auto)}`);
   if (def.sec) bits.push(`security ${st.security} → ${Math.min(100, st.security + def.sec)}`);
@@ -75,8 +82,8 @@ function effectLine(def: EquipmentDef, st: BusinessStats): string {
 
 /** £ per unit of what it does, so like-for-like kit can be compared. */
 function valueLine(def: EquipmentDef): string {
-  const k = def.cap ? ['capacity', def.cap] : def.light ? ['light', def.light] : def.air ? ['air', def.air] : def.storage ? ['storage', def.storage] : def.sec ? ['security', def.sec] : null;
-  return k ? `${money(def.price / (k[1] as number))} per point of ${k[0]}` : '';
+  const k = def.plants ? ['plant', def.plants] : def.watts ? ['100 W', def.watts / 100] : def.cfm ? ['100 CFM', def.cfm / 100] : def.storage ? ['unit of storage', def.storage] : def.sec ? ['point of security', def.sec] : null;
+  return k ? `${money(def.price / (k[1] as number))} a ${k[0]}` : '';
 }
 
 /** Two clicks to spend money: the first arms the button, the second buys. */
@@ -86,8 +93,8 @@ function confirmButton(label: string, confirmText: string, armed: boolean, arm: 
 
 // ---- the grow shop --------------------------------------------------------------------------------
 
-export function growShopScreen(progress: Progress, close: () => void, saved: () => void, startTab: string = 'room'): Screen {
-  let tab: ShopTab = (EQUIPMENT_CATEGORIES.some((c) => c.id === startTab) ? startTab : 'room') as ShopTab;
+export function growShopScreen(progress: Progress, close: () => void, saved: () => void, startTab: string = 'tents'): Screen {
+  let tab: ShopTab = (EQUIPMENT_CATEGORIES.some((c) => c.id === startTab) ? startTab : 'tents') as ShopTab;
   let sel = EQUIPMENT_LIST.find((e) => e.cat === tab)?.id ?? 'tent_s';
   let qty = 1;
   let armed: string | null = null;
@@ -231,6 +238,7 @@ export function terminalScreen(progress: Progress, close: () => void, saved: () 
     const stat = (label: string, value: string, warn = false) => h('div', { class: `biz-stat${warn ? ' warn' : ''}` }, h('span', { text: label }), h('b', { text: value }));
     if (tab === 'overview') {
       const progressPct = st.ready && bs.active ? Math.round((bs.cycle / st.cycleSeconds) * 100) : 0;
+      const stage = growStage(b, st);
       const bar = h('div', { class: 'stat-bar biz-progress' }, h('i', {}));
       (bar.firstChild as HTMLElement).style.width = `${progressPct}%`;
       rows.push(
@@ -238,7 +246,8 @@ export function terminalScreen(progress: Progress, close: () => void, saved: () 
         h('div', { class: 'biz-grid' },
           stat('Business level', `${st.level} / 5`),
           stat('Stock', `${bs.stock} / ${st.storage} units`, bs.stock >= st.storage),
-          stat('Per cycle', `${st.unitsPerCycle} units every ${Math.round(st.cycleSeconds / 60 * 10) / 10} min`),
+          stat('Strain', `${st.strain.name} (${st.strain.type})`),
+          stat('Each harvest', `${st.unitsPerCycle} units every ${Math.round(st.cycleSeconds / 60 * 10) / 10} min`),
           stat('Unit value', money(st.unitValue)),
           stat('Running costs', `£${st.opPerHour}/hr`),
           stat('Est. profit', st.ready ? `${money(st.profitPerHour)}/hr of play` : '—'),
@@ -249,8 +258,36 @@ export function terminalScreen(progress: Progress, close: () => void, saved: () 
           stat('Total earned', money(bs.totalEarned)),
           stat('Units sold', String(bs.unitsSold)),
         ),
-        h('p', { class: 'hint', text: `Cycle progress ${progressPct}%. Capacity ${st.capacity}, light ${st.light}, air ${st.air}${st.bottleneck !== 'none' && st.capacity > 0 ? ` — held back by ${st.bottleneck}` : ''}. Production only runs while you're playing.` }),
+        h('p', { class: 'hint', text: st.ready && bs.active ? `${stage.stage}: week ${stage.week} of ${stage.of}. Harvest ${progressPct}% of the way. It only grows while you're playing.` : `Crop: ${st.strain.name}, ${st.weeks.veg + st.weeks.flower + st.weeks.dry + st.weeks.turnaround} weeks seed to replant.` }),
         bar,
+        h('div', { class: 'biz-grid' },
+          stat('Plants', `${st.effective} growing of ${st.capacity} in ${st.tents} tent${st.tents === 1 ? '' : 's'}`, st.bottleneck !== 'none' && st.capacity > 0),
+          stat('Light', `${st.watts} W: ${st.light} plants at ${st.strain.wpp} W`, st.light < st.capacity),
+          stat('Extraction', `${st.cfm} of ${st.needCfm} CFM`, st.cfm < st.needCfm),
+          stat('Heat', `${st.heat} kW out of ${st.cooling} kW`, st.heat > st.cooling),
+          stat('Clip fans', `${st.clipFans} for ${st.tents} tent${st.tents === 1 ? '' : 's'}`, st.clipFans < st.tents),
+          stat('Yield', `${Math.round(st.efficiency * 100)}% of the strain's best`),
+        ),
+      );
+      if (st.bottleneck !== 'none' && st.capacity > 0) rows.push(h('p', { class: 'hub-warn', text: st.bottleneck === 'light' ? `Only ${st.light} of ${st.capacity} plants get enough light: add ${Math.ceil((st.capacity * st.strain.wpp - st.watts) / 100) * 100} W more.` : `The fans only air ${st.air} of ${st.capacity} plants: ${st.needCfm - st.cfm} CFM more extraction needed.` }));
+      if (st.warnings.length) rows.push(h('p', { class: 'hub-warn', text: `Costing yield: ${st.warnings.join('; ')}.` }));
+      const lvl = businessLevel(bs.unitsSold);
+      rows.push(
+        h('h3', { class: 'biz-h', text: 'Seeds' }),
+        h('p', { class: 'hint', text: 'Changing strain pulls what\'s growing and starts again from seed.' }),
+        h('div', { class: 'biz-strains' }, ...STRAINS.map((sd) => {
+          const on = bs.strain === sd.id;
+          const locked = lvl < sd.level;
+          const weeks = sd.veg + sd.flower;
+          return h('div', { class: `biz-strain${on ? ' on' : ''}${locked ? ' locked' : ''}` },
+            h('b', { text: sd.name }),
+            h('span', { class: 'biz-strain-type', text: `${sd.type} · ${sd.veg ? `${sd.veg} wk veg + ${sd.flower} wk flower` : `${weeks} wk seed to harvest`} · ${sd.wpp} W a plant · ${sd.likes.map((k) => LIGHT_KINDS[k].name).join(' or ')}` }),
+            h('p', { text: sd.blurb }),
+            on ? h('span', { class: 'biz-strain-tag', text: 'Growing now' })
+              : locked ? h('span', { class: 'biz-strain-tag', text: `Business level ${sd.level}` })
+              : confirmButton(`Plant ${sd.name}`, bs.cycle > 0 ? 'Pull the crop and replant' : `Plant ${sd.name}`, armed === `strain:${sd.id}`, () => ((armed = `strain:${sd.id}`), rebuild()), () => done(setStrain(progress, sd.id), `${sd.name} planted`), 'small'),
+          );
+        })),
       );
       if (st.missing.length) rows.push(h('p', { class: 'hub-warn', text: `To run it needs: ${st.missing.join(', ')}.` }));
       const actions = h('div', { class: 'row-actions' });

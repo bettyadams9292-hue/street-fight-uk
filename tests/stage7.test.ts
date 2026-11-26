@@ -22,7 +22,7 @@ import {
   suggestEquipmentSpot,
   uninstallEquipment,
 } from '../src/business/basement';
-import { MAX_CATCHUP, businessStats, businessStatus, eventChance, payBills, sellStock, setPaused, startBusiness, tickBusiness, withdraw } from '../src/business/production';
+import { MAX_CATCHUP, businessStats, businessStatus, eventChance, growStage, payBills, sellStock, setPaused, setStrain, startBusiness, tickBusiness, withdraw } from '../src/business/production';
 import { resolveLevel } from '../src/property/levels';
 import { LEVELS } from '../src/world/levels';
 import { exitLocked, World } from '../src/world/World';
@@ -101,7 +101,7 @@ test('grow shop: a real shop on the trading estate with a door, staff, product d
   assert(door && street.facades.some((f) => f.kind === 'showroom' && door.x >= f.x0 && door.x <= f.x1), 'shopfront with a door');
   assert(shop.exits.some((e) => e.to === 'ind_estate' && street.entries.some((x) => x.id === e.toEntry)), 'way back out');
   assert(shop.stations!.some((s) => s.id === 'grow_counter' && s.npc), 'cashier');
-  assert(shop.stations!.filter((s) => s.id === 'grow_display').map((s) => s.tab).join() === 'room,environment,room,environment,security', 'product displays open their own section');
+  assert(shop.stations!.filter((s) => s.id === 'grow_display').map((s) => s.tab).join() === 'room,lights,tents,air,security', 'product displays open their own section');
   assert(SHOP_STOPS.some((s) => s.area === 'grow_shop'), 'Duber goes there');
   const p = fresh();
   const w = new World(resolveLevel('grow_shop', p.save), p, { entry: 'door', seed: 2 });
@@ -109,20 +109,20 @@ test('grow shop: a real shop on the trading estate with a door, staff, product d
   assert(!exitLocked(shop.exits[0], p), 'can leave');
 });
 
-test('catalogue: every product has a name, price, description, category and tier; all four categories stocked', () => {
+test('catalogue: every product has a name, price, description, category and tier; every category stocked', () => {
   for (const e of EQUIPMENT_LIST) assert(e.name && e.price > 0 && e.blurb && e.cat && e.tier >= 1 && e.tier <= 3, e.id);
-  for (const c of ['room', 'environment', 'security']) assert(EQUIPMENT_LIST.some((e) => e.cat === c), c);
+  for (const c of ['tents', 'lights', 'air', 'room', 'security']) assert(EQUIPMENT_LIST.some((e) => e.cat === c), c);
   assert(Object.keys(BUSINESS_UPGRADES).length === 5, 'five business upgrades');
 });
 
 test('buying takes the right money; not enough money takes nothing; buy several; sell from storage for half', () => {
   const p = fresh(1000);
-  assert(buyEquipment(p, 'tent_s', 2).ok && wallet(p) === 1000 - 700, 'two tents');
+  assert(buyEquipment(p, 'tent_s', 2).ok && wallet(p) === 1000 - 240, 'two tents');
   assert(p.save.basement.equipment.length === 2 && p.save.basement.equipment.every((e) => e.at === null), 'in storage');
   const r = buyEquipment(p, 'module');
-  assert(!r.ok && r.reason.includes('Not enough') && wallet(p) === 300 && p.save.basement.equipment.length === 2, 'refused, nothing taken');
+  assert(!r.ok && r.reason.includes('Not enough') && wallet(p) === 760 && p.save.basement.equipment.length === 2, 'refused, nothing taken');
   const s = sellEquipment(p, p.save.basement.equipment[0].uid);
-  assert(s.ok && s.refund === equipmentResale(350) && p.save.cash.pocket === 175, 'sold for half');
+  assert(s.ok && s.refund === equipmentResale(120) && p.save.cash.pocket === 60, 'sold for half');
 });
 
 test('placement: install, rotate, move, store; no overlaps, walls, stairs, terminal, walkway or junk', () => {
@@ -149,13 +149,13 @@ test('placement: install, rotate, move, store; no overlaps, walls, stairs, termi
   assert(w.arena.blocked(5.5, -1.55, 0.1), 'installed kit has collision');
 });
 
-test('business: needs a grow unit, light and air; startup fee; runs on play time; capacity limited by light and air', () => {
+test('business: needs a tent, light and extraction; startup fee; runs on play time; plants limited by watts and CFM', () => {
   const p = fresh();
   kit(p, 'tent_s');
   assert(!startBusiness(p).ok, 'cannot start with just a tent');
-  kit(p, 'led_rig', 'fan');
+  kit(p, 'led_rig', 'fan', 'clip_fan');
   const st = businessStats(p.save.basement);
-  assert(st.ready && st.effective === 4 && st.unitsPerCycle === 4, `starter makes 4 a cycle (${st.unitsPerCycle})`);
+  assert(st.ready && st.effective === 2 && st.unitsPerCycle === 4, `a 2×2 grows 2 plants, 4 units a harvest (${st.effective}, ${st.unitsPerCycle})`);
   const before = wallet(p);
   assert(startBusiness(p).ok && wallet(p) === before - STARTUP_FEE, 'started, fee taken');
   assert(businessStatus(p.save.basement, p.save.playTime) === 'running', 'running');
@@ -163,9 +163,18 @@ test('business: needs a grow unit, light and air; startup fee; runs on play time
   assert(p.save.basement.business.stock === 0, 'nothing until the cycle completes');
   play(p, 1);
   assert(p.save.basement.business.stock === 4, `one cycle, 4 units (${p.save.basement.business.stock})`);
-  // Add a second tent without more light: light is the bottleneck.
+  // A second tent without more light: light is the bottleneck (200 W lights 2 plants).
   kit(p, 'tent_s');
-  assert(businessStats(p.save.basement).bottleneck === 'light' && businessStats(p.save.basement).effective === 6, 'held back by light');
+  let s2 = businessStats(p.save.basement);
+  assert(s2.bottleneck === 'light' && s2.effective === 2 && s2.capacity === 4, `held back by light (${s2.bottleneck} ${s2.effective})`);
+  assert(s2.warnings.some((w) => w.includes('clip fan')), 'the new tent has no clip fan');
+  // Enough light, then the 4-inch fan runs short once a 4×4 goes in.
+  kit(p, 'led_array', 'clip_fan', 'tent_l', 'clip_fan', 'led_array');
+  s2 = businessStats(p.save.basement);
+  assert(s2.bottleneck === 'air' && s2.cfm === 190 && s2.needCfm === 320, `held back by air (${s2.bottleneck} ${s2.cfm}/${s2.needCfm})`);
+  kit(p, 'air_handler');
+  s2 = businessStats(p.save.basement);
+  assert(s2.bottleneck === 'none' && s2.effective === 10 && !s2.warnings.length, `all 10 plants growing (${s2.effective}, ${s2.warnings})`);
 });
 
 test('leaving and coming back: only time actually played counts; the clock can’t be gamed', () => {
@@ -231,7 +240,7 @@ test('unpaid bills cut the power until paid; switching off stops production', ()
 
 test('power supply limits kit until the electrics are upgraded', () => {
   const p = fresh();
-  kit(p, 'tent_s', 'led_rig', 'fan', 'cooler', 'cooler', 'cooler', 'cooler');
+  kit(p, 'tent_s', 'led_rig', 'fan', 'cooler', 'cooler', 'cooler', 'cooler', 'cooler');
   const st = businessStats(p.save.basement);
   assert(!st.ready && st.missing.some((m) => m.includes('power')), `over the supply (${st.power}/${st.supply})`);
   buyTier(p);
@@ -279,21 +288,21 @@ test('upgrades and basement works cost the right amounts and change the numbers 
 
 test('balance: starter pays back in a few hours of play; professional earns well but is capped by storage', () => {
   const p = fresh(1e6);
-  kit(p, 'tent_s', 'led_rig', 'fan');
+  kit(p, 'tent_s', 'led_rig', 'fan', 'clip_fan');
   const starter = businessStats(p.save.basement);
-  const starterCost = 350 + 250 + 200 + STARTUP_FEE;
+  const starterCost = 120 + 180 + 140 + 25 + STARTUP_FEE;
   assert(starter.profitPerHour > 150 && starter.profitPerHour < 600, `starter £${starter.profitPerHour}/hr`);
   console.log(`       (starter £${starter.profitPerHour}/hr)`);
   assert(starterCost / starter.profitPerHour < 4, 'pays back within 4 hours');
   const q = fresh(1e6);
   buyTier(q); buyTier(q); buyTier(q);
   buyImprovement(q, 'electrics'); buyImprovement(q, 'three_phase');
-  kit(q, 'module', 'module', 'light_bars', 'light_bars', 'air_system', 'air_system', 'climate', 'control', 'pallet_rack');
+  kit(q, 'module', 'module', ...Array(7).fill('light_bars'), 'air_system', 'air_system', 'air_system', 'clip_fan', 'clip_fan', 'climate', 'control', 'pallet_rack');
   for (const k of ['capacity', 'automation', 'efficiency'] as const) for (let i = 0; i < 3; i++) buyUpgrade(q, k);
   const pro = businessStats(q.save.basement);
   assert(pro.ready, `pro runs (${pro.missing.join()})`);
   console.log(`       (pro £${pro.profitPerHour}/hr, ${pro.unitsPerCycle}/cycle, storage ${pro.storage})`);
-  assert(pro.profitPerHour > starter.profitPerHour * 10 && pro.profitPerHour < 20000, `pro £${pro.profitPerHour}/hr`);
+  assert(pro.profitPerHour > starter.profitPerHour * 10 && pro.profitPerHour < 25000, `pro £${pro.profitPerHour}/hr`);
   assert(pro.storage / pro.unitsPerCycle < 4, 'storage fills within a few cycles: you have to come back');
 });
 
@@ -340,6 +349,33 @@ test('every area still builds, and all 42 areas are reachable data', () => {
     assert(w.player, id);
     for (const ex of lvl.exits) assert(LEVELS[ex.to] && LEVELS[ex.to].entries.some((e) => e.id === ex.toEntry), `${id}:${ex.id} leads somewhere real`);
   }
+});
+
+test('strains: timetable, light need and lamp preference; HPS heat needs air; seeds unlock by level; replanting pulls the crop', () => {
+  const p = fresh();
+  kit(p, 'tent_l', 'hps', 'air_handler', 'clip_fan');
+  let st = businessStats(p.save.basement);
+  assert(st.strain.id === 'northern_lights' && st.cycleSeconds === (4 + 8 + 1 + 2) * 40, `Northern Lights: 4 + 8 weeks, dry, turnaround (${st.cycleSeconds})`);
+  assert(st.needCfm === 200 + 90 && st.cfm === 400 && st.effective === 6, `a 4×4 under 600 W HPS with a 6-inch fan grows 6 (${st.needCfm})`);
+  startBusiness(p);
+  play(p, 40 * 5);
+  assert(growStage(p.save.basement).stage.startsWith('Flowering'), `week 6 is flowering (${growStage(p.save.basement).stage})`);
+  assert(!setStrain(p, 'amnesia').ok, 'the haze is locked at level 1');
+  assert(setStrain(p, 'blueberry_auto').ok && p.save.basement.business.cycle === 0, 'replanting starts again');
+  st = businessStats(p.save.basement);
+  assert(st.weeks.veg === 0 && st.light === 8 && st.effective === 6 && st.cycleSeconds < (4 + 8 + 1 + 2) * 40, 'autos: no veg, 75 W a plant, quicker');
+  assert(growStage(p.save.basement).stage.startsWith('Growing and flowering'), 'autos flower on their own');
+  p.save.basement.business.unitsSold = 2500;
+  assert(setStrain(p, 'amnesia').ok, 'level 4 opens the haze');
+  st = businessStats(p.save.basement);
+  assert(st.light === 4 && st.bottleneck === 'light', `130 W a plant: 600 W lights 4 (${st.light})`);
+  // Heat: two HPS lamps in one 4×4 with a small fan is too hot.
+  const q = fresh();
+  kit(q, 'tent_l', 'hps', 'hps', 'fan', 'clip_fan');
+  const hot = businessStats(q.save.basement);
+  assert(hot.heat > hot.cooling && hot.warnings.some((w) => w.includes('too hot')), `too hot (${hot.heat}/${hot.cooling})`);
+  kit(q, 'air_handler', 'cooler');
+  assert(!businessStats(q.save.basement).warnings.some((w) => w.includes('too hot')), 'air con fixes it');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

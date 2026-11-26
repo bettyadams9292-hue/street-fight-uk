@@ -1,3 +1,4 @@
+import { CELL } from './interiors';
 import { metroVisit } from '../travel/metro';
 import { GATE_X, STAIRS_X } from './metroLevels';
 import { streetSolids } from '../city/street';
@@ -1055,6 +1056,17 @@ export class World {
   // ---- the Metro ---------------------------------------------------------------------------------------------
 
   /** Not through the gates yet: the barriers stop you (tap in or hop them: Game, station `metro_gates`). */
+  /** Doing time: you stay in the cell (its barred front is shut) till it's up. */
+  private holdInCell(): void {
+    if (this.level.id !== 'police_station' || !this.progress.save.police.serving) return;
+    const p = this.player;
+    const x0 = CELL.x - CELL.hw + 0.35;
+    const x1 = CELL.x + CELL.hw - 0.35;
+    const z1 = CELL.z + CELL.hd - 0.35;
+    p.pos.x = Math.min(x1, Math.max(x0, p.pos.x));
+    if (p.pos.z > z1) p.pos.z = z1;
+  }
+
   private holdAtGates(): void {
     if (this.level.theme !== 'metro') return;
     const v = metroVisit();
@@ -1933,6 +1945,7 @@ export class World {
     this.endScramble(frame);
     this.sim.step(commands);
     this.holdAtGates();
+    this.holdInCell();
     this.updateStairGoers();
 
     this.syncHeld();
@@ -3340,6 +3353,7 @@ export class World {
 
 /** An exit you can't use yet. */
 export function exitLocked(ex: ExitDef, progress: Progress): boolean {
+  if (ex.custody && progress.save.police.serving) return true;
   if (ex.shop && !progress.isShopOpen(ex.shop)) return true;
   if (ex.requires && !progress.has(ex.requires)) return true;
   return !!ex.requiresAll && ex.requiresAll.some((f) => !progress.has(f));

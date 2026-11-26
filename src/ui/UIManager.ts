@@ -17,6 +17,8 @@ export class UIManager {
   private stack: Screen[] = [];
   private focusIndex = 0;
   onNavigate: (() => void) | null = null;
+  /** Given each screen as it's shown: the game themes it for the place you're in (ui/venueTheme.ts). */
+  decorate: ((el: HTMLElement) => void) | null = null;
   onConfirm: (() => void) | null = null;
 
   /** Where screens go while an app has them inside the phone (null: over the game). */
@@ -56,6 +58,7 @@ export class UIManager {
   push(screen: Screen): void {
     if (this.top) this.top.el.classList.remove('active');
     this.stack.push(screen);
+    this.decorate?.(screen.el);
     this.mount.append(screen.el);
     this.activate(screen);
   }

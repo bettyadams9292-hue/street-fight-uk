@@ -17,7 +17,9 @@ import {
   settlePrice,
   type CrimeEntry,
 } from '../src/progress/record';
-import { book, canPayBail, crewToRing, kerriganCool, kerriganGearBack, losePaperwork, nightInCells, payBail, repayCrew, ringCrew } from '../src/world/custody';
+import { book, canPayBail, crewToRing, kerriganCool, kerriganGearBack, losePaperwork, payBail, release, repayCrew, ringCrew, sentenceSeconds, serveTime, SENTENCE_MAX, timeLeft } from '../src/world/custody';
+import { exitLocked } from '../src/world/World';
+import { sanitisePolice } from '../src/progress/cops';
 import { BENT_BASE, BENT_SARGE, BRIBERY_HEAT, BUNG_COOL, bentChance, bungPrice, CAUGHT_HEAT, copFor, owedFor, ROSTER_SIZE, roster, sargeOnDuty } from '../src/progress/cops';
 import { COMPANIONS, followMe } from '../src/companions/companions';
 import { World } from '../src/world/World';
@@ -115,20 +117,27 @@ test('pay bail: charges and police heat cleared; refused if you can’t cover it
   assert(!canPayBail(broke, b2) && !payBail(broke, b2) && broke.save.cash.pocket === 10, 'can’t pay, nothing taken');
 });
 
-test('a night in the cells: time passes, a court fine from what you have, police cool everywhere', () => {
-  const p = fresh(1000);
-  p.logCrime('robbery');
+test('can’t pay: you do time in the cell, longer for worse and more charges; the door stays locked till it’s done', () => {
+  const p = fresh(0);
+  p.logCrime('mugging');
   p.addHeatOf({ police: 40 }, 'City Centre');
-  const trips = p.save.trips;
-  const b = book(p);
-  const taken = nightInCells(p, b);
-  assert(taken === b.fine && p.save.cash.pocket === 1000 - b.fine, `fined ${taken}`);
-  assert(p.save.trips >= trips + 4, 'time passed');
-  assert(p.save.record.length === 0, 'charges dealt with');
-  assert(p.heatIn('City Centre').police < 40, 'police elsewhere cooled');
-  const broke = fresh(0);
-  broke.logCrime('robbery');
-  assert(nightInCells(broke, book(broke)) === 0, 'nothing to take, nothing taken');
+  const light = sentenceSeconds(p, book(p));
+  const q = fresh(0);
+  q.logCrime('robbery');
+  q.logCrime('assault');
+  q.logCrime('assault_police');
+  const bq = book(q);
+  const heavy = sentenceSeconds(q, bq);
+  assert(heavy > light, `worse charges, longer (${light} vs ${heavy})`);
+  assert(heavy <= SENTENCE_MAX, 'capped');
+  const secs = serveTime(q, bq);
+  assert(secs === heavy && q.save.record.length === 0, 'charges dealt with, nothing taken');
+  assert(timeLeft(q) === secs && q.save.cash.pocket === 0);
+  const door = LEVELS.police_station.exits.find((e) => e.id === 'out')!;
+  assert(exitLocked(door, q), 'the door is locked while you serve');
+  q.save.playTime += secs + 1;
+  assert(timeLeft(q) === 0 && release(q) && !exitLocked(door, q), 'free once it’s done');
+  assert(sanitisePolice(JSON.parse(JSON.stringify({ ...q.save.police, serving: { until: 5, total: 90 } })), (x) => x as never).serving?.total === 90, 'kept across a save');
 });
 
 test('the front counter prices settling up by heat and what’s on file', () => {
