@@ -1,4 +1,5 @@
 import { METRO_LEVELS, addMetroEntrances } from './metroLevels';
+import { tidyStreet } from './streetTidy';
 import { contactStation } from '../jobs/contacts';
 import type { AreaId } from '../progress/Progress';
 import { DISTRICTS } from './districts';
@@ -671,6 +672,8 @@ for (const town of GENERATED_TOWNS) {
 }
 // The outdoor districts are one long street: join them end to end.
 joinStrip(LEVELS);
+// Street furniture where it belongs: phone boxes against the building, nothing in front of a door (world/streetTidy.ts).
+for (const lv of Object.values(LEVELS)) tidyStreet(lv);
 
 /** The story's spine, in order: who to beat next, for the story screen and the phone. */
 export const DISTRICT_ORDER: { flag: string; area: AreaId; label: string; optional?: boolean }[] = [
