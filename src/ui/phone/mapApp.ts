@@ -1,14 +1,16 @@
 /**
- * Maps, the phone's map app: a dark map in the style of a phone's own maps app. A blue dot for you, pins for
- * places, a search bar and filter chips on top, and a sheet at the bottom you pull up: places to search, or the
- * place you tapped with Directions (the route shows on the map in blue), a cab, or the way home.
+ * Maps, the phone's map app: a dark map in the style of a phone's own maps app, of the town as a real street plan
+ * (map/worldMap.ts LAYOUT, FEATURES). A blue dot for you and a button that brings you back to it; layer chips that
+ * switch kinds of place on and off (the story to start with); small round markers that merge into a counted bubble
+ * where they'd pile up, with names where there's room; and a sheet at the bottom you pull up: places to search, or
+ * the place you tapped with Directions (the route shows in blue), Run there, Drive, a cab, or the way home.
  */
 import { riskWord } from '../../travel/onFoot';
 import { h } from '../dom';
 import type { AreaId, Progress } from '../../progress/Progress';
 import {
-  MAP_H, MAP_W, along, junctions, markers, place, playerPoint, roadPoints, roads, route, travelOptions, unlocked, lockReason,
-  blurb, districts, districtBorders, MARKER_LABELS, type MapMarker, type MarkerKind, type Pt, type TravelOption,
+  MAP_H, MAP_PER_MILE, MAP_W, along, markers, place, playerPoint, roadPoints, roads, route, travelOptions, unlocked, lockReason,
+  blurb, districts, districtBorders, FEATURES, MARKER_LABELS, type MapMarker, type MarkerKind, type Pt, type TravelOption,
 } from '../../map/worldMap';
 import { paintedIconUrl, type IconName } from '../icons';
 
@@ -37,57 +39,84 @@ const KIND_COLOUR: Record<MarkerKind, string> = {
   atm: '#1d6fd1', mods: '#ff9f0a', lockup: '#c7a03b',
 };
 /**
- * Pins that only show once you zoom in (or pick their chip): the many shops and people. Zoomed out you see the
- * story, home, your car and the lock-up, so the town reads at a glance instead of as a pile of pins.
+ * Layers, as a real maps app has: the story is on to start with (and home, your car and the lock-up always show);
+ * everything else is a layer you switch on. Your choice is kept for next time.
  */
-const MINOR: ReadonlySet<MarkerKind> = new Set(['shop', 'clothes', 'pawn', 'pub', 'casino', 'cars', 'bikes', 'contact', 'police', 'gym', 'atm', 'mods', 'property']);
-/** Map units per screen pixel above which the minor pins hide. */
-const DECLUTTER_K = 1.9;
-type Chip = 'all' | 'story' | 'shops' | 'money' | 'motors' | 'gyms' | 'pubs' | 'yours';
-const CHIPS: { id: Chip; label: string; kinds: MarkerKind[] }[] = [
-  { id: 'all', label: 'All', kinds: [] },
-  { id: 'story', label: 'Story', kinds: ['mission', 'boss', 'side', 'lockup'] },
-  { id: 'shops', label: 'Shops', kinds: ['shop', 'clothes', 'pawn', 'casino', 'cars', 'bikes'] },
-  { id: 'money', label: 'Money', kinds: ['atm', 'pawn'] },
-  { id: 'motors', label: 'Motors', kinds: ['cars', 'mods', 'bikes', 'parked'] },
+type Layer = 'story' | 'shops' | 'food' | 'gyms' | 'money' | 'motors' | 'jobs' | 'yours';
+const LAYERS: { id: Layer; label: string; kinds: MarkerKind[] }[] = [
+  { id: 'story', label: 'Story', kinds: ['mission', 'boss', 'side'] },
+  { id: 'shops', label: 'Shops', kinds: ['shop', 'clothes', 'pawn'] },
+  { id: 'food', label: 'Pubs & fun', kinds: ['pub', 'casino'] },
   { id: 'gyms', label: 'Gyms', kinds: ['gym'] },
-  { id: 'pubs', label: 'Pubs', kinds: ['pub', 'contact'] },
-  { id: 'yours', label: 'Yours', kinds: ['home', 'property', 'parked'] },
+  { id: 'money', label: 'Money', kinds: ['atm', 'pawn', 'police'] },
+  { id: 'motors', label: 'Motors', kinds: ['cars', 'bikes', 'mods'] },
+  { id: 'jobs', label: 'Jobs', kinds: ['contact'] },
+  { id: 'yours', label: 'Yours', kinds: ['property'] },
 ];
+/** Always on the map, whatever the layers: where you live, your car, the lock-up. */
+const ALWAYS: ReadonlySet<MarkerKind> = new Set(['home', 'parked', 'lockup']);
+const LAYER_KEY = 'hg.map.layers';
+function savedLayers(): Set<Layer> {
+  try {
+    const v = JSON.parse(localStorage.getItem(LAYER_KEY) ?? 'null');
+    if (Array.isArray(v)) return new Set(v.filter((x): x is Layer => LAYERS.some((l) => l.id === x)));
+  } catch {
+    /* no storage: the default */
+  }
+  return new Set<Layer>(['story']);
+}
+function keepLayers(on: Set<Layer>): void {
+  try {
+    localStorage.setItem(LAYER_KEY, JSON.stringify([...on]));
+  } catch {
+    /* fine without */
+  }
+}
+/** Markers closer than this on screen (px) merge into one bubble with a count. */
+const CLUSTER_PX = 34;
+/** Map units per screen pixel: street names show below this, district names above the second. */
+const STREET_NAMES_K = 2.2;
+const DISTRICT_NAMES_K = 1.3;
+/** Kinds ranked for which marker leads a bubble and gets its label first. */
+const RANK: MarkerKind[] = ['mission', 'home', 'boss', 'parked', 'lockup', 'side', 'contact', 'gym', 'shop', 'clothes', 'pub', 'casino', 'cars', 'bikes', 'mods', 'atm', 'pawn', 'police', 'property', 'street'];
 
-/** The town itself, drawn in the dark maps palette (water, parks, blocks, roads, names). */
+/** The town itself, drawn in the dark maps palette: land, parks, water, railway, back streets, A-roads, streets, names. */
 function townArt(p: Progress, hereDistrict: string): string {
   const rs = roads();
+  const f = FEATURES;
   const o: string[] = [];
-  o.push(`<rect x="-600" y="-600" width="${MAP_W + 1200}" height="${MAP_H + 1200}" class="pm-land"/>`);
-  o.push(`<path class="pm-water" d="M1380 470 C1600 520 1700 640 1860 560 S 1990 300 2080 250 S 2350 270 2700 300"/>`);
-  o.push(`<path class="pm-water river" d="M2700 700 C 2560 840 2580 980 2600 1100 S 2520 1420 2380 1600 L 2300 1800"/>`);
-  o.push(`<ellipse class="pm-park" cx="470" cy="730" rx="190" ry="110" transform="rotate(30 470 730)"/><ellipse class="pm-park" cx="760" cy="980" rx="90" ry="50"/><rect class="pm-park" x="140" y="250" width="160" height="300" rx="14"/><ellipse class="pm-park" cx="2260" cy="1040" rx="60" ry="40"/>`);
-  // Each district is a shaded band along its own streets (so it sits exactly where it is in the game), yours lit,
-  // locked ones hatched. Where one district's street runs into the next, a white bar marks the boundary.
+  o.push(`<rect x="-900" y="-900" width="${MAP_W + 1800}" height="${MAP_H + 1800}" class="pm-land"/>`);
+  for (const pk of f.parks) o.push(`<polygon class="pm-park" points="${pts(pk)}"/>`);
+  f.water.forEach((w, i) => o.push(`<polyline class="pm-water${i ? ' canal' : ''}" points="${pts(w)}"/>`));
+  for (const m of f.minor) o.push(`<polyline class="pm-minor-case" points="${pts(m)}"/>`);
+  for (const m of f.minor) o.push(`<polyline class="pm-minor" points="${pts(m)}"/>`);
+  for (const a of f.arterial) o.push(`<polyline class="pm-arterial-case" points="${pts(a)}"/>`);
+  for (const a of f.arterial) o.push(`<polyline class="pm-arterial" points="${pts(a)}"/>`);
+  for (const r of f.rail) o.push(`<polyline class="pm-rail" points="${pts(r)}"/><polyline class="pm-rail-ties" points="${pts(r)}"/>`);
+  // Each district is a soft band along its own streets (so it sits exactly where it is in the game), yours lit,
+  // locked ones hatched.
   o.push(`<defs><pattern id="pm-hatch" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="26" height="26" fill="#1c1c1f"/><rect width="9" height="26" fill="#3a3a3e"/></pattern></defs>`);
   const ds = districts(p);
   for (const dd of ds) {
     const cls = `pm-zone${dd.name === hereDistrict ? ' here' : ''}${dd.open ? '' : ' locked'}`;
     for (const r of dd.roads) o.push(`<polyline class="${cls}" points="${pts(r)}"/>`);
   }
-  for (const r of rs) if (!unlocked(p, r.id)) o.push(`<polyline class="pm-lockzone" points="${pts(r.pts)}"/>`);
+  for (const l of f.links) o.push(`<polyline class="pm-casing link" points="${pts(l)}"/>`);
+  for (const l of f.links) o.push(`<polyline class="pm-road link" points="${pts(l)}"/>`);
   for (const r of rs) o.push(`<polyline class="pm-casing ${r.road}" points="${pts(r.pts)}"/>`);
-  for (const r of rs) o.push(`<polyline class="pm-road ${r.road}" points="${pts(r.pts)}"/>`);
-  for (const j of junctions()) o.push(`<circle class="pm-rbt" cx="${j.x.toFixed(1)}" cy="${j.y.toFixed(1)}" r="15"/>`);
+  for (const r of rs) o.push(`<polyline class="pm-road ${r.road}${unlocked(p, r.id) ? '' : ' shut'}" points="${pts(r.pts)}"/>`);
   for (const b of districtBorders()) {
-    const nx = -Math.sin(b.ang) * 46;
-    const ny = Math.cos(b.ang) * 46;
+    const nx = -Math.sin(b.ang) * 30;
+    const ny = Math.cos(b.ang) * 30;
     o.push(`<line class="pm-border" x1="${(b.at.x - nx).toFixed(1)}" y1="${(b.at.y - ny).toFixed(1)}" x2="${(b.at.x + nx).toFixed(1)}" y2="${(b.at.y + ny).toFixed(1)}"/>`);
   }
-  o.push(`<text class="pm-water-label" x="1700" y="540" transform="rotate(-8 1700 540)">Grand Union Canal</text><text class="pm-water-label" x="2580" y="1180" transform="rotate(80 2580 1180)">River Brack</text>`);
-  // District names above their band, with what state each is in: where you are, or what opens it.
-  for (const dd of ds) {
-    // Locked ones just say so; what opens them is on the place card (the full reason doesn't fit between districts).
-    const sub = dd.name === hereDistrict ? 'YOU’RE HERE' : dd.open ? '' : 'LOCKED';
-    o.push(`<text class="pm-district${dd.open ? '' : ' locked'}${dd.name === hereDistrict ? ' here' : ''}" x="${dd.label.x.toFixed(0)}" y="${dd.label.y.toFixed(0)}">${esc(dd.name.toUpperCase())}</text>`);
-    if (sub) o.push(`<text class="pm-district-sub${dd.open ? '' : ' locked'}" x="${dd.label.x.toFixed(0)}" y="${(dd.label.y + 24).toFixed(0)}">${sub}</text>`);
-  }
+  for (const l of f.labels) o.push(`<text class="pm-feature ${l.kind}" x="${l.at.x.toFixed(0)}" y="${l.at.y.toFixed(0)}" transform="rotate(${l.ang} ${l.at.x.toFixed(0)} ${l.at.y.toFixed(0)})">${esc(l.text)}</text>`);
+  // A-road numbers on their links.
+  f.links.forEach((l, i) => {
+    const c = along(l, 0.5);
+    o.push(`<g class="pm-shield"><rect x="${(c.x - 26).toFixed(0)}" y="${(c.y - 13).toFixed(0)}" width="52" height="26" rx="4"/><text x="${c.x.toFixed(0)}" y="${(c.y + 6).toFixed(0)}">A${(61 + i * 7) % 100 || 1}</text></g>`);
+  });
+  // Street names along their roads (close up), district names over their streets (further out).
   for (const r of rs) {
     const a = along(r.pts, 0.38);
     const b = along(r.pts, 0.62);
@@ -95,7 +124,11 @@ function townArt(p: Progress, hereDistrict: string): string {
     if (ang > 90) ang -= 180;
     if (ang < -90) ang += 180;
     const c = along(r.pts, 0.5);
-    o.push(`<text class="pm-street" x="${c.x.toFixed(1)}" y="${(c.y + 4).toFixed(1)}" transform="rotate(${ang.toFixed(1)} ${c.x.toFixed(1)} ${c.y.toFixed(1)})">${esc(r.name)}</text>`);
+    o.push(`<text class="pm-street" x="${c.x.toFixed(1)}" y="${(c.y + 5).toFixed(1)}" transform="rotate(${ang.toFixed(1)} ${c.x.toFixed(1)} ${c.y.toFixed(1)})">${esc(r.name)}</text>`);
+  }
+  for (const dd of ds) {
+    const lock = dd.open ? '' : '🔒 ';
+    o.push(`<text class="pm-district${dd.open ? '' : ' locked'}${dd.name === hereDistrict ? ' here' : ''}" x="${dd.label.x.toFixed(0)}" y="${dd.label.y.toFixed(0)}">${lock}${esc(dd.name.toUpperCase())}</text>`);
   }
   return o.join('');
 }
@@ -104,7 +137,8 @@ export function mapApp(d: MapAppDeps): HTMLElement {
   const p = d.progress;
   const here = playerPoint(d.here.area, d.here.x);
   const all = markers(p).filter((m) => m.kind !== 'street');
-  let chip: Chip = 'all';
+  const layers = savedLayers();
+  const kindsOn = (): Set<MarkerKind> => new Set([...ALWAYS, ...LAYERS.filter((l) => layers.has(l.id)).flatMap((l) => l.kinds)]);
   let query = '';
   let selected: MapMarker | null = null;
   let dest: AreaId | null = p.save.destination;
@@ -121,7 +155,11 @@ export function mapApp(d: MapAppDeps): HTMLElement {
     `<g class="pm-tag you" transform="translate(0 30)"><rect x="-27" y="0" width="54" height="20" rx="10"/><text x="0" y="14">YOU</text></g>`;
   // The destination: a flag with its name on, drawn at the place and scaled like the pins.
   const destG = document.createElementNS(NS, 'g');
-  svg.append(art, routeG, pinG, destG, youG);
+  // Bubbles for markers too close together to tell apart at this zoom: tap one to zoom in on them.
+  const clusterG = document.createElementNS(NS, 'g');
+  svg.append(art, routeG, pinG, clusterG, destG, youG);
+  /** True while the map is centred on you (the locate button shows filled). */
+  let following = true;
 
   // View: centre and width in map units.
   // w 0: fitted to the phone on the first layout (about 2.4 map units a pixel).
@@ -131,40 +169,118 @@ export function mapApp(d: MapAppDeps): HTMLElement {
     const r = svg.getBoundingClientRect();
     if (!view.w) {
       if (!r.width) return;
-      view.w = r.width * 2.4;
+      view.w = r.width * 2.2;
     }
     const aspect = r.width ? r.height / r.width : 1.6;
     const vh = view.w * aspect;
     svg.setAttribute('viewBox', `${(view.x - view.w / 2).toFixed(1)} ${(view.y - vh / 2).toFixed(1)} ${view.w.toFixed(1)} ${vh.toFixed(1)}`);
     const k = r.width ? view.w / r.width : 1;
     youG.setAttribute('transform', `translate(${here.x} ${here.y}) scale(${k.toFixed(3)})`);
-    for (const g of Array.from(pinG.children) as SVGGElement[]) {
-      const m = all.find((x) => x.key === g.dataset.key)!;
-      g.setAttribute('transform', `translate(${m.at.x.toFixed(1)} ${m.at.y.toFixed(1)}) scale(${(k * (selected?.key === m.key ? 1.3 : 1)).toFixed(3)})`);
-    }
+    layoutPins(k);
     routeG.querySelectorAll<SVGElement>('.pm-route').forEach((e) => e.setAttribute('stroke-width', String(Math.max(10, 7 * k))));
     routeG.querySelectorAll<SVGElement>('.pm-chev').forEach((e) => e.setAttribute('transform', `${e.dataset.at} scale(${k.toFixed(3)})`));
     if (dest) destG.setAttribute('transform', `translate(${place(dest).at.x.toFixed(1)} ${place(dest).at.y.toFixed(1)}) scale(${k.toFixed(3)})`);
-    svg.classList.toggle('far', k > DECLUTTER_K);
+    // Names of districts, water and parks keep their size on screen whatever the zoom.
+    svg.style.setProperty('--k', k.toFixed(3));
+    svg.classList.toggle('streets-off', k > STREET_NAMES_K);
+    svg.classList.toggle('districts-off', k < DISTRICT_NAMES_K);
+    svg.classList.toggle('features-off', k > 2.8);
+    // District names that would run into one another: yours first, then open ones, the rest dropped.
+    const boxes: { x0: number; x1: number; y0: number; y1: number }[] = [];
+    const names = Array.from(art.querySelectorAll<SVGTextElement>('.pm-district'))
+      .sort((a, b) => Number(b.classList.contains('here')) - Number(a.classList.contains('here')) || Number(a.classList.contains('locked')) - Number(b.classList.contains('locked')));
+    for (const t of names) {
+      const x = Number(t.getAttribute('x')) / k;
+      const y = Number(t.getAttribute('y')) / k;
+      const w = (t.textContent ?? '').length * 7.6 + 6;
+      const box = { x0: x - w / 2, x1: x + w / 2, y0: y - 12, y1: y + 3 };
+      const free = !boxes.some((b) => b.x0 < box.x1 && b.x1 > box.x0 && b.y0 < box.y1 && b.y1 > box.y0);
+      t.style.display = free ? '' : 'none';
+      if (free) boxes.push(box);
+    }
+    locate.classList.toggle('on', following);
   };
+
+  /**
+   * Place the markers for this zoom: the most important first; anything within CLUSTER_PX of a marker already
+   * placed joins its bubble instead of piling on top; then labels for single markers, where they fit.
+   */
+  function layoutPins(k: number): void {
+    const gs = Array.from(pinG.children) as SVGGElement[];
+    const items = gs.map((g) => ({ g, m: all.find((x) => x.key === g.dataset.key)! }))
+      .sort((a, b) => Number(b.m.key === selected?.key) - Number(a.m.key === selected?.key) || RANK.indexOf(a.m.kind) - RANK.indexOf(b.m.kind));
+    const heads: { at: Pt; members: MapMarker[]; g: SVGGElement }[] = [];
+    for (const it of items) {
+      const near = it.m.key === selected?.key ? null : heads.find((c) => Math.hypot(c.at.x - it.m.at.x, c.at.y - it.m.at.y) / k < CLUSTER_PX);
+      if (near) {
+        near.members.push(it.m);
+        it.g.style.display = 'none';
+        continue;
+      }
+      heads.push({ at: it.m.at, members: [it.m], g: it.g });
+      it.g.style.display = '';
+      it.g.setAttribute('transform', `translate(${it.m.at.x.toFixed(1)} ${it.m.at.y.toFixed(1)}) scale(${(k * (selected?.key === it.m.key ? 1.25 : 1)).toFixed(3)})`);
+    }
+    clusterG.innerHTML = '';
+    const taken: { x0: number; x1: number; y0: number; y1: number }[] = [];
+    for (const c of heads) {
+      const label = c.g.querySelector<SVGTextElement>('.pm-label');
+      if (c.members.length > 1) {
+        // A bubble: the count, over the lead marker (which stays visible behind it as a hint of what's there).
+        c.g.style.display = 'none';
+        const b = document.createElementNS(NS, 'g');
+        b.setAttribute('class', 'pm-cluster');
+        b.setAttribute('transform', `translate(${c.at.x.toFixed(1)} ${c.at.y.toFixed(1)}) scale(${k.toFixed(3)})`);
+        b.innerHTML = `<circle r="17"/><text y="5">${c.members.length}</text>`;
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          following = false;
+          view.x = c.members.reduce((n, m) => n + m.at.x, 0) / c.members.length;
+          view.y = c.members.reduce((n, m) => n + m.at.y, 0) / c.members.length;
+          view.w = Math.max(320, view.w * 0.4);
+          clampView();
+          apply();
+        });
+        clusterG.append(b);
+        continue;
+      }
+      if (!label) continue;
+      // Its name beside it, if that space is free (in screen pixels).
+      const sx = c.at.x / k;
+      const sy = c.at.y / k;
+      const w = Math.min(150, 7 * (label.textContent ?? '').length + 8);
+      const box = { x0: sx + 14, x1: sx + 14 + w, y0: sy - 9, y1: sy + 9 };
+      const free = !taken.some((t) => t.x0 < box.x1 && t.x1 > box.x0 && t.y0 < box.y1 && t.y1 > box.y0) &&
+        !heads.some((o) => o !== c && Math.abs(o.at.x / k - (box.x0 + box.x1) / 2) < w / 2 + 12 && Math.abs(o.at.y / k - sy) < 16);
+      label.style.display = free ? '' : 'none';
+      if (free) taken.push(box);
+    }
+  }
   const clampView = () => {
-    view.w = Math.max(320, Math.min(MAP_W * 1.1, view.w));
+    view.w = Math.max(320, Math.min(MAP_W * 1.05, view.w));
     view.x = Math.max(-200, Math.min(MAP_W + 200, view.x));
     view.y = Math.max(-200, Math.min(MAP_H + 200, view.y));
   };
 
   function drawPins(): void {
-    const kinds = new Set(CHIPS.find((c) => c.id === chip)!.kinds);
+    const kinds = kindsOn();
     pinG.innerHTML = '';
     for (const m of all) {
-      if (chip !== 'all' && !kinds.has(m.kind)) continue;
+      if (!kinds.has(m.kind) && m.key !== selected?.key && m.area !== dest) continue;
       const g = document.createElementNS(NS, 'g') as SVGGElement;
       g.dataset.key = m.key;
       const open = unlocked(p, m.area);
       const icon = paintedIconUrl(KIND_ICON[m.kind]);
-      g.setAttribute('class', `pm-pin${open ? '' : ' locked'}${selected?.key === m.key ? ' sel' : ''}${chip === 'all' && MINOR.has(m.kind) ? ' minor' : ''}`);
-      g.innerHTML = `<path class="pm-pin-body" d="M0 0 C -6 -9 -16 -15 -16 -26 A 16 16 0 1 1 16 -26 C 16 -15 6 -9 0 0 Z" fill="${open ? KIND_COLOUR[m.kind] : '#48484a'}"/>` +
-        `<circle cx="0" cy="-26" r="12" fill="#fff"/>` + (icon ? `<image href="${icon}" x="-11" y="-37" width="22" height="22"/>` : '');
+      const big = m.kind === 'mission' || m.kind === 'home';
+      const r = big ? 15 : 12;
+      // On the map, just who or what it is (Gaz Mullins, not the whole job); the sheet has the rest.
+      const name = m.label.replace(/^Yours: /, '').split(/: | \(/)[0];
+      g.setAttribute('class', `pm-pin${open ? '' : ' locked'}${selected?.key === m.key ? ' sel' : ''}${m.kind === 'mission' ? ' mission' : ''}`);
+      // A round badge in the kind's colour with its icon (pulsing for where the story wants you), its name beside it.
+      g.innerHTML = (m.kind === 'mission' ? `<circle class="pm-pulse" r="${r + 6}"/>` : '') +
+        `<circle class="pm-pin-body" r="${r}" fill="${open ? KIND_COLOUR[m.kind] : '#48484a'}"/>` +
+        (icon ? `<image href="${icon}" x="${-r + 3}" y="${-r + 3}" width="${(r - 3) * 2}" height="${(r - 3) * 2}"/>` : '') +
+        `<text class="pm-label" x="${r + 5}" y="5">${esc(name.length > 22 ? `${name.slice(0, 21)}…` : name)}</text>`;
       g.addEventListener('click', (e) => {
         e.stopPropagation();
         pick(m);
@@ -281,16 +397,17 @@ export function mapApp(d: MapAppDeps): HTMLElement {
 
   function results(): HTMLElement[] {
     const q = query.trim().toLowerCase();
-    const kinds = new Set(CHIPS.find((c) => c.id === chip)!.kinds);
+    // With a search, everywhere; without, what the map's showing.
+    const kinds = kindsOn();
     const rows = all
-      .filter((m) => chip === 'all' || kinds.has(m.kind))
+      .filter((m) => q || kinds.has(m.kind))
       .filter((m) => !q || m.label.toLowerCase().includes(q) || place(m.area).district.toLowerCase().includes(q))
       // Home and the route first, then open places nearest you, then the locked ones.
       .map((m) => ({ m, dist: Math.hypot(m.at.x - here.x, m.at.y - here.y), open: unlocked(p, m.area) }))
       .sort((a, b) => Number(b.m.kind === 'home') - Number(a.m.kind === 'home') || Number(b.m.area === dest) - Number(a.m.area === dest) || Number(b.open) - Number(a.open) || a.dist - b.dist);
     if (!rows.length) return [h('p', { class: 'pm-empty', text: 'No results' })];
     const out: HTMLElement[] = [];
-    if (!q) out.push(h('div', { class: 'pm-head', text: chip === 'all' ? 'Places' : CHIPS.find((c) => c.id === chip)!.label }));
+    if (!q) out.push(h('div', { class: 'pm-head', text: 'On the map' }));
     for (const { m, dist, open } of rows.slice(0, 40)) {
       out.push(h('button', { class: `pm-row${open ? '' : ' locked'}`, onclick: () => pick(m) },
         h('span', { class: 'pm-dot', style: `background:${open ? KIND_COLOUR[m.kind] : '#48484a'}` }, h('img', { src: paintedIconUrl(KIND_ICON[m.kind]) ?? '', alt: '' })),
@@ -300,7 +417,7 @@ export function mapApp(d: MapAppDeps): HTMLElement {
     return out;
   }
 
-  const distText = (u: number) => `${(u / 400).toFixed(1)} mi`;
+  const distText = (u: number) => `${(u / MAP_PER_MILE).toFixed(1)} mi`;
 
   function fillPlace(m: MapMarker): void {
     const pl = place(m.area);
@@ -359,26 +476,38 @@ export function mapApp(d: MapAppDeps): HTMLElement {
 
   function pick(m: MapMarker): void {
     selected = m;
+    following = false;
     show(m.at);
     drawPins();
     fillSheet();
     setSheet(false);
   }
 
-  // ---- top: search pill (opens the sheet) and filter chips; right: locate ----
-  const chips = h('div', { class: 'pm-chips' }, ...CHIPS.map((c) => h('button', { class: `pm-chip${c.id === chip ? ' on' : ''}`, onclick: (e: Event) => {
-    chip = c.id;
-    chips.querySelectorAll('.pm-chip').forEach((b) => b.classList.toggle('on', b === e.currentTarget));
-    selected = null;
-    drawPins();
-    fillSheet();
-  } }, c.label)));
-  const locate = h('button', { class: 'pm-locate', 'aria-label': 'Show where you are', onclick: () => {
-    view.w = svg.getBoundingClientRect().width * 2.4;
+  // ---- top: layer chips (each switches its places on or off); right: show where you are ----
+  const chips = h('div', { class: 'pm-chips', role: 'group', 'aria-label': 'Show on the map' }, ...LAYERS.map((l) => {
+    const count = all.filter((m) => l.kinds.includes(m.kind)).length;
+    return h('button', { class: `pm-chip${layers.has(l.id) ? ' on' : ''}`, 'aria-pressed': String(layers.has(l.id)), disabled: !count, onclick: (e: Event) => {
+      if (layers.has(l.id)) layers.delete(l.id);
+      else layers.add(l.id);
+      keepLayers(layers);
+      const b = e.currentTarget as HTMLElement;
+      b.classList.toggle('on', layers.has(l.id));
+      b.setAttribute('aria-pressed', String(layers.has(l.id)));
+      selected = null;
+      drawPins();
+      fillSheet();
+    } }, l.label, h('span', { class: 'pm-count', text: String(count) }));
+  }));
+  // The location button: centres on you, close in; filled while the map is following you.
+  const locate = h('button', { class: 'pm-locate on', 'aria-label': 'Show where you are', onclick: () => {
+    following = true;
+    view.w = svg.getBoundingClientRect().width * 2.2;
     show(here);
-  } }, h('span', { class: 'pm-arrow' }));
+  } });
+  locate.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 3 10.5l7.6 2.9L13.5 21z"/></svg>';
+  const whereTag = h('div', { class: 'pm-where' }, h('span', { class: 'pm-where-dot' }), place(d.here.area).name);
 
-  const root = h('div', { class: 'pm-app' }, h('div', { class: 'pm-mapwrap' }, svg), chips, locate, sheet);
+  const root = h('div', { class: 'pm-app' }, h('div', { class: 'pm-mapwrap' }, svg), chips, whereTag, locate, sheet);
 
   // ---- pan and pinch ----
   const touches = new Map<number, { x: number; y: number }>();
@@ -403,7 +532,10 @@ export function mapApp(d: MapAppDeps): HTMLElement {
       const k = view.w / r.width;
       const dx = e.clientX - t.x;
       const dy = e.clientY - t.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+      if (Math.abs(dx) + Math.abs(dy) > 3) {
+        moved = true;
+        following = false;
+      }
       view.x -= dx * k;
       view.y -= dy * k;
     }
