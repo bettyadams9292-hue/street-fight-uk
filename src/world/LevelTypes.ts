@@ -29,6 +29,8 @@ export type PropKind =
   | 'dumpster' | 'rubbish_bags' | 'cardboard' | 'abandoned_car' | 'container' | 'market_stall' | 'turnstile' | 'pillar' | 'bike_rack'
   | 'lamp_post' | 'traffic_light' | 'sign_post' | 'bollard_row' | 'bus' | 'forklift' | 'bollard_dock' | 'crane_leg' | 'kiosk' | 'fountain'
   | 'escalator' | 'mall_planter' | 'atm' | 'vending'
+  // A bank branch's ground floor (money/atm.ts): stone front, its logo fascia, windows and door; label = bank id
+  | 'bank_front'
   // shops and pubs
   | 'shop_rail' | 'mannequin' | 'display_cabinet' | 'glass_counter' | 'shop_counter' | 'shop_shelf' | 'changing_booth'
   | 'bar' | 'pool_table' | 'pub_table' | 'fruit_machine' | 'jukebox' | 'dj_booth'
@@ -329,7 +331,7 @@ export const PROP_SIZE: Record<PropKind, [number, number]> = {
   dumpster: [1.0, 0.6], rubbish_bags: [0.5, 0.35], cardboard: [0.45, 0.35], abandoned_car: [2.0, 0.9], container: [3.0, 1.2], market_stall: [1.3, 0.6],
   turnstile: [0.4, 0.3], pillar: [0.3, 0.3], bike_rack: [0.9, 0.15], lamp_post: [0.1, 0.1], traffic_light: [0.1, 0.1], sign_post: [0.08, 0.08],
   bollard_row: [1.5, 0.12], bus: [5.0, 1.2], forklift: [1.1, 0.65], bollard_dock: [0.22, 0.22], crane_leg: [0.5, 0.5], kiosk: [1.0, 0.8], fountain: [1.2, 1.0],
-  escalator: [2.4, 0.6], mall_planter: [1.0, 0.5], atm: [0.35, 0.25], vending: [0.45, 0.35],
+  escalator: [2.4, 0.6], mall_planter: [1.0, 0.5], atm: [0.35, 0.25], vending: [0.45, 0.35], bank_front: [3, 0.2],
   shop_rail: [0.9, 0.3], mannequin: [0.25, 0.25], display_cabinet: [0.8, 0.35], glass_counter: [1.2, 0.4], shop_counter: [1.3, 0.4], shop_shelf: [1.0, 0.25],
   changing_booth: [0.6, 0.6], bar: [2.5, 0.45], pool_table: [1.3, 0.75], pub_table: [0.45, 0.45], fruit_machine: [0.35, 0.3], jukebox: [0.45, 0.3], dj_booth: [1.2, 0.5],
   furniture: [0.5, 0.5], decor: [0.3, 0.3], vehicle: [1.0, 0.5], bath: [0.85, 0.4], toilet: [0.22, 0.3], basin: [0.3, 0.22],
