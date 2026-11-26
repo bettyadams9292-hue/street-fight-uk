@@ -222,48 +222,117 @@ export const FEATURES: MapFeatures = (() => {
     const mid = { x: (from.x + to.x) / 2 + (rnd() - 0.5) * 120, y: (from.y + to.y) / 2 + (rnd() - 0.5) * 120 };
     links.push(organic([from, mid, to], 3, 0.3).map((q, j, all) => (j === 0 ? from : j === all.length - 1 ? to : q)));
   }
-  // Through-roads radiating from the centre and a ring, as old towns grew.
+  // Through-roads: a ring round the old town, and roads from it out of town, off the edge of the map.
   const mid = cityPt(20, 13);
+  const ringAt = (a: number): Pt => ({ x: mid.x + Math.cos(a) * 560 * (1 + 0.08 * Math.sin(a * 3)), y: mid.y + Math.sin(a) * 400 * (1 + 0.08 * Math.cos(a * 2)) });
   const arterial: Pt[][] = [];
-  for (let i = 0; i < 6; i++) {
-    const ang = (i / 6) * Math.PI * 2 + 0.5 + (rnd() - 0.5) * 0.4;
-    const len = 1250 + rnd() * 250;
-    const pts: Pt[] = [];
-    // From the ring road outwards: the middle is the old town's own tangle.
-    for (let t = 0.42; t <= 1.0001; t += 0.116) pts.push({ x: mid.x + Math.cos(ang + Math.sin(t * 3 + i) * 0.12) * len * t, y: mid.y + Math.sin(ang + Math.sin(t * 3 + i) * 0.12) * len * t * 0.72 });
-    arterial.push(organic(pts, 2, 0.3));
-  }
   const ring: Pt[] = [];
-  for (let i = 0; i <= 24; i++) {
-    const a = (i / 24) * Math.PI * 2;
-    ring.push({ x: mid.x + Math.cos(a) * 560 * (1 + 0.08 * Math.sin(a * 3)), y: mid.y + Math.sin(a) * 400 * (1 + 0.08 * Math.cos(a * 2)) });
-  }
+  for (let i = 0; i <= 24; i++) ring.push(ringAt((i / 24) * Math.PI * 2));
   arterial.push(organic(ring, 2, 0.3));
-  // The back streets: a jittered lattice, each junction nudged, most links built, a few diagonals.
+  for (let i = 0; i < 6; i++) {
+    const ang = (i / 6) * Math.PI * 2 + 0.5;
+    const from = ringAt(ang);
+    const pts: Pt[] = [from];
+    // Out from the ring, bending a little, till well past the edge of the sheet.
+    for (let t = 1; t <= 12; t++) {
+      const a2 = ang + Math.sin(t * 0.9 + i) * 0.1;
+      pts.push({ x: from.x + Math.cos(a2) * 330 * t, y: from.y + Math.sin(a2) * 260 * t });
+    }
+    const road = organic(pts, 2, 0.3);
+    // It starts on the ring as drawn (the ring's corners are rounded off, so snap to its nearest point).
+    const drawn = arterial[0];
+    road[0] = drawn.reduce((b, q) => (Math.hypot(q.x - road[1].x, q.y - road[1].y) < Math.hypot(b.x - road[1].x, b.y - road[1].y) ? q : b), drawn[0]);
+    arterial.push(road);
+  }
+
+  // The back streets: a jittered lattice of junctions. The rim is a ring road; inside, most links are built and a
+  // few diagonals. No street through a park, none across the river or canal except a bridge now and then, and
+  // every dead end trimmed back, so every street goes somewhere.
   const minor: Pt[][] = [];
+  type Seg = [Pt, Pt];
+  const crosses = (a: Pt, b: Pt, line: Pt[]) => {
+    for (let i = 1; i < line.length; i++) {
+      const c = line[i - 1];
+      const d = line[i];
+      const den = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x);
+      if (Math.abs(den) < 1e-9) continue;
+      const t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / den;
+      const u = ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / den;
+      if (t >= 0 && t <= 1 && u >= 0 && u <= 1) return true;
+    }
+    return false;
+  };
+  const inside = (q: Pt, poly: Pt[]) => {
+    let hit = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      if ((poly[i].y > q.y) !== (poly[j].y > q.y) && q.x < ((poly[j].x - poly[i].x) * (q.y - poly[i].y)) / (poly[j].y - poly[i].y) + poly[i].x) hit = !hit;
+    }
+    return hit;
+  };
   const web = (x0: number, y0: number, x1: number, y1: number, step: number) => {
     const nx = Math.ceil((x1 - x0) / step);
     const ny = Math.ceil((y1 - y0) / step);
-    const node: Pt[][] = [];
-    for (let i = 0; i <= nx; i++) {
-      node.push([]);
-      for (let j = 0; j <= ny; j++) node[i].push({ x: x0 + i * step + (rnd() - 0.5) * step * 0.55, y: y0 + j * step + (rnd() - 0.5) * step * 0.55 });
+    const node: Pt[] = [];
+    const id = (i: number, j: number) => i * (ny + 1) + j;
+    for (let i = 0; i <= nx; i++) for (let j = 0; j <= ny; j++) {
+      const rim = i === 0 || j === 0 || i === nx || j === ny;
+      node.push(warp({ x: x0 + i * step + (rim ? 0 : (rnd() - 0.5) * step * 0.55), y: y0 + j * step + (rim ? 0 : (rnd() - 0.5) * step * 0.55) }));
     }
-    const add = (a: Pt, b: Pt) => {
-      // A slight bow in each street.
-      const m = lerp(a, b, 0.5);
-      const bow = (rnd() - 0.5) * step * 0.25;
-      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-      minor.push(organic([a, { x: m.x - ((b.y - a.y) / len) * bow, y: m.y + ((b.x - a.x) / len) * bow }, b], 1, 0.25));
+    const edges: [number, number][] = [];
+    let bridge = 0;
+    const tryAdd = (a: number, b: number, must: boolean) => {
+      if (!must && rnd() >= 0.8) return;
+      const [p, q] = [node[a], node[b]];
+      const m = lerp(p, q, 0.5);
+      if (f.parks.some((pk) => inside(m, pk))) return;
+      if (f.water.some((w) => crosses(p, q, w)) && bridge++ % 6 !== 0) return;
+      edges.push([a, b]);
     };
     for (let i = 0; i <= nx; i++) for (let j = 0; j <= ny; j++) {
-      if (i < nx && rnd() < 0.8) add(node[i][j], node[i + 1][j]);
-      if (j < ny && rnd() < 0.8) add(node[i][j], node[i][j + 1]);
-      if (i < nx && j < ny && rnd() < 0.12) add(node[i][j], rnd() < 0.5 ? node[i + 1][j + 1] : node[i + 1][j]);
+      if (i < nx) tryAdd(id(i, j), id(i + 1, j), j === 0 || j === ny);
+      if (j < ny) tryAdd(id(i, j), id(i, j + 1), i === 0 || i === nx);
+      if (i < nx && j < ny && rnd() < 0.12) tryAdd(id(i, j), rnd() < 0.5 ? id(i + 1, j + 1) : id(i + 1, j), false);
     }
+    // Trim dead ends till there are none.
+    let cut = true;
+    while (cut) {
+      cut = false;
+      const deg = new Map<number, number>();
+      for (const [a, b] of edges) {
+        deg.set(a, (deg.get(a) ?? 0) + 1);
+        deg.set(b, (deg.get(b) ?? 0) + 1);
+      }
+      for (let k = edges.length - 1; k >= 0; k--) {
+        const [a, b] = edges[k];
+        if (deg.get(a) === 1 || deg.get(b) === 1) {
+          edges.splice(k, 1);
+          cut = true;
+        }
+      }
+    }
+    for (const [a, b] of edges) {
+      const [p, q] = [node[a], node[b]];
+      const m = lerp(p, q, 0.5);
+      const bow = (rnd() - 0.5) * step * 0.2;
+      const len = Math.hypot(q.x - p.x, q.y - p.y) || 1;
+      const seg: Seg = [p, q];
+      // A slight bow in each street; its ends stay exactly on the junctions.
+      const c = { x: m.x - ((q.y - p.y) / len) * bow, y: m.y + ((q.x - p.x) / len) * bow };
+      minor.push([seg[0], lerp(seg[0], c, 0.5), c, lerp(c, seg[1], 0.5), seg[1]]);
+    }
+    return node;
   };
-  web(CITY_AT.x - CELL * 3, CITY_AT.y - CELL * 3, CITY_AT.x + 42 * CELL, CITY_AT.y + 30 * CELL, 78);
+  const f = { parks, water };
+  const cityNodes = web(CITY_AT.x - CELL * 3, CITY_AT.y - CELL * 3, CITY_AT.x + 42 * CELL, CITY_AT.y + 30 * CELL, 78);
   for (const t of TOWN_AT) web(t.x - CELL * 3, t.y - CELL * 3, t.x + CELL * 15, t.y + CELL * 10, 72);
+  // Kirkgate Ground's far end runs on into the back streets (every other street end meets the next street).
+  const start = LAYOUT[STRIP[0]]!.pts[0];
+  const near = cityNodes.reduce((best, q) => (Math.hypot(q.x - start.x, q.y - start.y) < Math.hypot(best.x - start.x, best.y - start.y) && q.x < start.x - 20 ? q : best), cityNodes[0]);
+  minor.push([start, lerp(start, near, 0.5), near]);
+  // And the last town's last street heads out of town on an A-road, off the map.
+  const lastPts = LAYOUT[STRIP[STRIP.length - 1]]!.pts;
+  const end = lastPts[lastPts.length - 1];
+  links.push(organic([end, { x: end.x + 300, y: end.y + 80 }, { x: MAP_W + 400, y: end.y + 160 }], 2, 0.3).map((q, j) => (j === 0 ? end : q)));
   const labels: MapFeatures['labels'] = [
     { text: 'River Brack', at: warp(cityPt(13, 22.8)), ang: 8, kind: 'water' },
     { text: 'River Brack', at: warp(cityPt(33.8, 14.4)), ang: 22, kind: 'water' },

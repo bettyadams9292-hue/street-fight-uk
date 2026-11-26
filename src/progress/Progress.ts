@@ -155,6 +155,8 @@ export interface GameSave {
   basement: BasementSave;
   /** Seconds actually spent playing in the world: the business's clock. */
   playTime: number;
+  /** When (playTime) you last mugged someone in each district: a street that's just been worked gives up less. */
+  muggings: Record<string, number[]>;
   /** Places you've been (the map shows the rest as "not visited yet"). */
   visited: AreaId[];
   /** Where the map's route is set to, if anywhere. */
@@ -230,6 +232,7 @@ export function newSave(character: PlayerCharacter): GameSave {
     companions: defaultCompanions(),
     basement: defaultBasement(),
     playTime: 0,
+    muggings: {},
     visited: ['home', 'estate'],
     destination: null,
     condition: defaultCondition(),
@@ -317,6 +320,7 @@ export function sanitiseSave(raw: unknown): GameSave | null {
     styleTraining: sanitiseStyleTraining(r.styleTraining, learned, list(r.moves, MOVE_UNLOCK_IDS).includes('specials')),
     companions: sanitiseCompanions(r.companions),
     playTime: typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0,
+    muggings: sanitiseMuggings(r.muggings),
     basement: sanitiseBasement(r.basement, typeof r.playTime === 'number' && Number.isFinite(r.playTime) && r.playTime >= 0 ? r.playTime : 0),
     visited: sanitiseVisited(r.visited, r.area, flags),
     destination: (AREA_IDS as readonly string[]).includes(r.destination as string) ? (r.destination as AreaId) : null,
@@ -868,6 +872,18 @@ export class Progress {
     this.save.heat = this.heatIn(district).police;
   }
 
+  /** How many people you've mugged in `district` in the last MUG_MEMORY seconds of play. */
+  mugStreak(district = this.here): number {
+    const t = this.save.playTime;
+    return (this.save.muggings[district] ?? []).filter((at) => t - at < MUG_MEMORY).length;
+  }
+
+  /** Another mugging in `district`: kept for MUG_MEMORY seconds. */
+  noteMugging(district = this.here): void {
+    const t = this.save.playTime;
+    this.save.muggings[district] = [...(this.save.muggings[district] ?? []).filter((at) => t - at < MUG_MEMORY), t];
+  }
+
   heatIn(district = this.here): DistrictHeat {
     return this.save.districtHeat[district] ?? emptyHeat();
   }
@@ -1080,3 +1096,15 @@ function sanitiseVisited(raw: unknown, area: unknown, flags: Record<string, bool
   return [...out];
 }
 
+
+/** Seconds of play a mugging is remembered on its street: word gets round, people keep their phones in. */
+export const MUG_MEMORY = 900;
+
+function sanitiseMuggings(v: unknown): Record<string, number[]> {
+  const out: Record<string, number[]> = {};
+  if (!v || typeof v !== 'object') return out;
+  for (const [k, list] of Object.entries(v as Record<string, unknown>)) {
+    if (Array.isArray(list)) out[k] = list.filter((n): n is number => typeof n === 'number' && Number.isFinite(n)).slice(-12);
+  }
+  return out;
+}
