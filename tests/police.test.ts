@@ -42,6 +42,7 @@ function assert(c: unknown, msg: string): asserts c {
 
 const fresh = (cash = 0, bank = 0): Progress => {
   const p = new Progress(newSave(createCharacter({ name: 'T', appearance: defaultAppearance('male'), background: 'estate_scrapper', allocated: emptyAllocation() })));
+  p.save.bank = 'califax';
   p.save.cash.pocket = cash;
   p.save.cash.bank = bank;
   p.enterDistrict('High Street');
@@ -302,10 +303,10 @@ test('ring your crew: they pay, you owe them a quarter on top from the tin, and 
   assert(!p.save.record.length && p.save.police.owed?.left === owedFor(b.bail) && owedFor(b.bail) > b.bail, 'owed');
   assert(!p.save.companions.following.includes(id) && !followMe(p, id).ok, 'still following');
   assert(!crewToRing(p).length, 'can ring again while owing');
-  p.save.cash.bank = 100;
+  p.save.cash.tin = 100;
   repayCrew(p);
-  assert(p.save.cash.bank === 0 && p.save.police.owed!.left === owedFor(b.bail) - 100, 'part paid');
-  p.save.cash.bank = 5000;
+  assert(p.save.cash.tin === 0 && p.save.police.owed!.left === owedFor(b.bail) - 100, 'part paid');
+  p.save.cash.tin = 5000;
   repayCrew(p);
   assert(!p.save.police.owed && followMe(p, id).ok, 'square again');
 });

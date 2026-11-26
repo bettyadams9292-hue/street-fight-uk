@@ -72,9 +72,9 @@ export function book(p: Progress): Booking {
   return { district, charges, seized, seizedValue, bail, fine: courtFine(bail), sarge: bent ? BENT_SARGE : STRAIGHT_SARGE, bent, paperwork: paperworkPrice(bail) };
 }
 
-/** Can you pay bail from what's on you and in the tin? */
+/** Can you pay bail from what's on you and your card? */
 export function canPayBail(p: Progress, b: Booking): boolean {
-  return p.save.cash.pocket + p.save.cash.bank >= b.bail;
+  return p.canAfford(b.bail);
 }
 
 /** The charges on the sheet are dealt with, and the district's police have had their man. */
@@ -97,7 +97,7 @@ export function payBail(p: Progress, b: Booking): boolean {
  */
 export function nightInCells(p: Progress, b: Booking): number {
   for (let i = 0; i < CELL_NIGHT_TRIPS; i++) p.tick();
-  const have = p.save.cash.pocket + p.save.cash.bank;
+  const have = p.spendable();
   const taken = Math.min(have, b.fine);
   p.pay(taken);
   for (const d of Object.keys(p.save.districtHeat)) if (d !== b.district) p.setHeat('police', Math.max(0, p.heatIn(d).police - CELL_NIGHT_COOL), d);
@@ -136,8 +136,8 @@ export function repayCrew(p: Progress): number {
   const o = p.save.police.owed;
   if (!o) return 0;
   const c = p.save.cash;
-  const fromTin = Math.min(c.bank, o.left);
-  c.bank -= fromTin;
+  const fromTin = Math.min(c.tin, o.left);
+  c.tin -= fromTin;
   const fromPocket = Math.min(c.pocket, o.left - fromTin);
   c.pocket -= fromPocket;
   const paid = fromTin + fromPocket;

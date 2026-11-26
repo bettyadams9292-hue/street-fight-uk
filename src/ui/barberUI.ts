@@ -3,6 +3,7 @@
  * beard and a colour, each one tried on as you tap it; the bill adds up what's changing, and paying makes it
  * yours. Hats come off while you're in the chair, so you can see the cut.
  */
+import { walletLine } from '../money/banking';
 import { LABELS } from '../character/Appearance';
 import { BARBER, BEARDS, COLOUR_NAMES, COLOUR_PRICE, GREYS, HAIRCUTS, cutOf, getCut, greyOf, menuFor, quote, type Cut } from '../barber/barber';
 import type { Progress } from '../progress/Progress';
@@ -72,7 +73,7 @@ export function barberScreen(progress: Progress, ui: UIManager, a: BarberActions
       blurb = 'Colour from the chart, and the grey covered, touched in or all over.';
     }
     const q = quote(now, wanted);
-    const canAfford = s.cash.pocket + s.cash.bank >= q.total;
+    const canAfford = progress.canAfford(q.total);
     const bill = h(
       'div',
       { class: 'barber-bill' },
@@ -103,7 +104,7 @@ export function barberScreen(progress: Progress, ui: UIManager, a: BarberActions
     );
     const reset = menuButton('Keep my look', () => choose(cutOf(progress.save.character.appearance)), 'Back to how you came in');
     el.replaceChildren(
-      h('div', { class: 'shop-head' }, h('h2', { text: BARBER.shop }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` })),
+      h('div', { class: 'shop-head' }, h('h2', { text: BARBER.shop }), h('span', { class: 'wallet', text: walletLine(progress) })),
       h('div', { class: 'inv-tabs' }, ...sections.map((x) => h('button', { class: `inv-tab${x.id === section ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => { section = x.id; build(true); } }, x.label))),
       h(
         'div',

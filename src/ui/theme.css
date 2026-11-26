@@ -2795,3 +2795,84 @@ body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) *
 .bp-screen .menu-btn.bp-btn .sub { font: 400 12px/1.3 var(--ui2); opacity: 0.8; margin: 0; text-transform: none; letter-spacing: 0; }
 .bp-screen .menu-btn.bp-btn.focused, .bp-screen .menu-btn.bp-btn:hover { border-color: #fff; }
 @media (max-height: 520px) and (orientation: landscape) { .bp-card { padding: 14px 18px; } .bp-logos { margin-bottom: 8px; } .bp-logo { height: 44px; width: 86px; } .bp-card p { margin-bottom: 10px; font-size: 13px; } }
+
+/* ==== The venue kit (ui/venue.ts): every shop, counter and point of interest, themed per place ================== */
+.vn-screen { display: grid; place-items: center; padding: max(12px, var(--safe-t)) 12px max(12px, var(--safe-b)); font-family: var(--ui2); }
+.vn-card {
+  --vn-line: color-mix(in srgb, var(--vn-ink) 12%, transparent);
+  --vn-dim: color-mix(in srgb, var(--vn-ink) 66%, transparent);
+  position: relative; width: min(620px, 96vw); max-height: calc(100dvh - 24px); display: flex; flex-direction: column; overflow: hidden;
+  border-radius: 16px; background: var(--vn-bg); color: var(--vn-ink); border: 1px solid var(--vn-line);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.vn-card.vn-light { box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55); }
+.vn-band { flex: none; height: 10px; background: var(--vn-band); }
+.vn-head { flex: none; display: flex; align-items: center; gap: 14px; padding: 16px 20px 12px; border-bottom: 1px solid var(--vn-line); }
+.vn-mark { flex: none; width: 52px; height: 52px; border-radius: 12px; display: grid; place-items: center; overflow: hidden; background: var(--vn-panel); box-shadow: inset 0 0 0 1px var(--vn-line); }
+.vn-mark img { width: 82%; height: 82%; object-fit: contain; }
+.vn-mark.plate img { width: 100%; height: 100%; object-fit: cover; }
+.vn-titles { min-width: 0; flex: 1; }
+.vn-kicker { display: block; font: 700 11px/1.2 var(--ui2); letter-spacing: 0.12em; text-transform: uppercase; color: var(--vn-accent); margin-bottom: 3px; }
+.vn-head h2 { margin: 0; font: 900 clamp(22px, 4.4vw, 30px)/1.05 var(--disp); letter-spacing: -0.015em; text-transform: none; color: var(--vn-ink); }
+.vn-sub { display: block; margin-top: 3px; font: 400 13px/1.35 var(--ui2); color: var(--vn-dim); }
+.vn-wallet { flex: none; max-width: 42%; text-align: right; font: 600 12.5px/1.35 var(--ui2); color: var(--vn-dim); font-variant-numeric: tabular-nums; }
+.vn-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 20px 14px; }
+.vn-foot { flex: none; display: flex; justify-content: flex-end; gap: 8px; padding: 10px 16px 14px; border-top: 1px solid var(--vn-line); }
+.vn-note { margin: 8px 0 2px; padding: 9px 12px; border-radius: 10px; font: 600 13.5px/1.4 var(--ui2); background: color-mix(in srgb, var(--vn-accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--vn-accent) 45%, transparent); }
+.vn-note.bad { background: rgba(232, 54, 42, 0.14); border-color: rgba(232, 54, 42, 0.55); }
+.vn-note.empty { display: none; }
+.vn-sec { margin-top: 14px; }
+.vn-sec > h3 { margin: 0 0 8px; font: 800 12px/1.2 var(--ui2); letter-spacing: 0.1em; text-transform: uppercase; color: var(--vn-dim); }
+.vn-copy { margin: 0 0 10px; font: 400 14px/1.5 var(--ui2); color: color-mix(in srgb, var(--vn-ink) 85%, transparent); }
+.vn-copy.small { font-size: 12.5px; color: var(--vn-dim); margin-top: 8px; }
+.vn-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin-bottom: 6px; border-radius: 12px; background: var(--vn-panel); border: 1px solid var(--vn-line); }
+.vn-row.off { opacity: 0.62; }
+.vn-what { flex: 1; min-width: 0; }
+.vn-what b { display: block; font: 700 15px/1.25 var(--disp); color: var(--vn-ink); }
+.vn-what span { display: block; font: 400 12.5px/1.4 var(--ui2); color: var(--vn-dim); }
+.vn-tag { flex: none; font: 700 12px/1 var(--ui2); padding: 7px 10px; border-radius: 999px; background: color-mix(in srgb, var(--vn-ink) 8%, transparent); color: var(--vn-dim); }
+.vn-screen .menu-btn.vn-btn, .vn-screen .menu-btn.vn-chip, .vn-card .menu-btn.vn-btn {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; margin: 0; border-radius: 999px;
+  font: 800 13.5px/1 var(--ui2); letter-spacing: 0; text-transform: none; white-space: nowrap; clip-path: none; transform: none;
+  background: var(--vn-accent); color: color-mix(in srgb, var(--vn-bg) 92%, black); border: 1px solid transparent; box-shadow: none;
+}
+.vn-screen .menu-btn.vn-btn .label, .vn-screen .menu-btn.vn-chip .label { font: inherit; letter-spacing: inherit; text-transform: none; }
+.vn-screen .menu-btn.vn-btn.cost { background: transparent; color: var(--vn-ink); border-color: var(--vn-accent); }
+.vn-screen .menu-btn.vn-btn.danger { background: #d8241a; color: #fff; }
+.vn-screen .menu-btn.vn-btn.ghost { background: transparent; color: var(--vn-ink); border-color: var(--vn-line); }
+.vn-screen .menu-btn.vn-btn.focused, .vn-screen .menu-btn.vn-btn:hover, .vn-screen .menu-btn.vn-chip.focused, .vn-screen .menu-btn.vn-chip:hover { outline: 2px solid var(--vn-ink); outline-offset: 2px; }
+.vn-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.vn-screen .menu-btn.vn-chip { background: var(--vn-panel); color: var(--vn-ink); border-color: var(--vn-line); font-variant-numeric: tabular-nums; }
+.vn-screen .menu-btn.vn-chip.on { background: var(--vn-accent); color: color-mix(in srgb, var(--vn-bg) 92%, black); border-color: transparent; }
+.vn-screen .menu-btn.vn-chip[disabled] { opacity: 0.4; pointer-events: none; }
+.vn-stats { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+.vn-stat { padding: 12px; border-radius: 12px; background: var(--vn-panel); border: 1px solid var(--vn-line); min-width: 0; }
+.vn-stat span { display: block; font: 700 10.5px/1.2 var(--ui2); letter-spacing: 0.1em; text-transform: uppercase; color: var(--vn-dim); margin-bottom: 6px; }
+.vn-stat b { display: block; font: 800 17px/1.1 var(--disp); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.vn-stat.big b { font-size: 28px; font-weight: 900; color: var(--vn-accent); }
+@media (orientation: portrait) and (max-width: 700px) {
+  .vn-card { width: 100%; max-height: calc(100dvh - 20px - var(--safe-t) - var(--safe-b)); }
+  .vn-head { flex-wrap: wrap; padding: 14px 16px 10px; }
+  .vn-wallet { max-width: none; flex-basis: 100%; text-align: left; }
+  .vn-body { padding: 4px 16px 12px; }
+  .vn-stats { grid-template-columns: 1fr 1fr; }
+  .vn-stats .vn-stat.big { grid-column: 1 / -1; }
+  .vn-row { flex-wrap: wrap; }
+  .vn-row .menu-btn.vn-btn { margin-left: auto; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .vn-card { width: min(760px, 96vw); max-height: calc(100dvh - 12px); }
+  .vn-band { height: 6px; }
+  .vn-head { padding: 9px 16px 8px; gap: 10px; }
+  .vn-mark { width: 40px; height: 40px; }
+  .vn-head h2 { font-size: 21px; }
+  .vn-body { padding: 2px 16px 8px; }
+  .vn-foot { padding: 6px 12px 8px; }
+  .vn-sec { margin-top: 8px; }
+  .vn-stat { padding: 8px 10px; }
+  .vn-stat.big b { font-size: 22px; }
+  .vn-screen .menu-btn.vn-btn, .vn-screen .menu-btn.vn-chip { min-height: 34px; }
+}
+.tin-balance { display: grid; grid-template-columns: auto 1fr auto 1fr; align-items: baseline; gap: 4px 10px; margin: 8px 0 10px; padding: 10px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); }
+.tin-balance b { font: 900 22px/1 var(--disp); font-variant-numeric: tabular-nums; }
+.tin-balance span { font: 600 11px/1 var(--ui2); letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; }

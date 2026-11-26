@@ -96,6 +96,7 @@ import { TutorialManager } from './tutorial/TutorialManager';
 import { barberScreen } from './ui/barberUI';
 import { atmOpen, bankOf } from './money/atm';
 import { atmScreen } from './ui/atmUI';
+import { branchScreen } from './ui/branchUI';
 import { tattooScreen } from './ui/tattooUI';
 import { DYNAMIC_LEVELS, everySetSettled, levelProgress, levelReady, prepareLevel, recordLevel } from './performance/levelAssets';
 import { LevelView } from './render/LevelView';
@@ -281,16 +282,6 @@ export class Game {
       unread: () => this.hud.unreadCount(),
       travel: (area, opt) => this.travelTo(area, opt),
       saved: () => this.saveGame(),
-      payIn: () => {
-        const p = this.progress;
-        if (!p || this.world?.level.id !== 'home') return 0;
-        const n = p.bankAll();
-        if (n) {
-          this.saveGame();
-          this.hud.toast(`Put £${n} in the tin`, 'cash');
-        }
-        return n;
-      },
       atHome: () => this.world?.level.id === 'home',
       editHome: () => {
         this.backToPlay();
@@ -1591,6 +1582,9 @@ export class Game {
           this.hud.toast('Savings moved into the new tin', 'item');
         });
         break;
+      case 'bank_counter':
+        screen = branchScreen(p, station?.tab === 'lloyds' ? 'lloyds' : 'califax', saved, close);
+        break;
       case 'atm':
         if (!atmOpen(p)) {
           this.backToPlay();
@@ -2363,11 +2357,10 @@ export class Game {
       return this.driveTo(area, opt.park ?? null, opt.entry);
     }
     if (opt.kind !== 'cab' || !opt.entry) return this.backToPlay();
-    if (p.save.cash.bank < opt.cost) {
+    if (!p.pay(opt.cost)) {
       this.backToPlay();
-      return this.hud.toast(`Need £${opt.cost} in the tin`, 'warn');
+      return this.hud.toast(`The fare’s £${opt.cost}. You haven’t got it on you${p.save.bank ? ' or on your card' : ''}.`, 'warn');
     }
-    p.save.cash.bank -= opt.cost;
     if (p.save.destination === area) p.save.destination = null;
     this.ui.replaceAll(null);
     this.state = 'playing';
@@ -3065,7 +3058,7 @@ export class Game {
         sub: 'Pays the fines: police heat and the record there wiped',
         go: () => {
           if (!p.pay(price)) {
-            this.hud.toast(`You need \u00a3${price} on you or in the tin.`, 'warn');
+            this.hud.toast(`You need \u00a3${price}: cash, or your card.`, 'warn');
             return;
           }
           s.record = s.record.filter((e) => e.district !== d);
@@ -3187,7 +3180,7 @@ export class Game {
       this.hud.toast(msg, 'info');
     };
     const buttons: { label: string; sub?: string; go: () => void }[] = [];
-    if (b.bent && p.save.cash.pocket + p.save.cash.bank >= b.paperwork) {
+    if (b.bent && p.canAfford(b.paperwork)) {
       buttons.push({
         label: 'Lose the paperwork',
         sub: `\u00a3${b.paperwork} to ${b.sarge}: charges gone, and he\u2019s your contact after`,

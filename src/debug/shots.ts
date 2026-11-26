@@ -118,6 +118,7 @@ export const SHOTS: Record<ShotName, SceneFn> & Record<string, SceneFn> = {
     const at = Number(q.get('at') ?? 8);
     g.progress = new Progress(newSave(hero(g)));
     g.progress.save.cash.bank = 1e6;
+    g.progress.save.bank ??= "califax";
     buyBike(g.progress, id, BIKE_LIST.find((b) => b.id === id)!.colours[0]);
     const uid = g.progress.save.property.bikes[0].uid;
     takeOutBike(g.progress, uid);

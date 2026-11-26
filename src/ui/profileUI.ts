@@ -179,7 +179,7 @@ export function profileScreen(o: ProfileOptions): Screen {
         h('div', { class: 'pf-xp' }, h('span', { text: s.level >= LEVEL_CAP ? 'Top level' : `Level ${s.level} → ${s.level + 1}` }), bar(s.xp, need || 1, 'xp', need ? `${s.xp} / ${need} XP` : 'MAX')),
         row('Total experience', `${total.toLocaleString('en-GB')} XP`),
         row('Training points', String(s.trainingPoints), 'Spend at the coach’s board or a fighting gym'),
-        row('Money', `£${s.cash.pocket.toLocaleString('en-GB')} on you`, `£${s.cash.bank.toLocaleString('en-GB')} in the tin`),
+        row('Money', `£${s.cash.pocket.toLocaleString('en-GB')} on you · £${s.cash.tin.toLocaleString('en-GB')} in the tin`, s.bank ? `£${s.cash.bank.toLocaleString('en-GB')} in the bank` : 'No bank account'),
         row('Fighting styles', styles.join(', ')),
       ),
       section('Physical', 'gym',

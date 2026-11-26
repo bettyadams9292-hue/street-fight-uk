@@ -1,3 +1,4 @@
+import { walletLine } from '../money/banking';
 import { WEAPONS } from '../combat/Weapons';
 import { tierLabel } from '../items/gearBonus';
 import { defOf, sortStacks, type ItemStack, type SortMode } from '../items/Inventory';
@@ -429,7 +430,7 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
     el.replaceChildren(
       h('div', { class: 'inv-top' },
         h('div', { class: 'inv-title' }, icon('bag'), h('h2', { text: 'Pockets & bag' })),
-        h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` }),
+        h('span', { class: 'wallet', text: walletLine(progress) }),
         h('span', { class: `cap${used >= cap ? ' full' : ''}` }, h('i', { class: 'cap-bar' }, h('i', { style: `width:${Math.min(100, (used / cap) * 100)}%` })), `${used}/${cap} slots`),
         h('button', { class: 'icon-btn', 'aria-label': 'Close', title: 'Close (Esc / I)', onclick: close }, icon('close')),
       ),
@@ -695,7 +696,7 @@ export function clothesShopScreen(progress: Progress, ui: UIManager, a: ShopActi
       const st: ItemStack = { uid: id, id, qty: 1 };
       return itemTile(st, { selected: id === selected, tag: owned(id) ? 'OWNED' : tierLock(progress, ITEMS[id]) ? 'SOON' : undefined, price: `£${shopPrice(ITEMS[id], a.priceMult)}`, onClick: () => { selected = id; confirmRob = false; a.preview(id); build(true); } });
     });
-    const canAfford = s.cash.pocket + s.cash.bank >= price;
+    const canAfford = progress.canAfford(price);
     const lock = tierLock(progress, d);
     const acts: HTMLElement[] = [
       menuButton(owned(selected) ? `Buy another (£${price})` : `Buy (£${price})`, () => {
@@ -725,7 +726,7 @@ export function clothesShopScreen(progress: Progress, ui: UIManager, a: ShopActi
     acts.push(menuButton('Back to my own clothes', () => { a.preview(null); build(); }, 'Stop previewing'));
     const compare = current && current.id !== selected ? h('div', { class: 'compare' }, h('div', { class: 'compare-title', text: `You’re wearing: ${defOf(current).name}` })) : null;
     el.replaceChildren(
-      h('div', { class: 'shop-head' }, h('h2', { text: 'JD Streets' }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` })),
+      h('div', { class: 'shop-head' }, h('h2', { text: 'JD Streets' }), h('span', { class: 'wallet', text: walletLine(progress) })),
       h('p', { class: 'hint', text: shopTier(progress) < 3 ? `On the rails now: ${SHOP_TIER_NAMES[shopTier(progress)].toLowerCase()} lines. ${SHOP_TIER_UNLOCK[(shopTier(progress) + 1) as 2 | 3].text}: ${SHOP_TIER_NAMES[(shopTier(progress) + 1) as 2 | 3].toLowerCase()}.` : 'Every line in stock, up to the Iconic pieces.' }),
       h('p', { class: 'warn-line', text: a.priceMult > 1 ? `Priya remembers you. Everything’s ${Math.round((a.priceMult - 1) * 100)}% dearer for you now.` : '' }),
       h('div', { class: 'inv-tabs' }, ...SHOP_SECTIONS.map((x) => h('button', { class: `inv-tab${x.id === section ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => { section = x.id; selected = SHOP_STOCK.find((id) => ITEMS[id] && x.test(ITEMS[id]))!; a.preview(selected); build(); } }, x.label))),

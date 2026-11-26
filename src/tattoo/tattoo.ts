@@ -114,7 +114,7 @@ export function getInk(p: Progress, wanted: Ink): InkResult {
   // An ink colour with nothing to re-ink: nothing to pay, and nothing would show.
   const sameWork = TATTOO_SLOTS.every((s) => now.tattoos[s] === wanted.tattoos[s]);
   if (!q.lines.length && sameWork) return { ok: false, reason: 'That’s what you’ve already got.' };
-  if (!p.pay(q.total)) return { ok: false, reason: `That’s £${q.total}. Pocket money first, then the tin at home.` };
+  if (!p.pay(q.total)) return { ok: false, reason: `That’s £${q.total}. Cash on you first, then your card.` };
   a.tattoos = { ...wanted.tattoos };
   a.inkColour = wanted.inkColour;
   return { ok: true, total: q.total };

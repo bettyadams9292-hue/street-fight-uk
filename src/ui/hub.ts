@@ -1,3 +1,4 @@
+import { walletLine } from '../money/banking';
 import { DEFAULT_TIN, TIN_STYLES } from '../render/props/biscuitTin';
 import { BOSSES } from '../ai/bosses';
 import { WEAPONS } from '../combat/Weapons';
@@ -56,8 +57,7 @@ export function panelScreen(title: string, progress: Progress, body: (msg: (text
   let message = '';
   let bad = false;
   const build = () => {
-    const s = progress.save;
-    const wallet = `On you £${s.cash.pocket} · Tin £${s.cash.bank}`;
+    const wallet = walletLine(progress);
     const msgEl = h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message });
     const set = (text: string, b = false) => {
       message = text;
@@ -92,7 +92,7 @@ export const result = (r: PurchaseResult, ok: string, msg: (t: string, bad?: boo
 export function gymScreen(progress: Progress, close: () => void, changed: () => void): Screen {
   return panelScreen('Gym', progress, (msg) => {
     const s = progress.save;
-    const rows: HTMLElement[] = [h('p', { class: 'hint', text: `Training points: ${s.trainingPoints} (one per level). Upgrades also cost money from the tin.` }), h('h3', { text: 'Training' })];
+    const rows: HTMLElement[] = [h('p', { class: 'hint', text: `Training points: ${s.trainingPoints} (one per level). Upgrades also cost money.` }), h('h3', { text: 'Training' })];
     for (const id of UPGRADE_IDS) {
       const def = UPGRADES[id];
       const rank = s.upgrades[id];
@@ -164,7 +164,7 @@ export function repairScreen(progress: Progress, close: () => void, changed: () 
     if (s.held) weapons.push({ st: s.held, where: 'in your hands' });
     for (const st of s.inventory) if (ITEMS[st.id].weapon) weapons.push({ st, where: 'in your pockets' });
     for (const st of s.storage) if (ITEMS[st.id].weapon) weapons.push({ st, where: 'in the stash' });
-    const rows: HTMLElement[] = [h('p', { class: 'hint', text: 'Tape, glue and the odd bolt. Bring a battered weapon back to full strength, paid from the tin. Things that smash (bottles, tellies) can\u2019t be fixed.' })];
+    const rows: HTMLElement[] = [h('p', { class: 'hint', text: 'Tape, glue and the odd bolt. Bring a battered weapon back to full strength. Things that smash (bottles, tellies) can\u2019t be fixed.' })];
     if (!weapons.length) rows.push(h('p', { text: 'No weapons to work on. Pick some up out there; spares can live in the stash.' }));
     for (const { st, where } of weapons) {
       const d = ITEMS[st.id];
@@ -173,8 +173,7 @@ export function repairScreen(progress: Progress, close: () => void, changed: () 
       const fixable = !w.breaks || w.durability > 2;
       rows.push(
         shopRow(`${d.name}  ${st.hits ?? w.durability}/${w.durability}`, where, cost === 0 ? 'Good as new' : !fixable ? 'Can\u2019t fix' : `Fix \u00a3${cost}`, cost === 0 || !fixable ? null : () => {
-          if (s.cash.bank < cost) return msg(`Need \u00a3${cost} in the tin`, true);
-          s.cash.bank -= cost;
+          if (!progress.pay(cost)) return msg(`Need \u00a3${cost}`, true);
           st.hits = w.durability;
           changed();
           msg(`${d.name} fixed up`);
@@ -298,7 +297,7 @@ export function contactsScreen(progress: Progress, close: () => void, openMap: (
     const next = DISTRICT_ORDER.find((d) => !d.optional && !progress.has(d.flag));
     return [
       h('div', { class: 'phone-msg' }, h('b', { text: 'Mo' }), h('p', { text: next ? `“${hintFor(next.flag)}”` : '“You did it. Nobody runs these streets now. Mad.”' })),
-      shopRow('Duber', `On the meter: £${CAB_FLAG.toFixed(2)} and £${CAB_PER_MILE.toFixed(2)} a mile, from the tin. Pick where on the map.`, 'Open map', openMap),
+      shopRow('Duber', `On the meter: £${CAB_FLAG.toFixed(2)} and £${CAB_PER_MILE.toFixed(2)} a mile, cash or card. Pick where on the map.`, 'Open map', openMap),
       ...(crew ? [shopRow('Your crew', s.companions.following.length ? `Following you: ${s.companions.following.map((id) => COMPANIONS[id]?.nickname ?? id).join(', ')}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage (H)', crew)] : []),
     ];
   }, close);
@@ -333,17 +332,34 @@ function hintFor(flag: string): string {
   }
 }
 
+/** Put in and take out rows for the tin: all of it, or a few round amounts. */
+function tinMoves(progress: Progress, msg: (t: string, bad?: boolean) => void, changed: () => void): HTMLElement[] {
+  const c = progress.save.cash;
+  const amounts = (have: number) => [...new Set([10, 50, 100, 500].filter((n) => n < have).concat(have > 0 ? [have] : []))];
+  const rows: HTMLElement[] = [];
+  rows.push(shopRow('Put in', c.pocket > 0 ? `£${c.pocket} on you` : 'Nothing on you', c.pocket > 0 ? `All £${c.pocket}` : 'Nothing', c.pocket > 0 ? () => {
+    const n = progress.toTin(c.pocket);
+    changed();
+    msg(`Put £${n} in the tin. £${c.tin} in it now.`);
+  } : null));
+  for (const n of amounts(c.pocket).filter((n) => n !== c.pocket)) rows.push(shopRow(`Put in £${n}`, '', `£${n}`, () => { progress.toTin(n); changed(); msg(`Put £${n} in the tin.`); }));
+  rows.push(shopRow('Take out', c.tin > 0 ? `£${c.tin} in the tin` : 'The tin’s empty', c.tin > 0 ? `All £${c.tin}` : 'Nothing', c.tin > 0 ? () => {
+    const n = progress.fromTin(c.tin);
+    changed();
+    msg(`Took £${n} out. It’s on you now: mind how you go.`);
+  } : null));
+  for (const n of amounts(c.tin).filter((n) => n !== c.tin)) rows.push(shopRow(`Take out £${n}`, '', `£${n}`, () => { progress.fromTin(n); changed(); msg(`Took £${n} out.`); }));
+  return rows;
+}
+
 export function tinScreen(progress: Progress, close: () => void, changed: () => void, restyle?: () => void): Screen {
   return panelScreen('Biscuit tin', progress, (msg, rebuild) => {
     const s = progress.save;
     const now = s.property.tin ?? DEFAULT_TIN;
     return [
-      h('p', { text: 'Money in the tin is safe and pays for training, food and cabs. Money in your pocket goes with you, and some of it goes if you get battered.' }),
-      shopRow('Put it in the tin', `£${s.cash.pocket} on you`, s.cash.pocket > 0 ? `Bank £${s.cash.pocket}` : 'Nothing on you', s.cash.pocket > 0 ? () => {
-        const n = progress.bankAll();
-        changed();
-        msg(`Put £${n} in the tin. £${s.cash.bank} saved.`);
-      } : null),
+      h('p', { text: 'The tin is your stash. Nobody gets at it: not the police, not a mugger, not a beating. It only opens here at home, so money in it stays here till you take it out. Cash on you goes with you.' }),
+      h('div', { class: 'tin-balance' }, h('span', { text: 'In the tin' }), h('b', { text: `£${s.cash.tin.toLocaleString('en-GB')}` }), h('span', { text: 'On you' }), h('b', { text: `£${s.cash.pocket.toLocaleString('en-GB')}` })),
+      ...tinMoves(progress, msg, changed),
       // Which tin sits on the desk: the three ornate tins, free to swap.
       ...TIN_STYLES.map((t) => shopRow(`${t.name} tin`, t.id === now ? 'On the desk now' : 'Swap your savings into this one', t.id === now ? 'In use' : 'Use this tin', t.id === now ? null : () => {
         s.property.tin = t.id;

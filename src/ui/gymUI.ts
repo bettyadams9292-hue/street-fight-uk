@@ -173,7 +173,7 @@ export function styleCoachScreen(progress: Progress, close: () => void, saved: (
       if (locked) lacks.push(need.requiresText ?? 'Not yet');
       if (prog.xp < need.xp) lacks.push(`drill XP ${prog.xp}/${need.xp}`);
       if (s.trainingPoints < need.points) lacks.push(`${need.points} training point${need.points > 1 ? 's' : ''}`);
-      if (s.cash.pocket + s.cash.bank < need.cash) lacks.push(money(need.cash));
+      if (!progress.canAfford(need.cash)) lacks.push(money(need.cash));
       if (need.xp) rows.push(h('div', { class: 'stat-row' }, h('span', { text: 'Drill XP' }), bar(prog.xp, need.xp), h('em', { text: `${prog.xp}/${need.xp}` })));
       const label = need.rank === 1 ? `Learn ${STYLES[style].name} — ${money(need.cash)}` : `Rank ${need.rank} — ${money(need.cash)}${need.points ? ` + ${need.points} pt` : ''}`;
       const key = `${style}:${need.rank}`;

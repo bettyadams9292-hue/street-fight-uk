@@ -137,7 +137,7 @@ export function jewellerScreen(progress: Progress, close: () => void, saved: () 
       return item;
     }));
     const ownedHere = s.jewellery.owned.filter((o) => o.id === d.id && o.finish === finish);
-    const have = s.cash.pocket + s.cash.bank;
+    const have = progress.spendable();
     const lock = tierLockFor(progress, rarityTier(d.rarity));
     const buy = (wear: boolean) => {
       const r = buyJewel(progress, d.id, finish, priceMult);

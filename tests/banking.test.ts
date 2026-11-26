@@ -59,4 +59,56 @@ ok('the choice survives a save; junk doesn’t', () => {
   assert.equal(sanitiseSave({ ...JSON.parse(JSON.stringify(p.save)), bank: 'barclays' }).bank, undefined);
 });
 
+ok('the tin: money in and out only in the house, and it pays only there', () => {
+  const p = fresh();
+  p.save.cash.tin = 0;
+  p.save.cash.pocket = 100;
+  p.inHouse = false;
+  assert.equal(p.toTin(100), 0, 'not from the street');
+  assert.equal(p.fromTin(10), 0);
+  p.inHouse = true;
+  assert.equal(p.toTin(60), 60);
+  assert.deepEqual([p.save.cash.pocket, p.save.cash.tin], [40, 60]);
+  assert.equal(p.fromTin(500), 60, 'never more than is in it');
+  p.toTin(100);
+  p.inHouse = false;
+  assert.equal(p.canAfford(50), false, 'the tin is at home');
+  p.inHouse = true;
+  assert.ok(p.pay(50), 'at home it pays');
+  assert.equal(p.save.cash.tin, 50);
+});
+
+ok('paying: cash first, then the card; some things are cash only', () => {
+  const p = fresh();
+  p.save.cash.tin = 0;
+  p.save.cash.pocket = 30;
+  p.save.cash.bank = 500;
+  assert.equal(p.pay(100), false, 'no account, no card');
+  chooseBank(p, 'califax');
+  assert.ok(p.pay(100));
+  assert.deepEqual([p.save.cash.pocket, p.save.cash.bank], [0, 430]);
+  assert.equal(p.pay(20, 'cash'), false, 'a bung is cash in hand');
+  p.save.cash.pocket = 20;
+  assert.ok(p.pay(20, 'cash'));
+  assert.equal(p.save.cash.bank, 430, 'cash only never touches the card');
+});
+
+ok('nothing floats: the phone app moves nothing; rent and sales go to the account (the tin with none)', () => {
+  const p = fresh();
+  p.save.cash.tin = 0;
+  p.credit(100);
+  assert.equal(p.save.cash.tin, 100, 'no account: the tin');
+  chooseBank(p, 'lloyds');
+  p.credit(250);
+  assert.equal(p.save.cash.bank, 250);
+});
+
+ok('saves from before the split keep their money in the tin', () => {
+  const p = fresh();
+  const raw = JSON.parse(JSON.stringify(p.save));
+  raw.cash = { pocket: 12, bank: 3400 };
+  const s = sanitiseSave(raw)!;
+  assert.deepEqual(s.cash, { pocket: 12, bank: 0, tin: 3400 });
+});
+
 console.log(`banking: ${passed} passed, 0 failed`);

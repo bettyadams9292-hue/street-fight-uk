@@ -15,7 +15,8 @@ import { INK_COLOURS, defaultAppearance } from '../src/character/Appearance';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { Progress, newSave, sanitiseSave } from '../src/progress/Progress';
 import { LASER_PRICE, REINK_PRICE, designPrice, designsFor, getInk, inkOf, quote } from '../src/tattoo/tattoo';
-import { ATM_FLAG, ATM_MAX, ATM_SITES, PAY_FEE, atmFee, atmOpen, bankOf, deposit, withdraw } from '../src/money/atm';
+import { ATM_FLAG, ATM_MAX, ATM_SITES, OTHER_BANK_FEE, PAY_FEE, atmFee, atmOpen, bankOf, withdraw } from '../src/money/atm';
+import { branchDeposit, branchWithdraw, chooseBank } from '../src/money/banking';
 import { DEALING_FLAG, DRUG_DEFS, streetPrice } from '../src/business/dealing';
 import {
   CORNER_BONUS, CORNER_TRIPS, DEALER_DISTRICTS, RIVAL_CUT, TRADE_MAX, buyOff, competition, cornerYours, dealerIn, rivalIn, stretchOf, takeCorner,
@@ -62,10 +63,11 @@ ok('tattoos: over an old piece it is lasered first; laser alone costs the laser;
   assert.equal(quote(now, { ...now, inkColour: other }).total, 2 * REINK_PRICE);
 });
 
-ok('tattoos: paying writes your own look, pocket then tin; sleeves only on arms; no money, no ink', () => {
+ok('tattoos: paying writes your own look, cash then card; sleeves only on arms; no money, no ink', () => {
   const p = fresh();
   p.save.cash.pocket = 10;
   p.save.cash.bank = 1000;
+  p.save.bank = 'califax';
   const now = inkOf(p.save.character.appearance);
   const r = getInk(p, { ...now, tattoos: { ...now.tattoos, leftUpperArm: 'sleeve' } });
   assert.ok(r.ok);
@@ -96,25 +98,25 @@ ok('tattoos: Ink & Iron is on Hollins, with Shaz, a door both ways and a cab sto
 
 // ---- cashpoints -------------------------------------------------------------------------------------------------
 
-ok('cashpoints: paying in and taking out; the fee only on rough estates; limits', () => {
+ok('cashpoints: take out only, with your card; the fee only on rough estates with no bank, or the other bank; limits', () => {
   const p = fresh();
-  p.save.cash.pocket = 120;
+  p.save.cash.pocket = 0;
   p.save.cash.bank = 300;
-  assert.ok(deposit(p, 100).ok);
-  assert.deepEqual(p.save.cash, { pocket: 20, bank: 400 });
-  assert.ok(deposit(p, Infinity).ok);
-  assert.deepEqual(p.save.cash, { pocket: 0, bank: 420 });
-  assert.equal(deposit(p, 10).ok, false, 'nothing on you');
+  assert.equal(withdraw(p, 100, 'High Street').ok, false, 'no account, no card');
+  chooseBank(p, 'califax');
   assert.equal(atmFee('High Street'), 0);
   assert.equal(atmFee('City Centre'), 0);
   assert.equal(atmFee('Hollins'), PAY_FEE);
-  assert.ok(withdraw(p, 100, 'High Street').ok);
-  assert.deepEqual(p.save.cash, { pocket: 100, bank: 320 });
-  assert.ok(withdraw(p, 100, 'Hollins').ok);
-  assert.deepEqual(p.save.cash, { pocket: 200, bank: 220 - PAY_FEE });
-  assert.equal(withdraw(p, ATM_MAX + 20, 'High Street').ok, false, 'over the limit');
-  assert.equal(withdraw(p, p.save.cash.bank, 'Hollins').ok, false, 'not enough for the fee');
-  assert.ok(p.save.finance.ledger.some((l) => l.amount === -PAY_FEE), 'the fee on the statement');
+  assert.equal(atmFee('Hollins', 'califax', 'califax'), 0, 'your own bank is free anywhere');
+  assert.equal(atmFee('High Street', 'lloyds', 'califax'), OTHER_BANK_FEE, 'the other bank charges');
+  assert.ok(withdraw(p, 100, 'High Street', 'califax').ok);
+  assert.equal(p.save.cash.pocket, 100);
+  assert.equal(p.save.cash.bank, 200);
+  assert.ok(withdraw(p, 100, 'City Centre', 'lloyds').ok);
+  assert.equal(p.save.cash.bank, 100 - OTHER_BANK_FEE);
+  assert.equal(withdraw(p, ATM_MAX + 20, 'High Street', 'califax').ok, false, 'over the limit');
+  assert.equal(withdraw(p, p.save.cash.bank, 'City Centre', 'lloyds').ok, false, 'not enough for the fee');
+  assert.ok(p.save.finance.ledger.some((l) => l.amount === -OTHER_BANK_FEE), 'the fee on the statement');
 });
 
 ok('cashpoints: scarce, set into walls, one bank each, shut till the second boss', () => {
@@ -139,18 +141,23 @@ ok('cashpoints: scarce, set into walls, one bank each, shut till the second boss
   assert.match(st.label, /Lloyd’s THC/);
 });
 
-ok('cashpoints: no invalid amounts, never more than you have', () => {
+ok('cashpoints and the counter: no invalid amounts, never more than you have, only your own bank', () => {
   const p = fresh();
+  chooseBank(p, 'califax');
   p.save.cash.pocket = 35;
   p.save.cash.bank = 100;
-  assert.equal(withdraw(p, 25, 'High Street').ok, false, 'notes only');
-  assert.equal(withdraw(p, -10, 'High Street').ok, false);
-  assert.equal(withdraw(p, NaN, 'High Street').ok, false);
-  assert.equal(deposit(p, 40).ok, false, 'more than is on you');
-  assert.equal(deposit(p, -5).ok, false);
-  assert.deepEqual(p.save.cash, { pocket: 35, bank: 100 }, 'nothing moved');
-  assert.ok(deposit(p, Infinity).ok, 'deposit all');
-  assert.deepEqual(p.save.cash, { pocket: 0, bank: 135 });
+  assert.equal(withdraw(p, 25, 'High Street', 'califax').ok, false, 'notes only');
+  assert.equal(withdraw(p, -10, 'High Street', 'califax').ok, false);
+  assert.equal(withdraw(p, NaN, 'High Street', 'califax').ok, false);
+  assert.equal(branchDeposit(p, 40, 'lloyds').ok, false, 'not your bank');
+  assert.equal(branchDeposit(p, -5, 'califax').ok, false);
+  assert.equal(p.save.cash.pocket, 35);
+  assert.equal(p.save.cash.bank, 100, 'nothing moved');
+  assert.ok(branchDeposit(p, 1000, 'califax').ok, 'pays in what you have');
+  assert.equal(p.save.cash.pocket, 0);
+  assert.equal(p.save.cash.bank, 135);
+  assert.ok(branchWithdraw(p, 35, 'califax').ok);
+  assert.equal(p.save.cash.pocket, 35);
   assert.ok(p.save.finance.ledger.some((l) => l.kind === 'cash' && l.amount === 35), 'on the mini statement');
 });
 

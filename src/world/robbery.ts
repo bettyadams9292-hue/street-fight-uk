@@ -117,7 +117,7 @@ export const FINE_CAP_PER_LEVEL = 100;
 /** Caught: stolen goods seized, a fine (arrestFine), heat wiped. */
 export function arrest(p: Progress): { fine: number; seized: number } {
   const seized = p.confiscateStolen();
-  const fine = arrestFine(p.save.cash.pocket, p.save.cash.bank, p.save.level);
+  const fine = arrestFine(p.save.cash.pocket, p.save.bank ? p.save.cash.bank : 0, p.save.level);
   p.pay(fine);
   // The police where you were nicked have had their man; elsewhere they still remember.
   p.setHeat('police', 0);

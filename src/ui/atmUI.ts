@@ -94,7 +94,8 @@ export function atmScreen(
   const menu = (): void => {
     show({
       body: [msg(bank.welcome, 'atm-title'), msg('Please select a service.')],
-      left: [opt('Cash Withdrawal', withdrawal), opt('Cash Deposit', depositMenu), null, null],
+      // Cash machines don't take deposits: pay in at your bank's branch counter.
+      left: [opt('Cash Withdrawal', withdrawal), null, null, null],
       right: [opt('Balance Enquiry', balance), opt('Recent Transactions', statement), null, opt('Return Card', exit)],
     });
   };
@@ -298,7 +299,8 @@ export function atmScreen(
         ...[1, 2, 3, 4].map((n): [number, () => View] => [n === 4 ? 300 : 180, () => (sound('key'), { body: [msg('Please enter your PIN'), dots(n)] })]),
         [600, () => ({ body: head('Verifying your details…') })],
       ],
-      menu,
+      // No account, no card: the machine hands it back (pick a bank in CaliStore, then pay in at its branch).
+      p.save.bank ? menu : () => error('Card not recognised. You need an account: get a bank’s app in CaliStore on your phone.', exit),
     );
   };
 

@@ -128,7 +128,7 @@ export function growShopScreen(progress: Progress, close: () => void, saved: () 
     const spare = mine.find((x) => !x.at);
     const total = def.price * qty;
     const lock = tierLockFor(progress, def.tier);
-    const short = progress.save.cash.pocket + progress.save.cash.bank < total;
+    const short = !progress.canAfford(total);
     const detail = h('div', { class: 'prop-detail' },
       previewCanvas(def.id, ''),
       h('h3', { text: `${def.name} — ${money(def.price)}` }),
@@ -267,7 +267,7 @@ export function terminalScreen(progress: Progress, close: () => void, saved: () 
             rebuild();
           }),
           menuButton(`Take ${money(bs.balance)} (pocket)`, () => collect('pocket'), undefined, 'small'),
-          menuButton('Into the tin', () => collect('bank'), undefined, 'small'),
+          menuButton(progress.save.bank ? 'Pay into the bank' : 'Into the tin', () => collect('bank'), undefined, 'small'),
           menuButton(bs.paused ? 'Switch on' : 'Switch off', () => {
             setPaused(progress, !bs.paused);
             saved();
@@ -306,7 +306,8 @@ export function terminalScreen(progress: Progress, close: () => void, saved: () 
       rows.push(
         h('div', { class: 'biz-grid' },
           stat('Your pocket', money(s.cash.pocket)),
-          stat('Your tin', money(s.cash.bank)),
+          stat('Your tin', money(s.cash.tin)),
+          stat('Your account', s.bank ? money(s.cash.bank) : 'No account'),
           stat('Business money', money(bs.balance)),
           stat('Bills owed', money(bs.owed)),
           stat('Running costs', `£${st.opPerHour}/hr`),
@@ -316,7 +317,7 @@ export function terminalScreen(progress: Progress, close: () => void, saved: () 
         ),
         h('div', { class: 'row-actions' },
           menuButton(`Take ${money(bs.balance)} (pocket)`, () => collect('pocket')),
-          menuButton('Into the tin', () => collect('bank')),
+          menuButton(progress.save.bank ? 'Pay into the bank' : 'Into the tin', () => collect('bank')),
         ),
         h('h3', { text: 'History' }),
         ...(b.ledger.length ? [...b.ledger].reverse().slice(0, 15).map((l) => h('div', { class: 'ledger-row' }, h('span', { text: `${Math.floor(l.t / 60)}m` }), h('span', { text: l.what }), h('b', { class: l.amount < 0 ? 'neg' : 'pos', text: `${l.amount < 0 ? '−' : '+'}${money(Math.abs(l.amount))}` }))) : [h('p', { class: 'hint', text: 'Nothing yet.' })]),

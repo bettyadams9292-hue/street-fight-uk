@@ -12,10 +12,12 @@ import { Progress, newSave } from '../src/progress/Progress';
 import { LEVELS } from '../src/world/levels';
 import { SHOP_STOPS } from '../src/ui/hub';
 import { cabFare, cabMiles, placePoint } from '../src/map/worldMap';
+/** Tests here pay as a player with a bank account would (money/banking.ts): card after cash. */
+const account = (p: Progress): Progress => ((p.save.bank = 'califax'), p);
 
 let passed = 0;
 const ok = (name: string, fn: () => void) => { fn(); passed++; console.log(`  ok   ${name}`); };
-const fresh = (body: 'male' | 'female' = 'male') => new Progress(newSave(createCharacter({ name: 'A', appearance: defaultAppearance(body), background: 'estate_scrapper', allocated: emptyAllocation() })));
+const fresh = (body: 'male' | 'female' = 'male') => account(new Progress(newSave(createCharacter({ name: 'A', appearance: defaultAppearance(body), background: 'estate_scrapper', allocated: emptyAllocation() }))));
 
 ok('nothing changing costs nothing', () => {
   const p = fresh();

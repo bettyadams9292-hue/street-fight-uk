@@ -2,7 +2,7 @@ import { CAB_FLAG, CAB_PER_MILE } from '../hub';
 import { BUY_IN, CHAMPION, DEFENCE_TRIPS, LADDER, NIGHT_SECONDS, STRIP_TRIPS, defencePurse } from '../../fightclub/club';
 import { BARBER, BEARDS, COLOUR_PRICE, GREYS, HAIRCUTS } from '../../barber/barber';
 import { DESIGNS, LASER_PRICE, REINK_PRICE, SLOT_NAMES, SLOT_ORDER, STUDIO, designPrice } from '../../tattoo/tattoo';
-import { ATM_MAX, PAY_FEE, OTHER_BANK_FEE } from '../../money/atm';
+import { ATM_MAX, OTHER_BANK_FEE } from '../../money/atm';
 import { CORNER_BONUS, CORNER_TRIPS, RIVAL_CUT, TRADE_SHARE } from '../../business/streetDealers';
 import { BAIL_BASE, COURT_FINE_SHARE } from '../../progress/record';
 import { BAG_PACK, BAG_PACK_PRICE, BULK_BUYBACK, bulkWorth, DRUG_DEFS, DRUGS, GROW_PER_BULK, TABLES } from '../../business/dealing';
@@ -41,7 +41,7 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'barber', title: 'The barber', blurb: 'Peaky Barbers on the High Street: haircuts, beards and colour, and what they cost.' },
   { id: 'tattoo', title: 'Tattoos', blurb: 'Ink & Iron on Hollins Estate: designs, where they go, laser removal and re-inking.' },
   { id: 'travel', title: 'Getting about', blurb: 'Running there on foot, Duber cabs, and driving your own car.' },
-  { id: 'cash', title: 'Cashpoints', blurb: 'Paying cash in and taking it out on the street, and which machines charge.' },
+  { id: 'cash', title: 'Money', blurb: 'Cash, the tin, your bank account and card, branches and cash machines.' },
   { id: 'gear', title: 'Clothes and jewellery', blurb: 'Tiers, what each kind of clothing does, outfit buffs, and jewellery’s XP bonus.' },
   { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
 ];
@@ -225,7 +225,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       list([
         'Pick a haircut, a beard and a colour: each one shows on you as you tap it. Turn and Zoom to look from every side.',
         'The bill only counts what’s changing. Picking what you’ve already got is free.',
-        'Pay from your pocket first, then the tin at home, like any shop. Keep my look puts you back how you came in.',
+        'Pay with cash first, then your card, like any shop. Keep my look puts you back how you came in.',
         'Hats come off in the chair. The cut is your own hair, so it stays whatever you wear on top.',
       ]),
     );
@@ -272,19 +272,22 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
 
   if (page === 'cash') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
-    return article('Cashpoints', 'Califax and Lloyd’s THC cash machines, set into the walls of a few shops: the High Street, the City Centre, Kingsway and the Riverside Centre. They’re out of service until you’ve dealt with Sully. Pick your bank in CaliStore on your phone: its app shows your money, and its machines are free.',
-      infobox('The machines', [
-        ['Paying in', 'Free'],
-        ['Your bank’s machines', 'Free'],
+    return article('Money', 'Your money lives in three places, and it only moves between them where it would in real life.',
+      infobox('Where it moves', [
+        ['Cash on you', 'Pays anywhere. Mugged, battered and seized with you.'],
+        ['The biscuit tin', 'At home. In and out only in the house. Nobody touches it.'],
+        ['Bank account', 'Pay in at your branch. Take out there or at a machine.'],
+        ['Bank app', 'Balance and statement only'],
+        ['Your machines', 'Free'],
         ['The other bank’s', `£${OTHER_BANK_FEE} a withdrawal`],
-        ['No bank picked yet', `Free in town, £${PAY_FEE} on the rough estates`],
-        ['Most at once', `£${ATM_MAX}`],
+        ['Most at once', `£${ATM_MAX} from a machine`],
       ]),
       list([
-        'Califax has the High Street and Kingsway, Lloyd’s THC the City Centre and the Riverside Centre. Switch banks in CaliStore any time, for nothing.',
-        'Cash on you is what goes if you get battered, mugged or run. Pay it in and it’s safe.',
-        'Shops take pocket money first, then the bank, so you rarely need to take any out. Some things want cash in hand.',
-        `Withdrawals come in £10 notes, up to £${ATM_MAX} at a time. Ask for a receipt or a mini statement on the screen.`,
+        'Pick a bank in CaliStore on your phone: Califax (branch on the High Street) or Lloyd’s THC (branch on Market Square). Switch any time, for nothing.',
+        'Shops, cabs and the barber take your cash first, then your card. At home, the tin pays before the card. Bungs, dealers and fight club buy-ins are cash in hand.',
+        'Rent, property sales and the business pay into your account (into the tin until you have one). Fight purses, job pay and anything you sell to a shop are cash.',
+        'Cash machines are out of service until you’ve dealt with Sully; the branch counters are open from the start. Machines don’t take deposits.',
+        `Withdrawals come in £10 notes, up to £${ATM_MAX} at a time, at Califax and Lloyd’s THC machines on the High Street, in the City Centre, on Kingsway and in the Riverside Centre.`,
       ]),
     );
   }

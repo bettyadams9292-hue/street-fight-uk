@@ -44,6 +44,7 @@ function assert(cond: unknown, msg: string): void {
 function fresh(cash = 100000): Progress {
   const c = createCharacter({ name: 'Tester', appearance: defaultAppearance(), background: 'estate_scrapper', allocated: emptyAllocation() });
   const p = new Progress(newSave(c));
+  p.save.bank = 'califax';
   p.save.cash.bank = cash;
   for (const f of ['boss_gaffer', 'boss_sully', 'boss_ratcatcher']) p.save.flags[f] = true;
   return p;

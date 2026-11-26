@@ -11,6 +11,8 @@ import { Arena } from '../src/world/Arena';
 import { propBox } from '../src/world/LevelTypes';
 import { LEVELS } from '../src/world/levels';
 import { World } from '../src/world/World';
+/** Tests here pay as a player with a bank account would (money/banking.ts): card after cash. */
+const account = (p: Progress): Progress => ((p.save.bank = 'califax'), p);
 
 let passed = 0;
 let failed = 0;
@@ -30,7 +32,7 @@ function assert(cond: unknown, msg: string): void {
 
 function freshProgress(): Progress {
   const c = createCharacter({ name: 'Tester', appearance: defaultAppearance(), background: 'estate_scrapper', allocated: emptyAllocation() });
-  return new Progress(newSave(c));
+  return account(new Progress(newSave(c)));
 }
 function cmd(o: Partial<CommandFrame> & { press?: (keyof CommandFrame['pressed'])[] } = {}): CommandFrame {
   const c = emptyCommand();
@@ -417,7 +419,7 @@ test('full loop: home, out, boss, home, bank, train, save, reload, next district
   const kv = memoryKV();
   const store = new SaveStore(kv);
   const p = freshProgress();
-  const startBank = p.save.cash.bank;
+  const startBank = p.save.cash.tin;
   // Home -> estate through the front door.
   let w = new World(LEVELS.home, p, { entry: 'start', seed: 1 });
   let exit: { to: AreaId; entry: string } | null = null;
@@ -438,7 +440,7 @@ test('full loop: home, out, boss, home, bank, train, save, reload, next district
   // Home: bank it and train.
   w = new World(LEVELS.home, p, { entry: 'door', seed: 3, carry: hs.carry() });
   const banked = p.bankAll();
-  assert(banked > 0 && p.save.cash.bank === startBank + banked && p.save.cash.pocket === 0, 'banking failed');
+  assert(banked > 0 && p.save.cash.tin === startBank + banked && p.save.cash.pocket === 0, 'banking failed');
   const hpBefore = w.player.vitals.maxHealth;
   assert(p.save.trainingPoints > 0, 'no training points after a boss');
   const r = p.buyUpgrade('health');

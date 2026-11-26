@@ -119,7 +119,7 @@ export function realtyBody(progress: Progress, actions: RealtyActions, start: Re
       const d = PROPERTIES[sel];
       const mine = holding(s, d.id);
       const price = valueNow(d, s.playTime);
-      const have = s.cash.pocket + s.cash.bank;
+      const have = progress.spendable();
       const buyBtns: HTMLElement[] = [];
       if (mine) buyBtns.push(menuButton('Manage it', () => ((tab = 'mine'), (mineSel = d.id), rebuild()), 'It’s yours', 'primary'));
       else if (confirmBuy === d.id)
