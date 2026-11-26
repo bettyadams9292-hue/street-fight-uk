@@ -42,8 +42,10 @@ export interface BankBrand {
   name: string;
   /** Wordmark on the screen header. */
   mark: string;
-  /** Approved logo image (public/art/banks/), drawn in place of the wordmark once supplied. */
+  /** Leeko's approved logo (public/art/banks/), drawn in place of the wordmark on the screens and the machine. */
   logo?: string;
+  /** The same logo laid out for the lit header board over the machine (about 4.6 : 1). */
+  fasciaArt?: string;
   /** Screen colours: background, panel, text, accent (buttons, loaders). */
   bg: string;
   panel: string;
@@ -56,14 +58,16 @@ export interface BankBrand {
 
 export const BANKS: Record<BankId, BankBrand> = {
   califax: {
-    id: 'califax', name: 'Califax', mark: 'CALIFAX',
-    bg: '#0b2a6b', panel: '#123a8c', ink: '#ffffff', accent: '#5fa8ff',
-    fascia: ['#0b2a6b', '#ffffff'], welcome: 'Welcome to Califax.',
+    id: 'califax', name: 'Califax', mark: 'CALIFAX', logo: '/art/banks/califax.webp', fasciaArt: '/art/banks/califax-fascia.webp',
+    // The logo's own navy, white letters.
+    bg: '#01196e', panel: '#0a2c8f', ink: '#ffffff', accent: '#6fb1ff',
+    fascia: ['#01196e', '#ffffff'], welcome: 'Welcome to Califax.',
   },
   lloyds: {
-    id: 'lloyds', name: 'Lloyd’s THC', mark: 'LLOYD’S THC',
-    bg: '#0b0f0c', panel: '#0f3a22', ink: '#ffffff', accent: '#2ecc71',
-    fascia: ['#006a3a', '#ffffff'], welcome: 'Welcome to Lloyd’s THC.',
+    id: 'lloyds', name: 'Lloyd’s THC', mark: 'LLOYD’S THC', logo: '/art/banks/lloyds.webp', fasciaArt: '/art/banks/lloyds-fascia.webp',
+    // The logo's black, white and its green.
+    bg: '#000000', panel: '#0d2410', ink: '#ffffff', accent: '#39ce07',
+    fascia: ['#000000', '#ffffff'], welcome: 'Welcome to Lloyd’s THC.',
   },
 };
 
