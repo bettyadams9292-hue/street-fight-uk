@@ -248,6 +248,10 @@ test('clothes shop: buying costs money, fails cleanly when broke, full pockets d
   const r = buyItem(p, 'leather_jacket', 1);
   assert(!r.ok && !p.owns('leather_jacket') && p.save.cash.pocket === 30, 'bought with no money');
   p.save.cash.bank = 500;
+  // Designer labels come in after Sully (items/shopTiers.ts).
+  assert(!buyItem(p, 'leather_jacket', 1).ok && p.save.cash.bank === 500, 'sold a Designer piece before Sully');
+  p.save.flags.boss_sully = true;
+  assert(!buyItem(p, 'iconic_hoodie', 1).ok, 'sold an Iconic piece before Big Dunc');
   const price = shopPrice(ITEMS.leather_jacket, 1);
   const r2 = buyItem(p, 'leather_jacket', 1);
   assert(r2.ok && r2.where === 'pocket' && p.owns('leather_jacket'), 'buy');
@@ -288,7 +292,7 @@ function robSetup(): { p: Progress; w: World } {
   return { p, w };
 }
 
-test('robbing Threads: stolen goods, heat, alarm, police arrive, the shop shuts', () => {
+test('robbing JD Streets: stolen goods, heat, alarm, police arrive, the shop shuts', () => {
   const { p, w } = robSetup();
   const keeper = [...w.npcs.entries()].find(([st]) => st.id === 'clothes_counter')![1];
   assert(keeper.team === 'neutral', 'shopkeeper should start neutral');
@@ -336,7 +340,7 @@ test('the pawn shop can be robbed too: valuables grabbed, door shut, offers drop
   assert(till.requires === 'pawn_robbable', 'till not tied to the robbery');
 });
 
-test('the Red Lion can be robbed: takings grabbed, Ray fights, the pub shuts', () => {
+test('Weatherspoons can be robbed: takings grabbed, Ray fights, the pub shuts', () => {
   const p = fresh();
   const w = new World(LEVELS.pub, p, { entry: 'door', seed: 3 });
   const ray = [...w.npcs.entries()].find(([st]) => st.id === 'bar')![1];
@@ -558,8 +562,8 @@ test('a Stage 4 (v2) save migrates: money, flags, gear, weapons and cosmetics al
 console.log('Stage 5: the campaign');
 
 test('every area (24 + Stage 6 and 7 buildings), every exit resolves, every new district has a boss or is an interior', () => {
-  // 36 hand-built areas (the police station since the police work, the Arches fight club since #95), plus the
-  // jeweller, the estate agent, Ashcombe Park and the inside of a property, and NeXo Cutz the barber.
+  // 36 hand-built areas (the police station since the police work, the Scrap Yard fight club since #95), plus the
+  // jeweller, the estate agent, Ashcombe Park and the inside of a property, and Peaky Barbers the barber.
   assert(AREA_IDS.length === 42 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const l = LEVELS[id];

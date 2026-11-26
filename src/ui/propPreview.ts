@@ -1,3 +1,4 @@
+import type { CarMods } from '../property/carMods';
 import * as THREE from 'three';
 import { buildAnyModel } from '../render/propModels';
 import { CARS } from '../property/catalogue';
@@ -35,12 +36,12 @@ class Turntable {
   }
 
   /** Show a catalogue item. */
-  show(id: string, colour: string): void {
-    const k = `${id}|${colour}`;
+  show(id: string, colour: string, mods?: CarMods): void {
+    const k = `${id}|${colour}|${mods ? JSON.stringify(mods) : ''}`;
     if (k === this.key) return;
     this.key = k;
     this.holder.clear();
-    const model = buildAnyModel(id, colour);
+    const model = buildAnyModel(id, colour, undefined, mods);
     // Wall pieces come down to eye level; everything is centred and framed by its size.
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
@@ -85,8 +86,8 @@ class Turntable {
 let shared: Turntable | null = null;
 
 /** The shared preview canvas, showing `id` in `colour`. */
-export function previewCanvas(id: string, colour: string): HTMLCanvasElement {
+export function previewCanvas(id: string, colour: string, mods?: CarMods): HTMLCanvasElement {
   shared ??= new Turntable();
-  shared.show(id, colour);
+  shared.show(id, colour, mods);
   return shared.canvas;
 }

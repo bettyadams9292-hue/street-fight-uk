@@ -55,9 +55,9 @@ export const CORE_AREA_IDS = [
   'clothes_shop', 'pawn_shop', 'pub', 'police_station',
   // Ink & Iron, the tattoo studio on Hollins Estate
   'tattoo_studio',
-  // NeXo Cutz, the barber on the High Street
+  // Peaky Barbers, the barber on the High Street
   'barber_shop',
-  // The Arches fight club, under Kane's Boxing
+  // The Scrap Yard fight club, under Hard Knocks
   'fight_club',
   // Stage 6: furniture shop, car dealer, bike shop, casino
   'furniture_shop', 'car_dealer', 'bike_shop', 'casino',
@@ -125,7 +125,7 @@ export interface GameSave {
   jobs: JobsSave;
   /** Dealing: the garage prep table, what's on it, and sales (business/dealing.ts). */
   dealing: DealingSave;
-  /** The Arches fight club: your place on the card, the title (fightclub/club.ts). */
+  /** The Scrap Yard fight club: your place on the card, the title (fightclub/club.ts). */
   club: ClubSave;
   /** Counts area changes: the game's clock for shop closures and heat. */
   trips: number;
@@ -704,7 +704,7 @@ export class Progress {
     }
     // Only ever one comes off the stack: the removed part is what gets worn (no copies).
     const one = takeStack(src, uid, 1, () => this.newUid())!;
-    // A chain from Threads takes the place of a chain from the jeweller, and so on.
+    // A chain from JD Streets takes the place of a chain from the jeweller, and so on.
     clearJewelForSlot(s, wear.slot);
     const prev = s.worn[wear.slot];
     s.worn[wear.slot] = one;

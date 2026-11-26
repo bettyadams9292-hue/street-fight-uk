@@ -99,7 +99,7 @@ test('grow shop: a real shop on the trading estate with a door, staff, product d
   assert(shop.exits.some((e) => e.to === 'ind_estate' && street.entries.some((x) => x.id === e.toEntry)), 'way back out');
   assert(shop.stations!.some((s) => s.id === 'grow_counter' && s.npc), 'cashier');
   assert(shop.stations!.filter((s) => s.id === 'grow_display').map((s) => s.tab).join() === 'room,environment,room,environment,security', 'product displays open their own section');
-  assert(SHOP_STOPS.some((s) => s.area === 'grow_shop'), 'Dave’s Cabs goes there');
+  assert(SHOP_STOPS.some((s) => s.area === 'grow_shop'), 'Duber goes there');
   const p = fresh();
   const w = new World(resolveLevel('grow_shop', p.save), p, { entry: 'door', seed: 2 });
   for (const s of shop.stations!) assert(!w.arena.blocked(s.x, s.z, 0.05), `${s.label} reachable`);
@@ -329,7 +329,7 @@ test('save and reload: basement, equipment and positions, business, upgrades, le
 test('every area still builds, and all 42 areas are reachable data', () => {
   const p = fresh();
   // 34 hand-built areas, then the generated towns east of Hale House.
-  // Plus the jeweller, the estate agent, Ashcombe Park and the inside of a property, and the Arches fight club, and NeXo Cutz.
+  // Plus the jeweller, the estate agent, Ashcombe Park and the inside of a property, and the Scrap Yard fight club, and Peaky Barbers.
   assert(CORE_AREA_IDS.length === 42 && AREA_IDS.length === 42 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const lvl = resolveLevel(id, p.save);

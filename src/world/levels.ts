@@ -87,7 +87,7 @@ const estate: LevelDef = {
     { id: 'subway', x: 38, z: -1.0, facing: -1 },
   ],
   exits: [
-    { id: 'boxing_door', kind: 'door', x: 50, z: -1.6, to: 'boxing_gym', toEntry: 'door', label: 'Into Del’s Boxing Club' },
+    { id: 'boxing_door', kind: 'door', x: 50, z: -1.6, to: 'boxing_gym', toEntry: 'door', label: 'Into Punch & Crunch' },
     { id: 'home_door', kind: 'door', x: -6, z: -1.6, to: 'home', toEntry: 'door', label: 'Go home' },
     { id: 'to_residential', kind: 'edge', side: 'left', x: -12, z: 0, to: 'residential', toEntry: 'right', label: 'Hollins Estate' },
     { id: 'to_high_street', kind: 'edge', side: 'right', x: 56, z: 0, to: 'high_street', toEntry: 'left', label: 'High Street' },
@@ -98,7 +98,7 @@ const estate: LevelDef = {
     { kind: 'terrace', x0: 0, x1: 18 },
     { kind: 'tower', x0: 18, x1: 32 },
     { kind: 'garages', x0: 32, x1: 44 },
-    { kind: 'gym_front', x0: 44, x1: 56, label: 'DEL’S BOXING CLUB', colour: '#7a1414' },
+    { kind: 'gym_front', x0: 44, x1: 56, label: 'PUNCH & CRUNCH', colour: '#7a1414' },
   ],
   // Number 14's low garden wall (drawn with the house front).
   walls: [{ minX: -5.2, maxX: -0.2, minZ: -2.4, maxZ: -1.67, visual: 'none' }],
@@ -126,7 +126,8 @@ const estate: LevelDef = {
     { id: 'bins', kind: 'bin', x: -2.2, z: -0.55, label: 'Search the wheelie bins', loot: 'bin' },
     { id: 'skip', kind: 'skip', x: 28, z: -0.25, label: 'Search the skip', loot: 'skip' },
     { id: 'car', kind: 'car', x: 6, z: 0.3, label: 'Search the parked car', loot: 'car' },
-    { id: 'lockup', kind: 'locker', x: 37.1, z: -1.6, label: 'Open the lock-up', fixed: [{ id: 'w_crowbar' }, { id: 'console' }, { id: 'cash_bundle' }], requires: 'has_lockup_key', lockedText: 'Padlocked. Somebody on Hollins has the key.' },
+    // The Estate King's lock-up: its own garage at the end of the row (world/lockup.ts), clear of the subway steps.
+    { id: 'lockup', kind: 'locker', x: 34.0, z: -1.45, label: 'Open the lock-up', fixed: [{ id: 'w_crowbar' }, { id: 'console' }, { id: 'cash_bundle' }], requires: 'has_lockup_key', lockedText: 'Padlocked. Somebody on Hollins has the key.' },
   ],
   breakables: [
     { id: 'crates1', kind: 'crate', x: 20, z: -1.5, hp: 2, drops: 'plank', loot: 'crate' },
@@ -167,22 +168,22 @@ const highStreet: LevelDef = {
   ],
   exits: [
     { id: 'to_estate', kind: 'edge', side: 'left', x: 0, z: 0, to: 'estate', toEntry: 'right', label: 'Estate' },
-    { id: 'pub_door', kind: 'door', x: 30.5, z: -1.6, to: 'pub', toEntry: 'door', shop: 'pub', label: 'Into the Red Lion' },
-    { id: 'threads_door', kind: 'door', x: 49, z: -1.6, to: 'clothes_shop', toEntry: 'door', shop: 'threads', label: 'Into Threads (clothes shop)' },
-    { id: 'furniture_door', kind: 'door', x: 58, z: -1.6, to: 'furniture_shop', toEntry: 'door', label: 'Into Home & Hearth (furniture)' },
-    { id: 'barber_door', kind: 'door', x: 71, z: -1.6, to: 'barber_shop', toEntry: 'door', label: 'Into NeXo Cutz (barber)' },
+    { id: 'pub_door', kind: 'door', x: 30.5, z: -1.6, to: 'pub', toEntry: 'door', shop: 'pub', label: 'Into Weatherspoons' },
+    { id: 'threads_door', kind: 'door', x: 49, z: -1.6, to: 'clothes_shop', toEntry: 'door', shop: 'threads', label: 'Into JD Streets (clothes shop)' },
+    { id: 'furniture_door', kind: 'door', x: 58, z: -1.6, to: 'furniture_shop', toEntry: 'door', label: 'Into Sofa So Good (furniture)' },
+    { id: 'barber_door', kind: 'door', x: 71, z: -1.6, to: 'barber_shop', toEntry: 'door', label: 'Into Peaky Barbers (barber)' },
     { id: 'to_alleys', kind: 'edge', side: 'right', x: 92, z: 0, to: 'alleys', toEntry: 'left', label: 'Back alleys', requires: 'boss_gaffer', lockedText: 'Gaffer’s lads block the way. Deal with him first.' },
   ],
   facades: [
-    { kind: 'shop', x0: 0, x1: 10, label: 'BOOKIES' },
-    { kind: 'shop', x0: 10, x1: 20, label: 'CHIPPY', colour: '#1f4f8a' },
-    { kind: 'pub', x0: 20, x1: 34, label: 'THE RED LION' },
-    { kind: 'shop', x0: 34, x1: 44, label: 'VAPE & PHONE', colour: '#6b2d82' },
-    { kind: 'shop', x0: 44, x1: 54, label: 'THREADS', colour: '#101012' },
-    { kind: 'showroom', x0: 54, x1: 62, label: 'HOME & HEARTH', colour: '#2a4a3a' },
-    { kind: 'shop', x0: 62, x1: 68, label: 'KEBAB HOUSE', colour: '#9a2a1a' },
-    { kind: 'shop', x0: 68, x1: 74, label: 'NeXo CUTZ BARBERS', colour: '#1f2a44' },
-    { kind: 'pub', x0: 74, x1: 92, label: 'THE GAFFER’S ARMS', colour: '#2a1a12' },
+    { kind: 'shop', x0: 0, x1: 10, label: 'LADSBROKE' },
+    { kind: 'shop', x0: 10, x1: 20, label: 'THE CODFATHER', colour: '#1f4f8a' },
+    { kind: 'pub', x0: 20, x1: 34, label: 'WEATHERSPOONS' },
+    { kind: 'shop', x0: 34, x1: 44, label: 'PUFF & CONNECT', colour: '#6b2d82' },
+    { kind: 'shop', x0: 44, x1: 54, label: 'JD STREETS', colour: '#101012' },
+    { kind: 'showroom', x0: 54, x1: 62, label: 'SOFA SO GOOD', colour: '#2a4a3a' },
+    { kind: 'shop', x0: 62, x1: 68, label: 'ABRA KEBABRA', colour: '#9a2a1a' },
+    { kind: 'shop', x0: 68, x1: 74, label: 'PEAKY BARBERS', colour: '#1f2a44' },
+    { kind: 'pub', x0: 74, x1: 92, label: 'THE DODGY ARMS', colour: '#2a1a12' },
   ],
   // Bev Okafor, the money lender, outside the bookies: jobs (src/jobs).
   stations: [contactStation('bev', 4.2, -1.0, -0.65)],
@@ -191,11 +192,12 @@ const highStreet: LevelDef = {
     { kind: 'phonebox', x: 18, z: -1.4 },
     { kind: 'postbox', x: 33, z: -1.6 },
     { kind: 'bin', x: 40, z: -1.6 },
-    { kind: 'atm', x: 44.6, z: -2.05, solid: false },
+    // Califax cash machine set into JD Streets' wall (money/atm.ts ATM_SITES).
+    { kind: 'atm', x: 44.6, z: -2.05, solid: false, label: 'califax' },
     { kind: 'bench', x: 50, z: -1.65 },
     { kind: 'van', x: 58, z: 1.2 },
     { kind: 'planter', x: 66, z: -1.5 },
-    // NeXo Cutz's pole, on the wall by its door.
+    // Peaky Barbers's pole, on the wall by its door.
     { kind: 'barber_pole', x: 69.6, z: -1.88, solid: false },
     { kind: 'barrier', x: 71, z: 1.6 },
     { kind: 'crates', x: 84, z: -1.5 },
@@ -219,7 +221,7 @@ const highStreet: LevelDef = {
     {
       id: 'pub_door', triggerX: 28, lock: [18, 42], optional: false,
       waves: [{ enemies: [{ archetype: 'thug' }, { archetype: 'hothead' }, { archetype: 'thug' }] }, { enemies: [{ archetype: 'bruiser' }, { archetype: 'tooled', weapon: 'bottle' }] }],
-      reward: { cash: 50, xp: 150 }, objective: 'Get past the Red Lion',
+      reward: { cash: 50, xp: 150 }, objective: 'Get past Weatherspoons',
     },
     { id: 'kebab_queue', triggerX: 60, optional: true, waves: [{ enemies: [{ archetype: 'defender' }, { archetype: 'thug' }] }], reward: { cash: 30, xp: 90 } },
     {
@@ -326,15 +328,15 @@ const industrial: LevelDef = {
   exits: [
     { id: 'to_alleys', kind: 'edge', side: 'left', x: 0, z: 0, to: 'alleys', toEntry: 'right', label: 'Back alleys' },
     { id: 'towpath', kind: 'door', x: 61, z: -1.6, to: 'docks', toEntry: 'left', label: 'Down to the canal towpath', requires: 'boss_sully', lockedText: 'Sully\u2019s lads guard the towpath gate.' },
-    { id: 'club_door', kind: 'door', x: 84, z: -1.6, to: 'fight_club', toEntry: 'door', label: 'Down to the Arches (fight club)', requires: 'boss_sully', lockedText: 'A bouncer on the cellar door: “Members only. Sully says who’s a member.”' },
+    { id: 'club_door', kind: 'door', x: 84, z: -1.6, to: 'fight_club', toEntry: 'door', label: 'Down to the Scrap Yard (fight club)', requires: 'boss_sully', lockedText: 'A bouncer on the cellar door: “Members only. Sully says who’s a member.”' },
     { id: 'to_subway', kind: 'edge', side: 'right', x: 92, z: 0, to: 'subway', toEntry: 'left', label: 'Subway', requires: 'boss_sully', lockedText: 'Sully’s gym runs this yard. Beat him first.' },
   ],
   facades: [
-    { kind: 'warehouse', x0: 0, x1: 22, label: 'H. BRIGGS & SONS' },
+    { kind: 'warehouse', x0: 0, x1: 22, label: 'BODGIT & SONS' },
     { kind: 'fence', x0: 22, x1: 32 },
     { kind: 'warehouse', x0: 32, x1: 56, label: 'UNIT 7' },
     { kind: 'garages', x0: 56, x1: 66 },
-    { kind: 'warehouse', x0: 66, x1: 92, label: 'KANE’S BOXING' },
+    { kind: 'warehouse', x0: 66, x1: 92, label: 'HARD KNOCKS' },
   ],
   props: [
     { kind: 'pallets', x: 7, z: -1.4 },
@@ -480,20 +482,20 @@ const city: LevelDef = {
   ],
   exits: [
     { id: 'to_subway', kind: 'edge', side: 'left', x: 0, z: 0, to: 'subway', toEntry: 'right', label: 'Subway' },
-    { id: 'pawn_door', kind: 'door', x: 67, z: -1.6, to: 'pawn_shop', toEntry: 'door', shop: 'pawn', label: 'Into Pawn & Gold' },
-    { id: 'police_door', kind: 'door', x: 25.5, z: -1.6, to: 'police_station', toEntry: 'door', label: 'Into Central Police Station' },
-    { id: 'casino_door', kind: 'door', x: 54, z: -1.6, to: 'casino', toEntry: 'door', label: 'Into the Golden Lion Casino' },
+    { id: 'pawn_door', kind: 'door', x: 67, z: -1.6, to: 'pawn_shop', toEntry: 'door', shop: 'pawn', label: 'Into Cash Degenerator' },
+    { id: 'police_door', kind: 'door', x: 25.5, z: -1.6, to: 'police_station', toEntry: 'door', label: 'Into Kirkgate Constabulary' },
+    { id: 'casino_door', kind: 'door', x: 54, z: -1.6, to: 'casino', toEntry: 'door', label: 'Into the Grand Gamble' },
     { id: 'precinct_walk', kind: 'door', x: 10, z: -1.6, to: 'precinct', toEntry: 'left', label: 'Walkway to Kingsway Precinct' },
     { id: 'neon_mile', kind: 'door', x: 38, z: -1.6, to: 'nightlife', toEntry: 'left', label: 'Through to the Neon Mile', requires: 'has_vip_pass', lockedText: 'The doormen want to see a VIP pass. Whoever runs the precinct hands them out.' },
     { id: 'to_territory', kind: 'edge', side: 'right', x: 92, z: 0, to: 'territory', toEntry: 'left', label: 'The Pit', requires: 'boss_ratcatcher', lockedText: 'The Ratcatcher’s crew won’t let you past' },
   ],
   facades: [
-    { kind: 'office', x0: 0, x1: 18, label: 'MERIDIAN HOUSE' },
-    { kind: 'office', x0: 18, x1: 30, label: 'POLICE', colour: '#16243f' },
-    { kind: 'club', x0: 30, x1: 46, label: 'VELVET' },
-    { kind: 'casino', x0: 46, x1: 62, label: 'GOLDEN LION' },
-    { kind: 'shop', x0: 62, x1: 72, label: 'PAWN & GOLD', colour: '#c9a227' },
-    { kind: 'club', x0: 72, x1: 92, label: 'RAT & CASTLE' },
+    { kind: 'office', x0: 0, x1: 18, label: 'MERIDIAN FINANCIAL' },
+    { kind: 'office', x0: 18, x1: 30, label: 'KIRKGATE CONSTABULARY', colour: '#16243f' },
+    { kind: 'club', x0: 30, x1: 46, label: 'AFTER HOURS' },
+    { kind: 'casino', x0: 46, x1: 62, label: 'THE GRAND GAMBLE' },
+    { kind: 'shop', x0: 62, x1: 72, label: 'CASH DEGENERATOR', colour: '#c9a227' },
+    { kind: 'club', x0: 72, x1: 92, label: 'THE RAT & CROWN' },
   ],
   props: [
     { kind: 'bollard', x: 6, z: -0.28 },
@@ -511,7 +513,8 @@ const city: LevelDef = {
     { kind: 'vending', x: 34.2, z: -1.98 },
     { kind: 'security_post', item: 'post_high', x: 47, z: -1.95, solid: false },
     { kind: 'bin', x: 62, z: -1.98 },
-    { kind: 'atm', x: 64.4, z: -2.05, solid: false },
+    // Lloyd's THC cash machine in the wall beside Cash Degenerator.
+    { kind: 'atm', x: 64.4, z: -2.05, solid: false, label: 'lloyds' },
     { kind: 'security_post', item: 'post_medium', x: 74.5, z: -1.95, solid: false },
     { kind: 'bin', x: 88, z: -1.98 },
     { kind: 'bench', x: 27, z: -1.98 },
@@ -542,7 +545,7 @@ const city: LevelDef = {
     {
       id: 'ratcatcher', triggerX: 80, lock: [70, 92], optional: false, boss: 'ratcatcher',
       waves: [{ enemies: [] }],
-      reward: { cash: 0, xp: 0 }, objective: 'Find the Ratcatcher at the Rat & Castle',
+      reward: { cash: 0, xp: 0 }, objective: 'Find the Ratcatcher at the Rat & Crown',
     },
   ],
   lights: [

@@ -1,7 +1,7 @@
 /**
- * Where the jewellery and property systems meet the streets: Halden & Crane
- * the jewellers in the Riverside Centre, Keys & Co the estate agents in
- * Meridian House, Ashcombe Park (the gated road of big houses off Leisure
+ * Where the jewellery and property systems meet the streets: H. Sterling
+ * the jewellers in the Riverside Centre, Wrongmove the estate agents in
+ * Meridian Financial, Ashcombe Park (the gated road of big houses off Leisure
  * Park), a front door on the street for every property for sale, and the
  * inside of each property, built from what kind of home it is.
  */
@@ -18,16 +18,16 @@ const F = (item: string, x: number, z: number, extra: Partial<PropDef> = {}): Pr
   kind: 'furniture', item, x, z, size: FURNITURE[item].size, colour: extra.colour ?? FURNITURE[item].colours[0], solid: FURNITURE[item].mount === 'floor', wallY: FURNITURE[item].wallY, ...extra,
 });
 
-// ---- Halden & Crane, jewellers (Riverside Centre) ----------------------------------------------
+// ---- H. Sterling, jewellers (Riverside Centre) ----------------------------------------------
 export const JEWELLER: LevelDef = {
   id: 'jeweller',
-  name: 'Halden & Crane',
+  name: 'H. Sterling',
   district: 'Riverside Centre',
   theme: 'jeweller',
   bounds: { minX: 0, maxX: 18, ...ROOM },
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'mall', toEntry: 'jeweller', label: 'Back out to the shopping centre' }],
-  facades: [{ kind: 'interior', x0: 0, x1: 18, label: 'HALDEN & CRANE — FINE JEWELLERS SINCE 1962', colour: '#1c1c24' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 18, label: 'H. STERLING — FINE JEWELLERS SINCE 1962', colour: '#1c1c24' }],
   props: [
     { kind: 'display_cabinet', x: 3.2, z: -1.3, label: 'rings' },
     { kind: 'glass_counter', x: 5.6, z: -0.55 },
@@ -65,16 +65,16 @@ export const JEWELLER: LevelDef = {
   objective: 'Browse the cases, buy at the counter. Everything you buy goes in your jewellery box',
 };
 
-// ---- Keys & Co, estate agents (Meridian House, City Centre) ------------------------------------
+// ---- Wrongmove, estate agents (Meridian Financial, City Centre) ------------------------------------
 export const ESTATE_AGENT: LevelDef = {
   id: 'estate_agent',
-  name: 'Keys & Co',
+  name: 'Wrongmove',
   district: 'City Centre',
   theme: 'estate_agent',
   bounds: { minX: 0, maxX: 14, ...ROOM },
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'city', toEntry: 'agent', label: 'Back out to Market Square' }],
-  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'KEYS & CO — SALES · LETTINGS · MANAGEMENT', colour: '#e8e4dc' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'WRONGMOVE — SALES · LETTINGS · MANAGEMENT', colour: '#e8e4dc' }],
   props: [
     { kind: 'agent_window', x: 3.1, z: -1.85 },
     { kind: 'agent_board', x: 5.25, z: -1.95, label: 'FOR SALE', solid: false },
@@ -162,19 +162,19 @@ export const ASHCOMBE: LevelDef = {
     { x: 156, y: 4, z: 0, colour: 0xffe2b0, intensity: 14, range: 16 },
   ],
   weather: 'clear',
-  objective: 'Private road. The big houses are for sale through Keys & Co: have a look round',
+  objective: 'Private road. The big houses are for sale through Wrongmove: have a look round',
 };
 
 /** Doors that lead to the new places from existing streets: [area, exit, matching entry]. */
 const NEW_DOORS: { area: AreaId; exit: ExitDef; entry: EntryDef }[] = [
   {
     area: 'mall',
-    exit: { id: 'jeweller_door', kind: 'door', x: 34, z: -1.6, to: 'jeweller', toEntry: 'door', shop: 'jeweller', label: 'Into Halden & Crane (jewellers)' },
+    exit: { id: 'jeweller_door', kind: 'door', x: 34, z: -1.6, to: 'jeweller', toEntry: 'door', shop: 'jeweller', label: 'Into H. Sterling (jewellers)' },
     entry: { id: 'jeweller', x: 34, z: -1.0, facing: -1 },
   },
   {
     area: 'city',
-    exit: { id: 'agent_door', kind: 'door', x: 9, z: -1.6, to: 'estate_agent', toEntry: 'door', label: 'Into Keys & Co (estate agents)' },
+    exit: { id: 'agent_door', kind: 'door', x: 9, z: -1.6, to: 'estate_agent', toEntry: 'door', label: 'Into Wrongmove (estate agents)' },
     entry: { id: 'agent', x: 9, z: -1.0, facing: 1 },
   },
   {

@@ -1,5 +1,5 @@
 /**
- * NeXo Cutz (barber/barber.ts): your fighter in the chair on the studio set, close on the face. Pick a cut, a
+ * Peaky Barbers (barber/barber.ts): your fighter in the chair on the studio set, close on the face. Pick a cut, a
  * beard and a colour, each one tried on as you tap it; the bill adds up what's changing, and paying makes it
  * yours. Hats come off while you're in the chair, so you can see the cut.
  */

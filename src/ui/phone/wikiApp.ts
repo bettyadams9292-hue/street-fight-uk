@@ -1,3 +1,4 @@
+import { CAB_FLAG, CAB_PER_MILE } from '../hub';
 import { BUY_IN, CHAMPION, DEFENCE_TRIPS, LADDER, NIGHT_SECONDS, STRIP_TRIPS, defencePurse } from '../../fightclub/club';
 import { BARBER, BEARDS, COLOUR_PRICE, GREYS, HAIRCUTS } from '../../barber/barber';
 import { DESIGNS, LASER_PRICE, REINK_PRICE, SLOT_NAMES, SLOT_ORDER, STUDIO, designPrice } from '../../tattoo/tattoo';
@@ -20,7 +21,7 @@ import { FINISHER_COOLDOWN } from '../../fighter/Fighter';
  * an infobox and sections. Controls are shown for the controller in hand, with tabs for the others.
  */
 
-export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club' | 'barber' | 'tattoo' | 'cash';
+export type WikiPage = 'index' | 'controls' | 'moves' | 'fighting' | 'heat' | 'police' | 'pockets' | 'jobs' | 'gear' | 'dealing' | 'club' | 'barber' | 'tattoo' | 'cash' | 'travel';
 
 export interface WikiDeps {
   device: () => Device;
@@ -36,9 +37,10 @@ const ARTICLES: { id: Exclude<WikiPage, 'index'>; title: string; blurb: string }
   { id: 'police', title: 'Getting nicked', blurb: 'Your record, the charge sheet, bail, a night in the cells, and the front counter.' },
   { id: 'pockets', title: 'Pockets and bags', blurb: 'What you can carry, and how to carry more.' },
   { id: 'dealing', title: 'Dealing', blurb: 'Bulk, the prep table in your garage, punters, prices and the risks.' },
-  { id: 'club', title: 'The Arches', blurb: 'The fight club under Kane’s Boxing: the card, the title and defending it.' },
-  { id: 'barber', title: 'The barber', blurb: 'NeXo Cutz on the High Street: haircuts, beards and colour, and what they cost.' },
+  { id: 'club', title: 'The Scrap Yard', blurb: 'The fight club under Hard Knocks: the card, the title and defending it.' },
+  { id: 'barber', title: 'The barber', blurb: 'Peaky Barbers on the High Street: haircuts, beards and colour, and what they cost.' },
   { id: 'tattoo', title: 'Tattoos', blurb: 'Ink & Iron on Hollins Estate: designs, where they go, laser removal and re-inking.' },
+  { id: 'travel', title: 'Getting about', blurb: 'Running there on foot, Duber cabs, and driving your own car.' },
   { id: 'cash', title: 'Cashpoints', blurb: 'Paying cash in and taking it out on the street, and which machines charge.' },
   { id: 'gear', title: 'Clothes and jewellery', blurb: 'Tiers, what each kind of clothing does, outfit buffs, and jewellery’s XP bonus.' },
   { id: 'jobs', title: 'Jobs', blurb: 'Who gives out work, the kinds of job, standing, and what goes wrong.' },
@@ -189,7 +191,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
 
   if (page === 'club') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
-    return article('The Arches', 'An unlicensed fight club in the cellar under Kane’s Boxing, Canal Side Works. Once you’ve beaten Sully Kane he runs the card for you: one fight a night, for money, all the way up to the title.',
+    return article('The Scrap Yard', 'An unlicensed fight club in the cellar under Hard Knocks, Canal Side Works. Once you’ve beaten Sully Kane he runs the card for you: one fight a night, for money, all the way up to the title.',
       infobox('The card', [...LADDER.map((f, i) => [`No. ${LADDER.length - i}`, `${f.name}: £${f.purse}`] as [string, string]).reverse(), ['Champion', `${CHAMPION.name}: £${CHAMPION.purse}`]]),
       sec('Fighting'),
       list([
@@ -198,7 +200,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
         `One fight a night, win or lose (a night is about ${NIGHT_SECONDS / 60} minutes of play). Win and you take their place on the card.`,
       ]),
       sec('The title'),
-      p(`Beat the number one contender and you get a shot at ${CHAMPION.name}. Win and you’re the champion: a £${CHAMPION.purse} purse and the Arches title belt, a one-of-a-kind belt (+8% damage, +40 max health, +20 poise) you can’t buy anywhere.`),
+      p(`Beat the number one contender and you get a shot at ${CHAMPION.name}. Win and you’re the champion: a £${CHAMPION.purse} purse and the Scrap Yard title belt, a one-of-a-kind belt (+8% damage, +40 max health, +20 poise) you can’t buy anywhere.`),
       sec('Defending it'),
       list([
         `Every ${DEFENCE_TRIPS} nights a challenger wants your belt. No buy-in for the champ, and the purse grows every time you keep it: £${defencePurse(0)} for the first, up to £${defencePurse(99)}.`,
@@ -211,7 +213,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
 
   if (page === 'barber') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
-    return article('The barber', `${BARBER.shop}, between the Kebab House and the Gaffer’s Arms on the High Street. ${BARBER.barber} cuts hair, shapes or shaves beards, and does colour. Sit in his chair and every look is tried on you before you pay.`,
+    return article('The barber', `${BARBER.shop}, between the Kebab House and the Dodgy Arms on the High Street. ${BARBER.barber} cuts hair, shapes or shaves beards, and does colour. Sit in his chair and every look is tried on you before you pay.`,
       infobox('Prices', [
         ['Haircuts', `£${Math.min(...Object.values(HAIRCUTS).map((j) => j.price))}–£${Math.max(...Object.values(HAIRCUTS).map((j) => j.price))}`],
         ['Beards', `£${Math.min(...Object.values(BEARDS).map((j) => j.price))}–£${Math.max(...Object.values(BEARDS).map((j) => j.price))}`],
@@ -231,7 +233,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
   if (page === 'tattoo') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
     const prices = Object.entries(DESIGNS).map(([, d]) => d.price);
-    return article('Tattoos', `${STUDIO.shop}, on Hollins Estate next to the garages, where Kez stands (Dave’s Cabs stops at the door). ${STUDIO.artist} does the work: pick a design for any place and it’s drawn on you before you pay.`,
+    return article('Tattoos', `${STUDIO.shop}, on Hollins Estate next to the garages, where Kez stands (Duber stops at the door). ${STUDIO.artist} does the work: pick a design for any place and it’s drawn on you before you pay.`,
       infobox('Prices', [
         ['Designs', `£${Math.min(...prices)}–£${Math.max(...prices)}, more on the chest and neck`],
         ['Full sleeve', `£${designPrice('sleeve', 'rightUpperArm')} an arm`],
@@ -250,9 +252,26 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
     );
   }
 
+  if (page === 'travel') {
+    const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
+    return article('Getting about', 'Pick a place on Maps and choose how to get there.',
+      infobox('Ways to travel', [
+        ['On foot', 'Free, any time'],
+        ['Duber', `£${CAB_FLAG.toFixed(2)} + £${CAB_PER_MILE.toFixed(2)} a mile`],
+        ['Your own car', 'Free once you own one'],
+      ]),
+      list([
+        'Run there: your fighter runs the real streets on their own, through the doors and round the corners. Move or press anything to take over; pick Run there again to carry on.',
+        'On foot you can get jumped. Each street you cross is a small chance, more in rough districts and where a gang is after you, less in the City Centre. Short trips are safer than long ones. Win the fight and you’re straight back on your way.',
+        'Duber drops you at the door for a fare from your bank. No trouble on the way.',
+        'Your own car is free and nobody jumps you. You drive it from wherever it’s parked: on the drive at home, or where you last left it. It’s left parked in the road when you get there, and shows on Maps.',
+      ]),
+    );
+  }
+
   if (page === 'cash') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
-    return article('Cashpoints', 'CaliBank cash machines on the High Street, Hollins, Market Square, the precincts and in Pawn & Gold. Your balance is the same money as the tin at home.',
+    return article('Cashpoints', 'Califax and Lloyd’s THC cash machines, set into the walls of a few shops: the High Street, the City Centre, Kingsway and the Riverside Centre. They’re out of service until you’ve dealt with Sully. Both banks reach the same account, the same money as the tin at home.',
       infobox('The machines', [
         ['Paying in', 'Free'],
         ['Taking out', `Free in town, £${PAY_FEE} on the rough estates`],
@@ -261,6 +280,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       list([
         'Cash on you is what goes if you get battered, mugged or run. Pay it in and it’s safe.',
         'Shops take pocket money first, then the bank, so you rarely need to take any out. Some things want cash in hand.',
+        `Withdrawals come in £10 notes, up to £${ATM_MAX} at a time. Ask for a receipt or a mini statement on the screen.`,
       ]),
     );
   }
@@ -355,7 +375,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
 
   if (page === 'police') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
-    return article('Getting nicked', 'Lose to the police, or lose any fight while the police are Hot on you, and you’re nicked. You’re booked in at Central Police Station in the City Centre, on Market Square. When it’s sorted, the door takes you straight home.',
+    return article('Getting nicked', 'Lose to the police, or lose any fight while the police are Hot on you, and you’re nicked. You’re booked in at Kirkgate Constabulary in the City Centre, on Market Square. When it’s sorted, the door takes you straight home.',
       infobox('Bail', [
         ['Mugging', `£${BAIL_BASE[1]}`],
         ['Assault', `£${BAIL_BASE[2]}`],
@@ -402,7 +422,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       ['Big rucksack', '+20 (24)'],
     ]),
     sec('Wearing a bag'),
-    p('You wear one bag at a time and see it on you. Threads sells them. Buying a bigger one puts it straight on; the old one goes in your pockets or home to the stash.'),
+    p('You wear one bag at a time and see it on you. JD Streets sells them. Buying a bigger one puts it straight on; the old one goes in your pockets or home to the stash.'),
     sec('Taking it off'),
     p('A bag won’t come off while what’s in it wouldn’t fit in your pockets: drop or stash things first.'),
     sec('The hotbar'),

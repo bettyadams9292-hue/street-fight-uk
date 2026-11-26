@@ -13,6 +13,8 @@
 import * as THREE from 'three';
 import { modelSet } from './modelSet';
 import { CAR_MODELS, VEHICLE_FILES } from './vehicleFiles';
+import { applyCarMods } from './carMods';
+import type { CarMods } from '../../property/carMods';
 
 export { CAR_MODELS, VEHICLE_FILES };
 
@@ -25,17 +27,23 @@ export function loadVehicles(): Promise<void> {
 const paints = new Map<string, THREE.MeshStandardMaterial>();
 
 /** Paint the body and (for bikes) put numbers on the boards. Materials are shared per colour. */
-function dress(root: THREE.Object3D, colour: string, plate?: THREE.Material): void {
+/** Paint finishes (property/carMods.ts): roughness and metalness of the clear coat. */
+const FINISH: Record<NonNullable<CarMods['finish']>, [number, number] | null> = { gloss: null, metallic: [0.22, 0.85], matte: [0.85, 0.15], pearl: [0.15, 0.6] };
+
+function dress(root: THREE.Object3D, colour: string, plate?: THREE.Material, finish: CarMods['finish'] = 'gloss'): void {
   root.traverse((o: THREE.Object3D) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
     const m = mesh.material as THREE.MeshStandardMaterial;
     if (m.name === 'paint') {
-      const key = `${m.uuid}|${colour}`;
+      const key = `${m.uuid}|${colour}|${finish}`;
       let p = paints.get(key);
       if (!p) {
         const made = m.clone();
         made.color.set(colour);
+        const f = FINISH[finish ?? 'gloss'];
+        if (f) [made.roughness, made.metalness] = f;
+        if (finish === 'pearl') made.emissive = new THREE.Color(colour).multiplyScalar(0.08);
         made.userData.shared = true;
         paints.set(key, made);
         p = made;
@@ -66,12 +74,14 @@ function place(inner: THREE.Object3D, keepLength = false): THREE.Group {
  * A car `length` × `width` metres (nose along +x), standing on y = 0, or null until loaded.
  * The body is stretched to the car's size; the wheels stay round.
  */
-export function carPiece(id: string, colour: string, length: number, width: number): THREE.Group | null {
+export function carPiece(id: string, colour: string, length: number, width: number, mods?: CarMods): THREE.Group | null {
   const spec = CAR_MODELS[id];
   if (!spec) return null;
   const p = vehicles.piece(spec.file, 0, 0, 0, { native: true });
   if (!p) return null;
   const inner = p.children[0];
+  dress(inner, colour, undefined, mods?.finish);
+  if (mods) applyCarMods(inner, mods, colour);
   inner.updateMatrixWorld(true);
   const size = new THREE.Box3().setFromObject(inner).getSize(new THREE.Vector3());
   const sx = width / size.x;
@@ -85,7 +95,6 @@ export function carPiece(id: string, colour: string, length: number, width: numb
   inner.traverse((o: THREE.Object3D) => {
     if (o !== inner && o.name.startsWith('wheel')) o.scale.set(k / sx, k / sy, k / sz);
   });
-  dress(inner, colour);
   return place(scaler);
 }
 

@@ -10,7 +10,7 @@ import { ITEMS } from '../items/items';
 
 /**
  * People you can hire to fight with you. Found in the snug at the back of
- * the Red Lion. One follows you at a time; they join fights, look after
+ * Weatherspoons. One follows you at a time; they join fights, look after
  * themselves, never touch civilians, and get back up when a fight's over.
  */
 

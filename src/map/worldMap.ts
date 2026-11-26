@@ -10,6 +10,9 @@ import { STRIP, stripLength, stripOffsets } from '../world/strip';
 import { GENERATED_TOWNS } from '../world/towns';
 import { PROPERTIES } from '../realty/catalogue';
 import { statusOf } from '../realty/portfolio';
+import { CARS } from '../property/catalogue';
+import { DRIVE_HOME, parkingSpot, type ParkingSpot } from '../property/parking';
+import { journeyRisk, riskWord } from '../travel/onFoot';
 
 /**
  * The town map's data. Places, doors, links, locks, bosses, shops and people
@@ -123,42 +126,42 @@ const BLURB: Record<AreaId, string> = {
   basement: 'Under the house. The business runs down here.',
   estate: 'Low-rise flats, garages and the playground. Where you grew up.',
   residential: 'Tower blocks, a parade of shops and the Estate King’s lads.',
-  leisure: 'Five-a-side cages, the leisure centre, the skate park and Iron Temple.',
-  stadium: 'Kirkgate Ground. The firm runs the terraces.',
-  high_street: 'Bookies, kebab shop, Threads, Home & Hearth and the Red Lion.',
+  leisure: 'Five-a-side cages, Kirkgate Active, the skate park, PureGraft and Fists First.',
+  stadium: 'Kirkgate Ground and Firm Direct, the club shop. The firm runs the terraces.',
+  high_street: 'LadsBroke, The Codfather, Weatherspoons, Puff & Connect, JD Streets, Sofa So Good, Abra Kebabra, Peaky Barbers and The Dodgy Arms.',
   alleys: 'Bins, back doors and shortcuts between the High Street and the canal.',
   market: 'Covered stalls and lock-ups. Maureen Doyle collects the rents.',
-  industrial: 'Canal Side Works: yards, warehouses and Sully’s gym.',
-  docks: 'Cranes, containers and Big Lenny’s crew.',
-  ind_estate: 'Brackley Trading Estate: car and bike dealers, Green Fingers.',
+  industrial: 'Canal Side Works: Bodgit & Sons, the yards and Hard Knocks, Sully’s gym.',
+  docks: 'Cranes, containers, Ship Happens and Big Lenny’s crew.',
+  ind_estate: 'Brackley Trading Estate: Halfrauds, CarpetWrong, B&THC, Bodgit & Scarper and Arnold Shark.',
   factory: 'Harrow & Lowe, shut for years. Somebody’s using it.',
   subway: 'Underpasses under the ring road. Mind the stairs.',
   underground: 'An old Deep Line tunnel nobody admits is there.',
-  city: 'Market Square: Pawn & Gold, the Golden Lion casino, the Rat & Castle.',
-  precinct: '60s concrete precinct. Dean Pryce takes a cut from every shop.',
-  mall: 'Riverside Shopping Centre: food court, escalators, security.',
-  car_park: 'The multi-storey. Top floor is where deals happen.',
-  nightlife: 'The Neon Mile: clubs, takeaways and Velvet.',
+  city: 'Market Square: Meridian Financial, Kirkgate Constabulary, After Hours, The Grand Gamble, Cash Degenerator and The Rat & Crown.',
+  precinct: '60s concrete precinct: Booze & Bargains, PoundTown, Debt365, Nailed It, Cluckin’ Hell, Rough & Tumble. Dean Pryce takes a cut from every shop.',
+  mall: 'Riverside Shopping Centre: Shorts Direct, Curruptys, H. Sterling, The Munch Box, Primeark and Debtenhams.',
+  car_park: 'No Chance Parking, the multi-storey. Top floor is where deals happen.',
+  nightlife: 'The Neon Mile: Last Orders, Doner Dynasty, Blackout, Booze Brothers and After Hours.',
   territory: 'The Pit. Big Dunc’s patch, past the city.',
   hq: 'Hale House. Where it ends.',
-  clothes_shop: 'Clothes, shoes, accessories and bags. Priya runs it.',
-  barber_shop: 'NeXo Cutz: haircuts, beards shaped or shaved, colour. Vinny’s chair, walk-ins welcome.',
+  clothes_shop: 'JD Streets: clothes, shoes, accessories and bags. Priya runs it.',
+  barber_shop: 'Peaky Barbers: haircuts, beards shaped or shaved, colour. Vinny’s chair, walk-ins welcome.',
   tattoo_studio: 'Ink & Iron: tattoos on arms, chest and neck, laser removal, re-inking. Shaz does the work.',
-  pawn_shop: 'Sell valuables and collectibles. Mr Kaur doesn’t ask questions.',
+  pawn_shop: 'Cash Degenerator: sell valuables and collectibles. Mr Kaur doesn’t ask questions.',
   police_station: 'The front counter: see what they’ve got on you and settle fines. Where you end up when you’re nicked.',
-  fight_club: 'The Arches: bare-knuckle fights in the cellar under Kane’s Boxing. Fight for purses, then for the title.',
-  pub: 'Food, drink and first aid at the bar. Fighters for hire in the Snug.',
-  furniture_shop: 'Furniture, floors and walls for your house.',
-  car_dealer: 'New and used cars.',
-  bike_shop: 'Off-road bikes and kit.',
-  casino: 'Slots, roulette, blackjack and prize motors.',
-  grow_shop: 'Equipment and works for the basement business.',
-  gym_store: 'Home gym kit: bags, weights, treadmill, bike and more.',
-  boxing_gym: 'Coach Del teaches boxing and kickboxing. Drills and ranks.',
-  karate_dojo: 'Mrs Okafor teaches karate and Muay Thai.',
-  wrestling_club: 'Big Kev teaches wrestling and BJJ.',
-  jeweller: 'Halden & Crane, fine jewellers: rings, watches, chains and grills. Marcus will sell you anything.',
-  estate_agent: 'Keys & Co in Meridian House: buy, sell and let property. Fiona and Raj run your portfolio.',
+  fight_club: 'The Scrap Yard: bare-knuckle fights in the cellar under Hard Knocks. Fight for purses, then for the title.',
+  pub: 'Weatherspoons: food, drink and first aid at the bar. Fighters for hire in The Firm.',
+  furniture_shop: 'Sofa So Good: furniture, floors and walls for your house.',
+  car_dealer: 'Arnold Shark: new and used cars.',
+  bike_shop: 'Halfrauds: bicycles, e-bikes, scooters and motorbikes.',
+  casino: 'The Grand Gamble: slots, roulette, blackjack and prize motors.',
+  grow_shop: 'B&THC: equipment and works for the basement business.',
+  gym_store: 'PureGraft: home gym kit, bags, weights, treadmill, bike and more.',
+  boxing_gym: 'Punch & Crunch: Coach Del teaches boxing and kickboxing. Drills and ranks.',
+  karate_dojo: 'Fists First: Mrs Okafor teaches karate and Muay Thai.',
+  wrestling_club: 'Rough & Tumble: Big Kev teaches wrestling and BJJ.',
+  jeweller: 'H. Sterling, fine jewellers: rings, watches, chains and grills. Marcus will sell you anything.',
+  estate_agent: 'Wrongmove in Meridian Financial: buy, sell and let property. Fiona and Raj run your portfolio.',
   ashcombe: 'Ashcombe Park: a gated road of mansions, villas and penthouses off Leisure Park. Everything’s for sale.',
   property: 'Inside a property: on a viewing, or one of your own.',
 };
@@ -492,17 +495,45 @@ export function nextExit(p: Progress, from: AreaId, to: AreaId): ExitDef | null 
 // ---- cabs ----------------------------------------------------------------------------------------
 
 export interface TravelOption {
-  kind: 'cab' | 'home' | 'walk' | 'here';
+  kind: 'cab' | 'drive' | 'home' | 'walk' | 'here';
   label: string;
   cost: number;
   /** A cab's distance in miles, for the meter. */
   miles?: number;
   entry?: string;
+  /** On foot: the chance of being jumped somewhere on the way (travel/onFoot.ts). */
+  risk?: number;
+  /** Driving: where the car will be left (null: back on the drive at home). */
+  park?: ParkingSpot | null;
   ok: boolean;
   why?: string;
 }
 
-/** Can a cab drop you there? (Dave's Cabs go to the stops the phone lists.) */
+/**
+ * Your own car: free, no fights on the way, and it's left parked at the other end (property/parking.ts). You drive
+ * it from where it is: on the drive at home, or wherever you last left it.
+ */
+export function driveOption(p: Progress, here: AreaId, to: AreaId, calm: boolean): TravelOption | null {
+  const prop = p.save.property;
+  const car = prop.cars.find((c) => c.uid === prop.activeCar);
+  if (!car) return null;
+  const def = CARS[car.id];
+  const out = prop.carOut && prop.carOut.uid === car.uid ? prop.carOut : null;
+  const carHere = out ? out.area === here : DRIVE_HOME.has(here);
+  const label = `Drive the ${def.name}: free`;
+  if (!carHere) return { kind: 'drive', label, cost: 0, ok: false, why: out ? `Your car’s parked in ${LEVELS[out.area].district}` : 'Your car’s on the drive at home' };
+  if (!calm) return { kind: 'drive', label, cost: 0, ok: false, why: 'Not with a fight on' };
+  if (!unlocked(p, to)) return { kind: 'drive', label, cost: 0, ok: false, why: lockReason(p, to) ?? 'Not yet' };
+  if (DRIVE_HOME.has(to)) return { kind: 'drive', label, cost: 0, ok: true, park: null };
+  const stop = cabStop(to);
+  const park = stop ? parkingSpot(to, car.id, stop.entry) : null;
+  if (!stop || !park) return { kind: 'drive', label, cost: 0, ok: false, why: 'Nowhere to park there' };
+  const shut = SHOP_STOPS.find((x) => x.area === to && x.shop && !p.isShopOpen(x.shop));
+  if (shut) return { kind: 'drive', label, cost: 0, ok: false, why: 'Shutters down after the robbery' };
+  return { kind: 'drive', label, cost: 0, entry: stop.entry, park, ok: true };
+}
+
+/** Can a cab drop you there? (Duber go to the stops the phone lists.) */
 export function cabStop(id: AreaId): { entry: string } | null {
   const s = SHOP_STOPS.find((x) => x.area === id) ?? TAXI_STOPS.find((x) => x.area === id);
   return s ? { entry: s.entry } : null;
@@ -542,6 +573,8 @@ export function travelOptions(p: Progress, here: AreaId, to: AreaId, calm: boole
   const out: TravelOption[] = [];
   const busy = calm ? undefined : 'Not with a fight on';
   if (to === 'home' || to === 'basement') out.push({ kind: 'home', label: 'Head home', cost: 0, ok: calm, why: busy });
+  const drive = driveOption(p, here, to, calm);
+  if (drive) out.push(drive);
   const stop = cabStop(to);
   if (stop) {
     const shut = SHOP_STOPS.find((x) => x.area === to && x.shop && !p.isShopOpen(x.shop));
@@ -549,10 +582,13 @@ export function travelOptions(p: Progress, here: AreaId, to: AreaId, calm: boole
     const fare = cabFare(miles);
     const ok = open && calm && !shut && p.save.cash.bank >= fare;
     const why = !open ? lock! : shut ? 'Shutters down after the robbery' : busy ?? (p.save.cash.bank < fare ? `Need £${fare} in the tin` : undefined);
-    out.push({ kind: 'cab', label: `Dave’s Cabs: ${miles.toFixed(1)} miles, £${fare} from the tin`, cost: fare, miles, entry: stop.entry, ok, why });
+    out.push({ kind: 'cab', label: `Duber: ${miles.toFixed(1)} miles, £${fare} from the tin`, cost: fare, miles, entry: stop.entry, ok, why });
   }
   const r = route(p, here, to);
-  out.push({ kind: 'walk', label: r ? `Walk: ${r.length} stop${r.length > 1 ? 's' : ''} away` : 'Walk', cost: 0, ok: !!r, why: r ? undefined : lock ?? 'No way through from here yet' });
+  // On foot: free, along the streets, with a small chance of trouble on each one crossed (travel/onFoot.ts).
+  // Rolled on each street crossed on the way (not where you start, and you stop as you reach the last).
+  const risk = r ? journeyRisk(p, r.slice(0, -1)) : 0;
+  out.push({ kind: 'walk', label: r ? `Walk: ${r.length} stop${r.length > 1 ? 's' : ''} away, free, ${riskWord(risk)}` : 'Walk', cost: 0, risk, ok: !!r, why: r ? undefined : lock ?? 'No way through from here yet' });
   return out;
 }
 
@@ -588,9 +624,9 @@ export function markers(p: Progress): MapMarker[] {
     const st = statusOf(hd);
     out.push({ key: `own:${d.id}`, kind: 'property', area: d.area, at: { x: at.x, y: at.y - 24 }, label: `Yours: ${d.name} (${st === 'personal' ? 'lived in' : st === 'vacant' ? 'empty, to let' : `let to ${hd.tenant?.name ?? 'tenants'}`})` });
   }
-  // The Snug's fighters for hire, next to the pub.
+  // The Firm's fighters for hire, next to the pub.
   const pub = placePoint('pub');
-  out.push({ key: 'contact:snug', kind: 'contact', area: 'pub', at: { x: pub.x + 30, y: pub.y - 26 }, label: 'The Snug: fighters for hire' });
+  out.push({ key: 'contact:snug', kind: 'contact', area: 'pub', at: { x: pub.x + 30, y: pub.y - 26 }, label: 'The Firm: fighters for hire' });
   // Contacts with work going (src/jobs), and where the job you're on takes you next.
   for (const id of CONTACT_IDS) {
     const c = CONTACTS[id];
@@ -609,6 +645,12 @@ export function markers(p: Progress): MapMarker[] {
   if (p.save.basement && p.save.basement.equipment?.length) {
     const h = placePoint('home');
     out.push({ key: 'place:basement', kind: 'property', area: 'basement', at: { x: h.x + 30, y: h.y - 22 }, label: 'Your basement business' });
+  }
+  const car = p.save.property.carOut;
+  if (car && LAYOUT[car.area]) {
+    const at = streetPoint(car.area, car.x);
+    const def = CARS[p.save.property.cars.find((c) => c.uid === car.uid)?.id ?? ''];
+    if (at) out.push({ key: 'parked:car', kind: 'parked', area: car.area, at: { x: at.x + 14, y: at.y + 26 }, label: `Where you left your ${def?.name ?? 'car'}` });
   }
   const bike = p.save.property.bikeOut;
   if (bike && !p.save.property.riding && LAYOUT[bike.area as AreaId]) {

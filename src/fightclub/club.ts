@@ -1,5 +1,5 @@
 /**
- * The Arches: an unlicensed fight club in the cellar under Kane's Boxing, Canal Side Works.
+ * The Scrap Yard: an unlicensed fight club in the cellar under Hard Knocks, Canal Side Works.
  *
  * Opens once you've beaten Sully Kane (`CLUB_FLAG`): the old champ tells you where the real money is.
  *
@@ -290,7 +290,7 @@ export function settleBout(p: Progress, b: Bout, won: boolean): BoutResult {
       if (left) p.save.storage.push(left);
     }
     out.text = out.belt
-      ? `CHAMPION. £${out.purse} and the Arches belt: nobody else has one. Defend it every few nights for the big purses.`
+      ? `CHAMPION. £${out.purse} and the Scrap Yard belt: nobody else has one. Defend it every few nights for the big purses.`
       : `The belt’s back where it belongs. £${out.purse}. Defend it every few nights.`;
     return out;
   }

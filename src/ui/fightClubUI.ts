@@ -1,5 +1,5 @@
 /**
- * The Arches on screen (fightclub/club.ts): Sully's card. Tonight's fight, the ladder, the title and its defences.
+ * The Scrap Yard on screen (fightclub/club.ts): Sully's card. Tonight's fight, the ladder, the title and its defences.
  */
 import { h } from './dom';
 import { menuButton } from './controls';
@@ -21,7 +21,7 @@ function boutTitle(b: Bout): string {
  * it can't.
  */
 export function clubScreen(p: Progress, close: () => void, fight: (b: Bout) => string | null): Screen {
-  return panelScreen('The Arches', p, (msg, rebuild) => {
+  return panelScreen('The Scrap Yard', p, (msg, rebuild) => {
     const c = p.save.club;
     if (clubTick(p).stripped) msg('You kept a challenger waiting too long. They’ve stripped you of the title: win it back.', true);
     const rows: HTMLElement[] = [];
@@ -52,7 +52,7 @@ export function clubScreen(p: Progress, close: () => void, fight: (b: Bout) => s
         h('div', { class: 'club-pay' },
           h('span', { text: `Purse ${money(purse)}` }),
           h('span', { text: buy ? `Buy-in ${money(buy)}` : 'No buy-in: you’re the champ' }),
-          b.kind === 'title' && !c.everChamp ? h('span', { class: 'club-belt', text: 'Win: the Arches belt (one of a kind)' }) : null,
+          b.kind === 'title' && !c.everChamp ? h('span', { class: 'club-belt', text: 'Win: the Scrap Yard belt (one of a kind)' }) : null,
         ),
         h('div', { class: 'row-actions' }, menuButton('Fight', () => {
           const why = fight(b);

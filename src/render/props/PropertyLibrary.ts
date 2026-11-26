@@ -1,7 +1,7 @@
 /**
  * Property kit (public/models/property): original low-poly models made for Street Fight UK
  * (tools/models/property/*.py write them). The four Ashcombe Park mansions with their railings
- * and gates, the hall staircase, Keys & Co's boards and window display, the jeweller's necklace
+ * and gates, the hall staircase, Wrongmove's boards and window display, the jeweller's necklace
  * bust, and the fittings for the big rooms: pool, cinema, conservatory, roof terrace and
  * dressing room.
  *

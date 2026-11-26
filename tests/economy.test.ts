@@ -69,13 +69,13 @@ test('house prices grow gently and settle: never more than 1.8x, never runaway',
   }
 });
 
-test('loot jewellery is a real jeweller piece, priced the same both ways, and Threads does not sell jewellery', () => {
+test('loot jewellery is a real jeweller piece, priced the same both ways, and JD Streets does not sell jewellery', () => {
   for (const [id, look] of Object.entries(JEWEL_ITEMS)) {
     const d = JEWELS[look.id];
     assert(d && d.finishes.includes(look.finish), `${id}: no such piece`);
     assert(ITEMS[id].value === jewelPrice(d, look.finish), `${id}: £${ITEMS[id].value} as loot, £${jewelPrice(d, look.finish)} at the jeweller`);
   }
-  for (const id of SHOP_STOCK) assert(!['chain_silver', 'chain_gold', 'watch_basic', 'ring_signet'].includes(id) && !JEWEL_ITEMS[id], `Threads sells ${id}`);
+  for (const id of SHOP_STOCK) assert(!['chain_silver', 'chain_gold', 'watch_basic', 'ring_signet'].includes(id) && !JEWEL_ITEMS[id], `JD Streets sells ${id}`);
 });
 
 test('the arrest fine is capped by level and never more than you have', () => {

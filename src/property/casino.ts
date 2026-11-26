@@ -3,7 +3,7 @@ import { BIKES, CARS, GARAGE_SPACES, MAX_CARS } from './catalogue';
 import { addBike, addCar } from './state';
 
 /**
- * The Golden Lion casino. Everything is played with the game's own pounds:
+ * The Grand Gamble casino. Everything is played with the game's own pounds:
  * stakes come out of your pocket first, then the tin; winnings go in your pocket.
  * Every game takes an rng so the tests can stack the deck.
  */

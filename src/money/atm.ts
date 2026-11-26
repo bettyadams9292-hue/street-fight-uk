@@ -1,11 +1,14 @@
 /**
- * Cashpoints: the `atm` props on the streets (and in Pawn & Gold) are usable. Take cash out of CaliBank (the same
- * money as the tin at home, `save.cash.bank`) or pay what's on you in, so it's safe if you get battered.
+ * Cash machines: the `atm` props set into shop and bank walls. Take cash out of your account (the same money as the
+ * tin at home, `save.cash.bank`) or pay what's on you in, so it's safe if you get battered.
  *
- * Paying in is free everywhere. Taking out is free on the High Street and in the clean districts; the machines on
- * rough streets charge a fee each time (`atmFee`), like the pay-to-use ones on a corner shop wall.
+ * Banking is a progression unlock: no machine works until the second story boss (Sully) is down (`ATM_FLAG`), and
+ * there are only a handful in the whole town (`ATM_SITES`, about one for every four districts). Each machine belongs
+ * to one of the two banks (`BANKS`, Califax or Lloyd's THC) by its prop's `label`; both reach the same account.
  *
- * Numbers and save state only (the screen is in Game, `openAtm`).
+ * Paying in is free everywhere. Taking out is free in town (`FREE`); machines elsewhere charge a fee each time.
+ *
+ * Numbers and save state only (the machine's software is ui/atmUI.ts).
  */
 import type { Progress } from '../progress/Progress';
 import { CLEAN_DISTRICTS } from '../progress/cops';
@@ -16,9 +19,70 @@ const FREE: ReadonlySet<string> = new Set([...CLEAN_DISTRICTS, 'High Street']);
 export const PAY_FEE = 2;
 /** What the machine will hand out in one go (banks cap it). */
 export const ATM_MAX = 500;
-/** The amounts on the screen. */
-export const WITHDRAW_STEPS = [20, 50, 100, 250, 500] as const;
-export const DEPOSIT_STEPS = [20, 50, 100] as const;
+/** Machines dispense notes: withdrawals are whole multiples of this. */
+export const NOTE = 10;
+/** The amounts on the screens. */
+export const WITHDRAW_STEPS = [10, 20, 50, 100, 200, 500] as const;
+export const DEPOSIT_STEPS = [10, 20, 50, 100, 200] as const;
+
+/** The cash machines open once the second story boss is beaten (Sully, after the Gaffer). */
+export const ATM_FLAG = 'boss_sully';
+
+export function atmOpen(p: Progress): boolean {
+  return !!p.save.flags[ATM_FLAG];
+}
+
+// ---- the two banks ----------------------------------------------------------------------------------------------
+
+export type BankId = 'califax' | 'lloyds';
+
+export interface BankBrand {
+  id: BankId;
+  /** As written on the machine and the screens. */
+  name: string;
+  /** Wordmark on the screen header. */
+  mark: string;
+  /** Approved logo image (public/art/banks/), drawn in place of the wordmark once supplied. */
+  logo?: string;
+  /** Screen colours: background, panel, text, accent (buttons, loaders). */
+  bg: string;
+  panel: string;
+  ink: string;
+  accent: string;
+  /** Header board on the machine's fascia: board, letters. */
+  fascia: [string, string];
+  welcome: string;
+}
+
+export const BANKS: Record<BankId, BankBrand> = {
+  califax: {
+    id: 'califax', name: 'Califax', mark: 'CALIFAX',
+    bg: '#0b2a6b', panel: '#123a8c', ink: '#ffffff', accent: '#5fa8ff',
+    fascia: ['#0b2a6b', '#ffffff'], welcome: 'Welcome to Califax.',
+  },
+  lloyds: {
+    id: 'lloyds', name: 'Lloyd’s THC', mark: 'LLOYD’S THC',
+    bg: '#0b0f0c', panel: '#0f3a22', ink: '#ffffff', accent: '#2ecc71',
+    fascia: ['#006a3a', '#ffffff'], welcome: 'Welcome to Lloyd’s THC.',
+  },
+};
+
+/** Which bank a machine belongs to, from its prop's label (Califax unless it says otherwise). */
+export function bankOf(label: string | undefined): BankBrand {
+  return label === 'lloyds' ? BANKS.lloyds : BANKS.califax;
+}
+
+/**
+ * Where the machines are: level id → bank. Four in the town, spread along the way the story opens it up (the High
+ * Street first, the City Centre, Kingsway and the Riverside Centre later), all set into a commercial wall. The
+ * generated towns and the estates have none. tests/streetLife.test.ts holds the list against the levels.
+ */
+export const ATM_SITES: Readonly<Record<string, BankId>> = {
+  high_street: 'califax',
+  city: 'lloyds',
+  precinct: 'califax',
+  mall: 'lloyds',
+};
 
 export function atmFee(district: string): number {
   return FREE.has(district) ? 0 : PAY_FEE;
@@ -26,26 +90,31 @@ export function atmFee(district: string): number {
 
 export type AtmResult = { ok: true; amount: number; fee: number } | { ok: false; reason: string };
 
-/** Take `amount` out of the bank into your pocket, less nothing: the fee comes off the balance on top. */
+/** Take `amount` out of the bank into your pocket; the fee comes off the balance on top. */
 export function withdraw(p: Progress, amount: number, district: string): AtmResult {
   const c = p.save.cash;
   const fee = atmFee(district);
   const n = Math.floor(amount);
-  if (n <= 0) return { ok: false, reason: 'Pick an amount.' };
-  if (n > ATM_MAX) return { ok: false, reason: `It won’t give out more than £${ATM_MAX} at once.` };
-  if (c.bank < n + fee) return { ok: false, reason: fee ? `Insufficient funds: £${n} and the £${fee} fee.` : 'Insufficient funds.' };
+  if (!Number.isFinite(amount) || n <= 0) return { ok: false, reason: 'Please enter an amount.' };
+  if (n % NOTE) return { ok: false, reason: `This machine can only dispense multiples of £${NOTE}.` };
+  if (n > ATM_MAX) return { ok: false, reason: `The maximum you can withdraw is £${ATM_MAX}.` };
+  if (c.bank < n + fee) return { ok: false, reason: fee ? `Insufficient funds. This machine charges £${fee} per withdrawal.` : 'Insufficient funds.' };
   c.bank -= n + fee;
   c.pocket += n;
+  record(p.save.finance, p.save.playTime, 'cash', `Cash withdrawal, ${district}`, -n);
   if (fee) record(p.save.finance, p.save.playTime, 'fees', `Cashpoint fee, ${district}`, -fee);
   return { ok: true, amount: n, fee };
 }
 
 /** Pay cash in: up to `amount` of what's on you (Infinity for all of it). */
-export function deposit(p: Progress, amount: number): AtmResult {
+export function deposit(p: Progress, amount: number, district = ''): AtmResult {
   const c = p.save.cash;
+  if (Number.isNaN(amount) || amount <= 0) return { ok: false, reason: 'Please enter an amount.' };
+  if (Number.isFinite(amount) && Math.floor(amount) > c.pocket) return { ok: false, reason: 'You don’t have that much cash on you.' };
   const n = Math.min(Math.floor(amount), c.pocket);
-  if (n <= 0) return { ok: false, reason: 'You’ve no cash on you.' };
+  if (n <= 0) return { ok: false, reason: 'You have no cash to deposit.' };
   c.pocket -= n;
   c.bank += n;
+  record(p.save.finance, p.save.playTime, 'cash', `Cash deposit${district ? `, ${district}` : ''}`, n);
   return { ok: true, amount: n, fee: 0 };
 }

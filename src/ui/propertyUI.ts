@@ -62,6 +62,8 @@ import {
   type Card,
   type RouletteBet,
 } from '../property/casino';
+import { driveOption, type TravelOption } from '../map/worldMap';
+import { MOD_CATS, fitMod, fitted, paintOf, type CarMods, type ModCat } from '../property/carMods';
 import { LEVELS } from '../world/levels';
 import { menuButton } from './controls';
 import { h } from './dom';
@@ -156,7 +158,7 @@ export function furnitureShopBody(progress: Progress, saved: () => void) {
 }
 
 export function furnitureShopScreen(progress: Progress, close: () => void, saved: () => void): Screen {
-  return panelScreen('Home & Hearth', progress, furnitureShopBody(progress, saved), close);
+  return panelScreen('Sofa So Good', progress, furnitureShopBody(progress, saved), close);
 }
 
 function finishesBlock(progress: Progress, room: RoomId, pickRoom: (r: RoomId) => void, msg: (t: string, bad?: boolean) => void, saved: () => void): HTMLElement {
@@ -223,7 +225,7 @@ export function plannerBody(progress: Progress, saved: () => void, place: (uid: 
       if (recolour === f.uid) rows.push(swatches(def.colours, f.colour, (c) => result(recolourFurniture(progress, f.uid, c), `${def.name} recoloured`, msg, saved)));
     }
     rows.push(h('h3', { text: `Not placed yet (${boxed.length})` }));
-    if (!boxed.length) rows.push(h('p', { class: 'hint', text: 'Buy more at Home & Hearth on the High Street.' }));
+    if (!boxed.length) rows.push(h('p', { class: 'hint', text: 'Buy more at Sofa So Good on the High Street.' }));
     for (const f of boxed) {
       const def = FURNITURE[f.id];
       rows.push(
@@ -254,10 +256,15 @@ export function carDealerScreen(progress: Progress, close: () => void, saved: ()
   let cls: CarClass = 'hatchback';
   let sel = CAR_LIST[0].id;
   let colour = CARS[sel].colours[0];
-  return panelScreen('Brackley Motors', progress, (msg, rebuild) => {
+  let mode: 'forecourt' | 'mods' = 'forecourt';
+  const mods: ModsState = { uid: null, cat: 'paint', pick: null, armed: false };
+  return panelScreen('Arnold Shark', progress, (msg, rebuild) => {
     const prop = progress.save.property;
+    const modeTabs = prop.cars.length ? tabs([{ id: 'forecourt' as const, name: 'Forecourt' }, { id: 'mods' as const, name: 'Mods' }], mode, (m) => ((mode = m), rebuild())) : null;
+    if (mode === 'mods' && prop.cars.length) return [modeTabs!, ...modsBody(progress, mods, msg, rebuild, saved)];
     const def = CARS[sel];
     const rows: HTMLElement[] = [
+      ...(modeTabs ? [modeTabs] : []),
       h('p', { class: 'hint', text: `Bought cars are parked on your drive at 14 Tanner Road (${prop.cars.length}/${MAX_CARS} owned). Swap which one's on the drive from the car itself.` }),
       tabs(CAR_CLASSES, cls, (c) => {
         cls = c;
@@ -305,7 +312,7 @@ export function bikeShopScreen(progress: Progress, close: () => void, saved: () 
   let sel = BIKE_LIST[0].id;
   let colour = BIKES[sel].colours[0];
   let compare: string | null = null;
-  return panelScreen('Mudlark Moto & Cycles', progress, (msg, rebuild) => {
+  return panelScreen('Halfrauds', progress, (msg, rebuild) => {
     const prop = progress.save.property;
     const def = BIKES[sel];
     const cmp: BikeDef | null = compare && compare !== sel ? BIKES[compare] : null;
@@ -360,7 +367,7 @@ export function garageBikeScreen(progress: Progress, close: () => void, saved: (
   return panelScreen('Bike store', progress, (msg) => {
     const prop = progress.save.property;
     const rows: HTMLElement[] = [h('p', { class: 'hint', text: `${prop.bikes.length}/${GARAGE_SPACES} bays used. A bike you take out is left by the front door; ride it with the interact button, get off with interact again.` })];
-    if (!prop.bikes.length) rows.push(h('p', { text: 'No bikes yet. Mudlark Moto on the Brackley Trading Estate sells them (Dave’s Cabs can drop you there).' }));
+    if (!prop.bikes.length) rows.push(h('p', { text: 'No bikes yet. Halfrauds on the Brackley Trading Estate sells them (Duber can drop you there).' }));
     const out = prop.bikeOut;
     if (out) {
       const b = prop.bikes.find((x) => x.uid === out.uid)!;
@@ -381,24 +388,82 @@ export function garageBikeScreen(progress: Progress, close: () => void, saved: (
   }, close);
 }
 
+// ---- cosmetic mods (property/carMods.ts) ------------------------------------------------------------
+
+interface ModsState {
+  uid: string | null;
+  cat: ModCat;
+  /** The option being looked at (previewed, not bought yet). */
+  pick: string | null;
+  /** The fit button's been pressed once: the next press pays. */
+  armed: boolean;
+}
+
+/** The Mods tab: your car, what's fitted, every option with its price, a live preview, and a fit that asks first. */
+function modsBody(progress: Progress, st: ModsState, msg: (t: string, bad?: boolean) => void, rebuild: () => void, saved: () => void): HTMLElement[] {
+  const prop = progress.save.property;
+  const car = prop.cars.find((c) => c.uid === st.uid) ?? prop.cars.find((c) => c.uid === prop.activeCar) ?? prop.cars[0];
+  st.uid = car.uid;
+  const def = CARS[car.id];
+  const cat = MOD_CATS.find((c) => c.id === st.cat)!;
+  const opts = cat.options(car.id);
+  const on = fitted(car, st.cat);
+  const pick = opts.find((o) => o.value === st.pick) ?? opts.find((o) => o.value === on) ?? opts[0];
+  const draft: CarMods = { ...(car.mods ?? {}), [st.cat]: pick.value };
+  const paint = st.cat === 'paint' ? pick.value : paintOf(car);
+  const reset = () => ((st.pick = null), (st.armed = false));
+  const rows: HTMLElement[] = [
+    h('p', { class: 'hint', text: 'Looks only: nothing changes how it drives. Pick a part to see it on the car, then fit it. Mods stay on the car wherever you park it.' }),
+  ];
+  if (prop.cars.length > 1) rows.push(tabs(prop.cars.map((c) => ({ id: c.uid, name: CARS[c.id].name })), car.uid, (u) => ((st.uid = u), reset(), rebuild())));
+  rows.push(tabs(MOD_CATS.map((c) => ({ id: c.id, name: c.name })), st.cat, (c) => ((st.cat = c), reset(), rebuild())));
+  const list = h('div', { class: 'prop-list' }, ...opts.map((o) => {
+    const b = h('button', { class: `prop-item${o.value === pick.value ? ' on' : ''}`, 'data-nav': true, onclick: () => ((st.pick = o.value), (st.armed = false), rebuild()) },
+      h('b', { text: `${o.value === on ? '✓ ' : ''}${o.name}` }), h('span', { text: o.value === on ? 'Fitted' : o.price ? money(o.price) : 'Free' }));
+    if (o.swatch) b.style.borderLeft = `10px solid ${o.swatch}`;
+    return b;
+  }));
+  const fittedNow = pick.value === on;
+  const btn = fittedNow
+    ? h('p', { class: 'hint', text: 'Fitted on your car.' })
+    : menuButton(st.armed ? `Confirm: fit for ${pick.price ? money(pick.price) : 'free'}` : `Fit ${pick.name}${pick.price ? ` (${money(pick.price)})` : ''}`, () => {
+        if (!st.armed) {
+          st.armed = true;
+          return rebuild();
+        }
+        st.armed = false;
+        const r = fitMod(progress, car.uid, st.cat, pick.value);
+        if (!r.ok) return msg(r.reason, true);
+        saved();
+        msg(`${pick.name} fitted to your ${def.name}${r.price ? ` for ${money(r.price)}` : ''}.`);
+      }, st.armed ? 'Pays from your pocket, then the bank' : 'Press again to confirm', 'primary');
+  rows.push(h('div', { class: 'prop-shop' }, list, h('div', { class: 'prop-detail' }, previewCanvas(car.id, paint, draft), h('h3', { text: `${def.name}: ${cat.name}` }), btn)));
+  return rows;
+}
+
 // ---- the car on the drive ----------------------------------------------------------------------------
 
-export function carScreen(progress: Progress, close: () => void, saved: () => void, travel: (area: AreaId, entry: string) => void, swapped: () => void): Screen {
+export function carScreen(progress: Progress, here: AreaId, calm: boolean, close: () => void, saved: () => void, travel: (area: AreaId, opt: TravelOption) => void, swapped: () => void): Screen {
   return panelScreen('Your car', progress, (msg) => {
     const prop = progress.save.property;
     const active = prop.cars.find((c) => c.uid === prop.activeCar);
     const rows: HTMLElement[] = [];
     if (active) {
       const d = CARS[active.id];
-      rows.push(h('p', { class: 'hint', text: `${d.name}: ${d.topSpeed} mph, 0-60 in ${d.zeroSixty}s. Driving is free; you’re dropped at the kerb.` }));
+      rows.push(h('p', { class: 'hint', text: `${d.name}: ${d.topSpeed} mph, 0-60 in ${d.zeroSixty}s. Driving is free and nobody jumps you on the way; it’s left parked at the other end. Or pick a place on the map and choose Drive.` }));
     }
     rows.push(h('h3', { text: 'Drive to' }));
-    const stops: { area: AreaId; entry: string; name: string; locked?: string }[] = [
-      ...SHOP_STOPS.map((s) => ({ area: s.area, entry: s.entry, name: LEVELS[s.area].name, locked: s.shop && !progress.isShopOpen(s.shop) ? 'Closed' : undefined })),
-      ...TAXI_STOPS.map((s) => ({ area: s.area, entry: s.entry, name: LEVELS[s.area].district, locked: s.requires && !progress.has(s.requires) ? s.requiresText ?? 'Not yet' : undefined })),
+    const stops: { area: AreaId; name: string }[] = [
+      ...(prop.carOut ? [{ area: 'home' as AreaId, name: 'Home (back on the drive)' }] : []),
+      ...SHOP_STOPS.map((s) => ({ area: s.area, name: LEVELS[s.area].name })),
+      ...TAXI_STOPS.map((s) => ({ area: s.area, name: LEVELS[s.area].district })),
     ];
-    for (const s of stops) rows.push(shopRow(s.name, s.locked ?? LEVELS[s.area].name, s.locked ? 'Locked' : 'Drive', s.locked ? null : () => travel(s.area, s.entry)));
-    if (prop.cars.length > 1) {
+    for (const s of stops) {
+      const opt = driveOption(progress, here, s.area, calm);
+      if (!opt || s.area === here) continue;
+      rows.push(shopRow(s.name, opt.ok ? LEVELS[s.area].name : opt.why ?? 'Not yet', opt.ok ? 'Drive' : 'Locked', opt.ok ? () => travel(s.area, opt) : null));
+    }
+    if (prop.cars.length > 1 && !prop.carOut) {
       rows.push(h('h3', { text: 'On the drive' }));
       for (const c of prop.cars) {
         const d = CARS[c.id];

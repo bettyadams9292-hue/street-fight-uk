@@ -313,7 +313,7 @@ export function characterCreator(
             }),
           ),
           cycleRow('Metal', [{ value: 'gold' as const, label: 'Gold' }, { value: 'silver' as const, label: 'Silver' }], a.chainColour, (v) => set('chainColour', v)),
-          h('p', { class: 'hint', text: lockedCount() ? 'These are your own clothes. Jackets, trainers, chains and more are sold at Threads on the High Street (or found), and you wear them from your inventory.' : '' }),
+          h('p', { class: 'hint', text: lockedCount() ? 'These are your own clothes. Jackets, trainers, chains and more are sold at JD Streets on the High Street (or found), and you wear them from your inventory.' : '' }),
         );
         break;
       }

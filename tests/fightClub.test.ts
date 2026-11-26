@@ -1,5 +1,5 @@
 /**
- * The Arches fight club (fightclub/club.ts): shut till Sully's beaten; the ladder (buy-in, purse, one fight a
+ * The Scrap Yard fight club (fightclub/club.ts): shut till Sully's beaten; the ladder (buy-in, purse, one fight a
  * night, climbing); the title (the one-of-a-kind belt, once); defences every few nights for growing purses;
  * losing the title and winning it back; stripped for keeping a challenger waiting; the fight itself in a World
  * (to the stoppage, never a game over); old saves.

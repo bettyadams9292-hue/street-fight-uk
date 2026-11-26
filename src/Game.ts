@@ -35,7 +35,8 @@ import { Fighter } from './fighter/Fighter';
 import { Arena } from './world/Arena';
 import { STYLES } from './data/styles';
 import { defaultAttributes } from './stats/Stats';
-import { emptyCommand, type AttackButton } from './input/Commands';
+import { emptyCommand, type AttackButton, type CommandFrame } from './input/Commands';
+import { ambushSize, jumped } from './travel/onFoot';
 import type { StudioFraming } from './render/StudioView';
 import { SaveStore } from './save/SaveStore';
 import { newSave, Progress, type AreaId } from './progress/Progress';
@@ -57,14 +58,15 @@ import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
 import { mapScreen } from './ui/mapUI';
 import { profileScreen } from './ui/profileUI';
-import { nextExit, type TravelOption } from './map/worldMap';
+import { cabStop, nextExit, type TravelOption } from './map/worldMap';
+import type { ParkingSpot } from './property/parking';
 import { Phone } from './ui/phone/Phone';
 import { barScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
 import { loadCharacterModels } from './render/characterModels';
 import { resolveLevel } from './property/levels';
-import { BIKES, FURNITURE, ROOMS, bikeHandling, type RoomId } from './property/catalogue';
+import { BIKES, CARS, FURNITURE, ROOMS, bikeHandling, type RoomId } from './property/catalogue';
 import { STAIRWELL, checkPlacement, suggestSpot, wallZ } from './property/home';
 import { mountBike, parkBike, placeFurniture, ridingBike, sellFurniture, storeBike, storeFurniture, type PlacedAt } from './property/state';
 import { EQUIPMENT, equipmentResale } from './business/catalogue';
@@ -90,6 +92,7 @@ import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, 
 import { themeProfile } from './render/themes';
 import { TutorialManager } from './tutorial/TutorialManager';
 import { barberScreen } from './ui/barberUI';
+import { atmOpen, bankOf } from './money/atm';
 import { atmScreen } from './ui/atmUI';
 import { tattooScreen } from './ui/tattooUI';
 import { DYNAMIC_LEVELS, everySetSettled, levelProgress, levelReady, prepareLevel, recordLevel } from './performance/levelAssets';
@@ -163,6 +166,13 @@ export class Game {
   private hubDirty = false;
   /** Just hired in the bar: they get up from their seat when the area's rebuilt (World justHired). */
   private justHired: string | null = null;
+  /**
+   * Running somewhere on your own (map → Run there; travel/onFoot.ts): where to, the journey's number (its ambush
+   * rolls), the street you're on and whether it's rolled, and a pause while a fight's on. Any input takes over.
+   */
+  private autoRun: {
+    dest: AreaId; journey: number; from: string; area: string; enterX: number; jump: boolean; fought: boolean; resumeAt: number; useAt: number; lastX: number; stuck: number; swerve: number;
+  } | null = null;
   /** The house's activities: cooking, eating, washing, sleeping. */
   private house!: HouseController;
   private state: GameState = 'menu';
@@ -368,6 +378,7 @@ export class Game {
   // ---- flow ----------------------------------------------------------------
 
   private showMainMenu(): void {
+    this.autoRun = null;
     this.tutorial?.stop();
     this.state = 'menu';
     this.studio = null;
@@ -1156,7 +1167,7 @@ export class Game {
     const p = this.progress!;
     const dest = p.save.destination;
     if (!dest) return null;
-    const name = LEVELS[dest].name;
+    const name = `${this.autoRun ? 'Running to ' : ''}${LEVELS[dest].name}`;
     const ex = nextExit(p, w.level.id, dest);
     if (!ex) return `${name}: no way through from here yet`;
     const dx = ex.x - w.player.pos.x;
@@ -1380,6 +1391,7 @@ export class Game {
         this.saveGame();
       }),
       ev.on('player:defeated', ({ byPolice }) => {
+        this.autoRun = null;
         const p = this.progress!;
         // Down on a job with something to lose: the parcel, the package, the goods or the money's gone with it.
         const job = p.save.jobs.active;
@@ -1450,7 +1462,7 @@ export class Game {
         this.ui.replaceAll(null);
         this.state = 'playing';
         this.hud.toast(`${def.name}: have a look round. The brochure’s in the hall.`, 'item');
-        // Booked through Keys & Co: the front door leads back there, not onto the property's street.
+        // Booked through Wrongmove: the front door leads back there, not onto the property's street.
         this.progress!.save.portfolio.viaAgent = true;
         this.changeArea('property', id, null);
       },
@@ -1562,7 +1574,7 @@ export class Game {
         screen = sofaScreen(p, close, () => this.saveGame());
         break;
       case 'contacts':
-        // The landline: ring Dave's Cabs on the phone.
+        // The landline: ring Duber on the phone.
         this.backToPlay();
         this.phone.open('cabs');
         return;
@@ -1577,7 +1589,11 @@ export class Game {
         });
         break;
       case 'atm':
-        screen = atmScreen(p, this.ui, w.level.district, saved, close);
+        if (!atmOpen(p)) {
+          this.backToPlay();
+          return this.hud.toast('OUT OF SERVICE. Sorry for any inconvenience.', 'warn');
+        }
+        screen = atmScreen(p, this.ui, w.level.district, bankOf(station?.tab), saved, close, (k) => this.audio.atm(k));
         break;
       case 'front_desk':
         screen = this.frontDesk(close);
@@ -1593,7 +1609,7 @@ export class Game {
         break;
       case 'cash_hatch':
         screen = pawnScreen(p, this.ui, saved, close, { priceMult: 1 / PAWN_HATCH_RATE });
-        this.hud.toast('Cash 4 U: they pay less than Pawn & Gold in the City Centre.', 'info');
+        this.hud.toast('Stash Converters: they pay less than Cash Degenerator in the City Centre.', 'info');
         break;
       case 'pawn_counter':
         screen = pawnScreen(p, this.ui, saved, close, { rob: () => this.robShop('pawn', at ?? { x: 7.2, z: 0.6 }), priceMult: p.shop('pawn').priceMult });
@@ -1625,11 +1641,7 @@ export class Game {
         });
         break;
       case 'car':
-        screen = carScreen(p, close, saved, (area, entry) => {
-          this.ui.replaceAll(null);
-          this.backToPlay();
-          this.changeArea(area, entry, null);
-        }, () => {
+        screen = carScreen(p, w.level.id, this.calm(), close, saved, (area, opt) => this.travelTo(area, opt), () => {
           this.ui.replaceAll(null);
           this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
           this.hud.toast('Car swapped', 'item');
@@ -1700,7 +1712,7 @@ export class Game {
     if (!w || !p || this.session) return;
     const kit = GYM_KIT[kitId];
     if (!kit) return;
-    if (!p.save.gym.owned.includes(kitId)) return this.hud.toast(`No ${kit.name.toLowerCase()} yet. Iron Temple in Leisure Park sells them.`, 'warn');
+    if (!p.save.gym.owned.includes(kitId)) return this.hud.toast(`No ${kit.name.toLowerCase()} yet. PureGraft in Leisure Park sells them.`, 'warn');
     const can = canTrain(p, kit.trains);
     if (!can.ok) return this.hud.toast(can.reason, 'warn');
     const f = w.player;
@@ -2318,6 +2330,7 @@ export class Game {
 
   /** Go somewhere by cab, or head home: from the map or the phone. */
   private travelTo(area: AreaId, opt: TravelOption): void {
+    this.autoRun = null;
     const w = this.world;
     const p = this.progress;
     if (!w || !p) return;
@@ -2333,6 +2346,14 @@ export class Game {
       if (p.save.property.riding) this.dismount();
       return this.goHome(false);
     }
+    if (opt.kind === 'walk') return this.startRun(area);
+    if (opt.kind === 'drive') {
+      if (!opt.ok) {
+        this.backToPlay();
+        return this.hud.toast(opt.why ?? 'Can’t drive there', 'warn');
+      }
+      return this.driveTo(area, opt.park ?? null, opt.entry);
+    }
     if (opt.kind !== 'cab' || !opt.entry) return this.backToPlay();
     if (p.save.cash.bank < opt.cost) {
       this.backToPlay();
@@ -2344,8 +2365,136 @@ export class Game {
     this.state = 'playing';
     // The bike stays parked where you got off it.
     if (p.save.property.riding) this.dismount();
-    this.hud.toast(`Dave’s Cabs: ${opt.miles !== undefined ? `${opt.miles.toFixed(1)} miles, ` : ''}£${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
+    this.hud.toast(`Duber: ${opt.miles !== undefined ? `${opt.miles.toFixed(1)} miles, ` : ''}£${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
     this.changeArea(area, opt.entry, w.carry());
+  }
+
+  /**
+   * Drive your own car (map → Drive, or the car's own screen): free, no street fights on the way, and the car is
+   * left at the other end (`park`; null puts it back on the drive at home). Only one car is ever out.
+   */
+  private driveTo(area: AreaId, park: ParkingSpot | null, entry?: string): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    const prop = p.save.property;
+    const car = prop.cars.find((c) => c.uid === prop.activeCar);
+    if (!car) return this.backToPlay();
+    prop.carOut = park ? { uid: car.uid, ...park } : null;
+    if (p.save.destination === area) p.save.destination = null;
+    this.ui.replaceAll(null);
+    this.state = 'playing';
+    if (prop.riding) this.dismount();
+    this.saveGame();
+    const name = CARS[car.id].name;
+    if (!park) {
+      this.hud.toast(`Drove the ${name} home. It’s on the drive.`, 'item');
+      return this.goHome(false);
+    }
+    this.hud.toast(`Drove the ${name} to ${LEVELS[area].name}. It’s parked${park.area === area ? ' up the road' : ` on ${LEVELS[park.area].name}`}.`, 'item');
+    this.changeArea(area, entry ?? cabStop(area)?.entry ?? 'left', w.carry());
+  }
+
+  /** Run there (map → Run there): your fighter runs the route on their own; move or press anything to take over. */
+  private startRun(dest: AreaId): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    if (nextExit(p, w.level.id, dest) === null) {
+      this.backToPlay();
+      return this.hud.toast('No way through from here yet', 'warn');
+    }
+    if (p.save.property.riding) this.dismount();
+    p.save.destination = dest;
+    this.autoRun = { dest, journey: Math.floor(Math.random() * 1e6), from: w.level.id, area: w.level.id, enterX: w.player.pos.x, jump: false, fought: false, resumeAt: 0, useAt: 0, lastX: w.player.pos.x, stuck: 0, swerve: 0 };
+    this.ui.replaceAll(null);
+    this.state = 'playing';
+    this.input.flush();
+    this.hud.toast(`Running to ${LEVELS[dest].name}. Move to take over.`, 'item');
+  }
+
+  private stopRun(text?: string): void {
+    this.autoRun = null;
+    if (text) this.hud.toast(text, 'info');
+  }
+
+  /** One step of the run: steer for the next exit on the route, use its door, stop for fights and at the end. */
+  private autoCommand(cmd: CommandFrame): CommandFrame {
+    const a = this.autoRun!;
+    const w = this.world!;
+    const p = this.progress!;
+    const pressed = Object.values(cmd.pressed).some(Boolean);
+    if (Math.abs(cmd.moveX) > 0.25 || Math.abs(cmd.moveZ) > 0.25 || pressed || cmd.use || cmd.block) {
+      this.stopRun('You’ve taken over.');
+      return cmd;
+    }
+    const here = w.level.id as AreaId;
+    if (here === a.dest || (a.dest === 'basement' && here === 'home')) {
+      this.stopRun(`You’re at ${LEVELS[a.dest].name}.`);
+      return cmd;
+    }
+    // A new street: roll once for being jumped on it (never the one you set off from), and run a bit first.
+    if (a.area !== here) {
+      a.area = here;
+      a.enterX = w.player.pos.x;
+      a.jump = jumped(p, here, a.journey);
+    }
+    // A fight: you're on your own till it's done, then off again after a breather.
+    if (!this.calm()) {
+      a.fought = true;
+      a.resumeAt = 0;
+      return cmd;
+    }
+    if (a.fought) {
+      if (!a.resumeAt) {
+        a.resumeAt = this.time + 1.6;
+        this.hud.toast(`Back on your way to ${LEVELS[a.dest].name}. Move to take over.`, 'item');
+      }
+      if (this.time < a.resumeAt) return cmd;
+      a.fought = false;
+      a.resumeAt = 0;
+    }
+    if (a.jump && Math.abs(w.player.pos.x - a.enterX) > 9) {
+      a.jump = false;
+      if (w.ambush(ambushSize(p))) {
+        a.fought = true;
+        this.hud.toast('Jumped! Sort them out and you’ll carry on.', 'warn');
+        return cmd;
+      }
+    }
+    const ex = nextExit(p, here, a.dest);
+    if (!ex) {
+      this.stopRun('No way through from here yet.');
+      return cmd;
+    }
+    const pos = w.player.pos;
+    const out: CommandFrame = { ...cmd, pressed: { ...cmd.pressed } };
+    const dx = ex.x - pos.x;
+    // Stuck on something (a skip, a parked car): swing out into the road for a bit.
+    if (Math.abs(pos.x - a.lastX) < 0.004) a.stuck++;
+    else a.stuck = Math.max(0, a.stuck - 2);
+    a.lastX = pos.x;
+    if (a.stuck > 25) a.swerve = 50;
+    const near = ex.kind === 'door' && Math.abs(dx) < 2.2;
+    // Run in the open lane (props stand against the wall or at the kerb), cutting in to a door only at the end.
+    const tz = a.swerve > 0 ? 1.0 : near ? ex.z + 0.55 : 0.15;
+    if (a.swerve > 0) a.swerve--;
+    const dz = tz - pos.z;
+    out.moveZ = Math.abs(dz) > 0.12 ? Math.sign(dz) * Math.min(1, Math.max(0.4, Math.abs(dz) * 2)) : 0;
+    if (ex.kind === 'door') {
+      if (Math.abs(dx) > 0.35) {
+        out.moveX = Math.sign(dx) * Math.min(1, Math.max(0.35, Math.abs(dx)));
+        out.run = Math.abs(dx) > 2.5;
+      } else if (Math.abs(dz) < 0.45 && this.time >= a.useAt) {
+        out.use = true;
+        a.useAt = this.time + 0.8;
+      }
+    } else {
+      // Off the end of the street.
+      out.moveX = Math.sign(dx) || 1;
+      out.run = true;
+    }
+    return out;
   }
 
   /** The town map: see everything, set a route, take a cab or head home (with a confirm step). */
@@ -2427,7 +2576,7 @@ export class Game {
       return;
     }
     const mine = w.crew.filter((m) => m.brain.home && p.save.companions.following.includes(m.def.id));
-    if (!mine.length) return this.hud.toast(p.save.companions.recruited.length ? 'Nobody’s with you. H → Crew to pick who follows you.' : 'No crew yet: fighters for hire at the Red Lion', 'item');
+    if (!mine.length) return this.hud.toast(p.save.companions.recruited.length ? 'Nobody’s with you. H → Crew to pick who follows you.' : 'No crew yet: fighters for hire at Weatherspoons', 'item');
     const on = !mine[0].brain.home!.following;
     w.callHomeCrew(on, mine.map((m) => m.def.id));
     this.hud.toast(on ? 'Crew: up you get, come with me' : 'Crew: make yourselves at home', 'item');
@@ -2516,7 +2665,7 @@ export class Game {
 
   // ---- shops ------------------------------------------------------------------------
 
-  /** Threads: browse with your fighter on the studio set, then back into the shop. */
+  /** JD Streets: browse with your fighter on the studio set, then back into the shop. */
   private openClothesShop(): void {
     const w = this.world;
     const p = this.progress;
@@ -2563,7 +2712,7 @@ export class Game {
     );
   }
 
-  /** NeXo Cutz: in Vinny's chair on the studio set, close on the face, trying cuts on before you pay. */
+  /** Peaky Barbers: in Vinny's chair on the studio set, close on the face, trying cuts on before you pay. */
   private openBarber(): void {
     const w = this.world;
     const p = this.progress;
@@ -2654,7 +2803,7 @@ export class Game {
   }
 
   /**
-   * Robbing Threads. Priya either empties the till or fights back; either
+   * Robbing JD Streets. Priya either empties the till or fights back; either
    * way the alarm goes, the police come, your heat goes up, the shop shuts
    * for a while and she charges you more afterwards. Each robbery pays less.
    */
@@ -2681,7 +2830,7 @@ export class Game {
   }
 
   /**
-   * The front counter at Central Police Station: what's on your record, and settling up a district's fines
+   * The front counter at Kirkgate Constabulary: what's on your record, and settling up a district's fines
    * early (clears its police heat and the crimes logged there) at a price (`settlePrice`).
    */
   /**
@@ -2693,15 +2842,15 @@ export class Game {
     const p = this.progress;
     if (!p || !clubOpen(p) || p.save.club.told) return;
     p.save.club.told = true;
-    this.hud.remember('Sully: You’ve got hands, kid. There’s fights every night in the cellar under my old gym: the Arches. Real purses, and a belt if you’re good enough. Come down.', 'item');
+    this.hud.remember('Sully: You’ve got hands, kid. There’s fights every night in the cellar under my old gym: the Scrap Yard. Real purses, and a belt if you’re good enough. Come down.', 'item');
     this.hud.toast('Sully: Fights every night under my old gym. Come down.', 'item');
     this.saveGame();
   }
 
-  /** The bout booked at the Arches, for settling up when it's over. */
+  /** The bout booked at the Scrap Yard, for settling up when it's over. */
   private clubBooked: Bout | null = null;
 
-  /** Ring the bell at the Arches: a reason if you can't. */
+  /** Ring the bell at the Scrap Yard: a reason if you can't. */
   private clubFight(w: World, b: Bout, close: () => void): string | null {
     const p = this.progress!;
     const can = canFight(p, b);
@@ -2860,7 +3009,7 @@ export class Game {
     return rewardScreen('FRONT COUNTER', lines, buttons, ['front-counter']);
   }
 
-  /** Nicked: booked in at the Central Police Station, with a charge sheet and a choice. */
+  /** Nicked: booked in at the Kirkgate Constabulary, with a charge sheet and a choice. */
   private nicked(delay: number): void {
     const p = this.progress!;
     const b = book(p);
@@ -2933,12 +3082,12 @@ export class Game {
 
   /**
    * The charge sheet after you're nicked (world/custody.ts): what they've got you for, what they took, and
-   * bail. Pay it and you're let out of custody at the Central Police Station; or do a night in the cells and
+   * bail. Pay it and you're let out of custody at the Kirkgate Constabulary; or do a night in the cells and
    * the court takes a smaller fine in the morning.
    */
   private chargeSheet(b: Booking): Screen {
     const p = this.progress!;
-    const lines: { text: string; big?: boolean }[] = [{ text: `You\u2019re nicked. Booked in at Central Police Station.`, big: true }];
+    const lines: { text: string; big?: boolean }[] = [{ text: `You\u2019re nicked. Booked in at Kirkgate Constabulary.`, big: true }];
     if (b.charges.length) for (const c of b.charges) lines.push({ text: `Charge: ${CRIME_NAME[c.crime]} (${c.district})` });
     else lines.push({ text: 'Charge: wanted for questioning. They\u2019ve nothing they can make stick.' });
     lines.push({ text: `${b.seized ? `Seized: ${b.seized} stolen item${b.seized === 1 ? '' : 's'} (\u00a3${b.seizedValue}).` : 'Nothing stolen on you.'} They\u2019ve got your phone till you walk out.` });
@@ -3545,6 +3694,7 @@ export class Game {
         }
         if (this.world) {
           if (this.house.active) cmd = this.house.command(cmd, DT);
+          else if (this.autoRun) cmd = this.autoCommand(cmd);
           this.world.step(cmd);
           this.businessClock(DT);
         } else this.mode!.step(cmd);

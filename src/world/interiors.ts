@@ -19,16 +19,16 @@ const ROOM = { minZ: -1.6, maxZ: 1.4 };
 /** A catalogue furniture piece as dressing (wall pieces go at z -2.0 with their wallY). */
 const F = (item: string, x: number, z: number, extra: Partial<PropDef> = {}): PropDef => ({ kind: 'furniture', item, x, z, size: FURNITURE[item].size, colour: extra.colour ?? FURNITURE[item].colours[0], solid: FURNITURE[item].mount === 'floor', wallY: FURNITURE[item].wallY, ...extra });
 
-// ---- Threads: clothes shop on the High Street -------------------------------------------------
+// ---- JD Streets: clothes shop on the High Street -------------------------------------------------
 const clothesShop: LevelDef = {
   id: 'clothes_shop',
-  name: 'Threads',
+  name: 'JD Streets',
   district: 'High Street',
   theme: 'shop',
   bounds: { minX: 0, maxX: 16, ...ROOM },
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'clothes', label: 'Back out to the High Street' }],
-  facades: [{ kind: 'interior', x0: 0, x1: 16, label: 'THREADS', colour: '#e8e4dc' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 16, label: 'JD STREETS', colour: '#e8e4dc' }],
   props: [
     // Window display by the door, then rails and stocked shelving down both walls, the till, the changing room.
     // The middle (z -0.6 to 0.6) stays clear: it's the way from the door to the counter.
@@ -73,16 +73,16 @@ const clothesShop: LevelDef = {
   objective: 'Browse, try things on, pay at the counter',
 };
 
-// ---- NeXo Cutz: the barber on the High Street (barber/barber.ts) ------------------------------------
+// ---- Peaky Barbers: the barber on the High Street (barber/barber.ts) ------------------------------------
 const barberShop: LevelDef = {
   id: 'barber_shop',
-  name: 'NeXo Cutz',
+  name: 'Peaky Barbers',
   district: 'High Street',
   theme: 'shop',
   bounds: { minX: 0, maxX: 14, ...ROOM },
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'barber', label: 'Back out to the High Street' }],
-  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'NeXo CUTZ — WALK-INS WELCOME', colour: '#f2efe8' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'PEAKY BARBERS — WALK-INS WELCOME', colour: '#f2efe8' }],
   props: [
     // Three chairs, each at its own station under a mirror (the mirrors are dressing: DECOR below), the
     // wash basin at the end, the till by the door. The middle (z -0.6 to 0.6) stays clear.
@@ -157,10 +157,10 @@ const tattooStudio: LevelDef = {
   objective: 'Sit down with Shaz: tattoos, laser removal, re-inking',
 };
 
-// ---- Pawn & Gold: pawn shop in the City Centre --------------------------------------------------
+// ---- Cash Degenerator: pawn shop in the City Centre --------------------------------------------------
 const pawnShop: LevelDef = {
   id: 'pawn_shop',
-  name: 'Pawn & Gold',
+  name: 'Cash Degenerator',
   district: 'City Centre',
   theme: 'pawn',
   bounds: { minX: 0, maxX: 14, ...ROOM },
@@ -170,14 +170,13 @@ const pawnShop: LevelDef = {
     // Lets you come here by cab before you've fought your way to Market Square.
     { id: 'cab_home', kind: 'door', x: 0.8, z: 0.9, to: 'home', toEntry: 'door', label: 'Back door: Dave’s cab home' },
   ],
-  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'PAWN & GOLD — WE BUY GOLD', colour: '#3a3428' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'CASH DEGENERATOR — WE BUY GOLD', colour: '#3a3428' }],
   props: [
     { kind: 'display_cabinet', x: 2.3, z: -1.25 },
     { kind: 'display_cabinet', x: 4.2, z: -1.25 },
     { kind: 'glass_counter', x: 7.2, z: -0.6 },
     { kind: 'shop_shelf', x: 10.4, z: -1.4 },
     { kind: 'display_cabinet', x: 3.4, z: 1.05 },
-    { kind: 'atm', x: 12.0, z: -1.35 },
   ],
   containers: [
     { id: 'pawn_till', kind: 'till', x: 8.4, z: 0.2, label: 'Empty the till', loot: 'till', requires: 'pawn_robbable', lockedText: 'Mr Kaur’s watching you like a hawk.' },
@@ -198,22 +197,22 @@ const pawnShop: LevelDef = {
   objective: 'Sell your valuables at the counter',
 };
 
-// ---- The Red Lion: pub on the High Street -------------------------------------------------------
+// ---- Weatherspoons: pub on the High Street -------------------------------------------------------
 
-/** How often the Red Lion's regulars start a lock-in when you walk in. */
+/** How often Weatherspoons' regulars start a lock-in when you walk in. */
 export const LOCK_IN_CHANCE = 1 / 3;
 
 const pub: LevelDef = {
   id: 'pub',
-  name: 'The Red Lion',
+  name: 'Weatherspoons',
   district: 'High Street',
   theme: 'pub',
   bounds: { minX: 0, maxX: 37, ...ROOM },
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [{ id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'pub', label: 'Back out to the High Street' }],
   facades: [
-    { kind: 'interior', x0: 0, x1: 22, label: 'THE RED LION', colour: '#3a1a12' },
-    { kind: 'interior', x0: 22, x1: 37, label: 'THE SNUG — FIGHTERS FOR HIRE', colour: '#2a1410' },
+    { kind: 'interior', x0: 0, x1: 22, label: 'WEATHERSPOONS', colour: '#3a1a12' },
+    { kind: 'interior', x0: 22, x1: 37, label: 'THE FIRM — FIGHTERS FOR HIRE', colour: '#2a1410' },
   ],
   props: [
     { kind: 'bar', x: 6.5, z: -0.6 },
@@ -284,11 +283,11 @@ const pub: LevelDef = {
   objective: 'A pint, a game of pool, and the regulars looking for trouble',
 };
 
-// ---- Home & Hearth: furniture shop on the High Street ----------------------------------------------
+// ---- Sofa So Good: furniture shop on the High Street ----------------------------------------------
 
 const furnitureShop: LevelDef = {
   id: 'furniture_shop',
-  name: 'Home & Hearth',
+  name: 'Sofa So Good',
   district: 'High Street',
   theme: 'furniture_store',
   bounds: { minX: 0, maxX: 22, ...ROOM },
@@ -334,12 +333,12 @@ const furnitureShop: LevelDef = {
   objective: 'Browse the showroom, buy at the counter: it’s delivered to your house',
 };
 
-// ---- Brackley Motors: car showroom on the trading estate --------------------------------------------
+// ---- Arnold Shark: car showroom on the trading estate --------------------------------------------
 const V = (item: string, x: number, z: number, colour: string, size: [number, number], extra: Partial<PropDef> = {}): PropDef => ({ kind: 'vehicle', item, x, z, colour, size, plinth: true, ...extra });
 
 const carDealer: LevelDef = {
   id: 'car_dealer',
-  name: 'Brackley Motors',
+  name: 'Arnold Shark',
   district: 'Trading Estate',
   theme: 'car_showroom',
   bounds: { minX: 0, maxX: 28, ...ROOM },
@@ -348,7 +347,7 @@ const carDealer: LevelDef = {
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'ind_estate', toEntry: 'dealer', label: 'Back out to the trading estate' },
     { id: 'cab_home', kind: 'door', x: 27.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Side door: courtesy car home' },
   ],
-  facades: [{ kind: 'interior', x0: 0, x1: 28, label: 'BRACKLEY MOTORS — NEW & USED', colour: '#e8ecf0' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 28, label: 'ARNOLD SHARK — NEW & USED', colour: '#e8ecf0' }],
   props: [
     V('corvo', 4.0, -1.05, '#7a1414', [2.1, 1.0]),
     V('regent', 9.2, -1.05, '#1a1a1a', [2.5, 1.0]),
@@ -373,10 +372,10 @@ const carDealer: LevelDef = {
   objective: 'Pick a motor. It’ll be parked on your drive.',
 };
 
-// ---- Mudlark Moto: off-road bike shop on the trading estate ------------------------------------------
+// ---- Halfrauds: off-road bike shop on the trading estate ------------------------------------------
 const bikeShop: LevelDef = {
   id: 'bike_shop',
-  name: 'Mudlark Moto',
+  name: 'Halfrauds',
   district: 'Trading Estate',
   theme: 'bike_shop',
   bounds: { minX: 0, maxX: 20, ...ROOM },
@@ -385,7 +384,7 @@ const bikeShop: LevelDef = {
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'ind_estate', toEntry: 'bikes', label: 'Back out to the trading estate' },
     { id: 'cab_home', kind: 'door', x: 19.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Workshop door: van home' },
   ],
-  facades: [{ kind: 'interior', x0: 0, x1: 20, label: 'MUDLARK MOTO & CYCLES — BIKES · SCOOTERS · MOTOS', colour: '#2a2c30' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 20, label: 'HALFRAUDS — BIKES · SCOOTERS · MOTOS', colour: '#2a2c30' }],
   props: [
     { kind: 'bike_stand', x: 3.0, z: -1.25 },
     V('b23_mini_e_mx', 3.0, -1.25, '#3a9a3a', [0.95, 0.3], { plinth: false, solid: false }),
@@ -418,10 +417,10 @@ const bikeShop: LevelDef = {
   objective: 'Pick a bike. It’ll be waiting in your garage.',
 };
 
-// ---- The Golden Lion: casino on Market Square ---------------------------------------------------------
+// ---- The Grand Gamble: casino on Market Square ---------------------------------------------------------
 const casino: LevelDef = {
   id: 'casino',
-  name: 'The Golden Lion',
+  name: 'The Grand Gamble',
   district: 'City Centre',
   theme: 'casino',
   bounds: { minX: 0, maxX: 26, ...ROOM },
@@ -430,7 +429,7 @@ const casino: LevelDef = {
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'city', toEntry: 'casino', label: 'Back out to Market Square' },
     { id: 'cab_home', kind: 'door', x: 25.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Rear exit: house cab home' },
   ],
-  facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'THE GOLDEN LION', colour: '#3a0e14' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'THE GRAND GAMBLE', colour: '#3a0e14' }],
   props: [
     { kind: 'casino_cage', x: 4.0, z: -0.6 },
     { kind: 'prize_podium', x: 9.4, z: -1.0 },
@@ -468,14 +467,14 @@ const casino: LevelDef = {
   objective: 'Slots, roulette, blackjack, and a motor on the podium. Play responsibly: it’s only game money.',
 };
 
-// ---- Green Fingers Hydroponics: grow shop on the trading estate ------------------------------------
+// ---- B&THC Hydroponics: grow shop on the trading estate ------------------------------------
 const EQ = (item: string, x: number, z: number, extra: Partial<PropDef> = {}): PropDef => ({
   kind: 'equipment', item, x, z, size: EQUIPMENT[item].size, solid: EQUIPMENT[item].mount === 'floor', wallY: EQUIPMENT[item].wallY, plinth: EQUIPMENT[item].mount === 'floor', label: 'ok|0|on', ...extra,
 });
 
 const growShop: LevelDef = {
   id: 'grow_shop',
-  name: 'Green Fingers Hydroponics',
+  name: 'B&THC Hydroponics',
   district: 'Trading Estate',
   theme: 'grow_shop',
   bounds: { minX: 0, maxX: 20, ...ROOM },
@@ -484,7 +483,7 @@ const growShop: LevelDef = {
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'ind_estate', toEntry: 'grow', label: 'Back out to the trading estate' },
     { id: 'cab_home', kind: 'door', x: 19.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Back door: Kez’s van home' },
   ],
-  facades: [{ kind: 'interior', x0: 0, x1: 20, label: 'GREEN FINGERS — HYDROPONICS · LIGHTING · VENTILATION', colour: '#e8ece4' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 20, label: 'B&THC — HYDROPONICS · LIGHTING · VENTILATION', colour: '#e8ece4' }],
   props: [
     { kind: 'grow_shelf', x: 3.0, z: -1.85, label: 'room' },
     { kind: 'grow_shelf', x: 5.6, z: -1.85, label: 'environment' },
@@ -522,14 +521,14 @@ const growShop: LevelDef = {
   objective: 'Kit out the basement. Everything you buy goes into basement storage.',
 };
 
-// ---- Iron Temple: gym equipment store (Leisure Park) ------------------------------------------------
+// ---- PureGraft: gym equipment store (Leisure Park) ------------------------------------------------
 /** Gym dressing (GymLibrary models): `size` is the half footprint; small pieces don't block the way. */
 const GYM = (item: string, x: number, z: number, size: [number, number]): PropDef => ({ kind: 'gym_prop', item, x, z, size, solid: size[0] > 0.3 });
 const KIT = (item: string, x: number, z: number): PropDef => ({ kind: 'gym_kit', item, x, z, size: GYM_KIT[item].size, solid: GYM_KIT[item].solid, plinth: true });
 
 const gymStore: LevelDef = {
   id: 'gym_store',
-  name: 'Iron Temple Fitness',
+  name: 'PureGraft Fitness',
   district: 'Leisure Park',
   theme: 'gym_store',
   bounds: { minX: 0, maxX: 22, ...ROOM },
@@ -538,7 +537,7 @@ const gymStore: LevelDef = {
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'leisure', toEntry: 'irontemple', label: 'Back out to Leisure Park' },
     { id: 'cab_home', kind: 'door', x: 21.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Delivery bay: ride home with the van' },
   ],
-  facades: [{ kind: 'interior', x0: 0, x1: 22, label: 'IRON TEMPLE — HOME GYM EQUIPMENT', colour: '#2a2c30' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 22, label: 'PUREGRAFT — HOME GYM EQUIPMENT', colour: '#2a2c30' }],
   props: [
     KIT('dumbbells', 3.0, -1.85),
     KIT('barbell', 5.2, -1.75),
@@ -633,9 +632,9 @@ function fightGym(
   };
 }
 
-const boxingGym = fightGym('boxing_gym', 'Del’s Boxing Club', 'Tanner Road Estate', 'estate', 'boxing', 'boxing_ring', { name: 'Coach Del', seed: 3301, body: 'male', top: 'tshirt', colour: '#7a1414' }, 'DEL’S BOXING CLUB — EST. 1979', '#5a2a22');
-const karateDojo = fightGym('karate_dojo', 'Okafor Karate & Muay Thai', 'Leisure Park', 'leisure', 'dojo', 'dojo_mat', { name: 'Mrs Okafor', seed: 3302, body: 'female', top: 'tshirt', colour: '#f0eee8' }, 'OKAFOR KARATE & MUAY THAI', '#e8e0d0');
-const wrestlingClub = fightGym('wrestling_club', 'Kev’s Wrestling & Grappling', 'Kingsway Precinct', 'precinct', 'wrestling', 'wrestling_mat', { name: 'Big Kev', seed: 3303, body: 'male', top: 'vest', colour: '#1f2a44' }, 'KEV’S WRESTLING & GRAPPLING', '#3a4a5a');
+const boxingGym = fightGym('boxing_gym', 'Punch & Crunch', 'Tanner Road Estate', 'estate', 'boxing', 'boxing_ring', { name: 'Coach Del', seed: 3301, body: 'male', top: 'tshirt', colour: '#7a1414' }, 'PUNCH & CRUNCH — BOXING SINCE 1979', '#5a2a22');
+const karateDojo = fightGym('karate_dojo', 'Fists First', 'Leisure Park', 'leisure', 'dojo', 'dojo_mat', { name: 'Mrs Okafor', seed: 3302, body: 'female', top: 'tshirt', colour: '#f0eee8' }, 'FISTS FIRST — KARATE & MUAY THAI', '#e8e0d0');
+const wrestlingClub = fightGym('wrestling_club', 'Rough & Tumble', 'Kingsway Precinct', 'precinct', 'wrestling', 'wrestling_mat', { name: 'Big Kev', seed: 3303, body: 'male', top: 'vest', colour: '#1f2a44' }, 'ROUGH & TUMBLE — WRESTLING & GRAPPLING', '#3a4a5a');
 
 // ---- the floor in front: rooms at their real depth ---------------------------------------------
 // Each room is about 8 m deep now (world/rooms.ts). What it always had stays against the back wall; this is what
@@ -729,9 +728,9 @@ export function fitOut<T extends LevelDef>(level: T): T {
   return decor ? { ...withFront, props: [...withFront.props, ...addDecor(withFront, decor.map((p) => ({ ...p })), withFront.bounds.maxZ + ROOM_EXTRA)] } : withFront;
 }
 
-// ---- Central Police Station: the front desk, and through the back the custody suite --------------
+// ---- Kirkgate Constabulary: the front desk, and through the back the custody suite --------------
 /**
- * Central Police Station (police step 1, furnished from the owner's police sets): the custody block at the left
+ * Kirkgate Constabulary (police step 1, furnished from the owner's police sets): the custody block at the left
  * end (two holding cells and the interview room against the back wall, the custody sergeant's desk, fingerprints
  * and the property store beside them), the public side at the right (the charge desk where Sgt Hollis keeps the
  * front counter, waiting benches, the noticeboard). Leaving takes you straight home, never back onto Market
@@ -755,7 +754,7 @@ const CELL_WALLS = [
 
 const policeStation: LevelDef = {
   id: 'police_station',
-  name: 'Central Police Station',
+  name: 'Kirkgate Constabulary',
   district: 'City Centre',
   theme: 'shop',
   bounds: { minX: 0, maxX: 26, ...ROOM },
@@ -766,7 +765,7 @@ const policeStation: LevelDef = {
   ],
   exits: [{ id: 'out', kind: 'door', x: 25.6, z: 0.9, to: 'home', toEntry: 'door', label: 'Leave: straight home' }],
   walls: CELL_WALLS,
-  facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'CENTRAL POLICE STATION', colour: '#16243f' }],
+  facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'KIRKGATE CONSTABULARY', colour: '#16243f' }],
   props: [
     // Custody: the holding cells and the interview room stand against the back wall, their barred doors facing out.
     D('policeHoldingCellDouble', 2.45, atBack('policeHoldingCellDouble')),
@@ -804,7 +803,7 @@ const policeStation: LevelDef = {
   weather: 'indoors',
 };
 
-// ---- The Arches: the fight club in the cellar under Kane's Boxing (fightclub/club.ts) --------------------
+// ---- The Scrap Yard: the fight club in the cellar under Hard Knocks (fightclub/club.ts) --------------------
 
 /** The pit: where the fight happens, out on the cellar floor. */
 export const PIT = { x: 12.5, z: 2.9, w: 7.2, d: 4.4 };
@@ -815,7 +814,7 @@ export const PIT_WAIT = { x: PIT.x + 4.4, z: PIT.z - 1.2 };
 
 const fightClub: LevelDef = {
   id: 'fight_club',
-  name: 'The Arches',
+  name: 'The Scrap Yard',
   district: 'Industrial Quarter',
   theme: 'basement',
   bounds: { minX: 0, maxX: 22, ...ROOM },
@@ -824,7 +823,7 @@ const fightClub: LevelDef = {
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'industrial', toEntry: 'club', label: 'Up the steps to Canal Side Works' },
     { id: 'cab_home', kind: 'door', x: 21.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Back stairs: a lift home' },
   ],
-  facades: [{ kind: 'basement', x0: 0, x1: 22, label: 'THE ARCHES' }],
+  facades: [{ kind: 'basement', x0: 0, x1: 22, label: 'THE SCRAP YARD' }],
   props: [
     // The pit: a stained canvas floor with its circles, out in the middle of the cellar. You walk on it.
     { kind: 'wrestling_mat', x: PIT.x, z: PIT.z, size: [PIT.w / 2, PIT.d / 2], solid: false, colour: '#3a1616' },

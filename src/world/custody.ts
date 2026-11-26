@@ -1,5 +1,5 @@
 /**
- * Getting nicked properly (docs/POLICE_PLAN.md): you wake up in a cell at the Central Police Station with a
+ * Getting nicked properly (docs/POLICE_PLAN.md): you wake up in a cell at the Kirkgate Constabulary with a
  * charge sheet. Bail is priced from what's on your record (`progress/record.ts`); pay it and walk out, or do
  * a night inside and pay a smaller court fine. Either way the stolen goods are gone and the charges are dealt
  * with.

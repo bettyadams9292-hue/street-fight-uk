@@ -1,7 +1,7 @@
 /**
  * The clothing overhaul: every style the game offers builds into something worn on the body,
  * the cut edges are straight, shoes are shaped like shoes with a sole under the whole foot, hats
- * have their brims, everything Threads sells exists, and anything bought can be worn and is kept
+ * have their brims, everything JD Streets sells exists, and anything bought can be worn and is kept
  * in the save.
  */
 import { readFileSync } from 'fs';
@@ -226,7 +226,7 @@ test('caps have a peak and bucket hats a brim, on the head bone', () => {
   assert(!(beanie.extra ?? []).length, 'a beanie has no brim');
 });
 
-test('everything Threads sells exists and can be worn', () => {
+test('everything JD Streets sells exists and can be worn', () => {
   for (const id of SHOP_STOCK) {
     const d = ITEMS[id];
     assert(d, `${id} is in stock but not an item`);

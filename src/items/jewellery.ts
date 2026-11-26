@@ -239,8 +239,8 @@ export const JEWEL_ITEMS: Readonly<Record<string, JewelLook>> = {
 };
 
 /**
- * The plain pieces sold elsewhere (Threads, the pawn shop) drawn the same way when worn,
- * so a gold chain from Threads shows on the new characters too.
+ * The plain pieces sold elsewhere (JD Streets, the pawn shop) drawn the same way when worn,
+ * so a gold chain from JD Streets shows on the new characters too.
  */
 export const LEGACY_LOOKS: Readonly<Record<string, JewelLook>> = {
   chain_silver: { id: 'n_curb_silver', finish: 'silver' },

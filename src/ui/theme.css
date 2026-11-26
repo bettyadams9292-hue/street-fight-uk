@@ -2374,45 +2374,107 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
   .barber-screen .panel-actions { margin-top: 4px; }
 }
 
-/* ---- A cashpoint (ui/atmUI.ts): the machine's screen, keys either side of the balance ---- */
-.screen.atm-screen { justify-content: center; align-items: center; }
-.atm-face {
-  width: min(520px, 92vw); padding: 14px 16px 12px; background: linear-gradient(180deg, #0f2a3a, #0a1a26);
-  box-shadow: inset 0 0 0 2px #2b4c62, 0 0 0 6px #1a1d24, 0 0 0 8px #3a3f4a, 0 10px 30px rgba(0, 0, 0, 0.6);
-  color: #d8f1ff; font-family: var(--ui);
+/* ---- A cash machine (ui/atmUI.ts): Califax / Lloyd's THC software on a steel fascia with side buttons ---- */
+.screen.atm-screen { justify-content: center; align-items: center; background: rgba(6, 8, 10, 0.82); padding: 10px 16px; }
+.atm-machine {
+  width: min(720px, 100%); background: linear-gradient(180deg, #9ea3a8, #6f757b 60%, #5c6166); border-radius: 6px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.5); padding: 0 0 12px; animation: atm-in 0.28s ease-out;
 }
-.atm-brand { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 1px solid #2b4c62; padding-bottom: 6px; margin-bottom: 8px; }
-.atm-brand b { font-family: var(--head); font-weight: 900; font-size: 22px; letter-spacing: 0.02em; color: #8fe3ff; }
-.atm-brand span { font-size: 12px; color: #7fa6bc; }
-.atm-bal { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
-.atm-bal div { display: flex; flex-direction: column; padding: 6px 10px; background: rgba(0, 0, 0, 0.3); }
-.atm-bal span { font-size: 12px; color: #7fa6bc; }
-.atm-bal b { font-family: var(--head); font-weight: 900; font-size: 24px; color: #fff; }
-.atm-sec { font-family: var(--head); font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: #8fe3ff; margin: 8px 0 4px; }
-.atm-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px; }
-.atm-keys.one { grid-template-columns: 1fr; margin-top: 6px; }
-.atm-key {
-  display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 6px; border: 0; cursor: pointer; font: inherit;
-  background: linear-gradient(180deg, #d9dde4, #a9afba); color: #10141c; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+@keyframes atm-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+.atm-fascia { font-family: Arial, Helvetica, sans-serif; font-weight: 900; letter-spacing: 0.08em; text-align: center; font-size: 18px; padding: 7px 0; border-radius: 6px 6px 0 0; }
+.atm-front { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 12px 12px 0; }
+.atm-bezel {
+  display: grid; grid-template-columns: 40px 1fr 40px; grid-template-rows: minmax(120px, auto) repeat(4, 40px); column-gap: 8px; row-gap: 4px;
+  background: #2a2d31; padding: 10px 8px; border-radius: 4px; box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
 }
-.atm-key b { font-family: var(--head); font-weight: 900; font-size: 18px; }
-.atm-key span { font-size: 11px; color: #3a4250; }
-.atm-key:disabled { opacity: 0.35; cursor: default; }
-.atm-key:focus-visible, .atm-key.focused { outline: 3px solid var(--yellow); outline-offset: 1px; }
-.atm-face .hub-msg { margin-top: 8px; min-height: 1.3em; color: #cfeeff; }
-.atm-screen .panel-actions { width: min(520px, 92vw); margin-top: 10px; }
+.atm-glass { grid-column: 2; grid-row: 1 / 6; background: var(--atm-bg); border: 3px solid #111; border-radius: 3px; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.45); }
+.atm-head { grid-column: 2; grid-row: 1; align-self: start; display: flex; justify-content: space-between; align-items: baseline; padding: 8px 12px 0; color: var(--atm-ink); z-index: 1; }
+.atm-head b { font-family: Arial, Helvetica, sans-serif; font-weight: 900; font-size: 15px; letter-spacing: 0.08em; }
+.atm-head span { font-family: Arial, Helvetica, sans-serif; font-size: 11px; opacity: 0.7; }
+.atm-body {
+  grid-column: 2; grid-row: 1; z-index: 1; padding: 34px 16px 8px; color: var(--atm-ink); font-family: Arial, Helvetica, sans-serif; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; animation: atm-fade 0.18s ease-out;
+}
+@keyframes atm-fade { from { opacity: 0; } to { opacity: 1; } }
+.atm-msg { margin: 0; font-size: 15px; line-height: 1.3; }
+.atm-msg.atm-title { font-size: 19px; font-weight: 700; }
+.atm-msg.atm-small { font-size: 12px; opacity: 0.8; }
+.atm-msg.atm-bad { color: #ffb0a8; }
+.atm-big { margin: 2px 0; font-size: 30px; font-weight: 700; letter-spacing: 0.02em; }
+.atm-hero { font-family: Arial, Helvetica, sans-serif; font-weight: 900; font-size: 34px; letter-spacing: 0.1em; animation: atm-hero 0.45s ease-out; }
+@keyframes atm-hero { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+.atm-loader { display: flex; gap: 6px; margin-top: 6px; }
+.atm-loader i { width: 9px; height: 9px; background: var(--atm-accent); animation: atm-dot 0.9s infinite ease-in-out; }
+.atm-loader i:nth-child(2) { animation-delay: 0.15s; }
+.atm-loader i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes atm-dot { 0%, 100% { opacity: 0.25; transform: scale(0.8); } 50% { opacity: 1; transform: none; } }
+.atm-pin { display: flex; gap: 14px; margin-top: 8px; }
+.atm-pin i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--atm-ink); transition: background 0.1s; }
+.atm-pin i.on { background: var(--atm-ink); }
+.atm-amount { display: flex; align-items: baseline; gap: 4px; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--atm-accent); padding: 4px 16px; min-width: 150px; justify-content: center; }
+.atm-amount span { font-size: 20px; }
+.atm-amount b { font-size: 28px; font-variant-numeric: tabular-nums; }
+.atm-side {
+  grid-column: 1; width: 40px; height: 34px; align-self: center; border: 0; border-radius: 3px; cursor: pointer;
+  background: linear-gradient(180deg, #d9dcdf, #9ca1a6); box-shadow: 0 3px 0 #4a4e52, inset 0 1px 0 #fff; touch-action: manipulation;
+}
+.atm-side.right { grid-column: 3; }
+.atm-side:active { transform: translateY(2px); box-shadow: 0 1px 0 #4a4e52; }
+.atm-side:not(.live) { opacity: 0.55; cursor: default; }
+.atm-opt {
+  grid-column: 2; z-index: 1; align-self: center; margin: 0 6px; padding: 0 10px; height: 34px; min-width: 40%; border: 0; cursor: pointer; touch-action: manipulation;
+  background: var(--atm-panel); color: var(--atm-ink); font: 700 14px Arial, Helvetica, sans-serif; display: flex; align-items: center; position: relative;
+}
+.atm-opt.left { justify-self: start; justify-content: flex-start; border-left: 4px solid var(--atm-accent); }
+.atm-opt.right { justify-self: end; justify-content: flex-end; border-right: 4px solid var(--atm-accent); }
+.atm-opt.left::before, .atm-opt.right::after { content: ''; position: absolute; top: 50%; width: 10px; border-top: 2px solid var(--atm-ink); opacity: 0.6; }
+.atm-opt.left::before { left: -14px; }
+.atm-opt.right::after { right: -14px; }
+.atm-opt:disabled { opacity: 0.4; cursor: default; }
+.atm-opt.focused, .atm-opt:focus-visible { outline: 3px solid var(--yellow); outline-offset: 1px; }
+.atm-opt:active:not(:disabled) { filter: brightness(1.3); }
+.atm-keypad { display: grid; grid-template-columns: repeat(3, 56px) 92px; grid-template-rows: repeat(4, 38px); gap: 6px; justify-content: center; }
+.atm-k {
+  border: 0; border-radius: 3px; cursor: pointer; font: 700 17px Arial, Helvetica, sans-serif; color: #111; touch-action: manipulation;
+  background: linear-gradient(180deg, #f1f2f3, #b9bdc1); box-shadow: 0 3px 0 #4a4e52;
+}
+.atm-k:active { transform: translateY(2px); box-shadow: 0 1px 0 #4a4e52; }
+.atm-k.blank { visibility: hidden; }
+.atm-k.cancel, .atm-k.clear, .atm-k.enter { font-size: 12px; color: #fff; }
+.atm-k.cancel { background: linear-gradient(180deg, #e0463c, #a5241c); }
+.atm-k.clear { background: linear-gradient(180deg, #f2c94c, #c79a12); color: #111; }
+.atm-k.enter { background: linear-gradient(180deg, #3ec46d, #1e8a44); }
+.atm-keypad:not(.live) .atm-k { opacity: 0.55; pointer-events: none; }
+.atm-statement { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; text-align: left; }
+.atm-sline { display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; border-bottom: 1px dotted rgba(255, 255, 255, 0.3); padding: 2px 0; }
+.atm-sline small { opacity: 0.7; }
+.atm-receipt { background: #fbfaf5; color: #222; font: 12px 'Courier New', monospace; width: min(260px, 100%); padding: 8px 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); text-align: left; animation: atm-slip 0.35s ease-out; }
+@keyframes atm-slip { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.atm-rhead { text-align: center; font-weight: 900; letter-spacing: 0.1em; border-bottom: 1px dashed #888; padding-bottom: 4px; margin-bottom: 4px; }
+.atm-rline { display: flex; justify-content: space-between; gap: 10px; }
+.atm-rfoot { text-align: center; border-top: 1px dashed #888; margin-top: 4px; padding-top: 4px; font-size: 11px; }
+/* Sideways phones: the keypad beside the screen, everything a notch smaller. */
 @media (max-height: 520px) and (orientation: landscape) {
-  .atm-face { width: min(640px, 80vw); padding: 8px 12px; }
-  .atm-bal b { font-size: 18px; }
-  .atm-keys { grid-template-columns: repeat(5, 1fr); gap: 4px; }
-  .atm-key { padding: 4px; }
-  .atm-key b { font-size: 15px; }
-  .atm-sec { margin: 4px 0 2px; }
-  .atm-screen .panel-actions { width: min(640px, 80vw); margin-top: 4px; }
+  .screen.atm-screen { padding: 6px 12px; }
+  .atm-machine { width: min(780px, 100%); padding-bottom: 8px; }
+  .atm-fascia { font-size: 13px; padding: 4px 0; }
+  .atm-front { grid-template-columns: 1fr auto; padding: 8px 8px 0; align-items: center; gap: 8px; }
+  .atm-bezel { grid-template-rows: minmax(96px, auto) repeat(4, 34px); padding: 6px; }
+  .atm-side { height: 28px; }
+  .atm-opt { height: 28px; font-size: 13px; }
+  .atm-body { padding: 26px 10px 4px; }
+  .atm-big { font-size: 24px; }
+  .atm-keypad { grid-template-columns: repeat(3, 44px) 70px; grid-template-rows: repeat(4, 34px); gap: 5px; }
+  .atm-receipt { font-size: 11px; padding: 4px 8px; }
 }
 @media (orientation: portrait) and (max-width: 700px) {
-  .atm-keys { grid-template-columns: repeat(3, 1fr); }
-  .atm-bal b { font-size: 20px; }
+  .screen.atm-screen { padding: 8px 10px; }
+  .atm-bezel { grid-template-columns: 30px 1fr 30px; column-gap: 4px; padding: 8px 4px; grid-template-rows: minmax(150px, auto) repeat(4, 40px); }
+  .atm-side { width: 30px; }
+  .atm-opt { font-size: 13px; margin: 0 2px; padding: 0 6px; min-width: 0; max-width: 49%; }
+  .atm-opt.left::before, .atm-opt.right::after { display: none; }
+  .atm-body { padding: 30px 8px 6px; }
+  .atm-keypad { grid-template-columns: repeat(3, 1fr) 1.4fr; width: 100%; }
 }
 
 /* ---- Ink & Iron (ui/tattooUI.ts): the barber's board, with seven places as one scrolling row of tabs ---- */

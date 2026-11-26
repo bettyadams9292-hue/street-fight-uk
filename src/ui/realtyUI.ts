@@ -42,7 +42,7 @@ import type { Screen } from './UIManager';
 import { LEVELS } from '../world/levels';
 
 /**
- * Keys & Co: the property market and your portfolio. Browse what's for sale,
+ * Wrongmove: the property market and your portfolio. Browse what's for sale,
  * book a viewing, buy; then manage what you own: live in it, let it, set the
  * rent, see who lives there and what they've paid, collect rent, sell. The
  * same screens are on the computer at home. Every button goes through
@@ -329,13 +329,13 @@ function manageBlock(
   );
 }
 
-/** Keys & Co, the estate agents. */
+/** Wrongmove, the estate agents. */
 export function estateAgentScreen(progress: Progress, close: () => void, actions: RealtyActions, start: RealtyTab = 'market', focus?: string): Screen {
-  return panelScreen('Keys & Co Estate Agents', progress, realtyBody(progress, actions, start, focus), close);
+  return panelScreen('Wrongmove Estate Agents', progress, realtyBody(progress, actions, start, focus), close);
 }
 
 /** Inside a property: the brochure (viewing) or your own place's details. */
 export function propertyBrochureScreen(progress: Progress, id: string, close: () => void, actions: RealtyActions): Screen {
   const owned = !!holding(progress.save, id);
-  return panelScreen(owned ? 'Your property' : 'Keys & Co brochure', progress, realtyBody(progress, actions, owned ? 'mine' : 'market', id), close);
+  return panelScreen(owned ? 'Your property' : 'Wrongmove brochure', progress, realtyBody(progress, actions, owned ? 'mine' : 'market', id), close);
 }

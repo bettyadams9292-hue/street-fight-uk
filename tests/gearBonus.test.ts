@@ -55,7 +55,7 @@ test('a better tier of the same style gives more', () => {
   }
 });
 
-test('Threads sells every tier, from Basic to Iconic', () => {
+test('JD Streets sells every tier, from Basic to Iconic', () => {
   const tiers = new Set(SHOP_STOCK.filter((id) => ITEMS[id]?.category === 'clothing').map((id) => tierOf(ITEMS[id].rarity)));
   for (const t of [1, 2, 3, 4, 5]) assert(tiers.has(t), `no tier ${t} clothes for sale`);
 });

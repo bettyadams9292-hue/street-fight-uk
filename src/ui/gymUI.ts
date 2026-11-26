@@ -101,12 +101,12 @@ export function coachBoardScreen(progress: Progress, close: () => void, changed:
   }, close);
 }
 
-// ---- Iron Temple ---------------------------------------------------------------------------------
+// ---- PureGraft ---------------------------------------------------------------------------------
 
 export function gymStoreScreen(progress: Progress, close: () => void, saved: () => void, startId = 'dumbbells'): Screen {
   let sel = GYM_KIT[startId] ? startId : 'dumbbells';
   let armed = false;
-  return panelScreen('Iron Temple Fitness', progress, (msg, rebuild) => {
+  return panelScreen('PureGraft Fitness', progress, (msg, rebuild) => {
     const g = progress.save.gym;
     const def = GYM_KIT[sel];
     const owned = g.owned.includes(def.id);

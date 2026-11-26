@@ -23,7 +23,7 @@ import { panelScreen } from './hub';
 import type { Screen } from './UIManager';
 
 /**
- * Halden & Crane, the jewellers: browse each case, turn a piece over in the
+ * H. Sterling, the jewellers: browse each case, turn a piece over in the
  * preview, pick the metal, buy it, wear it. And the jewellery box: everything
  * you own, what's on, and putting things on and taking them off. Both go
  * through items/jewelleryBox.ts, which takes the money and changes the save.
@@ -84,7 +84,7 @@ export function jewellerScreen(progress: Progress, close: () => void, saved: () 
   let finish: FinishId = JEWELS[sel].finishes[0];
   let boxSel: string | null = null;
   let confirmSell: string | null = null;
-  return panelScreen('Halden & Crane', progress, (msg, rebuild) => {
+  return panelScreen('H. Sterling', progress, (msg, rebuild) => {
     const s = progress.save;
     const off = (c: JewelCat) => {
       removeJewel(progress, c);
@@ -179,7 +179,7 @@ function boxBody(progress: Progress, selUid: string | null, select: (uid: string
   const s = progress.save;
   const owned = s.jewellery.owned;
   if (!owned.length)
-    return [h('div', { class: 'inv-empty', text: 'Your jewellery box is empty. Halden & Crane in the Riverside Centre sells rings, watches, chains and grills.' })];
+    return [h('div', { class: 'inv-empty', text: 'Your jewellery box is empty. H. Sterling in the Riverside Centre sells rings, watches, chains and grills.' })];
   const sel = owned.find((o) => o.uid === selUid) ?? owned.find((o) => isWorn(s, o.uid)) ?? owned[owned.length - 1];
   const unseen = new Set(s.jewellery.unseen);
   const groups = JEWEL_CATS.map((c) => {
@@ -373,7 +373,7 @@ export function jewelleryBoxPanel(progress: Progress, changed: () => void, saved
       worn ? jewelSlot({ id: worn.id, finish: worn.finish }) : null),
     rows.length
       ? h('div', { class: 'jb-rows' }, ...rows)
-      : h('p', { class: 'jb-empty', text: `No ${JEWEL_CAT_LABELS[slot].toLowerCase()} yet. Halden & Crane in the Riverside Centre sells them, and some turn up after a fight.` }),
+      : h('p', { class: 'jb-empty', text: `No ${JEWEL_CAT_LABELS[slot].toLowerCase()} yet. H. Sterling in the Riverside Centre sells them, and some turn up after a fight.` }),
     rows.length ? h('p', { class: 'hint', text: worn ? 'Tap the one you’re wearing to take it off.' : 'Tap one to put it on.' }) : null,
     h('p', { class: 'jb-xp' }, h('b', { text: `+${Math.round(progress.xpBonus * 100)}% XP` }), h('span', { text: ` from what you’re wearing (up to ${Math.round(XP_BONUS_CAP * 100)}%). Four pieces on at once adds more, six more again.` })),
   );

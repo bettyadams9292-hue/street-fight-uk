@@ -1,5 +1,5 @@
 /**
- * NeXo Cutz, the barber on the High Street: a new hairstyle, a beard shaped, trimmed or shaved off,
+ * Peaky Barbers, the barber on the High Street: a new hairstyle, a beard shaped, trimmed or shaved off,
  * a colour, the grey covered or put in. Pure rules (prices, what's allowed, paying and applying it);
  * the screen is ui/barberUI.ts and the shop is `barber_shop` in world/interiors.ts.
  *
@@ -9,7 +9,7 @@
 import { FACIAL_HAIR, HAIR_COLOURS, HAIR_STYLES, LABELS, type BodyType, type CharacterAppearance, type FacialHair, type HairStyle } from '../character/Appearance';
 import type { Progress } from '../progress/Progress';
 
-export const BARBER = { shop: 'NeXo Cutz', barber: 'Vinny' } as const;
+export const BARBER = { shop: 'Peaky Barbers', barber: 'Vinny' } as const;
 
 /** What a cut costs, and the line Vinny says about it. */
 export interface Job {

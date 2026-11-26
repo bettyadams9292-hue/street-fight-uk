@@ -1,3 +1,4 @@
+import type { CarMods } from '../property/carMods';
 import type { ArchetypeId } from '../ai/archetypes';
 import type { BossId } from '../ai/bosses';
 import type { WeaponId } from '../combat/Weapons';
@@ -52,7 +53,7 @@ export type PropKind =
   | 'barber_chair' | 'barber_station' | 'barber_pole'
   // The tattoo studio: the artist's bed, the flash sheets on the wall
   | 'tattoo_bed' | 'flash_wall'
-  // Keys & Co's window display; the big rooms' fittings (pool, cinema, conservatory, roof terrace, dressing room)
+  // Wrongmove's window display; the big rooms' fittings (pool, cinema, conservatory, roof terrace, dressing room)
   | 'agent_window' | 'pool_basin' | 'pool_lounger' | 'cinema_screen' | 'projector' | 'cinema_seats'
   | 'conservatory_glazing' | 'terrace_balustrade' | 'terrace_deck' | 'terrace_sofa' | 'terrace_table' | 'wardrobe_wall' | 'dressing_island';
 
@@ -67,6 +68,8 @@ export interface PropDef {
   label?: string;
   /** Furniture or vehicle catalogue id (kind 'furniture' / 'vehicle'). */
   item?: string;
+  /** An owned car's cosmetic mods (kind 'vehicle'; property/carMods.ts). */
+  mods?: CarMods;
   /** Quarter turns (0..3). Odd turns swap width and depth. */
   rot?: number;
   /** Half extents, overriding the kind's size. */
@@ -237,7 +240,7 @@ export type StationId =
   | 'jeweller_counter' | 'jeweller_case' | 'agent_desk' | 'agent_window' | 'prop_info' | 'prop_rest'
   // Someone who gives out jobs (`tab` is their id, src/jobs/contacts.ts)
   | 'contact'
-  // Sully at the Arches fight club: the card, the title (fightclub/club.ts)
+  // Sully at the Scrap Yard fight club: the card, the title (fightclub/club.ts)
   | 'fight_club'
   // The dealing prep table in the garage (business/dealing.ts)
   | 'prep';

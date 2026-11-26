@@ -401,7 +401,7 @@ test('the follow list and fatigue save; an old single "active" companion becomes
   assert(junk.following.join() === 'shaz', 'cleaned');
 });
 
-test('the Snug has room for everyone you can hire', () => {
+test('The Firm has room for everyone you can hire', () => {
   const pub = LEVELS.pub;
   for (const c of COMPANION_LIST) {
     const st = pub.stations!.find((s) => s.id === 'recruit' && s.tab === c.id)!;

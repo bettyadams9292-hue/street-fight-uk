@@ -95,7 +95,7 @@ export function buyJewel(p: Progress, id: string, finish: FinishId, priceMult = 
 
 /**
  * Put a piece on. Whatever was in that spot comes off: another piece goes back in the box, and a plain item
- * from the shops (a Threads chain, the gumshield) goes back in your pockets, or the stash if they're full.
+ * from the shops (a JD Streets chain, the gumshield) goes back in your pockets, or the stash if they're full.
  */
 export function wearJewel(p: Progress, uid: string): PurchaseResult {
   const s = p.save;

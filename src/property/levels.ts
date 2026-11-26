@@ -1,3 +1,4 @@
+import { paintOf } from './carMods';
 import type { AreaId, GameSave } from '../progress/Progress';
 import { DEALING_FLAG } from '../business/dealing';
 import type { LevelDef, PropDef, StationDef } from '../world/LevelTypes';
@@ -30,11 +31,18 @@ export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
   const props: PropDef[] = area === 'home' || area === 'basement' || area === 'property' ? [] : streetBikes(level);
   const stations: StationDef[] = [];
 
-  if (area === 'estate') {
-    const car = prop.cars.find((c) => c.uid === prop.activeCar);
+  // The car: on the drive, or parked where you last drove it (property/parking.ts).
+  const car = prop.cars.find((c) => c.uid === prop.activeCar);
+  const parked = prop.carOut && car && prop.carOut.uid === car.uid ? prop.carOut : null;
+  if (car && parked && parked.area === area) {
+    const def = CARS[car.id];
+    props.push({ kind: 'vehicle', item: car.id, colour: paintOf(car), mods: car.mods, x: parked.x, z: parked.z, size: def.size });
+    stations.push({ id: 'car', x: parked.x, z: Math.max(-0.2, parked.z - def.size[1] - 0.45), label: `Your ${def.name}: drive somewhere` });
+  }
+  if (area === 'estate' && !parked) {
     if (car) {
       const def = CARS[car.id];
-      props.push({ kind: 'vehicle', item: car.id, colour: car.colour, x: DRIVEWAY.x, z: DRIVEWAY.z, size: def.size });
+      props.push({ kind: 'vehicle', item: car.id, colour: paintOf(car), mods: car.mods, x: DRIVEWAY.x, z: DRIVEWAY.z, size: def.size });
       stations.push({ id: 'car', x: DRIVEWAY.x, z: DRIVEWAY.z + def.size[1] + 0.4, label: `Your ${def.name}: drive somewhere, swap cars` });
     }
   }

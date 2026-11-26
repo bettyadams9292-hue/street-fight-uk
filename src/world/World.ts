@@ -1,3 +1,4 @@
+import { atmOpen, bankOf } from '../money/atm';
 import { doorX } from '../city/doorSpots';
 import { BODY_RADIUS } from '../core/constants';
 import { BOSS_DAMAGE_TAKEN, ENEMY_DAMAGE_TAKEN, fightStrength, SECOND_WIND } from './fightTuning';
@@ -1118,7 +1119,7 @@ export class World {
       if (Math.abs(p.pos.x - them.pos.x) > 7) this.endDuel(false, true);
       return;
     }
-    // The Arches: to the stoppage. Down and out (or walk out of the pit) loses; put them down to win.
+    // The Scrap Yard: to the stoppage. Down and out (or walk out of the pit) loses; put them down to win.
     if (d.kind === 'club') {
       if (them.isKO || them.vitals.health <= 0) this.endDuel(true, false);
       else if (p.isKO || p.vitals.health <= 0) {
@@ -1156,7 +1157,7 @@ export class World {
       x.vitals.health = Math.max(x.vitals.health, Math.round(x.vitals.maxHealth * 0.6));
     }
     this.tokens.release(f);
-    // The Arches: their fight's over, they're off out of the pit (and off the fight list).
+    // The Scrap Yard: their fight's over, they're off out of the pit (and off the fight list).
     if (d.kind === 'club') {
       this.clubDownAt = -1;
       this.enemies = this.enemies.filter((e) => e !== f);
@@ -1168,7 +1169,7 @@ export class World {
     this.events.emit('duel:end', { kind: d.kind, id: d.id, won, stopped, landed: d.landed, blocked: d.blocked, seconds: Math.round(frames / SIM_HZ) });
   }
 
-  // ---- the Arches fight club (fightclub/club.ts) -----------------------------------------
+  // ---- the Scrap Yard fight club (fightclub/club.ts) -----------------------------------------
 
   /** The next opponent, waiting at the side of the pit (not in the fight list till the bell). */
   clubFoe: { f: Fighter; bout: Bout } | null = null;
@@ -1181,7 +1182,7 @@ export class World {
     return this.duel?.kind === 'club';
   }
 
-  /** Into the Arches: the crowd round the pit, and tonight's opponent if you've a fight to have. */
+  /** Into the Scrap Yard: the crowd round the pit, and tonight's opponent if you've a fight to have. */
   private setUpClub(): void {
     if (this.level.id !== 'fight_club') return;
     const p = this.progress;
@@ -1313,7 +1314,12 @@ export class World {
     this.stations = (level.stations ?? []).filter((st) => !seats.includes(st));
     // Every cashpoint is a cashpoint (money/atm.ts): stand in front of it to use it. The street ones are set into the
     // wall (not solid), so passers-by walk past them as they would the wall.
-    for (const pr of level.props) if (pr.kind === 'atm') this.stations.push({ id: 'atm', x: pr.x, z: Math.min(level.bounds.maxZ - 0.3, pr.z + 0.6), label: 'Use the cashpoint' });
+    // The machine's bank (Califax or Lloyd's THC) rides on the station's tab; before the second boss they're all out of service.
+    for (const pr of level.props)
+      if (pr.kind === 'atm') {
+        const bank = bankOf(pr.label);
+        this.stations.push({ id: 'atm', x: pr.x, z: Math.min(level.bounds.maxZ - 0.3, pr.z + 0.6), label: atmOpen(progress) ? `Use the ${bank.name} cash machine` : `${bank.name} cash machine (out of service)`, tab: bank.id });
+      }
     const obstacles: Obstacle[] = [];
     for (const p of level.props) {
       const box = propBox(p);
@@ -1467,7 +1473,7 @@ export class World {
     });
 
     // Heat: if you're wanted, the police might be waiting for you on the street.
-    // Not down the Arches: the police don't know it's there.
+    // Not down the Scrap Yard: the police don't know it's there.
     const street = !['home', 'shop', 'pawn', 'pub'].includes(level.theme) && level.id !== 'fight_club';
     if (street && progress.save.heat >= 40 && this.lootRng.next() < progress.save.heat / 120) {
       // Kerrigan rings ahead: they'll be a while, and you know they're coming.
@@ -1525,6 +1531,27 @@ export class World {
     this.events.emit('gang:hunt', { district: this.level.district, count: n, gang });
   }
 
+  /**
+   * Jumped on the way somewhere (the run-there autopilot, travel/onFoot.ts): a few lads off the street come at you
+   * from one side, an ordinary street fight. False if something's already going on.
+   */
+  ambush(n: number): boolean {
+    const p = this.player;
+    if (this.activeEncounter || this.locked || this.duel || p.isKO || this.policeActive || this.progress.save.property.riding) return false;
+    if (this.enemies.some((e) => !e.isKO)) return false;
+    const side = this.lootRng.next() < 0.5 ? -1 : 1;
+    const ids: ArchetypeId[] = ['hooded', 'thug', 'runner'];
+    const out: Fighter[] = [];
+    for (let i = 0; i < n; i++) {
+      const f = this.spawnEnemy(ids[i % ids.length], this.spawnX(null, i), this.spawnZ(i));
+      f.pos.x = Math.max(this.arena.bounds.minX + 0.5, Math.min(this.arena.bounds.maxX - 0.5, p.pos.x + side * (7 + i * 1.4)));
+      out.push(f);
+    }
+    this.events.emit('enemy:say', { fighter: out[0], text: ['Oi! Where d’you think you’re going?', 'Empty your pockets, mate.', 'Wrong street, pal.', 'You lost or something?'][Math.floor(this.lootRng.next() * 4)], kind: 'taunt' });
+    for (const c of this.civilians) c.brain.react(p.pos.x, this.sim.frame);
+    return true;
+  }
+
   private clearedKey(def: EncounterDef): string {
     return `cleared:${this.level.id}:${def.id}`;
   }
@@ -1540,6 +1567,11 @@ export class World {
   containerKey(c: ContainerDef): string {
     // Fixed finds are once ever; random loot refills every few trips.
     return c.fixed ? `searched:${this.level.id}:${c.id}` : `searched:${this.level.id}:${c.id}:${Math.floor(this.progress.save.trips / CONTAINER_REFILL_TRIPS)}`;
+  }
+
+  /** The container being searched right now (the lock-up's door lifts while you open it). */
+  get searchingId(): string | null {
+    return this.searching > 0 ? this.searchTarget?.id ?? null : null;
   }
 
   isSearched(c: ContainerDef): boolean {
@@ -2387,7 +2419,7 @@ export class World {
     if (n.hair) look.hair = n.hair as HairStyle;
     if (n.hairColour) look.hairColour = n.hairColour;
     if (n.tattoos) look.tattoos = { ...look.tattoos, ...(n.tattoos as Partial<CharacterAppearance['tattoos']>) };
-    // Sully runs the Arches: he looks like himself, not a stranger with his name.
+    // Sully runs the Scrap Yard: he looks like himself, not a stranger with his name.
     if (s.id === 'fight_club') Object.assign(look, BOSSES.sully.appearance);
     const f = new Fighter({
       id: this.nextId++,
