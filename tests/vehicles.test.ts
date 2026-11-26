@@ -3,6 +3,7 @@
  * left over. Bikes and scooters are the 30 approved models: each one is ridden properly (hands on the grips, feet on
  * the pedals, pegs or deck), handles like itself, and old saves' bikes become new ones.
  */
+import { kitStreet, planStreet } from '../src/city/street';
 import { existsSync, readdirSync } from 'fs';
 import { BIKE_LIST, CAR_LIST } from '../src/property/catalogue';
 import { CAR_MODELS, VEHICLE_FILES } from '../src/render/props/vehicleFiles';
@@ -149,6 +150,7 @@ test('bikes and scooters: few, leaning on the wall out of the way, solid, never 
       assert(p.leanOnWall && p.z < base.bounds.minZ, `${area}: ${p.item} isn't against the wall`);
       assert(!p.rot || p.rot === 2, `${area}: ${p.item} isn't along the wall`);
       for (const e of lv.exits) if (e.kind === 'door') assert(Math.abs(e.x - p.x) > 0.9, `${area}: ${p.item} at the door ${e.id}`);
+      if (kitStreet(base)) for (const d of planStreet(base).shopDoors) assert(Math.abs(d.x - p.x) > 1.2, `${area}: ${p.item} across ${d.name}'s door`);
       for (const q of added) if (q !== p) assert(Math.abs(q.x - p.x) > 1.6, `${area}: ${p.item} and ${q.item} piled together`);
     }
   }

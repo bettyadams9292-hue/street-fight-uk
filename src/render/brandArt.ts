@@ -183,7 +183,14 @@ export function vinylTexture(text: string, b: Brand, aspect: number): THREE.Canv
   g.font = font(b.face === 'script' ? 'heavy' : b.face, 26);
   g.textBaseline = 'middle';
   const uw = g.measureText(unit).width;
-  for (let x = 12; x < w; x += uw) g.fillText(unit, x, h / 2 + 2);
+  if (uw > w * 0.6) {
+    // One pane's worth: the words once, centred and fitted.
+    const one = shown(b, text);
+    const px = fitText(g, one, b.face === 'script' ? 'heavy' : b.face, 30, w * 0.92);
+    g.font = font(b.face === 'script' ? 'heavy' : b.face, px);
+    g.textAlign = 'center';
+    g.fillText(one, w / 2, h / 2 + 2);
+  } else for (let x = 12; x < w; x += uw) g.fillText(unit, x, h / 2 + 2);
   return textTex(c);
 }
 
@@ -208,5 +215,20 @@ export function bannerTexture(text: string, b: Brand, aspect: number): THREE.Can
     g.arc(x, y, 4, 0, Math.PI * 2);
     g.fill();
   }
+  return textTex(c);
+}
+
+/** White lettering on clear, for a door's or window's glass: the text centred, fitted to the width. */
+export function glassLettering(text: string, face: BrandFace, aspect: number, colour = '#f4f1e8'): THREE.CanvasTexture {
+  const h = 96;
+  const w = Math.max(h, Math.min(1024, Math.round(h * aspect)));
+  const [c, g] = canvas(w, h);
+  g.clearRect(0, 0, w, h);
+  const px = fitText(g, text, face === 'script' ? 'heavy' : face, h * 0.72, w * 0.94);
+  g.font = font(face === 'script' ? 'heavy' : face, px);
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = colour;
+  g.fillText(text, w / 2, h / 2 + 2);
   return textTex(c);
 }

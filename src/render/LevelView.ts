@@ -1,3 +1,4 @@
+import { glassLettering } from './brandArt';
 import { bankOf } from '../money/atm';
 import { advanceWork, DISTRICT_BUILD_BUDGET_MS } from '../performance/FrameBudget';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -34,7 +35,7 @@ import { buildAnyModel, buildEquipmentModel, buildGymKitModel, buildFurnitureMod
 import { EQUIPMENT } from '../business/catalogue';
 import { CARS, FINISHES, FURNITURE } from '../property/catalogue';
 import { themeProfile } from './themes';
-import { kitStreet, planStreet, type ApprovedPlacement, type ShopGood, type StreetPlan } from '../city/street';
+import { kitStreet, planStreet, type ApprovedPlacement, type ShopDoor, type ShopGood, type StreetPlan } from '../city/street';
 import { bakeApproved, prototype, type ApprovedCopy } from './approved/prototype';
 import { bakeStatic } from './bakeStatic';
 import { buildKitStreetSteps, hasKitPiece, kitFloor, kitPiece, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
@@ -351,6 +352,8 @@ export class LevelView {
       yield;
       this.buildShopGoods(this.street.goods);
       yield;
+      this.buildShopDoors(this.street.shopDoors);
+      yield;
       this.buildApproved(this.street.approved);
     } else this.buildGround();
     yield;
@@ -586,6 +589,54 @@ export class LevelView {
     m.position.set(x, y, this.back + out);
     this.group.add(m);
     return true;
+  }
+
+  /**
+   * Every shop's front door, in the gap left in its glass (city/street.ts ShopDoor): an aluminium frame in the
+   * glazing's dark grey, a glazed leaf with a push bar and a kick plate, the shop's name and its hours on the
+   * glass, and a fixed glass panel above, up to the top of the screen. A shop you can go into has its exit here.
+   */
+  private buildShopDoors(doors: ShopDoor[]): void {
+    const alu = this.mat('#2c2f33', 0.35, 0.75, { flatShading: false });
+    const steel = this.mat('#b9bdc2', 0.3, 0.9, { flatShading: false });
+    const glass = this.mat('#9fb4c4', 0.06, 0.3, { transparent: true, opacity: 0.16, depthWrite: false });
+    for (const d of doors) {
+      const z = d.z;
+      const hw = d.w / 2;
+      const top = 2.92;
+      const head = 2.38;
+      // The frame: jambs, the head between door and fanlight, and the threshold.
+      this.box(0.07, top - 0.1, 0.12, d.x - hw + 0.035, 0.1 + (top - 0.1) / 2, z - 0.06, alu, false);
+      this.box(0.07, top - 0.1, 0.12, d.x + hw - 0.035, 0.1 + (top - 0.1) / 2, z - 0.06, alu, false);
+      this.box(d.w, 0.07, 0.12, d.x, head, z - 0.06, alu, false);
+      this.box(d.w, 0.04, 0.16, d.x, 0.12, z - 0.06, steel, false);
+      // The door leaf: a slim frame round its glass, hung to one side, slightly ajar on the push side.
+      const lw = d.w - 0.16;
+      const leaf = new THREE.Group();
+      leaf.position.set(d.x, 0.14, z - 0.1);
+      this.group.add(leaf);
+      this.box(lw, 0.09, 0.05, 0, head - 0.2, 0, alu, false, leaf);
+      this.box(lw, 0.2, 0.05, 0, 0.1, 0, alu, false, leaf);
+      this.box(0.08, head - 0.18, 0.05, -lw / 2 + 0.04, (head - 0.18) / 2, 0, alu, false, leaf);
+      this.box(0.08, head - 0.18, 0.05, lw / 2 - 0.04, (head - 0.18) / 2, 0, alu, false, leaf);
+      this.box(lw - 0.16, head - 0.47, 0.012, 0, 0.2 + (head - 0.47) / 2, 0, glass, false, leaf);
+      // Kick plate and a push bar across the glass.
+      this.box(lw - 0.16, 0.16, 0.01, 0, 0.12, 0.03, steel, false, leaf);
+      this.box(lw - 0.36, 0.035, 0.035, 0, 1.0, 0.06, steel, false, leaf);
+      for (const s of [-1, 1]) this.box(0.03, 0.03, 0.05, s * (lw / 2 - 0.2), 1.0, 0.035, steel, false, leaf);
+      // The shop's name and hours on the glass.
+      const name = glassLettering(d.brand.lower ? d.name.toLowerCase() : d.name, d.brand.face, (lw - 0.3) / 0.12);
+      const hours = glassLettering('OPEN 9–6 · 7 DAYS', 'heavy', (lw - 0.4) / 0.07, '#e8e4d8');
+      const nameM = new THREE.MeshStandardMaterial({ map: name, transparent: true, depthWrite: false, emissive: 0xffffff, emissiveMap: name, emissiveIntensity: 0.25 });
+      const hoursM = new THREE.MeshStandardMaterial({ map: hours, transparent: true, depthWrite: false, emissive: 0xffffff, emissiveMap: hours, emissiveIntensity: 0.2 });
+      const n = new THREE.Mesh(new THREE.PlaneGeometry(lw - 0.3, 0.12), nameM);
+      n.position.set(0, 1.55, 0.012);
+      const hm = new THREE.Mesh(new THREE.PlaneGeometry(lw - 0.4, 0.07), hoursM);
+      hm.position.set(0, 1.38, 0.012);
+      leaf.add(n, hm);
+      // The fanlight over the door.
+      this.box(d.w - 0.14, top - head - 0.06, 0.012, d.x, head + (top - head) / 2, z - 0.1, glass, false);
+    }
   }
 
   /** A security-set piece (SecurityLibrary) on the back wall: x along the street, y its height, `out` in front of the wall. */
