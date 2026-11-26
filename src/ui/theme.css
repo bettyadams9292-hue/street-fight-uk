@@ -2446,6 +2446,8 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .atm-head { grid-column: 2; grid-row: 1; align-self: start; display: flex; justify-content: space-between; align-items: baseline; padding: 8px 12px 0; color: var(--atm-ink); z-index: 1; }
 .atm-head b { font-family: Arial, Helvetica, sans-serif; font-weight: 900; font-size: 15px; letter-spacing: 0.08em; }
 .atm-head span { font-family: Arial, Helvetica, sans-serif; font-size: 11px; opacity: 0.7; }
+.atm-head:has(.atm-headlogo) { align-items: center; gap: 8px; }
+.atm-head span { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .atm-body {
   grid-column: 2; grid-row: 1; z-index: 1; padding: 34px 16px 8px; color: var(--atm-ink); font-family: Arial, Helvetica, sans-serif; text-align: center;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; animation: atm-fade 0.18s ease-out;
@@ -2505,6 +2507,14 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .atm-sline small { opacity: 0.7; }
 .atm-receipt { background: #fbfaf5; color: #222; font: 12px 'Courier New', monospace; width: min(260px, 100%); padding: 8px 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); text-align: left; animation: atm-slip 0.35s ease-out; }
 @keyframes atm-slip { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.atm-headlogo { display: block; flex: none; height: clamp(20px, 4.5vh, 30px); width: auto; border-radius: 2px; }
+.atm-brand { font-family: Arial, Helvetica, sans-serif; font-weight: 900; letter-spacing: 0.1em; font-size: 15px; }
+.atm-brand.logo { line-height: 0; }
+.atm-brand.logo img { display: block; height: clamp(34px, 9vh, 60px); width: auto; margin: 0 auto 2px; border-radius: 3px; }
+.atm-fascia.art { padding: 0; line-height: 0; overflow: hidden; }
+.atm-fascia.art img { display: block; height: 46px; max-width: 100%; margin: 0 auto; object-fit: contain; }
+.atm-hero.logo { animation: atm-hero 0.45s ease-out; line-height: 0; }
+.atm-hero.logo img { display: block; width: min(78%, 320px); height: auto; margin: 0 auto; border-radius: 4px; }
 .atm-rhead { text-align: center; font-weight: 900; letter-spacing: 0.1em; border-bottom: 1px dashed #888; padding-bottom: 4px; margin-bottom: 4px; }
 .atm-rline { display: flex; justify-content: space-between; gap: 10px; }
 .atm-rfoot { text-align: center; border-top: 1px dashed #888; margin-top: 4px; padding-top: 4px; font-size: 11px; }
@@ -2513,6 +2523,8 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
   .screen.atm-screen { padding: 6px 12px; }
   .atm-machine { width: min(780px, 100%); padding-bottom: 8px; }
   .atm-fascia { font-size: 13px; padding: 4px 0; }
+  .atm-fascia.art { padding: 0; }
+  .atm-fascia.art img { height: 32px; }
   .atm-front { grid-template-columns: 1fr auto; padding: 8px 8px 0; align-items: center; gap: 8px; }
   .atm-bezel { grid-template-rows: minmax(96px, auto) repeat(4, 34px); padding: 6px; }
   .atm-side { height: 28px; }
