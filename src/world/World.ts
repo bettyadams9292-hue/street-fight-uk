@@ -214,7 +214,7 @@ export function heroChance(street: number): number {
   return Math.min(0.65, 0.3 + street / 250);
 }
 
-/** What a passer-by has on them that's worth taking: what you can see they're wearing, then their pockets. */
+/** What a passer-by is seen wearing that's worth anything (it raises the odds they'll fight for it). */
 export function valuablesOf(a: CharacterAppearance): string[] {
   const out: string[] = [];
   if (a.accessories.includes('chain')) out.push(a.chainColour === 'gold' ? 'chain_gold' : 'chain_silver');
@@ -222,6 +222,24 @@ export function valuablesOf(a: CharacterAppearance): string[] {
   if (a.accessories.includes('ring')) out.push('ring_signet');
   if (a.accessories.includes('earring')) out.push('earring_silver');
   return out;
+}
+
+/**
+ * What you actually get off someone you mug: a roll for each pocket, not everything they own. Most have a wallet
+ * with a few quid in it; some a phone; worn jewellery almost never comes off (one cheap piece at most, gold
+ * rarely). And a street that's just been worked (`streak`: muggings here in the last MUG_MEMORY seconds) gives up
+ * less: people keep their wallets in, more of them have nothing on them. So mugging is a desperate few quid,
+ * never a way to fund the game (docs/ECONOMY.md).
+ */
+export function mugHaul(next: () => number, a: CharacterAppearance, streak: number): { items: string[]; cash: number } {
+  const fall = 1 / (1 + 0.6 * streak);
+  if (next() < Math.min(0.75, 0.12 + 0.18 * streak)) return { items: [], cash: next() < 0.5 ? Math.round(1 + next() * 3) : 0 };
+  const items: string[] = [];
+  const cash = next() < 0.8 ? Math.round((3 + next() * 22) * fall) : 0;
+  if (next() < 0.25 * fall) items.push('phone_cheap');
+  const worn = valuablesOf(a).sort((x, y) => (ITEMS[x]?.value ?? 0) - (ITEMS[y]?.value ?? 0))[0];
+  if (worn && next() < (worn === 'chain_gold' || worn === 'ring_signet' ? 0.05 : 0.12) * fall) items.push(worn);
+  return { items, cash };
 }
 
 /**
@@ -2831,8 +2849,8 @@ export class World {
     if (!best) return null;
     const a = best.appearance;
     const him = a.body === 'female' ? 'her' : 'him';
-    const v = valuablesOf(a)[0];
-    const label = `Mug ${him}${v ? `: ${ITEMS[v].name.toLowerCase()}` : ''}`;
+    // You don't know what's in their pockets till you try.
+    const label = `Mug ${him}`;
     return { kind: 'mug', x: best.pos.x, z: best.pos.z, label, target: best };
   }
 
@@ -2849,17 +2867,20 @@ export class World {
     const rng = this.lootRng;
     const a = target.appearance;
     const male = a.body !== 'female';
-    const items = valuablesOf(a);
-    if (rng.next() < 0.55) items.push('phone_cheap');
-    const cash = Math.round(5 + rng.next() * 40);
-    const worth = items.reduce((t, id) => t + (ITEMS[id]?.value ?? 0), 0) + cash;
+    const streak = this.progress.mugStreak(this.level.district);
+    const { items, cash } = mugHaul(() => rng.next(), a, streak);
+    this.progress.noteMugging(this.level.district);
+    // What they're seen wearing makes them likelier to fight, whatever they'd actually hand over.
+    const worth = valuablesOf(a).reduce((t, id) => t + (ITEMS[id]?.value ?? 0), 0) + cash;
     const resisted = rng.next() < mugResistChance(c.brain.temper, male, worth, this.progress.save.level);
     this.mugged.add(target);
     // Who saw it (before they scatter): each one is someone who'll describe you.
     const witnesses = this.civilians.filter((o) => o !== c && !o.f.isKO && Math.abs(o.f.pos.x - target.pos.x) < 9);
     const wasKnown = this.progress.heatIn().street >= KNOWN_FACE_HEAT;
-    const heat = HEAT.mug.police + witnesses.length * HEAT.witness.police;
-    const h = this.progress.addHeatOf({ police: heat, street: HEAT.mug.street + witnesses.length * HEAT.witness.street });
+    // A street that's just been worked notices quicker: each mugging here in a while adds half again.
+    const again = 1 + 0.5 * streak;
+    const heat = Math.round((HEAT.mug.police + witnesses.length * HEAT.witness.police) * again);
+    const h = this.progress.addHeatOf({ police: heat, street: Math.round((HEAT.mug.street + witnesses.length * HEAT.witness.street) * again) });
     this.progress.logCrime('mugging');
     target.facing = p.pos.x < target.pos.x ? -1 : 1;
     const say = (f: Fighter, lines: string[]) => this.events.emit('enemy:say', { fighter: f, text: lines[Math.floor(rng.next() * lines.length)], kind: 'taunt' });
