@@ -296,7 +296,7 @@ export function acceptJob(p: Progress, job: Job): JobResult {
   if (s.active) return { ok: false, reason: `You’re already on a job: ${s.active.title}. Finish it or drop it first.` };
   if (job.item && (job.kind === 'deliver' || job.kind === 'deal') && p.spaceFor(job.item) < 1) return { ok: false, reason: 'No room in your pockets for it. Make some space first.' };
   if (job.kind === 'deal') {
-    if (!p.pay(job.cost ?? 0)) return { ok: false, reason: `The package is £${job.cost}. You haven’t got it.` };
+    if (!p.pay(job.cost ?? 0, 'cash')) return { ok: false, reason: `The package is £${job.cost}, cash. You haven’t got it on you.` };
   }
   if (job.item && (job.kind === 'deliver' || job.kind === 'deal')) p.giveItem(job.item, 1, job.kind === 'deal' ? { stolen: true } : {});
   s.active = { ...job, stage: 'go', deadline: job.seconds ? p.save.playTime + job.seconds : undefined };

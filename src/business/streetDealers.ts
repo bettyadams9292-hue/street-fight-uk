@@ -138,7 +138,7 @@ export function buyOff(p: Progress, district: string, drug: Drug, n: number): De
   const def = DRUG_DEFS[drug];
   if (p.spaceFor(def.dealItem, { stolen: true }) < k) return { ok: false, reason: 'No room in your pockets.' };
   const price = tradePrice(drug) * k;
-  if (!p.pay(price)) return { ok: false, reason: `That’s £${price}. You haven’t got it.` };
+  if (!p.pay(price, 'cash')) return { ok: false, reason: `That’s £${price} in cash. You haven’t got it on you.` };
   p.giveItem(def.dealItem, k, { stolen: true });
   const c = corners(p);
   const st = stretchOf(p.save.trips);
