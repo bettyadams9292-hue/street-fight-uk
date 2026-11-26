@@ -3004,31 +3004,107 @@ export class LevelView {
         break;
       }
       case 'atm': {
-        // Set into the wall like a real through-the-wall machine (money/atm.ts): a granite surround flush with the
-        // building behind, the bank's name on a lit header over it, the machine itself at its real size.
+        // A real through-the-wall machine (money/atm.ts): only its face shows, set back in a granite pier on the
+        // building line, under a hood, with the bank's lit logo over it. Nothing stands out on the pavement.
         const bank = bankOf(p.label);
-        const surround = this.mat('#2b2d30', 0.55, 0.2);
-        B(W + 0.34, 2.1, 0.04, 0, 1.05, -D / 2 - 0.02, surround, false);
-        // The lit header carries the bank's approved logo (public/art/banks/*-fascia.webp), its wordmark otherwise.
-        let head: THREE.Texture = signTexture(bank.mark, bank.fascia[0], bank.fascia[1], { w: 512, h: 96 });
+        const wz = this.back - p.z;
+        const fz = wz + 0.2;
+        const stone = this.mat('#2b2d30', 0.5, 0.15, { flatShading: false });
+        // The pier, built round the opening (0.9 × 1.25 m, its foot at 0.75 m).
+        B(0.3, 3.2, 0.2, -0.6, 1.6, wz + 0.1, stone);
+        B(0.3, 3.2, 0.2, 0.6, 1.6, wz + 0.1, stone);
+        B(0.9, 0.75, 0.2, 0, 0.375, wz + 0.1, stone);
+        B(0.9, 1.2, 0.2, 0, 2.6, wz + 0.1, stone);
+        // The machine's face at the back of the recess.
+        // Brushed steel, kept as asked (an extra keeps the texture library off it).
+        const steel = this.mat('#8d939a', 0.35, 0.85, { flatShading: false });
+        // The face sits 6 cm back in the pier: in front of a branch's stone cladding (12 cm off the wall).
+        const rz = fz - 0.06;
+        B(0.9, 1.25, 0.04, 0, 1.375, rz - 0.02, steel, false);
+        // Screen: the bank's own colours, its logo on it.
+        let screen: THREE.Texture | null = null;
+        if (bank.logo) {
+          screen = new THREE.TextureLoader().load(bank.logo);
+          screen.colorSpace = THREE.SRGBColorSpace;
+        }
+        B(0.5, 0.36, 0.03, 0, 1.64, rz, this.mat('#15181c', 0.3, 0.4), false);
+        const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.3), new THREE.MeshStandardMaterial({ color: screen ? 0xffffff : new THREE.Color(bank.bg), map: screen, emissive: 0xffffff, emissiveMap: screen, emissiveIntensity: screen ? 0.85 : 0.2, roughness: 0.2 }));
+        scr.position.set(0, 1.64, rz + 0.017);
+        if (!screen) (scr.material as THREE.MeshStandardMaterial).emissive = new THREE.Color(bank.bg);
+        g.add(scr);
+        // Side keys either side of the screen.
+        const key = this.mat('#c8ccd0', 0.4, 0.7);
+        for (let i = 0; i < 4; i++) for (const sx of [-0.3, 0.3]) B(0.05, 0.035, 0.025, sx, 1.53 + i * 0.075, rz, key, false);
+        // The keypad on a sloped shelf, the card slot lit in the bank's colour, the cash and receipt slots.
+        const pad = new THREE.Group();
+        pad.position.set(-0.05, 1.2, rz + 0.07);
+        pad.rotation.x = -0.5;
+        g.add(pad);
+        this.box(0.34, 0.03, 0.18, 0, 0, 0, this.mat('#3a3e44', 0.4, 0.7), false, pad);
+        const keyCap = this.mat('#d8dce0', 0.5, 0.6);
+        for (let r = 0; r < 4; r++) for (let k = 0; k < 3; k++) this.box(0.05, 0.015, 0.03, -0.09 + k * 0.06, 0.022, -0.06 + r * 0.04, keyCap, false, pad);
+        for (let r = 0; r < 3; r++) this.box(0.055, 0.015, 0.03, 0.12, 0.022, -0.05 + r * 0.045, this.mat(['#c8102e', '#e8c82a', '#2a8a3a'][r], 0.5), false, pad);
+        const glow = this.mat(bank.accent, 0.3, 0.2, { emissive: new THREE.Color(bank.accent).getHex(), emissiveIntensity: 1.2 });
+        B(0.1, 0.06, 0.03, 0.3, 1.3, rz, this.mat('#1a1c20', 0.4, 0.5), false);
+        B(0.08, 0.012, 0.032, 0.3, 1.3, rz + 0.002, glow, false);
+        B(0.36, 0.05, 0.03, 0, 0.93, rz, this.mat('#111214', 0.4, 0.5), false);
+        B(0.3, 0.008, 0.032, 0, 0.955, rz + 0.002, glow, false);
+        B(0.08, 0.02, 0.03, 0.3, 1.05, rz, this.mat('#111214', 0.4, 0.5), false);
+        // CASH over the screen, and a hood over the opening.
+        const t = signTexture('CASH', bank.fascia[0], bank.fascia[1], { w: 256, h: 96 });
+        B(0.6, 0.14, 0.02, 0, 1.92, rz + 0.005, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.55 }), false);
+        B(1.0, 0.04, 0.24, 0, 2.02, fz - 0.06, steel, false);
+        // The bank's lit logo on the pier over it (Leeko's approved fascia artwork).
+        let head: THREE.Texture = signTexture(bank.mark, bank.fascia[0], bank.fascia[1], { w: 512, h: 112 });
         if (bank.fasciaArt) {
           head = new THREE.TextureLoader().load(bank.fasciaArt);
           head.colorSpace = THREE.SRGBColorSpace;
           head.anisotropy = 4;
         }
-        B(W + 0.34, 0.22, 0.05, 0, 2.21, -D / 2, new THREE.MeshStandardMaterial({ map: head, emissive: 0xffffff, emissiveMap: head, emissiveIntensity: 0.55 }), false);
-        if (this.fitting(g, 'atm', 0, 0, 0, { native: true })) {
-          const t = signTexture('CASH', bank.fascia[0], bank.fascia[1], { w: 256, h: 96 });
-          const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.16), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5 }));
-          sign.position.set(0, 1.58, 0.262);
-          g.add(sign);
-          break;
+        B(1.36, 0.3, 0.03, 0, 2.42, fz + 0.016, new THREE.MeshStandardMaterial({ map: head, emissive: 0xffffff, emissiveMap: head, emissiveIntensity: 0.6 }), false);
+        break;
+      }
+      case 'bank_front': {
+        // A bank branch's ground floor laid over its building: Portland stone and a granite plinth, the bank's lit
+        // fascia, a glazed door at the left end and windows with its offers. Its cash machine is an 'atm' prop
+        // set into the right end (the pier stands proud of the stone).
+        const bank = bankOf(p.label);
+        const wz = this.back - p.z;
+        const hw = W / 2;
+        const stoneM = this.mat('#d9d3c5', 0.85);
+        B(W, 3.95, 0.12, 0, 1.975, wz + 0.06, stoneM);
+        B(W + 0.04, 0.42, 0.18, 0, 0.21, wz + 0.09, this.mat('#2b2d30', 0.45, 0.15));
+        // Cornice and fascia.
+        B(W + 0.1, 0.12, 0.26, 0, 3.98, wz + 0.13, stoneM);
+        let head: THREE.Texture = signTexture(bank.mark, bank.fascia[0], bank.fascia[1], { w: 1024, h: 224 });
+        if (bank.fasciaArt) {
+          head = new THREE.TextureLoader().load(bank.fasciaArt);
+          head.colorSpace = THREE.SRGBColorSpace;
+          head.anisotropy = 8;
         }
-        B(W, 1.6, D, 0, 0.8, 0, this.mat('#4a4d55', 0.4, 0.6));
-        B(W * 0.7, 0.3, 0.02, 0, 1.25, D / 2 + 0.01, this.mat('#0a1a2a', 0.1, 0.4, { emissive: 0x2a8ad8, emissiveIntensity: 0.9 }), false);
-        B(W * 0.5, 0.15, 0.06, 0, 0.95, D / 2 + 0.03, this.mat('#2a2a2a', 0.4, 0.6), false);
-        const t = signTexture('CASH', bank.fascia[0], bank.fascia[1], { w: 256, h: 96 });
-        B(W, 0.2, 0.02, 0, 1.52, D / 2 + 0.01, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5 }), false);
+        const fw = Math.min(W - 0.5, 0.66 * 4.57);
+        B(fw + 0.08, 0.74, 0.06, 0, 3.4, wz + 0.15, this.mat('#1a1c20', 0.4, 0.6));
+        B(fw, 0.66, 0.02, 0, 3.4, wz + 0.19, new THREE.MeshStandardMaterial({ map: head, emissive: 0xffffff, emissiveMap: head, emissiveIntensity: 0.65 }), false);
+        // The door: bronze frame, glass, a push plate, the opening hours on the glass.
+        const bronze = this.mat('#5a4630', 0.35, 0.8);
+        const dx = -hw + 0.9;
+        B(1.2, 2.5, 0.08, dx, 1.25 + 0.42, wz + 0.13, bronze);
+        B(1.04, 2.34, 0.02, dx, 1.25 + 0.42, wz + 0.18, this.mat('#0c141c', 0.04, 0.9, { emissive: 0xffe8c8, emissiveIntensity: 0.05 }), false);
+        const hours = signTexture('MON–FRI 9–4:30', '#14202a', '#e8e4d8', { w: 512, h: 96 });
+        B(0.6, 0.11, 0.01, dx, 1.5, wz + 0.195, new THREE.MeshStandardMaterial({ map: hours, transparent: true, emissive: 0xffffff, emissiveMap: hours, emissiveIntensity: 0.3 }), false);
+        // Windows between the door and the machine, with the bank's offers in them.
+        const x0 = dx + 0.9;
+        const x1 = hw - 1.7;
+        const offers = bank.id === 'lloyds' ? ['SAVINGS 4.1% AER', 'TALK TO US ABOUT LOANS', 'MORTGAGE ADVICE'] : ['MORTGAGES FROM 3.9%', 'SWITCH & GET £150', 'BUSINESS BANKING'];
+        const n = Math.max(1, Math.round((x1 - x0) / 1.8));
+        const ww = (x1 - x0) / n;
+        for (let i = 0; i < n; i++) {
+          const cx = x0 + ww * (i + 0.5);
+          B(ww - 0.2, 2.0, 0.06, cx, 1.55, wz + 0.13, bronze);
+          B(ww - 0.32, 1.88, 0.02, cx, 1.55, wz + 0.165, this.mat('#0c141c', 0.04, 0.9, { emissive: 0xffe8c8, emissiveIntensity: 0.05 }), false);
+          const card = signTexture(offers[i % offers.length], bank.bg, '#ffffff', { w: 512, h: 160 });
+          B(Math.min(1.1, ww - 0.5), 0.34, 0.01, cx, 1.55, wz + 0.175, new THREE.MeshStandardMaterial({ map: card, emissive: 0xffffff, emissiveMap: card, emissiveIntensity: 0.45 }), false);
+        }
         break;
       }
       case 'vending': {
