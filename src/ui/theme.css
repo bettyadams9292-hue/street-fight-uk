@@ -1605,6 +1605,25 @@ body.phone-on .hud-buttons { opacity: 0.35; pointer-events: none; }
 .pm-water-label { fill: #5e8fbf; font: italic 600 22px/1 -apple-system, var(--ui); text-anchor: middle; }
 .pm-route { fill: none; stroke: #0a84ff; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
 .pm-dest { fill: #ff3b30; stroke: #fff; stroke-width: 6; }
+/* Map overhaul (Phase 2): districts as shaded bands along their own streets, boundaries where they meet, your
+   district lit, locked ones hatched; the route as one line with chevrons the way you're going; a flag and a name
+   tag at the destination, a YOU tag on the dot; the many shop and people pins only when zoomed in (.far hides them). */
+.pm-zone { fill: none; stroke: rgba(120, 130, 150, 0.12); stroke-width: 170; stroke-linecap: round; stroke-linejoin: round; }
+.pm-zone.here { stroke: rgba(10, 132, 255, 0.2); }
+.pm-zone.locked { stroke: url(#pm-hatch); opacity: 0.55; }
+.pm-border { stroke: rgba(255, 255, 255, 0.7); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 2 12; }
+.pm-district.here { fill: #5ac8fa; }
+.pm-district.locked { fill: rgba(235, 235, 245, 0.28); }
+.pm-district-sub { fill: #8ac9ff; font: 700 15px/1 -apple-system, var(--ui); letter-spacing: 0.08em; text-anchor: middle; paint-order: stroke; stroke: #232326; stroke-width: 5; }
+.pm-district-sub.locked { fill: #ff9f8a; }
+.pm-chev { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.pm-flagpole { stroke: #fff; stroke-width: 3; stroke-linecap: round; }
+.pm-flag { fill: #ff3b30; stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; }
+.pm-destdot { fill: #ff3b30; stroke: #fff; stroke-width: 3; }
+.pm-tag rect { fill: #0a84ff; stroke: #fff; stroke-width: 2; }
+.pm-tag.dest rect { fill: #ff3b30; }
+.pm-tag text { fill: #fff; font: 800 12px/1 -apple-system, var(--ui); letter-spacing: 0.06em; text-anchor: middle; }
+.pm-svg.far .pm-pin.minor:not(.sel) { display: none; }
 .pm-you { fill: #0a84ff; stroke: #fff; stroke-width: 4; }
 .pm-you-ring { fill: #fff; }
 .pm-you-halo { fill: rgba(10, 132, 255, 0.18); }

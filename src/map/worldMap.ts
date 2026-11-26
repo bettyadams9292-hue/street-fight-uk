@@ -13,6 +13,8 @@ import { statusOf } from '../realty/portfolio';
 import { CARS } from '../property/catalogue';
 import { DRIVE_HOME, parkingSpot, type ParkingSpot } from '../property/parking';
 import { journeyRisk, riskWord } from '../travel/onFoot';
+import { atmOpen, bankOf } from '../money/atm';
+import { LOCKUP_ID } from '../world/lockup';
 
 /**
  * The town map's data. Places, doors, links, locks, bosses, shops and people
@@ -168,7 +170,9 @@ const BLURB: Record<AreaId, string> = {
 
 export type MarkerKind =
   | 'home' | 'mission' | 'boss' | 'side' | 'shop' | 'clothes' | 'pawn' | 'gym' | 'pub' | 'casino'
-  | 'cars' | 'bikes' | 'property' | 'contact' | 'street' | 'parked' | 'police';
+  | 'cars' | 'bikes' | 'property' | 'contact' | 'street' | 'parked' | 'police'
+  // Phase 2 (map overhaul): the cash machines, the car mod shop and the boss-reward lock-up have pins of their own.
+  | 'atm' | 'mods' | 'lockup';
 
 export const MARKER_LABELS: Record<MarkerKind, string> = {
   home: 'Home (safehouse)',
@@ -188,6 +192,9 @@ export const MARKER_LABELS: Record<MarkerKind, string> = {
   street: 'Street',
   parked: 'Your bike',
   police: 'Police station',
+  atm: 'Cash machine',
+  mods: 'Car mods',
+  lockup: 'Lock-up',
 };
 
 const INTERIOR_KIND: Partial<Record<AreaId, MarkerKind>> = {
@@ -658,6 +665,95 @@ export function markers(p: Progress): MapMarker[] {
     if (at) out.push({ key: 'parked', kind: 'parked', area: bike.area as AreaId, at: { x: at.x, y: at.y + 26 }, label: 'Where you left your bike' });
   }
   out.push(...bossMarkers(p));
+  out.push(...serviceMarkers(p));
+  return out;
+}
+
+/**
+ * The cash machines (money/atm.ts: four in town, out of service till Sully's beaten), the car mod shop (Arnold
+ * Shark's Mods tab) and the Estate King's lock-up, with what state each is in.
+ */
+export function serviceMarkers(p: Progress): MapMarker[] {
+  const out: MapMarker[] = [];
+  const open = atmOpen(p);
+  for (const id of AREA_IDS) {
+    const lvl = LEVELS[id];
+    if (!lvl || !LAYOUT[id]) continue;
+    for (const pr of lvl.props) {
+      if (pr.kind !== 'atm') continue;
+      const at = streetPoint(id, pr.x);
+      if (!at) continue;
+      const bank = bankOf(pr.label);
+      out.push({ key: `atm:${id}:${pr.x}`, kind: 'atm', area: id, at: { x: at.x + 16, y: at.y - 30 }, label: open ? `${bank.name} cash machine` : `${bank.name} cash machine (out of service till Sully’s beaten)` });
+    }
+    for (const c of lvl.containers ?? []) {
+      if (c.id !== LOCKUP_ID) continue;
+      const at = streetPoint(id, c.x);
+      if (!at) continue;
+      const emptied = p.has(`searched:${id}:${c.id}`);
+      const key = !!c.requires && p.has(c.requires);
+      const state = emptied ? 'emptied' : key ? 'you’ve got the key' : 'padlocked: the Estate King has the key';
+      out.push({ key: `lockup:${id}`, kind: 'lockup', area: id, at: { x: at.x - 16, y: at.y - 30 }, label: `The lock-up (${state})` });
+    }
+  }
+  const dealer = placePoint('car_dealer');
+  out.push({ key: 'mods:car_dealer', kind: 'mods', area: 'car_dealer', at: { x: dealer.x + 30, y: dealer.y - 24 }, label: 'Arnold Shark: car mods' });
+  return out;
+}
+
+/** The district an area belongs to, as the map names it. */
+export function districtOf(id: AreaId): string {
+  return place(id).district;
+}
+
+/**
+ * Each district as an area of the map: the roads in it (for its shaded band), where its name goes, whether you
+ * can get there yet, and if not, what opens it. Built from the same roads the routes use, so a district is drawn
+ * exactly where its streets are and nowhere else.
+ */
+export interface MapDistrict {
+  name: string;
+  roads: Pt[][];
+  label: Pt;
+  open: boolean;
+  why: string | null;
+  areas: AreaId[];
+}
+export function districts(p: Progress): MapDistrict[] {
+  const by = new Map<string, MapDistrict>();
+  for (const r of roads()) {
+    const d = by.get(r.district) ?? { name: r.district, roads: [], label: { x: 0, y: 0 }, open: false, why: null, areas: [] };
+    d.roads.push(r.pts);
+    d.areas.push(r.id);
+    by.set(r.district, d);
+  }
+  for (const d of by.values()) {
+    const mids = d.roads.map((r) => along(r, 0.5));
+    const minY = Math.min(...d.roads.flat().map((q) => q.y));
+    d.label = { x: mids.reduce((n, q) => n + q.x, 0) / mids.length, y: minY - 70 };
+    d.open = d.areas.some((a) => unlocked(p, a));
+    d.why = d.open ? null : lockReason(p, d.areas[0]);
+  }
+  return [...by.values()];
+}
+
+/**
+ * Where district meets district along the road: the points where one district's roads end and the next one's
+ * begin, so the map can mark the boundary (and only where the streets really connect).
+ */
+export function districtBorders(): { at: Pt; ang: number; from: string; to: string }[] {
+  const rs = roads();
+  const out: { at: Pt; ang: number; from: string; to: string }[] = [];
+  for (const a of rs) {
+    for (const b of rs) {
+      if (a === b || a.district === b.district) continue;
+      const end = a.pts[a.pts.length - 1];
+      const start = b.pts[0];
+      if (Math.hypot(end.x - start.x, end.y - start.y) > 2) continue;
+      const prev = a.pts[a.pts.length - 2] ?? end;
+      out.push({ at: end, ang: Math.atan2(end.y - prev.y, end.x - prev.x), from: a.district, to: b.district });
+    }
+  }
   return out;
 }
 
