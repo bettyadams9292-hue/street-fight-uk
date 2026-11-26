@@ -3009,7 +3009,13 @@ export class LevelView {
         const bank = bankOf(p.label);
         const surround = this.mat('#2b2d30', 0.55, 0.2);
         B(W + 0.34, 2.1, 0.04, 0, 1.05, -D / 2 - 0.02, surround, false);
-        const head = signTexture(bank.mark, bank.fascia[0], bank.fascia[1], { w: 512, h: 96 });
+        // The lit header carries the bank's approved logo (public/art/banks/*-fascia.webp), its wordmark otherwise.
+        let head: THREE.Texture = signTexture(bank.mark, bank.fascia[0], bank.fascia[1], { w: 512, h: 96 });
+        if (bank.fasciaArt) {
+          head = new THREE.TextureLoader().load(bank.fasciaArt);
+          head.colorSpace = THREE.SRGBColorSpace;
+          head.anisotropy = 4;
+        }
         B(W + 0.34, 0.22, 0.05, 0, 2.21, -D / 2, new THREE.MeshStandardMaterial({ map: head, emissive: 0xffffff, emissiveMap: head, emissiveIntensity: 0.55 }), false);
         if (this.fitting(g, 'atm', 0, 0, 0, { native: true })) {
           const t = signTexture('CASH', bank.fascia[0], bank.fascia[1], { w: 256, h: 96 });

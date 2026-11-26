@@ -49,6 +49,9 @@ export function atmScreen(
   el.style.setProperty('--atm-panel', bank.panel);
   el.style.setProperty('--atm-ink', bank.ink);
   el.style.setProperty('--atm-accent', bank.accent);
+  /** The bank's approved logo where there is one, its wordmark otherwise. */
+  const logoOr = (cls: string): HTMLElement =>
+    bank.logo ? h('div', { class: `${cls} logo` }, h('img', { src: bank.logo, alt: bank.name, draggable: 'false' })) : h('div', { class: cls, text: bank.mark });
   const fee = atmFee(district);
 
   let alive = true;
@@ -273,7 +276,7 @@ export function atmScreen(
     leaving = true;
     busy = true;
     sound('ok');
-    show({ body: [msg(`Thank you for banking with ${bank.name}.`, 'atm-title'), msg('Please take your card.'), loader()] });
+    show({ body: [logoOr('atm-brand'), msg(`Thank you for banking with ${bank.name}.`, 'atm-title'), msg('Please take your card.'), loader()] });
     after(1100, finish, true);
   };
   const finish = (): void => {
@@ -289,7 +292,7 @@ export function atmScreen(
     const head = (text: string) => [msg(text), loader()];
     sequence(
       [
-        [450, () => ({ body: [h('div', { class: 'atm-hero', text: bank.mark }), loader()] })],
+        [450, () => ({ body: [logoOr('atm-hero'), loader()] })],
         [600, () => ({ body: head('Reading your card…') })],
         [250, () => ({ body: [msg('Please enter your PIN'), dots(0)] })],
         ...[1, 2, 3, 4].map((n): [number, () => View] => [n === 4 ? 300 : 180, () => (sound('key'), { body: [msg('Please enter your PIN'), dots(n)] })]),
@@ -356,11 +359,11 @@ export function atmScreen(
     h(
       'div',
       { class: 'atm-machine' },
-      h('div', { class: 'atm-fascia', style: `background:${bank.fascia[0]};color:${bank.fascia[1]}`, text: bank.mark }),
+      h('div', { class: `atm-fascia${bank.fasciaArt ? ' art' : ''}`, style: `background:${bank.fascia[0]};color:${bank.fascia[1]}` }, bank.fasciaArt ? h('img', { src: bank.fasciaArt, alt: bank.name, draggable: 'false' }) : bank.mark),
       h('div', { class: 'atm-front' }, grid, pad),
     ),
   );
-  head.append(h('b', { text: bank.mark }), h('span', { text: fee ? `Charges £${fee}` : 'Free withdrawals' }));
+  head.append(bank.logo ? h('img', { class: 'atm-headlogo', src: bank.logo, alt: bank.name, draggable: 'false' }) : h('b', { text: bank.mark }), h('span', { text: fee ? `Charges £${fee}` : 'Free withdrawals' }));
 
   let started = false;
   return {
