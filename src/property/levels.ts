@@ -51,8 +51,8 @@ export function resolveLevel(area: AreaId, save: GameSave): LevelDef {
   if (out && !prop.riding && out.area === area && area !== 'home') {
     const bike = prop.bikes.find((b) => b.uid === out.uid);
     if (bike) {
-      // Parked bikes don't block you (you might be stood where you got off).
-      props.push({ kind: 'vehicle', item: bike.id, colour: bike.colour, x: out.x, z: out.z, size: BIKE_SIZE, solid: false, rot: out.left ? 2 : 0 });
+      // Your parked bike: solid once nobody's stood in it (you might be stood where you got off).
+      props.push({ kind: 'vehicle', item: bike.id, colour: bike.colour, x: out.x, z: out.z, size: BIKE_SIZE, solid: false, settle: true, rot: out.left ? 2 : 0 });
       stations.push({ id: 'bike', x: out.x, z: out.z + 0.2, label: `Your ${BIKES[bike.id].name}: get on` });
     }
   }

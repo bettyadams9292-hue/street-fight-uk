@@ -132,7 +132,7 @@ test("an old save's bikes become the nearest new ones, out on the street too", (
   for (const b of s.property.bikes) assert(BIKES[b.id], `${b.id} is a new bike`);
   assert(s.property.bikeOut?.uid === 'u1', 'the bike left out is still out');
 });
-test('bikes and scooters are parked across the world, never at a door, never indoors', () => {
+test('bikes and scooters: few, leaning on the wall out of the way, solid, never at a door, never piled up or indoors', () => {
   const save = newSave(createCharacter({ name: 'T', appearance: defaultAppearance(), background: 'estate_scrapper', allocated: emptyAllocation() }));
   let n = 0;
   const kinds = new Set<string>();
@@ -141,15 +141,19 @@ test('bikes and scooters are parked across the world, never at a door, never ind
     const lv = resolveLevel(area, save);
     const added = lv.props.filter((p) => p.kind === 'vehicle' && BIKES[p.item!] && !base.props.includes(p));
     if (base.deep) assert(!added.length, `${area}: bikes parked indoors`);
+    assert(added.length <= 3, `${area}: ${added.length} bikes, too many`);
     for (const p of added) {
       n++;
       kinds.add(BIKES[p.item!].cls);
-      assert(p.solid === false, `${area}: a parked bike blocks the way`);
+      assert(p.solid !== false, `${area}: ${p.item} can be walked through`);
+      assert(p.leanOnWall && p.z < base.bounds.minZ, `${area}: ${p.item} isn't against the wall`);
+      assert(!p.rot || p.rot === 2, `${area}: ${p.item} isn't along the wall`);
       for (const e of lv.exits) if (e.kind === 'door') assert(Math.abs(e.x - p.x) > 0.9, `${area}: ${p.item} at the door ${e.id}`);
+      for (const q of added) if (q !== p) assert(Math.abs(q.x - p.x) > 1.6, `${area}: ${p.item} and ${q.item} piled together`);
     }
   }
-  assert(n >= 12, `only ${n} bikes out in the world`);
-  for (const c of ['bicycle', 'ebike', 'scooter']) assert(kinds.has(c), `no ${c}s out in the world`);
+  assert(n >= 6, `only ${n} bikes out in the world`);
+  for (const c of ['bicycle', 'scooter']) assert(kinds.has(c), `no ${c}s out in the world`);
 });
 test('every listed file exists, and every file is listed', () => {
   const absent = VEHICLE_FILES.filter((f) => !existsSync(`${DIR}${f}.glb`));

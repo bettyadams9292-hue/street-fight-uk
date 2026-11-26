@@ -3862,6 +3862,10 @@ export class LevelView {
       const glow = this.cyl(Math.max(hx, hz) + 0.21, Math.max(hx, hz) + 0.21, 0.02, 0, 0.005, 0, this.mat('#ffffff', 0.5, 0, { emissive: isCar ? 0x6aa0ff : 0xff9a3a, emissiveIntensity: 0.8 }), 40, g);
       glow.scale.z = plinth.scale.z;
       glow.castShadow = false;
+    } else if (p.leanOnWall) {
+      // Leaning on the wall behind it: rolled about the line its wheels stand on, the top towards the building
+      // (turned round, the same roll leans the other way, so it flips with the turn).
+      model.rotation.x = (rot % 4 === 2 ? 1 : -1) * 0.2;
     } else if (!isCar && p.solid === false) {
       // A parked bike leans on its stand.
       model.rotation.x = -0.12;

@@ -82,6 +82,10 @@ export interface PropDef {
   wallY?: number;
   /** Showroom display: stand it on a lit plinth. */
   plinth?: boolean;
+  /** Not solid while someone stands in it (your bike as you get off), solid once they've stepped clear (World.settleObstacle). */
+  settle?: boolean;
+  /** A parked bike leaning on the wall behind it (world/streetBikes.ts). */
+  leanOnWall?: boolean;
   /** Drawn this much larger or smaller than its model (the stash safe at its biggest). */
   scale?: number;
 }

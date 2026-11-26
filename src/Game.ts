@@ -1974,6 +1974,9 @@ export class Game {
     w.removeStation('bike');
     this.renderer.setDynamicProp('parked_bike', null);
     this.hideLevelBike(w);
+    // It's under you now, not in your way.
+    w.clearObstacle('parked_bike');
+    for (const o of w.arena.obstacles) if (o.id?.startsWith('settle:') && Math.abs((o.minX + o.maxX) / 2 - p.save.property.bikeOut!.x) < 0.05) w.clearObstacle(o.id);
     // Stand on the bike's spot so you ride off from where it was.
     const out = p.save.property.bikeOut!;
     w.player.pos.x = out.x;
@@ -2017,6 +2020,8 @@ export class Game {
     const owned = p.save.property.bikes.find((b) => b.uid === p.save.property.bikeOut!.uid)!;
     w.removeStation('bike');
     w.addStation({ id: 'bike', x: spot.x, z: spot.z + 0.2, label: `Your ${BIKES[owned.id].name}: get on` });
+    // Solid once you've stepped off it.
+    w.settleObstacle('parked_bike', spot.x, spot.z, 0.95, 0.3);
     const park = () => this.renderer.setDynamicProp('parked_bike', { kind: 'vehicle', item: owned.id, colour: owned.colour, x: spot.x, z: spot.z, size: [0.95, 0.3], solid: false, rot: w.player.facing < 0 ? 2 : 0 });
     const view = this.renderer.viewOf(w.player);
     if (reason || !view) {
