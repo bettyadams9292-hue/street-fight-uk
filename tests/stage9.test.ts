@@ -73,6 +73,33 @@ test('every area in the game is on the map, inside the map, and has a descriptio
   }
 });
 
+test('every road on the map goes somewhere: no end that stops in the middle of nowhere', () => {
+  type P = { x: number; y: number };
+  const lines: { kind: string; pts: P[] }[] = [
+    ...roads().map((r) => ({ kind: r.id, pts: r.pts })),
+    ...FEATURES.minor.map((m) => ({ kind: 'back street', pts: m })),
+    ...FEATURES.arterial.map((m) => ({ kind: 'through-road', pts: m })),
+    ...FEATURES.links.map((m) => ({ kind: 'A-road', pts: m })),
+  ];
+  const off = (q: P) => q.x < -100 || q.y < -100 || q.x > MAP_W + 100 || q.y > MAP_H + 100;
+  const dist = (q: P, line: P[]) => {
+    let b = Infinity;
+    for (let i = 1; i < line.length; i++) {
+      const a = line[i - 1];
+      const dx = line[i].x - a.x;
+      const dy = line[i].y - a.y;
+      const t = Math.max(0, Math.min(1, ((q.x - a.x) * dx + (q.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+      b = Math.min(b, Math.hypot(a.x + dx * t - q.x, a.y + dy * t - q.y));
+    }
+    return b;
+  };
+  for (const L of lines) for (const end of [L.pts[0], L.pts[L.pts.length - 1]]) {
+    if (off(end)) continue;
+    const loop = Math.hypot(L.pts[0].x - L.pts[L.pts.length - 1].x, L.pts[0].y - L.pts[L.pts.length - 1].y) < 6;
+    assert(loop || lines.some((o) => o !== L && dist(end, o.pts) < 6), `a ${L.kind} stops at (${Math.round(end.x)}, ${Math.round(end.y)})`);
+  }
+});
+
 test('the map is a street plan: no street crosses another', () => {
   const segs = roads().flatMap((r) => r.pts.slice(1).map((q, i) => ({ id: r.id, a: r.pts[i], b: q })));
   type P = { x: number; y: number };
