@@ -2492,3 +2492,6 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 /* Shop tiers (items/shopTiers.ts): a locked piece's note in place of its Buy button. */
 .tier-lock { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .tier-lock .hint { margin: 0; color: var(--hg-muted, #b9b9b9); }
+
+/* A shop's painted name in its screen's heading (hub.ts headingArt). */
+.hub-head h2 .hub-title-art { height: clamp(34px, 6vh, 52px); width: auto; display: block; }

@@ -18,7 +18,7 @@ import { LEVELS, DISTRICT_ORDER } from '../world/levels';
 import { cycleRow, menuButton } from './controls';
 import { screenLogo } from './screens';
 import { h } from './dom';
-import { firstTitle, titleArt, slugify } from './titles';
+import { BRAND_TITLES, firstTitle, titleArt, titleFor, slugify } from './titles';
 import { icon } from './icons';
 import { COMPANIONS } from '../companions/companions';
 import type { Screen } from './UIManager';
@@ -39,6 +39,18 @@ export const CAB_MIN = 5;
 /** Total secrets hidden around the neighbourhood. */
 export const SECRET_COUNT = Object.values(LEVELS).reduce((n, l) => n + l.pickups.filter((p) => p.kind === 'secret').length, 0);
 
+/** A shop's heading in its painted title where there is one ("PureGraft Fitness" uses PureGraft's), else the words. */
+function headingArt(title: string): HTMLElement | string {
+  const whole = titleFor(title);
+  if (whole) return titleArt(title, whole, 'hub-title-art');
+  const words = title.split(' ');
+  for (let n = words.length - 1; n >= 1; n--) {
+    const art = titleFor(words.slice(0, n).join(' '));
+    if (art && BRAND_TITLES.has(art)) return titleArt(title, art, 'hub-title-art');
+  }
+  return title;
+}
+
 export function panelScreen(title: string, progress: Progress, body: (msg: (text: string, bad?: boolean) => void, rebuild: () => void) => HTMLElement[], close: () => void): Screen {
   const el = h('div', { class: 'screen panel-screen hub-screen' });
   let message = '';
@@ -53,7 +65,7 @@ export function panelScreen(title: string, progress: Progress, body: (msg: (text
       build();
     };
     el.replaceChildren(
-      h('div', { class: 'hub-head' }, h('h2', { text: title }), h('span', { class: 'wallet', text: wallet }), h('button', { class: 'icon-btn', 'aria-label': 'Close', title: 'Close (Esc)', onclick: () => close() }, icon('close'))),
+      h('div', { class: 'hub-head' }, h('h2', {}, headingArt(title)), h('span', { class: 'wallet', text: wallet }), h('button', { class: 'icon-btn', 'aria-label': 'Close', title: 'Close (Esc)', onclick: () => close() }, icon('close'))),
       h('div', { class: 'panel' }, ...body(set, build), msgEl),
       h('div', { class: 'panel-actions' }, menuButton('Back', close)),
     );

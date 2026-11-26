@@ -5,8 +5,19 @@
  */
 import { h } from './dom';
 
+/** The businesses' own names, which can head a longer title ("PureGraft Fitness", "Wrongmove Estate Agents"). */
+export const BRAND_TITLES: ReadonlySet<string> = new Set([
+  'weatherspoons', 'jd-streets', 'ladsbroke', 'cash-degenerator', 'grand-gamble', 'h-sterling', 'duber', 'sofa-so-good', 'arnold-shark',
+  'halfrauds', 'puregraft', 'wrongmove', 'peaky-barbers', 'primeark', 'debtenhams', 'curruptys', 'poundtown', 'califax', 'lloyds-thc',
+  'stash-converters', 'booze-brothers', 'b-and-thc', 'puff-and-connect', 'cash-4-u', 'debt365',
+]);
+
 /** Every graphic in public/art/titles (tests/titles.test.ts keeps this in step with the folder). */
 export const TITLE_SLUGS: ReadonlySet<string> = new Set([
+  // The rebranded businesses and travel (tools/icons/hg/kit_from_titles.py; digits and & from digits.py).
+  'weatherspoons', 'jd-streets', 'ladsbroke', 'cash-degenerator', 'grand-gamble', 'h-sterling', 'duber', 'sofa-so-good', 'arnold-shark',
+  'halfrauds', 'puregraft', 'wrongmove', 'peaky-barbers', 'primeark', 'debtenhams', 'curruptys', 'poundtown', 'califax', 'lloyds-thc',
+  'run-there', 'drive', 'mods', 'stash-converters', 'booze-brothers', 'b-and-thc', 'puff-and-connect', 'cash-4-u', 'debt365',
   // The tutorial (tools/icons/hg/kit_from_titles.py).
   'tutorials', 'resume-tutorial', 'skip-tutorial', 'tutorial-hints',
   // Dealing (kit_from_titles.py).
