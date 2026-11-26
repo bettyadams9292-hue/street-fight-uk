@@ -494,9 +494,9 @@ export function mapScreen(o: MapOptions): Screen {
     if (confirm) {
       const c = confirm;
       acts.push(
-        h('div', { class: 'mp-confirm', text: c.kind === 'cab' ? `Take a cab to ${pl.name}? ${c.miles?.toFixed(1) ?? ''} miles on the meter: £${c.cost}.` : `Head home to 14 Tanner Road?` }),
+        h('div', { class: 'mp-confirm', text: c.kind === 'cab' ? `Take a cab to ${pl.name}? ${c.miles?.toFixed(1) ?? ''} miles on the meter: £${c.cost}.` : c.kind === 'drive' ? `Drive to ${pl.name}? Free, and no trouble on the way. You’ll leave the car parked there.` : `Head home to 14 Tanner Road?` }),
         h('div', { class: 'mp-confirm-row' },
-          actionBtn('Go', c.kind === 'cab' ? 'cab' : 'home', () => o.travel(selected!, c), 'primary'),
+          actionBtn('Go', c.kind === 'home' ? 'home' : 'cab', () => o.travel(selected!, c), 'primary'),
           actionBtn('Cancel', 'back', () => { confirm = null; renderPanel(); }),
         ),
       );
@@ -514,7 +514,7 @@ export function mapScreen(o: MapOptions): Screen {
           }, '', t.ok || isDest ? undefined : t.why, !t.ok && !isDest, t.ok ? t.label : undefined));
           continue;
         }
-        acts.push(actionBtn(t.kind === 'cab' ? 'Take a cab' : 'Head home', t.kind === 'cab' ? 'cab' : 'home', () => { confirm = t; renderPanel(); }, t.ok ? 'primary' : '', t.ok ? undefined : t.why, !t.ok, t.ok ? t.label : undefined));
+        acts.push(actionBtn(t.kind === 'cab' ? 'Take a cab' : t.kind === 'drive' ? 'Drive' : 'Head home', t.kind === 'home' ? 'home' : 'cab', () => { confirm = t; renderPanel(); }, t.ok ? 'primary' : '', t.ok ? undefined : t.why, !t.ok, t.ok ? t.label : undefined));
       }
       if (isHere) acts.push(h('div', { class: 'mp-here-note', text: 'You’re here now.' }));
     }

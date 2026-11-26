@@ -226,6 +226,7 @@ export function mapApp(d: MapAppDeps): HTMLElement {
     const open = unlocked(p, m.area);
     const opts = travelOptions(p, d.here.area, m.area, d.calm, d.here.x);
     const cab = opts.find((x) => x.kind === 'cab');
+    const drive = opts.find((x) => x.kind === 'drive');
     const home = opts.find((x) => x.kind === 'home');
     const walk = opts.find((x) => x.kind === 'walk');
     const isHere = opts.some((x) => x.kind === 'here');
@@ -242,6 +243,7 @@ export function mapApp(d: MapAppDeps): HTMLElement {
       } }, on ? 'End route' : 'Directions', h('small', { text: on ? '' : walk.label.replace('Walk: ', '') })));
     }
     if (home) actions.push(h('button', { class: 'pm-act', disabled: !home.ok, onclick: () => d.travel(m.area, home) }, 'Go home', h('small', { text: home.ok ? 'On foot' : home.why ?? '' })));
+    if (drive && !isHere) actions.push(h('button', { class: 'pm-act', disabled: !drive.ok, onclick: () => d.travel(m.area, drive) }, 'Drive', h('small', { text: drive.ok ? 'Your car · free' : drive.why ?? '' })));
     if (cab) actions.push(h('button', { class: 'pm-act', disabled: !cab.ok, onclick: () => d.travel(m.area, cab) }, `Cab £${cab.cost}`, h('small', { text: cab.ok ? `Duber · ${cab.miles?.toFixed(1)} mi` : cab.why ?? '' })));
     sheet.replaceChildren(
       grab,

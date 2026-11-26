@@ -57,14 +57,15 @@ import { LEVELS } from './world/levels';
 import type { Simulation as Sim } from './core/Simulation';
 import { mapScreen } from './ui/mapUI';
 import { profileScreen } from './ui/profileUI';
-import { nextExit, type TravelOption } from './map/worldMap';
+import { cabStop, nextExit, type TravelOption } from './map/worldMap';
+import type { ParkingSpot } from './property/parking';
 import { Phone } from './ui/phone/Phone';
 import { barScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
 import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
 import { loadCharacterModels } from './render/characterModels';
 import { resolveLevel } from './property/levels';
-import { BIKES, FURNITURE, ROOMS, bikeHandling, type RoomId } from './property/catalogue';
+import { BIKES, CARS, FURNITURE, ROOMS, bikeHandling, type RoomId } from './property/catalogue';
 import { STAIRWELL, checkPlacement, suggestSpot, wallZ } from './property/home';
 import { mountBike, parkBike, placeFurniture, ridingBike, sellFurniture, storeBike, storeFurniture, type PlacedAt } from './property/state';
 import { EQUIPMENT, equipmentResale } from './business/catalogue';
@@ -1630,11 +1631,7 @@ export class Game {
         });
         break;
       case 'car':
-        screen = carScreen(p, close, saved, (area, entry) => {
-          this.ui.replaceAll(null);
-          this.backToPlay();
-          this.changeArea(area, entry, null);
-        }, () => {
+        screen = carScreen(p, w.level.id, this.calm(), close, saved, (area, opt) => this.travelTo(area, opt), () => {
           this.ui.replaceAll(null);
           this.enterArea(w.level.id, 'start', { at: { x: w.player.pos.x, z: w.player.pos.z }, carry: w.carry() });
           this.hud.toast('Car swapped', 'item');
@@ -2338,6 +2335,13 @@ export class Game {
       if (p.save.property.riding) this.dismount();
       return this.goHome(false);
     }
+    if (opt.kind === 'drive') {
+      if (!opt.ok) {
+        this.backToPlay();
+        return this.hud.toast(opt.why ?? 'Can’t drive there', 'warn');
+      }
+      return this.driveTo(area, opt.park ?? null, opt.entry);
+    }
     if (opt.kind !== 'cab' || !opt.entry) return this.backToPlay();
     if (p.save.cash.bank < opt.cost) {
       this.backToPlay();
@@ -2351,6 +2355,32 @@ export class Game {
     if (p.save.property.riding) this.dismount();
     this.hud.toast(`Duber: ${opt.miles !== undefined ? `${opt.miles.toFixed(1)} miles, ` : ''}£${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
     this.changeArea(area, opt.entry, w.carry());
+  }
+
+  /**
+   * Drive your own car (map → Drive, or the car's own screen): free, no street fights on the way, and the car is
+   * left at the other end (`park`; null puts it back on the drive at home). Only one car is ever out.
+   */
+  private driveTo(area: AreaId, park: ParkingSpot | null, entry?: string): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    const prop = p.save.property;
+    const car = prop.cars.find((c) => c.uid === prop.activeCar);
+    if (!car) return this.backToPlay();
+    prop.carOut = park ? { uid: car.uid, ...park } : null;
+    if (p.save.destination === area) p.save.destination = null;
+    this.ui.replaceAll(null);
+    this.state = 'playing';
+    if (prop.riding) this.dismount();
+    this.saveGame();
+    const name = CARS[car.id].name;
+    if (!park) {
+      this.hud.toast(`Drove the ${name} home. It’s on the drive.`, 'item');
+      return this.goHome(false);
+    }
+    this.hud.toast(`Drove the ${name} to ${LEVELS[area].name}. It’s parked${park.area === area ? ' up the road' : ` on ${LEVELS[park.area].name}`}.`, 'item');
+    this.changeArea(area, entry ?? cabStop(area)?.entry ?? 'left', w.carry());
   }
 
   /** The town map: see everything, set a route, take a cab or head home (with a confirm step). */

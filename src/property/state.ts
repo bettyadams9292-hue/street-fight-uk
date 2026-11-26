@@ -64,6 +64,11 @@ export interface PropertySave {
   /** Where the bike is parked; `left` if it points left (you got off riding that way). */
   bikeOut: { uid: string; area: AreaId; x: number; z: number; left?: boolean } | null;
   riding: boolean;
+  /**
+   * Where the active car is parked when it isn't on the drive (property/parking.ts): you drove it there (map →
+   * Drive). Null: on the drive at 14 Tanner Road. Only ever one place, so it's never in two districts at once.
+   */
+  carOut?: { uid: string; area: AreaId; x: number; z: number } | null;
   casino: CasinoStats;
   seq: number;
   /** The house has had its room dressing put out (home.ts dressHouse): once, then it's yours to move or sell. */
@@ -154,6 +159,8 @@ export function sanitiseProperty(raw: unknown, areas: readonly string[]): Proper
     out.bikeOut = { uid: bo.uid, area: bo.area, x: num(bo.x, BIKE_HOME_SPOT.x), z: num(bo.z, BIKE_HOME_SPOT.z), ...(bo.left === true ? { left: true } : {}) };
     out.riding = r.riding === true;
   }
+  const co = r.carOut;
+  out.carOut = co && co.uid === out.activeCar && areas.includes(co.area) ? { uid: co.uid, area: co.area, x: num(co.x, 0, -50, 500), z: num(co.z, 1, -3, 3) } : null;
   const c = (r.casino ?? {}) as Partial<CasinoStats>;
   out.casino = {
     staked: num(c.staked, 0, 0),
@@ -282,7 +289,9 @@ export function buyBike(p: Progress, id: string, colour: string): PurchaseResult
 
 export function setActiveCar(p: Progress, uid: string): PurchaseResult {
   if (!P(p).cars.some((c) => c.uid === uid)) return fail('Not yours');
+  // The car that was out goes home with the swap: the new one's on the drive.
   P(p).activeCar = uid;
+  P(p).carOut = null;
   return { ok: true };
 }
 
@@ -292,7 +301,10 @@ export function sellCar(p: Progress, uid: string): { ok: true; refund: number } 
   if (i < 0) return { ok: false, reason: 'Not yours' };
   const refund = resale(CARS[prop.cars[i].id].price);
   prop.cars.splice(i, 1);
-  if (prop.activeCar === uid) prop.activeCar = prop.cars[0]?.uid ?? null;
+  if (prop.activeCar === uid) {
+    prop.activeCar = prop.cars[0]?.uid ?? null;
+    prop.carOut = null;
+  }
   p.save.cash.pocket += refund;
   return { ok: true, refund };
 }

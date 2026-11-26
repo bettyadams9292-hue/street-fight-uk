@@ -62,6 +62,7 @@ import {
   type Card,
   type RouletteBet,
 } from '../property/casino';
+import { driveOption, type TravelOption } from '../map/worldMap';
 import { LEVELS } from '../world/levels';
 import { menuButton } from './controls';
 import { h } from './dom';
@@ -383,22 +384,27 @@ export function garageBikeScreen(progress: Progress, close: () => void, saved: (
 
 // ---- the car on the drive ----------------------------------------------------------------------------
 
-export function carScreen(progress: Progress, close: () => void, saved: () => void, travel: (area: AreaId, entry: string) => void, swapped: () => void): Screen {
+export function carScreen(progress: Progress, here: AreaId, calm: boolean, close: () => void, saved: () => void, travel: (area: AreaId, opt: TravelOption) => void, swapped: () => void): Screen {
   return panelScreen('Your car', progress, (msg) => {
     const prop = progress.save.property;
     const active = prop.cars.find((c) => c.uid === prop.activeCar);
     const rows: HTMLElement[] = [];
     if (active) {
       const d = CARS[active.id];
-      rows.push(h('p', { class: 'hint', text: `${d.name}: ${d.topSpeed} mph, 0-60 in ${d.zeroSixty}s. Driving is free; you’re dropped at the kerb.` }));
+      rows.push(h('p', { class: 'hint', text: `${d.name}: ${d.topSpeed} mph, 0-60 in ${d.zeroSixty}s. Driving is free and nobody jumps you on the way; it’s left parked at the other end. Or pick a place on the map and choose Drive.` }));
     }
     rows.push(h('h3', { text: 'Drive to' }));
-    const stops: { area: AreaId; entry: string; name: string; locked?: string }[] = [
-      ...SHOP_STOPS.map((s) => ({ area: s.area, entry: s.entry, name: LEVELS[s.area].name, locked: s.shop && !progress.isShopOpen(s.shop) ? 'Closed' : undefined })),
-      ...TAXI_STOPS.map((s) => ({ area: s.area, entry: s.entry, name: LEVELS[s.area].district, locked: s.requires && !progress.has(s.requires) ? s.requiresText ?? 'Not yet' : undefined })),
+    const stops: { area: AreaId; name: string }[] = [
+      ...(prop.carOut ? [{ area: 'home' as AreaId, name: 'Home (back on the drive)' }] : []),
+      ...SHOP_STOPS.map((s) => ({ area: s.area, name: LEVELS[s.area].name })),
+      ...TAXI_STOPS.map((s) => ({ area: s.area, name: LEVELS[s.area].district })),
     ];
-    for (const s of stops) rows.push(shopRow(s.name, s.locked ?? LEVELS[s.area].name, s.locked ? 'Locked' : 'Drive', s.locked ? null : () => travel(s.area, s.entry)));
-    if (prop.cars.length > 1) {
+    for (const s of stops) {
+      const opt = driveOption(progress, here, s.area, calm);
+      if (!opt || s.area === here) continue;
+      rows.push(shopRow(s.name, opt.ok ? LEVELS[s.area].name : opt.why ?? 'Not yet', opt.ok ? 'Drive' : 'Locked', opt.ok ? () => travel(s.area, opt) : null));
+    }
+    if (prop.cars.length > 1 && !prop.carOut) {
       rows.push(h('h3', { text: 'On the drive' }));
       for (const c of prop.cars) {
         const d = CARS[c.id];

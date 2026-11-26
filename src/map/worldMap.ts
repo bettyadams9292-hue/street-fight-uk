@@ -10,6 +10,8 @@ import { STRIP, stripLength, stripOffsets } from '../world/strip';
 import { GENERATED_TOWNS } from '../world/towns';
 import { PROPERTIES } from '../realty/catalogue';
 import { statusOf } from '../realty/portfolio';
+import { CARS } from '../property/catalogue';
+import { DRIVE_HOME, parkingSpot, type ParkingSpot } from '../property/parking';
 
 /**
  * The town map's data. Places, doors, links, locks, bosses, shops and people
@@ -492,14 +494,40 @@ export function nextExit(p: Progress, from: AreaId, to: AreaId): ExitDef | null 
 // ---- cabs ----------------------------------------------------------------------------------------
 
 export interface TravelOption {
-  kind: 'cab' | 'home' | 'walk' | 'here';
+  kind: 'cab' | 'drive' | 'home' | 'walk' | 'here';
   label: string;
   cost: number;
   /** A cab's distance in miles, for the meter. */
   miles?: number;
   entry?: string;
+  /** Driving: where the car will be left (null: back on the drive at home). */
+  park?: ParkingSpot | null;
   ok: boolean;
   why?: string;
+}
+
+/**
+ * Your own car: free, no fights on the way, and it's left parked at the other end (property/parking.ts). You drive
+ * it from where it is: on the drive at home, or wherever you last left it.
+ */
+export function driveOption(p: Progress, here: AreaId, to: AreaId, calm: boolean): TravelOption | null {
+  const prop = p.save.property;
+  const car = prop.cars.find((c) => c.uid === prop.activeCar);
+  if (!car) return null;
+  const def = CARS[car.id];
+  const out = prop.carOut && prop.carOut.uid === car.uid ? prop.carOut : null;
+  const carHere = out ? out.area === here : DRIVE_HOME.has(here);
+  const label = `Drive the ${def.name}: free`;
+  if (!carHere) return { kind: 'drive', label, cost: 0, ok: false, why: out ? `Your car’s parked in ${LEVELS[out.area].district}` : 'Your car’s on the drive at home' };
+  if (!calm) return { kind: 'drive', label, cost: 0, ok: false, why: 'Not with a fight on' };
+  if (!unlocked(p, to)) return { kind: 'drive', label, cost: 0, ok: false, why: lockReason(p, to) ?? 'Not yet' };
+  if (DRIVE_HOME.has(to)) return { kind: 'drive', label, cost: 0, ok: true, park: null };
+  const stop = cabStop(to);
+  const park = stop ? parkingSpot(to, car.id, stop.entry) : null;
+  if (!stop || !park) return { kind: 'drive', label, cost: 0, ok: false, why: 'Nowhere to park there' };
+  const shut = SHOP_STOPS.find((x) => x.area === to && x.shop && !p.isShopOpen(x.shop));
+  if (shut) return { kind: 'drive', label, cost: 0, ok: false, why: 'Shutters down after the robbery' };
+  return { kind: 'drive', label, cost: 0, entry: stop.entry, park, ok: true };
 }
 
 /** Can a cab drop you there? (Duber go to the stops the phone lists.) */
@@ -542,6 +570,8 @@ export function travelOptions(p: Progress, here: AreaId, to: AreaId, calm: boole
   const out: TravelOption[] = [];
   const busy = calm ? undefined : 'Not with a fight on';
   if (to === 'home' || to === 'basement') out.push({ kind: 'home', label: 'Head home', cost: 0, ok: calm, why: busy });
+  const drive = driveOption(p, here, to, calm);
+  if (drive) out.push(drive);
   const stop = cabStop(to);
   if (stop) {
     const shut = SHOP_STOPS.find((x) => x.area === to && x.shop && !p.isShopOpen(x.shop));
@@ -609,6 +639,12 @@ export function markers(p: Progress): MapMarker[] {
   if (p.save.basement && p.save.basement.equipment?.length) {
     const h = placePoint('home');
     out.push({ key: 'place:basement', kind: 'property', area: 'basement', at: { x: h.x + 30, y: h.y - 22 }, label: 'Your basement business' });
+  }
+  const car = p.save.property.carOut;
+  if (car && LAYOUT[car.area]) {
+    const at = streetPoint(car.area, car.x);
+    const def = CARS[p.save.property.cars.find((c) => c.uid === car.uid)?.id ?? ''];
+    if (at) out.push({ key: 'parked:car', kind: 'parked', area: car.area, at: { x: at.x + 14, y: at.y + 26 }, label: `Where you left your ${def?.name ?? 'car'}` });
   }
   const bike = p.save.property.bikeOut;
   if (bike && !p.save.property.riding && LAYOUT[bike.area as AreaId]) {
