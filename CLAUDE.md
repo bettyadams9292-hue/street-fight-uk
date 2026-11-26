@@ -314,6 +314,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 **26 Nov 2026**
 - #104 (to merge): Hard Graft master directive, first pass: commercial rebrand (Weatherspoons, JD Streets, LadsBroke, Cash Degenerator, The Grand Gamble, H. Sterling, Duber…); Califax and Lloyd's THC cash machines (four, in walls, after Sully) with real ATM software; Run there on foot with ambushes; Drive your own car, parked where you leave it; car mods; shop tiers; the lock-up garage. Also fixed `?shot=` pages (GameRenderer `publish` before declared). Not done: the full map redesign, approved bank logos, painted titles for the new names.
 
+- Lock-up clear of the subway (directive Phase 6): on Tanner Road the subway stairwell moved to the near end of the garage row (x 33.9) and the Estate King's lock-up to the far end (x 42, next to Punch & Crunch), ordinary garages between; the bollards stand at the kerb in front of those (x 36.4, 37.6: `tests/npc.test.ts`'s about-turn limit and `tests/stage10.test.ts`'s seeded estate fight are both sensitive to where they go).
 - Bank logos (directive Phase 7.10/10): Leeko's approved Califax and Lloyd’s THC logos (`public/art/banks/califax.webp`, `lloyds.webp`, and `*-fascia.webp` laid out for the lit header over each machine). `BANKS` in `money/atm.ts` takes its colours from them (Califax navy #01196e; Lloyd’s THC black with its green #39ce07) and draws them on the machine's header (LevelView `atm`), the ATM's top board, the screen's corner, the card-reading screen and the goodbye.
 ## Open questions and next steps
 
