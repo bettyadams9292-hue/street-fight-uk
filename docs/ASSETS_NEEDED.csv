@@ -621,3 +621,9 @@ World: Tattoo studio,Tattoo bed,tattoo_bed (prop),"3D adjustable tattoo bed: pad
 World: Tattoo studio,Flash wall,flash_wall (prop),"Wall of tattoo flash sheets: painted design sheets pinned in rows",Canvas texture drawn in code from the game's tattoo designs (LevelView flashTexture),FALSE
 Characters,Tattoo designs,tattoos (appearance),"Hand-drawn tattoo artwork (11 designs) as transparent textures laid on the skin: tribal, rose, swallow, crown, geometric, sleeve, skull, anchor, star, dagger, lettering",Drawn with canvas paths in code (render/skinPainter.ts drawDesign) onto the skin texture (render/human/tattooSkin.ts),FALSE
 Characters,Street dealer look,Street dealer (World.setUpDealer),"A street dealer's look: hoodie or puffer, cap, a bum bag; ideally a model or outfit of his own",A random passer-by look with a dark hoodie or puffer and a cap,FALSE
+Metro,Station entrance,metro_entrance (docs/SUBWAY_PLAN.md),"Stairs down with railings and a lit roundel on a post, for a gap in the frontage",Not in the game yet (planned),FALSE
+Metro,Ticket hall,station_<id> (planned),"Ticket machine, paddle-barrier gate line that opens, staff booth",Not in the game yet (planned),FALSE
+Metro,Platform,metro platform (planned),"Tiled wall panels, platform edge with the yellow line, benches, dot-matrix departure board, tunnel mouths",Not in the game yet (planned),FALSE
+Metro,Train,metro train (planned),"Carriage outside with sliding doors, and its inside: seats, poles, grab handles, line-map strip",Not in the game yet (planned),FALSE
+Metro,Transport police and inspector,btp / revenue inspector (planned),A British Transport Police officer look and a revenue inspector look,Not in the game yet (planned),FALSE
+Metro,Metro sounds,metro sfx (planned),"Barrier beep, gate, train arriving and leaving, doors, mind the gap, carriage rumble",Not in the game yet (planned),FALSE
