@@ -1,3 +1,4 @@
+import { streetSolids } from '../city/street';
 import { atmOpen, bankOf } from '../money/atm';
 import { doorX } from '../city/doorSpots';
 import { BODY_RADIUS } from '../core/constants';
@@ -53,6 +54,8 @@ import { Arena, type Obstacle } from './Arena';
 import { gateNeeds, lockedMessage } from './gates';
 import {
   propBox,
+  propHalf,
+  type PropDef,
   type BreakableDef,
   type ContainerDef,
   type EncounterDef,
@@ -342,6 +345,35 @@ export class World {
 
   addStation(s: StationDef): void {
     this.stations.push(s);
+  }
+
+  /**
+   * Something set down where someone may be standing (your bike as you get off it): not solid till nobody's in it,
+   * then solid like anything else. `id` replaces an earlier one of the same id.
+   */
+  settleObstacle(id: string, x: number, z: number, hx: number, hz: number): void {
+    this.clearObstacle(id);
+    const o: Obstacle = { id, minX: x - hx, maxX: x + hx, minZ: z - hz, maxZ: z + hz, solid: false };
+    this.arena.obstacles.push(o);
+    this.settling.push(o);
+  }
+
+  clearObstacle(id: string): void {
+    this.arena.obstacles = this.arena.obstacles.filter((o) => o.id !== id);
+    this.settling = this.settling.filter((o) => o.id !== id);
+  }
+
+  private settling: Obstacle[] = [];
+
+  /** Settle what nobody's standing in any more. */
+  private settleObstacles(): void {
+    for (let i = this.settling.length - 1; i >= 0; i--) {
+      const o = this.settling[i];
+      const r = BODY_RADIUS + 0.05;
+      if (this.sim.fighters.some((f) => f.pos.x > o.minX - r && f.pos.x < o.maxX + r && f.pos.z > o.minZ - r && f.pos.z < o.maxZ + r)) continue;
+      o.solid = true;
+      this.settling.splice(i, 1);
+    }
   }
 
   removeStation(id: string): void {
@@ -1321,10 +1353,23 @@ export class World {
         this.stations.push({ id: 'atm', x: pr.x, z: Math.min(level.bounds.maxZ - 0.3, pr.z + 0.6), label: atmOpen(progress) ? `Use the ${bank.name} cash machine` : `${bank.name} cash machine (out of service)`, tab: bank.id });
       }
     const obstacles: Obstacle[] = [];
-    for (const p of level.props) {
+    // On a kit street, what's drawn can be bigger than a prop's box (a kit car, a skip): collide with what you see.
+    const drawn = streetSolids(level);
+    const settle: PropDef[] = [];
+    level.props.forEach((p, i) => {
+      if (p.settle) settle.push(p);
       const box = propBox(p);
-      if (box) obstacles.push(box);
-    }
+      if (!box) return;
+      for (const d of drawn) if (d.prop === i) {
+        box.minX = Math.min(box.minX, d.x0);
+        box.maxX = Math.max(box.maxX, d.x1);
+        box.minZ = Math.min(box.minZ, d.z0);
+        box.maxZ = Math.max(box.maxZ, d.z1);
+      }
+      obstacles.push(box);
+    });
+    // Lamp columns at the kerb.
+    for (const d of drawn) if (d.prop < 0) obstacles.push({ minX: d.x0, maxX: d.x1, minZ: d.z0, maxZ: d.z1 });
     for (const w of level.walls ?? []) obstacles.push({ ...w });
     for (const g of level.gates ?? []) {
       const o: Obstacle = { id: g.id, minX: g.x - 0.12, maxX: g.x + 0.12, minZ: g.z0, maxZ: g.z1, solid: !progress.has(g.openFlag) };
@@ -1338,6 +1383,10 @@ export class World {
       this.breakables.push({ def: b, hp: b.hp, broken, obstacle: o, lastHitBy: -1 });
     }
     this.arena = new Arena({ ...level.bounds }, level.name, obstacles);
+    for (const p of settle) {
+      const [hx, hz] = propHalf(p);
+      this.settleObstacle(`settle:${p.x}:${p.z}`, p.x, p.z, hx, hz);
+    }
     const seed = opts.seed ?? (Date.now() & 0xffff);
     this.sim = new Simulation(this.arena, seed);
     this.lootRng = new Rng(seed * 31 + 7);
@@ -1696,6 +1745,7 @@ export class World {
   // ---- per-frame update -------------------------------------------------------
 
   step(input: CommandFrame): void {
+    if (this.settling.length) this.settleObstacles();
     const frame = this.sim.frame;
     let cmd = input;
     const p = this.player;

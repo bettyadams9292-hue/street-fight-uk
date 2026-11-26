@@ -393,7 +393,7 @@ const bikeShop: LevelDef = {
     { kind: 'bike_stand', x: 7.2, z: -1.25 },
     V('b25_supermoto', 7.2, -1.25, '#e8e4dc', [0.95, 0.3], { plinth: false, solid: false }),
     { kind: 'bike_stand', x: 9.3, z: -1.25 },
-    V('b26_sportbike', 9.3, -1.25, '#c82a2a', [0.95, 0.3], { plinth: false, solid: false }),
+    V('b26_sportbike', 9.3, -1.25, '#c82a2a', [0.95, 0.3], { plinth: false }),
     { kind: 'bike_stand', x: 11.4, z: -1.25 },
     V('b27_cruiser', 11.4, -1.25, '#1a1a1a', [0.95, 0.3], { plinth: false, solid: false }),
     { kind: 'tyre_stack', x: 13.1, z: -1.75 },
@@ -666,10 +666,10 @@ const FRONT: Record<string, PropDef[]> = {
   car_dealer: [F('desk2', 23.5, 3.4), F('dining_chair', 23.5, 4.1, { rot: 2 }), F('dining_chair', 23.5, 2.7), F('sofa_2', 19.0, 4.6), F('coffee_table', 19.0, 3.7), F('plant_tall', 26.8, 4.8), F('plant_tall', 15.4, 4.8)],
   // The front floor: a row of bicycles and e-bikes, then the scooters and the moped by the counter.
   bike_shop: [
-    ...(['b07_road_racer', 'b10_mtb_hardtail', 'b12_bmx', 'b05_city_stepthrough', 'b17_city_ebike', 'b20_e_mtb'] as const).map((id, i) => V(id, 2.6 + i * 1.75, 3.6, '', [0.85, 0.25], { plinth: false, solid: false })),
+    ...(['b07_road_racer', 'b10_mtb_hardtail', 'b12_bmx', 'b05_city_stepthrough', 'b17_city_ebike', 'b20_e_mtb'] as const).map((id, i) => V(id, 2.6 + i * 1.75, 3.6, '', [0.85, 0.25], { plinth: false })),
     V('b29_standup_escooter', 13.2, 4.6, '', [0.55, 0.2], { plinth: false, solid: false }),
     V('b30_seated_escooter', 14.4, 4.6, '', [0.75, 0.25], { plinth: false, solid: false }),
-    V('b28_delivery_moped', 15.9, 4.6, '', [0.9, 0.3], { plinth: false, solid: false }),
+    V('b28_delivery_moped', 15.9, 4.6, '', [0.9, 0.3], { plinth: false }),
     P('tyre_stack', 13.0, 3.0), P('tyre_stack', 13.9, 3.2), P('shop_shelf', 17.6, 4.8, { size: [1.2, 0.3] }),
   ],
   gym_store: [

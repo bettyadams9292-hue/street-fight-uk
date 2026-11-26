@@ -313,6 +313,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 - #101: Dave's Cabs stops at NeXo Cutz (`SHOP_STOPS` in `ui/hub.ts`), straight to its door: in the phone's cab list and on the Maps card, on the meter (about £9 from home). `tests/barber.test.ts`.
 **26 Nov 2026**
 - #104 (to merge): Hard Graft master directive, first pass: commercial rebrand (Weatherspoons, JD Streets, LadsBroke, Cash Degenerator, The Grand Gamble, H. Sterling, Duber…); Califax and Lloyd's THC cash machines (four, in walls, after Sully) with real ATM software; Run there on foot with ambushes; Drive your own car, parked where you leave it; car mods; shop tiers; the lock-up garage. Also fixed `?shot=` pages (GameRenderer `publish` before declared). Not done: the full map redesign, approved bank logos, painted titles for the new names.
+- Street collision (to merge): street bikes are few (a bicycle by each rack, now and then a delivery moped or an e-scooter), solid, leaning on the shop wall (`leanOnWall`, `world/streetBikes.ts`); lamp columns are solid and shuffle along the kerb to leave room to pass (`streetSolids`, `lampSpot` in `city/street.ts`); kit models collide by what's drawn; your parked bike and showroom bikes are solid (`World.settleObstacle`). `tests/streetCollision.test.ts`.
 
 ## Open questions and next steps
 

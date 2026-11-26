@@ -1,7 +1,7 @@
 import { Rng } from '../core/Rng';
 import type { AreaId } from '../progress/Progress';
 import type { FacadeDef, FacadeKind, LevelDef, PropKind } from '../world/LevelTypes';
-import { propHalf } from '../world/LevelTypes';
+import { propBox, propHalf } from '../world/LevelTypes';
 import { onStrip, stripNeighbours, isSubwayStairs, SUBWAY_GAP } from '../world/strip';
 import { LOCKUP_HALF, LOCKUP_ID } from '../world/lockup';
 import { KIT_METRICS } from './polyKitMetrics';
@@ -127,6 +127,11 @@ export interface StreetPlan {
   goods: ShopGood[];
   /** Approved British models standing in for the kit's (see APPROVED_STREET): drawn by LevelView, baked per chunk. */
   approved: ApprovedPlacement[];
+  /**
+   * Footprints of what's drawn that people mustn't walk through: kit models standing in for props (often bigger than
+   * the prop's box) by the prop's index, and lamp columns (index -1). World adds them to the arena's obstacles.
+   */
+  solids: { prop: number; x0: number; x1: number; z0: number; z1: number }[];
   /** For each of the level's props, in order: true if a kit model stands in for it. */
   propDone: boolean[];
   /** Doorways the kit buildings provide (x positions), so exits don't draw their own frame. */
@@ -654,6 +659,15 @@ export function kerbFor(level: LevelDef): number | null {
 /** Props that are vehicles (parked on the road in front of the fight, they fade when you walk behind). */
 const VEHICLES = new Set<string>(['car', 'homecar', 'van', 'abandoned_car']);
 
+const solidCache = new WeakMap<LevelDef, StreetPlan['solids']>();
+/** The street plan's solid footprints for a kit street (empty otherwise), worked out once per level. */
+export function streetSolids(level: LevelDef): StreetPlan['solids'] {
+  if (!kitStreet(level)) return [];
+  let s = solidCache.get(level);
+  if (!s) solidCache.set(level, (s = planStreet(level).solids));
+  return s;
+}
+
 export function planStreet(level: LevelDef): StreetPlan {
   const d = DISTRICTS[level.id];
   if (!d) throw new Error(`street plan: ${level.id} is not on the street`);
@@ -666,7 +680,7 @@ export function planStreet(level: LevelDef): StreetPlan {
   const hasRoad = kerbFor(level) !== null;
   const plan: StreetPlan = {
     area: level.id, back, kerbZ: hasRoad ? KERB_Z : null, front, x0, x1, ground: d.ground,
-    placements: [], blocks: [], signs: [], surfaces: [], shopfronts: [], goods: [], approved: [], propDone: level.props.map(() => false), doors: [],
+    placements: [], blocks: [], signs: [], surfaces: [], solids: [], shopfronts: [], goods: [], approved: [], propDone: level.props.map(() => false), doors: [],
   };
   const rng = new Rng(hash(`street:${level.id}`));
   const put = (model: string, x: number, y: number, z: number, o: Partial<Placement> = {}): void => {
@@ -794,6 +808,14 @@ export function planStreet(level: LevelDef): StreetPlan {
       const cx = copies === 1 ? p.x : p.x - hx + ((c + 0.5) * hx * 2) / copies;
       const own = VEHICLES.has(p.kind) && p.z > 0.6 ? `vehicle:${i}:${c}` : undefined;
       put(model, cx, 0, p.z, { ry, sx: k, sy: k, sz: k, paint, tint: pm.tint ?? p.colour, own });
+      // What's actually drawn, turned as it is: its own footprint about where it stands.
+      if (p.solid !== false) {
+        const turn = Math.round(ry / HALF_PI) & 3;
+        const [ax0, ax1, az0, az1] = [s.minX, s.minX + s.w, s.minZ, s.minZ + s.d].map((v) => v * k);
+        const fx = turn === 0 ? [ax0, ax1] : turn === 2 ? [-ax1, -ax0] : turn === 1 ? [az0, az1] : [-az1, -az0];
+        const fz = turn === 0 ? [az0, az1] : turn === 2 ? [-az1, -az0] : turn === 1 ? [-ax1, -ax0] : [ax0, ax1];
+        plan.solids.push({ prop: i, x0: cx + fx[0], x1: cx + fx[1], z0: p.z + fz[0], z1: p.z + fz[1] });
+      }
     }
     plan.propDone[i] = true;
   });
@@ -1064,10 +1086,25 @@ export function planStreet(level: LevelDef): StreetPlan {
   // lens under its head, as the kit lamps have). Never on the building line: shopfronts stand forward of it, so a
   // column there ended up inside the shop. Plazas, lanes and yards keep their own lights.
   const ukLamp = d.ground === 'street' || d.ground === 'suburb';
+  // A column is solid, so it stands where it leaves room to walk past on both sides: shuffled along the kerb (up to
+  // 3 m from its light) clear of anything that would pinch the way, and of pickups, doors and where people arrive.
+  const lampSpot = (lx: number): number => {
+    const boxes = level.props.map((p) => propBox(p)).filter((b): b is NonNullable<ReturnType<typeof propBox>> => !!b);
+    const spots = [...level.pickups, ...level.entries, ...level.exits.filter((e) => e.kind === 'door'), ...(level.stations ?? [])];
+    const ok = (x: number) =>
+      x > x0 + 0.5 && x < x1 - 0.5 &&
+      !boxes.some((b) => x > b.minX - 0.9 && x < b.maxX + 0.9 && b.maxZ > LAMP_Z - 0.85 && b.minZ < LAMP_Z + 0.85) &&
+      !spots.some((q) => Math.abs(q.x - x) < 0.9 && Math.abs(q.z - LAMP_Z) < 0.9);
+    for (let d = 0; d <= 3; d += 0.25) for (const x of [lx + d, lx - d]) if (ok(x)) return x;
+    return NaN;
+  };
   for (const l of level.lights) {
     if (ukLamp) {
-      plan.approved.push({ id: 'streetLamp', x: l.x, y: 0, z: LAMP_Z, ry: -HALF_PI });
-      plan.blocks.push({ x: l.x, y: 4.13, z: LAMP_Z + 1.12, w: 0.2, h: 0.05, d: 0.32, colour: '#fff1d0', glow: true });
+      const lx = lampSpot(l.x);
+      if (Number.isNaN(lx)) continue;
+      plan.approved.push({ id: 'streetLamp', x: lx, y: 0, z: LAMP_Z, ry: -HALF_PI });
+      plan.solids.push({ prop: -1, x0: lx - 0.1, x1: lx + 0.1, z0: LAMP_Z - 0.1, z1: LAMP_Z + 0.1 });
+      plan.blocks.push({ x: lx, y: 4.13, z: LAMP_Z + 1.12, w: 0.2, h: 0.05, d: 0.32, colour: '#fff1d0', glow: true });
       continue;
     }
     const s = size(d.lamp);
