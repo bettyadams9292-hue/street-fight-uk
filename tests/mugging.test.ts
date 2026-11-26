@@ -5,9 +5,10 @@
 import { defaultAppearance } from '../src/character/Appearance';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { emptyCommand } from '../src/input/Commands';
-import { newSave, Progress } from '../src/progress/Progress';
+import { MUG_MEMORY, newSave, Progress } from '../src/progress/Progress';
+import { ITEMS } from '../src/items/items';
 import { LEVELS } from '../src/world/levels';
-import { ASSAULT_HEAT, BAIL_MAX, BAIL_MIN, heroChance, MUG_HEAT, MUG_WITNESS_HEAT, mugResistChance, policeCallChance, valuablesOf, World } from '../src/world/World';
+import { ASSAULT_HEAT, BAIL_MAX, BAIL_MIN, heroChance, MUG_HEAT, MUG_WITNESS_HEAT, mugHaul, mugResistChance, policeCallChance, valuablesOf, World } from '../src/world/World';
 import { coolHeat, GANG_GRUDGE, gangMods, HEAT, huntChance, KNOWN_FACE_HEAT } from '../src/progress/heat';
 import { arrest } from '../src/world/robbery';
 import { ARREST_HEAT } from '../src/world/robbery';
@@ -85,30 +86,33 @@ test('mugging: they hand it over and run, or fight for it and drop it when they�
     w.step(emptyCommand());
     const it = w.interactable;
     if (it?.kind !== 'mug' || it.target !== c.f) continue;
-    assert(/^Mug (him|her): gold chain$/.test(it.label), it.label);
+    assert(/^Mug (him|her)$/.test(it.label), `you don't see what's in their pockets: ${it.label}`);
     const heat = p.save.heat;
-    let ev: { witnesses: number; heat: number } | null = null;
+    const pocket0 = p.save.cash.pocket;
+    let ev: { witnesses: number; heat: number; items: string[]; cash: number } | null = null;
     w.events.on('mug', (e) => (ev = e));
     const use = { ...emptyCommand(), use: true, pressed: { ...emptyCommand().pressed, use: true } };
     w.step(use as never);
     assert(ev, 'mug event');
-    const e = ev as unknown as { witnesses: number; heat: number };
+    const e = ev as unknown as { witnesses: number; heat: number; items: string[]; cash: number };
     assert(e.heat === MUG_HEAT + e.witnesses * MUG_WITNESS_HEAT && p.save.heat === heat + e.heat, `heat +${MUG_HEAT} and +${MUG_WITNESS_HEAT} a witness (${e.witnesses}): ${p.save.heat - heat}`);
     assert(p.heatIn(street.district).street === HEAT.mug.street + e.witnesses * HEAT.witness.street, 'the locals remember');
-    const chain = () => w.items.find((g) => g.stack.id === 'chain_gold');
+    // Whatever the pockets gave up (a roll, mugHaul): all of it on the floor, hot.
+    const haul = () => e.items.every((id) => w.items.some((g) => g.stack.id === id && g.stack.stolen)) && (!e.cash || w.cash.some((m) => m.amount === e.cash) || p.save.cash.pocket >= pocket0 + e.cash);
+    const nothingYet = () => !e.items.some((id) => w.items.some((g) => g.stack.id === id));
     if (c.f.team === 'enemy') {
       fought++;
       assert(w.enemies.includes(c.f) && !w.civilians.some((x) => x.f === c.f), 'off the street and into the fight');
-      assert(!chain(), 'nothing dropped yet');
+      assert(nothingYet(), 'nothing dropped yet');
       c.f.knockOut();
       const before = p.save.heat;
       w.sim.bus.emit('fighter:ko', { fighter: c.f, by: w.player });
       assert(p.save.heat === Math.min(100, before + ASSAULT_HEAT), 'putting them down is assault');
       for (let f = 0; f < 200; f++) w.step(emptyCommand());
-      assert(chain()?.stack.stolen, 'down: the chain’s on the floor, hot');
+      assert(haul(), 'down: what they had is on the floor, hot');
     } else {
       handed++;
-      assert(chain()?.stack.stolen, 'handed over: the chain at their feet, hot');
+      assert(haul(), `handed over: what they had at their feet, hot (${JSON.stringify(e.items)} £${e.cash}; floor ${JSON.stringify(w.items.map((g) => g.stack.id))} cash ${JSON.stringify(w.cash.map((m) => m.amount))})`);
       assert(c.brain.activity === 'flee', 'and they leg it');
       for (let f = 0; f < 120; f++) w.step(emptyCommand());
       assert(c.brain.activity === 'flee', 'still running two seconds on');
@@ -119,6 +123,40 @@ test('mugging: they hand it over and run, or fight for it and drop it when they�
     }
   }
   assert(handed > 0 && fought > 0, `saw both: handed ${handed}, fought ${fought}`);
+});
+
+test('a mugging is a few quid: pockets are a roll, jewellery hardly ever, a worked street gives up less', () => {
+  let seed = 11;
+  const next = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const a = { ...defaultAppearance(), accessories: ['chain'], chainColour: 'gold' } as never;
+  const worth = (streak: number) => {
+    let total = 0;
+    let gold = 0;
+    for (let i = 0; i < 4000; i++) {
+      const h = mugHaul(next, a, streak);
+      total += h.cash + h.items.reduce((t, id) => t + Math.round((ITEMS[id]?.value ?? 0) * 0.5), 0);
+      if (h.items.includes('chain_gold')) gold++;
+    }
+    return { avg: total / 4000, gold: gold / 4000 };
+  };
+  const first = worth(0);
+  const seventh = worth(6);
+  assert(first.avg > 8 && first.avg < 30, `a first mugging is worth about £${first.avg.toFixed(0)} at the pawn shop`);
+  assert(first.gold < 0.07, `the gold chain comes off ${(first.gold * 100).toFixed(1)}% of the time`);
+  assert(seventh.avg < first.avg * 0.35, `the seventh on one street is worth £${seventh.avg.toFixed(0)}, against £${first.avg.toFixed(0)}`);
+  let total = 0;
+  for (let k = 0; k < 7; k++) total += worth(k).avg;
+  assert(total < 80, `robbing seven people in a row comes to about £${total.toFixed(0)}`);
+});
+
+test('a street that has just been worked: it remembers for a while, and the heat grows', () => {
+  const p = progress();
+  assert(p.mugStreak('High Street') === 0);
+  p.noteMugging('High Street');
+  p.noteMugging('High Street');
+  assert(p.mugStreak('High Street') === 2 && p.mugStreak('Hollins') === 0, 'per street');
+  p.save.playTime += MUG_MEMORY + 1;
+  assert(p.mugStreak('High Street') === 0, 'forgotten after a while');
 });
 
 test('consequences scale: witnesses and a reputation bring the police and heroes', () => {
