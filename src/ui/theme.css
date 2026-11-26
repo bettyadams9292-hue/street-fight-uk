@@ -823,7 +823,7 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
   .reward-art h2 img.reward-title { height: 72px; }
 }
 
-/* ---- Jewellery: Halden & Crane and the jewellery box ------------------------------------------------- */
+/* ---- Jewellery: H. Sterling and the jewellery box ------------------------------------------------- */
 .jw-preview { cursor: grab; }
 .jw-preview:active { cursor: grabbing; }
 .jw-drag { margin: 2px 0 0; font-size: 11px; color: var(--faint); text-align: center; max-width: 380px; }
@@ -867,7 +867,7 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
 .jw-card.worn { background: rgba(106, 208, 74, 0.08); }
 .inv-body.jw-inv { display: block; overflow-y: auto; }
 
-/* ---- Property: Keys & Co and the portfolio --------------------------------------------------------------- */
+/* ---- Property: Wrongmove and the portfolio --------------------------------------------------------------- */
 .prop-tabs .prop-tab { display: inline-flex; align-items: center; gap: 6px; }
 .prop-tabs .prop-tab svg { width: 16px; height: 16px; }
 .prop-tabs.sub .prop-tab { font-size: 13px; padding-top: 4px; padding-bottom: 4px; }
@@ -2555,3 +2555,10 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 @media (orientation: portrait) and (max-width: 700px) {
   .tattoo-screen .inv-tab { padding: 4px 9px; font-size: 13px; }
 }
+
+/* Shop tiers (items/shopTiers.ts): a locked piece's note in place of its Buy button. */
+.tier-lock { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.tier-lock .hint { margin: 0; color: var(--hg-muted, #b9b9b9); }
+
+/* A shop's painted name in its screen's heading (hub.ts headingArt). */
+.hub-head h2 .hub-title-art { height: clamp(34px, 6vh, 52px); width: auto; display: block; }

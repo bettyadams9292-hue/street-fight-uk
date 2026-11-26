@@ -59,6 +59,8 @@ function fresh(bank = 0, pocket = 0): Progress {
   const s = newSave(createCharacter({ name: 'Test', appearance: defaultAppearance('male'), background: 'estate_scrapper', allocated: emptyAllocation() }));
   s.cash.bank = bank;
   s.cash.pocket = pocket;
+  // Every shop tier open (items/shopTiers.ts): these tests are about the shops' own rules.
+  for (const f of ['boss_sully', 'boss_dunc']) s.flags[f] = true;
   return new Progress(s);
 }
 const reload = (p: Progress): Progress => new Progress(sanitiseSave(JSON.parse(JSON.stringify(p.save)) as GameSave)!);

@@ -13,6 +13,7 @@ import { streetDetail } from '../materials/streetDetail';
 import * as THREE from 'three';
 import type { Block, Placement, Sign, StreetPlan } from '../../city/street';
 import { signTexture } from '../levelTextures';
+import { bannerTexture, fasciaTexture, posterTexture, vinylTexture } from '../brandArt';
 
 const BASE = '/models/polyfork/';
 
@@ -558,6 +559,21 @@ export function* buildKitStreetSteps(plan: StreetPlan, o: { night?: boolean } = 
     yield;
   }
 
+  // Window dressing: one shared plane, each with its own picture; posters and banners behind the glass, vinyl on it.
+  const decalGeo = new THREE.PlaneGeometry(1, 1);
+  disposables.push(decalGeo);
+  for (const d of plan.decals) {
+    const tex = d.art === 'poster' ? posterTexture(d.text, d.brand, d.seed, d.name) : d.art === 'vinyl' ? vinylTexture(d.text, d.brand, d.w / d.h) : bannerTexture(d.text, d.brand, d.w / d.h);
+    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8, transparent: d.art === 'vinyl', depthWrite: d.art !== 'vinyl', emissive: new THREE.Color('#ffffff'), emissiveMap: tex, emissiveIntensity: d.art === 'vinyl' ? 0.1 : 0.4 });
+    const m = new THREE.Mesh(decalGeo, mat);
+    m.scale.set(d.w, d.h, 1);
+    m.position.set(d.x, d.y, d.z);
+    if (d.art === 'vinyl') m.renderOrder = 3;
+    disposables.push(mat, tex);
+    group.add(m);
+  }
+  yield;
+
   for (const s of plan.signs) {
     const board = signBoard(s);
     disposables.push(board.geometry, board.material as THREE.Material);
@@ -657,7 +673,7 @@ void main() {`,
 }
 
 function signBoard(s: Sign): THREE.Mesh {
-  const tex = signTexture(s.text, s.bg, s.fg, { aspect: s.w / s.h, neon: s.neon, h: 128 });
+  const tex = s.brand && !s.neon ? fasciaTexture(s.text, s.brand, s.w / s.h) : signTexture(s.text, s.bg, s.fg, { aspect: s.w / s.h, neon: s.neon, h: 128 });
   const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7, emissive: new THREE.Color(s.neon ? s.fg : '#ffffff'), emissiveMap: tex, emissiveIntensity: s.neon ? 0.9 : 0.35 });
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(s.w, s.h), mat);
   mesh.position.set(s.x, s.y, s.z);

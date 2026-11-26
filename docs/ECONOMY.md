@@ -15,7 +15,7 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 ## Rules the numbers follow
 
 - **Bosses pay mostly in cash.** Every purse is at least 90% of what its drops would sell for. The victory screen says what the loot is worth.
-- **Jewellery lives in the jewellery box.** Watches, chains and rings found as loot or dropped by bosses are real pieces from Halden & Crane's range (`JEWEL_ITEMS` in `src/items/jewellery.ts`). They go straight in the box, can be worn, and sell back at 45%, the same as bought pieces. Their item value equals the piece's price. Stolen jewellery stays in your pockets as hot goods for the pawn shop. Threads sells no jewellery.
+- **Jewellery lives in the jewellery box.** Watches, chains and rings found as loot or dropped by bosses are real pieces from H. Sterling's range (`JEWEL_ITEMS` in `src/items/jewellery.ts`). They go straight in the box, can be worn, and sell back at 45%, the same as bought pieces. Their item value equals the piece's price. Stolen jewellery stays in your pockets as hot goods for the pawn shop. Threads sells no jewellery.
 - **The grow business pays back within 8 hours** at every size. `UNIT_VALUE` is £14 a unit.
 - **Rent pays back in 11–17 hours.** A letting month is ten minutes of play, so yields (`YIELD` in `src/realty/catalogue.ts`) are 1.0–1.5% a month: well above real yields, on purpose.
 - **House prices settle rather than compound.** Each tier drifts up towards a long-run level, from +15% (budget) to +38% (exclusive), over a few hundred months. On top of that there's a wobble that pulls back to the trend, kept within 0.75–1.8 times the starting price. Unchecked compounding used to double mansion prices in 30 hours, so saving for one was a moving target.

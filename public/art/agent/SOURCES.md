@@ -1,4 +1,4 @@
-# Keys & Co artwork: sources
+# Wrongmove artwork: sources
 
 Original work for Street Fight UK, painted with PIL by `tools/models/property/boards.py` using the
 game's own Big Shoulders and Overpass fonts (SIL OFL, see `public/fonts`). The phone number is in

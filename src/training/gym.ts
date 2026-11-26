@@ -1,3 +1,4 @@
+import { priceTier, tierLockFor } from '../items/shopTiers';
 import type { Progress, PurchaseResult } from '../progress/Progress';
 import type { PropDef, StationDef } from '../world/LevelTypes';
 import type { UpgradeId } from '../progress/catalogue';
@@ -114,6 +115,8 @@ export function buyGymKit(p: Progress, id: string): PurchaseResult {
   const def = GYM_KIT[id];
   const g = p.save.gym;
   if (!def) return { ok: false, reason: 'Not stocked' };
+  const lock = tierLockFor(p, priceTier('gym', def.price));
+  if (lock) return { ok: false, reason: lock };
   if (g.owned.includes(id)) return { ok: false, reason: 'You’ve already got one in the gym' };
   if (!p.pay(def.price)) return { ok: false, reason: `Not enough money: need £${def.price}` };
   g.owned.push(id);

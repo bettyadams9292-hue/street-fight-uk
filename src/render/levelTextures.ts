@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { canvas, toTexture } from './textures';
+import { ownBrand } from '../city/brands';
+import { fasciaTexture } from './brandArt';
 import { fileTexture, flatNormalCanvas, textureImage, toneCanvas, toneTexture, windowCell, type WindowCell } from './textureFiles';
 
 /**
@@ -36,6 +38,9 @@ export function signTexture(
   // The canvas takes the board's shape, so letters are never stretched.
   const h = opts.h ?? 160;
   const w = opts.aspect ? Math.max(h, Math.min(4096, Math.round(h * opts.aspect))) : opts.w ?? 1024;
+  // A named business signs in its own lettering and colours (city/brands.ts), wherever its sign is drawn.
+  const brand = opts.neon || w <= h ? null : ownBrand(text);
+  if (brand) return fasciaTexture(text, brand, w / h);
   const [c, g] = canvas(w, h);
   g.fillStyle = bg;
   g.fillRect(0, 0, w, h);

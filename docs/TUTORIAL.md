@@ -60,7 +60,7 @@ Inputs are keyboard / pad / touch. Unless a row says "(info)" or "(hint)", the l
 | Clothes tiers, outfit buffs, jewellery XP | `items/gearBonus.ts` | none | wearing something that gives a buff | any | B: Dressed for it | read | B |
 | Kitchen: fridge, cupboards, cooking | `home/house.ts`, `kitchenUI.ts` | USE | home | home | B: The kitchen (first fridge or cupboard) | read | B |
 | The Red Lion: bar, lock-in, the Snug | `world/interiors.ts`, `recruit` | USE | in the pub | High Street | B: The Red Lion (first visit) | read | B |
-| Property | `realty/` | USE at Keys & Co | Riverside Centre | later | C: Property (hint at the agent) | read | C |
+| Property | `realty/` | USE at Wrongmove | Riverside Centre | later | C: Property (hint at the agent) | read | C |
 | Bikes | `world/streetBikes.ts` | USE on a bike | bike racks | streets | C: Bikes (hint on the first bike) | read | C |
 | Business | `business/` | the basement | basement unlocked | later | C: The basement (hint on the first visit) | read | C |
 
