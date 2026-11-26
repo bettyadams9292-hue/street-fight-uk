@@ -16,6 +16,7 @@ import { LEVELS } from '../src/world/levels';
 import { propHalf } from '../src/world/LevelTypes';
 import { AMBUSH_MAX, ambushChance, jumped, journeyRisk } from '../src/travel/onFoot';
 import { World } from '../src/world/World';
+import { fitMod, fitted, optionFor, paintOf } from '../src/property/carMods';
 import { route } from '../src/map/worldMap';
 
 let passed = 0;
@@ -149,6 +150,41 @@ ok('on foot: an ambush is an ordinary street fight, never on top of another', ()
   assert.ok(w.ambush(2));
   assert.equal(w.enemies.length - before, 2);
   assert.equal(w.ambush(2), false, 'not while they are still up');
+});
+
+// ---- car mods ---------------------------------------------------------------------------------------------
+
+ok('mods: paid once, only what suits the car, kept through a reload and on the parked car', () => {
+  const p = fresh();
+  const car = addCar(p, 'corvo', CARS.corvo.colours[0], 'bought');
+  p.save.cash.pocket = 0;
+  p.save.cash.bank = 2000;
+  const wheels = optionFor('corvo', 'wheels', 'gold')!;
+  const r = fitMod(p, car.uid, 'wheels', 'gold');
+  assert.ok(r.ok);
+  assert.equal(p.save.cash.bank, 2000 - wheels.price);
+  assert.equal(fitMod(p, car.uid, 'wheels', 'gold').ok, false, 'not twice');
+  assert.equal(p.save.cash.bank, 2000 - wheels.price, 'charged once');
+  assert.equal(fitMod(p, car.uid, 'ride', 'lifted').ok, false, 'no lift on a hatchback');
+  const suv = addCar(p, 'tundra', CARS.tundra.colours[0], 'bought');
+  assert.equal(fitMod(p, suv.uid, 'spoiler', 'wing').ok, false, 'no wing on an SUV');
+  assert.ok(fitMod(p, suv.uid, 'ride', 'lifted').ok);
+  assert.ok(fitMod(p, car.uid, 'paint', '#c8102e').ok);
+  assert.ok(fitMod(p, car.uid, 'plate', 'GR4 FTY').ok);
+  p.save.cash.bank = 0;
+  assert.equal(fitMod(p, car.uid, 'tint', 'limo').ok, false, 'not without the money');
+  const back = sanitiseSave(JSON.parse(JSON.stringify(p.save)))!;
+  const c2 = back.property.cars.find((c) => c.uid === car.uid)!;
+  assert.equal(fitted(c2, 'wheels'), 'gold');
+  assert.equal(paintOf(c2), '#c8102e');
+  assert.equal(c2.mods?.plate, 'GR4 FTY');
+  const junk = sanitiseSave(JSON.parse(JSON.stringify({ ...p.save, property: { ...p.save.property, cars: [{ ...car, mods: { wheels: 'rainbow', ride: 'lifted', plate: 'X' } }] } })))!;
+  assert.equal(junk.property.cars[0].mods, undefined, 'unknown or unsuitable mods dropped');
+  // The parked car carries them.
+  p.save.property.activeCar = car.uid;
+  const prop = resolveLevel('estate', p.save).props.find((x) => x.kind === 'vehicle' && x.item === 'corvo')!;
+  assert.equal(prop.colour, '#c8102e');
+  assert.equal(prop.mods?.wheels, 'gold');
 });
 
 console.log(`\ntravel: ${passed} passed, ${failed} failed`);

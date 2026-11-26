@@ -63,6 +63,7 @@ import {
   type RouletteBet,
 } from '../property/casino';
 import { driveOption, type TravelOption } from '../map/worldMap';
+import { MOD_CATS, fitMod, fitted, paintOf, type CarMods, type ModCat } from '../property/carMods';
 import { LEVELS } from '../world/levels';
 import { menuButton } from './controls';
 import { h } from './dom';
@@ -255,10 +256,15 @@ export function carDealerScreen(progress: Progress, close: () => void, saved: ()
   let cls: CarClass = 'hatchback';
   let sel = CAR_LIST[0].id;
   let colour = CARS[sel].colours[0];
+  let mode: 'forecourt' | 'mods' = 'forecourt';
+  const mods: ModsState = { uid: null, cat: 'paint', pick: null, armed: false };
   return panelScreen('Arnold Shark', progress, (msg, rebuild) => {
     const prop = progress.save.property;
+    const modeTabs = prop.cars.length ? tabs([{ id: 'forecourt' as const, name: 'Forecourt' }, { id: 'mods' as const, name: 'Mods' }], mode, (m) => ((mode = m), rebuild())) : null;
+    if (mode === 'mods' && prop.cars.length) return [modeTabs!, ...modsBody(progress, mods, msg, rebuild, saved)];
     const def = CARS[sel];
     const rows: HTMLElement[] = [
+      ...(modeTabs ? [modeTabs] : []),
       h('p', { class: 'hint', text: `Bought cars are parked on your drive at 14 Tanner Road (${prop.cars.length}/${MAX_CARS} owned). Swap which one's on the drive from the car itself.` }),
       tabs(CAR_CLASSES, cls, (c) => {
         cls = c;
@@ -380,6 +386,59 @@ export function garageBikeScreen(progress: Progress, close: () => void, saved: (
     }
     return rows;
   }, close);
+}
+
+// ---- cosmetic mods (property/carMods.ts) ------------------------------------------------------------
+
+interface ModsState {
+  uid: string | null;
+  cat: ModCat;
+  /** The option being looked at (previewed, not bought yet). */
+  pick: string | null;
+  /** The fit button's been pressed once: the next press pays. */
+  armed: boolean;
+}
+
+/** The Mods tab: your car, what's fitted, every option with its price, a live preview, and a fit that asks first. */
+function modsBody(progress: Progress, st: ModsState, msg: (t: string, bad?: boolean) => void, rebuild: () => void, saved: () => void): HTMLElement[] {
+  const prop = progress.save.property;
+  const car = prop.cars.find((c) => c.uid === st.uid) ?? prop.cars.find((c) => c.uid === prop.activeCar) ?? prop.cars[0];
+  st.uid = car.uid;
+  const def = CARS[car.id];
+  const cat = MOD_CATS.find((c) => c.id === st.cat)!;
+  const opts = cat.options(car.id);
+  const on = fitted(car, st.cat);
+  const pick = opts.find((o) => o.value === st.pick) ?? opts.find((o) => o.value === on) ?? opts[0];
+  const draft: CarMods = { ...(car.mods ?? {}), [st.cat]: pick.value };
+  const paint = st.cat === 'paint' ? pick.value : paintOf(car);
+  const reset = () => ((st.pick = null), (st.armed = false));
+  const rows: HTMLElement[] = [
+    h('p', { class: 'hint', text: 'Looks only: nothing changes how it drives. Pick a part to see it on the car, then fit it. Mods stay on the car wherever you park it.' }),
+  ];
+  if (prop.cars.length > 1) rows.push(tabs(prop.cars.map((c) => ({ id: c.uid, name: CARS[c.id].name })), car.uid, (u) => ((st.uid = u), reset(), rebuild())));
+  rows.push(tabs(MOD_CATS.map((c) => ({ id: c.id, name: c.name })), st.cat, (c) => ((st.cat = c), reset(), rebuild())));
+  const list = h('div', { class: 'prop-list' }, ...opts.map((o) => {
+    const b = h('button', { class: `prop-item${o.value === pick.value ? ' on' : ''}`, 'data-nav': true, onclick: () => ((st.pick = o.value), (st.armed = false), rebuild()) },
+      h('b', { text: `${o.value === on ? '✓ ' : ''}${o.name}` }), h('span', { text: o.value === on ? 'Fitted' : o.price ? money(o.price) : 'Free' }));
+    if (o.swatch) b.style.borderLeft = `10px solid ${o.swatch}`;
+    return b;
+  }));
+  const fittedNow = pick.value === on;
+  const btn = fittedNow
+    ? h('p', { class: 'hint', text: 'Fitted on your car.' })
+    : menuButton(st.armed ? `Confirm: fit for ${pick.price ? money(pick.price) : 'free'}` : `Fit ${pick.name}${pick.price ? ` (${money(pick.price)})` : ''}`, () => {
+        if (!st.armed) {
+          st.armed = true;
+          return rebuild();
+        }
+        st.armed = false;
+        const r = fitMod(progress, car.uid, st.cat, pick.value);
+        if (!r.ok) return msg(r.reason, true);
+        saved();
+        msg(`${pick.name} fitted to your ${def.name}${r.price ? ` for ${money(r.price)}` : ''}.`);
+      }, st.armed ? 'Pays from your pocket, then the bank' : 'Press again to confirm', 'primary');
+  rows.push(h('div', { class: 'prop-shop' }, list, h('div', { class: 'prop-detail' }, previewCanvas(car.id, paint, draft), h('h3', { text: `${def.name}: ${cat.name}` }), btn)));
+  return rows;
 }
 
 // ---- the car on the drive ----------------------------------------------------------------------------

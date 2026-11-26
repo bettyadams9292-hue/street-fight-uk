@@ -1,3 +1,4 @@
+import type { CarMods } from '../property/carMods';
 import * as THREE from 'three';
 import { BIKES, CARS, FURNITURE, type CarDef, type FurnitureDef } from '../property/catalogue';
 import { signTexture } from './levelTextures';
@@ -482,12 +483,12 @@ function artMaterial(id: string, colour: string): THREE.Material {
 // ---- cars ------------------------------------------------------------------------------------------
 
 /** A car with its nose along +x. */
-export function buildCarModel(id: string, colour?: string): THREE.Group {
+export function buildCarModel(id: string, colour?: string, mods?: CarMods): THREE.Group {
   const def = CARS[id];
   const g = new THREE.Group();
   if (!def) return g;
   // The model from VehicleLibrary when it has loaded; the code-built car otherwise.
-  const model = carPiece(id, colour ?? def.colours[0], def.size[0] * 2, def.size[1] * 2);
+  const model = carPiece(id, colour ?? def.colours[0], def.size[0] * 2, def.size[1] * 2, mods);
   if (model) {
     g.add(model);
     if (id === 'warden') wardenKit(g, model);
@@ -592,8 +593,8 @@ export function buildBikeModel(id: string, colour?: string): THREE.Group {
 }
 
 /** Car or bike, whichever the id is. */
-export function buildVehicleModel(id: string, colour?: string): THREE.Group {
-  return CARS[id] ? buildCarModel(id, colour) : buildBikeModel(id, colour);
+export function buildVehicleModel(id: string, colour?: string, mods?: CarMods): THREE.Group {
+  return CARS[id] ? buildCarModel(id, colour, mods) : buildBikeModel(id, colour);
 }
 
 // ---- basement business equipment -------------------------------------------------------------------
@@ -919,11 +920,11 @@ export function buildEquipmentModel(id: string, state = 'ok|0|on'): THREE.Group 
 }
 
 /** Whatever a catalogue id is: furniture, a vehicle or basement equipment. */
-export function buildAnyModel(id: string, colour?: string, state?: string): THREE.Group {
+export function buildAnyModel(id: string, colour?: string, state?: string, mods?: CarMods): THREE.Group {
   if (GYM_KIT[id]) return buildGymKitModel(id);
   if (FURNITURE[id]) return buildFurnitureModel(id, colour);
   if (EQUIPMENT[id]) return buildEquipmentModel(id, state);
-  return buildVehicleModel(id, colour);
+  return buildVehicleModel(id, colour, mods);
 }
 
 // ---- home gym kit ------------------------------------------------------------------------------------

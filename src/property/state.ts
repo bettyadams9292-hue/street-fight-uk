@@ -1,3 +1,4 @@
+import { sanitiseMods, type CarMods } from './carMods';
 import type { AreaId, Progress, PurchaseResult } from '../progress/Progress';
 import {
   BIKES,
@@ -39,6 +40,8 @@ export interface OwnedVehicle {
   colour: string;
   /** How you got it. */
   from: 'bought' | 'won';
+  /** Cosmetic mods from Arnold Shark (cars only; property/carMods.ts). */
+  mods?: CarMods;
 }
 
 export interface CasinoStats {
@@ -151,7 +154,11 @@ export function sanitiseProperty(raw: unknown, areas: readonly string[]): Proper
       .filter((x): x is OwnedVehicle => !!x && !!table[x.id] && uidOk(x.uid))
       .slice(0, cap)
       .map((x) => ({ uid: x.uid, id: x.id, colour: colourOk(x.colour, table[x.id].colours[0]), from: x.from === 'won' ? ('won' as const) : ('bought' as const) }));
-  out.cars = vehicles(r.cars, CARS, MAX_CARS);
+  out.cars = vehicles(r.cars, CARS, MAX_CARS).map((c) => {
+    const raw = (Array.isArray(r.cars) ? r.cars : []).find((x) => x && (x as OwnedVehicle).uid === c.uid) as OwnedVehicle | undefined;
+    const mods = sanitiseMods(c.id, raw?.mods);
+    return mods ? { ...c, mods } : c;
+  });
   out.bikes = vehicles(r.bikes, BIKES, GARAGE_SPACES);
   out.activeCar = out.cars.some((c) => c.uid === r.activeCar) ? r.activeCar! : out.cars[0]?.uid ?? null;
   const bo = r.bikeOut;

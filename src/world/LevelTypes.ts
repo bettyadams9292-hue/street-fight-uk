@@ -1,3 +1,4 @@
+import type { CarMods } from '../property/carMods';
 import type { ArchetypeId } from '../ai/archetypes';
 import type { BossId } from '../ai/bosses';
 import type { WeaponId } from '../combat/Weapons';
@@ -67,6 +68,8 @@ export interface PropDef {
   label?: string;
   /** Furniture or vehicle catalogue id (kind 'furniture' / 'vehicle'). */
   item?: string;
+  /** An owned car's cosmetic mods (kind 'vehicle'; property/carMods.ts). */
+  mods?: CarMods;
   /** Quarter turns (0..3). Odd turns swap width and depth. */
   rot?: number;
   /** Half extents, overriding the kind's size. */

@@ -3765,7 +3765,7 @@ export class LevelView {
       return;
     }
     const isCar = !!CARS[p.item ?? ''];
-    const model = buildVehicleModel(p.item ?? '', p.colour);
+    const model = buildVehicleModel(p.item ?? '', p.colour, p.mods);
     g.add(model);
     g.rotation.y = -rot * (Math.PI / 2);
     const [hx, hz] = propHalf(p);
