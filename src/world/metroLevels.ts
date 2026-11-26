@@ -3,7 +3,7 @@
  * (render/metroStation.ts) and dressed for each station by its colour, its name and its tiles.
  *
  * Left to right: the stairs up to the street (x 0–3.6), the ticket hall (ticket machines, the line map, the staff
- * booth) and the gate line at `GATE_X`, a passage, then the platform (`PLATFORM_X0`–`PLATFORM_X1`) with the track
+ * booth), open straight through (no barriers), a passage, then the platform (`PLATFORM_X0`–`PLATFORM_X1`) with the track
  * and the tunnel behind it. The walkway is the street's (NARROW); the platform edge is the back of it.
  */
 import type { LevelDef } from './LevelTypes';
@@ -11,7 +11,7 @@ import { STATIONS, type Station, type StationId } from '../travel/subway';
 import type { AreaId } from '../progress/Progress';
 
 export const METRO_LENGTH = 62;
-/** The gate line across the ticket hall. */
+/** Where the ticket hall ends and the way to the platform starts (signs; there are no barriers). */
 export const GATE_X = 15.5;
 /** The platform's length along the room; the train stands along it. */
 export const PLATFORM_X0 = 20;
@@ -78,7 +78,6 @@ function stationLevel(st: Station): LevelDef {
     containers: [],
     encounters: [],
     stations: [
-      { id: 'metro_gates', x: GATE_X - 0.6, z: 0.2, label: 'Ticket barriers' },
       { id: 'metro_board', x: 34.8, z: -1.0, label: 'Departures' },
       ...TRAIN_DOORS.map((x) => ({ id: 'metro_train' as const, x, z: -1.25, label: 'Board the train' })),
     ],
@@ -92,6 +91,16 @@ function streetName(area: AreaId): string {
   const names: Partial<Record<string, string>> = { estate: 'the underpass', high_street: 'the High Street', city: 'Market Square', docks: 'Canal Docks', mall: 'the Riverside Centre', nightlife: 'the Neon Mile', underground: 'the Deep Line', subway: 'the underpass' };
   return names[area] ?? 'the street';
 }
+
+/** Who has to go down before each station opens, for the shutter notice. */
+const OPENED_BY: Record<string, string> = {
+  boss_gaffer: 'the Gaffer’s off the High Street',
+  boss_ratcatcher: 'the Ratcatcher’s beaten in the City Centre',
+  boss_docks: 'Big Lenny’s down at the Canal Docks',
+  boss_precinct: 'Dean Pryce has lost Kingsway',
+  boss_nightclub: 'Simone Achebe’s settled on the Neon Mile',
+  boss_underground: 'the Underground King’s found on the Deep Line',
+};
 
 /** Every station's area. */
 export const METRO_LEVELS: Record<string, LevelDef> = Object.fromEntries(STATIONS.map((st) => [`metro_${st.id}`, stationLevel(st)]));
@@ -107,9 +116,12 @@ export function addMetroEntrances(levels: Record<string, LevelDef>): void {
     const lv = levels[e.area];
     if (!lv) continue;
     for (const p of lv.props) if (Math.abs(p.x - e.x) < 2.2 && p.z < -0.6) p.x = e.x + (p.x < e.x ? -2.6 : 2.6);
+    // Nothing else to use at the top of the stairs either (a bin to search would take the USE off the stairs).
+    for (const c of lv.containers ?? []) if (Math.abs(c.x - e.x) < 2.2) c.x = e.x + (c.x < e.x ? -2.6 : 2.6);
+    for (const s of lv.stations ?? []) if (Math.abs(s.x - e.x) < 1.6 && s.z < 0) s.x = e.x + (s.x < e.x ? -2.2 : 2.2);
     lv.exits.push({
       id: `metro_${st.id}`, kind: 'door', x: e.x, z: -1.5, to: `metro_${st.id}` as AreaId, toEntry: 'street',
-      label: `Down to ${st.name} station`, ...(st.opens ? { requires: st.opens, lockedText: 'Shutters down. The line doesn’t run this far yet.' } : {}),
+      label: `Down to ${st.name} station`, requires: st.opens, lockedText: `Shutters down. ${st.name} station opens once ${OPENED_BY[st.opens] ?? 'this district is yours'}.`,
     });
     lv.entries.push({ id: `metro_${st.id}`, x: e.x, z: -1.0, facing: 1 });
   }

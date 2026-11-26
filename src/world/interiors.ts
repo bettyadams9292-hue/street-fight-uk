@@ -168,7 +168,6 @@ const pawnShop: LevelDef = {
   exits: [
     { id: 'out', kind: 'door', x: 13.4, z: 0.9, to: 'city', toEntry: 'pawn', label: 'Back out to Market Square' },
     // Lets you come here by cab before you've fought your way to Market Square.
-    { id: 'cab_home', kind: 'door', x: 0.8, z: 0.9, to: 'home', toEntry: 'door', label: 'Back door: Dave’s cab home' },
   ],
   facades: [{ kind: 'interior', x0: 0, x1: 14, label: 'CASH DEGENERATOR — WE BUY GOLD', colour: '#3a3428' }],
   props: [
@@ -294,7 +293,6 @@ const furnitureShop: LevelDef = {
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'high_street', toEntry: 'furniture', label: 'Back out to the High Street' },
-    { id: 'cab_home', kind: 'door', x: 21.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Loading bay: ride home in the delivery van' },
   ],
   facades: [{ kind: 'interior', x0: 0, x1: 22, label: 'HOME & HEARTH — FURNITURE · LIGHTING · DECOR', colour: '#e8e0d0' }],
   props: [
@@ -345,7 +343,6 @@ const carDealer: LevelDef = {
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'ind_estate', toEntry: 'dealer', label: 'Back out to the trading estate' },
-    { id: 'cab_home', kind: 'door', x: 27.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Side door: courtesy car home' },
   ],
   facades: [{ kind: 'interior', x0: 0, x1: 28, label: 'ARNOLD SHARK — NEW & USED', colour: '#e8ecf0' }],
   props: [
@@ -382,7 +379,6 @@ const bikeShop: LevelDef = {
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'ind_estate', toEntry: 'bikes', label: 'Back out to the trading estate' },
-    { id: 'cab_home', kind: 'door', x: 19.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Workshop door: van home' },
   ],
   facades: [{ kind: 'interior', x0: 0, x1: 20, label: 'HALFRAUDS — BIKES · SCOOTERS · MOTOS', colour: '#2a2c30' }],
   props: [
@@ -427,7 +423,6 @@ const casino: LevelDef = {
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'city', toEntry: 'casino', label: 'Back out to Market Square' },
-    { id: 'cab_home', kind: 'door', x: 25.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Rear exit: house cab home' },
   ],
   facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'THE GRAND GAMBLE', colour: '#3a0e14' }],
   props: [
@@ -481,7 +476,6 @@ const growShop: LevelDef = {
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'ind_estate', toEntry: 'grow', label: 'Back out to the trading estate' },
-    { id: 'cab_home', kind: 'door', x: 19.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Back door: Kez’s van home' },
   ],
   facades: [{ kind: 'interior', x0: 0, x1: 20, label: 'B&THC — HYDROPONICS · LIGHTING · VENTILATION', colour: '#e8ece4' }],
   props: [
@@ -535,7 +529,6 @@ const gymStore: LevelDef = {
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'leisure', toEntry: 'irontemple', label: 'Back out to Leisure Park' },
-    { id: 'cab_home', kind: 'door', x: 21.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Delivery bay: ride home with the van' },
   ],
   facades: [{ kind: 'interior', x0: 0, x1: 22, label: 'PUREGRAFT — HOME GYM EQUIPMENT', colour: '#2a2c30' }],
   props: [
@@ -598,7 +591,6 @@ function fightGym(
     entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
     exits: [
       { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: street, toEntry: streetEntry, label: 'Back outside' },
-      { id: 'cab_home', kind: 'door', x: 19.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Fire exit: lift home' },
     ],
     facades: [{ kind: 'interior', x0: 0, x1: 20, label: sign, colour: wall }],
     props: [
@@ -765,7 +757,7 @@ const policeStation: LevelDef = {
     // A night in the cells: you wake up inside the single cell, and walk out of it in the morning.
     { id: 'cell', x: CELL_X, z: CELL_Z - 0.2, facing: 1 },
   ],
-  exits: [{ id: 'out', kind: 'door', x: 25.6, z: 0.9, to: 'home', toEntry: 'door', label: 'Leave: straight home', custody: true, lockedText: 'Locked. You\u2019re not going anywhere till you\u2019ve done your time.' }],
+  exits: [{ id: 'out', kind: 'door', x: 25.6, z: 0.9, to: 'city', toEntry: 'police', label: 'Out onto Market Square', custody: true, lockedText: 'Locked. You\u2019re not going anywhere till you\u2019ve done your time.' }],
   walls: CELL_WALLS,
   facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'KIRKGATE CONSTABULARY', colour: '#16243f' }],
   props: [
@@ -823,7 +815,6 @@ const fightClub: LevelDef = {
   entries: [{ id: 'door', x: 1.4, z: 0.4, facing: 1 }],
   exits: [
     { id: 'out', kind: 'door', x: 0.6, z: 0.9, to: 'industrial', toEntry: 'club', label: 'Up the steps to Canal Side Works' },
-    { id: 'cab_home', kind: 'door', x: 21.4, z: 0.9, to: 'home', toEntry: 'door', label: 'Back stairs: a lift home' },
   ],
   facades: [{ kind: 'basement', x0: 0, x1: 22, label: 'THE SCRAP YARD' }],
   props: [

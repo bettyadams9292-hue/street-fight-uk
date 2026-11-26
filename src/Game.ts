@@ -1,8 +1,7 @@
 import { decorate, venueFor } from './ui/venueTheme';
-import { arriveBy, hop, metroArea, metroVisit, rollTrain, setMetroVisit, stationAt, tapIn, tapOut } from './travel/metro';
+import { arriveBy, metroArea, metroVisit, payRide, rollTrain, setMetroVisit, stationAt } from './travel/metro';
 import { stationOf, stopsBetween, type StationId as MetroStop } from './travel/subway';
-import { gatesScreen, trainScreen } from './ui/metroUI';
-import { GATE_X } from './world/metroLevels';
+import { trainScreen } from './ui/metroUI';
 import { bankPrompt } from './ui/bankPrompt';
 import { custodyRecord, frontCounter, policeStop } from './ui/policeUI';
 import { setHumansEnabled } from './render/human/HumanRig';
@@ -209,7 +208,7 @@ export class Game {
       // The studio (trying on clothes, the barber's and tattoo chairs) has no world: it's still the place you're in.
       const where = this.world?.level.id ?? (this.state === 'studio' ? this.placeId : null);
       if (this.state === 'menu' || this.phone?.isOpen || !where) return;
-      decorate(el, venueFor(where, this.lastStation));
+      decorate(el, venueFor(where, this.lastStation), where);
       this.lastStation = null;
     };
     this.house = new HouseController({
@@ -1203,6 +1202,12 @@ export class Game {
         if ((w.level.id === 'home' && to === 'basement') || (w.level.id === 'basement' && to === 'home')) return this.walkStairs(w, to, entry);
         // The next district of the long street: no door, no fade, you just keep walking.
         if (seam) return this.crossSeam(w, to, entry);
+        // Released after being booked in (bail paid, time done, paperwork lost): you're taken home. Walked in to see
+        // the desk, you walk out onto Market Square.
+        if (w.level.id === 'police_station' && this.progress?.save.police.custody) {
+          this.changeArea('home', 'door', w.carry());
+          return this.hud.toast('Released. You get a lift home.', 'info');
+        }
         this.changeArea(to, entry, w.carry());
       }),
       ev.on('area:locked', ({ text }) => this.hud.toast(text, 'warn')),
@@ -1480,8 +1485,9 @@ export class Game {
         this.ui.replaceAll(null);
         this.state = 'playing';
         this.hud.toast(`${def.name}: have a look round. The brochure’s in the hall.`, 'item');
-        // Booked through Wrongmove: the front door leads back there, not onto the property's street.
-        this.progress!.save.portfolio.viaAgent = true;
+        // Booked through the agent: the front door leads out onto the property's street if you've been there, or
+        // home if you haven't (a viewing can't be a way onto streets you haven't reached).
+        this.progress!.save.portfolio.viaAgent = !this.progress!.save.visited.includes(def.area);
         this.changeArea('property', id, null);
       },
     };
@@ -1612,31 +1618,6 @@ export class Game {
           this.hud.toast('Savings moved into the new tin', 'item');
         });
         break;
-      case 'metro_gates': {
-        const here = stationAt(w.level.id);
-        if (!here) return this.backToPlay();
-        screen = gatesScreen(p, here, {
-          tap: () => {
-            const r = tapIn(p, here);
-            if (!r.ok) return r.reason;
-            const v = metroVisit();
-            if (v) v.through = true;
-            this.ui.replaceAll(null);
-            this.backToPlay();
-            this.audio.atm('ok');
-            this.hud.toast('Tapped in. The fare’s taken when you tap out.', 'info');
-            saved();
-            return null;
-          },
-          hop: () => {
-            this.ui.replaceAll(null);
-            this.backToPlay();
-            this.hopGates(here);
-          },
-          close,
-        });
-        break;
-      }
       case 'metro_board': {
         const v = metroVisit();
         this.backToPlay();
@@ -2398,52 +2379,19 @@ export class Game {
   }
 
   /** Go somewhere by cab, or head home: from the map or the phone. */
-  /**
-   * Over the barriers: a vault onto the far side (the player carried by hand, the gates don't hold them), then the
-   * roll. Caught: the penalty fare, police heat and fare evasion on your record (travel/metro.ts hop).
-   */
-  private hopGates(here: MetroStop): void {
-    const w = this.world;
-    const p = this.progress;
-    if (!w || !p) return;
-    const r = hop(p, here, Math.random());
-    const f = w.player;
-    const from = { x: f.pos.x, z: f.pos.z };
-    const to = { x: GATE_X + 0.9, z: f.pos.z };
-    w.stairAnim = true;
-    f.anchored = true;
-    let t = 0;
-    const step = (): void => {
-      t += 1 / 60;
-      const k = Math.min(1, t / 0.7);
-      f.pos.x = from.x + (to.x - from.x) * k;
-      f.pos.y = Math.sin(k * Math.PI) * 0.9;
-      f.facing = 1;
-      if (k < 1) return void requestAnimationFrame(step);
-      f.pos.y = 0;
-      f.anchored = false;
-      w.stairAnim = false;
-      const v = metroVisit();
-      if (v) v.through = true;
-      if (r.ok && r.caught) {
-        this.hud.toast(`Caught. Penalty fare £${r.fine}, and the police have your name: fare evasion.`, 'warn');
-        this.saveGame();
-      } else this.hud.toast('Over. Nobody saw.', 'info');
-    };
-    requestAnimationFrame(step);
-  }
-
   /** On the train to `to`: the doors close, the ride passes in the dark, and you're on the platform there. */
-  private metroRide(from: MetroStop, to: MetroStop): void {
+  private metroRide(from: MetroStop, to: MetroStop): string | null {
     const w = this.world;
     const p = this.progress;
-    if (!w || !p) return;
+    if (!w || !p) return null;
+    const r = payRide(p, from, to);
+    if (!r.ok) return r.reason;
     this.ui.replaceAll(null);
     this.state = 'playing';
-    const charged = tapOut(p, to);
     const stops = stopsBetween(from, to).length - 1;
-    this.hud.toast(`${stops} stop${stops === 1 ? '' : 's'} to ${stationOf(to).name}.${charged ? ` Tapped out: £${charged.toFixed(2)}.` : ''}`, charged ? 'cash' : 'info');
+    this.hud.toast(`${stops} stop${stops === 1 ? '' : 's'} to ${stationOf(to).name}. £${r.paid} fare.`, 'cash');
     this.changeArea(metroArea(to), 'platform', w.carry());
+    return null;
   }
 
   private travelTo(area: AreaId, opt: TravelOption): void {

@@ -158,14 +158,15 @@ test('the record survives a save and load, junk dropped', () => {
   assert(sanitiseSave(old)!.record.length === 0, 'old saves start with a clean record');
 });
 
-test('Kirkgate Constabulary: a door on Market Square, the cells, the front counter, and the only way out goes home', () => {
+test('Kirkgate Constabulary: a door on Market Square, the cells, the front counter, and its door back out onto the square', () => {
   const st = LEVELS.police_station;
   assert(st, 'no station');
   assert(st.entries.some((e) => e.id === 'cell') && st.entries.some((e) => e.id === 'door'), 'entries');
   assert(st.stations?.some((s) => s.id === 'front_desk'), 'front counter');
-  // Leaving never puts you back on Market Square: every way out of the station goes straight home.
-  assert(st.exits.length > 0 && st.exits.every((e) => e.to === 'home'), `exits: ${st.exits.map((e) => e.to)}`);
-  for (const e of st.exits) assert(LEVELS.home.entries.some((n) => n.id === e.toEntry), `home has no entry ${e.toEntry}`);
+  // Walked in, you walk out where you came in (Game sends you home instead after being booked in).
+  assert(st.exits.length === 1 && st.exits[0].to === 'city' && st.exits[0].custody, `exits: ${st.exits.map((e) => e.to)}`);
+  const at = LEVELS.city.entries.find((n) => n.id === st.exits[0].toEntry);
+  assert(at && Math.abs(at.x - LEVELS.city.exits.find((e) => e.to === 'police_station')!.x) < 1, 'back out at the station door');
   // Furnished from the owner's police sets: the holding cells and the charge desk at least.
   const items = new Set(st.props.map((p) => p.item));
   for (const id of ['policeHoldingCellDouble', 'policeHoldingCellSingle', 'policeChargeDesk', 'policeCustodyDesk']) assert(items.has(id), `no ${id}`);
@@ -262,7 +263,7 @@ test('booked in: they take your phone and the stolen gear goes into the property
   const b = book(p);
   assert(p.save.police.custody, 'phone not taken');
   assert(b.seized >= 1 && p.save.police.seized.length >= 1, 'nothing in the property store');
-  assert(LEVELS.police_station.exits.every((e) => e.to === 'home'), 'the station lets you out somewhere but home');
+  // Booked in, the way out takes you home (Game's area:exit, keyed on police.custody).
 });
 
 test('Kerrigan on the desk loses the paperwork for half the bail, then he\u2019s your contact', () => {

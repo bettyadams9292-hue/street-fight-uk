@@ -80,3 +80,6 @@ every stairwell leads to its own station; ticket hall, gates (tap in, tap out, o
 in with its doors open or not (the board says how long; go back up and down to check again); riding to any station.
 Passers-by go down and come up the stairs. Still to do: the scraps on the platform and in the carriage, riding inside
 the carriage, and the Metro asset rows (train, roundels, gates) to replace the code-built pieces.
+
+Update (26 Nov 2026, Leeko): the barriers are gone. The hall is open to the platform and you pay as you board.
+Each station stays shuttered until its district's boss is beaten (`Station.opens`).

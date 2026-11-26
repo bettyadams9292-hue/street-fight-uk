@@ -1,7 +1,7 @@
 /**
  * The Metro in play (travel/metro.ts, world/metroLevels.ts): every station is an area you can get down to and up
- * from; a visit rolls once whether a train's in; the gates hold you till you tap in or hop; tapping in needs the
- * dearest fare and tapping out charges the real one; hopping can cost a penalty and a record; people use the stairs.
+ * from; a visit rolls once whether a train's in; no barriers, you walk straight to the platform and pay as you board;
+ * each station is shuttered until its district's boss is beaten; people use the stairs.
  */
 import assert from 'node:assert/strict';
 import { defaultAppearance } from '../src/character/Appearance';
@@ -10,9 +10,10 @@ import { emptyCommand } from '../src/input/Commands';
 import { newSave, Progress, type AreaId } from '../src/progress/Progress';
 import { LEVELS } from '../src/world/levels';
 import { World } from '../src/world/World';
-import { GATE_X, ENTRANCE } from '../src/world/metroLevels';
+import { ENTRANCE, PLATFORM_X0 } from '../src/world/metroLevels';
+import { exitLocked } from '../src/world/World';
 import { STATIONS, fare } from '../src/travel/subway';
-import { arriveBy, hop, maxFare, metroArea, rollTrain, setMetroVisit, tapIn, tapOut } from '../src/travel/metro';
+import { arriveBy, destinations, metroArea, payRide, rollTrain, setMetroVisit } from '../src/travel/metro';
 
 let passed = 0;
 const ok = (name: string, fn: () => void) => {
@@ -22,7 +23,7 @@ const ok = (name: string, fn: () => void) => {
 };
 const fresh = () => {
   const p = new Progress(newSave(createCharacter({ name: 'A', appearance: defaultAppearance('male'), background: 'estate_scrapper', allocated: emptyAllocation() })));
-  for (const st of STATIONS) if (st.opens) p.save.flags[st.opens] = true;
+  for (const st of STATIONS) p.save.flags[st.opens] = true;
   return p;
 };
 
@@ -47,56 +48,50 @@ ok('a visit rolls once whether a train is in: sometimes yes, sometimes no; off a
   for (let i = 0; i < 30; i++) seen.add(rollTrain(p, 'high_street').train);
   assert.deepEqual([...seen].sort(), [false, true]);
   const a = arriveBy('riverside');
-  assert.ok(a.train && a.through && a.arrived);
+  assert.ok(a.train && a.arrived);
   const v = rollTrain(p, 'high_street');
   if (!v.train) assert.ok(v.minutes >= 2 && v.minutes <= 8);
 });
 
-ok('tapping in needs the dearest fare from here; tapping out charges the ride', () => {
+ok('no barriers: from the stairs you walk straight down the hall onto the platform', () => {
+  const p = fresh();
+  setMetroVisit({ station: 'high_street', train: true, minutes: 0, arrived: false });
+  const w = new World(LEVELS['metro_high_street' as AreaId], p, { entry: 'street', seed: 1 });
+  assert.ok(!w.level.stations?.some((s) => (s.id as string) === 'metro_gates'), 'no gate station');
+  const c = emptyCommand();
+  c.moveX = 1;
+  for (let i = 0; i < 900; i++) w.step(c);
+  assert.ok(w.player.pos.x > PLATFORM_X0 + 2, `on the platform (${w.player.pos.x.toFixed(1)})`);
+  setMetroVisit(null);
+});
+
+ok('you pay as you board: cash, then card; not enough and you stay', () => {
   const p = fresh();
   p.save.cash.pocket = 1;
-  assert.equal(tapIn(p, 'tanner_road').ok, false);
+  assert.equal(payRide(p, 'tanner_road', 'riverside').ok, false);
   p.save.cash.pocket = 20;
-  assert.ok(maxFare(p, 'tanner_road') >= fare('tanner_road', 'riverside'));
-  assert.ok(tapIn(p, 'tanner_road').ok);
-  const charged = tapOut(p, 'market_square');
-  assert.equal(charged, fare('tanner_road', 'market_square'));
-  assert.equal(p.save.cash.pocket, 20 - Math.ceil(charged));
-  assert.equal(p.save.metro.tappedIn, null);
-  assert.equal(tapOut(p, 'riverside'), 0, 'no tap-in, nothing taken');
+  const r = payRide(p, 'tanner_road', 'market_square');
+  assert.ok(r.ok && r.paid === Math.ceil(fare('tanner_road', 'market_square')));
+  assert.equal(p.save.cash.pocket, 20 - Math.ceil(fare('tanner_road', 'market_square')));
 });
 
-ok('hopping: caught costs the penalty fare, police heat and fare evasion on the record', () => {
-  const p = fresh();
-  p.save.cash.pocket = 100;
-  assert.equal(hop(p, 'market_square', 0.99).ok && (hop(p, 'market_square', 0.99) as { caught?: boolean }).caught, false);
-  const r = hop(p, 'market_square', 0);
-  assert.ok(r.ok && r.caught && r.fine === 50);
-  assert.equal(p.save.cash.pocket, 50);
-  assert.ok(p.save.record.some((c) => c.crime === 'fare_evasion'));
-});
-
-ok('the gates hold you in the ticket hall until you are through', () => {
-  const p = fresh();
-  const lv = LEVELS['metro_high_street' as AreaId];
-  setMetroVisit({ station: 'high_street', train: true, minutes: 0, through: false, arrived: false });
-  const w = new World(lv, p, { entry: 'street', seed: 1 });
-  const right = () => {
-    const c = emptyCommand();
-    c.moveX = 1;
-    return c;
-  };
-  for (let i = 0; i < 600; i++) w.step(right());
-  assert.ok(w.player.pos.x <= GATE_X - 0.7, `held at the gates (${w.player.pos.x.toFixed(2)})`);
-  setMetroVisit({ station: 'high_street', train: true, minutes: 0, through: true, arrived: false });
-  for (let i = 0; i < 300; i++) w.step(right());
-  assert.ok(w.player.pos.x > GATE_X + 2, 'through once tapped in');
-  setMetroVisit(null);
+ok('each station is shuttered until its district boss is down, and only open stations are on the train', () => {
+  const p = new Progress(newSave(createCharacter({ name: 'B', appearance: defaultAppearance('male'), background: 'estate_scrapper', allocated: emptyAllocation() })));
+  for (const st of STATIONS) {
+    const down = LEVELS[ENTRANCE[st.id].area].exits.find((e) => e.to === metroArea(st.id))!;
+    assert.ok(exitLocked(down, p), `${st.name} shut at the start`);
+    assert.ok(down.lockedText?.includes('opens once'), 'says what opens it');
+  }
+  p.save.flags.boss_gaffer = true;
+  assert.deepEqual(destinations(p, 'tanner_road'), ['high_street']);
+  const hs = LEVELS.high_street.exits.find((e) => e.to === metroArea('high_street'))!;
+  assert.ok(!exitLocked(hs, p), 'High Street opens with the Gaffer');
+  assert.ok(exitLocked(LEVELS.city.exits.find((e) => e.to === metroArea('market_square'))!, p), 'Market Square waits for the Ratcatcher');
 });
 
 ok('people use the station stairs: some go down to the street and come down from it', () => {
   const p = fresh();
-  setMetroVisit({ station: 'high_street', train: false, minutes: 4, through: false, arrived: false });
+  setMetroVisit({ station: 'high_street', train: false, minutes: 4, arrived: false });
   const w = new World(LEVELS['metro_high_street' as AreaId], p, { entry: 'street', seed: 3 });
   let onStairs = 0;
   for (let i = 0; i < 60 * 40; i++) {

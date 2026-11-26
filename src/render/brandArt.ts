@@ -65,7 +65,11 @@ function gild(g: CanvasRenderingContext2D, h: number, y0: number, y1: number): C
 
 /** The fascia: the name in the brand's own lettering on its colour, with its stripe or gold leaf. */
 export function fasciaTexture(text: string, b: Brand, aspect: number): THREE.CanvasTexture {
-  const h = 128;
+  return textTex(fasciaCanvas(text, b, aspect));
+}
+
+/** The fascia drawn on a canvas (also the shop's logo on its screens: ui/shopBrand.ts). */
+export function fasciaCanvas(text: string, b: Brand, aspect: number, h = 128): HTMLCanvasElement {
   const w = Math.max(h, Math.min(2048, Math.round(h * aspect)));
   const [c, g] = canvas(w, h);
   g.fillStyle = b.bg;
@@ -95,7 +99,7 @@ export function fasciaTexture(text: string, b: Brand, aspect: number): THREE.Can
   g.fillText(name, w / 2 + 3, y + 4);
   g.fillStyle = b.gilt ? gild(g, h, y - px / 2, y + px / 2) : b.fg;
   g.fillText(name, w / 2, y);
-  return textTex(c);
+  return c;
 }
 
 /** A window card: the offer big on the brand's colours, a sticker on some, the shop's name small underneath. */

@@ -131,11 +131,15 @@ export function addDecor(level: Pick<LevelDef, 'props' | 'walls' | 'stations' | 
   }
   for (const w of level.walls ?? []) taken.push(w);
   for (const s of level.stations ?? []) taken.push({ minX: s.x - 0.5, maxX: s.x + 0.5, minZ: s.z - 0.6, maxZ: s.z + 0.8 });
-  for (const e of level.exits) taken.push({ minX: e.x - 0.8, maxX: e.x + 0.8, minZ: -3, maxZ: 1.7 });
+  // A door in the back wall is seen across the whole room: keep the floor in front of it clear all the way to the
+  // camera, so nothing stands in front of it or in the way to it.
+  for (const e of level.exits) taken.push({ minX: e.x - 0.8, maxX: e.x + 0.8, minZ: -3, maxZ: e.z < 0 && e.kind === 'door' ? 99 : 1.7 });
+  const backDoors = level.exits.filter((e) => e.kind === 'door' && e.z < 0);
   const out: PropDef[] = [];
   for (const d of decor) {
-    // On the back wall (a dartboard, a clock): only kept clear of other wall pieces.
+    // On the back wall (a dartboard, a clock): never hung over a door.
     if (d.wallY !== undefined) {
+      if (backDoors.some((e) => Math.abs(e.x - d.x) < 0.95)) continue;
       out.push({ ...d, solid: false });
       continue;
     }

@@ -7,7 +7,7 @@
  */
 import { deepRoom } from '../world/rooms';
 import type { EntryDef, ExitDef, FacadeDef, LevelDef, LightDef, PropDef, StationDef } from '../world/LevelTypes';
-import { PROP_SIZE } from '../world/LevelTypes';
+import { PROP_SIZE, propHalf } from '../world/LevelTypes';
 import { FURNITURE } from '../property/catalogue';
 import { addDecor, roomDecor, type DecorRoom } from '../world/roomDecor';
 import type { AreaId } from '../progress/Progress';
@@ -385,6 +385,9 @@ const ROOM_FIT: Partial<Record<RoomKind, { back: number; pieces: { kind: PropDef
  * The inside of a property: its rooms side by side along the walkway, each with its own floor, walls and
  * furniture, front door in the hallway. `as` says whether you're viewing it (the brochure) or it's yours.
  */
+/** Where the front door is, in the first room's back wall. */
+const DOOR_X = 0.9;
+
 export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', personal: boolean, priceText: string, viaAgent = false): LevelDef {
   const scale = [0, 0.85, 0.92, 1, 1.08, 1.2][p.quality];
   const fin = FINISH_BY_QUALITY[p.quality];
@@ -414,6 +417,8 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
       }
       cursor = x0 + 1.9;
     }
+    // The front door is in the first room's back wall (x 0.9): whatever the room, nothing goes in front of it.
+    if (i === 0) cursor = Math.max(cursor, DOOR_X + 1.0);
     const limit = kind === 'hall' && p.stairs ? x1 - 2.5 : x1 - 0.3;
     const fit = ROOM_FIT[kind];
     for (const f of fit?.pieces ?? []) {
@@ -427,7 +432,10 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
         const [hx, hz] = fdef.size;
         if (fdef.mount === 'wall') {
           // Wall pieces hang over whatever's in the middle of the room.
-          props.push(F(item, (x0 + x1) / 2 + (props.length % 2 ? -0.6 : 0.6), -2.25, { colour: fdef.colours[(p.quality + i) % fdef.colours.length] }));
+          let wx = (x0 + x1) / 2 + (props.length % 2 ? -0.6 : 0.6);
+          // Never hung over the front door.
+          if (Math.abs(wx - DOOR_X) < hx + 0.6) wx = DOOR_X + hx + 0.6;
+          props.push(F(item, wx, -2.25, { colour: fdef.colours[(p.quality + i) % fdef.colours.length] }));
           continue;
         }
         if (cursor + hx * 2 > limit) continue;
@@ -454,8 +462,8 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
   // door can't be a way onto streets further along than you've got.
   const exits: ExitDef[] = [
     as === 'viewing' && viaAgent
-      ? { id: 'front_door', kind: 'door', x: 0.9, z: -1.4, to: 'home', toEntry: 'door', label: 'Leave: straight home' }
-      : { id: 'front_door', kind: 'door', x: 0.9, z: -1.4, to: p.area, toEntry: exitId(p.id), label: 'Go out (front door)' },
+      ? { id: 'front_door', kind: 'door', x: DOOR_X, z: -1.4, to: 'home', toEntry: 'door', label: 'Leave: straight home' }
+      : { id: 'front_door', kind: 'door', x: DOOR_X, z: -1.4, to: p.area, toEntry: exitId(p.id), label: 'Go out (front door)' },
   ];
   const entries: EntryDef[] = [{ id: p.id, x: 1.4, z: -0.4, facing: 1 }];
   stations.push({
@@ -481,8 +489,16 @@ export function buildPropertyInterior(p: PropertyDef, as: 'viewing' | 'owner', p
     weather: 'indoors',
     objective: as === 'viewing' ? `Viewing: ${p.type.toLowerCase()}, ${QUALITY_LABELS[p.quality].toLowerCase()} fit-out. The brochure's in the hall` : personal ? `${p.name}. Yours` : `${p.name}. Yours, on the market to let`,
   });
+  // The way from the front door into the room stays clear: anything standing in front of it (mid-room pieces on the
+  // front floor included) is left out. Wall pieces, rugs and the stairs don't count.
+  const clear = built.props.filter((pr) => {
+    if (pr.solid === false || pr.kind === 'staircase' || (pr.kind === 'furniture' && pr.z <= -2.2)) return true;
+    if (pr.kind === 'furniture' && FURNITURE[pr.item ?? '']?.mount === 'rug') return true;
+    const [hx] = propHalf(pr);
+    return Math.abs(pr.x - DOOR_X) >= hx + 0.55;
+  });
   // Each room dressed round its edges with the furniture pack, wherever that touches nothing already there.
-  return { ...built, props: [...built.props, ...addDecor(built, decor, built.bounds.maxZ)] };
+  return { ...built, props: [...clear, ...addDecor({ ...built, props: clear }, decor, built.bounds.maxZ)] };
 }
 
 /** Which dressing each kind of room gets (world/roomDecor.ts). */

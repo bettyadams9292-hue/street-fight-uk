@@ -1,6 +1,6 @@
 import { CELL } from './interiors';
 import { metroVisit } from '../travel/metro';
-import { GATE_X, STAIRS_X } from './metroLevels';
+import { STAIRS_X } from './metroLevels';
 import { streetSolids } from '../city/street';
 import { atmOpen, bankOf } from '../money/atm';
 import { doorX } from '../city/doorSpots';
@@ -1055,7 +1055,6 @@ export class World {
 
   // ---- the Metro ---------------------------------------------------------------------------------------------
 
-  /** Not through the gates yet: the barriers stop you (tap in or hop them: Game, station `metro_gates`). */
   /** Doing time: you stay in the cell (its barred front is shut) till it's up. */
   private holdInCell(): void {
     if (this.level.id !== 'police_station' || !this.progress.save.police.serving) return;
@@ -1067,19 +1066,7 @@ export class World {
     if (p.pos.z > z1) p.pos.z = z1;
   }
 
-  private holdAtGates(): void {
-    if (this.level.theme !== 'metro') return;
-    const v = metroVisit();
-    const p = this.player;
-    if (v?.through || this.stairAnim) return;
-    const stop = GATE_X - 0.75;
-    if (p.pos.x > stop) {
-      p.pos.x = stop;
-      if (p.vel.x > 0) p.vel.x = 0;
-    }
-  }
-
-  /** Set while a scripted move (hopping the gates) carries the player; the gates don't hold them then. */
+  /** Set while a scripted move carries the player (stairs). */
   stairAnim = false;
 
   /**
@@ -1944,7 +1931,6 @@ export class World {
     }
     this.endScramble(frame);
     this.sim.step(commands);
-    this.holdAtGates();
     this.holdInCell();
     this.updateStairGoers();
 
@@ -2832,17 +2818,12 @@ export class World {
     for (const s of this.stations) {
       if (s.id === 'sparring' && (this.duel || !this.sparPartner)) continue;
       if (s.id === 'recruit' && this.duel) continue;
-      // The Metro: the train's doors only while one's in and you're through the gates; the board otherwise.
+      // The Metro: the train's doors only while one's in; the board otherwise.
       if (s.id === 'metro_train' || s.id === 'metro_board') {
         const v = metroVisit();
         const train = !!v?.train && !v.arrived;
-        if (s.id === 'metro_train' && (!train || !v?.through)) continue;
+        if (s.id === 'metro_train' && !train) continue;
         if (s.id === 'metro_board' && train) continue;
-      }
-      if (s.id === 'metro_gates') {
-        const v = metroVisit();
-        // Coming back out the gates open for you: nothing to use from the platform side.
-        if (v?.through || p.pos.x > GATE_X) continue;
       }
       const npc = this.npcs.get(s);
       if (npc && (npc.team !== 'neutral' || npc.isKO)) continue;

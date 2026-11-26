@@ -26,8 +26,8 @@ export interface Station {
   x: number;
   /** Fare zone (1 is the middle of town). */
   zone: 1 | 2 | 3;
-  /** The story flag that opens it (the street being reachable isn't enough: the line opens in stages). */
-  opens?: string;
+  /** The boss whose defeat opens it: each station stays shuttered until its district is yours. */
+  opens: string;
 }
 
 /**
@@ -36,13 +36,15 @@ export interface Station {
  */
 export const STATIONS: Station[] = [
   // The estate's stairwell down (x 33.9, beside the lock-up) is the entrance: it leads to the Ring Road underpass now.
-  { id: 'tanner_road', name: 'Tanner Road', area: 'estate', x: 33.9, zone: 2 },
-  { id: 'high_street', name: 'High Street', area: 'high_street', x: 40, zone: 1 },
-  { id: 'market_square', name: 'Market Square', area: 'city', x: 40, zone: 1, opens: 'boss_gaffer' },
-  { id: 'canal_docks', name: 'Canal Docks', area: 'docks', x: 35, zone: 2, opens: 'boss_gaffer' },
-  { id: 'riverside', name: 'Riverside', area: 'mall', x: 12, zone: 2, opens: 'boss_sully' },
-  { id: 'neon_mile', name: 'Neon Mile', area: 'nightlife', x: 60, zone: 3, opens: 'boss_ratcatcher' },
-  { id: 'deep_line', name: 'Deep Line', area: 'underground', x: 44, zone: 3, opens: 'boss_dunc' },
+  // Home and the High Street open together once the Gaffer's down (the estate has no boss of its own); the Riverside
+  // Centre has none either, so it opens with Kingsway, the district before it on the street.
+  { id: 'tanner_road', name: 'Tanner Road', area: 'estate', x: 33.9, zone: 2, opens: 'boss_gaffer' },
+  { id: 'high_street', name: 'High Street', area: 'high_street', x: 40, zone: 1, opens: 'boss_gaffer' },
+  { id: 'market_square', name: 'Market Square', area: 'city', x: 40, zone: 1, opens: 'boss_ratcatcher' },
+  { id: 'canal_docks', name: 'Canal Docks', area: 'docks', x: 35, zone: 2, opens: 'boss_docks' },
+  { id: 'riverside', name: 'Riverside', area: 'mall', x: 12, zone: 2, opens: 'boss_precinct' },
+  { id: 'neon_mile', name: 'Neon Mile', area: 'nightlife', x: 60, zone: 3, opens: 'boss_nightclub' },
+  { id: 'deep_line', name: 'Deep Line', area: 'underground', x: 44, zone: 3, opens: 'boss_underground' },
 ];
 
 export const stationOf = (id: StationId): Station => STATIONS.find((s) => s.id === id)!;
