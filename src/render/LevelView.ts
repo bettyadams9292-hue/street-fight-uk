@@ -1,3 +1,4 @@
+import { bankOf } from '../money/atm';
 import { advanceWork, DISTRICT_BUILD_BUDGET_MS } from '../performance/FrameBudget';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import * as THREE from 'three';
@@ -2999,9 +3000,15 @@ export class LevelView {
         break;
       }
       case 'atm': {
-        // Modelled at its real size; the CASH sign goes on its green header.
+        // Set into the wall like a real through-the-wall machine (money/atm.ts): a granite surround flush with the
+        // building behind, the bank's name on a lit header over it, the machine itself at its real size.
+        const bank = bankOf(p.label);
+        const surround = this.mat('#2b2d30', 0.55, 0.2);
+        B(W + 0.34, 2.1, 0.04, 0, 1.05, -D / 2 - 0.02, surround, false);
+        const head = signTexture(bank.mark, bank.fascia[0], bank.fascia[1], { w: 512, h: 96 });
+        B(W + 0.34, 0.22, 0.05, 0, 2.21, -D / 2, new THREE.MeshStandardMaterial({ map: head, emissive: 0xffffff, emissiveMap: head, emissiveIntensity: 0.55 }), false);
         if (this.fitting(g, 'atm', 0, 0, 0, { native: true })) {
-          const t = signTexture('CASH', '#1f6a3a', '#ffffff', { w: 256, h: 96 });
+          const t = signTexture('CASH', bank.fascia[0], bank.fascia[1], { w: 256, h: 96 });
           const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.16), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5 }));
           sign.position.set(0, 1.58, 0.262);
           g.add(sign);
@@ -3010,7 +3017,7 @@ export class LevelView {
         B(W, 1.6, D, 0, 0.8, 0, this.mat('#4a4d55', 0.4, 0.6));
         B(W * 0.7, 0.3, 0.02, 0, 1.25, D / 2 + 0.01, this.mat('#0a1a2a', 0.1, 0.4, { emissive: 0x2a8ad8, emissiveIntensity: 0.9 }), false);
         B(W * 0.5, 0.15, 0.06, 0, 0.95, D / 2 + 0.03, this.mat('#2a2a2a', 0.4, 0.6), false);
-        const t = signTexture('CASH', '#1f6a3a', '#ffffff', { w: 256, h: 96 });
+        const t = signTexture('CASH', bank.fascia[0], bank.fascia[1], { w: 256, h: 96 });
         B(W, 0.2, 0.02, 0, 1.52, D / 2 + 0.01, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.5 }), false);
         break;
       }

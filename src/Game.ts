@@ -90,6 +90,7 @@ import { FIGHT_GYMS, canDrill, drillSet, finishDrill, nextRankNeeds, styleRank, 
 import { themeProfile } from './render/themes';
 import { TutorialManager } from './tutorial/TutorialManager';
 import { barberScreen } from './ui/barberUI';
+import { atmOpen, bankOf } from './money/atm';
 import { atmScreen } from './ui/atmUI';
 import { tattooScreen } from './ui/tattooUI';
 import { DYNAMIC_LEVELS, everySetSettled, levelProgress, levelReady, prepareLevel, recordLevel } from './performance/levelAssets';
@@ -1577,7 +1578,11 @@ export class Game {
         });
         break;
       case 'atm':
-        screen = atmScreen(p, this.ui, w.level.district, saved, close);
+        if (!atmOpen(p)) {
+          this.backToPlay();
+          return this.hud.toast('OUT OF SERVICE. Sorry for any inconvenience.', 'warn');
+        }
+        screen = atmScreen(p, this.ui, w.level.district, bankOf(station?.tab), saved, close, (k) => this.audio.atm(k));
         break;
       case 'front_desk':
         screen = this.frontDesk(close);

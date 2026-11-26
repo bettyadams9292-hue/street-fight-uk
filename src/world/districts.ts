@@ -58,7 +58,6 @@ const residential: LevelDef = {
     { kind: 'bin', x: 15, z: -1.55 },
     { kind: 'bin', x: 15.8, z: -1.55, colour: '#2a3f7a' },
     { kind: 'abandoned_car', x: 30, z: 1.3 },
-    { kind: 'atm', x: 40.6, z: -2.05, solid: false },
     { kind: 'rubbish_bags', x: 42.5, z: -1.5 },
     { kind: 'trolley', x: 44, z: -0.46 },
     { kind: 'lamp_post', x: 50, z: -1.85 },
@@ -527,7 +526,8 @@ const precinct: LevelDef = {
   props: [
     { kind: 'mall_planter', x: 8, z: 1.2 },
     { kind: 'bench', x: 20, z: -1.65 },
-    { kind: 'atm', x: 34, z: -1.7 },
+    // Califax cash machine in the wall of the bookies (Debt365).
+    { kind: 'atm', x: 34, z: -2.05, solid: false, label: 'califax' },
     { kind: 'fountain', x: 44, z: 0.6 },
     { kind: 'bin', x: 52, z: -1.55 },
     { kind: 'kiosk', x: 62, z: 1.0 },
@@ -598,6 +598,8 @@ const mall: LevelDef = {
     { kind: 'kiosk', x: 46, z: 0.9 },
     { kind: 'mall_planter', x: 60, z: 0.4 },
     { kind: 'vending', x: 66, z: -1.55 },
+    // Lloyd's THC cash machine in Debtenhams' wall.
+    { kind: 'atm', x: 74, z: -2.05, solid: false, label: 'lloyds' },
     { kind: 'escalator', x: 80, z: -0.95 },
   ],
   pickups: [

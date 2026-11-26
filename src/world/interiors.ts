@@ -177,7 +177,6 @@ const pawnShop: LevelDef = {
     { kind: 'glass_counter', x: 7.2, z: -0.6 },
     { kind: 'shop_shelf', x: 10.4, z: -1.4 },
     { kind: 'display_cabinet', x: 3.4, z: 1.05 },
-    { kind: 'atm', x: 12.0, z: -1.35 },
   ],
   containers: [
     { id: 'pawn_till', kind: 'till', x: 8.4, z: 0.2, label: 'Empty the till', loot: 'till', requires: 'pawn_robbable', lockedText: 'Mr Kaur’s watching you like a hawk.' },

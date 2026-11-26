@@ -15,7 +15,7 @@ import { INK_COLOURS, defaultAppearance } from '../src/character/Appearance';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { Progress, newSave, sanitiseSave } from '../src/progress/Progress';
 import { LASER_PRICE, REINK_PRICE, designPrice, designsFor, getInk, inkOf, quote } from '../src/tattoo/tattoo';
-import { ATM_MAX, PAY_FEE, atmFee, deposit, withdraw } from '../src/money/atm';
+import { ATM_FLAG, ATM_MAX, ATM_SITES, PAY_FEE, atmFee, atmOpen, bankOf, deposit, withdraw } from '../src/money/atm';
 import { DEALING_FLAG, DRUG_DEFS, streetPrice } from '../src/business/dealing';
 import {
   CORNER_BONUS, CORNER_TRIPS, DEALER_DISTRICTS, RIVAL_CUT, TRADE_MAX, buyOff, competition, cornerYours, dealerIn, rivalIn, stretchOf, takeCorner,
@@ -117,8 +117,45 @@ ok('cashpoints: paying in and taking out; the fee only on rough estates; limits'
   assert.ok(p.save.finance.ledger.some((l) => l.amount === -PAY_FEE), 'the fee on the statement');
 });
 
+ok('cashpoints: scarce, set into walls, one bank each, shut till the second boss', () => {
+  const withAtm = Object.values(LEVELS).filter((lv) => lv.props.some((x) => x.kind === 'atm')).map((lv) => lv.id).sort();
+  assert.deepEqual(withAtm, Object.keys(ATM_SITES).sort(), 'only the listed sites have a machine');
+  const streets = Object.values(LEVELS).filter((lv) => lv.weather !== 'indoors' || lv.id === 'mall').length;
+  assert.ok(withAtm.length <= Math.ceil(streets / 4), `about one for every four districts (${withAtm.length} of ${streets})`);
+  for (const id of withAtm) {
+    const atm = LEVELS[id as keyof typeof LEVELS].props.find((x) => x.kind === 'atm')!;
+    assert.equal(atm.solid, false, `${id}: in the wall, not standing in the street`);
+    assert.equal(bankOf(atm.label).id, ATM_SITES[id], `${id}: its bank`);
+  }
+  const p = fresh();
+  assert.equal(atmOpen(p), false, 'no banking before the second boss');
+  const w = new World(LEVELS.high_street, p, { entry: 'left', seed: 2, civilians: false });
+  assert.match(w.stations.find((s) => s.id === 'atm')!.label, /out of service/);
+  p.save.flags[ATM_FLAG] = true;
+  assert.equal(atmOpen(p), true);
+  const w2 = new World(LEVELS.city, p, { entry: 'left', seed: 2, civilians: false });
+  const st = w2.stations.find((s) => s.id === 'atm')!;
+  assert.equal(st.tab, 'lloyds');
+  assert.match(st.label, /Lloyd’s THC/);
+});
+
+ok('cashpoints: no invalid amounts, never more than you have', () => {
+  const p = fresh();
+  p.save.cash.pocket = 35;
+  p.save.cash.bank = 100;
+  assert.equal(withdraw(p, 25, 'High Street').ok, false, 'notes only');
+  assert.equal(withdraw(p, -10, 'High Street').ok, false);
+  assert.equal(withdraw(p, NaN, 'High Street').ok, false);
+  assert.equal(deposit(p, 40).ok, false, 'more than is on you');
+  assert.equal(deposit(p, -5).ok, false);
+  assert.deepEqual(p.save.cash, { pocket: 35, bank: 100 }, 'nothing moved');
+  assert.ok(deposit(p, Infinity).ok, 'deposit all');
+  assert.deepEqual(p.save.cash, { pocket: 0, bank: 135 });
+  assert.ok(p.save.finance.ledger.some((l) => l.kind === 'cash' && l.amount === 35), 'on the mini statement');
+});
+
 ok('cashpoints: every cashpoint on a street is something to use', () => {
-  for (const id of ['high_street', 'city', 'residential'] as const) {
+  for (const id of ['high_street', 'city', 'precinct', 'mall'] as const) {
     const lv = LEVELS[id];
     const atm = lv.props.find((x) => x.kind === 'atm');
     assert.ok(atm, `${id} has a cashpoint`);

@@ -85,7 +85,7 @@ const RECIPES: Record<StreetKind, StreetRecipe> = {
       { kind: 'precinct', w: [8, 10], shops: ['clothes', 'gadgets', 'takeaway', 'salon', 'bookies', 'cafe', 'furniture', 'general'], weight: 6 },
       { kind: 'mall', w: [14, 18], weight: 2 }, { kind: 'office', w: [9, 12], shops: ['office'], weight: 1 },
     ],
-    back: ['bench', 'bin', 'planter', 'atm', 'vending'], front: ['mall_planter', 'kiosk', 'fountain', 'mall_planter', 'bench'], spacing: 9, nouns: ['Square', 'Precinct', 'Arcade', 'Centre'],
+    back: ['bench', 'bin', 'planter', 'vending'], front: ['mall_planter', 'kiosk', 'fountain', 'mall_planter', 'bench'], spacing: 9, nouns: ['Square', 'Precinct', 'Arcade', 'Centre'],
   },
   suburb: {
     ground: 'suburb', theme: 'residential',

@@ -4,7 +4,8 @@
  * the record of what moved, for the statements in the portfolio and the shop.
  */
 
-export type FinanceKind = 'jewellery' | 'property' | 'rent' | 'fees';
+/** `cash`: money taken out of or paid in at a cash machine (src/money/atm.ts). */
+export type FinanceKind = 'jewellery' | 'property' | 'rent' | 'fees' | 'cash';
 
 export interface FinanceEntry {
   /** Play-time seconds when it happened. */
@@ -22,10 +23,10 @@ export interface FinanceSave {
 }
 
 export const LEDGER_LINES = 120;
-const KINDS: FinanceKind[] = ['jewellery', 'property', 'rent', 'fees'];
+const KINDS: FinanceKind[] = ['jewellery', 'property', 'rent', 'fees', 'cash'];
 
 export function defaultFinance(): FinanceSave {
-  return { ledger: [], totals: { jewellery: { in: 0, out: 0 }, property: { in: 0, out: 0 }, rent: { in: 0, out: 0 }, fees: { in: 0, out: 0 } } };
+  return { ledger: [], totals: { jewellery: { in: 0, out: 0 }, property: { in: 0, out: 0 }, rent: { in: 0, out: 0 }, fees: { in: 0, out: 0 }, cash: { in: 0, out: 0 } } };
 }
 
 export function record(f: FinanceSave, t: number, kind: FinanceKind, what: string, amount: number): void {

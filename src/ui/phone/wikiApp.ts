@@ -252,7 +252,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
 
   if (page === 'cash') {
     const list = (items: string[]) => h('ul', {}, ...items.map((t) => h('li', { text: t })));
-    return article('Cashpoints', 'CaliBank cash machines on the High Street, Hollins, Market Square, the precincts and in Pawn & Gold. Your balance is the same money as the tin at home.',
+    return article('Cashpoints', 'Califax and Lloyd’s THC cash machines, set into the walls of a few shops: the High Street, the City Centre, Kingsway and the Riverside Centre. They’re out of service until you’ve dealt with Sully. Both banks reach the same account, the same money as the tin at home.',
       infobox('The machines', [
         ['Paying in', 'Free'],
         ['Taking out', `Free in town, £${PAY_FEE} on the rough estates`],
@@ -261,6 +261,7 @@ export function wikiApp(d: WikiDeps, page: WikiPage, go: (p: WikiPage) => void, 
       list([
         'Cash on you is what goes if you get battered, mugged or run. Pay it in and it’s safe.',
         'Shops take pocket money first, then the bank, so you rarely need to take any out. Some things want cash in hand.',
+        `Withdrawals come in £10 notes, up to £${ATM_MAX} at a time. Ask for a receipt or a mini statement on the screen.`,
       ]),
     );
   }

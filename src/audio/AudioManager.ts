@@ -318,6 +318,32 @@ export class AudioManager {
     this.thump(this.sfx, this.ctx.currentTime, 220, 0.12, 0.3);
   }
 
+  /** Cash machine software (ui/atmUI.ts): keypad clicks, a confirm double beep, a low error buzz, notes counted. */
+  atm(kind: 'key' | 'ok' | 'err' | 'count'): void {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const beep = (at: number, freq: number, dur: number, gain: number, type: OscillatorType = 'square') => {
+      const ctx = this.ctx!;
+      const osc = ctx.createOscillator();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, at);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.linearRampToValueAtTime(gain, at + 0.005);
+      g.gain.setValueAtTime(gain, at + dur - 0.01);
+      g.gain.linearRampToValueAtTime(0.0001, at + dur);
+      osc.connect(g).connect(this.sfx);
+      osc.start(at);
+      osc.stop(at + dur + 0.02);
+    };
+    if (kind === 'key') beep(t, 1320, 0.06, 0.035);
+    else if (kind === 'ok') {
+      beep(t, 1046, 0.09, 0.04);
+      beep(t + 0.12, 1568, 0.12, 0.04);
+    } else if (kind === 'err') beep(t, 220, 0.32, 0.05, 'sawtooth');
+    else for (let i = 0; i < 9; i++) this.noise(this.sfx, t + i * 0.055, 0.035, 'bandpass', 2600, 0.05);
+  }
+
   // ---- the house (Stage 12) ----
 
   private loops = new Map<string, { stop: () => void }>();

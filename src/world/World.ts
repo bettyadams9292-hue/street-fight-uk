@@ -1,3 +1,4 @@
+import { atmOpen, bankOf } from '../money/atm';
 import { doorX } from '../city/doorSpots';
 import { BODY_RADIUS } from '../core/constants';
 import { BOSS_DAMAGE_TAKEN, ENEMY_DAMAGE_TAKEN, fightStrength, SECOND_WIND } from './fightTuning';
@@ -1313,7 +1314,12 @@ export class World {
     this.stations = (level.stations ?? []).filter((st) => !seats.includes(st));
     // Every cashpoint is a cashpoint (money/atm.ts): stand in front of it to use it. The street ones are set into the
     // wall (not solid), so passers-by walk past them as they would the wall.
-    for (const pr of level.props) if (pr.kind === 'atm') this.stations.push({ id: 'atm', x: pr.x, z: Math.min(level.bounds.maxZ - 0.3, pr.z + 0.6), label: 'Use the cashpoint' });
+    // The machine's bank (Califax or Lloyd's THC) rides on the station's tab; before the second boss they're all out of service.
+    for (const pr of level.props)
+      if (pr.kind === 'atm') {
+        const bank = bankOf(pr.label);
+        this.stations.push({ id: 'atm', x: pr.x, z: Math.min(level.bounds.maxZ - 0.3, pr.z + 0.6), label: atmOpen(progress) ? `Use the ${bank.name} cash machine` : `${bank.name} cash machine (out of service)`, tab: bank.id });
+      }
     const obstacles: Obstacle[] = [];
     for (const p of level.props) {
       const box = propBox(p);
