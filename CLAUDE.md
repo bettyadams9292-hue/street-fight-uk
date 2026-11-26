@@ -105,11 +105,13 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 - Drive (`driveOption`, `Game.driveTo`): free, no fights, from wherever the car is: on the drive, or `save.property.carOut` (where you left it). It's parked on clear road at the other end (`property/parking.ts`), drawn with its paint and mods, with a map pin; one place at a time.
 - Car mods (`property/carMods.ts`, Arnold Shark's Mods tab): paint, finish, alloys, tint, spoiler, body kit, ride height, callipers, exhaust, plates, decals; looks only; saved on `OwnedVehicle.mods`; drawn by `render/props/carMods.ts` over the kit model. `tests/travel.test.ts`.
 
-**Shop tiers.** `src/items/shopTiers.ts`: JD Streets sells Basic and Branded from the start, Designer after Sully, Luxury and Iconic after Big Dunc; locked pieces show SOON and can still be tried on.
+**Shop tiers.** `src/items/shopTiers.ts`: every shop sells on three tiers, everyday from the start, better after Sully (`boss_sully`), premium after Big Dunc (`boss_dunc`). JD Streets and H. Sterling by rarity; Sofa So Good, Arnold Shark, Halfrauds and PureGraft by price (`PRICE_TIERS`); B&THC by its own grades. The buy functions refuse locked stock (`tierLockFor`); the screens show SOON and what brings it in. `tests/shopTiers.test.ts`; tests about a shop's own rules open every tier in their `fresh()`.
+
+**Shopfronts.** `src/city/brands.ts` is the brand book: each named business's colours, lettering, tagline, window posters and banner, and a look per kind of shop (keyword looks for the independents, varied by name). `render/brandArt.ts` draws fascias, posters, window vinyl and banners; `city/street.ts` lays them on the glass (`plan.decals`); `signTexture` signs a named business in its own lettering anywhere. New business: add it to `BRANDS`. `tests/brands.test.ts`.
 
 **The lock-up.** `src/world/lockup.ts`: the Estate King's reward lock-up is its own garage at the end of the estate's garage row (a gap in the kit frontage, built in `LevelView.buildLockup`); its up-and-over door swings up and in while you open it and stays up.
 
-**Shop names.** The brands are display names only (signs, prompts, screens, map, wiki): internal ids, districts and save keys are unchanged. Shop interiors still pick their layout from the sign, so new names are in `interiorFor` / `layoutFor` (`city/street.ts`). The new names have no painted title graphics yet (they fall back to text).
+**Shop names.** The brands are display names only (signs, prompts, screens, map, wiki): internal ids, districts and save keys are unchanged. Shop interiors still pick their layout from the sign, so new names are in `interiorFor` / `layoutFor` (`city/street.ts`). Their painted titles are in `public/art/titles` (`BRAND_TITLES` in `ui/titles.ts`); a shop screen's heading uses its business's (`headingArt` in `ui/hub.ts`).
 
 **Heat.** `src/progress/heat.ts`: police, locals and gang heat per district, what raises it (`HEAT`), how fast it cools, and the thresholds. Raise it with `Progress.addHeatOf`, never by writing `save.heat`.
 
@@ -313,6 +315,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 - #101: Dave's Cabs stops at NeXo Cutz (`SHOP_STOPS` in `ui/hub.ts`), straight to its door: in the phone's cab list and on the Maps card, on the meter (about £9 from home). `tests/barber.test.ts`.
 **26 Nov 2026**
 - #104 (to merge): Hard Graft master directive, first pass: commercial rebrand (Weatherspoons, JD Streets, LadsBroke, Cash Degenerator, The Grand Gamble, H. Sterling, Duber…); Califax and Lloyd's THC cash machines (four, in walls, after Sully) with real ATM software; Run there on foot with ambushes; Drive your own car, parked where you leave it; car mods; shop tiers; the lock-up garage. Also fixed `?shot=` pages (GameRenderer `publish` before declared). Not done: the full map redesign, approved bank logos, painted titles for the new names.
+- Finishing pass (to merge): shop tiers in every shop (`items/shopTiers.ts`); every shopfront dressed as itself (`city/brands.ts`, `render/brandArt.ts`: fascia, posters, window vinyl, banners, awning colour); 28 painted titles for the new names (digits and & from `tools/icons/hg/digits.py`), shown on the shop screens; Wrongmove's own boards (`tools/models/property/boards.py`); the last two Halden names are Sterling; Run there steers round what's in the lane (`Game.clearLane`), checked High Street to the Neon Mile with `tools/travel/run_check.py`.
 
 ## Open questions and next steps
 
