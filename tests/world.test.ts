@@ -300,7 +300,7 @@ test('one-time pickups stay collected; everyday finds restock only after a few t
   place(w, 28, 0.5);
   run(w, 2);
   assert(p.save.cash.pocket === cash + 10, 'tenner not picked up');
-  place(w, 43, -1.6);
+  place(w, 37.9, -1.6);
   run(w, 2);
   assert(p.save.stats.secrets === 1 && p.owns('cap_black'), 'secret not found');
   // Chips go in your pockets.
@@ -350,7 +350,7 @@ test('subway lever opens the gate and the estate shortcut', () => {
   const e = new World(LEVELS.estate, p, { entry: 'home', seed: 1 });
   const door = e['findInteractable'];
   void door;
-  place(e, 38, -1.0);
+  place(e, 33.9, -1.0);
   for (const x of e.encounters) x.status = 'cleared';
   let to = '';
   e.events.on('area:exit', (ev) => (to = ev.to));
