@@ -867,7 +867,7 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
 .jw-card.worn { background: rgba(106, 208, 74, 0.08); }
 .inv-body.jw-inv { display: block; overflow-y: auto; }
 
-/* ---- Property: Keys & Co and the portfolio --------------------------------------------------------------- */
+/* ---- Property: Wrongmove and the portfolio --------------------------------------------------------------- */
 .prop-tabs .prop-tab { display: inline-flex; align-items: center; gap: 6px; }
 .prop-tabs .prop-tab svg { width: 16px; height: 16px; }
 .prop-tabs.sub .prop-tab { font-size: 13px; padding-top: 4px; padding-bottom: 4px; }

@@ -84,6 +84,6 @@ export function doorState(save: GameSave, id: string): DoorState {
   const h = holding(save, id);
   if (!h) return { label: `View ${def.name}: ${def.type.toLowerCase()}, ${formatPounds(valueNow(def, save.playTime))}`, board: 'FOR SALE' };
   if (h.use === 'personal') return { label: `${def.name}: go in (yours)` };
-  if (h.tenant) return { label: `${def.name} (let to ${h.tenant.name})`, locked: `${h.tenant.name} live${h.tenant.name.startsWith('The ') ? '' : 's'} here. Manage the let from the estate agent or your computer.`, board: 'LET BY KEYS & CO' };
+  if (h.tenant) return { label: `${def.name} (let to ${h.tenant.name})`, locked: `${h.tenant.name} live${h.tenant.name.startsWith('The ') ? '' : 's'} here. Manage the let from the estate agent or your computer.`, board: 'LET BY WRONGMOVE' };
   return { label: `${def.name}: go in (yours, to let)`, board: 'TO LET' };
 }
