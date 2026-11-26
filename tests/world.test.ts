@@ -484,7 +484,7 @@ test('soak: AI groups in every area for 40 s without errors or escapes', () => {
       for (const f of w.sim.fighters) {
         assert(Number.isFinite(f.pos.x) && Number.isFinite(f.pos.z), `${id}: NaN position`);
         const b = w.arena.bounds;
-        assert(f.pos.x >= b.minX - 0.01 && f.pos.x <= b.maxX + 0.01 && f.pos.z >= b.minZ - 0.01 && f.pos.z <= b.maxZ + 0.01, `${id}: ${f.name} out of bounds`);
+        if (!f.anchored) assert(f.pos.x >= b.minX - 0.01 && f.pos.x <= b.maxX + 0.01 && f.pos.z >= b.minZ - 0.01 && f.pos.z <= b.maxZ + 0.01, `${id}: ${f.name} out of bounds`);
         if (!f.grapple) assert(!w.arena.blocked(f.pos.x, f.pos.z, BODY_RADIUS * 0.7), `${id}: ${f.name} inside an obstacle at ${f.pos.x.toFixed(2)},${f.pos.z.toFixed(2)}`);
       }
     }

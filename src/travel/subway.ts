@@ -39,7 +39,7 @@ export const STATIONS: Station[] = [
   { id: 'tanner_road', name: 'Tanner Road', area: 'estate', x: 33.9, zone: 2 },
   { id: 'high_street', name: 'High Street', area: 'high_street', x: 40, zone: 1 },
   { id: 'market_square', name: 'Market Square', area: 'city', x: 40, zone: 1, opens: 'boss_gaffer' },
-  { id: 'canal_docks', name: 'Canal Docks', area: 'docks', x: 30, zone: 2, opens: 'boss_gaffer' },
+  { id: 'canal_docks', name: 'Canal Docks', area: 'docks', x: 35, zone: 2, opens: 'boss_gaffer' },
   { id: 'riverside', name: 'Riverside', area: 'mall', x: 12, zone: 2, opens: 'boss_sully' },
   { id: 'neon_mile', name: 'Neon Mile', area: 'nightlife', x: 60, zone: 3, opens: 'boss_ratcatcher' },
   { id: 'deep_line', name: 'Deep Line', area: 'underground', x: 44, zone: 3, opens: 'boss_dunc' },

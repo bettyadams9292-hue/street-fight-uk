@@ -279,6 +279,13 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
   ]
  },
  "market": {},
+ "metro_canal_docks": {},
+ "metro_deep_line": {},
+ "metro_high_street": {},
+ "metro_market_square": {},
+ "metro_neon_mile": {},
+ "metro_riverside": {},
+ "metro_tanner_road": {},
  "nightlife": {},
  "pawn_shop": {
   "doors": [

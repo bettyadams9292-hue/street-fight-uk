@@ -1,3 +1,7 @@
+import { arriveBy, hop, metroArea, metroVisit, rollTrain, setMetroVisit, stationAt, tapIn, tapOut } from './travel/metro';
+import { stationOf, stopsBetween, type StationId as MetroStop } from './travel/subway';
+import { gatesScreen, trainScreen } from './ui/metroUI';
+import { GATE_X } from './world/metroLevels';
 import { bankPrompt } from './ui/bankPrompt';
 import { custodyRecord, frontCounter, policeStop } from './ui/policeUI';
 import { setHumansEnabled } from './render/human/HumanRig';
@@ -899,6 +903,10 @@ export class Game {
       p.save.portfolio.inside = null;
       p.save.portfolio.viaAgent = false;
     }
+    // A Metro station: off a train you're on the platform with it still there; down the stairs, a train's in or
+    // it isn't (rolled once a visit, travel/metro.ts).
+    const metroHere = stationAt(area);
+    setMetroVisit(metroHere ? (entry === 'platform' ? arriveBy(metroHere) : rollTrain(p, metroHere)) : null);
     const level = resolveLevel(area, p.save);
     this.unwire();
     this.leaveWorld();
@@ -1582,6 +1590,42 @@ export class Game {
           this.hud.toast('Savings moved into the new tin', 'item');
         });
         break;
+      case 'metro_gates': {
+        const here = stationAt(w.level.id);
+        if (!here) return this.backToPlay();
+        screen = gatesScreen(p, here, {
+          tap: () => {
+            const r = tapIn(p, here);
+            if (!r.ok) return r.reason;
+            const v = metroVisit();
+            if (v) v.through = true;
+            this.ui.replaceAll(null);
+            this.backToPlay();
+            this.audio.atm('ok');
+            this.hud.toast('Tapped in. The fare’s taken when you tap out.', 'info');
+            saved();
+            return null;
+          },
+          hop: () => {
+            this.ui.replaceAll(null);
+            this.backToPlay();
+            this.hopGates(here);
+          },
+          close,
+        });
+        break;
+      }
+      case 'metro_board': {
+        const v = metroVisit();
+        this.backToPlay();
+        return this.hud.toast(v && !v.train ? `No train in. The board says ${v.minutes} min. Go back up and come down again to see if one's in.` : 'The train’s in. Mind the gap.', 'info');
+      }
+      case 'metro_train': {
+        const here = stationAt(w.level.id);
+        if (!here) return this.backToPlay();
+        screen = trainScreen(p, here, (to) => this.metroRide(here, to), close);
+        break;
+      }
       case 'bank_counter':
         screen = branchScreen(p, station?.tab === 'lloyds' ? 'lloyds' : 'califax', saved, close);
         break;
@@ -2331,6 +2375,54 @@ export class Game {
   }
 
   /** Go somewhere by cab, or head home: from the map or the phone. */
+  /**
+   * Over the barriers: a vault onto the far side (the player carried by hand, the gates don't hold them), then the
+   * roll. Caught: the penalty fare, police heat and fare evasion on your record (travel/metro.ts hop).
+   */
+  private hopGates(here: MetroStop): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    const r = hop(p, here, Math.random());
+    const f = w.player;
+    const from = { x: f.pos.x, z: f.pos.z };
+    const to = { x: GATE_X + 0.9, z: f.pos.z };
+    w.stairAnim = true;
+    f.anchored = true;
+    let t = 0;
+    const step = (): void => {
+      t += 1 / 60;
+      const k = Math.min(1, t / 0.7);
+      f.pos.x = from.x + (to.x - from.x) * k;
+      f.pos.y = Math.sin(k * Math.PI) * 0.9;
+      f.facing = 1;
+      if (k < 1) return void requestAnimationFrame(step);
+      f.pos.y = 0;
+      f.anchored = false;
+      w.stairAnim = false;
+      const v = metroVisit();
+      if (v) v.through = true;
+      if (r.ok && r.caught) {
+        this.hud.toast(`Caught. Penalty fare £${r.fine}, and the police have your name: fare evasion.`, 'warn');
+        this.saveGame();
+      } else this.hud.toast('Over. Nobody saw.', 'info');
+    };
+    requestAnimationFrame(step);
+  }
+
+  /** On the train to `to`: the doors close, the ride passes in the dark, and you're on the platform there. */
+  private metroRide(from: MetroStop, to: MetroStop): void {
+    const w = this.world;
+    const p = this.progress;
+    if (!w || !p) return;
+    this.ui.replaceAll(null);
+    this.state = 'playing';
+    const charged = tapOut(p, to);
+    const stops = stopsBetween(from, to).length - 1;
+    this.hud.toast(`${stops} stop${stops === 1 ? '' : 's'} to ${stationOf(to).name}.${charged ? ` Tapped out: £${charged.toFixed(2)}.` : ''}`, charged ? 'cash' : 'info');
+    this.changeArea(metroArea(to), 'platform', w.carry());
+  }
+
   private travelTo(area: AreaId, opt: TravelOption): void {
     this.autoRun = null;
     const w = this.world;

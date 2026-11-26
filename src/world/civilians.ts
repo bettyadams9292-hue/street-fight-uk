@@ -19,6 +19,8 @@ export type Temper = 'nervy' | 'nosy' | 'steady';
 
 /** How busy each street is (max pedestrians alive near you). Not listed = nobody about. */
 export const CIVILIAN_DENSITY: Partial<Record<AreaId, number>> = {
+  // The Metro's stations: passengers in the hall and waiting on the platform.
+  metro_tanner_road: 6, metro_high_street: 8, metro_market_square: 9, metro_canal_docks: 5, metro_riverside: 8, metro_neon_mile: 7, metro_deep_line: 4,
   estate: 5, high_street: 9, city: 9, subway: 4, residential: 6, leisure: 6, stadium: 6, market: 7, mall: 8, precinct: 7, nightlife: 8,
   ind_estate: 4, docks: 2, car_park: 2, underground: 5, alleys: 2, industrial: 3,
 };

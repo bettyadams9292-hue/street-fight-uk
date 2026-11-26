@@ -1,3 +1,5 @@
+import { metroVisit } from '../travel/metro';
+import { GATE_X, STAIRS_X } from './metroLevels';
 import { streetSolids } from '../city/street';
 import { atmOpen, bankOf } from '../money/atm';
 import { doorX } from '../city/doorSpots';
@@ -45,7 +47,7 @@ import { competition, dealerIn, rivalIn, takeCorner, taxOffer, type Dealer } fro
 import { DRUG_DEFS, DRUGS, dealingOpen, dealsOnYou, recordSale, SALE_HEAT, streetPrice, takeFromPockets, undercoverChance, type Drug } from '../business/dealing';
 import { stripAreaOf } from '../jobs/jobs';
 import { checkJob, completeJob, jobStep, objectiveOf, spotIn, streetJob, STREET_CHANCE, TARGET_ARCH, timeLeft, type ActiveJob, type Job, type JobPaid } from '../jobs/jobs';
-import { onStrip, stripIndex } from './strip';
+import { isSubwayStairs, onStrip, stripIndex } from './strip';
 import { HOTBAR_COOLDOWN, hotbarView, refillHotbar, type HotbarSlot } from '../items/hotbar';
 import { bossDropValue, lootTableFor, rollLoot } from '../items/loot';
 import type { AreaId, Progress } from '../progress/Progress';
@@ -1050,6 +1052,119 @@ export class World {
     this.civilians.push({ f, brain });
   }
 
+  // ---- the Metro ---------------------------------------------------------------------------------------------
+
+  /** Not through the gates yet: the barriers stop you (tap in or hop them: Game, station `metro_gates`). */
+  private holdAtGates(): void {
+    if (this.level.theme !== 'metro') return;
+    const v = metroVisit();
+    const p = this.player;
+    if (v?.through || this.stairAnim) return;
+    const stop = GATE_X - 0.75;
+    if (p.pos.x > stop) {
+      p.pos.x = stop;
+      if (p.vel.x > 0) p.vel.x = 0;
+    }
+  }
+
+  /** Set while a scripted move (hopping the gates) carries the player; the gates don't hold them then. */
+  stairAnim = false;
+
+  /**
+   * People using the stairs, the way you do at home (Game.walkStairs): on a street with a station, now and then a
+   * passer-by at the stairwell turns in and walks down out of sight; in a station, passengers come down from the
+   * street and walk off along the hall, and some walk up and out. Each is carried along its path by hand
+   * (anchored, so the walkway bounds don't hold them), with the walk playing from the movement.
+   */
+  private stairGoers: { f: Fighter; path: { x: number; y: number; z: number }[]; leg: number; at: number; gone: boolean; brain?: CivilianBrain }[] = [];
+  private stairClock = 0;
+
+  private stairwells(): { x: number; down: boolean }[] {
+    if (this.level.theme === 'metro') return [{ x: STAIRS_X, down: false }];
+    return this.level.exits.filter((e) => isSubwayStairs(this.level, e)).map((e) => ({ x: e.x, down: true }));
+  }
+
+  private updateStairGoers(): void {
+    const dt = 1 / 60;
+    const wells = this.stairwells();
+    if (!wells.length || !this.civCap) return;
+    const back = this.arena.bounds.minZ;
+    // Carry everyone already on the stairs.
+    for (const g of this.stairGoers) {
+      const a = g.path[g.leg];
+      const b = g.path[g.leg + 1];
+      if (!b) {
+        g.gone = true;
+        continue;
+      }
+      const len = Math.max(0.01, Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z));
+      g.at += (1.05 * dt) / len;
+      const t = Math.min(1, g.at);
+      g.f.pos.x = a.x + (b.x - a.x) * t;
+      g.f.pos.y = a.y + (b.y - a.y) * t;
+      g.f.pos.z = a.z + (b.z - a.z) * t;
+      g.f.vel.x = g.f.vel.z = 0;
+      if (Math.abs(b.x - a.x) > 0.05) g.f.facing = b.x > a.x ? 1 : -1;
+      if (t >= 1) {
+        g.leg++;
+        g.at = 0;
+      }
+    }
+    for (const g of this.stairGoers.filter((x) => x.gone)) {
+      if (g.brain) {
+        // Down off the street stairs into the station: hand them back to walking about.
+        g.f.anchored = false;
+        g.f.pos.y = 0;
+        this.brains.set(g.f, g.brain);
+        g.brain.dir = 1;
+      } else {
+        this.sim.remove(g.f);
+        const i = this.civilians.findIndex((c) => c.f === g.f);
+        if (i >= 0) this.civilians.splice(i, 1);
+      }
+    }
+    this.stairGoers = this.stairGoers.filter((g) => !g.gone);
+    if (this.activeEncounter || this.locked) return;
+    this.stairClock += dt;
+    if (this.stairClock < 1.5) return;
+    this.stairClock = 0;
+    const rng = this.lootRng;
+    for (const w of wells) {
+      if (w.down) {
+        // A passer-by walking past the top of the stairs turns in and goes down.
+        const c = this.civilians.find((c) => this.brains.has(c.f) && Math.abs(c.f.pos.x - w.x) < 0.9 && !c.f.isKO && c.f.team === 'neutral');
+        if (!c || rng.next() > 0.45) continue;
+        this.brains.delete(c.f);
+        c.brain.release();
+        c.f.anchored = true;
+        const top = { x: w.x, y: 0, z: back - 0.1 };
+        this.stairGoers.push({ f: c.f, path: [{ ...c.f.pos }, { x: w.x, y: 0, z: back + 0.2 }, top, { x: w.x, y: -3.0, z: back - 5.2 }], leg: 0, at: 0, gone: false });
+      } else {
+        // In the station: someone comes down from the street, or a passenger by the stairs walks up and out.
+        const leaving = this.civilians.find((c) => this.brains.has(c.f) && Math.abs(c.f.pos.x - w.x) < 1.6 && !c.f.isKO && c.f.team === 'neutral');
+        if (leaving && rng.next() < 0.5) {
+          this.brains.delete(leaving.f);
+          leaving.brain.release();
+          leaving.f.anchored = true;
+          const foot = { x: w.x, y: 0, z: back + 0.15 };
+          this.stairGoers.push({ f: leaving.f, path: [{ ...leaving.f.pos }, foot, { x: w.x, y: 3.3, z: back - 4.8 }], leg: 0, at: 0, gone: false });
+        } else if (this.civilians.length < this.civCap && rng.next() < 0.55) {
+          this.spawnCivilian();
+          const c = this.civilians[this.civilians.length - 1];
+          if (!c || this.stairGoers.some((g) => g.f === c.f)) continue;
+          const brain = c.brain;
+          this.brains.delete(c.f);
+          c.f.anchored = true;
+          const top = { x: w.x, y: 3.3, z: back - 4.8 };
+          c.f.pos.x = top.x;
+          c.f.pos.y = top.y;
+          c.f.pos.z = top.z;
+          this.stairGoers.push({ f: c.f, path: [top, { x: w.x, y: 0, z: back + 0.15 }, { x: w.x + 1.2, y: 0, z: back + 0.9 }], leg: 0, at: 0, gone: false, brain });
+        }
+      }
+    }
+  }
+
   private removeCivilian(i: number): void {
     const c = this.civilians[i];
     c.brain.release();
@@ -1817,6 +1932,8 @@ export class World {
     }
     this.endScramble(frame);
     this.sim.step(commands);
+    this.holdAtGates();
+    this.updateStairGoers();
 
     this.syncHeld();
     this.collectDroppedWeapons();
@@ -2702,6 +2819,18 @@ export class World {
     for (const s of this.stations) {
       if (s.id === 'sparring' && (this.duel || !this.sparPartner)) continue;
       if (s.id === 'recruit' && this.duel) continue;
+      // The Metro: the train's doors only while one's in and you're through the gates; the board otherwise.
+      if (s.id === 'metro_train' || s.id === 'metro_board') {
+        const v = metroVisit();
+        const train = !!v?.train && !v.arrived;
+        if (s.id === 'metro_train' && (!train || !v?.through)) continue;
+        if (s.id === 'metro_board' && train) continue;
+      }
+      if (s.id === 'metro_gates') {
+        const v = metroVisit();
+        // Coming back out the gates open for you: nothing to use from the platform side.
+        if (v?.through || p.pos.x > GATE_X) continue;
+      }
       const npc = this.npcs.get(s);
       if (npc && (npc.team !== 'neutral' || npc.isKO)) continue;
       options.push({ kind: 'station', x: s.x, z: s.z, label: s.label, station: s, closed: !!s.shop && !this.progress.isShopOpen(s.shop) });

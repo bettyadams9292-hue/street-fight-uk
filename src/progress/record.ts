@@ -5,10 +5,10 @@
  * (docs/POLICE_PLAN.md).
  */
 
-export type Crime = 'mugging' | 'assault' | 'robbery' | 'assault_police' | 'bribery' | 'dealing';
+export type Crime = 'mugging' | 'assault' | 'robbery' | 'assault_police' | 'bribery' | 'dealing' | 'fare_evasion';
 
 /** How serious each crime is: the worst on the sheet sets the bail. */
-export const CRIME_SEVERITY: Record<Crime, number> = { mugging: 1, assault: 2, robbery: 3, assault_police: 4, bribery: 2, dealing: 3 };
+export const CRIME_SEVERITY: Record<Crime, number> = { mugging: 1, assault: 2, robbery: 3, assault_police: 4, bribery: 2, dealing: 3, fare_evasion: 1 };
 
 /** How the charge reads on the sheet. */
 export const CRIME_NAME: Record<Crime, string> = {
@@ -18,6 +18,7 @@ export const CRIME_NAME: Record<Crime, string> = {
   assault_police: 'Assault on a police officer',
   bribery: 'Attempting to bribe an officer',
   dealing: 'Possession with intent to supply',
+  fare_evasion: 'Fare evasion on the Metro',
 };
 
 export interface CrimeEntry {
