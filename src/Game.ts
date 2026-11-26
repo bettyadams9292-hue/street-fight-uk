@@ -1,3 +1,4 @@
+import { decorate, venueFor } from './ui/venueTheme';
 import { arriveBy, hop, metroArea, metroVisit, rollTrain, setMetroVisit, stationAt, tapIn, tapOut } from './travel/metro';
 import { stationOf, stopsBetween, type StationId as MetroStop } from './travel/subway';
 import { gatesScreen, trainScreen } from './ui/metroUI';
@@ -54,7 +55,7 @@ import { HOTBAR_SLOTS, hotbarView, type HotbarSlot } from './items/hotbar';
 import { PAWN_HATCH_RATE } from './items/shops';
 import { clothesShopScreen, inventoryScreen, pawnScreen, storageScreen } from './ui/inventoryUI';
 import { ARREST_HEAT, ROBBABLE, robShop } from './world/robbery';
-import { book, canPayBail, crewToRing, losePaperwork, nightInCells, payBail, repayCrew, ringCrew, type Booking } from './world/custody';
+import { book, canPayBail, crewToRing, losePaperwork, payBail, release, repayCrew, ringCrew, sentenceSeconds, serveTime, timeLeft, type Booking } from './world/custody';
 import { owedFor } from './progress/cops';
 import { CRIME_NAME, settlePrice } from './progress/record';
 import { World } from './world/World';
@@ -139,6 +140,9 @@ const MAX_STEPS_PER_FRAME = 5;
  * Top-level game: owns settings, input, audio, rendering and UI, and runs
  * the fixed 60 Hz simulation inside a variable-rate render loop.
  */
+/** Minutes and seconds, 3:05. */
+const clock = (s: number): string => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
 export class Game {
   private settings = new SettingsStore();
   private input = new InputManager();
@@ -200,6 +204,14 @@ export class Game {
     setHumansEnabled(s.quality !== 'low');
     this.renderer.onFootstep = () => this.audio.step();
     this.ui = new UIManager(uiRoot);
+    // Screens opened in play look like the place they're opened in; menus and the phone keep their own look.
+    this.ui.decorate = (el) => {
+      // The studio (trying on clothes, the barber's and tattoo chairs) has no world: it's still the place you're in.
+      const where = this.world?.level.id ?? (this.state === 'studio' ? this.placeId : null);
+      if (this.state === 'menu' || this.phone?.isOpen || !where) return;
+      decorate(el, venueFor(where, this.lastStation));
+      this.lastStation = null;
+    };
     this.house = new HouseController({
       world: () => this.world,
       progress: () => this.progress,
@@ -628,8 +640,8 @@ export class Game {
             this.state = 'playing';
             this.openProfile();
           },
-          home: atHome || w.locked || w.player.isKO ? null : () => this.goHome(false),
-          homeWhy: atHome ? '' : 'Can\u2019t head home in the middle of a fight',
+          home: atHome || w.locked || w.player.isKO || this.progress?.save.police.serving ? null : () => this.goHome(false),
+          homeWhy: this.progress?.save.police.serving ? 'Not while you\u2019re doing your time' : atHome ? '' : 'Can\u2019t head home in the middle of a fight',
           save: () => {
             this.hud.notify(this.saveGame() ? 'SAVED' : 'COULDN\u2019T SAVE', 'info');
             this.resume();
@@ -814,6 +826,8 @@ export class Game {
       if (p.save.tutorial.essentialDone) this.hud.toast('Have a look round the house. The front door’s in the living room.', 'info');
       return;
     }
+    // Still doing time: back in the cell, whatever the save says.
+    if (p.save.police.serving) return this.enterArea('police_station' as AreaId, 'cell');
     this.enterArea(p.save.area, p.save.entry);
   }
 
@@ -905,6 +919,7 @@ export class Game {
     }
     // A Metro station: off a train you're on the platform with it still there; down the stairs, a train's in or
     // it isn't (rolled once a visit, travel/metro.ts).
+    this.placeId = area;
     const metroHere = stationAt(area);
     setMetroVisit(metroHere ? (entry === 'platform' ? arriveBy(metroHere) : rollTrain(p, metroHere)) : null);
     const level = resolveLevel(area, p.save);
@@ -1103,7 +1118,8 @@ export class Game {
     const boss = w.activeBoss;
     const def = w.activeEncounter?.bossDef ?? null;
     let objective = w.objective;
-    if (w.level.id === 'home' && s.cash.pocket > 0) objective = `Bank your £${s.cash.pocket} in the biscuit tin`;
+    if (w.level.id === 'home' && s.cash.pocket > 0) objective = `Put your £${s.cash.pocket} in the biscuit tin`;
+    if (s.police.serving) objective = `In the cells: ${clock(Math.ceil(timeLeft(this.progress!)))} to do`;
     this.hud.updateStory(
       {
         pocket: s.cash.pocket,
@@ -1471,7 +1487,13 @@ export class Game {
     };
   }
 
+  /** What was last used, so its screen can look like it (ui/venueTheme.ts). */
+  private lastStation: string | null = null;
+  /** The last area entered (kept while the studio stands in for the world). */
+  private placeId: string | null = null;
+
   private openStation(id: StationId, from?: StationDef): void {
+    this.lastStation = id;
     const w = this.world;
     const p = this.progress;
     if (!w || !p) return;
@@ -1696,7 +1718,7 @@ export class Game {
         break;
       case 'grow_counter':
       case 'grow_display':
-        screen = growShopScreen(p, close, saved, station?.tab ?? 'room');
+        screen = growShopScreen(p, close, saved, station?.tab ?? 'tents');
         break;
       case 'casino_slots':
         screen = slotsScreen(p, close, saved);
@@ -2264,6 +2286,7 @@ export class Game {
     const p = this.progress;
     if (!p) return;
     p.save.playTime += dt;
+    this.updateSentence();
     this.bizTimer += dt;
     if (this.bizTimer < 1) return;
     const step = this.bizTimer;
@@ -3212,7 +3235,7 @@ export class Game {
     const buttons: { label: string; sub?: string; go: () => void }[] = [
       {
         label: 'Offer a bung',
-        sub: `\u00a3${price} from the cash on you, then the tin`,
+        sub: `\u00a3${price} cash in hand`,
         go: () => {
           const r = w.bung();
           resume();
@@ -3255,13 +3278,24 @@ export class Game {
    * bail. Pay it and you're let out of custody at the Kirkgate Constabulary; or do a night in the cells and
    * the court takes a smaller fine in the morning.
    */
+  /** Doing time in the cell: the clock on the objective plate, and the door unlocked when it's up. */
+  private updateSentence(): void {
+    const p = this.progress;
+    if (!p?.save.police.serving) return;
+    const left = timeLeft(p);
+    if (left > 0) return;
+    release(p);
+    this.saveGame();
+    this.hud.toast('Time done. The cell door clanks open: you\u2019re free to go.', 'info');
+  }
+
   private chargeSheet(b: Booking): Screen {
     const p = this.progress!;
     const lines: { text: string; big?: boolean }[] = [{ text: `You\u2019re nicked. Booked in at Kirkgate Constabulary.`, big: true }];
     if (b.charges.length) for (const c of b.charges) lines.push({ text: `Charge: ${CRIME_NAME[c.crime]} (${c.district})` });
     else lines.push({ text: 'Charge: wanted for questioning. They\u2019ve nothing they can make stick.' });
     lines.push({ text: `${b.seized ? `Seized: ${b.seized} stolen item${b.seized === 1 ? '' : 's'} (\u00a3${b.seizedValue}).` : 'Nothing stolen on you.'} They\u2019ve got your phone till you walk out.` });
-    lines.push({ text: `Bail \u00a3${b.bail}, or a night in the cells and a \u00a3${b.fine} fine.` });
+    lines.push({ text: canPayBail(p, b) ? `Bail \u00a3${b.bail}. You\u2019re not leaving till it\u2019s paid.` : `Bail \u00a3${b.bail}, and you can\u2019t cover it: you\u2019ll do ${clock(sentenceSeconds(p, b))} in the cell.` });
     const ring = crewToRing(p);
     const mate = ring.length ? (COMPANIONS[p.save.companions.following.find((id) => ring.includes(id)) ?? ring[0]]) : null;
     if (mate) lines.push({ text: `${mate.nickname} would pay it: you\u2019d owe \u00a3${owedFor(b.bail)}.` });
@@ -3285,7 +3319,7 @@ export class Game {
     if (canPayBail(p, b)) {
       buttons.push({
         label: 'Pay bail',
-        sub: `\u00a3${b.bail} from the cash on you, then the tin`,
+        sub: `\u00a3${b.bail} cash, then your card`,
         go: () => {
           payBail(p, b);
           out(`Bail paid: \u00a3${b.bail}. "Don\u2019t let us see you back here."`, 'door');
@@ -3302,21 +3336,25 @@ export class Game {
         },
       });
     }
-    buttons.push({
-      label: 'Night in the cells',
-      sub: canPayBail(p, b) ? `Keep the bail money; the court takes \u00a3${b.fine} in the morning` : 'You can\u2019t make bail',
-      go: () => {
-        const taken = nightInCells(p, b);
-        out(`${taken ? `A night on a plastic mattress. The court fined you \u00a3${taken}.` : 'A night on a plastic mattress. The court let you off: you\u2019ve got nothing.'} The cell door\u2019s open: walk out when you\u2019re ready.`, 'cell');
-      },
-    });
+    // No way round the bill: pay it (or have it paid), or, if you can't, do your time in the cell.
+    if (!canPayBail(p, b)) {
+      const secs = sentenceSeconds(p, b);
+      buttons.push({
+        label: 'Do your time',
+        sub: `You can’t pay. ${clock(secs)} in the cell, locked in`,
+        go: () => {
+          serveTime(p, b);
+          out(`The door slams. ${clock(secs)} to do. Nobody’s coming.`, 'cell');
+        },
+      });
+    }
     const notes = lines.filter((l) => /would pay it|on the desk/.test(l.text)).map((l) => l.text);
     return custodyRecord({
       ref: `KC/${String(p.save.trips).padStart(4, '0')}/${String(p.save.record.length + 1).padStart(2, '0')}`,
       charges: b.charges.map((c) => ({ what: CRIME_NAME[c.crime], where: c.district })),
       seized: `${b.seized ? `${b.seized} stolen item${b.seized === 1 ? '' : 's'} (£${b.seizedValue})` : 'Nothing stolen'}; your phone, till you walk out`,
       bail: b.bail,
-      fine: b.fine,
+      time: canPayBail(p, b) ? 0 : sentenceSeconds(p, b),
       notes,
       choices: buttons.map((x) => ({ ...x, tone: /paperwork/i.test(x.label) ? 'danger' : /cells/i.test(x.label) ? 'calm' : 'cost' })),
     });

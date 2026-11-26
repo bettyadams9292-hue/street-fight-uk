@@ -1,10 +1,20 @@
 import type { Progress, PurchaseResult } from '../progress/Progress';
 import {
-  BASE_CYCLE,
   BASE_STORAGE,
   BASE_SUPPLY,
+  DEFAULT_STRAIN,
+  DRY_WEEKS,
   EQUIPMENT,
+  HPS_CFM_PER_W,
   IMPROVEMENT,
+  KW_PER_CFM,
+  LIGHT_KINDS,
+  STRAIN,
+  TURNAROUND_WEEKS,
+  WEEK,
+  type LightKind,
+  type StrainDef,
+  type StrainId,
   LEVEL_UNITS,
   OWED_LIMIT,
   STARTUP_FEE,
@@ -21,11 +31,23 @@ import { logLedger, type BasementSave, type BusinessEvent } from './basement';
  */
 
 export interface BusinessStats {
-  /** Raw capacity from grow units. */
+  /** Plants the tents hold. */
   capacity: number;
+  /** Plants the lamps can light, for this strain. */
   light: number;
+  /** Plants the extraction can air (all of them once the fans keep up). */
   air: number;
-  /** What actually gets produced per cycle, after light and air limits and upgrades. */
+  /** Lamp watts, the air the tents need and the air the fans move (CFM). */
+  watts: number;
+  needCfm: number;
+  cfm: number;
+  /** Lamp heat and what extraction and air con take out, kW. */
+  heat: number;
+  cooling: number;
+  /** Tents, and clip fans in them. */
+  tents: number;
+  clipFans: number;
+  /** Plants actually growing. */
   effective: number;
   /** What's holding it back, if anything. */
   bottleneck: 'none' | 'capacity' | 'light' | 'air';
@@ -46,6 +68,11 @@ export interface BusinessStats {
   /** Can it run at all? */
   ready: boolean;
   missing: string[];
+  /** Things costing yield, in words ("no clip fan in 1 tent", "too hot"). */
+  warnings: string[];
+  strain: StrainDef;
+  /** The crop's timetable, weeks. */
+  weeks: { veg: number; flower: number; dry: number; turnaround: number };
 }
 
 export function businessLevel(unitsSold: number): number {
@@ -54,39 +81,73 @@ export function businessLevel(unitsSold: number): number {
   return l;
 }
 
+export function strainOf(b: BasementSave): StrainDef {
+  return STRAIN[b.business.strain] ?? STRAIN[DEFAULT_STRAIN];
+}
+
 export function businessStats(b: BasementSave): BusinessStats {
   const placed = b.equipment.filter((e) => e.at);
   const installed = placed.map((e) => EQUIPMENT[e.id]);
-  // Broken kit limps on at half its capacity, light, air and storage, and adds nothing else until repaired.
-  const halfKeys = new Set(['cap', 'light', 'air', 'storage']);
-  const sum = (k: 'cap' | 'light' | 'air' | 'eff' | 'auto' | 'sec' | 'storage') =>
-    placed.reduce((n, e) => n + (e.faulty ? (halfKeys.has(k) ? Math.floor((EQUIPMENT[e.id][k] ?? 0) / 2) : 0) : EQUIPMENT[e.id][k] ?? 0), 0);
-  const capacity = sum('cap');
-  const light = sum('light');
-  const air = sum('air');
+  const strain = strainOf(b);
+  // Broken kit limps on at half its plants, watts, air and storage, and adds nothing else until repaired.
+  const halfKeys = new Set(['plants', 'watts', 'cfm', 'storage', 'cool']);
+  const sum = (k: 'plants' | 'needCfm' | 'watts' | 'cfm' | 'circ' | 'cool' | 'eff' | 'auto' | 'sec' | 'storage') =>
+    placed.reduce((n, e) => {
+      const v = EQUIPMENT[e.id][k] ?? 0;
+      if (!e.faulty || k === 'needCfm') return n + v;
+      return n + (halfKeys.has(k) ? Math.floor(v / 2) : 0);
+    }, 0);
+  const capacity = sum('plants');
+  const tents = installed.filter((d) => d.plants).length;
+  const clipFans = sum('circ');
+  // Light: watts by lamp kind, each kind growing its own amount a watt; a strain grows better under the lamps it likes.
+  const byKind: Record<LightKind, number> = { led: 0, cmh: 0, hps: 0 };
+  for (const e of placed) {
+    const d = EQUIPMENT[e.id];
+    if (d.watts && d.lamp) byKind[d.lamp] += e.faulty ? Math.floor(d.watts / 2) : d.watts;
+  }
+  const watts = byKind.led + byKind.cmh + byKind.hps;
+  const light = Math.floor(watts / strain.wpp + 1e-9);
+  const kinds = Object.keys(byKind) as LightKind[];
+  const lampQuality = watts ? kinds.reduce((n, k) => n + byKind[k] * LIGHT_KINDS[k].yield * (strain.likes.includes(k) ? 1.1 : 1), 0) / watts : 0;
+  // Air: the tents need their air changed, more with hot HPS lamps; fans short of that air only some of the plants.
+  const needCfm = Math.round(sum('needCfm') + byKind.hps * HPS_CFM_PER_W);
+  const cfm = sum('cfm');
+  const air = needCfm > 0 ? Math.floor(capacity * Math.min(1, cfm / needCfm) + 1e-9) : 0;
   const limit = Math.min(capacity, light, air);
   const bottleneck = capacity === 0 ? 'capacity' : limit === capacity ? 'none' : light <= air ? 'light' : 'air';
-  const effective = Math.floor(limit * (1 + 0.1 * b.upgrades.capacity));
+  // Heat: lamp heat out through the extraction and any air con; too hot and the crop suffers.
+  const heat = Math.round(kinds.reduce((n, k) => n + byKind[k] * LIGHT_KINDS[k].heat, 0) / 10) / 100;
+  const cooling = Math.round((cfm * KW_PER_CFM + sum('cool')) * 100) / 100;
+  const heatFactor = heat > cooling ? Math.max(0.6, cooling / heat) : 1;
+  const circFactor = tents > clipFans ? 1 - (0.1 * (tents - clipFans)) / tents : 1;
+  const warnings: string[] = [];
+  if (tents > clipFans) warnings.push(`no clip fan in ${tents - clipFans} tent${tents - clipFans > 1 ? 's' : ''}: bud rot (−${Math.round((1 - circFactor) * 100)}%)`);
+  if (heatFactor < 1) warnings.push(`too hot: ${heat} kW of lamp heat, ${cooling} kW taken out (−${Math.round((1 - heatFactor) * 100)}%)`);
+  if (byKind.hps && !strain.likes.includes('hps') && strain.type === 'Autoflower') warnings.push('autos stress under hot HPS');
+  const effective = limit;
   const impEff = b.improvements.reduce((n, i) => n + (IMPROVEMENT[i]?.eff ?? 0), 0);
   const level = businessLevel(b.business.unitsSold);
-  const efficiency = 1 + Math.min(0.4, sum('eff')) + 0.08 * b.upgrades.efficiency + impEff;
+  const efficiency = Math.round((1 + Math.min(0.4, sum('eff')) + 0.08 * b.upgrades.efficiency + 0.1 * b.upgrades.capacity + impEff) * lampQuality * heatFactor * circFactor * 1000) / 1000;
   const automation = Math.min(4, sum('auto') + b.upgrades.automation);
-  const cycleSeconds = Math.round(BASE_CYCLE * (1 - 0.12 * automation));
-  const unitsPerCycle = Math.floor(effective * efficiency);
+  // The timetable: veg (autos have none), flower, dry and cure, then clean down and replant; timers and drippers cut the turnaround.
+  const weeks = { veg: strain.veg, flower: strain.flower, dry: DRY_WEEKS, turnaround: Math.max(0, TURNAROUND_WEEKS - 0.5 * automation) };
+  const cycleSeconds = Math.round((weeks.veg + weeks.flower + weeks.dry + weeks.turnaround) * WEEK);
+  const unitsPerCycle = Math.floor(effective * strain.yield * efficiency + 1e-9);
   const storage = BASE_STORAGE + sum('storage') + 25 * b.upgrades.storage;
   const security = Math.min(100, sum('sec') + 10 * b.upgrades.security + b.improvements.reduce((n, i) => n + (IMPROVEMENT[i]?.sec ?? 0), 0));
   const power = Math.round(installed.reduce((n, d) => n + d.power, 0) * 100) / 100;
   const supply = Math.max(BASE_SUPPLY, ...b.improvements.map((i) => IMPROVEMENT[i]?.supply ?? 0));
   const opPerHour = installed.reduce((n, d) => n + d.op, 0) + 5;
-  const unitValue = Math.round(UNIT_VALUE * (1 + 0.04 * (level - 1)) * 100) / 100;
+  const unitValue = Math.round(UNIT_VALUE * strain.value * (1 + 0.04 * (level - 1)) * 100) / 100;
   const missing: string[] = [];
-  if (capacity === 0) missing.push('a grow unit');
-  if (light === 0) missing.push('lighting');
-  if (air === 0) missing.push('air handling');
+  if (capacity === 0) missing.push('a grow tent');
+  if (light === 0) missing.push(watts ? `more light (${strain.name} needs ${strain.wpp} W a plant)` : 'a grow light');
+  if (air === 0) missing.push(cfm ? `a bigger extractor (${cfm} of ${needCfm} CFM)` : 'an extractor fan and carbon filter');
   if (power > supply) missing.push(`more power (${power} of ${supply} kW): electrical upgrade or less kit`);
   const ready = missing.length === 0 && unitsPerCycle > 0;
   const profitPerHour = ready ? Math.round((3600 / cycleSeconds) * unitsPerCycle * unitValue - opPerHour) : 0;
-  return { capacity, light, air, effective, bottleneck, efficiency, automation, cycleSeconds, unitsPerCycle, storage, security, power, supply, opPerHour, level, unitValue, profitPerHour, ready, missing };
+  return { capacity, light, air, watts, needCfm, cfm, heat, cooling, tents, clipFans, effective, bottleneck, efficiency, automation, cycleSeconds, unitsPerCycle, storage, security, power, supply, opPerHour, level, unitValue, profitPerHour, ready, missing, warnings, strain, weeks };
 }
 
 export type BusinessStatus = 'not_started' | 'not_ready' | 'running' | 'paused' | 'down' | 'unpaid' | 'full';
@@ -178,7 +239,7 @@ export function tickBusiness(b: BasementSave, now: number, heat = 0): BusinessEv
       bs.cycle = 0;
       const n = bs.cyclesDone++;
       bs.stock = Math.min(st.storage, bs.stock + st.unitsPerCycle);
-      if (roll(b.seed, n, 1) < eventChance(st.security, heat)) {
+      if (roll(b.seed, n, 1) < eventChance(st.security, heat) * (st.strain.id === 'skunk' ? 1.25 : 1)) {
         const kind = roll(b.seed, n, 2);
         if (kind < 0.35) {
           bs.downUntil = t + 120;
@@ -220,6 +281,29 @@ export function startBusiness(p: Progress): PurchaseResult {
   b.business.lastTick = p.save.playTime;
   b.business.cycle = 0;
   logLedger(p, 'Startup supplies', -STARTUP_FEE);
+  return { ok: true };
+}
+
+/** Where the crop is in its timetable: the stage, and the week of it. */
+export function growStage(b: BasementSave, st = businessStats(b)): { stage: string; week: number; of: number } {
+  const wk = b.business.cycle / WEEK;
+  const w = st.weeks;
+  const at = (start: number, len: number, stage: string) => ({ stage, week: Math.min(len, Math.floor(wk - start) + 1), of: Math.max(1, Math.ceil(len)) });
+  if (w.veg && wk < w.veg) return at(0, w.veg, wk < 1 ? 'Seedlings (18/6 light)' : 'Veg (18/6 light)');
+  if (wk < w.veg + w.flower) return at(w.veg, w.flower, st.strain.type === 'Autoflower' ? 'Growing and flowering (18/6)' : 'Flowering (12/12 light)');
+  if (wk < w.veg + w.flower + w.dry) return at(w.veg + w.flower, w.dry, 'Drying and curing');
+  return at(w.veg + w.flower + w.dry, w.turnaround, 'Cleaning down and replanting');
+}
+
+/** Plant a different strain. Pulls whatever's growing (the crop is lost) and starts again from seed. */
+export function setStrain(p: Progress, id: StrainId): { ok: true } | { ok: false; reason: string } {
+  const b = p.save.basement;
+  const s = STRAIN[id];
+  if (!s) return { ok: false, reason: 'No such seeds' };
+  if (businessLevel(b.business.unitsSold) < s.level) return { ok: false, reason: `Seeds unlock at business level ${s.level}` };
+  if (b.business.strain === id) return { ok: false, reason: 'Already growing' };
+  b.business.strain = id;
+  b.business.cycle = 0;
   return { ok: true };
 }
 

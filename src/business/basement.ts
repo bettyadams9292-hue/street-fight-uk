@@ -5,13 +5,16 @@ import type { LevelDef, LightDef, PropDef, StationDef } from '../world/LevelType
 import { propHalf } from '../world/LevelTypes';
 import {
   BUSINESS_UPGRADES,
+  DEFAULT_STRAIN,
   EQUIPMENT,
+  STRAIN,
   IMPROVEMENT,
   MAX_UPGRADE,
   TIERS,
   UPGRADE_KEYS,
   equipmentResale,
   type EquipmentDef,
+  type StrainId,
   type UpgradeKey,
 } from './catalogue';
 
@@ -66,6 +69,8 @@ export interface BusinessState {
   totalEarned: number;
   totalCosts: number;
   events: BusinessEvent[];
+  /** What's planted. Changing it pulls the crop and starts again. */
+  strain: StrainId;
 }
 
 export interface BasementSave {
@@ -88,7 +93,7 @@ export function defaultBasement(): BasementSave {
     upgrades: { capacity: 0, automation: 0, efficiency: 0, storage: 0, security: 0 },
     business: {
       active: false, paused: false, lastTick: 0, cycle: 0, cyclesDone: 0, stock: 0, balance: 0, owed: 0, owedFrac: 0, downUntil: 0,
-      unitsSold: 0, totalEarned: 0, totalCosts: 0, events: [],
+      unitsSold: 0, totalEarned: 0, totalCosts: 0, events: [], strain: DEFAULT_STRAIN,
     },
     ledger: [],
     seq: 1,
@@ -141,6 +146,7 @@ export function sanitiseBasement(raw: unknown, playTime: number): BasementSave {
     totalEarned: Math.floor(num(b.totalEarned, 0)),
     totalCosts: Math.floor(num(b.totalCosts, 0)),
     events: Array.isArray(b.events) ? b.events.filter((e) => e && typeof e.text === 'string').slice(-12) : [],
+    strain: typeof b.strain === 'string' && b.strain in STRAIN ? b.strain : DEFAULT_STRAIN,
   };
   out.ledger = Array.isArray(r.ledger) ? r.ledger.filter((l) => l && typeof l.what === 'string' && typeof l.amount === 'number').slice(-40) : [];
   let seq = Math.floor(num(r.seq, 1, 1));

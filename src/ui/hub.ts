@@ -19,7 +19,7 @@ import { LEVELS, DISTRICT_ORDER } from '../world/levels';
 import { cycleRow, menuButton } from './controls';
 import { screenLogo } from './screens';
 import { h } from './dom';
-import { BRAND_TITLES, firstTitle, titleArt, titleFor, slugify } from './titles';
+import { firstTitle, titleArt, slugify } from './titles';
 import { icon } from './icons';
 import { COMPANIONS } from '../companions/companions';
 import type { Screen } from './UIManager';
@@ -41,14 +41,8 @@ export const CAB_MIN = 5;
 export const SECRET_COUNT = Object.values(LEVELS).reduce((n, l) => n + l.pickups.filter((p) => p.kind === 'secret').length, 0);
 
 /** A shop's heading in its painted title where there is one ("PureGraft Fitness" uses PureGraft's), else the words. */
+/** A shop's heading: its name, set in the screen's own type (the venue theme, ui/venueTheme.ts). */
 function headingArt(title: string): HTMLElement | string {
-  const whole = titleFor(title);
-  if (whole) return titleArt(title, whole, 'hub-title-art');
-  const words = title.split(' ');
-  for (let n = words.length - 1; n >= 1; n--) {
-    const art = titleFor(words.slice(0, n).join(' '));
-    if (art && BRAND_TITLES.has(art)) return titleArt(title, art, 'hub-title-art');
-  }
   return title;
 }
 

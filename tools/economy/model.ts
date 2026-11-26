@@ -15,6 +15,7 @@ import { UPGRADES, STYLE_LESSONS, MOVE_UNLOCKS as TECHNIQUES } from '../../src/p
 import { STYLE_CASH } from '../../src/training/styleGyms';
 import { PROPERTY_LIST, MONTH, marketRent, valueNow } from '../../src/realty/catalogue';
 import { businessStats } from '../../src/business/production';
+import type { StrainId } from '../../src/business/catalogue';
 import { defaultBasement } from '../../src/business/basement';
 import { EQUIPMENT, BUSINESS_UPGRADES, IMPROVEMENT, TIERS, STARTUP_FEE } from '../../src/business/catalogue';
 import { CAR_LIST as CARS, BIKE_LIST as BIKES } from '../../src/property/catalogue';
@@ -47,11 +48,11 @@ function encounterCash(ids: readonly string[]): { enc: number; grunts: number } 
   return { enc, grunts };
 }
 
-export function businessSetups(): { name: string; kit: string[]; ups: Partial<Record<string, number>>; imps: string[]; tier: number }[] {
+export function businessSetups(): { name: string; kit: string[]; ups: Partial<Record<string, number>>; imps: string[]; tier: number; strain: StrainId }[] {
   return [
-    { name: 'Starter (tent, LED, fan)', kit: ['tent_s', 'led_rig', 'fan'], ups: {}, imps: [], tier: 0 },
-    { name: 'Mid (2 double tents, arrays, handler, cooler)', kit: ['tent_d', 'tent_d', 'led_array', 'led_rig', 'air_handler', 'cooler', 'shelving', 'workbench2'], ups: { capacity: 1, efficiency: 1, automation: 1 }, imps: ['electrics', 'led_lighting'], tier: 1 },
-    { name: 'Full (modules, light bars, air system, climate)', kit: ['module', 'module', 'light_bars', 'led_array', 'air_system', 'climate', 'control', 'control', 'sensor', 'pallet_rack', 'workbench2'], ups: { capacity: 3, efficiency: 3, automation: 3, storage: 2 }, imps: ['three_phase', 'led_lighting', 'ducting'], tier: 3 },
+    { name: 'Starter (2×2 tent, 200 W LED, 4-inch fan, Northern Lights)', kit: ['tent_s', 'led_rig', 'fan', 'clip_fan'], ups: {}, imps: [], tier: 0, strain: 'northern_lights' },
+    { name: 'Mid (two 4×4s under 600 W HPS, Skunk #1)', kit: ['tent_l', 'tent_l', 'hps', 'hps', 'air_handler', 'fan', 'clip_fan', 'clip_fan', 'shelving', 'workbench2'], ups: { capacity: 1, efficiency: 1, automation: 1 }, imps: ['electrics', 'led_lighting'], tier: 1, strain: 'skunk' },
+    { name: 'Full (grow room and twin tent, LED bars, Amnesia Haze)', kit: ['module', 'tent_d', ...Array(7).fill('light_bars'), 'air_system', 'air_system', 'clip_fan', 'clip_fan', 'climate', 'control', 'control', 'sensor', 'pallet_rack', 'workbench2'], ups: { capacity: 3, efficiency: 3, automation: 3, storage: 2 }, imps: ['three_phase', 'led_lighting', 'ducting'], tier: 3, strain: 'amnesia' },
   ];
 }
 
@@ -63,6 +64,7 @@ export function businessReport(): EconomyReport['business'] {
     for (const [k, v] of Object.entries(s.ups)) (b.upgrades as Record<string, number>)[k] = v!;
     b.improvements = s.imps;
     b.business.unitsSold = s.tier >= 3 ? 2500 : s.tier >= 1 ? 200 : 0;
+    b.business.strain = s.strain;
     const st = businessStats(b);
     let spend = STARTUP_FEE + s.kit.reduce((n, id) => n + EQUIPMENT[id].price, 0) + s.imps.reduce((n, id) => n + IMPROVEMENT[id].price, 0);
     for (let t = 1; t <= s.tier; t++) spend += TIERS[t].price;

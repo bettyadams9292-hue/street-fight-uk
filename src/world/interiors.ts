@@ -500,10 +500,10 @@ const growShop: LevelDef = {
     { kind: 'hydro_prop', item: 'dwc_bucket', x: 15.9, z: -2.0, size: [0.25, 0.25] },
   ],
   stations: [
-    { id: 'grow_display', x: 3.0, z: -1.1, label: 'Browse room equipment', tab: 'room' },
-    { id: 'grow_display', x: 5.6, z: -1.1, label: 'Browse lighting, air and climate kit', tab: 'environment' },
-    { id: 'grow_display', x: 8.7, z: -0.55, label: 'Look at the grow tents', tab: 'room' },
-    { id: 'grow_display', x: 12.0, z: -0.85, label: 'Look at the environmental kit', tab: 'environment' },
+    { id: 'grow_display', x: 3.0, z: -1.1, label: 'Browse shelving and storage', tab: 'room' },
+    { id: 'grow_display', x: 5.6, z: -1.1, label: 'Browse grow lights', tab: 'lights' },
+    { id: 'grow_display', x: 8.7, z: -0.55, label: 'Look at the grow tents', tab: 'tents' },
+    { id: 'grow_display', x: 12.0, z: -0.85, label: 'Look at fans, filters and air con', tab: 'air' },
     { id: 'grow_display', x: 14.9, z: -1.1, label: 'Browse security', tab: 'security' },
     {
       id: 'grow_counter', x: 17.6, z: 0.2, label: 'Talk to Kez (checkout, upgrades, basement works)', tab: 'upgrades',
@@ -743,6 +743,8 @@ const atBack = (id: string) => BACK + 0.06 + DECOR_SIZE[id][1];
 const CELL_X = 6.5;
 const CELL_Z = atBack('policeHoldingCellSingle');
 const [CELL_HW, CELL_HD] = DECOR_SIZE.policeHoldingCellSingle;
+/** The single cell, for holding you in it while you do your time (World) and drawing its barred front (LevelView). */
+export const CELL = { x: CELL_X, z: CELL_Z, hw: CELL_HW, hd: CELL_HD };
 /**
  * The cell's side walls (the back is the station wall). It's drawn cut away, with no front wall, like every room
  * in the game (render/approved/prototype.ts `CUTAWAY`), so you're seen inside and walk out of the front.
@@ -763,7 +765,7 @@ const policeStation: LevelDef = {
     // A night in the cells: you wake up inside the single cell, and walk out of it in the morning.
     { id: 'cell', x: CELL_X, z: CELL_Z - 0.2, facing: 1 },
   ],
-  exits: [{ id: 'out', kind: 'door', x: 25.6, z: 0.9, to: 'home', toEntry: 'door', label: 'Leave: straight home' }],
+  exits: [{ id: 'out', kind: 'door', x: 25.6, z: 0.9, to: 'home', toEntry: 'door', label: 'Leave: straight home', custody: true, lockedText: 'Locked. You\u2019re not going anywhere till you\u2019ve done your time.' }],
   walls: CELL_WALLS,
   facades: [{ kind: 'interior', x0: 0, x1: 26, label: 'KIRKGATE CONSTABULARY', colour: '#16243f' }],
   props: [

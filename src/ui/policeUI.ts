@@ -51,7 +51,7 @@ export function policeStop(o: { lead: string; count: number; said: string; know:
 }
 
 /** The custody record: booked in, what they've got you for, what they took, bail, and the ways out. */
-export function custodyRecord(o: { ref: string; charges: { what: string; where: string }[]; seized: string; bail: number; fine: number; notes: string[]; choices: PoliceChoice[] }): Screen {
+export function custodyRecord(o: { ref: string; charges: { what: string; where: string }[]; seized: string; bail: number; time: number; notes: string[]; choices: PoliceChoice[] }): Screen {
   const money = (n: number) => `£${n.toLocaleString('en-GB')}`;
   const el = h('div', { class: 'screen pz-screen pz-custody' },
     h('div', { class: 'pz-sheet' },
@@ -64,7 +64,9 @@ export function custodyRecord(o: { ref: string; charges: { what: string; where: 
       h('p', { class: 'pz-row' }, h('span', { text: 'Property' }), h('b', { text: o.seized })),
       h('div', { class: 'pz-figures' },
         h('div', {}, h('span', { text: 'Bail' }), h('b', { text: money(o.bail) })),
-        h('div', {}, h('span', { text: 'Or a night in the cells' }), h('b', { text: `${money(o.fine)} fine` })),
+        o.time
+          ? h('div', { class: 'pz-time' }, h('span', { text: 'Can\u2019t pay: time in the cell' }), h('b', { text: `${Math.floor(o.time / 60)}:${String(o.time % 60).padStart(2, '0')}` }))
+          : h('div', {}, h('span', { text: 'Release' }), h('b', { text: 'When it\u2019s paid' })),
       ),
       h('div', { class: 'pz-notes' }, ...o.notes.map((n) => h('p', { class: 'pz-note', text: n }))),
       choices(o.choices),

@@ -18,12 +18,12 @@ import {
   sargeOnDuty,
   STRAIGHT_SARGE,
 } from '../progress/cops';
+import { CRIME_SEVERITY } from '../progress/record';
 import type { Progress } from '../progress/Progress';
 import { LEVELS } from './levels';
 import {
   bailPrice,
   CELL_NIGHT_COOL,
-  CELL_NIGHT_TRIPS,
   chargesFor,
   courtFine,
   type CrimeEntry,
@@ -92,17 +92,44 @@ export function payBail(p: Progress, b: Booking): boolean {
 }
 
 /**
- * A night in the cells: time passes, the police cool off everywhere, and in the morning the court takes its
- * fine from whatever you've got. Returns what was taken.
+ * Can't pay: you do your time in the cell instead. Nothing is taken and the charges are dealt with, but you're
+ * locked in until the time's up (`save.police.serving`; World holds you in the cell, the station door stays shut).
+ * The time grows with how bad the worst charge is, how many there are, and how often you've been nicked.
  */
-export function nightInCells(p: Progress, b: Booking): number {
-  for (let i = 0; i < CELL_NIGHT_TRIPS; i++) p.tick();
-  const have = p.spendable();
-  const taken = Math.min(have, b.fine);
-  p.pay(taken);
-  for (const d of Object.keys(p.save.districtHeat)) if (d !== b.district) p.setHeat('police', Math.max(0, p.heatIn(d).police - CELL_NIGHT_COOL), d);
+export const SENTENCE_BASE = 60;
+export const SENTENCE_PER_SEVERITY = 40;
+export const SENTENCE_PER_CHARGE = 25;
+export const SENTENCE_PER_ARREST = 15;
+export const SENTENCE_MAX = 420;
+
+export function sentenceSeconds(p: Progress, b: Booking): number {
+  const worst = b.charges.reduce((m, c) => Math.max(m, CRIME_SEVERITY[c.crime]), 0);
+  const extra = Math.max(0, b.charges.length - 1);
+  // Booking counted this arrest already: past ones only.
+  const arrests = Math.max(0, p.save.stats.arrests - 1);
+  return Math.min(SENTENCE_MAX, SENTENCE_BASE + worst * SENTENCE_PER_SEVERITY + extra * SENTENCE_PER_CHARGE + arrests * SENTENCE_PER_ARREST);
+}
+
+/** Start doing your time: the charges are settled, and you're in the cell till it's up. Returns the seconds. */
+export function serveTime(p: Progress, b: Booking): number {
+  const secs = sentenceSeconds(p, b);
   settle(p, b);
-  return taken;
+  for (const d of Object.keys(p.save.districtHeat)) if (d !== b.district) p.setHeat('police', Math.max(0, p.heatIn(d).police - CELL_NIGHT_COOL), d);
+  p.save.police.serving = { until: p.save.playTime + secs, total: secs };
+  return secs;
+}
+
+/** Seconds of your time still to do (0 when you're free to go). */
+export function timeLeft(p: Progress): number {
+  const s = p.save.police.serving;
+  return s ? Math.max(0, s.until - p.save.playTime) : 0;
+}
+
+/** Time's up: the cell door's unlocked. True if you were serving. */
+export function release(p: Progress): boolean {
+  if (!p.save.police.serving) return false;
+  p.save.police.serving = null;
+  return true;
 }
 
 /**

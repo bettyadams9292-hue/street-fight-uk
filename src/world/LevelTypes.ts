@@ -140,6 +140,8 @@ export interface ExitDef {
   /** A shop door: shut while the shop is closed (after a robbery). */
   shop?: string;
   lockedText?: string;
+  /** Shut while you're doing time in the cells (the police station's way out). */
+  custody?: boolean;
   label: string;
 }
 

@@ -644,9 +644,18 @@ function hydroEquipment(g: THREE.Group, id: string, W: number, D: number, on: bo
   const plant = (x: number, z: number, h: number, i: number) => put('cannabis_plant', h * 0.6, h, h * 0.6, x, 0, z, true, i * 2.1);
   switch (id) {
     case 'tent_s':
+    case 'tent_m':
+    case 'tent_l':
+    case 'tent_xl': {
+      // A tent with its plants in a grid on the floor, smaller the more it holds.
       put('grow_tent', W, 1.95, D);
-      plant(0, 0, 1.15, 0);
+      const n = EQUIPMENT[id]?.plants ?? 1;
+      const cols = Math.ceil(Math.sqrt(n));
+      const rows = Math.ceil(n / cols);
+      const cell = Math.min(W / cols, D / rows);
+      for (let i = 0; i < n; i++) plant(-W / 2 + (W / cols) * ((i % cols) + 0.5), -D / 2 + (D / rows) * (Math.floor(i / cols) + 0.5), Math.min(1.15, (cell / 0.6) * 0.95), i);
       return true;
+    }
     case 'tent_d':
       put('grow_tent', W / 2 - 0.02, 1.95, D, -W / 4);
       put('grow_tent', W / 2 - 0.02, 1.95, D, W / 4);
@@ -686,6 +695,8 @@ function hydroEquipment(g: THREE.Group, id: string, W: number, D: number, on: bo
       put('nutrient_bottles', 0.3, 0.2, 0.1, W / 4, 0.86, -0.05, true);
       return true;
     case 'led_rig':
+    case 'cmh':
+    case 'hps':
     case 'led_array':
     case 'light_bars': {
       // Floor stand with grow lights hanging from the top bar, plants growing under them.
@@ -695,7 +706,7 @@ function hydroEquipment(g: THREE.Group, id: string, W: number, D: number, on: bo
         B(g, 0.06, 0.03, D, dx, 0.015, 0, steel, false);
       }
       B(g, W, 0.03, 0.03, 0, H, 0, steel, false);
-      const n = id === 'led_rig' ? 1 : id === 'led_array' ? 2 : 3;
+      const n = id === 'led_array' ? 2 : id === 'light_bars' ? 3 : 1;
       const lw = (W - 0.12) / n;
       for (let i = 0; i < n; i++) put('grow_light', lw - 0.04, 0.5, 0.2, -W / 2 + 0.06 + lw * (i + 0.5), H - 0.44 * (lw - 0.04), 0, true);
       for (let i = 0; i < n; i++) plant(-W / 2 + 0.06 + lw * (i + 0.5), 0, Math.min(1.15, (lw - 0.04) / 0.52), i);
@@ -703,6 +714,8 @@ function hydroEquipment(g: THREE.Group, id: string, W: number, D: number, on: bo
     }
     case 'fan':
       return put('fan', W, 0.9, D, 0, 0, 0, true);
+    case 'clip_fan':
+      return put('fan', W, 0.35, D, 0, 0, 0, true);
     default:
       return false;
   }
@@ -744,6 +757,9 @@ export function buildEquipmentModel(id: string, state = 'ok|0|on'): THREE.Group 
   }
   switch (id) {
     case 'tent_s':
+    case 'tent_m':
+    case 'tent_l':
+    case 'tent_xl':
     case 'tent_d': {
       const H = 1.9;
       const fabric = mat('#1a1a1c', 0.95);
@@ -758,7 +774,7 @@ export function buildEquipmentModel(id: string, state = 'ok|0|on'): THREE.Group 
       B(g, W - 0.04, H * 0.6, 0.01, 0, H * 0.31, -D / 2 + 0.02, mat('#c8ccd0', 0.2, 0.8, { emissive: 0xf0d8ff, emissiveIntensity: on ? 0.25 : 0 }), false);
       // Lamp hanging inside.
       B(g, W * 0.7, 0.04, D * 0.6, 0, H - 0.25, 0, glow(0xf4d8ff, 1.3), false);
-      const n = id === 'tent_d' ? 4 : 2;
+      const n = Math.min(6, EQUIPMENT[id]?.plants ?? 2);
       for (let i = 0; i < n; i++) foliage(-W / 2 + (W / n) * (i + 0.5), 0.05, 0.75, 0.16);
       if (id === 'tent_d') B(g, 0.02, H * 0.6, 0.03, 0, H * 0.31, D / 2 + 0.01, mat('#2a2a2e', 0.6), false);
       break;
@@ -808,6 +824,8 @@ export function buildEquipmentModel(id: string, state = 'ok|0|on'): THREE.Group 
       C(g, 0.04, 0.04, 0.12, 0.05, 0.99, 0.05, mat('#e8e4dc', 0.4), 10);
       break;
     case 'led_rig':
+    case 'cmh':
+    case 'hps':
     case 'led_array':
     case 'light_bars': {
       // Floor stand with a hanging panel; plants under it on bigger rigs.
@@ -817,14 +835,20 @@ export function buildEquipmentModel(id: string, state = 'ok|0|on'): THREE.Group 
         B(g, 0.06, 0.03, D, dx, 0.015, 0, steel, false);
       }
       B(g, W, 0.03, 0.03, 0, H, 0, steel, false);
-      const bars = id === 'led_rig' ? 1 : id === 'led_array' ? 3 : 6;
+      const bars = id === 'led_array' ? 3 : id === 'light_bars' ? 6 : 1;
       for (let i = 0; i < bars; i++) {
         const x = bars === 1 ? 0 : -W / 2 + 0.1 + ((W - 0.2) / (bars - 1)) * i;
         B(g, bars === 1 ? W * 0.8 : 0.06, 0.04, D * 0.8, x, H - 0.3, 0, dark, false);
-        B(g, bars === 1 ? W * 0.75 : 0.05, 0.01, D * 0.75, x, H - 0.325, 0, glow(0xffd8ff, 1.6), false);
+        B(g, bars === 1 ? W * 0.75 : 0.05, 0.01, D * 0.75, x, H - 0.325, 0, glow(id === 'hps' ? 0xffb050 : id === 'cmh' ? 0xfff2e0 : 0xffd8ff, 1.6), false);
       }
       B(g, 0.12, 0.08, 0.06, W / 2 - 0.1, H - 0.2, 0, dark, false);
-      if (id !== 'led_rig') foliage(0, 0, 0.6, 0.15);
+      if (id === 'led_array' || id === 'light_bars') foliage(0, 0, 0.6, 0.15);
+      break;
+    }
+    case 'clip_fan': {
+      C(g, 0.02, 0.02, 0.5, 0, 0.25, 0, steel, 6);
+      const head = C(g, 0.13, 0.13, 0.06, 0, 0.55, 0, mat('#2a2a2a', 0.7), 16);
+      head.rotation.x = Math.PI / 2;
       break;
     }
     case 'fan': {

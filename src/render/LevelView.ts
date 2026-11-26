@@ -1,3 +1,4 @@
+import { CELL } from '../world/interiors';
 import { buildMetroStation, type MetroView } from './metroStation';
 import { stationAt } from '../travel/metro';
 import { stationOf, type StationId as MetroStop } from '../travel/subway';
@@ -415,6 +416,7 @@ export class LevelView {
     for (const ex of lvl.exits) { this.buildExit(ex); yield; }
     for (const c of lvl.containers ?? []) if (c.id === LOCKUP_ID) this.buildLockup(c);
     if (lvl.deep) this.buildPartitions();
+    if (lvl.id === 'police_station') this.buildCell();
     for (const g of lvl.gates ?? []) this.buildGate(g.id, g.x, g.z0, g.z1);
     for (const l of lvl.levers ?? []) this.buildLever(l.id, l.x);
     if (!this.street) this.buildGraffiti();
@@ -1287,6 +1289,56 @@ export class LevelView {
   }
 
   /** Disused underground platform: curved tiled tunnel, roundel, track bed in front. */
+  /**
+   * The single holding cell, fitted out (world/interiors.ts CELL): a barred front with a gate that's shut while
+   * you're doing your time and slides open when it's done, a blue wipe-clean mattress on the bench, a steel toilet,
+   * a frosted glass-block window high up, a caged light and a painted dado. Steel and paint from the library.
+   */
+  private cellGate: THREE.Group | null = null;
+  private buildCell(): void {
+    const { x, z, hw, hd } = CELL;
+    const front = z + hd - 0.04;
+    const steel = this.mat('#8d939b', 0.35, 0.6);
+    const paint = this.mat('#c9ccc4', 0.85);
+    const dado = this.mat('#2f4a6b', 0.7);
+    // Bars across the front, either side of the gate, and a top and bottom rail.
+    const gateW = 0.95;
+    for (let bx = x - hw + 0.08; bx < x + hw - 0.05; bx += 0.13) {
+      if (Math.abs(bx - (x + hw - 0.25 - gateW / 2)) < gateW / 2) continue;
+      this.box(0.035, 2.3, 0.035, bx, 1.15, front, steel, false);
+    }
+    this.box(hw * 2, 0.08, 0.08, x, 2.3, front, steel, false);
+    this.box(hw * 2, 0.06, 0.06, x, 0.05, front, steel, false);
+    this.box(hw * 2, 0.06, 0.06, x, 1.05, front, steel, false);
+    // The gate: its own group, so it can slide along behind the bars.
+    const gate = new THREE.Group();
+    const gx = x + hw - 0.25 - gateW / 2;
+    for (let i = 0; i < 7; i++) this.box(0.035, 2.2, 0.035, -gateW / 2 + 0.07 + i * 0.135, 1.12, 0, steel, false, gate);
+    this.box(gateW, 0.06, 0.06, 0, 2.2, 0, steel, false, gate);
+    this.box(gateW, 0.06, 0.06, 0, 1.05, 0, steel, false, gate);
+    this.box(gateW, 0.06, 0.06, 0, 0.08, 0, steel, false, gate);
+    this.box(0.16, 0.26, 0.08, gateW / 2 - 0.12, 1.05, 0.05, this.mat('#3b3f45', 0.4, 0.7), false, gate);
+    gate.position.set(gx, 0, front - 0.06);
+    gate.userData.shutX = gx;
+    gate.userData.openX = gx - gateW + 0.05;
+    this.group.add(gate);
+    this.cellGate = gate;
+    // Inside: the dado and paint on the walls, the mattress, the toilet, the window and the light.
+    const back = z - hd + 0.08;
+    this.box(hw * 2 - 0.3, 1.0, 0.02, x, 0.5, back, dado, false);
+    this.box(hw * 2 - 0.3, 1.5, 0.02, x, 1.75, back, paint, false);
+    this.box(1.8, 0.08, 0.62, x - hw + 1.15, 0.5, back + 0.36, this.mat('#2453a8', 0.55), false);
+    this.box(1.8, 0.42, 0.62, x - hw + 1.15, 0.23, back + 0.36, this.mat('#a7aaa4', 0.8), false);
+    this.cyl(0.2, 0.17, 0.42, x + hw - 0.45, 0.21, back + 0.3, this.mat('#c4c9cf', 0.3, 0.7), 16);
+    this.box(0.4, 0.05, 0.36, x + hw - 0.45, 0.44, back + 0.3, this.mat('#9aa0a7', 0.3, 0.7), false);
+    this.box(0.7, 0.3, 0.04, x - 0.2, 2.15, back + 0.01, this.mat('#dfe9ee', 0.2, 0, { emissive: 0xcfe2ee, emissiveIntensity: 0.4 }), false);
+    for (let i = 0; i < 4; i++) this.box(0.02, 0.3, 0.05, x - 0.53 + i * 0.22, 2.15, back + 0.03, this.mat('#8a9096', 0.5), false);
+    this.box(0.5, 0.06, 0.18, x, 2.45, z, this.mat('#ffffff', 0.4, 0, { emissive: 0xf4f6ff, emissiveIntensity: 0.9 }), false);
+    const lamp = new THREE.PointLight(0xe9efff, 2.2, 4.5, 1.6);
+    lamp.position.set(x, 2.3, z);
+    this.group.add(lamp);
+  }
+
   /** A Brack Metro station: the whole room is one build (render/metroStation.ts). */
   private metro: MetroView | null = null;
   private metroStation(): void {
@@ -4486,6 +4538,11 @@ export class LevelView {
   update(dt: number, time: number, world: World, camX: number): void {
     for (const sp of this.spinners) sp.rotation.y = time * 0.25;
     this.metro?.update(dt);
+    if (this.cellGate) {
+      const g = this.cellGate;
+      const want = world.progress.save.police.serving ? g.userData.shutX : g.userData.openX;
+      g.position.x += (want - g.position.x) * Math.min(1, dt * 3);
+    }
     for (const b of this.seamBlocks) b.group.visible = exitLocked(b.exit, world.progress);
     this.dressing?.update(time, camX);
     if (this.foreCars.length) {
