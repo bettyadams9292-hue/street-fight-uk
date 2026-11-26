@@ -42,3 +42,39 @@ export function tierLock(p: Progress, d: ItemDef): string | null {
   const need = itemShopTier(d);
   return need <= shopTier(p) ? null : SHOP_TIER_UNLOCK[need].text;
 }
+
+// ---- every other shop -------------------------------------------------------------------------------------------
+/**
+ * The other shops by the same three tiers (Phase 1 of the master directive): each sells its own kind of thing, and
+ * its dearer stock comes in as the story goes on. Shops priced by the piece split on price (at or above the first
+ * number is Tier 2, the second Tier 3), set so each shop's cheapest third or so is there from the start; the
+ * jeweller splits on rarity like the clothes, and B&THC by its own grades (Starter, Intermediate, Professional).
+ */
+export type TieredShop = 'furniture' | 'gym' | 'cars' | 'bikes';
+export const PRICE_TIERS: Record<TieredShop, readonly [number, number]> = {
+  // Sofa So Good: the flat-pack basics, then the better pieces, then the statement ones.
+  furniture: [180, 400],
+  // PureGraft's home gym kit: bag and dumbbells, then the racks, then the full rigs.
+  gym: [400, 800],
+  // Arnold Shark: runarounds, then the decent motors, then the supercars.
+  cars: [20000, 60000],
+  // Halfrauds: bicycles and scooters, then e-bikes and mopeds, then the big bikes.
+  bikes: [1500, 5000],
+};
+
+/** A shop's tier for something it sells at `price`. */
+export function priceTier(shop: TieredShop, price: number): ShopTier {
+  const [t2, t3] = PRICE_TIERS[shop];
+  return price >= t3 ? 3 : price >= t2 ? 2 : 1;
+}
+
+/** H. Sterling's tier for a piece, by its rarity (as the clothes are). */
+export function rarityTier(rarity: string): ShopTier {
+  const t = TIER_OF[rarity as keyof typeof TIER_OF] ?? 1;
+  return t >= 4 ? 3 : t === 3 ? 2 : 1;
+}
+
+/** Null if a piece of this tier can be bought now; otherwise why not yet. */
+export function tierLockFor(p: Progress, tier: ShopTier): string | null {
+  return tier <= shopTier(p) ? null : SHOP_TIER_UNLOCK[tier].text;
+}

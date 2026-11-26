@@ -28,7 +28,7 @@ const ART: Record<string, string> = {
   'FOR SALE': '/art/agent/board_for_sale.webp',
   'TO LET': '/art/agent/board_to_let.webp',
   SOLD: '/art/agent/board_sold.webp',
-  'LET BY KEYS & CO': '/art/agent/board_let_by.webp',
+  'LET BY WRONGMOVE': '/art/agent/board_let_by.webp',
   header: '/art/agent/window_header.webp',
 };
 const art = new Map<string, THREE.Texture>();

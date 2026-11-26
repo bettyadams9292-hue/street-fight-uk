@@ -2481,9 +2481,19 @@ export class Game {
     a.lastX = pos.x;
     if (a.stuck > 25) a.swerve = 50;
     const near = ex.kind === 'door' && Math.abs(dx) < 2.2;
-    // Run in the open lane (props stand against the wall or at the kerb), cutting in to a door only at the end.
-    const tz = a.swerve > 0 ? 1.0 : near ? ex.z + 0.55 : 0.15;
-    if (a.swerve > 0) a.swerve--;
+    // Run in the open lane (props stand against the wall or at the kerb), cutting in to a door only at the end. If
+    // something stands in the lane ahead (a parked van, a skip), take the clearest line past it instead.
+    const want = near ? ex.z + 0.55 : 0.15;
+    let tz = want;
+    if (!near) {
+      const lane = this.clearLane(w, pos.x, pos.z, Math.sign(dx) || 1, want);
+      if (lane !== null) tz = lane;
+    }
+    if (a.swerve > 0) {
+      // Still stuck on the line it chose: try the far side of the walkway.
+      tz = a.swerve > 25 ? w.arena.bounds.maxZ - 0.3 : w.arena.bounds.minZ + 0.3;
+      a.swerve--;
+    }
     const dz = tz - pos.z;
     out.moveZ = Math.abs(dz) > 0.12 ? Math.sign(dz) * Math.min(1, Math.max(0.4, Math.abs(dz) * 2)) : 0;
     if (ex.kind === 'door') {
@@ -2500,6 +2510,25 @@ export class Game {
       out.run = true;
     }
     return out;
+  }
+
+  /**
+   * The line (z) to run along past whatever is ahead: the clear line nearest `want` along the next 3.5 m, that can
+   * be reached from where you are. Null if every line is blocked.
+   */
+  private clearLane(w: World, x: number, z: number, dir: number, want: number): number | null {
+    const { minZ, maxZ } = w.arena.bounds;
+    const clear = (lz: number): boolean => {
+      for (let d = 0.3; d <= 3.5; d += 0.25) if (w.arena.blocked(x + dir * d, lz)) return false;
+      // Getting across to it: the strip between here and there, just ahead.
+      const step = lz > z ? 0.2 : -0.2;
+      for (let q = z; Math.abs(q - lz) > 0.2; q += step) if (w.arena.blocked(x + dir * 0.35, q)) return false;
+      return true;
+    };
+    if (clear(want)) return want;
+    let best: number | null = null;
+    for (let lz = minZ + 0.3; lz <= maxZ - 0.3; lz += 0.2) if (clear(lz) && (best === null || Math.abs(lz - want) < Math.abs(best - want))) best = lz;
+    return best;
   }
 
   /** The town map: see everything, set a route, take a cab or head home (with a confirm step). */

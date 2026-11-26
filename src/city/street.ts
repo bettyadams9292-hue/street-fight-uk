@@ -1,3 +1,4 @@
+import { brandFor, brandName, ownBrand, type Brand } from './brands';
 import { Rng } from '../core/Rng';
 import type { AreaId } from '../progress/Progress';
 import type { FacadeDef, FacadeKind, LevelDef, PropKind } from '../world/LevelTypes';
@@ -72,6 +73,23 @@ export interface Sign {
   bg: string;
   fg: string;
   neon?: boolean;
+  /** The business's own look (city/brands.ts): its lettering, stripe or gold leaf. */
+  brand?: Brand;
+}
+
+/** Brand dressing on a shop window (city/brands.ts, drawn by render/brandArt.ts), facing the street. */
+export interface ShopDecal {
+  art: 'poster' | 'vinyl' | 'banner';
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+  h: number;
+  text: string;
+  brand: Brand;
+  /** The shop's name (small on posters) and a number to vary the cards. */
+  name: string;
+  seed: number;
 }
 
 export type SurfaceKind = 'pavement' | 'plaza' | 'cobbles' | 'yard' | 'deck' | 'kerb' | 'road' | 'water' | 'shopfloor' | 'garden';
@@ -123,6 +141,8 @@ export interface StreetPlan {
   signs: Sign[];
   surfaces: Surface[];
   shopfronts: Shopfront[];
+  /** Posters, window vinyl and banners on the shop windows. */
+  decals: ShopDecal[];
   /** Shop stock drawn from the other model sets (see ShopGood). */
   goods: ShopGood[];
   /** Approved British models standing in for the kit's (see APPROVED_STREET): drawn by LevelView, baked per chunk. */
@@ -531,6 +551,9 @@ const SKYLINE: Record<'low' | 'city', string[]> = {
 /** Sign colours for named buildings with solid fronts. */
 const PLAIN_SIGN: [string, string] = ['#20242c', '#e8e2d4'];
 
+/** Bank branches: drawn by their own props (LevelView bank_front), on the kit's bank building. */
+const BANK_FRONTS = new Set(['CALIFAX', 'LLOYD’S THC']);
+
 // ---- kit models standing in for props -------------------------------------------------------
 
 interface PropModel {
@@ -619,7 +642,7 @@ const APPROVED_STREET: Partial<Record<PropKind, { ids: readonly string[]; repeat
   bollard: { ids: ['bollard'] },
   bollard_dock: { ids: ['bollard'] },
   bollard_row: { ids: ['bollard'], repeat: 4 },
-  atm: { ids: ['cashMachine'] },
+  // atm: none. A cash machine is set into the wall (LevelView's through-the-wall build), not the approved kiosk.
   vending: { ids: ['vendingMachine'] },
   market_stall: { ids: ['marketStall'] },
   skip: { ids: ['skipBin'] },
@@ -680,7 +703,7 @@ export function planStreet(level: LevelDef): StreetPlan {
   const hasRoad = kerbFor(level) !== null;
   const plan: StreetPlan = {
     area: level.id, back, kerbZ: hasRoad ? KERB_Z : null, front, x0, x1, ground: d.ground,
-    placements: [], blocks: [], signs: [], surfaces: [], solids: [], shopfronts: [], goods: [], approved: [], propDone: level.props.map(() => false), doors: [],
+    placements: [], blocks: [], signs: [], surfaces: [], solids: [], shopfronts: [], decals: [], goods: [], approved: [], propDone: level.props.map(() => false), doors: [],
   };
   const rng = new Rng(hash(`street:${level.id}`));
   const put = (model: string, x: number, y: number, z: number, o: Partial<Placement> = {}): void => {
@@ -866,11 +889,18 @@ export function planStreet(level: LevelDef): StreetPlan {
 
   /** A run of buildings with solid fronts, stretched slightly so they fill the frontage exactly. */
   function solid(f: FacadeDef, label: string, frng: Rng, prev: string): string {
-    const palette = d!.solid?.[f.kind] ?? SOLID[f.kind] ?? ['nyc/bldg-tenement', 'nyc/bldg-walkup-infill'];
+    // A bank branch is the kit's bank building; its ground floor, fascia and cash machine are the bank_front and
+    // atm props (money/atm.ts), so it carries no plain sign of its own.
+    const bank = BANK_FRONTS.has(label);
+    const palette = bank ? ['nyc/bldg-bank'] : d!.solid?.[f.kind] ?? SOLID[f.kind] ?? ['nyc/bldg-tenement', 'nyc/bldg-walkup-infill'];
     const span = f.x1 - f.x0;
     const chosen: string[] = [];
     let left = span;
     let guard = 0;
+    if (bank) {
+      chosen.push('nyc/bldg-bank');
+      left = 0;
+    }
     while (left > 1.6 && guard++ < 40) {
       let options = palette.filter((m) => size(m).w <= left * 1.3);
       if (!options.length) options = [[...palette].sort((a, b) => size(a).w - size(b).w)[0]];
@@ -896,10 +926,11 @@ export function planStreet(level: LevelDef): StreetPlan {
       if (dark && s.w * k > 7 && frng.chance(0.6)) put('nyc/prop-scaffold', x + (s.w * k) / 2, 0, back - 0.9, { sx: Math.min(1.6, (s.w * k) / 5), tint: '#8a8680' });
       x += s.w * k;
     }
-    if (label) {
+    if (label && !bank) {
       const [bg, fg] = PLAIN_SIGN;
       const w = Math.min(span - 0.8, Math.max(3.2, label.length * 0.36));
-      plan.signs.push({ x: (f.x0 + f.x1) / 2, y: 3.5, z: back + 0.08, w, h: 0.6, text: label, bg: f.colour ?? bg, fg: f.colour ? readable(f.colour) : fg });
+      const own = ownBrand(label);
+      plan.signs.push({ x: (f.x0 + f.x1) / 2, y: 3.5, z: back + 0.08, w, h: 0.6, text: own ? brandName(label) : label, bg: own?.bg ?? f.colour ?? bg, fg: own?.fg ?? (f.colour ? readable(f.colour) : fg), ...(own ? { brand: own } : {}) });
     }
     return prev;
   }
@@ -1019,6 +1050,30 @@ export function planStreet(level: LevelDef): StreetPlan {
     const tint = pick(frng, d!.tints);
     const contents: string[] = [];
     const floor = SHOP_FLOOR[kind];
+    const brand = brandFor(label, kind, ownBrand(label) ? undefined : f.colour);
+    const shopName = brandName(label);
+    let card = hash(label);
+    let bannerDone = !brand.banner;
+    // Its own numbers, so dressing a window never moves anything else on the street.
+    const drng = new Rng(hash(`${level.id}:dress:${Math.round(f.x0 * 10)}`));
+    // The window dressing on one run of glass: vinyl along the foot, a card or two at eye height, the banner once.
+    const dress = (a: number, b: number): void => {
+      const len = b - a;
+      if (len < 0.8) return;
+      const mid = (a + b) / 2;
+      if (brand.tagline) plan.decals.push({ art: 'vinyl', x: mid, y: 0.52, z: back + 0.006, w: len - 0.08, h: 0.16, text: brand.tagline, brand, name: shopName, seed: 0 });
+      if (!bannerDone && len >= 2.2) {
+        bannerDone = true;
+        plan.decals.push({ art: 'banner', x: mid, y: 2.5, z: back - 0.05, w: Math.min(len - 0.3, 3.6), h: 0.34, text: brand.banner!, brand, name: shopName, seed: 0 });
+      }
+      if (!brand.posters.length) return;
+      const n = Math.min(3, Math.floor(len / 1.25));
+      for (let i = 0; i < n; i++) {
+        const text = brand.posters[card++ % brand.posters.length];
+        const x = a + (len * (i + 0.5)) / n + (drng.next() - 0.5) * 0.15;
+        plan.decals.push({ art: 'poster', x, y: 1.3 + (drng.next() - 0.5) * 0.12, z: back - 0.05, w: 0.58, h: 0.8, text, brand, name: shopName, seed: card });
+      }
+    };
     for (let c = 0; c < n; c++) {
       const cx = f.x0 + cw * (c + 0.5);
       put(d!.shell ?? SHELL, cx, 0, back - SHELL_DEPTH / 2, { sx: k, tint });
@@ -1051,20 +1106,25 @@ export function planStreet(level: LevelDef): StreetPlan {
       if (door !== undefined) {
         glass(open0, door - 0.7);
         glass(door + 0.7, open1);
+        dress(open0, door - 0.7);
+        dress(door + 0.7, open1);
         plan.doors.push(mine!);
-      } else glass(open0, open1);
+      } else {
+        glass(open0, open1);
+        dress(open0, open1);
+      }
       // A striped awning (approved) over the glass of shops that would have one, in the shop's own colour: its
       // back rail fixed to the wall just under the fascia, the valance at 2.7 m, clear of everyone's head.
       if (AWNING_KINDS.has(kind) && awningRng.chance(0.75)) {
         const span = open1 - open0 + 0.3;
-        plan.approved.push({ id: 'shopAwning', x: cx, y: 2.55, z: back + 0.72, ry: 0, scale: [span / 2.76, 1, 1], recolour: [['#b12e2a', f.colour ?? SIGN_STYLE[kind][0]]] });
+        plan.approved.push({ id: 'shopAwning', x: cx, y: 2.55, z: back + 0.72, ry: 0, scale: [span / 2.76, 1, 1], recolour: [['#b12e2a', brand.bg]] });
       }
     }
     // A pub hangs its sign out: bracketed to the wall at the end of the frontage, under the fascia, in its colour.
     if (kind === 'pub') plan.approved.push({ id: 'pubHangingSign', x: f.x0 + 0.32, y: 1.0, z: back + 0.05, ry: 0, recolour: [['#36664b', f.colour ?? SIGN_STYLE[kind][0]]] });
-    const [bg, fg, neon] = SIGN_STYLE[kind];
-    const w = Math.min(span - 0.6, Math.max(3.4, label.length * 0.4));
-    plan.signs.push({ x: (f.x0 + f.x1) / 2, y: 3.56, z: back + 0.1, w, h: 0.66, text: label, bg: f.colour ?? bg, fg: f.colour ? readable(f.colour) : fg, neon: !!neon });
+    const [, , neon] = SIGN_STYLE[kind];
+    const w = Math.min(span - 0.6, Math.max(3.4, shopName.length * 0.42));
+    plan.signs.push({ x: (f.x0 + f.x1) / 2, y: 3.56, z: back + 0.1, w, h: 0.66, text: shopName, bg: brand.bg, fg: brand.fg, neon: !!neon, ...(neon ? {} : { brand }) });
     plan.shopfronts.push({ label, kind, x0: f.x0, x1: f.x1, contents });
   }
 

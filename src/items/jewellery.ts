@@ -114,7 +114,7 @@ const ALL_METALS: FinishId[] = ['silver', 'gold9', 'gold18', 'white', 'rose', 'p
 ring('r_court_silver', 'Ashworth Court Band', 60, 'common', 'court', 4, ['silver', 'titanium', 'black'], '4 mm court band', 'Plain, comfortable, goes with everything.');
 ring('r_flat_gold', 'Kingsley Flat Band', 220, 'common', 'band', 6, GOLDS, '6 mm flat band', 'A wide flat band with a brushed centre stripe.');
 ring('r_signet_oval', 'Oval Signet', 380, 'uncommon', 'signet', 9, ['gold9', 'gold18', 'silver', 'rose'], 'Oval signet, plain face', 'Heavy oval signet. Old money, or wants you to think so.');
-ring('r_signet_onyx', 'Halden Onyx Signet', 620, 'rare', 'signet', 10, ['gold9', 'gold18', 'white'], 'Signet with onyx inlay', 'Black onyx set flush in a chunky signet.', 'onyx');
+ring('r_signet_onyx', 'Sterling Onyx Signet', 620, 'rare', 'signet', 10, ['gold9', 'gold18', 'white'], 'Signet with onyx inlay', 'Black onyx set flush in a chunky signet.', 'onyx');
 ring('r_sovereign', 'Full Sovereign Ring', 900, 'rare', 'sovereign', 12, ['gold9', 'gold18'], 'Sovereign coin mount', 'A full sovereign in a rope-edge mount. A classic round here.');
 ring('r_solitaire', 'Velloni Solitaire', 1400, 'rare', 'solitaire', 3, ['white', 'platinum', 'gold18', 'rose'], '0.5 ct round brilliant', 'One proper diamond, four claws, no fuss.', 'diamond');
 ring('r_halo', 'Marchetti Halo', 2600, 'epic', 'halo', 3, ['white', 'platinum', 'rose'], '1 ct centre, pavé halo', 'A big centre stone ringed with tiny diamonds.', 'diamond');
@@ -127,7 +127,7 @@ ring('r_champion', 'Champion’s Ring', 5200, 'legendary', 'statement', 16, ['go
 
 // ---- watches ----------------------------------------------------------------------------------
 watch('w_digital', 'Kasio Digital', 25, 'common', 'digital', 'rubber', 38, '#9aa79a', 'plain', ['black', 'steel'], 'Resin case, LCD', 'Alarm, stopwatch, backlight. Lasts forever.');
-watch('w_sport', 'Halden Sport Diver', 320, 'uncommon', 'round', 'rubber', 42, '#14233d', 'coloured', ['steel', 'titanium', 'black'], '200 m water resistant', 'Rotating dive bezel and a chunky rubber strap.', undefined, '#1f3f8a');
+watch('w_sport', 'Sterling Sport Diver', 320, 'uncommon', 'round', 'rubber', 42, '#14233d', 'coloured', ['steel', 'titanium', 'black'], '200 m water resistant', 'Rotating dive bezel and a chunky rubber strap.', undefined, '#1f3f8a');
 watch('w_chrono', 'Ashworth Chronograph', 680, 'uncommon', 'round', 'bracelet', 42, '#e9e7e0', 'tachy', ['steel', 'twotone', 'black'], 'Chronograph, tachymeter bezel', 'Three sub-dials and a racing bezel.');
 watch('w_dress_leather', 'Kingsley Dress Watch', 540, 'uncommon', 'round', 'leather', 39, '#f2efe6', 'plain', ['steel', 'gold9', 'rose'], 'Slim case, leather strap', 'Thin, smart, sits under a cuff.');
 watch('w_square', 'Montague Tank', 1250, 'rare', 'square', 'leather', 34, '#f4f1ea', 'plain', ['gold18', 'white', 'steel'], 'Rectangular case, Roman dial', 'Art-deco rectangle on a black strap.');

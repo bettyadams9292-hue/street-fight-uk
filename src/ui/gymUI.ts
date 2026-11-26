@@ -1,3 +1,4 @@
+import { priceTier, SHOP_TIER_NAMES, tierLockFor } from '../items/shopTiers';
 import type { Progress } from '../progress/Progress';
 import { MOVE_UNLOCKS, MOVE_UNLOCK_IDS, UPGRADES, UPGRADE_IDS, STYLE_LESSONS, effectiveRank, type UpgradeId } from '../progress/catalogue';
 import { STYLES } from '../data/styles';
@@ -112,8 +113,10 @@ export function gymStoreScreen(progress: Progress, close: () => void, saved: () 
     const owned = g.owned.includes(def.id);
     const list = h('div', { class: 'prop-list' }, ...GYM_KIT_LIST.map((k) =>
       h('button', { class: `prop-item${k.id === sel ? ' on' : ''}`, 'data-nav': true, onclick: () => ((sel = k.id), (armed = false), rebuild()) },
-        h('b', { text: k.name }), h('span', { text: `${money(k.price)} · trains ${k.attribute.toLowerCase()}${g.owned.includes(k.id) ? ' · in your gym' : ''}` }))));
+        h('b', { text: k.name }), h('span', { text: `${money(k.price)} · trains ${k.attribute.toLowerCase()}${g.owned.includes(k.id) ? ' · in your gym' : tierLockFor(progress, priceTier('gym', k.price)) ? ' · SOON' : ''}` }))));
     const rank = progress.save.upgrades[def.trains];
+    const tier = priceTier('gym', def.price);
+    const lock = tierLockFor(progress, tier);
     const detail = h('div', { class: 'prop-detail' },
       previewCanvas(def.id, ''),
       h('h3', { text: `${def.name} — ${money(def.price)}` }),
@@ -128,7 +131,9 @@ export function gymStoreScreen(progress: Progress, close: () => void, saved: () 
           } else msg(r.reason, true);
           rebuild();
         }, undefined, 'small'))
-        : menuButton(armed ? `Confirm ${money(def.price)}` : `Buy ${money(def.price)}`, () => {
+        : lock
+          ? h('div', { class: 'tier-lock' }, h('p', { class: 'hint', text: `${SHOP_TIER_NAMES[tier]}: ${lock}` }), menuButton('SOON', () => msg(lock, true), undefined, 'small'))
+          : menuButton(armed ? `Confirm ${money(def.price)}` : `Buy ${money(def.price)}`, () => {
           if (!armed) {
             armed = true;
             return rebuild();

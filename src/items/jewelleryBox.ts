@@ -4,6 +4,7 @@
  * purpose, so jewellery never takes a slot, can't be dropped and isn't lost
  * when you get battered. It survives area changes, saves and reloads.
  */
+import { rarityTier, tierLockFor } from './shopTiers';
 import type { CharacterAppearance } from '../character/Appearance';
 import type { GameSave, Progress, PurchaseResult } from '../progress/Progress';
 import { record } from '../progress/finance';
@@ -81,6 +82,8 @@ export function isWorn(save: GameSave, uid: string): boolean {
 export function buyJewel(p: Progress, id: string, finish: FinishId, priceMult = 1): PurchaseResult & { uid?: string } {
   const d = JEWELS[id];
   if (!d) return fail('They don’t sell that.');
+  const lock = tierLockFor(p, rarityTier(d.rarity));
+  if (lock) return fail(lock);
   if (!d.finishes.includes(finish)) return fail(`It doesn’t come in ${FINISHES[finish]?.name.toLowerCase() ?? 'that'}.`);
   const box = p.save.jewellery;
   if (box.owned.length >= MAX_JEWELS) return fail('Your jewellery box is full. Sell something back first.');

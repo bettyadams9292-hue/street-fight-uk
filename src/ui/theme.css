@@ -823,7 +823,7 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
   .reward-art h2 img.reward-title { height: 72px; }
 }
 
-/* ---- Jewellery: Halden & Crane and the jewellery box ------------------------------------------------- */
+/* ---- Jewellery: H. Sterling and the jewellery box ------------------------------------------------- */
 .jw-preview { cursor: grab; }
 .jw-preview:active { cursor: grabbing; }
 .jw-drag { margin: 2px 0 0; font-size: 11px; color: var(--faint); text-align: center; max-width: 380px; }
@@ -867,7 +867,7 @@ img.title-art { display: block; width: auto; max-width: 100%; object-fit: contai
 .jw-card.worn { background: rgba(106, 208, 74, 0.08); }
 .inv-body.jw-inv { display: block; overflow-y: auto; }
 
-/* ---- Property: Keys & Co and the portfolio --------------------------------------------------------------- */
+/* ---- Property: Wrongmove and the portfolio --------------------------------------------------------------- */
 .prop-tabs .prop-tab { display: inline-flex; align-items: center; gap: 6px; }
 .prop-tabs .prop-tab svg { width: 16px; height: 16px; }
 .prop-tabs.sub .prop-tab { font-size: 13px; padding-top: 4px; padding-bottom: 4px; }
@@ -1590,35 +1590,90 @@ body.phone-on .hud-buttons { opacity: 0.35; pointer-events: none; }
 .pm-app { position: absolute; inset: 0; overflow: hidden; font-family: -apple-system, 'SF Pro Text', var(--ui); color: #f2f2f7; }
 .pm-mapwrap { position: absolute; inset: 0; }
 .pm-svg { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; background: #1c1c1e; }
-.pm-land { fill: #232326; }
-.pm-water { fill: none; stroke: #1b3a57; stroke-width: 70; stroke-linecap: round; }
-.pm-water.river { stroke-width: 110; }
-.pm-park { fill: #1f3324; }
+.pm-land { fill: #1a1a1c; }
+.pm-water { fill: none; stroke: #1b3550; stroke-width: 74; stroke-linecap: round; stroke-linejoin: round; }
+.pm-water.canal { stroke-width: 22; }
+.pm-park { fill: #1c3322; stroke: #1c3322; stroke-width: 16; stroke-linejoin: round; }
+.pm-minor-case { fill: none; stroke: #121214; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; }
+.pm-minor { fill: none; stroke: #36363b; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+.pm-arterial-case { fill: none; stroke: #101012; stroke-width: 18; stroke-linecap: round; stroke-linejoin: round; }
+.pm-arterial { fill: none; stroke: #434349; stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; }
+.pm-rail { fill: none; stroke: #4a4a50; stroke-width: 8; }
+.pm-rail-ties { fill: none; stroke: #232326; stroke-width: 4; stroke-dasharray: 14 18; }
+.pm-casing.link { stroke-width: 34; }
+.pm-road.link { stroke: #7a6a3e; stroke-width: 24; }
+.pm-road.tunnel { stroke-dasharray: 26 16; }
+.pm-feature { font: italic 600 calc(var(--k, 1) * 12px)/1 -apple-system, var(--ui); stroke-width: calc(var(--k, 1) * 3px) !important; text-anchor: middle; paint-order: stroke; stroke: #1c1c1e; stroke-width: 5; }
+.pm-feature.water { fill: #5e8fbf; }
+.pm-feature.park { fill: #6fa878; font-style: normal; }
+.pm-feature.rail { fill: #8e8e93; font-style: normal; }
+.pm-shield rect { fill: #1e5a2e; stroke: #e8e4d0; stroke-width: 2.5; }
+.pm-shield text { fill: #f5d33a; font: 800 16px/1 -apple-system, var(--ui); text-anchor: middle; }
 .pm-lockzone { fill: none; stroke: rgba(0, 0, 0, 0.35); stroke-width: 150; stroke-linecap: round; stroke-linejoin: round; }
-.pm-casing { fill: none; stroke: #121214; stroke-width: 30; stroke-linecap: round; stroke-linejoin: round; }
-.pm-casing.main { stroke-width: 40; }
-.pm-road { fill: none; stroke: #48484c; stroke-width: 22; stroke-linecap: round; stroke-linejoin: round; }
-.pm-road.main { stroke: #6b6457; stroke-width: 32; }
+.pm-casing { fill: none; stroke: #0e0e10; stroke-width: 28; stroke-linecap: round; stroke-linejoin: round; }
+.pm-casing.main { stroke-width: 34; }
+.pm-road { fill: none; stroke: #66635c; stroke-width: 20; stroke-linecap: round; stroke-linejoin: round; }
+.pm-road.main { stroke: #7d786c; stroke-width: 26; }
+/* Streets you can't reach yet: dimmed, as the rest of the network. */
+.pm-road.shut { stroke: #45454a; }
 .pm-rbt { fill: #48484c; stroke: #121214; stroke-width: 5; }
 .pm-district { fill: rgba(235, 235, 245, 0.4); font: 700 21px/1 -apple-system, var(--ui); letter-spacing: 0.12em; text-anchor: middle; paint-order: stroke; stroke: #232326; stroke-width: 6; }
 .pm-street { fill: #d1d1d6; font: 600 15px/1 -apple-system, var(--ui); text-anchor: middle; paint-order: stroke; stroke: #121214; stroke-width: 4; }
 .pm-water-label { fill: #5e8fbf; font: italic 600 22px/1 -apple-system, var(--ui); text-anchor: middle; }
 .pm-route { fill: none; stroke: #0a84ff; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
 .pm-dest { fill: #ff3b30; stroke: #fff; stroke-width: 6; }
+/* Map overhaul (Phase 2): districts as shaded bands along their own streets, boundaries where they meet, your
+   district lit, locked ones hatched; the route as one line with chevrons the way you're going; a flag and a name
+   tag at the destination, a YOU tag on the dot; the many shop and people pins only when zoomed in (.far hides them). */
+.pm-zone { fill: none; stroke: rgba(120, 130, 150, 0.08); stroke-width: 140; stroke-linecap: round; stroke-linejoin: round; }
+.pm-zone.here { stroke: rgba(10, 132, 255, 0.16); }
+.pm-zone.locked { stroke: url(#pm-hatch); opacity: 0.4; }
+.pm-border { stroke: rgba(255, 255, 255, 0.7); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 2 12; }
+.pm-district { font-size: calc(var(--k, 1) * 10.5px); letter-spacing: 0.08em; stroke-width: calc(var(--k, 1) * 3px); }
+.pm-svg.features-off .pm-feature { display: none; }
+.pm-district.here { fill: #5ac8fa; }
+.pm-district.locked { fill: rgba(235, 235, 245, 0.28); }
+.pm-district-sub { fill: #8ac9ff; font: 700 15px/1 -apple-system, var(--ui); letter-spacing: 0.08em; text-anchor: middle; paint-order: stroke; stroke: #232326; stroke-width: 5; }
+.pm-district-sub.locked { fill: #ff9f8a; }
+.pm-chev { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.pm-flagpole { stroke: #fff; stroke-width: 3; stroke-linecap: round; }
+.pm-flag { fill: #ff3b30; stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; }
+.pm-destdot { fill: #ff3b30; stroke: #fff; stroke-width: 3; }
+.pm-tag rect { fill: #0a84ff; stroke: #fff; stroke-width: 2; }
+.pm-tag.dest rect { fill: #ff3b30; }
+.pm-tag text { fill: #fff; font: 800 12px/1 -apple-system, var(--ui); letter-spacing: 0.06em; text-anchor: middle; }
+.pm-svg.streets-off .pm-street { display: none; }
+.pm-svg.districts-off .pm-district { display: none; }
+.pm-pin-body { stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
+.pm-pin.sel .pm-pin-body { stroke: #0a84ff; stroke-width: 4; }
+.pm-pulse { fill: rgba(255, 59, 48, 0.28); animation: pm-pulse 1.8s ease-out infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes pm-pulse { from { transform: scale(0.7); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pm-pulse { animation: none; } }
+.pm-label { fill: #f2f2f7; font: 600 13px/1 -apple-system, var(--ui); paint-order: stroke; stroke: rgba(18, 18, 20, 0.92); stroke-width: 4; stroke-linejoin: round; pointer-events: none; }
+.pm-pin.locked .pm-label { fill: #aeaeb2; }
+.pm-cluster { cursor: pointer; }
+.pm-cluster circle { fill: #3a3a3c; stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
+.pm-cluster text { fill: #fff; font: 800 14px/1 -apple-system, var(--ui); text-anchor: middle; pointer-events: none; }
 .pm-you { fill: #0a84ff; stroke: #fff; stroke-width: 4; }
 .pm-you-ring { fill: #fff; }
 .pm-you-halo { fill: rgba(10, 132, 255, 0.18); }
 .pm-pin { cursor: pointer; }
-.pm-pin-body { stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); }
 .pm-pin.locked { opacity: 0.6; }
 .pm-chips { position: absolute; top: 46px; left: 52px; right: 8px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; z-index: 2; }
 .pm-chips::-webkit-scrollbar { display: none; }
 .pm-chip { flex: 0 0 auto; padding: 6px 12px; border-radius: 16px; border: 0; background: rgba(44, 44, 46, 0.92); color: #f2f2f7; font: 600 13px/1 -apple-system, var(--ui); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); cursor: pointer; }
 .pm-chip.on { background: #0a84ff; color: #fff; }
+.pm-chip:disabled { opacity: 0.4; }
+.pm-count { margin-left: 6px; padding: 1px 6px; border-radius: 8px; background: rgba(255, 255, 255, 0.14); font-size: 11px; font-weight: 700; }
+.pm-chip.on .pm-count { background: rgba(255, 255, 255, 0.25); }
+.pm-where { position: absolute; top: 86px; left: 10px; z-index: 2; display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border-radius: 14px; background: rgba(28, 28, 30, 0.88); font: 600 12px/1 -apple-system, var(--ui); color: #f2f2f7; pointer-events: none; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-where-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #0a84ff; box-shadow: 0 0 0 2px #fff; }
 .pm-back { position: absolute; top: 44px; left: 8px; z-index: 3; width: 36px; height: 34px; border-radius: 17px; border: 0; background: rgba(44, 44, 46, 0.92); display: grid; place-items: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
 .pm-back img { width: 24px; height: 24px; object-fit: contain; }
 .pm-locate { position: absolute; right: 10px; bottom: calc(40% + 14px); z-index: 2; width: 42px; height: 42px; border-radius: 10px; border: 0; background: rgba(44, 44, 46, 0.95); display: grid; place-items: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); transition: bottom 0.25s ease; }
-.pm-arrow { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 18px solid #0a84ff; transform: rotate(40deg); }
+.pm-locate { border-radius: 50%; width: 46px; height: 46px; }
+.pm-locate svg { width: 22px; height: 22px; fill: none; stroke: #0a84ff; stroke-width: 2.2; stroke-linejoin: round; }
+.pm-locate.on svg { fill: #0a84ff; }
 .pm-sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 40%; z-index: 3; background: rgba(28, 28, 30, 0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border-radius: 16px 16px 0 0; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45); display: flex; flex-direction: column; padding: 0 12px 26px; transition: height 0.28s cubic-bezier(0.2, 0.9, 0.25, 1); }
 .pm-app.sheet-up .pm-sheet { height: 82%; }
@@ -2391,6 +2446,8 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .atm-head { grid-column: 2; grid-row: 1; align-self: start; display: flex; justify-content: space-between; align-items: baseline; padding: 8px 12px 0; color: var(--atm-ink); z-index: 1; }
 .atm-head b { font-family: Arial, Helvetica, sans-serif; font-weight: 900; font-size: 15px; letter-spacing: 0.08em; }
 .atm-head span { font-family: Arial, Helvetica, sans-serif; font-size: 11px; opacity: 0.7; }
+.atm-head:has(.atm-headlogo) { align-items: center; gap: 8px; }
+.atm-head span { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .atm-body {
   grid-column: 2; grid-row: 1; z-index: 1; padding: 34px 16px 8px; color: var(--atm-ink); font-family: Arial, Helvetica, sans-serif; text-align: center;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; animation: atm-fade 0.18s ease-out;
@@ -2450,6 +2507,14 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 .atm-sline small { opacity: 0.7; }
 .atm-receipt { background: #fbfaf5; color: #222; font: 12px 'Courier New', monospace; width: min(260px, 100%); padding: 8px 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); text-align: left; animation: atm-slip 0.35s ease-out; }
 @keyframes atm-slip { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.atm-headlogo { display: block; flex: none; height: clamp(20px, 4.5vh, 30px); width: auto; border-radius: 2px; }
+.atm-brand { font-family: Arial, Helvetica, sans-serif; font-weight: 900; letter-spacing: 0.1em; font-size: 15px; }
+.atm-brand.logo { line-height: 0; }
+.atm-brand.logo img { display: block; height: clamp(34px, 9vh, 60px); width: auto; margin: 0 auto 2px; border-radius: 3px; }
+.atm-fascia.art { padding: 0; line-height: 0; overflow: hidden; }
+.atm-fascia.art img { display: block; height: 46px; max-width: 100%; margin: 0 auto; object-fit: contain; }
+.atm-hero.logo { animation: atm-hero 0.45s ease-out; line-height: 0; }
+.atm-hero.logo img { display: block; width: min(78%, 320px); height: auto; margin: 0 auto; border-radius: 4px; }
 .atm-rhead { text-align: center; font-weight: 900; letter-spacing: 0.1em; border-bottom: 1px dashed #888; padding-bottom: 4px; margin-bottom: 4px; }
 .atm-rline { display: flex; justify-content: space-between; gap: 10px; }
 .atm-rfoot { text-align: center; border-top: 1px dashed #888; margin-top: 4px; padding-top: 4px; font-size: 11px; }
@@ -2458,6 +2523,8 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
   .screen.atm-screen { padding: 6px 12px; }
   .atm-machine { width: min(780px, 100%); padding-bottom: 8px; }
   .atm-fascia { font-size: 13px; padding: 4px 0; }
+  .atm-fascia.art { padding: 0; }
+  .atm-fascia.art img { height: 32px; }
   .atm-front { grid-template-columns: 1fr auto; padding: 8px 8px 0; align-items: center; gap: 8px; }
   .atm-bezel { grid-template-rows: minmax(96px, auto) repeat(4, 34px); padding: 6px; }
   .atm-side { height: 28px; }
@@ -2488,3 +2555,10 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 @media (orientation: portrait) and (max-width: 700px) {
   .tattoo-screen .inv-tab { padding: 4px 9px; font-size: 13px; }
 }
+
+/* Shop tiers (items/shopTiers.ts): a locked piece's note in place of its Buy button. */
+.tier-lock { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.tier-lock .hint { margin: 0; color: var(--hg-muted, #b9b9b9); }
+
+/* A shop's painted name in its screen's heading (hub.ts headingArt). */
+.hub-head h2 .hub-title-art { height: clamp(34px, 6vh, 52px); width: auto; display: block; }

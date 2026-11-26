@@ -1,3 +1,4 @@
+import { rarityTier, SHOP_TIER_NAMES, tierLockFor } from '../items/shopTiers';
 import type { Progress } from '../progress/Progress';
 import {
   FINISHES,
@@ -130,13 +131,14 @@ export function jewellerScreen(progress: Progress, close: () => void, saved: () 
       const owned = s.jewellery.owned.filter((o) => o.id === x.id);
       const wearing = owned.some((o) => isWorn(s, o.uid));
       const item = h('button', { class: `prop-item${x.id === sel ? ' on' : ''}`, 'data-nav': true, onclick: () => ((sel = x.id), (finish = x.finishes[0]), rebuild()) },
-        h('b', {}, x.name, wearing ? h('span', { class: 'jw-tag on', text: 'Wearing' }) : owned.length ? h('span', { class: 'jw-tag', text: `Owned${owned.length > 1 ? ` ×${owned.length}` : ''}` }) : null),
+        h('b', {}, x.name, wearing ? h('span', { class: 'jw-tag on', text: 'Wearing' }) : owned.length ? h('span', { class: 'jw-tag', text: `Owned${owned.length > 1 ? ` ×${owned.length}` : ''}` }) : tierLockFor(progress, rarityTier(x.rarity)) ? h('span', { class: 'jw-tag', text: 'SOON' }) : null),
         h('span', { text: `from ${money(Math.round(Math.min(...x.finishes.map((f) => jewelPrice(x, f))) * priceMult))} · ${RARITY_LABELS[x.rarity]}` }));
       item.style.setProperty('--rarity', RARITY_COLOURS[x.rarity]);
       return item;
     }));
     const ownedHere = s.jewellery.owned.filter((o) => o.id === d.id && o.finish === finish);
     const have = s.cash.pocket + s.cash.bank;
+    const lock = tierLockFor(progress, rarityTier(d.rarity));
     const buy = (wear: boolean) => {
       const r = buyJewel(progress, d.id, finish, priceMult);
       if (!r.ok) return msg(r.reason, true);
@@ -158,9 +160,11 @@ export function jewellerScreen(progress: Progress, close: () => void, saved: () 
       bonusLine(d, finish),
       finishPicker(d, finish, (f) => ((finish = f), rebuild())),
       h('div', { class: 'jw-price' }, h('b', { text: money(price) }), ownedHere.length ? h('span', { class: 'jw-tag', text: `You own ${ownedHere.length} in ${FINISHES[finish].name.toLowerCase()}` }) : null, priceMult > 1 ? h('span', { class: 'jw-tag bad', text: 'Marcus remembers you: prices are up' }) : null),
-      h('div', { class: 'row-actions' },
-        menuButton(`Buy and wear`, () => buy(true), have < price ? `You’re ${money(price - have)} short` : `${money(price)}, on straight away`, 'primary'),
-        menuButton(`Buy`, () => buy(false), 'Into the jewellery box')),
+      lock
+        ? h('div', { class: 'row-actions' }, menuButton('SOON', () => msg(lock, true), `${SHOP_TIER_NAMES[rarityTier(d.rarity)]}: ${lock}`))
+        : h('div', { class: 'row-actions' },
+          menuButton(`Buy and wear`, () => buy(true), have < price ? `You’re ${money(price - have)} short` : `${money(price)}, on straight away`, 'primary'),
+          menuButton(`Buy`, () => buy(false), 'Into the jewellery box')),
     );
     rows.push(h('div', { class: 'prop-shop' }, list, detail));
     return rows;
