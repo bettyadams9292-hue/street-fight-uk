@@ -342,6 +342,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   2. auto-decimate a lighter copy of the body and garments (about 27k → 8k) for people who aren't fighting; fighters and anyone close up keep the full model;
   3. only if still needed: pre-rendered impostors for the far crowd. Not for everyone: outfits are random (so they'd be baked at load), and lamps, rain and night would need relightable impostors.
   Expected: people cost half to two-thirds less. Profiling: in `?shot=` pages `window.__realNow` is the real clock (`performance.now` is frozen there), and `renderer.info` with `autoReset = false` gives triangles per frame.
+- **The Brack Metro (the subway as transport), next on the roadmap.** Leeko wants the subway to be a way to get about: stations on the streets, pay at the barriers or hop them, wait on the platform, ride to another station; scraps on the platform and in the carriage. The groundwork is in `src/travel/subway.ts` (line, stations, fares, hopping, scrap odds; `tests/subway.test.ts`); `docs/SUBWAY_PLAN.md` has the steps, the numbers and the asset rows (Area "Metro" in `docs/ASSETS_NEEDED.*`). Nothing in the game uses it yet.
 - **Balance:** `docs/BALANCE.md`. A few late fights (underground platform, Hale House courtyard and gate) sit a little under target; the Estate King is easy.
 
 - PR #20's own "not done" list:
