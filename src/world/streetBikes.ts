@@ -2,7 +2,7 @@
  * Bikes and scooters out in the world (the 30 approved models), as scenery: nobody rides them. See streetBikes.
  */
 import type { LevelDef, PropDef } from './LevelTypes';
-import { interiorFor } from '../city/street';
+import { interiorFor, kitStreet, planStreet } from '../city/street';
 
 const RACK_BIKES = ['b01_roadster_1950', 'b02_shopper_1970', 'b04_school_bike', 'b06_hybrid_commuter', 'b07_road_racer', 'b08_gravel', 'b10_mtb_hardtail', 'b12_bmx', 'b13_folding', 'b05_city_stepthrough'];
 
@@ -29,7 +29,8 @@ export function streetBikes(level: LevelDef): PropDef[] {
   if (level.deep || level.facades.some((f) => f.kind === 'interior' || f.kind === 'room' || f.kind === 'basement')) return [];
   const r = rng(level.id);
   const out: PropDef[] = [];
-  const doors = level.exits.filter((e) => e.kind === 'door').map((e) => e.x);
+  // Every doorway: the exits, and every shop's own front door on a kit street.
+  const doors = [...level.exits.filter((e) => e.kind === 'door').map((e) => e.x), ...(kitStreet(level) ? planStreet(level).shopDoors.map((d) => d.x) : [])];
   // Against the building: its front is 0.55 m behind the walkable edge; a bike's middle sits 0.3 m off it.
   const wallZ = level.bounds.minZ - 0.25;
   const clear = (x: number, hx: number) =>

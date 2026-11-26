@@ -53,5 +53,21 @@ ok('every see-into shop on the streets is dressed in its own brand', () => {
   assert(shops > 20, `shops checked: ${shops}`);
 });
 
+ok('every shop unit has its front door, and the window cards sit inside the panes', () => {
+  for (const l of Object.values(LEVELS)) {
+    if (!kitStreet(l)) continue;
+    const plan = planStreet(l);
+    for (const s of plan.shopfronts) {
+      const mine = plan.shopDoors.filter((d) => d.x > s.x0 && d.x < s.x1);
+      assert(mine.length >= 1, `${l.id}: ${s.label} has no door`);
+      for (const d of plan.decals.filter((q) => q.x > s.x0 && q.x < s.x1)) {
+        for (const door of mine) assert(Math.abs(d.x - door.x) > door.w / 2 + d.w / 2 - 0.02, `${l.id}: ${s.label}'s ${d.art} is over its door`);
+        if (d.art === 'poster') assert(d.y - d.h / 2 >= 0.917 && d.y + d.h / 2 <= 1.481, `${l.id}: ${s.label}'s poster crosses a glazing bar (${d.y})`);
+        if (d.art === 'poster') assert(d.w <= 0.64, `${l.id}: ${s.label}'s ${d.art} is wider than a pane (${d.w})`);
+      }
+    }
+  }
+});
+
 console.log(`\nbrands: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

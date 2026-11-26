@@ -77,6 +77,21 @@ export interface Sign {
   brand?: Brand;
 }
 
+/**
+ * A shop's front door, in the gap in its glass (LevelView.buildShopDoors): an aluminium-framed glazed door like
+ * the shopfront's own, with the shop's name and hours on it. Only the points of interest open (their exit is
+ * here too); the rest are just the door a real shop would have.
+ */
+export interface ShopDoor {
+  x: number;
+  /** The building line (the face of the frontage). */
+  z: number;
+  /** Width of the gap in the glass. */
+  w: number;
+  brand: Brand;
+  name: string;
+}
+
 /** Brand dressing on a shop window (city/brands.ts, drawn by render/brandArt.ts), facing the street. */
 export interface ShopDecal {
   art: 'poster' | 'vinyl' | 'banner';
@@ -143,6 +158,8 @@ export interface StreetPlan {
   shopfronts: Shopfront[];
   /** Posters, window vinyl and banners on the shop windows. */
   decals: ShopDecal[];
+  /** Every shop unit's front door. */
+  shopDoors: ShopDoor[];
   /** Shop stock drawn from the other model sets (see ShopGood). */
   goods: ShopGood[];
   /** Approved British models standing in for the kit's (see APPROVED_STREET): drawn by LevelView, baked per chunk. */
@@ -551,6 +568,15 @@ const SKYLINE: Record<'low' | 'city', string[]> = {
 /** Sign colours for named buildings with solid fronts. */
 const PLAIN_SIGN: [string, string] = ['#20242c', '#e8e2d4'];
 
+/**
+ * The kit's glazed shopfront screen (cafe/glazed-shopfront-screen, 2 m by 3.2 m, laid 2.82 m tall from 0.1 m):
+ * three panes across (centres as a share of half the panel's width, and their width) and four rows of glass
+ * (bottom and top, metres from the ground), from the model's own geometry.
+ */
+const SHOPFRONT_PANES = [-0.655, 0, 0.655];
+const SHOPFRONT_PANE_W = 0.61;
+const SHOPFRONT_ROWS: [number, number][] = [[0.304, 0.869], [0.917, 1.481], [1.529, 2.094], [2.141, 2.706]];
+
 /** Bank branches: drawn by their own props (LevelView bank_front), on the kit's bank building. */
 const BANK_FRONTS = new Set(['CALIFAX', 'LLOYD’S THC']);
 
@@ -703,7 +729,7 @@ export function planStreet(level: LevelDef): StreetPlan {
   const hasRoad = kerbFor(level) !== null;
   const plan: StreetPlan = {
     area: level.id, back, kerbZ: hasRoad ? KERB_Z : null, front, x0, x1, ground: d.ground,
-    placements: [], blocks: [], signs: [], surfaces: [], solids: [], shopfronts: [], decals: [], goods: [], approved: [], propDone: level.props.map(() => false), doors: [],
+    placements: [], blocks: [], signs: [], surfaces: [], solids: [], shopfronts: [], decals: [], shopDoors: [], goods: [], approved: [], propDone: level.props.map(() => false), doors: [],
   };
   const rng = new Rng(hash(`street:${level.id}`));
   const put = (model: string, x: number, y: number, z: number, o: Partial<Placement> = {}): void => {
@@ -1056,22 +1082,33 @@ export function planStreet(level: LevelDef): StreetPlan {
     let bannerDone = !brand.banner;
     // Its own numbers, so dressing a window never moves anything else on the street.
     const drng = new Rng(hash(`${level.id}:dress:${Math.round(f.x0 * 10)}`));
-    // The window dressing on one run of glass: vinyl along the foot, a card or two at eye height, the banner once.
-    const dress = (a: number, b: number): void => {
-      const len = b - a;
-      if (len < 0.8) return;
-      const mid = (a + b) / 2;
-      if (brand.tagline) plan.decals.push({ art: 'vinyl', x: mid, y: 0.52, z: back + 0.006, w: len - 0.08, h: 0.16, text: brand.tagline, brand, name: shopName, seed: 0 });
-      if (!bannerDone && len >= 2.2) {
+    /**
+     * The window dressing, pane by pane, so nothing sits behind a glazing bar (the screen model has three panes
+     * across each panel and four rows: SHOPFRONT_ROWS): the shop's name in the bottom panes, a card in some of
+     * the eye-level panes, behind the glass, and the banner, once, in a top pane.
+     */
+    const dress = (panes: { x: number; w: number }[]): void => {
+      if (!panes.length) return;
+      const behind = back - 0.12;
+      panes.forEach((p, i) => {
+        if (brand.tagline || shopName) plan.decals.push({ art: 'vinyl', x: p.x, y: SHOPFRONT_ROWS[0][0] + 0.2, z: back - 0.085, w: p.w - 0.06, h: 0.13, text: i % 2 && brand.tagline ? brand.tagline : shopName, brand, name: shopName, seed: 1 });
+      });
+      if (!bannerDone && panes.length >= 3) {
         bannerDone = true;
-        plan.decals.push({ art: 'banner', x: mid, y: 2.5, z: back - 0.05, w: Math.min(len - 0.3, 3.6), h: 0.34, text: brand.banner!, brand, name: shopName, seed: 0 });
+        const p = panes[Math.floor(panes.length / 2)];
+        const [y0, y1] = SHOPFRONT_ROWS[3];
+        plan.decals.push({ art: 'banner', x: p.x, y: (y0 + y1) / 2, z: behind, w: p.w - 0.05, h: y1 - y0 - 0.08, text: brand.banner!, brand, name: shopName, seed: 0 });
       }
       if (!brand.posters.length) return;
-      const n = Math.min(3, Math.floor(len / 1.25));
-      for (let i = 0; i < n; i++) {
+      const [y0, y1] = SHOPFRONT_ROWS[1];
+      const h = Math.min(0.52, y1 - y0 - 0.05);
+      // Every other pane, starting from one picked by the shop, at most three to a run.
+      let shown = 0;
+      for (let i = drng.next() < 0.5 ? 0 : 1; i < panes.length && shown < 3; i += 2) {
+        const p = panes[i];
         const text = brand.posters[card++ % brand.posters.length];
-        const x = a + (len * (i + 0.5)) / n + (drng.next() - 0.5) * 0.15;
-        plan.decals.push({ art: 'poster', x, y: 1.3 + (drng.next() - 0.5) * 0.12, z: back - 0.05, w: 0.58, h: 0.8, text, brand, name: shopName, seed: card });
+        plan.decals.push({ art: 'poster', x: p.x, y: (y0 + y1) / 2, z: behind, w: Math.min(p.w - 0.08, h * 0.727), h, text, brand, name: shopName, seed: card });
+        shown++;
       }
     };
     for (let c = 0; c < n; c++) {
@@ -1096,23 +1133,26 @@ export function planStreet(level: LevelDef): StreetPlan {
       // A door close to a pier still gets its gap, as near to it as the opening allows.
       const mine = doors.find((x) => x >= cx - cw / 2 && x < cx + cw / 2);
       const door = mine === undefined ? undefined : Math.max(open0 + 0.75, Math.min(open1 - 0.75, mine));
-      const glass = (a: number, b: number): void => {
-        if (b - a < 0.25) return;
+      // The glass: panels of the kit's glazed screen, three panes across each; returns the panes (centre, width).
+      const glass = (a: number, b: number): { x: number; w: number }[] => {
+        if (b - a < 0.25) return [];
         const g = size('cafe/glazed-shopfront-screen');
         const m = Math.max(1, Math.round((b - a) / 2.1));
         const w = (b - a) / m;
-        for (let i = 0; i < m; i++) put('cafe/glazed-shopfront-screen', a + w * (i + 0.5), 0.1, back - g.maxZ, { sx: w / g.w, sy: 2.82 / g.h });
+        const panes: { x: number; w: number }[] = [];
+        for (let i = 0; i < m; i++) {
+          const pc = a + w * (i + 0.5);
+          put('cafe/glazed-shopfront-screen', pc, 0.1, back - g.maxZ, { sx: w / g.w, sy: 2.82 / g.h });
+          for (const off of SHOPFRONT_PANES) panes.push({ x: pc + off * (w / 2), w: SHOPFRONT_PANE_W * (w / 2) });
+        }
+        return panes;
       };
-      if (door !== undefined) {
-        glass(open0, door - 0.7);
-        glass(door + 0.7, open1);
-        dress(open0, door - 0.7);
-        dress(door + 0.7, open1);
-        plan.doors.push(mine!);
-      } else {
-        glass(open0, open1);
-        dress(open0, open1);
-      }
+      // Every unit has its front door: at the exit for a shop you can go into, otherwise where a shop's door
+      // usually is (towards one end, alternating along the street), and that one doesn't open.
+      const at = door ?? Math.max(open0 + 0.75, Math.min(open1 - 0.75, cx + (c % 2 ? -1 : 1) * Math.min(1.9 * k, (open1 - open0) / 2 - 0.8)));
+      dress([...glass(open0, at - 0.7), ...glass(at + 0.7, open1)]);
+      plan.shopDoors.push({ x: at, z: back, w: 1.4, brand, name: shopName });
+      if (door !== undefined) plan.doors.push(mine!);
       // A striped awning (approved) over the glass of shops that would have one, in the shop's own colour: its
       // back rail fixed to the wall just under the fascia, the valance at 2.7 m, clear of everyone's head.
       if (AWNING_KINDS.has(kind) && awningRng.chance(0.75)) {
