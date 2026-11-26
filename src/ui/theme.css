@@ -20,6 +20,13 @@
 @font-face { font-family: 'Big Shoulders Stencil'; src: url('/fonts/BigShouldersStencil.woff') format('woff'); font-weight: 600 900; font-display: swap; }
 @font-face { font-family: 'Big Shoulders'; src: url('/fonts/BigShoulders.woff') format('woff'); font-weight: 500 900; font-display: swap; }
 @font-face { font-family: 'Overpass'; src: url('/fonts/Overpass.woff') format('woff'); font-weight: 400 800; font-display: swap; }
+/* Inter and Inter Display (OFL, public/fonts/OFL-Inter.txt): the game's UI type for prompts, dialogs and body text. */
+@font-face { font-family: 'Inter'; src: url('/fonts/Inter-Regular.woff') format('woff'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Inter'; src: url('/fonts/Inter-SemiBold.woff') format('woff'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Inter'; src: url('/fonts/Inter-Bold.woff') format('woff'); font-weight: 700 800; font-display: swap; }
+@font-face { font-family: 'Inter Display'; src: url('/fonts/InterDisplay-Bold.woff') format('woff'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Inter Display'; src: url('/fonts/InterDisplay-ExtraBold.woff') format('woff'); font-weight: 800; font-display: swap; }
+@font-face { font-family: 'Inter Display'; src: url('/fonts/InterDisplay-Black.woff') format('woff'); font-weight: 900; font-display: swap; }
 
 :root {
   /* Materials: night-time London, wet and blue-black */
@@ -62,7 +69,10 @@
   --radius: 0px;
   --display: 'Big Shoulders Stencil', 'Big Shoulders', Impact, 'Arial Narrow Bold', sans-serif;
   --head: 'Big Shoulders', 'Arial Narrow', sans-serif;
-  --ui: 'Overpass', 'Helvetica Neue', Arial, sans-serif;
+  --ui: 'Inter', 'Overpass', 'Helvetica Neue', Arial, sans-serif;
+  /* Headings in prompts and dialogs (the painted Big Shoulders titles stay for the game's own brand moments). */
+  --disp: 'Inter Display', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --ui2: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --ease: cubic-bezier(.2, .8, .2, 1);
 
   /* Shapes and textures */
@@ -2562,3 +2572,226 @@ body.phone-held .phone-btn { opacity: 0.35; filter: grayscale(1); }
 
 /* A shop's painted name in its screen's heading (hub.ts headingArt). */
 .hub-head h2 .hub-title-art { height: clamp(34px, 6vh, 52px); width: auto; display: block; }
+
+/* ==== Touch controls, v2 (TouchControls.ts): a thumb arc round a big PUNCH, glyph buttons, a USE pill ========= */
+.tc2 .stick-zone { left: 0; bottom: 0; width: 44%; height: 62%; }
+.tc2 .stick-base { width: 128px; height: 128px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02) 70%); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.22); }
+.tc2 .stick-knob { width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.95), rgba(220, 220, 228, 0.82)); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); }
+.tc2 .tc-cluster { position: absolute; width: 0; height: 0; right: calc(var(--safe-r) + 22px + var(--tb-big, 84px) / 2); bottom: calc(var(--safe-b) + 18px + var(--tb-big, 84px) / 2); pointer-events: none; }
+.tc2 .touch-btn {
+  position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  border-radius: 50%; border: 0; padding: 0; margin: 0; pointer-events: auto; transform: none; grid-area: auto;
+  background: radial-gradient(circle at 50% 35%, rgba(46, 48, 56, 0.78), rgba(14, 15, 18, 0.78));
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.16), 0 6px 18px rgba(0, 0, 0, 0.4);
+  color: #f4f4f6; font-family: var(--ui2, var(--ui)); transition: transform 0.08s ease, box-shadow 0.12s ease, background 0.12s ease;
+  --acc: #e8e8ee;
+}
+.tc2 .touch-btn .tb-ring { position: absolute; inset: 3px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--acc); opacity: 0.55; pointer-events: none; }
+.tc2 .touch-btn .tb-glyph { width: 44%; height: 44%; display: block; }
+.tc2 .touch-btn .tb-glyph svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+.tc2 .touch-btn small { font: 700 calc(9px * var(--tc-unit, 1)) / 1 var(--ui2, var(--ui)); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.78; }
+.tc2 .touch-btn b { display: none; }
+.tc2 .touch-btn.down { transform: scale(0.9); background: radial-gradient(circle at 50% 35%, rgba(70, 72, 82, 0.9), rgba(20, 21, 25, 0.9)); box-shadow: inset 0 0 0 2px var(--acc), 0 0 22px color-mix(in srgb, var(--acc) 55%, transparent); }
+.tc2 .touch-btn.down .tb-ring { opacity: 1; }
+.tc2 .touch-btn.lp, .tc2 .touch-btn.hp { --acc: #ff4b3e; }
+.tc2 .touch-btn.lk, .tc2 .touch-btn.hk { --acc: #ffb020; }
+.tc2 .touch-btn.block { --acc: #4aa3ff; }
+.tc2 .touch-btn.dodge, .tc2 .touch-btn.jump, .tc2 .touch-btn.jmp { --acc: #e6e6ec; }
+.tc2 .touch-btn.grab { --acc: #b48cff; }
+.tc2 .touch-btn.swap { --acc: #8e8e98; }
+.tc2 .touch-btn.sp { --acc: #ffd23d; }
+.tc2 .touch-btn.sp.armed { box-shadow: inset 0 0 0 2.5px #ffd23d, 0 0 26px rgba(255, 210, 61, 0.7); animation: tc-armed 1s ease-in-out infinite; }
+@keyframes tc-armed { 50% { box-shadow: inset 0 0 0 2.5px #ffd23d, 0 0 8px rgba(255, 210, 61, 0.3); } }
+.tc2 .touch-btn.lp .tb-glyph { width: 48%; height: 48%; }
+.tc2 .touch-btn.lp small { font-size: calc(10.5px * var(--tc-unit, 1)); }
+
+/* What shows when: walking about, PUNCH, KICK and JUMP; in a fight, the whole arc. */
+.tc2 .touch-btn.jmp { display: none; }
+body.roam .tc2 .tc-cluster .touch-btn { display: none; }
+body.roam .tc2 .tc-cluster .touch-btn.lp, body.roam .tc2 .tc-cluster .touch-btn.lk, body.roam .tc2 .tc-cluster .touch-btn.jmp { display: flex; }
+
+/* USE: a pill over the arc that says what it does; only when there's something to use, never in a fight. */
+.tc2 .tc-use {
+  position: absolute; right: calc(var(--safe-r) + 18px); bottom: calc(var(--safe-b) + 30px + var(--tb-big, 84px) * 1.95);
+  display: none; flex-direction: row; gap: 9px; align-items: center; padding: 0 18px 0 12px; height: 46px; max-width: min(62vw, 340px);
+  border-radius: 23px; transform: none; width: auto;
+  background: linear-gradient(180deg, #ff5145, #d8241a); box-shadow: 0 8px 22px rgba(216, 36, 26, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: #fff; font: 700 15px/1 var(--ui2, var(--ui)); letter-spacing: 0.01em; animation: tc-use-in 0.18s ease-out;
+}
+.tc2 .tc-use .tb-glyph { width: 24px; height: 24px; flex: none; }
+.tc2 .tc-use b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+.tc2 .tc-use .tb-ring { display: none; }
+.tc2 .tc-use.on { display: flex; }
+body.fight-on .tc2 .tc-use { display: none; }
+.tc2 .tc-use.down { transform: scale(0.95); }
+@keyframes tc-use-in { from { opacity: 0; transform: translateY(8px) scale(0.96); } }
+@media (prefers-reduced-motion: reduce) { .tc2 .tc-use, .tc2 .touch-btn.sp.armed { animation: none; } }
+/* Walking about the arc is just three buttons, so USE sits lower, just over them. */
+body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) * 184px); }
+/* On a touch screen the pill says it all: no second USE plate above the controls. */
+.touch-ui.tc-on .prompt.interact { display: none !important; }
+
+@media (orientation: portrait) and (max-width: 700px) {
+  .tc2 .stick-zone { width: 46%; height: 40%; }
+  .tc2 .tc-cluster { right: calc(var(--safe-r) + 14px + var(--tb-big, 84px) / 2); bottom: calc(var(--safe-b) + 16px + var(--tb-big, 84px) / 2); }
+}
+
+/* ==== AAA pass: prompts, dialogs and notifications (Inter), the police's own screens, the Duo ================== */
+/* Dialog chrome: a dark glass panel with a hairline and a thin red rule at the top, set in Inter. */
+.screen.pause-menu, .panel-screen .panel {
+  background: linear-gradient(180deg, rgba(24, 25, 30, 0.94), rgba(12, 13, 16, 0.96));
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  font-family: var(--ui2);
+}
+.screen.pause-menu { position: relative; overflow: hidden; }
+.screen.pause-menu::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--no-entry, #d8241a), rgba(216, 36, 26, 0)); }
+.screen.pause-menu > h2:not(:has(img)), .hub-head h2:not(:has(img)) { font-family: var(--disp); font-weight: 900; letter-spacing: -0.01em; text-transform: none; }
+.reward-list li { font: 400 15px/1.5 var(--ui2); color: rgba(242, 242, 246, 0.86); }
+.reward-list li.big { font: 600 18px/1.4 var(--ui2); color: #fff; }
+/* Plain menu buttons (no painted title): a quiet row that lights with a red bar when chosen. */
+.menu-btn:not(.has-art) { font-family: var(--ui2); font-weight: 600; letter-spacing: 0; text-transform: none; border-radius: 10px; }
+.menu-btn:not(.has-art) .label { font-family: var(--ui2); font-weight: 700; }
+.menu-btn:not(.has-art) .sub { font: 400 12.5px/1.35 var(--ui2); opacity: 0.7; letter-spacing: 0; text-transform: none; }
+/* The USE prompt on a keyboard or pad: a dark pill, the key as a cap, what it does in Inter. */
+.prompt, .prompt.interact { font-family: var(--ui2); font-weight: 600; letter-spacing: 0; text-transform: none; border-radius: 999px; background: rgba(14, 15, 18, 0.86); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45); color: #f4f4f6; padding: 8px 16px; }
+.prompt.interact .what { font-family: var(--disp); font-weight: 800; letter-spacing: 0.04em; font-size: 12px; color: #ff6b5f; }
+.prompt kbd, .prompt.interact kbd { font: 800 12px/1 var(--ui2); min-width: 22px; height: 22px; display: inline-grid; place-items: center; padding: 0 6px; border-radius: 6px; background: #fff; color: #111; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5); }
+/* Notifications and toasts: frosted cards in Inter. */
+.ntf-stack, .toast { font-family: var(--ui2); }
+.ntf-stack > * { border-radius: 14px; background: rgba(18, 19, 23, 0.86); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); }
+.ntf-text b { font-family: var(--disp); font-weight: 800; letter-spacing: 0; }
+
+/* ---- The police: their own look (ui/policeUI.ts) ---------------------------------------------------------------- */
+.pz-screen { display: grid; place-items: center; padding: max(16px, var(--safe-t)) 16px max(16px, var(--safe-b)); font-family: var(--ui2); color: #f2f3f6; }
+.pz-card { position: relative; width: min(560px, 94vw); max-height: calc(100vh - 32px); overflow: auto; border-radius: 16px; background: linear-gradient(180deg, #121826, #0b0f18); border: 1px solid rgba(120, 160, 255, 0.18); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.6); padding: 0 22px 18px; }
+.pz-battenburg { height: 18px; margin: 0 -22px 14px; background: repeating-linear-gradient(90deg, #1a43c8 0 28px, #ffd200 28px 56px); background-size: 56px 9px; background-repeat: repeat-x; box-shadow: inset 0 -9px 0 0 transparent; position: relative; }
+.pz-battenburg::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 9px; background: repeating-linear-gradient(90deg, #ffd200 0 28px, #1a43c8 28px 56px); }
+.pz-head { display: flex; align-items: center; gap: 12px; }
+.pz-badge { flex: none; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 40% 30%, #2a3f7a, #0e1630); box-shadow: inset 0 0 0 1.5px rgba(210, 220, 255, 0.5); }
+.pz-badge svg { width: 34px; height: 34px; fill: #d9e0f2; }
+.pz-badge .pz-shield { fill: #1a43c8; stroke: #d9e0f2; stroke-width: 1.2; }
+.pz-kicker { display: block; font: 700 11px/1 var(--ui2); letter-spacing: 0.14em; text-transform: uppercase; color: #8fa6dd; margin-bottom: 4px; }
+.pz-head h2, .pz-sheet-head h2 { margin: 0; font: 900 clamp(24px, 4.6vw, 32px)/1 var(--disp); letter-spacing: -0.015em; text-transform: none; }
+.pz-officer { margin: 16px 0 4px; font: 700 13px/1.3 var(--ui2); color: #ffd200; letter-spacing: 0.02em; }
+.pz-said { margin: 0 0 10px; font: 700 clamp(19px, 3.6vw, 24px)/1.25 var(--disp); color: #fff; letter-spacing: -0.01em; }
+.pz-know { margin: 0 0 10px; font: 400 14px/1.5 var(--ui2); color: rgba(230, 234, 245, 0.8); }
+.pz-facts { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
+.pz-facts li { position: relative; padding-left: 16px; font: 400 13.5px/1.45 var(--ui2); color: rgba(230, 234, 245, 0.78); }
+.pz-facts li::before { content: ''; position: absolute; left: 0; top: 0.55em; width: 6px; height: 6px; border-radius: 50%; background: #4a6ee0; }
+.pz-facts.file li::before { background: #ffd200; }
+.pz-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 0; }
+.pz-screen .menu-btn.pz-choice { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 12px 14px; min-height: 0; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.04); color: #fff; box-shadow: none; transform: none; clip-path: none; }
+.pz-screen .menu-btn.pz-choice .label { font: 800 15px/1.2 var(--disp); letter-spacing: 0; text-transform: none; }
+.pz-screen .menu-btn.pz-choice .sub { font: 400 12px/1.35 var(--ui2); opacity: 0.72; margin: 0; }
+.pz-screen .menu-btn.pz-choice.cost { border-color: rgba(255, 210, 0, 0.35); }
+.pz-screen .menu-btn.pz-choice.danger { border-color: rgba(255, 75, 62, 0.45); background: rgba(255, 75, 62, 0.08); }
+.pz-screen .menu-btn.pz-choice.focused, .pz-screen .menu-btn.pz-choice:hover { background: rgba(255, 255, 255, 0.1); border-color: #fff; }
+.pz-screen .menu-btn.pz-choice.danger.focused, .pz-screen .menu-btn.pz-choice.danger:hover { background: rgba(255, 75, 62, 0.22); border-color: #ff4b3e; }
+/* The custody record: a paper form. */
+.pz-sheet { position: relative; width: min(600px, 94vw); max-height: calc(100vh - 32px); overflow: auto; border-radius: 6px; padding: 20px 22px 18px; color: #1b1d22;
+  background: #f3f0e6 linear-gradient(180deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0) 30%); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
+.pz-sheet-head { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 2px solid #1b1d22; }
+.pz-sheet .pz-kicker { color: #3a4a7a; }
+.pz-sheet .pz-badge { background: radial-gradient(circle at 40% 30%, #2a3f7a, #0e1630); }
+.pz-ref { margin-left: auto; font: 700 12px/1 var(--ui2); font-variant-numeric: tabular-nums; letter-spacing: 0.06em; padding: 6px 8px; border: 1.5px solid #1b1d22; border-radius: 4px; }
+.pz-stamp { position: absolute; right: 26px; top: 76px; transform: rotate(-9deg); font: 900 22px/1 var(--disp); letter-spacing: 0.12em; text-transform: uppercase; color: rgba(190, 24, 24, 0.82); border: 3px solid rgba(190, 24, 24, 0.82); border-radius: 6px; padding: 5px 10px; mix-blend-mode: multiply; pointer-events: none; }
+.pz-table { width: 100%; border-collapse: collapse; margin: 14px 0 10px; font: 400 14px/1.4 var(--ui2); }
+.pz-table th { text-align: left; font: 700 11px/1 var(--ui2); letter-spacing: 0.12em; text-transform: uppercase; color: #5a5f6a; padding: 6px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.25); }
+.pz-table td { padding: 8px 0; border-bottom: 1px dashed rgba(0, 0, 0, 0.18); font-weight: 600; }
+.pz-table td + td, .pz-table th + th { text-align: right; }
+.pz-row { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; font: 400 13.5px/1.4 var(--ui2); }
+.pz-row span { color: #5a5f6a; font-weight: 700; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+.pz-row b { font-weight: 600; text-align: right; }
+.pz-figures { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.pz-figures div { border: 1.5px solid #1b1d22; border-radius: 6px; padding: 10px 12px; }
+.pz-figures span { display: block; font: 700 11px/1 var(--ui2); letter-spacing: 0.12em; text-transform: uppercase; color: #5a5f6a; margin-bottom: 6px; }
+.pz-figures b { font: 900 26px/1 var(--disp); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.pz-note { margin: 6px 0; font: 400 13px/1.45 var(--ui2); color: #3a3d44; font-style: italic; }
+.pz-sheet .pz-choices { margin-top: 14px; }
+.pz-sheet .menu-btn.pz-choice { background: #fff; color: #1b1d22; border: 1.5px solid #1b1d22; }
+.pz-sheet .menu-btn.pz-choice .sub { opacity: 0.68; }
+.pz-sheet .menu-btn.pz-choice.danger { border-color: #be1818; background: #fff5f4; }
+.pz-sheet .menu-btn.pz-choice.focused, .pz-sheet .menu-btn.pz-choice:hover { background: #1b1d22; color: #fff; }
+@media (max-height: 520px) and (orientation: landscape) {
+  .pz-card, .pz-sheet { max-height: calc(100vh - 16px); padding-bottom: 12px; }
+  .pz-said { font-size: 18px; } .pz-stamp { top: 58px; font-size: 18px; }
+  .pz-figures b { font-size: 20px; }
+  /* Sideways the custody record is a wide form: offences and property on the left, bail and the ways out on the right. */
+  .pz-sheet { width: min(760px, 96vw); display: grid; grid-template-columns: 1.15fr 1fr; column-gap: 18px; padding: 12px 18px 12px; align-items: start; }
+  .pz-sheet > .pz-sheet-head, .pz-sheet > .pz-stamp { grid-column: 1 / -1; }
+  .pz-sheet-head { padding-bottom: 8px; }
+  .pz-sheet-head h2 { font-size: 22px; }
+  .pz-sheet .pz-badge { width: 36px; height: 36px; } .pz-sheet .pz-badge svg { width: 26px; height: 26px; }
+  .pz-sheet > .pz-table, .pz-sheet > .pz-row { grid-column: 1; }
+  .pz-sheet > .pz-figures, .pz-sheet > .pz-notes, .pz-sheet > .pz-choices { grid-column: 2; }
+  .pz-sheet > .pz-figures { grid-row: 2; margin: 10px 0 6px; }
+  .pz-sheet > .pz-notes { grid-row: 3; } .pz-note { margin: 0 0 4px; font-size: 12px; }
+  .pz-sheet > .pz-choices { grid-row: 4 / span 3; margin-top: 4px; }
+  .pz-sheet > .pz-table { grid-row: 2 / span 3; margin: 8px 0 6px; font-size: 13px; }
+  .pz-sheet > .pz-row { grid-row: 5; font-size: 12.5px; }
+  .pz-table td { padding: 5px 0; }
+  .pz-stamp { top: 14px; right: 50%; font-size: 15px; }
+  .pz-card { padding: 0 18px 12px; }
+  .pz-card .pz-battenburg { margin: 0 -18px 10px; }
+  .pz-officer { margin-top: 10px; }
+  .pz-choices { grid-template-columns: repeat(3, 1fr); }
+  .pz-sheet .pz-choices { grid-template-columns: 1fr; }
+  .pz-screen .menu-btn.pz-choice { padding: 9px 12px; }
+}
+
+/* ---- The Duo: wider than tall, the phone is a foldable, open flat (Phone.ts .phone.duo) --------------------------- */
+.ph-crease { display: none; }
+.phone.duo .ph-device { aspect-ratio: auto; width: min(860px, 78vw); height: min(620px, calc(100vh - 28px - var(--safe-t) - var(--safe-b))); right: 50%; translate: 50% 0; bottom: calc(14px + var(--safe-b)); transform-origin: 50% 140%; }
+.phone.duo .ph-bezel { border-radius: 30px; padding: 10px; }
+.phone.duo .ph-bezel::before { right: auto; left: 22%; top: -4px; width: 64px; height: 4px; border-radius: 3px 3px 0 0; }
+.phone.duo .ph-screen { border-radius: 22px; }
+/* No notch along the top: the cover camera is a punch-hole in the right-hand half. */
+.phone.duo .ph-island { left: auto; right: 22%; translate: 0 0; top: 9px; width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 2px #1b1c22; }
+.phone.duo .ph-status { top: 10px; left: 10px; right: 10px; height: 34px; padding: 0 28px; }
+/* The fold: a soft shadowed valley down the middle, with the hinge's highlight either side. */
+.phone.duo .ph-crease { display: block; position: absolute; top: 10px; bottom: 10px; left: 50%; width: 18px; translate: -50% 0; pointer-events: none; z-index: 5;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 30%, rgba(0, 0, 0, 0.32) 48%, rgba(0, 0, 0, 0.36) 52%, rgba(255, 255, 255, 0.06) 70%, rgba(255, 255, 255, 0) 100%); }
+.phone.duo .ph-home { flex-direction: row; align-items: center; gap: 18px; padding: 40px 28px 24px; }
+.phone.duo .ph-lock { flex: 0 0 44%; margin: 0; }
+.phone.duo .ph-grid { flex: 1; margin: 0; grid-template-columns: repeat(4, 1fr); gap: 14px 8px; padding-left: 26px; }
+.phone.duo .ph-appview { padding-top: 38px; }
+.phone.duo .ph-bar { padding: 4px 18px 6px; }
+.phone.duo .ph-body { padding: 8px 18px 28px; display: grid; grid-template-columns: 1fr 1fr; align-content: start; column-gap: 34px; row-gap: 8px; }
+.phone.duo .ph-body > .ph-sec, .phone.duo .ph-body > .ph-thread, .phone.duo .ph-body > .ph-hero, .phone.duo .ph-body > .ph-card, .phone.duo .ph-body > .ph-warn, .phone.duo .ph-body > .ph-bubble, .phone.duo .ph-body > .ph-btn.wide, .phone.duo .ph-body > .ph-empty { grid-column: 1 / -1; }
+.phone.duo .ph-homebar { bottom: 10px; }
+
+/* ---- Banking: CaliStore, your bank's app, and the nudge to pick one (money/banking.ts) ----------------------- */
+.ph-appicon.logo { overflow: hidden; }
+.ph-appicon.logo img { width: 92%; height: auto; object-fit: contain; filter: none; }
+.ph-store-head { grid-column: 1 / -1; padding: 6px 2px 10px; }
+.ph-store-head b { display: block; font: 800 22px/1.15 var(--disp); letter-spacing: -0.01em; }
+.ph-store-head span { font: 400 13px/1.4 var(--ui2); opacity: 0.75; }
+.ph-storeapp { grid-column: 1 / -1; display: grid; grid-template-columns: 58px 1fr auto; gap: 12px; align-items: start; padding: 12px; margin-bottom: 8px; border-radius: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.07); }
+.ph-storeapp.yours { border-color: rgba(95, 211, 138, 0.5); }
+.ph-storeapp .ph-what b { font: 800 16px/1.2 var(--disp); }
+.ph-storeapp .ph-what > span { font: 400 12.5px/1.35 var(--ui2); opacity: 0.75; }
+.ph-perks { grid-column: 2 / -1; margin: -4px 0 0; padding: 0; list-style: none; font: 400 12px/1.45 var(--ui2); opacity: 0.85; }
+.ph-perks li::before { content: '✓ '; color: #5fd38a; }
+.ph-btn.get { align-self: center; border-radius: 999px; min-width: 64px; font: 800 13px/1 var(--ui2); padding: 8px 14px; background: #2f7bff; color: #fff; border: 0; }
+.ph-storeapp.yours .ph-btn.get { background: rgba(255, 255, 255, 0.14); }
+.ph-bankcard { background: linear-gradient(150deg, var(--bk-panel), var(--bk-bg)) !important; border: 1px solid color-mix(in srgb, var(--bk-accent) 40%, transparent); }
+.ph-bankcard .ph-banklogo { display: block; height: 34px; width: auto; margin: 0 0 8px; border-radius: 6px; }
+.ph-small { grid-column: 1 / -1; margin: 6px 2px; font: 400 12px/1.4 var(--ui2); opacity: 0.7; }
+.bp-screen { display: grid; place-items: center; padding: 16px; font-family: var(--ui2); }
+.bp-card { width: min(440px, 92vw); padding: 22px; border-radius: 18px; text-align: center; color: #f2f3f6; background: linear-gradient(180deg, rgba(26, 27, 33, 0.96), rgba(12, 13, 16, 0.97)); border: 1px solid rgba(255, 255, 255, 0.09); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65); }
+.bp-logos { display: flex; justify-content: center; gap: 12px; margin-bottom: 14px; }
+.bp-logo { width: 104px; height: 56px; border-radius: 12px; display: grid; place-items: center; overflow: hidden; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); }
+.bp-logo img { width: 100%; height: 100%; object-fit: cover; }
+.bp-card h2 { margin: 0 0 6px; font: 900 26px/1.1 var(--disp); letter-spacing: -0.015em; text-transform: none; }
+.bp-card p { margin: 0 0 16px; font: 400 14px/1.5 var(--ui2); color: rgba(235, 238, 245, 0.8); }
+.bp-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.bp-screen .menu-btn.bp-btn { display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: 11px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.05); color: #fff; clip-path: none; transform: none; min-height: 0; }
+.bp-screen .menu-btn.bp-btn.primary { background: #2f7bff; border-color: #2f7bff; }
+.bp-screen .menu-btn.bp-btn.primary .sub { color: #fff; opacity: 0.85; }
+.bp-screen .menu-btn.bp-btn .label { font: 800 15px/1.2 var(--disp); text-transform: none; letter-spacing: 0; }
+.bp-screen .menu-btn.bp-btn .sub { font: 400 12px/1.3 var(--ui2); opacity: 0.8; margin: 0; text-transform: none; letter-spacing: 0; }
+.bp-screen .menu-btn.bp-btn.focused, .bp-screen .menu-btn.bp-btn:hover { border-color: #fff; }
+@media (max-height: 520px) and (orientation: landscape) { .bp-card { padding: 14px 18px; } .bp-logos { margin-bottom: 8px; } .bp-logo { height: 44px; width: 86px; } .bp-card p { margin-bottom: 10px; font-size: 13px; } }

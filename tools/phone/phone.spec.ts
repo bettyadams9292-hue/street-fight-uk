@@ -186,10 +186,15 @@ for (const d of DEVICES) {
       await expect(page.locator('.pm-act.primary.on')).toHaveCount(1);
       await backHome(page, d.input);
 
-      // ---- Cabs, CaliBank: their rows and buttons are there ----
+      // ---- Cabs, CaliStore and the bank it puts on the phone: their rows and buttons are there ----
       await press(page, d.input, '.app-cabs');
       await expect.poll(() => app(page)).toBe('cabs');
       expect(await page.locator('.ph-body .ph-row').count()).toBeGreaterThan(0);
+      await backHome(page, d.input);
+      await press(page, d.input, '.app-store');
+      await expect.poll(() => app(page)).toBe('store');
+      await press(page, d.input, '.ph-storeapp:not(.yours) .ph-btn.get');
+      await expect.poll(() => app(page)).toBe('bank');
       await backHome(page, d.input);
       await press(page, d.input, '.app-bank');
       await expect.poll(() => app(page)).toBe('bank');

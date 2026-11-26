@@ -5,7 +5,7 @@
  * button at either side (the buttons and the words both press it), and the machine's keypad under it (beside it
  * on a phone held sideways) for typing an amount. One component for both banks; the brand (`BankBrand`) only
  * sets the name, colours, wordmark and messages. The money moves through `withdraw` / `deposit`, the same account
- * as the tin at home and the phone's CaliBank app.
+ * as the tin at home and the bank app on the phone (your bank's own, money/banking.ts).
  *
  * Opening plays the card-and-PIN sequence (about 2.5 s; the PIN fills itself). Every transaction runs once: the
  * money moves the moment it's confirmed, before the "counting" screens, and nothing can be pressed while they
@@ -52,7 +52,7 @@ export function atmScreen(
   /** The bank's approved logo where there is one, its wordmark otherwise. */
   const logoOr = (cls: string): HTMLElement =>
     bank.logo ? h('div', { class: `${cls} logo` }, h('img', { src: bank.logo, alt: bank.name, draggable: 'false' })) : h('div', { class: cls, text: bank.mark });
-  const fee = atmFee(district);
+  const fee = atmFee(district, bank.id, p.save.bank);
 
   let alive = true;
   let busy = false;
@@ -188,7 +188,7 @@ export function atmScreen(
 
   const doWithdraw = (n: number): void => {
     if (busy) return;
-    const r = withdraw(p, n, district);
+    const r = withdraw(p, n, district, bank.id);
     if (!r.ok) return error(r.reason, withdrawal);
     saved();
     const done = { type: 'Cash withdrawal', amount: r.amount, fee: r.fee, balance: p.save.cash.bank };
