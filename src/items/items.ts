@@ -233,13 +233,13 @@ acc('glasses', 'Glasses', 'face', 'glasses', 30, 'glasses', '#2a2420', 'Clear le
 acc('snood', 'Face covering', 'face', 'snood', 12, 'snood', '#1b1d22', 'Neck snood pulled up over the face.');
 acc('lucky_chain', 'Lucky gold chain', 'neck', 'chain', 120, 'chain', '#d4af37', 'Your nan’s. You fight smarter wearing it.', 'rare', [{ attr: 'technique', add: 3, text: '+3 Technique' }], 'gold');
 acc('chain_silver', 'Silver chain', 'neck', 'chain', 60, 'chain', '#c9ccd2', 'Fine silver curb chain.', 'common', undefined, 'silver');
-acc('chain_gold', 'Gold chain', 'neck', 'chain', 180, 'chain', '#d4af37', 'Thin 9ct gold chain from Threads.', 'uncommon', undefined, 'gold');
+acc('chain_gold', 'Gold chain', 'neck', 'chain', 180, 'chain', '#d4af37', 'Thin 9ct gold chain from JD Streets.', 'uncommon', undefined, 'gold');
 acc('watch_basic', 'Digital watch', 'wrist', 'watch', 20, 'watch', '#1b1d22', 'Does the job.');
 acc('earring_silver', 'Silver earring', 'ears', 'earring', 25, 'earring', '#c9ccd2', 'Small hoop.');
 acc('ring_signet', 'Signet ring', 'finger', 'ring', 90, 'ring', '#d4af37', 'Heavy gold signet. Adds weight to a punch.', 'uncommon', [{ stat: 'damageMult', mul: 1.03, text: '+3% damage' }]);
 acc('belt_leather', 'Leather belt', 'waist', 'belt', 20, 'belt', '#3a2414', 'Brown leather, brass buckle.');
-// Won, never bought: the Arches fight club's title belt (fightclub/club.ts). Only one in the game.
-acc('title_belt', 'The Arches title belt', 'waist', 'belt', 0, 'belt', '#d4af37', 'Gold plate on black leather. Champion of the Arches: nobody else has one.', 'legendary', [
+// Won, never bought: the Scrap Yard fight club's title belt (fightclub/club.ts). Only one in the game.
+acc('title_belt', 'The Scrap Yard title belt', 'waist', 'belt', 0, 'belt', '#d4af37', 'Gold plate on black leather. Champion of the Scrap Yard: nobody else has one.', 'legendary', [
   { stat: 'damageMult', mul: 1.08, text: '+8% damage' },
   { flat: 'maxHealth', add: 40, text: '+40 max health' },
   { flat: 'maxPoise', add: 20, text: '+20 poise' },
@@ -414,7 +414,7 @@ add({ id: 'steel_bar', name: 'Steel bar stock', text: 'Proper steel. Workbench m
 add({ id: 'spring_steel', name: 'Spring steel', text: 'Hard, whippy, valuable. Workbench material.', category: 'misc', rarity: 'rare', value: 40, stack: 5, icon: 'scrap', colour: '#3a4a5a' });
 add({ id: 'carbon_fibre', name: 'Carbon fibre sheet', text: 'Light and stupidly strong. Workbench material.', category: 'misc', rarity: 'epic', value: 90, stack: 5, icon: 'scrap', colour: '#1a1a1c' });
 add({ id: 'lighter', name: 'Zippo lighter', text: 'Engraved steel lighter. Sells for a few quid.', category: 'misc', rarity: 'common', value: 12, stack: 3, icon: 'scrap', colour: '#c9ccd2' });
-add({ id: 'bus_pass', name: 'Bus pass', text: 'Somebody’s. Dave’s Cabs take it as a free ride.', category: 'misc', rarity: 'common', value: 0, stack: 5, icon: 'card', colour: '#2f6fa8', unsellable: true });
+add({ id: 'bus_pass', name: 'Bus pass', text: 'Somebody’s. Duber take it as a free ride.', category: 'misc', rarity: 'common', value: 0, stack: 5, icon: 'card', colour: '#2f6fa8', unsellable: true });
 
 // ---- bags (carry space) --------------------------------------------------------------------------
 // You have 4 pockets. A bag is worn (one at a time, slot 'back') and adds its own slots; you see it on you.

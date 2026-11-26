@@ -225,23 +225,23 @@ function pick<T>(rng: Rng, list: readonly T[]): T {
 export function interiorFor(kind: FacadeKind, label: string): InteriorKind {
   const t = label.toUpperCase();
   if (kind === 'casino') return 'casino';
-  if (kind === 'gym_front' || /BOXING|TEMPLE|WRESTLING|GYM|KARATE/.test(t)) return 'gym';
-  if (/MOTORS/.test(t)) return 'cars';
-  if (/MOTO/.test(t)) return 'bikes';
-  if (/GREEN FINGERS|GARDEN|HYDRO/.test(t)) return 'plants';
-  if (/HEARTH|FURNITURE|CARPET/.test(t)) return 'furniture';
-  if (/PAWN/.test(t)) return 'pawn';
-  if (/JEWEL|HALDEN|GOLDSMITH/.test(t)) return 'jeweller';
+  if (kind === 'gym_front' || /BOXING|TEMPLE|WRESTLING|GYM|KARATE|PUREGRAFT|ROUGH & TUMBLE|PUNCH & CRUNCH|HARD KNOCKS|FISTS FIRST/.test(t)) return 'gym';
+  if (/MOTORS|ARNOLD SHARK/.test(t)) return 'cars';
+  if (/MOTO|HALFRAUDS/.test(t)) return 'bikes';
+  if (/GREEN FINGERS|B&THC|GARDEN|HYDRO/.test(t)) return 'plants';
+  if (/HEARTH|SOFA SO GOOD|FURNITURE|CARPET/.test(t)) return 'furniture';
+  if (/PAWN|DEGENERATOR|CONVERTERS/.test(t)) return 'pawn';
+  if (/JEWEL|HALDEN|STERLING|GOLDSMITH/.test(t)) return 'jeweller';
   if (/GOLD\b/.test(t)) return 'pawn';
-  if (kind === 'club' || /VELVET|PULSE|ELECTRIC/.test(t)) return 'club';
-  if (kind === 'pub' || /LION|ARMS|CASTLE|TAVERN/.test(t)) return 'pub';
-  if (/CHIPPY|KEBAB|CHICKEN|FOOD COURT|BAKERY/.test(t)) return 'takeaway';
+  if (kind === 'club' || /VELVET|PULSE|ELECTRIC|AFTER HOURS|LAST ORDERS|BLACKOUT/.test(t)) return 'club';
+  if (kind === 'pub' || /LION|ARMS|CASTLE|CROWN|TAVERN|SPOONS/.test(t)) return 'pub';
+  if (/CHIPPY|CODFATHER|KEBAB|DONER|CHICKEN|CLUCK|FOOD COURT|MUNCH|BAKERY/.test(t)) return 'takeaway';
   if (/CAFE|COFFEE/.test(t)) return 'cafe';
-  if (/BOOKIES|BOOKMAKERS/.test(t)) return 'bookies';
-  if (/VAPE|PHONE|TECH/.test(t)) return 'gadgets';
-  if (/THREADS|FASHION|SPORTS|CLUB SHOP|DEPARTMENT/.test(t)) return 'clothes';
+  if (/BOOKIES|BOOKMAKERS|LADSBROKE|DEBT365/.test(t)) return 'bookies';
+  if (/VAPE|PHONE|TECH|PUFF|CONNECT|CURRUPTYS/.test(t)) return 'gadgets';
+  if (/THREADS|JD STREETS|FASHION|PRIMEARK|SPORTS|SHORTS|CLUB SHOP|FIRM DIRECT|DEPARTMENT|DEBTENHAMS/.test(t)) return 'clothes';
   if (/BOOZE|OFF LICENCE/.test(t)) return 'offlicence';
-  if (/NAILS|BEAUTY|HAIR|BARBER|CUTZ/.test(t)) return 'salon';
+  if (/NAILS|NAILED|BEAUTY|HAIR|BARBER|CUTZ/.test(t)) return 'salon';
   if (kind === 'office') return 'office';
   return 'general';
 }
@@ -456,10 +456,10 @@ const INTERIORS: Record<string, Item[]> = {
 /** Which layout a shop gets: its kind, and for some kinds what the sign says it does. */
 export function layoutFor(kind: InteriorKind, label: string): string {
   const t = label.toUpperCase();
-  if (kind === 'gym') return /BOXING/.test(t) ? 'gym_boxing' : /WRESTLING|GRAPPLING|KARATE|DOJO|JUDO|MARTIAL/.test(t) ? 'gym_mats' : 'gym';
+  if (kind === 'gym') return /BOXING|PUNCH & CRUNCH|HARD KNOCKS/.test(t) ? 'gym_boxing' : /WRESTLING|GRAPPLING|TUMBLE|KARATE|FISTS FIRST|DOJO|JUDO|MARTIAL/.test(t) ? 'gym_mats' : 'gym';
   if (kind === 'salon') return /HAIR|BARBER/.test(t) ? 'salon_hair' : 'salon';
   if (kind === 'general') return /HARDWARE|DIY/.test(t) ? 'general_hardware' : 'general';
-  if (kind === 'takeaway') return /CHIPPY|CHIP|FISH/.test(t) ? 'takeaway_chippy' : /BAKER/.test(t) ? 'takeaway_bakery' : /KEBAB|CHICKEN|GRILL/.test(t) ? 'takeaway_grill' : 'takeaway';
+  if (kind === 'takeaway') return /CHIPPY|CHIP|FISH|CODFATHER/.test(t) ? 'takeaway_chippy' : /BAKER/.test(t) ? 'takeaway_bakery' : /KEBAB|DONER|CHICKEN|CLUCK|GRILL/.test(t) ? 'takeaway_grill' : 'takeaway';
   return kind;
 }
 

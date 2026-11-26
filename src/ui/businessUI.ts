@@ -43,7 +43,7 @@ import { previewCanvas } from './propPreview';
 import type { Screen } from './UIManager';
 
 /**
- * Green Fingers (the grow shop) and the basement's business terminal. Every
+ * B&THC (the grow shop) and the basement's business terminal. Every
  * button goes through business/basement.ts or business/production.ts, which
  * take the money and change the save.
  */
@@ -90,7 +90,7 @@ export function growShopScreen(progress: Progress, close: () => void, saved: () 
   let sel = EQUIPMENT_LIST.find((e) => e.cat === tab)?.id ?? 'tent_s';
   let qty = 1;
   let armed: string | null = null;
-  return panelScreen('Green Fingers Hydroponics', progress, (msg, rebuild) => {
+  return panelScreen('B&THC Hydroponics', progress, (msg, rebuild) => {
     const b = progress.save.basement;
     const st = businessStats(b);
     const rows: HTMLElement[] = [
@@ -278,7 +278,7 @@ export function terminalScreen(progress: Progress, close: () => void, saved: () 
         for (const e of [...bs.events].reverse().slice(0, 6)) rows.push(h('p', { class: 'hint', text: `${Math.floor(e.t / 60)}m in: ${e.text}` }));
       }
     } else if (tab === 'equipment') {
-      rows.push(h('p', { class: 'hint', text: 'Install puts it in the room: move with arrows/WASD, turn with Q/E, Enter to place, Esc to cancel. More kit at Green Fingers on the trading estate.' }));
+      rows.push(h('p', { class: 'hint', text: 'Install puts it in the room: move with arrows/WASD, turn with Q/E, Enter to place, Esc to cancel. More kit at B&THC on the trading estate.' }));
       if (!b.equipment.length) rows.push(h('p', { text: 'Nothing yet.' }));
       for (const e of b.equipment) {
         const def = EQUIPMENT[e.id];

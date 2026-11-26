@@ -18,7 +18,7 @@ function card(c: CompanionDef): HTMLElement[] {
   ];
 }
 
-/** Talking to someone in the snug at the Red Lion. `challenge` starts their fight. */
+/** Talking to someone in the snug at Weatherspoons. `challenge` starts their fight. */
 export function recruitScreen(progress: Progress, id: string, close: () => void, saved: () => void, challenge: () => void): Screen {
   const c = COMPANIONS[id];
   let armed = false;

@@ -257,7 +257,7 @@ test('two pedestrians walking into each other pass, and everyone calms down afte
 
 console.log('\nStage 8: companions');
 
-test('companions: seven fighters for hire in the Red Lion snug, each different, fees and unlocks enforced', () => {
+test('companions: seven fighters for hire in Weatherspoons snug, each different, fees and unlocks enforced', () => {
   assert(COMPANION_LIST.length >= 7 && new Set(COMPANION_LIST.map((c) => c.role)).size === COMPANION_LIST.length, 'seven roles');
   const pub = LEVELS.pub;
   assert(COMPANION_LIST.every((c) => pub.stations!.some((s) => s.id === 'recruit' && s.tab === c.id && s.npc)), 'all in the pub');
@@ -400,7 +400,7 @@ test('a saved weapon can’t claim more mods or condition than it’s allowed', 
 
 console.log('\nStage 8: gym store and home gym');
 
-test('Iron Temple: a real shop in Leisure Park; buying kit puts it in your gym; one of each', () => {
+test('PureGraft: a real shop in Leisure Park; buying kit puts it in your gym; one of each', () => {
   const store = LEVELS.gym_store;
   const street = LEVELS.leisure;
   const door = street.exits.find((e) => e.to === 'gym_store');

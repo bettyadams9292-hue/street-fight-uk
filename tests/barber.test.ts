@@ -1,5 +1,5 @@
 /**
- * NeXo Cutz (src/barber/barber.ts): you pay only for what changes, line by line; paying changes your own look
+ * Peaky Barbers (src/barber/barber.ts): you pay only for what changes, line by line; paying changes your own look
  * and saves; no money, nothing on the chart, or no change means no cut; beards only where the creator allows them;
  * the shop is on the High Street with its door and Vinny's chair.
  */
@@ -79,7 +79,7 @@ ok('beards on a male body only; colours only from the chart', () => {
   assert.equal(getCut(f, { ...cutOf(f.save.character.appearance), hairColour: '#00ff00' }).ok, false);
 });
 
-ok('NeXo Cutz is on the High Street, with Vinny in the chair', () => {
+ok('Peaky Barbers is on the High Street, with Vinny in the chair', () => {
   const hs = LEVELS.high_street;
   const door = hs.exits.find((e) => e.to === 'barber_shop');
   assert.ok(door, 'a door from the High Street');
@@ -89,7 +89,7 @@ ok('NeXo Cutz is on the High Street, with Vinny in the chair', () => {
   assert.ok(shop.stations.some((s) => s.id === 'barber_chair' && s.npc?.name === 'Vinny'));
 });
 
-ok('Dave’s Cabs stops at NeXo Cutz, on the High Street, at a fare', () => {
+ok('Duber stops at Peaky Barbers, on the High Street, at a fare', () => {
   const stop = SHOP_STOPS.find((s) => s.area === 'barber_shop');
   assert.ok(stop, 'a cab stop');
   assert.ok(LEVELS.barber_shop.entries.some((e) => e.id === stop!.entry), 'arriving at the door');

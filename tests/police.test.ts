@@ -1,6 +1,6 @@
 /**
  * Police, step 1 (docs/POLICE_PLAN.md): your record, the charge sheet, bail and a night in the cells, the
- * front counter, and the Central Police Station itself.
+ * front counter, and the Kirkgate Constabulary itself.
  */
 import { defaultAppearance } from '../src/character/Appearance';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
@@ -148,7 +148,7 @@ test('the record survives a save and load, junk dropped', () => {
   assert(sanitiseSave(old)!.record.length === 0, 'old saves start with a clean record');
 });
 
-test('Central Police Station: a door on Market Square, the cells, the front counter, and the only way out goes home', () => {
+test('Kirkgate Constabulary: a door on Market Square, the cells, the front counter, and the only way out goes home', () => {
   const st = LEVELS.police_station;
   assert(st, 'no station');
   assert(st.entries.some((e) => e.id === 'cell') && st.entries.some((e) => e.id === 'door'), 'entries');

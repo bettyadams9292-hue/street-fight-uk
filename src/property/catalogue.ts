@@ -112,7 +112,7 @@ export const FURNITURE_LIST: FurnitureDef[] = [
   F({ id: 'plant_small', name: 'Pot plant', cat: 'decor', price: 20, size: [0.15, 0.15], mount: 'floor', colours: ['#a85a3a', '#e8e4dc', '#2a2a2e'], rooms: WET, blurb: 'A little snake plant. Hard to kill.' }),
   F({ id: 'vase', name: 'Floor vase', cat: 'decor', price: 40, size: [0.16, 0.16], mount: 'floor', colours: ['#1f2a44', '#e8e4dc', '#a85a3a'], rooms: WET, blurb: 'Tall glazed vase with dried grasses.' }),
   F({ id: 'trophy_cab', name: 'Trophy cabinet', cat: 'decor', price: 210, size: [0.45, 0.22], mount: 'floor', tall: true, colours: WOOD, blurb: 'Glass-fronted, lit, for belts and medals.' }),
-  // ---- the furniture pack (approved models): the pieces that dress a room, sold at Home & Hearth too
+  // ---- the furniture pack (approved models): the pieces that dress a room, sold at Sofa So Good too
   F({ id: 'cube_shelves', name: 'Cube shelving', cat: 'living', price: 95, size: [0.72, 0.17], mount: 'floor', tall: true, colours: WOOD, blurb: 'Nine cubes for books, records and the stuff with nowhere else to go.' }),
   F({ id: 'club_chair', name: 'Club armchair', cat: 'living', price: 210, size: [0.43, 0.37], mount: 'floor', colours: FABRIC, seat: true, blurb: 'Low and wide, built for sinking into.' }),
   F({ id: 'side_table', name: 'Side table', cat: 'living', price: 55, size: [0.3, 0.3], mount: 'floor', colours: WOOD, blurb: 'For a brew and the remote.' }),

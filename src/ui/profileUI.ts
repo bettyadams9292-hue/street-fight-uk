@@ -278,7 +278,7 @@ export function profileScreen(o: ProfileOptions): Screen {
     const followers = s.following.map((id) => COMPANIONS[id]).filter(Boolean);
     const activeStrip = h('div', { class: 'pf-active' },
       h('div', { class: 'pf-active-head' }, h('b', { text: 'Active crew' }), h('span', { text: `${followers.length} / ${slots} following${slots < 2 ? ' · 2nd place after Sully Kane' : ''}` })),
-      ...(followers.length ? followers.map((d) => activeCard(d)) : [h('p', { class: 'pf-none', text: recruited.length ? 'Nobody with you. Pick someone below and tap “Follow me”.' : 'No crew yet. Fighters for hire in the Snug at the Red Lion (High Street).' })]),
+      ...(followers.length ? followers.map((d) => activeCard(d)) : [h('p', { class: 'pf-none', text: recruited.length ? 'Nobody with you. Pick someone below and tap “Follow me”.' : 'No crew yet. Fighters for hire in The Firm at Weatherspoons (High Street).' })]),
       followers.length ? h('p', { class: 'pf-hint', text: `${followers.every((d) => companionAvailable(crewState(p, d.id)).ok && crewState(p, d.id).fatigue < 50) ? 'Everyone’s fit to go.' : 'Someone needs rest before a big fight.'} G: quick orders (follow / wait / ready).` }) : null,
     );
 
@@ -299,10 +299,10 @@ export function profileScreen(o: ProfileOptions): Screen {
       return b;
     }));
     const notHired = COMPANION_LIST.filter((c) => !s.recruited.includes(c.id)).length;
-    if (notHired) list.append(h('p', { class: 'pf-hint', text: `${notHired} more fighter${notHired > 1 ? 's' : ''} for hire in the Snug at the Red Lion.` }));
+    if (notHired) list.append(h('p', { class: 'pf-hint', text: `${notHired} more fighter${notHired > 1 ? 's' : ''} for hire in The Firm at Weatherspoons.` }));
 
     const def = crewId ? COMPANIONS[crewId] : null;
-    if (!def) return h('div', { class: 'pf-grid crew' }, h('div', { class: 'pf-col pf-left' }, activeStrip, list), h('div', { class: 'pf-col pf-centre' }, h('p', { class: 'pf-none', text: 'Hire someone at the Red Lion and they’ll show up here.' })));
+    if (!def) return h('div', { class: 'pf-grid crew' }, h('div', { class: 'pf-col pf-left' }, activeStrip, list), h('div', { class: 'pf-col pf-centre' }, h('p', { class: 'pf-none', text: 'Hire someone at Weatherspoons and they’ll show up here.' })));
 
     const st = crewState(p, def.id);
     const f = live(def);

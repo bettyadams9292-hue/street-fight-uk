@@ -186,7 +186,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     reward: { cash: 1200, xp: 900 }, flag: 'boss_precinct', drops: ['vip_pass', 'earrings_diamond'],
   },
   nightclub_owner: {
-    id: 'nightclub_owner', name: 'Simone Achebe', title: 'Owner of Velvet', district: 'Neon Mile',
+    id: 'nightclub_owner', name: 'Simone Achebe', title: 'Owner of After Hours', district: 'Neon Mile',
     intro: 'You’ve caused a lot of trouble in my clubs. Let’s settle it on the dance floor.',
     defeat: 'Out. Get out of my club.',
     brain: { ...baseBrain, style: 'kickboxing', attributes: attrs(8, 10, 8, 10, 8, 10), level: 7, aggression: 0.55, blockChance: 0.3, dodgeChance: 0.28, parryChance: 0.15, comboLength: 3, reactionFrames: 11 },

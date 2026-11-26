@@ -87,7 +87,7 @@ test('streets that join end to end meet on the map; places sit by their own fron
   const pub = placePoint('pub');
   const door = LEVELS.high_street.exits.find((e) => e.to === 'pub')!;
   const at = playerPoint('high_street', door.x);
-  assert(Math.hypot(pub.x - at.x, pub.y - at.y) < 50, 'the Red Lion is by its door on the High Street');
+  assert(Math.hypot(pub.x - at.x, pub.y - at.y) < 50, 'Weatherspoons is by its door on the High Street');
 });
 
 test('markers point at real areas, and every shop, gym, pub and home has one', () => {
@@ -100,7 +100,7 @@ test('markers point at real areas, and every shop, gym, pub and home has one', (
   assert(ms.filter((m) => m.kind === 'mission').length === 1, 'exactly one main mission');
   const mission = ms.find((m) => m.kind === 'mission')!;
   assert(mission.area === DISTRICT_ORDER.find((d) => !d.optional && !p.has(d.flag))!.area, 'the mission is the next story boss');
-  assert(ms.some((m) => m.kind === 'contact' && m.area === 'pub'), 'the Snug’s fighters for hire');
+  assert(ms.some((m) => m.kind === 'contact' && m.area === 'pub'), 'The Firm’s fighters for hire');
 });
 
 test('locked and unlocked match the game: a new save can’t reach past the Gaffer, and says why', () => {
@@ -135,12 +135,12 @@ test('a route follows real exits, one step at a time, and only through open ones
     }
   }
   const ex = nextExit(p, 'estate', 'pub');
-  assert(ex && ex.to === 'high_street', 'from the estate to the Red Lion: head for the High Street');
+  assert(ex && ex.to === 'high_street', 'from the estate to Weatherspoons: head for the High Street');
   const locked = fresh();
   assert(route(locked, 'home', 'city') === null && nextExit(locked, 'estate', 'city') === null, 'no route through a locked street');
 });
 
-test('cabs: only to the stops Dave’s Cabs already serve, never in a fight, never locked, paid from the tin', () => {
+test('cabs: only to the stops Duber already serve, never in a fight, never locked, paid from the tin', () => {
   const p = fresh(100);
   const stops = new Set([...SHOP_STOPS.map((s) => s.area), ...TAXI_STOPS.map((s) => s.area)]);
   for (const id of AREA_IDS) assert(!!cabStop(id) === stops.has(id), `cab stop mismatch for ${id}`);

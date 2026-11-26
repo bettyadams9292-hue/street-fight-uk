@@ -29,9 +29,9 @@ export interface FightGym {
 }
 
 export const FIGHT_GYMS: FightGym[] = [
-  { id: 'boxing_gym', name: 'Del’s Boxing Club', coach: 'Coach Del', styles: ['boxing', 'kickboxing'], blurb: 'Old-school amateur club behind the estate garages. Hands, feet, and no excuses.' },
-  { id: 'karate_dojo', name: 'Okafor Karate & Muay Thai', coach: 'Mrs Okafor', styles: ['karate', 'muay_thai'], blurb: 'In the leisure centre. Discipline, distance, and very hard shins.' },
-  { id: 'wrestling_club', name: 'Kev’s Wrestling & Grappling', coach: 'Big Kev', styles: ['wrestling', 'bjj'], blurb: 'Above the old shop unit in Kingsway Precinct. Takedowns, scrambles, submissions.' },
+  { id: 'boxing_gym', name: 'Punch & Crunch', coach: 'Coach Del', styles: ['boxing', 'kickboxing'], blurb: 'Old-school amateur club behind the estate garages. Hands, feet, and no excuses.' },
+  { id: 'karate_dojo', name: 'Fists First', coach: 'Mrs Okafor', styles: ['karate', 'muay_thai'], blurb: 'In the leisure centre. Discipline, distance, and very hard shins.' },
+  { id: 'wrestling_club', name: 'Rough & Tumble', coach: 'Big Kev', styles: ['wrestling', 'bjj'], blurb: 'Above the old shop unit in Kingsway Precinct. Takedowns, scrambles, submissions.' },
 ];
 export const GYM_OF_STYLE: Partial<Record<StyleId, FightGym>> = Object.fromEntries(FIGHT_GYMS.flatMap((g) => g.styles.map((s) => [s, g])));
 

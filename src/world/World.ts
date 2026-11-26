@@ -1119,7 +1119,7 @@ export class World {
       if (Math.abs(p.pos.x - them.pos.x) > 7) this.endDuel(false, true);
       return;
     }
-    // The Arches: to the stoppage. Down and out (or walk out of the pit) loses; put them down to win.
+    // The Scrap Yard: to the stoppage. Down and out (or walk out of the pit) loses; put them down to win.
     if (d.kind === 'club') {
       if (them.isKO || them.vitals.health <= 0) this.endDuel(true, false);
       else if (p.isKO || p.vitals.health <= 0) {
@@ -1157,7 +1157,7 @@ export class World {
       x.vitals.health = Math.max(x.vitals.health, Math.round(x.vitals.maxHealth * 0.6));
     }
     this.tokens.release(f);
-    // The Arches: their fight's over, they're off out of the pit (and off the fight list).
+    // The Scrap Yard: their fight's over, they're off out of the pit (and off the fight list).
     if (d.kind === 'club') {
       this.clubDownAt = -1;
       this.enemies = this.enemies.filter((e) => e !== f);
@@ -1169,7 +1169,7 @@ export class World {
     this.events.emit('duel:end', { kind: d.kind, id: d.id, won, stopped, landed: d.landed, blocked: d.blocked, seconds: Math.round(frames / SIM_HZ) });
   }
 
-  // ---- the Arches fight club (fightclub/club.ts) -----------------------------------------
+  // ---- the Scrap Yard fight club (fightclub/club.ts) -----------------------------------------
 
   /** The next opponent, waiting at the side of the pit (not in the fight list till the bell). */
   clubFoe: { f: Fighter; bout: Bout } | null = null;
@@ -1182,7 +1182,7 @@ export class World {
     return this.duel?.kind === 'club';
   }
 
-  /** Into the Arches: the crowd round the pit, and tonight's opponent if you've a fight to have. */
+  /** Into the Scrap Yard: the crowd round the pit, and tonight's opponent if you've a fight to have. */
   private setUpClub(): void {
     if (this.level.id !== 'fight_club') return;
     const p = this.progress;
@@ -1473,7 +1473,7 @@ export class World {
     });
 
     // Heat: if you're wanted, the police might be waiting for you on the street.
-    // Not down the Arches: the police don't know it's there.
+    // Not down the Scrap Yard: the police don't know it's there.
     const street = !['home', 'shop', 'pawn', 'pub'].includes(level.theme) && level.id !== 'fight_club';
     if (street && progress.save.heat >= 40 && this.lootRng.next() < progress.save.heat / 120) {
       // Kerrigan rings ahead: they'll be a while, and you know they're coming.
@@ -2393,7 +2393,7 @@ export class World {
     if (n.hair) look.hair = n.hair as HairStyle;
     if (n.hairColour) look.hairColour = n.hairColour;
     if (n.tattoos) look.tattoos = { ...look.tattoos, ...(n.tattoos as Partial<CharacterAppearance['tattoos']>) };
-    // Sully runs the Arches: he looks like himself, not a stranger with his name.
+    // Sully runs the Scrap Yard: he looks like himself, not a stranger with his name.
     if (s.id === 'fight_club') Object.assign(look, BOSSES.sully.appearance);
     const f = new Fighter({
       id: this.nextId++,

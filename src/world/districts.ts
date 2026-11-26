@@ -37,16 +37,16 @@ const residential: LevelDef = {
     { id: 'to_estate', kind: 'edge', side: 'right', x: 86, z: 0, to: 'estate', toEntry: 'left', label: 'Tanner Road' },
     { id: 'tattoo_door', kind: 'door', x: 50.6, z: -1.6, to: 'tattoo_studio', toEntry: 'door', label: 'Into Ink & Iron (tattoos)' },
   ],
-  // Cash 4 U: a pawn hatch on the estate, the worst rates in the game (PAWN_HATCH_RATE).
+  // Stash Converters: a pawn hatch on the estate, the worst rates in the game (PAWN_HATCH_RATE).
   stations: [
-    { id: 'cash_hatch', x: 37.5, z: -1.1, label: 'Cash 4 U pawn hatch (worst rates)' },
+    { id: 'cash_hatch', x: 37.5, z: -1.1, label: 'Stash Converters pawn hatch (worst rates)' },
     // Kez, by the garages (clear of the estate's fights): jobs (src/jobs).
     contactStation('kez', 47.6, -1.0, -0.65),
   ],
   facades: [
     { kind: 'semi', x0: 0, x1: 20 },
     { kind: 'tower', x0: 20, x1: 34, label: 'HOLLINS HOUSE 1-64' },
-    { kind: 'shop', x0: 34, x1: 41, label: 'CASH 4 U PAWN', colour: '#6b2d82' },
+    { kind: 'shop', x0: 34, x1: 41, label: 'STASH CONVERTERS', colour: '#6b2d82' },
     { kind: 'garages', x0: 41, x1: 46 },
     { kind: 'shop', x0: 46, x1: 53, label: 'INK & IRON TATTOO', colour: '#141418' },
     { kind: 'semi', x0: 53, x1: 62 },
@@ -119,15 +119,15 @@ const leisure: LevelDef = {
     { id: 'right', x: 78, z: 0, facing: -1 },
   ],
   exits: [
-    { id: 'dojo_door', kind: 'door', x: 20, z: -1.6, to: 'karate_dojo', toEntry: 'door', label: 'Into the leisure centre: Okafor Karate & Muay Thai' },
-    { id: 'irontemple_door', kind: 'door', x: 47.5, z: -1.6, to: 'gym_store', toEntry: 'door', label: 'Into Iron Temple (gym equipment)' },
+    { id: 'dojo_door', kind: 'door', x: 20, z: -1.6, to: 'karate_dojo', toEntry: 'door', label: 'Into the leisure centre: Fists First' },
+    { id: 'irontemple_door', kind: 'door', x: 47.5, z: -1.6, to: 'gym_store', toEntry: 'door', label: 'Into PureGraft (gym equipment)' },
     { id: 'to_stadium', kind: 'edge', side: 'left', x: 0, z: 0, to: 'stadium', toEntry: 'right', label: 'Kirkgate Ground', requires: 'has_stadium_key', lockedText: 'The stadium service gate is locked. Someone at the Old Market has a key.' },
     { id: 'to_residential', kind: 'edge', side: 'right', x: 80, z: 0, to: 'residential', toEntry: 'left', label: 'Hollins Estate' },
   ],
   facades: [
     { kind: 'fence', x0: 0, x1: 12 },
-    { kind: 'leisure', x0: 12, x1: 44, label: 'KIRKGATE LEISURE CENTRE' },
-    { kind: 'shop', x0: 44, x1: 54, label: 'IRON TEMPLE GYM', colour: '#9a1c1c' },
+    { kind: 'leisure', x0: 12, x1: 44, label: 'KIRKGATE ACTIVE' },
+    { kind: 'shop', x0: 44, x1: 54, label: 'PUREGRAFT', colour: '#9a1c1c' },
     { kind: 'semi', x0: 54, x1: 80 },
   ],
   props: [
@@ -182,7 +182,7 @@ const stadium: LevelDef = {
   exits: [{ id: 'to_leisure', kind: 'edge', side: 'right', x: 90, z: 0, to: 'leisure', toEntry: 'left', label: 'Leisure Park' }],
   facades: [
     { kind: 'stand', x0: 0, x1: 40, label: 'KIRKGATE ROVERS F.C.' },
-    { kind: 'shop', x0: 40, x1: 50, label: 'CLUB SHOP', colour: '#b3121b' },
+    { kind: 'shop', x0: 40, x1: 50, label: 'FIRM DIRECT', colour: '#b3121b' },
     { kind: 'stand', x0: 50, x1: 74, label: 'EAST STAND' },
     { kind: 'terrace', x0: 74, x1: 90 },
   ],
@@ -309,7 +309,7 @@ const docks: LevelDef = {
   facades: [
     { kind: 'dock', x0: 0, x1: 26, label: 'BONDED WAREHOUSE No.3' },
     { kind: 'containers', x0: 26, x1: 46 },
-    { kind: 'dock', x0: 46, x1: 70, label: 'SHAW & SONS SHIPPING' },
+    { kind: 'dock', x0: 46, x1: 70, label: 'SHIP HAPPENS' },
     { kind: 'containers', x0: 70, x1: 96 },
   ],
   props: [
@@ -378,19 +378,19 @@ const indEstate: LevelDef = {
     { id: 'dealer', x: 81, z: -1.0, facing: -1 },
   ],
   exits: [
-    { id: 'bikes_door', kind: 'door', x: 13, z: -1.6, to: 'bike_shop', toEntry: 'door', label: 'Into Mudlark Moto (off-road bikes)' },
-    { id: 'grow_door', kind: 'door', x: 37, z: -1.6, to: 'grow_shop', toEntry: 'door', label: 'Into Green Fingers Hydroponics (grow shop)' },
-    { id: 'dealer_door', kind: 'door', x: 81, z: -1.6, to: 'car_dealer', toEntry: 'door', label: 'Into Brackley Motors (car showroom)' },
+    { id: 'bikes_door', kind: 'door', x: 13, z: -1.6, to: 'bike_shop', toEntry: 'door', label: 'Into Halfrauds (off-road bikes)' },
+    { id: 'grow_door', kind: 'door', x: 37, z: -1.6, to: 'grow_shop', toEntry: 'door', label: 'Into B&THC Hydroponics (grow shop)' },
+    { id: 'dealer_door', kind: 'door', x: 81, z: -1.6, to: 'car_dealer', toEntry: 'door', label: 'Into Arnold Shark (car showroom)' },
     { id: 'to_docks', kind: 'edge', side: 'left', x: 0, z: 0, to: 'docks', toEntry: 'right', label: 'Canal Docks' },
     { id: 'to_factory', kind: 'edge', side: 'right', x: 90, z: 0, to: 'factory', toEntry: 'left', label: 'Abandoned Factory', requires: 'boss_docks', lockedText: 'Lenny’s men have the factory road chained off.' },
   ],
   facades: [
-    { kind: 'showroom', x0: 0, x1: 22, label: 'MUDLARK MOTO', colour: '#e86a10' },
-    { kind: 'warehouse', x0: 22, x1: 32, label: 'UNIT 4 — CARPETS' },
-    { kind: 'showroom', x0: 32, x1: 42, label: 'GREEN FINGERS', colour: '#2a8a3a' },
+    { kind: 'showroom', x0: 0, x1: 22, label: 'HALFRAUDS', colour: '#e86a10' },
+    { kind: 'warehouse', x0: 22, x1: 32, label: 'CARPETWRONG' },
+    { kind: 'showroom', x0: 32, x1: 42, label: 'B&THC', colour: '#2a8a3a' },
     { kind: 'fence', x0: 42, x1: 52 },
-    { kind: 'warehouse', x0: 52, x1: 72, label: 'UNIT 9 — BUILDERS MERCHANT' },
-    { kind: 'showroom', x0: 72, x1: 90, label: 'BRACKLEY MOTORS', colour: '#1f4fa8' },
+    { kind: 'warehouse', x0: 52, x1: 72, label: 'BODGIT & SCARPER' },
+    { kind: 'showroom', x0: 72, x1: 90, label: 'ARNOLD SHARK', colour: '#1f4fa8' },
   ],
   props: [
     { kind: 'van', x: 5, z: 1.1, colour: '#e8e6e1' },
@@ -511,17 +511,17 @@ const precinct: LevelDef = {
     { id: 'right', x: 86, z: 0, facing: -1 },
   ],
   exits: [
-    { id: 'wrestling_door', kind: 'door', x: 79, z: -1.6, to: 'wrestling_club', toEntry: 'door', label: 'Upstairs: Kev’s Wrestling & Grappling' },
+    { id: 'wrestling_door', kind: 'door', x: 79, z: -1.6, to: 'wrestling_club', toEntry: 'door', label: 'Upstairs: Rough & Tumble' },
     { id: 'to_city', kind: 'edge', side: 'left', x: 0, z: 0, to: 'city', toEntry: 'precinct', label: 'Market Square' },
     { id: 'to_mall', kind: 'edge', side: 'right', x: 88, z: 0, to: 'mall', toEntry: 'left', label: 'Riverside Centre' },
   ],
   facades: [
-    { kind: 'precinct', x0: 0, x1: 16, label: 'BARGAIN BOOZE' },
-    { kind: 'precinct', x0: 16, x1: 30, label: 'POUND PALACE', colour: '#d81e1e' },
-    { kind: 'precinct', x0: 30, x1: 44, label: 'BOOKMAKERS', colour: '#1f6a3a' },
-    { kind: 'precinct', x0: 44, x1: 56, label: 'NAILS & BEAUTY', colour: '#c060a0' },
-    { kind: 'precinct', x0: 56, x1: 70, label: 'FRIED CHICKEN', colour: '#d84a1a' },
-    { kind: 'precinct', x0: 70, x1: 88, label: 'KEV’S WRESTLING', colour: '#1f2a44' },
+    { kind: 'precinct', x0: 0, x1: 16, label: 'BOOZE & BARGAINS' },
+    { kind: 'precinct', x0: 16, x1: 30, label: 'POUNDTOWN', colour: '#d81e1e' },
+    { kind: 'precinct', x0: 30, x1: 44, label: 'DEBT365', colour: '#1f6a3a' },
+    { kind: 'precinct', x0: 44, x1: 56, label: 'NAILED IT', colour: '#c060a0' },
+    { kind: 'precinct', x0: 56, x1: 70, label: 'CLUCKIN’ HELL', colour: '#d84a1a' },
+    { kind: 'precinct', x0: 70, x1: 88, label: 'ROUGH & TUMBLE', colour: '#1f2a44' },
   ],
   props: [
     { kind: 'mall_planter', x: 8, z: 1.2 },
@@ -581,15 +581,15 @@ const mall: LevelDef = {
   ],
   exits: [
     { id: 'to_precinct', kind: 'edge', side: 'left', x: 0, z: 0, to: 'precinct', toEntry: 'right', label: 'Kingsway Precinct' },
-    { id: 'to_car_park', kind: 'edge', side: 'right', x: 92, z: 0, to: 'car_park', toEntry: 'left', label: 'Multi-storey car park' },
+    { id: 'to_car_park', kind: 'edge', side: 'right', x: 92, z: 0, to: 'car_park', toEntry: 'left', label: 'No Chance Parking' },
   ],
   facades: [
-    { kind: 'mall', x0: 0, x1: 14, label: 'SPORTS WORLD' },
-    { kind: 'mall', x0: 14, x1: 28, label: 'TECH ZONE', colour: '#1f6fd8' },
-    { kind: 'mall', x0: 28, x1: 40, label: 'HALDEN & CRANE', colour: '#c9a227' },
-    { kind: 'mall', x0: 40, x1: 56, label: 'FOOD COURT', colour: '#d84a1a' },
-    { kind: 'mall', x0: 56, x1: 70, label: 'FASHION', colour: '#101012' },
-    { kind: 'mall', x0: 70, x1: 92, label: 'DEPARTMENT STORE', colour: '#2a3f7a' },
+    { kind: 'mall', x0: 0, x1: 14, label: 'SHORTS DIRECT' },
+    { kind: 'mall', x0: 14, x1: 28, label: 'CURRUPTYS', colour: '#1f6fd8' },
+    { kind: 'mall', x0: 28, x1: 40, label: 'H. STERLING', colour: '#c9a227' },
+    { kind: 'mall', x0: 40, x1: 56, label: 'THE MUNCH BOX', colour: '#d84a1a' },
+    { kind: 'mall', x0: 56, x1: 70, label: 'PRIMEARK', colour: '#101012' },
+    { kind: 'mall', x0: 70, x1: 92, label: 'DEBTENHAMS', colour: '#2a3f7a' },
   ],
   props: [
     { kind: 'mall_planter', x: 7, z: 0.4 },
@@ -634,10 +634,10 @@ const mall: LevelDef = {
   objective: 'Through the centre to the car park',
 };
 
-// ---- Multi-storey car park --------------------------------------------------------------------------
+// ---- No Chance Parking --------------------------------------------------------------------------
 const carPark: LevelDef = {
   id: 'car_park',
-  name: 'Riverside Multi-storey',
+  name: 'No Chance Parking',
   district: 'Multi-storey',
   theme: 'car_park',
   bounds: { minX: 0, maxX: 80, ...STREET },
@@ -696,11 +696,11 @@ const nightlife: LevelDef = {
   entries: [{ id: 'left', x: 2, z: 0, facing: 1 }],
   exits: [{ id: 'to_city', kind: 'edge', side: 'left', x: 0, z: 0, to: 'city', toEntry: 'neon', label: 'Market Square' }],
   facades: [
-    { kind: 'club', x0: 0, x1: 18, label: 'PULSE' },
-    { kind: 'shop', x0: 18, x1: 26, label: 'KEBAB KING', colour: '#d84a1a' },
-    { kind: 'club', x0: 26, x1: 44, label: 'ELECTRIC' },
-    { kind: 'shop', x0: 44, x1: 52, label: 'OFF LICENCE', colour: '#1f6a3a' },
-    { kind: 'club', x0: 52, x1: 90, label: 'VELVET' },
+    { kind: 'club', x0: 0, x1: 18, label: 'LAST ORDERS' },
+    { kind: 'shop', x0: 18, x1: 26, label: 'DONER DYNASTY', colour: '#d84a1a' },
+    { kind: 'club', x0: 26, x1: 44, label: 'BLACKOUT' },
+    { kind: 'shop', x0: 44, x1: 52, label: 'BOOZE BROTHERS', colour: '#1f6a3a' },
+    { kind: 'club', x0: 52, x1: 90, label: 'AFTER HOURS' },
   ],
   props: [
     { kind: 'barrier', x: 8, z: -1.6 },
@@ -732,7 +732,7 @@ const nightlife: LevelDef = {
     {
       id: 'simone', triggerX: 72, lock: [58, 90], optional: false, boss: 'nightclub_owner',
       waves: [{ enemies: [] }],
-      reward: { cash: 0, xp: 0 }, objective: 'Simone Achebe owns Velvet. Go and see her.',
+      reward: { cash: 0, xp: 0 }, objective: 'Simone Achebe owns After Hours. Go and see her.',
     },
   ],
   lights: [
@@ -742,7 +742,7 @@ const nightlife: LevelDef = {
     { x: 80, y: 4, z: 0.6, colour: 0xff4080, intensity: 16, range: 13 },
   ],
   weather: 'clear',
-  objective: 'Find the owner of Velvet',
+  objective: 'Find the owner of After Hours',
 };
 
 // ---- Deep Line: disused underground station ----------------------------------------------------------------

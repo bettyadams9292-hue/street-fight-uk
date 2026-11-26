@@ -242,7 +242,7 @@ export function mapApp(d: MapAppDeps): HTMLElement {
       } }, on ? 'End route' : 'Directions', h('small', { text: on ? '' : walk.label.replace('Walk: ', '') })));
     }
     if (home) actions.push(h('button', { class: 'pm-act', disabled: !home.ok, onclick: () => d.travel(m.area, home) }, 'Go home', h('small', { text: home.ok ? 'On foot' : home.why ?? '' })));
-    if (cab) actions.push(h('button', { class: 'pm-act', disabled: !cab.ok, onclick: () => d.travel(m.area, cab) }, `Cab £${cab.cost}`, h('small', { text: cab.ok ? `Dave’s Cabs · ${cab.miles?.toFixed(1)} mi` : cab.why ?? '' })));
+    if (cab) actions.push(h('button', { class: 'pm-act', disabled: !cab.ok, onclick: () => d.travel(m.area, cab) }, `Cab £${cab.cost}`, h('small', { text: cab.ok ? `Duber · ${cab.miles?.toFixed(1)} mi` : cab.why ?? '' })));
     sheet.replaceChildren(
       grab,
       h('div', { class: 'pm-place' },

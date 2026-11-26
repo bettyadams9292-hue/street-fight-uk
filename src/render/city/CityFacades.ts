@@ -164,7 +164,7 @@ function addSign(group: THREE.Group, s: SignedFacade, backZ: number): void {
     }
     case 'club':
     case 'casino': {
-      const neon = s.kind === 'casino' ? '#ffcf4a' : s.label === 'VELVET' ? '#ff4ac0' : '#a070ff';
+      const neon = s.kind === 'casino' ? '#ffcf4a' : s.label === 'AFTER HOURS' ? '#ff4ac0' : '#a070ff';
       const nw = Math.min(w - 2, 9);
       const t = signTexture(s.label, '#060608', neon, { neon: true, aspect: nw / 1.3, h: 160 });
       box(group, nw, 1.3, 0.12, cx, 3.9, backZ + 0.45, lit(t, 1.7));

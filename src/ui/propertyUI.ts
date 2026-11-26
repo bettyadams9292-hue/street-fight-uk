@@ -156,7 +156,7 @@ export function furnitureShopBody(progress: Progress, saved: () => void) {
 }
 
 export function furnitureShopScreen(progress: Progress, close: () => void, saved: () => void): Screen {
-  return panelScreen('Home & Hearth', progress, furnitureShopBody(progress, saved), close);
+  return panelScreen('Sofa So Good', progress, furnitureShopBody(progress, saved), close);
 }
 
 function finishesBlock(progress: Progress, room: RoomId, pickRoom: (r: RoomId) => void, msg: (t: string, bad?: boolean) => void, saved: () => void): HTMLElement {
@@ -223,7 +223,7 @@ export function plannerBody(progress: Progress, saved: () => void, place: (uid: 
       if (recolour === f.uid) rows.push(swatches(def.colours, f.colour, (c) => result(recolourFurniture(progress, f.uid, c), `${def.name} recoloured`, msg, saved)));
     }
     rows.push(h('h3', { text: `Not placed yet (${boxed.length})` }));
-    if (!boxed.length) rows.push(h('p', { class: 'hint', text: 'Buy more at Home & Hearth on the High Street.' }));
+    if (!boxed.length) rows.push(h('p', { class: 'hint', text: 'Buy more at Sofa So Good on the High Street.' }));
     for (const f of boxed) {
       const def = FURNITURE[f.id];
       rows.push(
@@ -254,7 +254,7 @@ export function carDealerScreen(progress: Progress, close: () => void, saved: ()
   let cls: CarClass = 'hatchback';
   let sel = CAR_LIST[0].id;
   let colour = CARS[sel].colours[0];
-  return panelScreen('Brackley Motors', progress, (msg, rebuild) => {
+  return panelScreen('Arnold Shark', progress, (msg, rebuild) => {
     const prop = progress.save.property;
     const def = CARS[sel];
     const rows: HTMLElement[] = [
@@ -305,7 +305,7 @@ export function bikeShopScreen(progress: Progress, close: () => void, saved: () 
   let sel = BIKE_LIST[0].id;
   let colour = BIKES[sel].colours[0];
   let compare: string | null = null;
-  return panelScreen('Mudlark Moto & Cycles', progress, (msg, rebuild) => {
+  return panelScreen('Halfrauds', progress, (msg, rebuild) => {
     const prop = progress.save.property;
     const def = BIKES[sel];
     const cmp: BikeDef | null = compare && compare !== sel ? BIKES[compare] : null;
@@ -360,7 +360,7 @@ export function garageBikeScreen(progress: Progress, close: () => void, saved: (
   return panelScreen('Bike store', progress, (msg) => {
     const prop = progress.save.property;
     const rows: HTMLElement[] = [h('p', { class: 'hint', text: `${prop.bikes.length}/${GARAGE_SPACES} bays used. A bike you take out is left by the front door; ride it with the interact button, get off with interact again.` })];
-    if (!prop.bikes.length) rows.push(h('p', { text: 'No bikes yet. Mudlark Moto on the Brackley Trading Estate sells them (Dave’s Cabs can drop you there).' }));
+    if (!prop.bikes.length) rows.push(h('p', { text: 'No bikes yet. Halfrauds on the Brackley Trading Estate sells them (Duber can drop you there).' }));
     const out = prop.bikeOut;
     if (out) {
       const b = prop.bikes.find((x) => x.uid === out.uid)!;

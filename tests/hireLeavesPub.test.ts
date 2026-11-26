@@ -1,5 +1,5 @@
 /**
- * Fighters for hire in the Red Lion's snug leave their seat once hired (World justHired): they aren't drawn at
+ * Fighters for hire in Weatherspoons' snug leave their seat once hired (World justHired): they aren't drawn at
  * the bar again (on this visit's rebuild or any later one), they get up from where you hired them and come
  * over to you, and with no room in your crew they walk out of the door on their way home.
  */
@@ -38,7 +38,7 @@ const seat = (id: string) => pub.stations!.find((s) => s.id === 'recruit' && s.t
 const seatsIn = (w: World) => w.stations.filter((s) => s.id === 'recruit').map((s) => s.tab);
 const nameAt = (w: World, name: string) => w.sim.fighters.filter((f) => f.name === name);
 
-console.log('Hiring in the Red Lion');
+console.log('Hiring in Weatherspoons');
 
 test('before hiring, everyone for hire has a seat', () => {
   const w = new World(pub, progress(), { entry: 'door', seed: 1, civilians: false });

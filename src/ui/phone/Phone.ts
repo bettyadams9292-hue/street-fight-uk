@@ -2,7 +2,7 @@
  * The phone (CaliLabsOS): how you get at everything out of a fight. Pull it up with its button (or P), put it away
  * the same way. It slides up from the bottom right like a phone out of a pocket, and slides back down.
  *
- * Apps that live on the phone: Messages (Mo, your needs, what's happened), Cabs (Dave's Cabs and walking home),
+ * Apps that live on the phone: Messages (Mo, your needs, what's happened), Cabs (Duber and walking home),
  * CaliBank (your money and where it went), Jobs (what to do next) and Home (edit your house, when you're in it).
  * Map, Me and Crew and Settings open inside it (your pockets and bag are on you, not on the phone), like the bigger apps on a real phone.
  */
@@ -409,7 +409,7 @@ export class Phone {
   // ---- apps --------------------------------------------------------------------------------------
 
   private appScreen(app: AppId): HTMLElement {
-    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Dave’s Cabs', bank: 'CaliBank', jobs: 'Jobs', heat: 'Heat', house: 'Home', embed: '', map: 'Maps', wiki: 'GraftWiki' };
+    const titles: Record<AppId, string> = { home: '', messages: 'Messages', cabs: 'Duber', bank: 'CaliBank', jobs: 'Jobs', heat: 'Heat', house: 'Home', embed: '', map: 'Maps', wiki: 'GraftWiki' };
     const body = app === 'messages' ? this.messages() : app === 'cabs' ? this.cabs() : app === 'bank' ? this.bank() : app === 'jobs' ? this.jobs() : app === 'heat' ? this.heat() : this.house();
     return h(
       'div',

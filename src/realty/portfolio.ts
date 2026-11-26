@@ -56,7 +56,7 @@ export interface PortfolioSave {
   /** Which property you're standing in, if any (the interior is built from it). */
   inside: string | null;
   /**
-   * A viewing booked through Keys & Co (the office or the computer at home): its front door takes you straight
+   * A viewing booked through Wrongmove (the office or the computer at home): its front door takes you straight
    * home, not out onto a street you haven't reached yet.
    */
   viaAgent?: boolean;

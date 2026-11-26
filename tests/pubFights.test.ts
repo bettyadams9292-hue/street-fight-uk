@@ -1,5 +1,5 @@
 /**
- * The Red Lion's lock-in (an optional fight) is on only some visits: about one in three, rolled once per trip
+ * Weatherspoons' lock-in (an optional fight) is on only some visits: about one in three, rolled once per trip
  * (World.fightIsOn), so it doesn't kick off every time you walk in, and a rebuild mid-visit keeps the answer.
  * Optional fights with no `chance` are unchanged.
  */

@@ -1,5 +1,5 @@
 /**
- * Shop and pawn rules, kept free of UI so they can be tested: what Threads
+ * Shop and pawn rules, kept free of UI so they can be tested: what JD Streets
  * stocks, what it charges, what Mr Kaur offers, and buying.
  */
 import type { Progress } from '../progress/Progress';
@@ -19,7 +19,7 @@ export const SHOP_STOCK: string[] = [
   'cargos_khaki', 'cargo_shorts', 'denim_shorts', 'shorts_black',
   'trainers_white', 'trainers_black', 'trainers_navy', 'runners', 'runners_red', 'hitops_black', 'hitops_white', 'boots_work', 'steel_toecaps',
   'cap_black', 'cap_red', 'cap_navy', 'cap_white', 'beanie', 'beanie_red', 'beanie_grey', 'bucket_hat', 'bucket_hat_black', 'flat_cap',
-  // Chains, watches, rings, bracelets and earrings are the jeweller's (Halden & Crane, Riverside Centre), not Threads'.
+  // Chains, watches, rings, bracelets and earrings are the jeweller's (H. Sterling, Riverside Centre), not JD Streets'.
   'sunglasses', 'glasses', 'snood', 'belt_leather',
   'wraps', 'mouthguard', 'headguard', 'bag_bumbag', 'bag_rucksack', 'bag_holdall', 'bag_hiking',
 ];
@@ -28,7 +28,7 @@ export function shopPrice(d: ItemDef, mult: number): number {
   return Math.round(d.value * mult);
 }
 
-/** Cash 4 U on the High Street pays this share of Pawn & Gold's offer: the worst rates in the game. */
+/** Stash Converters on the High Street pays this share of Cash Degenerator's offer: the worst rates in the game. */
 export const PAWN_HATCH_RATE = 0.6;
 
 /** What the pawnbroker pays for one. Stolen goods fetch less; quest items and rubbish nothing. */

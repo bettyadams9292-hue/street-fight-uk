@@ -30,7 +30,7 @@ import type { Screen } from './UIManager';
 
 export const MEAL_COST = 15;
 /**
- * Dave's Cabs run on the meter, like a real black cab or private hire: a flag fall when you get in, then so much a
+ * Duber run on the meter, like a real black cab or private hire: a flag fall when you get in, then so much a
  * mile, never under the minimum. A hop to the pub is a fiver; the far side of town about £20.
  */
 export const CAB_FLAG = 3.6;
@@ -173,7 +173,7 @@ export function repairScreen(progress: Progress, close: () => void, changed: () 
   }, close);
 }
 
-// ---- the Red Lion bar -----------------------------------------------------------------------------
+// ---- Weatherspoons bar -----------------------------------------------------------------------------
 
 export const BAR_MENU: { id: string; price: number }[] = [
   { id: 'can_of_pop', price: 2 },
@@ -188,9 +188,9 @@ export const BAR_MENU: { id: string; price: number }[] = [
 
 export function barScreen(progress: Progress, close: () => void, changed: () => void, rob?: () => void): Screen {
   let confirmRob = false;
-  return panelScreen('The Red Lion', progress, (msg, rebuild) => {
+  return panelScreen('Weatherspoons', progress, (msg, rebuild) => {
     const rows: HTMLElement[] = [h('p', { class: 'hint', text: '"What can I get you? Kitchen\u2019s open till ten. And there\u2019s a first aid kit behind the bar, if you\u2019re after a fight."' })];
-    // Ray remembers a robbery: prices go up by the same margin as at Threads.
+    // Ray remembers a robbery: prices go up by the same margin as at JD Streets.
     const mult = progress.shop('pub').priceMult;
     if (mult > 1) rows.push(h('p', { class: 'warn-line', text: 'Ray hasn\u2019t forgotten. Everything costs you more now.' }));
     for (const m of BAR_MENU) {
@@ -257,13 +257,13 @@ export const TAXI_STOPS: { area: AreaId; entry: string; requires?: string; requi
   { area: 'mall', entry: 'left', requires: 'boss_precinct', requiresText: 'Beat Dean Pryce first' },
 ];
 
-/** Straight to the shop door. Pawn & Gold has a back door with a cab home, so it's safe to visit early. */
+/** Straight to the shop door. Cash Degenerator has a back door with a cab home, so it's safe to visit early. */
 export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: string }[] = [
   { area: 'pawn_shop', entry: 'door', where: 'Sell valuables. Market Square, City Centre', shop: 'pawn' },
   { area: 'police_station', entry: 'door', where: 'Your record, settle fines. Market Square, City Centre' },
-  { area: 'fight_club', entry: 'door', where: 'The fight club under Kane’s Boxing. Canal Side Works' },
+  { area: 'fight_club', entry: 'door', where: 'The fight club under Hard Knocks. Canal Side Works' },
   { area: 'clothes_shop', entry: 'door', where: 'Clothes and bags. High Street', shop: 'threads' },
-  { area: 'barber_shop', entry: 'door', where: 'NeXo Cutz: haircuts, beards and colour. High Street' },
+  { area: 'barber_shop', entry: 'door', where: 'Peaky Barbers: haircuts, beards and colour. High Street' },
   { area: 'tattoo_studio', entry: 'door', where: 'Ink & Iron: tattoos and laser removal. Hollins Estate' },
   { area: 'pub', entry: 'door', where: 'Food, drink, pool. High Street', shop: 'pub' },
   { area: 'furniture_shop', entry: 'door', where: 'Furniture, floors and walls. High Street' },
@@ -276,7 +276,7 @@ export const SHOP_STOPS: { area: AreaId; entry: string; where: string; shop?: st
   { area: 'grow_shop', entry: 'door', where: 'Basement equipment. Brackley Trading Estate' },
   { area: 'casino', entry: 'door', where: 'Slots, roulette, blackjack, prize motors. Market Square' },
   { area: 'jeweller', entry: 'door', where: 'Rings, watches, chains and grills. Riverside Centre', shop: 'jeweller' },
-  { area: 'estate_agent', entry: 'door', where: 'Buy, sell and let property. Meridian House, City Centre' },
+  { area: 'estate_agent', entry: 'door', where: 'Buy, sell and let property. Meridian Financial, City Centre' },
   { area: 'ashcombe', entry: 'gate', where: 'Mansions and penthouses for sale. Off Leisure Park' },
 ];
 
@@ -286,7 +286,7 @@ export function contactsScreen(progress: Progress, close: () => void, openMap: (
     const next = DISTRICT_ORDER.find((d) => !d.optional && !progress.has(d.flag));
     return [
       h('div', { class: 'phone-msg' }, h('b', { text: 'Mo' }), h('p', { text: next ? `“${hintFor(next.flag)}”` : '“You did it. Nobody runs these streets now. Mad.”' })),
-      shopRow('Dave’s Cabs', `On the meter: £${CAB_FLAG.toFixed(2)} and £${CAB_PER_MILE.toFixed(2)} a mile, from the tin. Pick where on the map.`, 'Open map', openMap),
+      shopRow('Duber', `On the meter: £${CAB_FLAG.toFixed(2)} and £${CAB_PER_MILE.toFixed(2)} a mile, from the tin. Pick where on the map.`, 'Open map', openMap),
       ...(crew ? [shopRow('Your crew', s.companions.following.length ? `Following you: ${s.companions.following.map((id) => COMPANIONS[id]?.nickname ?? id).join(', ')}` : `${s.companions.recruited.length} hired. Nobody with you.`, 'Manage (H)', crew)] : []),
     ];
   }, close);
@@ -301,17 +301,17 @@ export function moHint(progress: Progress): string {
 function hintFor(flag: string): string {
   switch (flag) {
     case 'boss_gaffer':
-      return 'Gaz Mullins thinks he owns the High Street. He drinks at the Gaffer’s Arms, far end. Sort him out and the alleys open up.';
+      return 'Gaz Mullins thinks he owns the High Street. He drinks at the Dodgy Arms, far end. Sort him out and the alleys open up.';
     case 'boss_sully':
       return 'Sully Kane used to be a proper boxer. Runs a gym at the end of the Canal Side yard. Watch his hands.';
     case 'boss_ratcatcher':
-      return 'The Ratcatcher drinks at the Rat & Castle in town. He’ll try to tie you up. Don’t let him get you on the floor.';
+      return 'The Ratcatcher drinks at the Rat & Crown in town. He’ll try to tie you up. Don’t let him get you on the floor.';
     case 'boss_docks':
       return 'Down the towpath from Sully\u2019s yard there\u2019s the old canal docks. Big Lenny Shaw runs them. Huge bloke, grabs and throws.';
     case 'boss_precinct':
       return 'Kingsway Precinct, through the walkway off Market Square. Dean Pryce takes money off every shop. He\u2019s got the VIP passes for the Neon Mile too.';
     case 'boss_nightclub':
-      return 'With Pryce\u2019s VIP pass you can get onto the Neon Mile. Simone Achebe owns Velvet. Fast feet, watch the kicks.';
+      return 'With Pryce\u2019s VIP pass you can get onto the Neon Mile. Simone Achebe owns After Hours. Fast feet, watch the kicks.';
     case 'boss_stadium':
       return 'Kirkgate Ground, past the leisure park. You need the service key: Maureen at the Old Market keeps one. The firm\u2019s top boy is Carl Briggs.';
     case 'boss_dunc':

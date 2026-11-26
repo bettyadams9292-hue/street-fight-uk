@@ -1456,7 +1456,7 @@ export class LevelView {
     this.box(gw, 3.0, 0.06, cx, 1.6, this.back + 0.09, glass, false);
     for (let x = f.x0 + 0.5; x <= f.x1 - 0.5 + 0.01; x += gw / Math.max(2, Math.round(gw / 2.4))) this.box(0.08, 3.0, 0.1, x, 1.6, this.back + 0.11, this.mat('#1a1a1c', 0.3, 0.6), false);
     // What's in the window: silhouettes of the stock.
-    const kind = f.label.includes('MOTORS') ? 'car' : f.label.includes('MOTO') ? 'bike' : f.label.includes('GREEN') ? 'grow' : 'furniture';
+    const kind = /MOTORS|ARNOLD SHARK/.test(f.label) ? 'car' : /MOTO|HALFRAUDS/.test(f.label) ? 'bike' : /GREEN|B&THC/.test(f.label) ? 'grow' : 'furniture';
     const sil = this.mat('#1a1a1c', 0.6, 0, { transparent: true, opacity: 0.55 });
     for (let x = f.x0 + 2.2; x < f.x1 - 1.5; x += kind === 'car' ? 5 : 2.6) {
       if (kind === 'car') {
@@ -1506,7 +1506,7 @@ export class LevelView {
     return this.brickWall(f.x0, f.x1, 7.5);
   }
 
-  /** The Golden Lion: black and gold, neon, marquee bulbs, a red carpet and a doorman's rope. */
+  /** The Grand Gamble: black and gold, neon, marquee bulbs, a red carpet and a doorman's rope. */
   private casinoFront(f: FacadeDef): void {
     const w = f.x1 - f.x0;
     const cx = (f.x0 + f.x1) / 2;
@@ -1676,7 +1676,7 @@ export class LevelView {
     if (theme === 'gym_store') this.box(w, 1.0, 0.03, cx, 0.5, this.back + 0.02, this.mat('#1a1a1c', 0.5), false);
   }
 
-  /** Green Fingers: bright white walls, green branding, product boards, a purple-lit demo corner. */
+  /** B&THC: bright white walls, green branding, product boards, a purple-lit demo corner. */
   private growShopInterior(f: FacadeDef): void {
     const w = f.x1 - f.x0;
     const cx = (f.x0 + f.x1) / 2;
@@ -2250,7 +2250,7 @@ export class LevelView {
     const cx = (f.x0 + f.x1) / 2;
     this.panel(w, 9, cx, 4.5, this.mat('#121216', 0.6), 0);
     for (let x = f.x0 + 2; x < f.x1 - 1; x += 3.5) this.windowAt(x, 6, 1.4, 1.6, this.windowMat(0.08));
-    const neonCol = f.label === 'VELVET' ? '#ff4ac0' : '#a070ff';
+    const neonCol = f.label === 'AFTER HOURS' ? '#ff4ac0' : '#a070ff';
     if (f.label) {
       const t = signTexture(f.label, '#060608', neonCol, { neon: true });
       this.box(Math.min(w - 2, 8), 1.2, 0.1, cx, 3.8, this.back + 0.1, new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 1.6 }), false);
@@ -3594,7 +3594,7 @@ export class LevelView {
         break;
       }
       case 'grow_shelf': {
-        // Green Fingers' shelving, stocked with the hydroponics pack's kit (room kit or lighting, air and nutrients).
+        // B&THC' shelving, stocked with the hydroponics pack's kit (room kit or lighting, air and nutrients).
         if (hydroReady() && this.fitting(g, 'grow_shelf', W, 2.0, D)) {
           const stock: HydroModelId[][] = p.label === 'environment'
             ? [['water_pump', 'water_pump', 'fan', 'fan'], ['nutrient_bottles', 'nutrient_bottles', 'nutrient_bottles', 'ph_meter', 'ph_meter'], ['grow_light', 'grow_light'], ['nutrient_bottles', 'watering_can', 'nutrient_bottles']]

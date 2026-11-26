@@ -124,7 +124,7 @@ function detailLines(d: ItemDef, st: ItemStack | null): HTMLElement[] {
   out.push(statLine('Value', d.value > 0 ? `£${d.value}${st && st.qty > 1 ? ` each (£${d.value * st.qty} total)` : ''}` : 'Worthless'));
   out.push(statLine('Space', `1 slot${d.stack > 1 ? `, stacks to ${d.stack}` : ''}`));
   if (st?.stolen) out.push(h('p', { class: 'warn-line', text: 'Stolen. The pawn shop pays less, and the police will take it if they catch you.' }));
-  if (d.category === 'valuable' || d.category === 'collectible') out.push(h('p', { class: 'hint', text: 'Sell it at Pawn & Gold (Market Square). Ring Dave’s Cabs on your phone (P) and he’ll drop you at the door.' }));
+  if (d.category === 'valuable' || d.category === 'collectible') out.push(h('p', { class: 'hint', text: 'Sell it at Cash Degenerator (Market Square). Ring Duber on your phone (P) and he’ll drop you at the door.' }));
   if (d.questFlag) out.push(h('p', { class: 'warn-line', text: 'Quest item: can’t be dropped or sold.' }));
   return out;
 }
@@ -318,7 +318,7 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
       if (main) acts.push(menuButton(verb[0].toUpperCase() + verb.slice(1), () => { main(); build(); }, sel.where === 'pocket' && d.wear ? WEAR_SLOT_LABELS[d.wear.slot] : undefined, 'primary'));
       if (sel.where === 'pocket') {
         if (opts.atHome) acts.push(menuButton('Put in the stash', () => { const r = progress.deposit(st.uid); if (r.ok) { say('Put in the stash'); actions.changed(); } else say(r.reason, true); build(); }));
-        if (pawnOffer(d, st) > 0 && (d.category === 'valuable' || d.category === 'collectible') && actions.showOnMap) acts.push(menuButton('Where to sell it', () => actions.showOnMap!('pawn_shop'), 'Pawn & Gold, on the map'));
+        if (pawnOffer(d, st) > 0 && (d.category === 'valuable' || d.category === 'collectible') && actions.showOnMap) acts.push(menuButton('Where to sell it', () => actions.showOnMap!('pawn_shop'), 'Cash Degenerator, on the map'));
         if (!d.questFlag) {
           if (confirmDrop === st.uid) {
             acts.push(menuButton(`Drop ${st.qty > 1 ? 'all' : 'it'}: sure?`, () => { actions.drop(st.uid, st.qty); confirmDrop = null; say(`Dropped the ${d.name.toLowerCase()}`); actions.changed(); build(); }, d.value >= 50 ? `Worth £${d.value * st.qty}` : undefined, 'danger'));
@@ -368,7 +368,7 @@ export function inventoryScreen(progress: Progress, ui: UIManager, actions: Inve
           )
         : h('div', { class: 'inv-bagcard none' },
             h('img', { src: '/icons/hg/backpack.webp', alt: '', draggable: 'false' }),
-            h('span', { class: 'bc-text' }, h('b', { text: 'No bag' }), h('span', { text: 'Threads sells them. A bum bag doubles what you carry.' })),
+            h('span', { class: 'bc-text' }, h('b', { text: 'No bag' }), h('span', { text: 'JD Streets sells them. A bum bag doubles what you carry.' })),
           ),
       h('div', { class: 'inv-hands' },
         h('span', { class: 'inv-lab', text: 'Holding' }),
@@ -608,7 +608,7 @@ export function pawnScreen(progress: Progress, ui: UIManager, changed: () => voi
       detail = h('div', {}, detailPanel(d, st, acts), offer);
     }
     el.replaceChildren(
-      h('div', { class: 'inv-top' }, h('h2', { text: 'Pawn & Gold' }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you` }), h('span', { class: 'cap', text: `Sold so far: ${s.pawn.itemsSold} items, £${s.pawn.earned}` })),
+      h('div', { class: 'inv-top' }, h('h2', { text: 'Cash Degenerator' }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you` }), h('span', { class: 'cap', text: `Sold so far: ${s.pawn.itemsSold} items, £${s.pawn.earned}` })),
       h('p', { class: 'hint', text: '"Let’s see what you’ve got. I don’t ask questions, but I don’t pay full whack for hot gear either."' }),
       h('p', { class: 'warn-line', text: mult > 1 ? `Mr Kaur hasn’t forgotten. He offers you ${Math.round((1 - 1 / mult) * 100)}% less than he would.` : '' }),
       h(
@@ -723,7 +723,7 @@ export function clothesShopScreen(progress: Progress, ui: UIManager, a: ShopActi
     acts.push(menuButton('Back to my own clothes', () => { a.preview(null); build(); }, 'Stop previewing'));
     const compare = current && current.id !== selected ? h('div', { class: 'compare' }, h('div', { class: 'compare-title', text: `You’re wearing: ${defOf(current).name}` })) : null;
     el.replaceChildren(
-      h('div', { class: 'shop-head' }, h('h2', { text: 'Threads' }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` })),
+      h('div', { class: 'shop-head' }, h('h2', { text: 'JD Streets' }), h('span', { class: 'wallet', text: `£${s.cash.pocket} on you · £${s.cash.bank} in the tin` })),
       h('p', { class: 'warn-line', text: a.priceMult > 1 ? `Priya remembers you. Everything’s ${Math.round((a.priceMult - 1) * 100)}% dearer for you now.` : '' }),
       h('div', { class: 'inv-tabs' }, ...SHOP_SECTIONS.map((x) => h('button', { class: `inv-tab${x.id === section ? ' on' : ''}`, 'data-nav': true, 'data-grid': true, onclick: () => { section = x.id; selected = SHOP_STOCK.find((id) => ITEMS[id] && x.test(ITEMS[id]))!; a.preview(selected); build(); } }, x.label))),
       h('div', { class: 'shop-body' }, h('div', { class: 'item-grid' }, ...tiles), h('div', { class: 'inv-right' }, detailPanel(d, null, acts, compare), h('div', { class: `hub-msg${bad ? ' bad' : ''}`, text: message }))),

@@ -1451,7 +1451,7 @@ export class Game {
         this.ui.replaceAll(null);
         this.state = 'playing';
         this.hud.toast(`${def.name}: have a look round. The brochure’s in the hall.`, 'item');
-        // Booked through Keys & Co: the front door leads back there, not onto the property's street.
+        // Booked through Wrongmove: the front door leads back there, not onto the property's street.
         this.progress!.save.portfolio.viaAgent = true;
         this.changeArea('property', id, null);
       },
@@ -1563,7 +1563,7 @@ export class Game {
         screen = sofaScreen(p, close, () => this.saveGame());
         break;
       case 'contacts':
-        // The landline: ring Dave's Cabs on the phone.
+        // The landline: ring Duber on the phone.
         this.backToPlay();
         this.phone.open('cabs');
         return;
@@ -1598,7 +1598,7 @@ export class Game {
         break;
       case 'cash_hatch':
         screen = pawnScreen(p, this.ui, saved, close, { priceMult: 1 / PAWN_HATCH_RATE });
-        this.hud.toast('Cash 4 U: they pay less than Pawn & Gold in the City Centre.', 'info');
+        this.hud.toast('Stash Converters: they pay less than Cash Degenerator in the City Centre.', 'info');
         break;
       case 'pawn_counter':
         screen = pawnScreen(p, this.ui, saved, close, { rob: () => this.robShop('pawn', at ?? { x: 7.2, z: 0.6 }), priceMult: p.shop('pawn').priceMult });
@@ -1705,7 +1705,7 @@ export class Game {
     if (!w || !p || this.session) return;
     const kit = GYM_KIT[kitId];
     if (!kit) return;
-    if (!p.save.gym.owned.includes(kitId)) return this.hud.toast(`No ${kit.name.toLowerCase()} yet. Iron Temple in Leisure Park sells them.`, 'warn');
+    if (!p.save.gym.owned.includes(kitId)) return this.hud.toast(`No ${kit.name.toLowerCase()} yet. PureGraft in Leisure Park sells them.`, 'warn');
     const can = canTrain(p, kit.trains);
     if (!can.ok) return this.hud.toast(can.reason, 'warn');
     const f = w.player;
@@ -2349,7 +2349,7 @@ export class Game {
     this.state = 'playing';
     // The bike stays parked where you got off it.
     if (p.save.property.riding) this.dismount();
-    this.hud.toast(`Dave’s Cabs: ${opt.miles !== undefined ? `${opt.miles.toFixed(1)} miles, ` : ''}£${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
+    this.hud.toast(`Duber: ${opt.miles !== undefined ? `${opt.miles.toFixed(1)} miles, ` : ''}£${opt.cost}. ${LEVELS[area].name}, sorted.`, 'cash');
     this.changeArea(area, opt.entry, w.carry());
   }
 
@@ -2432,7 +2432,7 @@ export class Game {
       return;
     }
     const mine = w.crew.filter((m) => m.brain.home && p.save.companions.following.includes(m.def.id));
-    if (!mine.length) return this.hud.toast(p.save.companions.recruited.length ? 'Nobody’s with you. H → Crew to pick who follows you.' : 'No crew yet: fighters for hire at the Red Lion', 'item');
+    if (!mine.length) return this.hud.toast(p.save.companions.recruited.length ? 'Nobody’s with you. H → Crew to pick who follows you.' : 'No crew yet: fighters for hire at Weatherspoons', 'item');
     const on = !mine[0].brain.home!.following;
     w.callHomeCrew(on, mine.map((m) => m.def.id));
     this.hud.toast(on ? 'Crew: up you get, come with me' : 'Crew: make yourselves at home', 'item');
@@ -2521,7 +2521,7 @@ export class Game {
 
   // ---- shops ------------------------------------------------------------------------
 
-  /** Threads: browse with your fighter on the studio set, then back into the shop. */
+  /** JD Streets: browse with your fighter on the studio set, then back into the shop. */
   private openClothesShop(): void {
     const w = this.world;
     const p = this.progress;
@@ -2568,7 +2568,7 @@ export class Game {
     );
   }
 
-  /** NeXo Cutz: in Vinny's chair on the studio set, close on the face, trying cuts on before you pay. */
+  /** Peaky Barbers: in Vinny's chair on the studio set, close on the face, trying cuts on before you pay. */
   private openBarber(): void {
     const w = this.world;
     const p = this.progress;
@@ -2659,7 +2659,7 @@ export class Game {
   }
 
   /**
-   * Robbing Threads. Priya either empties the till or fights back; either
+   * Robbing JD Streets. Priya either empties the till or fights back; either
    * way the alarm goes, the police come, your heat goes up, the shop shuts
    * for a while and she charges you more afterwards. Each robbery pays less.
    */
@@ -2686,7 +2686,7 @@ export class Game {
   }
 
   /**
-   * The front counter at Central Police Station: what's on your record, and settling up a district's fines
+   * The front counter at Kirkgate Constabulary: what's on your record, and settling up a district's fines
    * early (clears its police heat and the crimes logged there) at a price (`settlePrice`).
    */
   /**
@@ -2698,15 +2698,15 @@ export class Game {
     const p = this.progress;
     if (!p || !clubOpen(p) || p.save.club.told) return;
     p.save.club.told = true;
-    this.hud.remember('Sully: You’ve got hands, kid. There’s fights every night in the cellar under my old gym: the Arches. Real purses, and a belt if you’re good enough. Come down.', 'item');
+    this.hud.remember('Sully: You’ve got hands, kid. There’s fights every night in the cellar under my old gym: the Scrap Yard. Real purses, and a belt if you’re good enough. Come down.', 'item');
     this.hud.toast('Sully: Fights every night under my old gym. Come down.', 'item');
     this.saveGame();
   }
 
-  /** The bout booked at the Arches, for settling up when it's over. */
+  /** The bout booked at the Scrap Yard, for settling up when it's over. */
   private clubBooked: Bout | null = null;
 
-  /** Ring the bell at the Arches: a reason if you can't. */
+  /** Ring the bell at the Scrap Yard: a reason if you can't. */
   private clubFight(w: World, b: Bout, close: () => void): string | null {
     const p = this.progress!;
     const can = canFight(p, b);
@@ -2865,7 +2865,7 @@ export class Game {
     return rewardScreen('FRONT COUNTER', lines, buttons, ['front-counter']);
   }
 
-  /** Nicked: booked in at the Central Police Station, with a charge sheet and a choice. */
+  /** Nicked: booked in at the Kirkgate Constabulary, with a charge sheet and a choice. */
   private nicked(delay: number): void {
     const p = this.progress!;
     const b = book(p);
@@ -2938,12 +2938,12 @@ export class Game {
 
   /**
    * The charge sheet after you're nicked (world/custody.ts): what they've got you for, what they took, and
-   * bail. Pay it and you're let out of custody at the Central Police Station; or do a night in the cells and
+   * bail. Pay it and you're let out of custody at the Kirkgate Constabulary; or do a night in the cells and
    * the court takes a smaller fine in the morning.
    */
   private chargeSheet(b: Booking): Screen {
     const p = this.progress!;
-    const lines: { text: string; big?: boolean }[] = [{ text: `You\u2019re nicked. Booked in at Central Police Station.`, big: true }];
+    const lines: { text: string; big?: boolean }[] = [{ text: `You\u2019re nicked. Booked in at Kirkgate Constabulary.`, big: true }];
     if (b.charges.length) for (const c of b.charges) lines.push({ text: `Charge: ${CRIME_NAME[c.crime]} (${c.district})` });
     else lines.push({ text: 'Charge: wanted for questioning. They\u2019ve nothing they can make stick.' });
     lines.push({ text: `${b.seized ? `Seized: ${b.seized} stolen item${b.seized === 1 ? '' : 's'} (\u00a3${b.seizedValue}).` : 'Nothing stolen on you.'} They\u2019ve got your phone till you walk out.` });

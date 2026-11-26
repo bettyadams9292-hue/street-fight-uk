@@ -288,7 +288,6 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "wall_dome"
   ],
   "shop": [
-   "atm",
    "display_cabinet"
   ]
  },

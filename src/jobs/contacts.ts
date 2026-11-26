@@ -8,7 +8,7 @@ import type { ContactDef, ContactId, JobKind } from './save';
 
 export const CONTACTS: Record<ContactId, ContactDef> = {
   terry: {
-    id: 'terry', name: 'Terry Walsh', role: 'Fixer', area: 'pub', where: 'The Red Lion, by the door',
+    id: 'terry', name: 'Terry Walsh', role: 'Fixer', area: 'pub', where: 'Weatherspoons, by the door',
     kinds: ['sort', 'recover'],
     line: 'Sit down, son. I’ve always got something for someone who can handle himself.',
     look: { seed: 7301, body: 'male', top: 'shirt', topColour: '#3a3f4a' },
@@ -70,7 +70,7 @@ export const CHAINS: Record<ContactId, ChainStep[]> = {
   terry: [
     { kind: 'sort', title: 'Barred for life', brief: 'Some lad called Rhys glassed one of Terry’s regulars and laughed about it. He drinks on the estate. Make sure he stops laughing.', area: 'estate', target: 'Rhys', mates: 1, needs: 0, mult: 2, reward: 'first_aid' },
     { kind: 'recover', title: 'The landlord’s ring', brief: 'Ray’s late dad’s ring went missing the night Shaun Pike was in. Shaun’s been flashing it about on the High Street. Get it back.', area: 'high_street', target: 'Shaun Pike', mates: 2, needs: 15, mult: 2.5, reward: 'ring_signet', item: 'job_ring' },
-    { kind: 'sort', title: 'Last orders', brief: 'The Gaffer’s old crew want the Red Lion. Their top boy, Vinnie Rourke, is on Hollins with his lads. Terry wants it finished.', area: 'residential', target: 'Vinnie Rourke', mates: 3, needs: 35, mult: 3, reward: 'w_baseball_bat' },
+    { kind: 'sort', title: 'Last orders', brief: 'The Gaffer’s old crew want Weatherspoons. Their top boy, Vinnie Rourke, is on Hollins with his lads. Terry wants it finished.', area: 'residential', target: 'Vinnie Rourke', mates: 3, needs: 35, mult: 3, reward: 'w_baseball_bat' },
   ],
   bev: [
     { kind: 'debt', title: 'The window cleaner', brief: 'Ste borrowed for a new van and bought a holiday instead. He’s on the estate, tanned. He’ll pay.', area: 'estate', target: 'Ste', mates: 0, needs: 0, mult: 2, reward: 'plasters' },
