@@ -126,7 +126,8 @@ const estate: LevelDef = {
     { id: 'bins', kind: 'bin', x: -2.2, z: -0.55, label: 'Search the wheelie bins', loot: 'bin' },
     { id: 'skip', kind: 'skip', x: 28, z: -0.25, label: 'Search the skip', loot: 'skip' },
     { id: 'car', kind: 'car', x: 6, z: 0.3, label: 'Search the parked car', loot: 'car' },
-    { id: 'lockup', kind: 'locker', x: 37.1, z: -1.6, label: 'Open the lock-up', fixed: [{ id: 'w_crowbar' }, { id: 'console' }, { id: 'cash_bundle' }], requires: 'has_lockup_key', lockedText: 'Padlocked. Somebody on Hollins has the key.' },
+    // The Estate King's lock-up: its own garage at the end of the row (world/lockup.ts), clear of the subway steps.
+    { id: 'lockup', kind: 'locker', x: 34.0, z: -1.45, label: 'Open the lock-up', fixed: [{ id: 'w_crowbar' }, { id: 'console' }, { id: 'cash_bundle' }], requires: 'has_lockup_key', lockedText: 'Padlocked. Somebody on Hollins has the key.' },
   ],
   breakables: [
     { id: 'crates1', kind: 'crate', x: 20, z: -1.5, hp: 2, drops: 'plank', loot: 'crate' },

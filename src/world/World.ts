@@ -1548,6 +1548,11 @@ export class World {
     return c.fixed ? `searched:${this.level.id}:${c.id}` : `searched:${this.level.id}:${c.id}:${Math.floor(this.progress.save.trips / CONTAINER_REFILL_TRIPS)}`;
   }
 
+  /** The container being searched right now (the lock-up's door lifts while you open it). */
+  get searchingId(): string | null {
+    return this.searching > 0 ? this.searchTarget?.id ?? null : null;
+  }
+
   isSearched(c: ContainerDef): boolean {
     return this.progress.has(this.containerKey(c));
   }

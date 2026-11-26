@@ -289,6 +289,21 @@ export class GameRenderer {
         return;
       }
       const v = new LevelView(LEVELS[id], world.progress, !immediate);
+      // Declared before the job: on a shot page the job runs (and calls this) as soon as it's added.
+      const publish = (): void => {
+      v.setActive(false);
+      v.group.position.x = side === 'left' ? here.bounds.minX - v.level.bounds.maxX : here.bounds.maxX - v.level.bounds.minX;
+      this.near[side] = v;
+      this.scene.add(v.group);
+      // Configure only the new district's lights; avoid resizing all render targets.
+      for (const l of v.shadowLights) {
+        l.castShadow = this.quality !== 'low';
+        const size = this.quality === 'high' ? 2048 : 1024;
+        l.shadow.mapSize.set(size, size);
+      }
+      // Its shaders, before you walk into it.
+      this.precompile(v.group, true);
+      };
       // Built a few milliseconds a frame, in the one background budget all such work shares (performance/scheduler.ts).
       const handle = addJob({
         priority: PRIORITY.soon,
@@ -304,20 +319,6 @@ export class GameRenderer {
       });
       this.pendingDistricts.set(v, handle);
       if (immediate) runBackground(Infinity);
-      const publish = (): void => {
-      v.setActive(false);
-      v.group.position.x = side === 'left' ? here.bounds.minX - v.level.bounds.maxX : here.bounds.maxX - v.level.bounds.minX;
-      this.near[side] = v;
-      this.scene.add(v.group);
-      // Configure only the new district's lights; avoid resizing all render targets.
-      for (const l of v.shadowLights) {
-        l.castShadow = this.quality !== 'low';
-        const size = this.quality === 'high' ? 2048 : 1024;
-        l.shadow.mapSize.set(size, size);
-      }
-      // Its shaders, before you walk into it.
-      this.precompile(v.group, true);
-      };
     };
     // Whichever end you are nearer comes first.
     const mid = (here.bounds.minX + here.bounds.maxX) / 2;

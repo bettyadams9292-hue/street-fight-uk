@@ -27,7 +27,8 @@ import { pickupFx, type PickupFx } from './props/pickupFx';
 import { UseMarker } from './props/useMarker';
 import { buildCar, fadeCar } from './street/carModel';
 import type { Progress } from '../progress/Progress';
-import type { ExitDef, FacadeDef, LevelDef, PropDef, Theme } from '../world/LevelTypes';
+import type { ContainerDef, ExitDef, FacadeDef, LevelDef, PropDef, Theme } from '../world/LevelTypes';
+import { LOCKUP_DEPTH, LOCKUP_DOOR_H, LOCKUP_DOOR_W, LOCKUP_HALF, LOCKUP_HEIGHT, LOCKUP_ID, LOCKUP_OPEN_SECONDS } from '../world/lockup';
 import { propHalf } from '../world/LevelTypes';
 import { buildAnyModel, buildEquipmentModel, buildGymKitModel, buildFurnitureModel, buildVehicleModel } from './propModels';
 import { EQUIPMENT } from '../business/catalogue';
@@ -95,6 +96,8 @@ export class LevelView {
   private projMeshes = new Map<string, THREE.Object3D>();
   private breakMeshes = new Map<string, { whole: THREE.Object3D; debris: THREE.Object3D }>();
   private containerMarks = new Map<string, THREE.Object3D>();
+  /** The boss-reward lock-up (world/lockup.ts): its door (swings up and in) and the reward on show inside. */
+  private lockup: { id: string; pivot: THREE.Object3D; padlock: THREE.Object3D; reward: THREE.Object3D; light: THREE.Mesh; t: number; start: number | null } | null = null;
   private gates = new Map<string, { mesh: THREE.Object3D; lift: number }>();
   private levers = new Map<string, { handle: THREE.Object3D; lamp: THREE.MeshStandardMaterial }>();
   private exitSigns: { exit: ExitDef; mat: THREE.MeshStandardMaterial; text: THREE.Mesh; locked: boolean | null }[] = [];
@@ -404,6 +407,7 @@ export class LevelView {
     if (decor.length) this.buildApproved(decor);
     yield;
     for (const ex of lvl.exits) { this.buildExit(ex); yield; }
+    for (const c of lvl.containers ?? []) if (c.id === LOCKUP_ID) this.buildLockup(c);
     if (lvl.deep) this.buildPartitions();
     for (const g of lvl.gates ?? []) this.buildGate(g.id, g.x, g.z0, g.z1);
     for (const l of lvl.levers ?? []) this.buildLever(l.id, l.x);
@@ -4044,6 +4048,70 @@ export class LevelView {
     this.group.add(lamp);
   }
 
+  /**
+   * The lock-up: a single brick garage in its own gap in the frontage (city/street.ts), set back into the building
+   * like the rest of the row. Inside: bare block walls, a strip light, shelving, a tyre, and the reward on a crate.
+   * The up-and-over door hangs from a pivot at the top of the opening and swings up and in (update()).
+   */
+  private buildLockup(c: ContainerDef): void {
+    const g = new THREE.Group();
+    g.position.set(c.x, 0, this.back);
+    this.group.add(g);
+    this.building = 'garages';
+    const W = LOCKUP_HALF * 2;
+    const D = LOCKUP_DEPTH;
+    const H = LOCKUP_HEIGHT;
+    const dw = LOCKUP_DOOR_W;
+    const dh = LOCKUP_DOOR_H;
+    const brick = new THREE.MeshStandardMaterial({ map: brickTexture(W / 2.2, H / 1.1), roughness: 0.9, color: 0xb08070 });
+    const block = this.mat('#8e8c86', 0.95);
+    const floor = this.mat('#6d6b66', 0.95);
+    const trim = this.mat('#2a2c30', 0.6, 0.3);
+    const pier = (W - dw) / 2;
+    // The front: piers either side of the opening, a lintel over it, a coping along the top, a flat felt roof.
+    for (const sx of [-1, 1]) this.box(pier, H, 0.3, sx * (dw / 2 + pier / 2), H / 2, 0.1, brick, true, g);
+    this.box(dw, H - dh, 0.3, 0, dh + (H - dh) / 2, 0.1, brick, true, g);
+    this.box(W + 0.1, 0.1, 0.4, 0, H + 0.05, 0.1, trim, true, g);
+    this.box(W, 0.08, D + 0.3, 0, H - 0.02, -D / 2, this.mat('#202124', 0.9), true, g);
+    // Inside, seen once the door's up.
+    this.box(W - 0.1, 0.04, D, 0, 0.01, -D / 2, floor, false, g);
+    this.box(W - 0.1, H, 0.1, 0, H / 2, -D, block, false, g);
+    for (const sx of [-1, 1]) this.box(0.1, H, D, sx * (W / 2 - 0.1), H / 2, -D / 2, block, false, g);
+    this.box(W - 0.1, 0.05, D, 0, dh + 0.25, -D / 2, this.mat('#5a5852', 0.9), false, g);
+    const light = this.box(0.12, 0.05, 1.3, 0, dh + 0.2, -D / 2, this.mat('#30302c', 0.4, 0, { emissive: 0xfff4dc, emissiveIntensity: 0 }), false, g);
+    // Kit along the walls: shelving with boxes on, a tyre, a jerry can.
+    const shelf = this.mat('#3a4a5a', 0.5, 0.5);
+    for (const y of [0.4, 1.0, 1.6]) this.box(0.4, 0.04, 1.6, -W / 2 + 0.35, y, -D + 1.0, shelf, false, g);
+    for (const y of [0.42, 1.02]) this.box(0.34, 0.3, 0.4, -W / 2 + 0.35, y + 0.17, -D + 0.6, this.mat('#a07a4a', 0.9), false, g);
+    const tyre = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.1, 8, 18), this.mat('#151515', 0.9));
+    tyre.position.set(W / 2 - 0.4, 0.4, -D + 0.5);
+    tyre.rotation.y = Math.PI / 2;
+    g.add(tyre);
+    this.box(0.18, 0.32, 0.28, W / 2 - 0.4, 0.16, -1.1, this.mat('#b3261e', 0.5, 0.3), false, g);
+    // The reward on a crate in the middle: a crowbar, a games console and a bundle of notes.
+    const reward = new THREE.Group();
+    reward.position.set(0, 0, -D / 2 - 0.2);
+    this.box(0.8, 0.5, 0.6, 0, 0.25, 0, this.mat('#9a7848', 0.9), false, reward);
+    const bar = this.box(0.7, 0.03, 0.03, 0, 0.52, 0.18, this.mat('#b3121b', 0.4, 0.6), false, reward);
+    bar.rotation.y = 0.3;
+    this.box(0.32, 0.07, 0.24, -0.15, 0.535, -0.08, this.mat('#111214', 0.4, 0.2), false, reward);
+    this.box(0.18, 0.06, 0.09, 0.22, 0.53, -0.1, this.mat('#4a7a3a', 0.8), false, reward);
+    g.add(reward);
+    // The up-and-over door: one ribbed steel panel hanging from the top of the opening.
+    const pivot = new THREE.Group();
+    pivot.position.set(0, dh, 0.03);
+    g.add(pivot);
+    const panel = new THREE.MeshStandardMaterial({ map: shutterTexture(), roughness: 0.55, metalness: 0.45, color: 0x9fb0a4 });
+    this.box(dw - 0.06, dh - 0.02, 0.05, 0, -dh / 2, 0, panel, true, pivot);
+    this.box(0.24, 0.05, 0.05, 0, -dh + 0.45, 0.04, trim, false, pivot);
+    const padlock = this.box(0.08, 0.1, 0.04, 0, -dh + 0.12, 0.05, this.mat('#c9a227', 0.3, 0.8), false, pivot);
+    // A number on the lintel.
+    const t = signTexture('LOCK-UP 7', '#e8e4dc', '#1a1a1a', { w: 256, h: 64 });
+    this.box(0.7, 0.18, 0.02, 0, dh + 0.3, 0.26, new THREE.MeshStandardMaterial({ map: t, roughness: 0.6 }), false, g);
+    this.building = '';
+    this.lockup = { id: c.id, pivot, padlock, reward, light, t: 0, start: null };
+  }
+
   private buildExit(ex: ExitDef): void {
     this.buildingExit = true;
     try {
@@ -4432,6 +4500,24 @@ export class LevelView {
       v.debris.visible = b.broken;
       // A little shake when it takes a hit.
       if (!b.broken && b.hp < b.def.hp) v.whole.rotation.z = Math.sin(time * 40) * 0.01 * (b.def.hp - b.hp);
+    }
+    // The lock-up's door: shut and padlocked till it's opened, then up and in (searching it starts it), and stays up.
+    if (this.lockup) {
+      const lk = this.lockup;
+      const def = this.level.containers?.find((c) => c.id === lk.id);
+      const done = !!def && world.isSearched(def);
+      const opening = done || world.searchingId === lk.id;
+      // Opened on an earlier visit: already up. Opening now: up over LOCKUP_OPEN_SECONDS from when it started.
+      if (!opening) lk.start = null;
+      else if (lk.start === null) lk.start = done && world.searchingId !== lk.id && lk.t === 0 ? -Infinity : time;
+      lk.t = opening && lk.start !== null ? Math.min(1, (time - lk.start) / LOCKUP_OPEN_SECONDS) : 0;
+      const e = lk.t * lk.t * (3 - 2 * lk.t);
+      lk.pivot.rotation.x = (Math.PI / 2) * 0.97 * e;
+      lk.pivot.position.z = 0.03 - 0.35 * e;
+      lk.padlock.visible = lk.t === 0;
+      // The reward's there till it's taken; the strip light flickers on as the door lifts.
+      lk.reward.visible = !done || lk.t < 1;
+      (lk.light.material as THREE.MeshStandardMaterial).emissiveIntensity = lk.t > 0.3 ? (lk.t < 0.45 && Math.sin(time * 60) > 0 ? 0.2 : 1.4) : 0;
     }
     // A faint sparkle over anything not yet searched.
     for (const c of this.level.containers ?? []) {

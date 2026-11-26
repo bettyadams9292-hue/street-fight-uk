@@ -3,6 +3,7 @@ import type { AreaId } from '../progress/Progress';
 import type { FacadeDef, FacadeKind, LevelDef, PropKind } from '../world/LevelTypes';
 import { propHalf } from '../world/LevelTypes';
 import { onStrip, stripNeighbours, isSubwayStairs, SUBWAY_GAP } from '../world/strip';
+import { LOCKUP_HALF, LOCKUP_ID } from '../world/lockup';
 import { KIT_METRICS } from './polyKitMetrics';
 
 /**
@@ -808,7 +809,11 @@ export function planStreet(level: LevelDef): StreetPlan {
     run.push(...facades);
     if (last.x1 < x1 - 0.05) run.push({ ...last, x0: last.x1, x1, label: undefined });
     // Gaps in the frontage where stairs go down to the subway (LevelView draws the stairwell there).
-    const gaps = level.exits.filter((e) => isSubwayStairs(level, e)).map((e) => [e.x - SUBWAY_GAP, e.x + SUBWAY_GAP] as const);
+    const gaps = [
+      ...level.exits.filter((e) => isSubwayStairs(level, e)).map((e) => [e.x - SUBWAY_GAP, e.x + SUBWAY_GAP] as const),
+      // The boss-reward lock-up is a garage of its own (world/lockup.ts, built by LevelView).
+      ...(level.containers ?? []).filter((c) => c.id === LOCKUP_ID).map((c) => [c.x - LOCKUP_HALF, c.x + LOCKUP_HALF] as const),
+    ];
     if (gaps.length) {
       const cut: FacadeDef[] = [];
       for (const f of run) {
