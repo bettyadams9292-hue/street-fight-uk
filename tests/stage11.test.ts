@@ -172,7 +172,10 @@ test('fighting styles look different in a real fight (what they actually throw)'
   assert(th.heavy / th.all > dh.heavy / dh.all + 0.15, `heavy boxer leads with heavy shots more than the technical one (${(th.heavy / th.all).toFixed(2)} vs ${(dh.heavy / dh.all).toFixed(2)} over ${th.all}/${dh.all} exchanges)`);
   assert(kickShare(tank) === 0, 'boxer never kicks');
   assert(kickShare(mia) > 0.25, `kickboxer kicks (${kickShare(mia).toFixed(2)})`);
-  assert(jonno.grabs > tank.grabs, `wrestler grabs more (${jonno.grabs} vs ${tank.grabs})`);
+  // Grabs in one scrap depend on where the fight drifts, so count them over several, like the leads above.
+  const grabs = (id: string) => [1, 2, 3, 4, 5, 6].reduce((n, sd) => n + measure(id, 40, sd).grabs, 0);
+  const jg = grabs('jonno'), tg = grabs('tank');
+  assert(jg > tg, `wrestler grabs more (${jg} vs ${tg} over six fights)`);
   console.log(`       tank ${JSON.stringify(tank)}\n       mia ${JSON.stringify(mia)}\n       jonno ${JSON.stringify(jonno)}`);
 });
 

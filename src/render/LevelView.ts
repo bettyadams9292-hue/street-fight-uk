@@ -4412,9 +4412,9 @@ export class LevelView {
   }
 
   private exitSign(ex: ExitDef, x: number, y: number, z: number): void {
-    // Boards only for places worth finding (shops, gyms, the pub, story routes); ordinary doors,
-    // stairs and the way back out go unlabelled. The prompt still says where a door goes.
-    if (ex.kind === 'door' && !isPoiExit(ex)) return;
+    // No boards over doors: every shop and place has its own sign on its front, and the USE prompt says where a
+    // door goes. Only the ends of a street get a street sign.
+    if (ex.kind === 'door') return;
     const arrow = ex.kind === 'edge' ? (ex.side === 'left' ? '← ' : '') : '';
     const after = ex.kind === 'edge' && ex.side === 'right' ? ' →' : '';
     const t = signTexture(`${arrow}${ex.label}${after}`, '#16365a', '#ffffff', { w: 768, h: 128 });

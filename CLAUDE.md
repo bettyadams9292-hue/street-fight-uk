@@ -17,12 +17,12 @@ Read this first. Two people work on this repo, each with their own Claude: Leeko
 - `GymLibrary`, `ShopLibrary`, `HydroLibrary`, `SecurityLibrary`, `DoorLibrary`, `KenneyLibrary` (furniture and food), and `PropLibrary` (weapons and small items).
 - Shared loader: `modelSet.ts`. Some sets are used in `LevelView.ts` through the helpers `fit()` (Kenney), `fitting()` (shop), `gym()` and `piece()` (Polyfork kit).
 
-**Streets** (`src/city/`). Built from the city kit (`public/models/city`).
+**Streets** (`src/city/`). Built from the city kit (`public/models/city`). The pavement runs from the building line (0.55 m behind the walkable edge) to the kerb at `KERB_Z` (0.45; it was -0.1 before it was widened). `world/streetTidy.ts` (`tidyStreet`, run over every level in `world/levels.ts`) puts furniture where it belongs: phone boxes against the building, nothing standing by the wall in front of a door (ways in, and the shopfronts' own doors), what stood at the old kerb moved out with it, parked cars clear of the kerb.
 - `street.ts`: `PROP_MODELS` lists the street props the kit draws. `KIT_KINDS` in `catalogue.ts` lists the building fronts it draws.
 - Anything not covered there is built from boxes in `LevelView.ts`.
 
 **Doors** (`src/city/doorSpots.ts`). `tests/doors.test.ts` checks the rules: every way out of somewhere you walked into puts you back at the door you used (no back doors home from shops; only home's own front door, after being booked in at the police station, and an agent's viewing of a street you haven't reached yet go home), the long street joins end to end, nothing stands in front of a property's front door or hangs over it, every door can be stood at and used, and the route from home reaches every open place without looping. Doors are random styles from DoorLibrary. In `World.findInteractable`, an exit is a strip in front of the door, so you use it standing at the door.
-- Blue door boards show only over points of interest: `isPoiExit` at the end of `LevelView.ts` (shops, gyms, pub, casino, routes the story opens).
+- No boards over doors (Leeko: every shop and place has its own sign; `LevelView.exitSign` only signs the ends of a street). The USE prompt says where a door goes.
 
 **Characters** (`src/characters/human/`, `public/models/human`).
 - MakeHuman-style body plus clothing and hair proxies. `fromAppearance.ts` maps the creator's choices to models.
@@ -349,6 +349,7 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 - The Brack Metro, step 1 (to merge): every subway stairwell goes down to a real station (see The Brack Metro): ticket hall and gates, a platform where a train is in or isn't each time you come down, tap in and out or hop the barriers, ride to any station; passers-by take the stairs.
 - Places look like themselves, custody and the grow (to merge): every shop, POI and prompt screen in its place's look (see Venue looks), with the iPhone overflow fixes; no walking out of the police station: pay bail or do your time in a barred cell (see Custody); the basement grow reworked into tents, watts, CFM, clip fans, heat and strains (see The grow).
 - Doors, the Metro and shop logos (to merge): leaving anywhere puts you back at the door you came in by (the shops' back doors home are gone; the police station lets you out onto Market Square unless you were booked in; a viewing booked through the agent goes back to its street once you've been there); nothing in front of or over a for-sale house's front door; Wrongmove has its own shopfront round its door; the Metro has no barriers (pay as you board) and each station opens with its district's boss; shop screens wear their shopfront's fascia and colours; `tests/doors.test.ts`.
+- Wider pavements, furniture off the doors, no door boards (to merge): the kerb moved out 0.55 m; phone boxes stand against the building; no bin, bench, phone box, lamp or barrier in front of any door (`world/streetTidy.ts`); the blue "Into …" boards over doors are gone.
 - Tutorial refresh (to merge): the lessons cover what's in the game now (the hotbar and bag in First steps, running off a fight, the tin as a home-only stash, the phone's apps; hints for cash machines, your bank, mugging, custody and getting about); three new guides: 09 Money, 10 The Metro, 11 The grow; one redesigned card for steps, guides and tips; read steps move on by themselves; the card keeps clear of the hotbar, the stick and the objective.
 ## Open questions and next steps
 
