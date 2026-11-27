@@ -96,7 +96,7 @@ export function tattooScreen(progress: Progress, ui: UIManager, a: TattooActions
         a.preview(wanted, slotOf());
         build();
       },
-      q.lines.length ? (canAfford ? 'Pocket money first, then the tin' : 'Not enough money') : 'Tap a design to try it on',
+      q.lines.length ? (canAfford ? 'Pocket money first, then your card' : 'Not enough money') : 'Tap a design to try it on',
       q.lines.length && canAfford ? 'primary' : '',
     );
     const reset = menuButton('Keep my skin', () => choose(inkOf(progress.save.character.appearance)), 'Back to how you came in');

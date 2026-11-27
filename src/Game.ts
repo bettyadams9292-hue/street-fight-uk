@@ -942,7 +942,7 @@ export class Game {
     // Out of the station: your phone back from the desk.
     if (area !== 'police_station') p.save.police.custody = false;
     document.body.classList.toggle('phone-held', p.save.police.custody);
-    // Home with the crew's bail money owed: it comes out of the tin, then your pockets.
+    // Home with the crew's bail money owed: it comes out of your pockets, then your account (never the tin).
     if (area === 'home' && p.save.police.owed) {
       const o = p.save.police.owed;
       const who = COMPANIONS[o.id]?.nickname ?? 'Your mate';

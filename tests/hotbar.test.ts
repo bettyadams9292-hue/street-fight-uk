@@ -3,7 +3,7 @@
  * next of its item from your pockets, works in a fight, and when its item runs out pulls in the next suitable
  * thing you carry. Changed from Pockets & bag; kept in the save; old saves start with "pick for me".
  */
-import { buySupply, SUPPLIES } from '../src/home/supplies';
+import { buySupply, packStamina, STAMINA_PER_POUND, SUPPLIES } from '../src/home/supplies';
 import { defaultAppearance } from '../src/character/Appearance';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { emptyCommand } from '../src/input/Commands';
@@ -173,6 +173,15 @@ test('an old save\'s drinks slot moves to where its item belongs', () => {
   assert(sanitiseHotbar({ drink: 'energy_drink' }).stamina === 'energy_drink', 'booster to stamina');
   assert(sanitiseHotbar({ drink: 'can_of_pop' }).food === 'can_of_pop', 'a can in with the food');
   assert(sanitiseHotbar({ food: 'chips', drink: 'can_of_pop' }).food === 'chips', 'a chosen food stays');
+});
+
+test('boosters are priced by the stamina they give: one rate, a stronger one costs more each', () => {
+  for (const sp of SUPPLIES) {
+    const rate = packStamina(sp) / sp.price;
+    assert(rate >= STAMINA_PER_POUND * 0.85 && rate <= STAMINA_PER_POUND * 1.2, `${sp.id}: ${rate.toFixed(1)} stamina a pound`);
+  }
+  const each = SUPPLIES.map((sp) => ({ per: ITEMS[sp.id].use!.stamina!, cost: sp.price / sp.pack })).sort((a, b) => a.per - b.per);
+  for (let i = 1; i < each.length; i++) assert(each[i].cost > each[i - 1].cost, 'more stamina a use costs more a use');
 });
 
 test('boosters are ordered from the home computer: paid for, in your pockets, the rest in the stash', () => {

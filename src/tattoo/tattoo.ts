@@ -98,7 +98,7 @@ export function inkName(colour: string): string {
 export type InkResult = { ok: true; total: number } | { ok: false; reason: string };
 
 /**
- * Pay and have it done: pocket money first, then the tin. Written to your own look
+ * Pay and have it done: pocket money first, then the card. Written to your own look
  * (`save.character.appearance`) in place, so the fighter the game holds has it too.
  */
 export function getInk(p: Progress, wanted: Ink): InkResult {

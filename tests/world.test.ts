@@ -443,6 +443,9 @@ test('full loop: home, out, boss, home, bank, train, save, reload, next district
   assert(banked > 0 && p.save.cash.tin === startBank + banked && p.save.cash.pocket === 0, 'banking failed');
   const hpBefore = w.player.vitals.maxHealth;
   assert(p.save.trainingPoints > 0, 'no training points after a boss');
+  // The tin never pays for anything: take some out first.
+  assert(!p.buyUpgrade('health').ok, 'paid from the tin');
+  assert(p.fromTin(200) > 0, 'took nothing out of the tin');
   const r = p.buyUpgrade('health');
   assert(r.ok, `upgrade refused: ${!r.ok ? r.reason : ''}`);
   const w2 = new World(LEVELS.home, p, { entry: 'door', seed: 3 });

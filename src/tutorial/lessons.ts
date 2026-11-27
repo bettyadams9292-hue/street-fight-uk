@@ -235,10 +235,10 @@ export const GUIDES: readonly ChapterDef[] = [
     start: { on: 'station', test: (e) => e.type === 'station' && (e.id === 'tin' || e.id === 'atm' || e.id === 'bank_counter') },
     steps: [
       { id: 'pocket', text: 'Cash on you is the only money anyone can take.', why: 'Lose a fight, get mugged or nicked, and it goes. Don’t walk about with more than you need.', focus: ['.story-row .money'], done: { read: true } },
-      { id: 'tin', text: 'The tin at home is a stash nobody touches.', why: 'You can only pay in or take out at home, standing at the tin.', done: { read: true } },
+      { id: 'tin', text: 'The tin at home is your emergency fund: nobody touches it, and nothing pays from it.', why: 'Only you put money in or take it out, standing at the tin.', done: { read: true } },
       { id: 'account', text: 'Open a bank account: CaliStore on your phone, pick Califax or Lloyd’s THC.', keys: ['phone'], why: 'Money in the bank is safe anywhere, and your card pays when your pocket’s short.', focus: ['.phone-btn'], done: { poll: (c) => !!c.progress.save.bank } },
       { id: 'branch', text: 'Pay in and take out at your bank’s branch counter.', why: 'Califax is on the High Street, Lloyd’s THC on Market Square. Cash machines only give cash out; the phone app only shows your balance.', done: { read: true } },
-      { id: 'paying', text: 'Shops take your cash first, then the tin if you’re home, then your card.', why: 'Rent and the business pay into your account. Dealers and bungs are cash only.', done: { read: true } },
+      { id: 'paying', text: 'Shops take your cash first, then your card. Never the tin: that’s your emergency fund, in and out by hand.', why: 'Rent and the business pay into your account. Dealers and bungs are cash only.', done: { read: true } },
     ],
   },
   {

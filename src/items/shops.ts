@@ -41,7 +41,7 @@ export function pawnOffer(d: ItemDef, st: Pick<ItemStack, 'stolen'>): number {
 
 export type BuyResult = { ok: true; price: number; where: 'pocket' | 'storage' | 'worn' } | { ok: false; reason: string };
 
-/** Buy one from a shop: pays pocket first, then the tin; full pockets mean it's delivered home. */
+/** Buy one from a shop: pays pocket first, then the card; full pockets mean it's delivered home. */
 export function buyItem(p: Progress, id: string, mult: number, stock: readonly string[] = SHOP_STOCK): BuyResult {
   const d = ITEMS[id];
   if (!d || !stock.includes(id)) return { ok: false, reason: 'They don’t sell that.' };

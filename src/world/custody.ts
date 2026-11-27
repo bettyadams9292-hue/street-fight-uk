@@ -158,16 +158,16 @@ export function ringCrew(p: Progress, b: Booking, id: string): boolean {
   return true;
 }
 
-/** Home: pay back whoever bailed you out, from the tin and then your pockets. Returns what was paid now. */
+/** Home: pay back whoever bailed you out, from your pockets and then your account (never the tin). Returns what was paid now. */
 export function repayCrew(p: Progress): number {
   const o = p.save.police.owed;
   if (!o) return 0;
   const c = p.save.cash;
-  const fromTin = Math.min(c.tin, o.left);
-  c.tin -= fromTin;
-  const fromPocket = Math.min(c.pocket, o.left - fromTin);
+  const fromPocket = Math.min(c.pocket, o.left);
   c.pocket -= fromPocket;
-  const paid = fromTin + fromPocket;
+  const fromBank = p.save.bank ? Math.min(c.bank, o.left - fromPocket) : 0;
+  c.bank -= fromBank;
+  const paid = fromPocket + fromBank;
   o.left -= paid;
   if (o.left <= 0) p.save.police.owed = null;
   return paid;

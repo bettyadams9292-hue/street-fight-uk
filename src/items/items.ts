@@ -270,9 +270,9 @@ food('protein_bar', 'Protein bar', 10, 2, 'Chewy. Tastes of chalk.', '#5a3a2a', 
 drink('energy_drink', 'Energy drink', 60, 2, 'Can of something fizzy and bright.', '#3ad84a', 0, { fill: 0, diet: 10, energy: 15, bladder: 18 });
 ITEMS_BOOST.push('energy_drink');
 // Stamina boosters, ordered to the house from the home computer (home/supplies.ts): quick to take mid-fight.
-add({ id: 'stamina_gel', name: 'Energy gel', text: 'A sachet of fast sugar and caffeine. Tear, squeeze, go.', category: 'consumable', rarity: 'common', value: 3, stack: 10, icon: 'drink', colour: '#f2a81d', boost: true, use: { stamina: 45, text: '+45 stamina' } });
-add({ id: 'stamina_shot', name: 'Stamina shot', text: 'A little bottle of something strong. Your legs come back.', category: 'consumable', rarity: 'uncommon', value: 6, stack: 10, icon: 'drink', colour: '#e8333a', boost: true, use: { stamina: 85, text: '+85 stamina' } });
-add({ id: 'electrolyte_drink', name: 'Electrolyte drink', text: 'A sports bottle of salts and sugar. Full tank.', category: 'consumable', rarity: 'rare', value: 10, stack: 5, icon: 'drink', colour: '#3d86ff', store: 'fridge', boost: true, use: { stamina: 150, needs: { fill: 0, diet: 20, bladder: 12 }, text: 'Stamina right back up' } });
+add({ id: 'stamina_gel', name: 'Energy gel', text: 'A sachet of fast sugar and caffeine. Tear, squeeze, go.', category: 'consumable', rarity: 'common', value: 1, stack: 10, icon: 'drink', colour: '#f2a81d', boost: true, use: { stamina: 30, text: '+30 stamina' } });
+add({ id: 'stamina_shot', name: 'Stamina shot', text: 'A little bottle of something strong. Your legs come back.', category: 'consumable', rarity: 'uncommon', value: 4, stack: 10, icon: 'drink', colour: '#e8333a', boost: true, use: { stamina: 100, text: '+100 stamina' } });
+add({ id: 'electrolyte_drink', name: 'Electrolyte drink', text: 'A sports bottle of salts and sugar. Full tank.', category: 'consumable', rarity: 'rare', value: 6, stack: 5, icon: 'drink', colour: '#3d86ff', store: 'fridge', boost: true, use: { stamina: 150, needs: { fill: 0, diet: 20, bladder: 12 }, text: '+150 stamina' } });
 drink('can_of_pop', 'Can of pop', 30, 1, 'Fizzy and cold.', '#d82a2a', 5, { fill: 2, diet: 10, bladder: 15 });
 drink('water', 'Bottle of water', 40, 1, 'Fresh and cold.', '#8ac8ff', 0, { fill: 0, diet: 70, bladder: 15 });
 drink('flask_tea', 'Flask of tea', 35, 3, 'Strong, two sugars.', '#8a5a3a', 15, { fill: 2, diet: 40, energy: 6, bladder: 15 });
