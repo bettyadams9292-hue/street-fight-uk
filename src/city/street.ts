@@ -229,7 +229,7 @@ export const DISTRICTS: Partial<Record<AreaId, District>> = {
 /** How far the scenery carries on past an end of the street that has no neighbour. */
 export const STREET_EXTENT = 16;
 /** The kerb line on streets with a road: paving behind it, tarmac in front. */
-export const KERB_Z = -0.1;
+export const KERB_Z = 0.45;
 /** Street lamps stand just behind the kerb, on the pavement's road edge. */
 export const LAMP_Z = KERB_Z - 0.16;
 const KERB_DEPTH = 0.3;
