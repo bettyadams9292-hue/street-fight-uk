@@ -3123,3 +3123,18 @@ body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) *
   .hud .style-row { display: none; }
   .hud .fighter-panel .name-row { font-size: 15px; }
 }
+
+/* Home computer → Supplements: a row per booster, icon, what it does, the price as the button. */
+.sup-list { display: flex; flex-direction: column; gap: 8px; }
+.sup-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+.sup-icon { width: 48px; height: 48px; object-fit: contain; }
+.sup-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sup-text b { font: 800 18px/1.1 var(--head); text-transform: uppercase; }
+.sup-text span { font: 500 13px/1.3 var(--ui2); color: var(--muted); }
+.sup-buy { min-width: 72px; padding: 10px 14px; border: 0; border-radius: 0; background: var(--accent); color: #fff; font: 800 20px/1 var(--head); cursor: pointer; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }
+.sup-buy:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5); }
+.sup-buy.focused, .sup-buy:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* The food and drink slot's tag is the longest: no tracking so FOOD/DRINK fits the plate. */
+.hb-slot.food .hb-tag, .hb-slot.stamina .hb-tag { letter-spacing: 0; }
+.hb-slot.food .hb-tag { font-size: 8.5px; }
+.touch-ui .hb-slot.food .hb-tag { font-size: 7px; }

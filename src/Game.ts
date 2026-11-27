@@ -2,6 +2,7 @@ import { decorate, venueFor } from './ui/venueTheme';
 import { arriveBy, metroArea, metroVisit, payRide, rollTrain, setMetroVisit, stationAt } from './travel/metro';
 import { stationOf, stopsBetween, type StationId as MetroStop } from './travel/subway';
 import { safeResume } from './progress/resume';
+import { suppliesBody } from './home/supplies';
 import { trainScreen } from './ui/metroUI';
 import { bankPrompt } from './ui/bankPrompt';
 import { custodyRecord, frontCounter, policeStop } from './ui/policeUI';
@@ -1087,11 +1088,11 @@ export class Game {
       }
       if (slot === 'medic') this.audio.uiConfirm();
       else if (slot === 'food') this.audio.house('eat');
-      else if (slot === 'drink') this.audio.house('clink');
+      else if (slot === 'stamina') this.audio.house('clink');
       else this.audio.uiConfirm();
       const swapped = r.next && before && r.next !== before ? ITEMS[r.next]?.name : null;
       const left = hotbarView(s, slot);
-      const out = slot !== 'weapon' && !left.stack ? ` Last one: no more ${slot === 'medic' ? 'medical' : slot === 'drink' ? 'drinks' : 'food'} on you.` : '';
+      const out = slot !== 'weapon' && !left.stack ? ` Last one: no more ${slot === 'medic' ? 'medical' : slot === 'stamina' ? 'boosters' : 'food or drink'} on you.` : '';
       this.hud.toast(`${r.text}${swapped ? `. Next up: ${swapped}` : ''}${out ? `.${out}` : ''}`, slot === 'weapon' ? 'info' : 'item');
     }
     if (!live) {
@@ -1566,7 +1567,7 @@ export class Game {
         break;
       case 'computer':
         // The property portfolio is on the home computer too.
-        screen = computerScreen(p, close, saved, (uid, room) => this.startPlacing(uid, room), [{ id: 'property', name: 'Property', body: realtyBody(p, this.realtyActions(), p.save.portfolio.holdings.length ? 'mine' : 'market') }]);
+        screen = computerScreen(p, close, saved, (uid, room) => this.startPlacing(uid, room), [{ id: 'supplies', name: 'Supplements', body: suppliesBody(p, saved) }, { id: 'property', name: 'Property', body: realtyBody(p, this.realtyActions(), p.save.portfolio.holdings.length ? 'mine' : 'market') }]);
         break;
       case 'gym_counter':
         screen = gymStoreScreen(p, close, saved, station?.tab);

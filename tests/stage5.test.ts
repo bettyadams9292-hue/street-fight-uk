@@ -126,8 +126,8 @@ test('pockets: 4 slots, a worn bag adds its own, overflow is returned not delete
   assert(p.inventoryCap === BASE_INVENTORY_SLOTS, 'a carried bag counted');
   const bag = p.save.inventory.find((s) => s.id === 'bag_rucksack')!;
   assert(p.wear(bag.uid).ok, 'wear the rucksack');
-  assert(p.inventoryCap === 12, `with rucksack ${p.inventoryCap}`);
-  for (let i = 0; i < 6; i++) assert(!p.giveItem('watch_basic'), `bag slot ${i}`);
+  assert(p.inventoryCap === 20, `with rucksack ${p.inventoryCap}`);
+  for (let i = 0; i < 14; i++) assert(!p.giveItem('watch_basic'), `bag slot ${i}`);
   // Can't take the bag off while it's holding things your pockets can't.
   assert(!p.unwear('back').ok, 'took off a full bag');
   // Nor swap to a smaller one that can't take it all.

@@ -90,6 +90,8 @@ export interface ItemDef {
   questFlag?: string;
   /** Pawn shop won't take it (worthless, or a quest item). */
   unsellable?: boolean;
+  /** A stamina booster: goes in the hotbar's stamina slot, not with food and drink. */
+  boost?: boolean;
   /** Food that keeps in the kitchen: which of the fridge or the cupboards it lives in. */
   store?: 'fridge' | 'cupboard';
   /** A cooking ingredient (not eaten on its own). */
@@ -251,6 +253,7 @@ const food = (id: string, name: string, heal: number, value: number, text: strin
   const n = needs ?? { fill: Math.round(heal * 0.9), diet: 30 };
   add({ id, name, text, category: 'consumable', rarity: 'common', value, stack: 5, icon: 'food', colour, use: { heal, stamina, needs: n, text: `+${heal} health${stamina ? `, +${stamina} stamina` : ''}${needsText(n)}` } });
 };
+const ITEMS_BOOST: string[] = [];
 const drink = (id: string, name: string, stamina: number, value: number, text: string, colour: string, heal = 0, needs?: UseSpec['needs']) => {
   const n = needs ?? { fill: 3, diet: 40, bladder: 15 };
   add({ id, name, text, category: 'consumable', rarity: 'common', value, stack: 5, icon: 'drink', colour, store: 'fridge', use: { stamina, heal, needs: n, text: `+${stamina} stamina${heal ? `, +${heal} health` : ''}` } });
@@ -265,6 +268,11 @@ food('curry', 'Curry', 30, 9, 'Chicken tikka and rice from the takeaway.', '#d88
 food('fry_up', 'Full English', 40, 10, 'Everything on one plate.', '#e8a040', 20, { fill: 60, diet: 45, energy: 10 });
 food('protein_bar', 'Protein bar', 10, 2, 'Chewy. Tastes of chalk.', '#5a3a2a', 15, { fill: 12, diet: 60, energy: 5 });
 drink('energy_drink', 'Energy drink', 60, 2, 'Can of something fizzy and bright.', '#3ad84a', 0, { fill: 0, diet: 10, energy: 15, bladder: 18 });
+ITEMS_BOOST.push('energy_drink');
+// Stamina boosters, ordered to the house from the home computer (home/supplies.ts): quick to take mid-fight.
+add({ id: 'stamina_gel', name: 'Energy gel', text: 'A sachet of fast sugar and caffeine. Tear, squeeze, go.', category: 'consumable', rarity: 'common', value: 3, stack: 10, icon: 'drink', colour: '#f2a81d', boost: true, use: { stamina: 45, text: '+45 stamina' } });
+add({ id: 'stamina_shot', name: 'Stamina shot', text: 'A little bottle of something strong. Your legs come back.', category: 'consumable', rarity: 'uncommon', value: 6, stack: 10, icon: 'drink', colour: '#e8333a', boost: true, use: { stamina: 85, text: '+85 stamina' } });
+add({ id: 'electrolyte_drink', name: 'Electrolyte drink', text: 'A sports bottle of salts and sugar. Full tank.', category: 'consumable', rarity: 'rare', value: 10, stack: 5, icon: 'drink', colour: '#3d86ff', store: 'fridge', boost: true, use: { stamina: 150, needs: { fill: 0, diet: 20, bladder: 12 }, text: 'Stamina right back up' } });
 drink('can_of_pop', 'Can of pop', 30, 1, 'Fizzy and cold.', '#d82a2a', 5, { fill: 2, diet: 10, bladder: 15 });
 drink('water', 'Bottle of water', 40, 1, 'Fresh and cold.', '#8ac8ff', 0, { fill: 0, diet: 70, bladder: 15 });
 drink('flask_tea', 'Flask of tea', 35, 3, 'Strong, two sugars.', '#8a5a3a', 15, { fill: 2, diet: 40, energy: 6, bladder: 15 });
@@ -418,18 +426,22 @@ add({ id: 'bus_pass', name: 'Bus pass', text: 'Somebody’s. Duber take it as a 
 
 // ---- bags (carry space) --------------------------------------------------------------------------
 // You have 4 pockets. A bag is worn (one at a time, slot 'back') and adds its own slots; you see it on you.
-add({ id: 'bag_bumbag', name: 'Bum bag', text: 'Round the waist. 4 more slots: 8 with your pockets.', category: 'misc', rarity: 'common', value: 40, icon: 'bag', colour: '#1b1d22', unsellable: false, wear: { slot: 'back' } });
-add({ id: 'bag_rucksack', name: 'Rucksack', text: 'On your back. 8 more slots: 12 with your pockets.', category: 'misc', rarity: 'uncommon', value: 120, icon: 'bag', colour: '#2f4a2d', wear: { slot: 'back' } });
-add({ id: 'bag_holdall', name: 'Gym holdall', text: 'Over the shoulder. 12 more slots: 16 with your pockets.', category: 'misc', rarity: 'rare', value: 260, icon: 'bag', colour: '#1f2a44', wear: { slot: 'back' } });
-add({ id: 'bag_hiking', name: 'Big rucksack', text: 'A 65-litre hiking pack. 20 more slots: 24 with your pockets.', category: 'misc', rarity: 'epic', value: 520, icon: 'bag', colour: '#3a2f22', wear: { slot: 'back' } });
+add({ id: 'bag_bumbag', name: 'Bum bag', text: 'Round the waist. 8 more slots: 12 with your pockets.', category: 'misc', rarity: 'common', value: 40, icon: 'bag', colour: '#1b1d22', unsellable: false, wear: { slot: 'back' } });
+add({ id: 'bag_rucksack', name: 'Rucksack', text: 'On your back. 16 more slots: 20 with your pockets.', category: 'misc', rarity: 'uncommon', value: 120, icon: 'bag', colour: '#2f4a2d', wear: { slot: 'back' } });
+add({ id: 'bag_holdall', name: 'Gym holdall', text: 'Over the shoulder. 24 more slots: 28 with your pockets.', category: 'misc', rarity: 'rare', value: 260, icon: 'bag', colour: '#1f2a44', wear: { slot: 'back' } });
+add({ id: 'bag_hiking', name: 'Big rucksack', text: 'A 65-litre hiking pack. 36 more slots: 40 with your pockets.', category: 'misc', rarity: 'epic', value: 520, icon: 'bag', colour: '#3a2f22', wear: { slot: 'back' } });
 
+for (const id of ITEMS_BOOST) {
+  const d = defs.find((x) => x.id === id);
+  if (d) d.boost = true;
+}
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(defs.map((d) => [d.id, d]));
 // The title belt is won, not bought, and nobody will buy it off you.
 ITEMS.title_belt.unsellable = true;
 export const ITEM_LIST: readonly ItemDef[] = defs;
 
 /** What each bag adds to your 4 pockets while you wear it. */
-export const BAG_SLOTS: Record<string, number> = { bag_bumbag: 4, bag_rucksack: 8, bag_holdall: 12, bag_hiking: 20 };
+export const BAG_SLOTS: Record<string, number> = { bag_bumbag: 8, bag_rucksack: 16, bag_holdall: 24, bag_hiking: 36 };
 
 export function itemDef(id: string): ItemDef | undefined {
   return ITEMS[id];

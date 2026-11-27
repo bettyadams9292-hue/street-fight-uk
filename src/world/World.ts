@@ -3282,7 +3282,7 @@ export class World {
         r = this.putAwayWeapon() ? { ok: true, text: `${name} away` } : { ok: false, text: 'Your pockets are full' };
       } else r = { ok: false, text: 'No weapon on you' };
     } else if (!v.stack) {
-      r = { ok: false, text: slot === 'medic' ? 'Nothing to patch up with' : slot === 'drink' ? 'Nothing to drink' : 'Nothing to eat' };
+      r = { ok: false, text: slot === 'medic' ? 'Nothing to patch up with' : slot === 'stamina' ? 'Nothing to get your legs back' : 'Nothing to eat or drink' };
     } else r = this.useItem(v.stack.uid);
     if (!r.ok) return r;
     if (slot !== 'weapon') this.hotbarAt = this.sim.frame;

@@ -3,6 +3,7 @@
  * next of its item from your pockets, works in a fight, and when its item runs out pulls in the next suitable
  * thing you carry. Changed from Pockets & bag; kept in the save; old saves start with "pick for me".
  */
+import { buySupply, SUPPLIES } from '../src/home/supplies';
 import { defaultAppearance } from '../src/character/Appearance';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { emptyCommand } from '../src/input/Commands';
@@ -143,28 +144,46 @@ test('weapon: draws the slot’s weapon; when it breaks, the next weapon in your
   assert(away.ok && !w.player.weapon && count(p, 'w_hammer') === 1, `put away: ${away.text}`);
 });
 
-test('drinks have their own slot: a can or energy drink mid-fight, refilled from your pockets; food leaves them alone', () => {
-  assert(slotFor(ITEMS.energy_drink) === 'drink' && slotFor(ITEMS.can_of_pop) === 'drink' && slotFor(ITEMS.water) === 'drink' && slotFor(ITEMS.flask_tea) === 'drink', 'the four drinks');
-  assert(!fitsSlot('food', ITEMS.energy_drink), 'not food');
+test('food and drink share slot 2; stamina boosters have slot 3, refilled from your pockets', () => {
+  assert(slotFor(ITEMS.can_of_pop) === 'food' && slotFor(ITEMS.water) === 'food' && slotFor(ITEMS.flask_tea) === 'food', 'drinks go with the food');
+  assert(slotFor(ITEMS.energy_drink) === 'stamina' && slotFor(ITEMS.stamina_gel) === 'stamina' && slotFor(ITEMS.stamina_shot) === 'stamina' && slotFor(ITEMS.electrolyte_drink) === 'stamina', 'the boosters');
+  assert(!fitsSlot('food', ITEMS.energy_drink), 'a booster is not food');
   const p = progress();
   p.save.inventory = [];
   p.giveItem('energy_drink', 1);
-  p.giveItem('water', 2);
+  p.giveItem('stamina_gel', 2);
   p.giveItem('chips', 1);
   setHotbar(p.save, 'energy_drink');
-  assert(hotbarView(p.save, 'food').stack?.id === 'chips', 'food slot has the chips, not a drink');
+  assert(hotbarView(p.save, 'food').stack?.id === 'chips', 'food slot has the chips, not a booster');
   const w = new World(street, p, { entry: street.entries[0].id, seed: 4, civilians: false });
   w.spawnEnemy('thug', w.player.pos.x + 2.5, w.player.pos.z);
   w.step(emptyCommand());
   const v = w.player.vitals;
   v.stamina = 10;
-  const r = w.useHotbar('drink');
+  const r = w.useHotbar('stamina');
   assert(r.ok && v.stamina > 50, `energy drink: ${r.text} (stamina ${v.stamina})`);
-  assert(r.next === 'water' && hotbarView(p.save, 'drink').stack?.id === 'water', `water next: ${r.next}`);
+  assert(r.next === 'stamina_gel' && hotbarView(p.save, 'stamina').stack?.id === 'stamina_gel', `gel next: ${r.next}`);
   // Shares the wait with heals and food, so it can't be mashed either.
-  assert(!w.useHotbar('drink').ok && !w.useHotbar('food').ok, 'waits');
+  assert(!w.useHotbar('stamina').ok && !w.useHotbar('food').ok, 'waits');
   wait(w, HOTBAR_COOLDOWN + 0.1);
-  assert(w.useHotbar('drink').ok, 'water');
+  assert(w.useHotbar('stamina').ok, 'gel');
+});
+
+test('an old save\'s drinks slot moves to where its item belongs', () => {
+  assert(sanitiseHotbar({ drink: 'energy_drink' }).stamina === 'energy_drink', 'booster to stamina');
+  assert(sanitiseHotbar({ drink: 'can_of_pop' }).food === 'can_of_pop', 'a can in with the food');
+  assert(sanitiseHotbar({ food: 'chips', drink: 'can_of_pop' }).food === 'chips', 'a chosen food stays');
+});
+
+test('boosters are ordered from the home computer: paid for, in your pockets, the rest in the stash', () => {
+  const p = progress();
+  p.save.inventory = [];
+  p.save.cash.pocket = 20;
+  const r = buySupply(p, 'stamina_shot');
+  assert(r.ok && p.save.cash.pocket === 20 - SUPPLIES.find((s) => s.id === 'stamina_shot')!.price, r.text);
+  assert(p.save.inventory.some((s) => s.id === 'stamina_shot'), 'delivered to your pockets');
+  p.save.cash = { pocket: 0, bank: 0, tin: 0 } as typeof p.save.cash;
+  assert(!buySupply(p, 'stamina_gel').ok, 'no money, no delivery');
 });
 
 test('changing a slot from Pockets & bag cycles through what you carry that fits', () => {
@@ -197,7 +216,7 @@ test('saved and loaded; old saves and junk get "pick for me"', () => {
 test('controls: 1–4; Back with X, Y, A, B on a pad; named in prompts for every device', () => {
   assert(HOTBAR_KEYS.map((k) => k[0]).join() === 'Digit1,Digit2,Digit3,Digit4', 'number keys');
   assert(PAD_EXTRA.hotbar === PAD.BACK && PAD_HOTBAR.join() === [PAD.X, PAD.Y, PAD.A, PAD.B].join(), 'pad combos');
-  assert(HOTBAR_SLOTS.join() === 'medic,food,drink,weapon', 'slot order matches the keys');
+  assert(HOTBAR_SLOTS.join() === 'medic,food,stamina,weapon', 'slot order matches the keys');
   assert(control('hotbar', 'keyboard') === '1 / 2 / 3 / 4', control('hotbar', 'keyboard'));
   assert(/BACK/.test(control('hotbar', 'gamepad')), control('hotbar', 'gamepad'));
   assert(control('hotbar', 'touch').length > 0, 'touch');

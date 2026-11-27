@@ -16,8 +16,10 @@ export const GATE_X = 15.5;
 /** The platform's length along the room; the train stands along it. */
 export const PLATFORM_X0 = 20;
 export const PLATFORM_X1 = 60;
-/** Where the train's doors are (the middle of each pair), for boarding. */
-export const TRAIN_DOORS = [24, 28.2, 32.4, 37.2, 41.4, 45.6, 50.4, 54.6];
+/** The train's three cars along the platform (x from, to); 0.3 m gangways between them. */
+export const TRAIN_CARS: [number, number][] = [[21, 33], [33.3, 45.3], [45.6, 57.6]];
+/** Where the train's doors are (the middle of each pair), for boarding: three a car, never near a car's end. */
+export const TRAIN_DOORS = TRAIN_CARS.flatMap(([a]) => [a + 2.6, a + 6, a + 9.4]);
 /** Where you come down from the street. */
 export const STAIRS_X = 1.9;
 
@@ -71,8 +73,8 @@ function stationLevel(st: Station): LevelDef {
     facades: [{ kind: 'metro', x0: 0, x1: METRO_LENGTH, label: st.name.toUpperCase() }],
     props: [
       // Benches along the back of the platform, between the doors.
-      { kind: 'bench', x: 30.3, z: 1.35, solid: false },
-      { kind: 'bench', x: 43.5, z: 1.35, solid: false },
+      { kind: 'bench', x: 31.7, z: 1.35, solid: false },
+      { kind: 'bench', x: 44.0, z: 1.35, solid: false },
     ],
     pickups: [],
     containers: [],

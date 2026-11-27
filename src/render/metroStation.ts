@@ -16,7 +16,7 @@
  */
 import * as THREE from 'three';
 import { surface } from './materials/library';
-import { STATION_LOOK, GATE_X, PLATFORM_X0, PLATFORM_X1, STAIRS_X, TRAIN_DOORS, METRO_LENGTH } from '../world/metroLevels';
+import { STATION_LOOK, GATE_X, PLATFORM_X0, PLATFORM_X1, STAIRS_X, TRAIN_CARS, TRAIN_DOORS, METRO_LENGTH } from '../world/metroLevels';
 import { STATIONS, stationOf, type StationId } from '../travel/subway';
 import { metroVisit } from '../travel/metro';
 
@@ -412,7 +412,10 @@ export function buildMetroStation(id: StationId, back: number): MetroView {
       // Off a train: the doors close after a few seconds and it pulls out east into the tunnel.
       if (v?.arrived) {
         const shut = Math.min(1, Math.max(0, (t - 3.5) / 0.8));
-        for (const l of leaves) l.position.x = l.userData.openX + (l.userData.shutX - l.userData.openX) * shut;
+        for (const l of leaves) {
+          l.visible = shut > 0;
+          l.position.x = l.userData.openX + (l.userData.shutX - l.userData.openX) * shut;
+        }
         if (t > 4.6) {
           speed = Math.min(14, speed + dt * 2.4);
           train.position.x += speed * dt;
@@ -473,14 +476,15 @@ function buildTrain(trackZ: number, pitY: number, box: Box, plane: Plane, flat: 
   const black = flat('#111317', 0.7, 0.2);
   const glass = new THREE.MeshStandardMaterial({ color: '#1b2026', roughness: 0.06, metalness: 0.4, transparent: true, opacity: 0.38 });
   const ceiling = flat('#f4f1e8', 0.6, 0, 0xfff6e2, 0.9);
-  const wallIn = flat('#e6e2d6', 0.7, 0, 0xfff1d8, 0.25);
+  const wallIn = flat('#c9c4b8', 0.75, 0, 0xfff1d8, 0.1);
   const floorIn = flat('#4d5157', 0.9);
   const seat = flat('#24418f', 0.95);
   const seatFrame = flat('#7d828a', 0.4, 0.6);
   const pole = flat('#f2c200', 0.35, 0.5);
   const tunnel = flat('#050608', 1);
+  const tunnelGlass = flat('#0a0c10', 0.1, 0.4);
 
-  const cars: [number, number][] = [[21.2, 32.5], [32.8, 44.1], [44.4, 55.7]];
+  const cars = TRAIN_CARS;
   for (const [x0, x1] of cars) {
     const L = x1 - x0;
     const cx = (x0 + x1) / 2;
@@ -586,7 +590,14 @@ function buildTrain(trackZ: number, pitY: number, box: Box, plane: Plane, flat: 
         box(0.02, doorH - 0.1, 0.012, (-s * (doorW / 2 - 0.02)) / 2, 0, 0.026, black, leaf);
         leaf.userData.openX = openX;
         leaf.userData.shutX = shutX;
+        // Open, a leaf is tucked away inside the body: hidden, so it never shows red through the next window.
+        leaf.visible = false;
         leaves.push(leaf);
+      }
+      // The doors on the far side, shut: seen through the open doorway instead of a blank wall.
+      for (const s of [-1, 1]) {
+        const far = box(doorW / 2 - 0.02, doorH - 0.02, 0.04, d + (s * doorW) / 4, floorY + doorH / 2, farZ + 0.12, red, g);
+        box(doorW / 2 - 0.26, 0.85, 0.01, 0, 0.32, 0.025, tunnelGlass, far);
       }
       // Door surround: the red frame round the opening on the outside.
       box(doorW + 0.12, 0.06, 0.02, d, floorY + doorH + 0.03, nearZ + 0.01, red, g);
@@ -598,7 +609,10 @@ function buildTrain(trackZ: number, pitY: number, box: Box, plane: Plane, flat: 
   // Gangways between the cars.
   for (let i = 0; i < cars.length - 1; i++) {
     const gx = (cars[i][1] + cars[i + 1][0]) / 2;
-    box(cars[i + 1][0] - cars[i][1] + 0.08, eave - floorY - 0.1, W - 0.5, gx, (eave + floorY) / 2, trackZ, black, g);
+    // Concertina rubber between the cars, set back from the sides so the body lines run on.
+    const gw = cars[i + 1][0] - cars[i][1] + 0.1;
+    box(gw, eave - floorY - 0.2, W - 0.7, gx, (eave + floorY) / 2, trackZ, flat('#2a2c30', 0.85), g);
+    for (let k = 0; k < 4; k++) box(gw + 0.01, eave - floorY - 0.24, 0.02, gx, (eave + floorY) / 2, trackZ + W / 2 - 0.34 - k * 0.012, flat('#1a1b1e', 0.9), g);
   }
   // A cab at each end: the red front with a windscreen, the destination blind, and head and tail lights.
   for (const [ex, dir] of [[cars[0][0], -1], [cars[cars.length - 1][1], 1]] as const) {

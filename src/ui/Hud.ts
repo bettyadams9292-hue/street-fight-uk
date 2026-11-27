@@ -56,7 +56,7 @@ function bars(side: 'left' | 'right'): BarSet {
  * training-ground controls.
  */
 /** The word on each hotbar slot's tag. */
-const HOTBAR_TAGS: Record<HotbarSlot, string> = { medic: 'MED', food: 'FOOD', drink: 'DRINK', weapon: 'WEAPON' };
+const HOTBAR_TAGS: Record<HotbarSlot, string> = { medic: 'MED', food: 'FOOD/DRINK', stamina: 'STAMINA', weapon: 'WEAPON' };
 
 export class Hud {
   readonly el: HTMLElement;
