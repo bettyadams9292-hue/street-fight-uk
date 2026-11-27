@@ -28,6 +28,7 @@ class FakeEl {
 (globalThis as { document?: unknown }).document = { createElement: () => new FakeEl(), querySelectorAll: () => [], querySelector: () => null };
 
 import { defaultAppearance } from '../src/character/Appearance';
+import { LessonOverlay } from '../src/tutorial/overlay';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { emptyCommand } from '../src/input/Commands';
 import { newSave, Progress, sanitiseSave } from '../src/progress/Progress';
@@ -445,5 +446,21 @@ test('a job that goes wrong brings up its hint; a guide in progress survives a r
 });
 
 void LEVELS;
+test('the card comes down after a chapter or guide\'s last step (it stuck on screen with its tick)', () => {
+  const slot = new FakeEl();
+  const o = new LessonOverlay(slot as unknown as HTMLElement, { next: () => {}, skip: () => {} });
+  o.show({ kind: 'step', head: '06 Jobs', badge: '06', title: 'Jobs', text: 'Last step', keys: [], progress: { at: 8, of: 8 }, next: 'Done', skip: null, focus: [] });
+  assert((o.el as unknown as FakeEl).classList.contains('off') === false, 'shown');
+  o.flash();
+  const real = performance.now;
+  try {
+    (performance as { now: () => number }).now = () => real.call(performance) + 1000;
+    o.show(null);
+  } finally {
+    (performance as { now: () => number }).now = real;
+  }
+  assert((o.el as unknown as FakeEl).classList.contains('off'), 'still up after the last step');
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

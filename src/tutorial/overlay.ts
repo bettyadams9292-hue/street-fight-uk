@@ -99,7 +99,9 @@ export class LessonOverlay {
     this.el.classList.add('done');
     this.el.append(h('span', { class: 'tut-tick', 'aria-hidden': 'true' }));
     this.flashing = performance.now() + 650;
-    this.shown = '';
+    // Not '' (that's "nothing shown"): after a guide's last step there's nothing next, and with '' the card
+    // matched "nothing" and was never taken down, stuck on screen with its tick.
+    this.shown = '#flash';
   }
 
   /** Off and unlit (leaving the game, or the tutorial switched off). */
