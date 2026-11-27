@@ -6,8 +6,11 @@ import { h } from '../ui/dom';
 
 export interface LessonView {
   kind: 'step' | 'hint';
-  /** "01 · First steps", or the hint's title. */
+  /** "01 · First steps", or the hint's title (for screen readers and the library). */
   head: string;
+  /** The chapter's number ("01") or "Tip", and its title, shown apart. */
+  badge: string;
+  title: string;
   text: string;
   why?: string;
   /** What to press, already worded for the device in hand. */
@@ -46,6 +49,9 @@ export class LessonOverlay {
     // The USE plate steps to the other half of the screen while a card is up (the card would hide it).
     document.body?.classList?.toggle('tut-on-left', !!v && side === 'left');
     document.body?.classList?.toggle('tut-on-right', !!v && side === 'right');
+    // The objective plate steps aside while a card is up, unless the step is about it.
+    document.body?.classList?.toggle('tut-up', !!v);
+    document.body?.classList?.toggle('tut-obj', !!v && v.focus.some((f) => f.includes('objective')));
     // Hold the tick on screen for a moment before the next step replaces it.
     if (performance.now() < this.flashing) return;
     const key = v ? JSON.stringify(v) + side : '';
@@ -57,15 +63,19 @@ export class LessonOverlay {
       return;
     }
     this.el.className = `tut-card ${v.kind} ${side}`;
+    this.el.style?.setProperty('--tut-progress', v.progress ? `${Math.round((v.progress.at / v.progress.of) * 100)}%` : '100%');
+    this.el.style?.setProperty('--tut-auto', '0%');
+    this.el.setAttribute?.('aria-label', v.head);
     const keys = v.keys.length ? h('div', { class: 'tut-keys' }, ...v.keys.map((k) => h('kbd', { class: 'tut-key', text: k }))) : null;
-    const dots = v.progress ? h('div', { class: 'tut-dots', 'aria-label': `Step ${v.progress.at} of ${v.progress.of}` }, ...Array.from({ length: v.progress.of }, (_, i) => h('i', { class: i < v.progress!.at - 1 ? 'on' : i === v.progress!.at - 1 ? 'now' : '' }))) : null;
+    const count = v.progress ? h('span', { class: 'tut-count', text: `${v.progress.at}/${v.progress.of}`, 'aria-label': `Step ${v.progress.at} of ${v.progress.of}` }) : null;
+    this.nextBtn = v.next ? h('button', { class: 'tut-next', onclick: () => this.on.next() }, v.next, h('small', { text: 'Enter' })) : null;
     const actions = v.next || v.skip
       ? h('div', { class: 'tut-actions' },
-        v.next ? h('button', { class: 'tut-next', onclick: () => this.on.next() }, v.next, h('small', { text: 'Enter' })) : null,
+        this.nextBtn,
         v.skip ? h('button', { class: 'tut-skip', onclick: () => this.on.skip() }, v.skip) : null)
       : null;
     const parts: (HTMLElement | null)[] = [
-      h('div', { class: 'tut-head' }, h('span', { text: v.head }), dots),
+      h('div', { class: 'tut-head' }, h('span', { class: 'tut-badge', text: v.badge }), h('span', { class: 'tut-title', text: v.title }), count),
       h('p', { class: 'tut-text', text: v.text }),
       keys,
       v.pointer ? h('p', { class: 'tut-pointer', text: v.pointer }) : null,
@@ -73,6 +83,15 @@ export class LessonOverlay {
       actions,
     ];
     this.el.replaceChildren(...parts.filter((x): x is HTMLElement => !!x));
+    this.hotbarCheck = 0;
+    this.clearHotbar();
+  }
+
+  private nextBtn: HTMLElement | null = null;
+
+  /** How far a read step has got towards moving on by itself (0–1): fills the Next button. */
+  setAuto(frac: number): void {
+    this.el.style?.setProperty('--tut-auto', `${Math.round(Math.max(0, Math.min(1, frac)) * 100)}%`);
   }
 
   /** A step done: a tick and a brief light on the card before the next one shows. */
@@ -87,13 +106,39 @@ export class LessonOverlay {
   clear(): void {
     this.shown = '';
     this.light([]);
-    document.body?.classList?.remove('tut-on-left', 'tut-on-right');
+    document.body?.classList?.remove('tut-on-left', 'tut-on-right', 'tut-up', 'tut-obj');
     this.el.classList.add('off');
   }
 
   destroy(): void {
     this.clear();
     this.el.remove();
+  }
+
+  private hotbarCheck = 0;
+
+  private clearHotbar(): void {
+    const card = this.el;
+    if (!card?.style || card.classList?.contains('off')) return;
+    // Measured every few frames: reading layout every frame costs on a phone.
+    if (this.hotbarCheck++ % 12 !== 0) return;
+    card.style.marginLeft = '';
+    card.style.width = '';
+    const bar = typeof document !== 'undefined' ? document.querySelector('.hotbar:not(.off)') : null;
+    if (!bar) return;
+    const c = card.getBoundingClientRect();
+    const b = bar.getBoundingClientRect();
+    const overlap = b.width > 0 && c.bottom > b.top + 2 && c.top < b.bottom && c.left < b.right && c.right > b.left;
+    if (!overlap) return;
+    // The slots to the card's right (sideways phones): the card stops short of them.
+    if (b.left > c.left + c.width / 2) {
+      const w = Math.floor(b.left - 8 - c.left);
+      if (w >= 250) card.style.width = `${w}px`;
+      return;
+    }
+    const push = Math.ceil(b.right + 8 - c.left);
+    card.style.marginLeft = `${push}px`;
+    card.style.width = `calc(100% - ${push}px)`;
   }
 
   /** The lit elements are still in the page (the HUD rebuilds some on each visit). */
@@ -109,8 +154,10 @@ export class LessonOverlay {
     this.place();
   }
 
-  /** Each ring over its element, where it is now; hidden when the element isn't on screen. */
+  /** Each ring over its element, where it is now; hidden when the element isn't on screen. And the card itself kept
+   * clear of the hotbar column (upright phones put the slots down the left side, under the card). */
   private place(): void {
+    this.clearHotbar();
     this.lit.forEach((e, i) => {
       const ring = this.rings[i];
       if (!ring?.style) return;

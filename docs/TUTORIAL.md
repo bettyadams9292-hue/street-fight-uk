@@ -62,14 +62,22 @@ Inputs are keyboard / pad / touch. Unless a row says "(info)" or "(hint)", the l
 | The Red Lion: bar, lock-in, the Snug | `world/interiors.ts`, `recruit` | USE | in the pub | High Street | B: The Red Lion (first visit) | read | B |
 | Property | `realty/` | USE at Wrongmove | Riverside Centre | later | C: Property (hint at the agent) | read | C |
 | Bikes | `world/streetBikes.ts` | USE on a bike | bike racks | streets | C: Bikes (hint on the first bike) | read | C |
-| Business | `business/` | the basement | basement unlocked | later | C: The basement (hint on the first visit) | read | C |
+| The grow: tents, lights, extraction, heat, seeds | `business/catalogue.ts`, `production.ts` | USE at the terminal | the basement | later | G: 11 The grow (first visit to the basement) | the terminal used | G |
+| Money: pocket, tin, bank account, branches, cash machines | `progress/Progress.ts`, `money/banking.ts`, `atm.ts` | USE at the tin, a machine or a counter; CaliStore on the phone | out of a fight | after the first lessons | G: 09 Money (first time at the tin, a machine or a counter); B: Cashpoints, Your bank | an account opened, read | G/B |
+| The Brack Metro | `travel/metro.ts`, `world/metroLevels.ts` | walk down the stairs; USE the train's doors or the board | a station open (its district's boss beaten) | after the Gaffer | G: 10 The Metro (first time down a station) | the train or the board used | G |
+| Hotbar on screen | `Hud.setHotbar` | 1–4 / Back + X, Y, A, B / the slots | none | start | 1: Your hotbar (read) | read | A |
+| Pockets and bag (first look) | `inventoryUI` | I / bag button | out of a fight | start | 1: Your pockets and bag | bag opened | A |
+| Pussy out | `World.bailOut` | X / the red button | a fight you can run from | any | 4: Losing badly (read) | read | A |
+| Mugging | `World.findMuggable` | USE on a passer-by | out of a fight | streets | B: Mugging (when USE first offers it) | read | B |
+| Custody: bail or time | `world/custody.ts` | none | booked in | any | B: The Old Bill | read | B |
 
 ## Design
 
+- **How it runs (Nov 27 rework).** Steps you only read move on by themselves after time to read them (`readSeconds` in `TutorialManager.ts`: about 2.6 s plus a quarter of a second a word, 4.5–12 s, counted only while you're playing); the Next button fills as it goes and can be tapped to go sooner. The first card (Start / Skip the tutorial) and a guide's first card (Next / Not now) wait for you. Hints close themselves after 14 s, their Got it filling the same way. The card is one design for steps, guides and tips (`overlay.ts`, the `.tut-card` block of `theme.css`): number or Tip badge, title, step count, a hairline of progress along the top, the words, keycaps for the device in hand, a pill pointing the way, and the why. While a card is up the objective plate steps aside (unless the step is about it), the card keeps clear of the hotbar (beside it on upright phones, short of it sideways), and only its buttons take touches, so it never blocks the stick.
 - **Layers.**
   - **A (essential):** chapters 1–5. They run on a new game, at home and in the first fight. Every step can be skipped, and so can the whole tutorial.
   - **B and C (contextual):** a one-time card the first time you meet the thing (`HINTS`). They respect Settings → Tutorial hints.
-  - **G (guides):** short lessons for things met later (`GUIDES` in `lessons.ts`: 06 Jobs, 07 The hotbar, 08 Dealing), run on real events like the chapters. Each starts itself the first time you meet its thing (`start`: an event, or a check made every second, never in a fight), only once the first-run lessons are done and with Tutorial hints on. The first card has Not now (skips it; it's never offered again). Pause → Tutorials can start one, or replay one you've done. `save.tutorial.guide` keeps one in progress across a reload; `GUIDE_CHAPTERS` in `state.ts` must match `GUIDES` (`tests/tutorial.test.ts`).
+  - **G (guides):** short lessons for things met later (`GUIDES` in `lessons.ts`: 06 Jobs, 07 The hotbar, 08 Dealing, 09 Money, 10 The Metro, 11 The grow), run on real events like the chapters. Each starts itself the first time you meet its thing (`start`: an event, or a check made every second, never in a fight), only once the first-run lessons are done and with Tutorial hints on. The first card has Not now (skips it; it's never offered again). Pause → Tutorials can start one, or replay one you've done. `save.tutorial.guide` keeps one in progress across a reload; `GUIDE_CHAPTERS` in `state.ts` must match `GUIDES` (`tests/tutorial.test.ts`).
 - **Saves.**
   - `save.tutorial` holds the version, started, essential done, completed and skipped lesson ids, hints shown, the active step, and a guide in progress.
   - A save from before the tutorial counts as done, with every hint already shown, so existing players aren't marched through it.

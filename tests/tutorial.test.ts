@@ -36,7 +36,7 @@ import { control } from '../src/tutorial/controls';
 import { CHAPTERS, GUIDES, HINTS } from '../src/tutorial/lessons';
 import { acceptJob, boardOf, completeJob, failJob } from '../src/jobs/jobs';
 import { ESSENTIAL_CHAPTERS, GUIDE_CHAPTERS } from '../src/tutorial/state';
-import { TutorialManager, type TutorialHost } from '../src/tutorial/TutorialManager';
+import { TutorialManager, readSeconds, type TutorialHost } from '../src/tutorial/TutorialManager';
 import { World } from '../src/world/World';
 import { LEVELS } from '../src/world/levels';
 
@@ -133,6 +133,33 @@ test('reading steps can’t be mashed through: Next does nothing for the first m
   assert(r.at() === 'first-steps/intro', 'skipped by mashing');
   r.read();
   assert(r.at() === 'first-steps/walk', r.at());
+});
+
+test('a step you read moves on by itself once there’s been time to read it; the very first card waits for you', () => {
+  const p = fresh();
+  const r = rig(p);
+  r.frames(60 * 20);
+  assert(r.at() === 'first-steps/intro', `the first card waited (${r.at()})`);
+  r.read();
+  goTo(p, 'first-steps', 'objective');
+  const step = CHAPTERS.find((c) => c.id === 'first-steps')!.steps.find((s) => s.id === 'objective')!;
+  const need = readSeconds(step.text as string, step.why as string);
+  r.frames(Math.floor(60 * need * 0.8));
+  assert(r.at() === 'first-steps/objective', 'moved on too soon');
+  r.frames(Math.ceil(60 * need * 0.3) + 2);
+  assert(r.at() !== 'first-steps/objective', `still on it after ${need.toFixed(1)} s`);
+});
+
+test('every guide starts on something that happens and finishes on things the game really does', () => {
+  const stations = new Set(['contact', 'prep', 'tin', 'atm', 'bank_counter', 'metro_train', 'metro_board', 'terminal']);
+  for (const g of GUIDES) {
+    assert(!!g.start, `${g.id} has no start`);
+    for (const st of g.steps) if ('on' in st.done && st.done.on === 'station') {
+      const src = String(st.done.test);
+      assert([...src.matchAll(/'([a-z_]+)'/g)].every((m) => m[1] === 'station' || stations.has(m[1])), `${g.id}/${st.id}: ${src}`);
+    }
+  }
+  assert(GUIDES.some((g) => g.id === 'money') && GUIDES.some((g) => g.id === 'metro') && GUIDES.some((g) => g.id === 'grow'), 'money, metro and grow guides');
 });
 
 test('combat steps want the real thing: a punch that lands on Mo, not a kick, not a whiff', () => {

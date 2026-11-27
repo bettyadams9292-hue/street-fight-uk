@@ -15,6 +15,7 @@ import { SPAR_SPOT } from '../training/gym';
 import type { Action } from './controls';
 import { ITEMS } from '../items/items';
 import { slotFor } from '../items/hotbar';
+import { PLATFORM_X0 } from '../world/metroLevels';
 
 /** What the tutorial hears about, boiled down from the game's own events (TutorialManager's bridge). */
 export type TutEvent =
@@ -114,12 +115,14 @@ export const CHAPTERS: readonly ChapterDef[] = [
       { id: 'depth', text: 'Step towards the back wall, and back out.', keys: ['depth'], why: 'You can move in and out as well: it’s how you get round people.', done: { poll: (c) => c.stepped >= 0.5 } },
       { id: 'run', text: 'Break into a run.', keys: ['run'], why: 'Running gets you about quicker. In a fight it costs stamina.', done: { poll: (c) => c.ran >= 0.3 } },
       { id: 'jump', text: 'Jump.', keys: ['jump'], done: { on: 'jump' } },
-      { id: 'use', text: 'Use the biscuit tin on the desk.', keys: ['use'], why: 'Stand at something and its name comes up. That’s your money tin: cash in it is safe.', at: { area: 'home', x: -13.9, label: 'the desk in the bedroom' }, done: { on: 'station', test: (e) => e.type === 'station' && e.id === 'tin' } },
+      { id: 'use', text: 'Use the biscuit tin on the desk.', keys: ['use'], why: 'Stand at something and USE comes up. The tin is your stash: nobody can take what’s in it, but you can only get at it here at home.', at: { area: 'home', x: -13.9, label: 'the desk in the bedroom' }, done: { on: 'station', test: (e) => e.type === 'station' && e.id === 'tin' } },
       { id: 'health', text: 'Health: the red bar. Hits take it; food and rest bring it back.', why: 'At nothing, you’re done in and someone goes through your pockets.', focus: ['.hud-top .fighter-panel.left .bar.health'], done: { read: true } },
       { id: 'stamina', text: 'Stamina: the blue bar. Attacking, blocking and running use it.', why: 'Let it come back between flurries, or you’ll be too tired to fight.', focus: ['.hud-top .fighter-panel.left .bar.stamina'], done: { read: true } },
       { id: 'level', text: 'Your level, the cash on you, and the XP bar under them.', why: 'Fights pay cash and XP. A full bar is a level up, and a level up is a training point.', focus: ['.story-row .lvl', '.story-row .money', '.xp-bar'], done: { read: true } },
       { id: 'objective', text: 'What to do next is always here. Tap it to read all of it.', why: 'Badges beside your money are needs, like hunger: tap one to see what it wants.', focus: ['.objective', '.needs-chips'], done: { read: true } },
-      { id: 'phone', text: 'Get your phone out.', keys: ['phone'], why: 'Maps, cabs, your bank, messages and GraftWiki are all on it.', focus: ['.phone-btn'], done: { on: 'phone', test: (e) => e.type === 'phone' && e.open } },
+      { id: 'hotbar', text: 'Your hotbar: 1 medical, 2 food, 3 drink, 4 weapon.', keys: ['hotbar'], why: 'Each slot uses the next one in your pockets, in a fight too. Nothing on it yet: it fills as you pick things up.', focus: ['.hotbar'], done: { read: true } },
+      { id: 'bag', text: 'Open your pockets and bag.', keys: ['bag'], why: 'Four pockets to start; a bag from JD Streets adds more. Use, wear and drop things here.', focus: ['.bag-btn'], done: { poll: (c) => c.device === 'gamepad' || !!c.progress.save.flags['seen:bag'] } },
+      { id: 'phone', text: 'Get your phone out.', keys: ['phone'], why: 'Messages, Maps (with Run there, your car and Duber cabs), Jobs, Heat, your bank’s app and GraftWiki, which explains everything.', focus: ['.phone-btn'], done: { on: 'phone', test: (e) => e.type === 'phone' && e.open } },
       { id: 'phone-away', text: 'Have a look round, then put it away.', keys: ['phone'], done: { on: 'phone', test: (e) => e.type === 'phone' && !e.open } },
       { id: 'pause', text: 'Pause the game.', keys: ['pause'], why: 'Pause has Moves, Settings, Controls and Tutorials, where every lesson is.', focus: ['.pause-btn'], done: { on: 'pause', test: (e) => e.type === 'pause' && e.open } },
       { id: 'resume', text: 'Now carry on.', done: { on: 'pause', test: (e) => e.type === 'pause' && !e.open } },
@@ -159,7 +162,8 @@ export const CHAPTERS: readonly ChapterDef[] = [
     steps: [
       { id: 'out', text: 'Out the front door. The front door’s in the living room.', keys: ['use'], why: 'There are lads on the estate who don’t like the look of you.', done: { poll: (c) => c.world.level.id === 'estate' } },
       { id: 'fight', text: 'Win the fight. Use what Mo showed you.', at: { area: 'estate', label: 'the estate, out the front door' }, why: 'Mix your hits, block what you see coming, and don’t stand there empty.', done: { on: 'cleared', test: (e) => e.type === 'cleared' && !e.optional } },
-      { id: 'rewards', text: 'Fights pay: cash in your pocket, and XP towards your next level.', why: 'Cash on you can be taken if you get battered. Put it in the tin at home.', focus: ['.story-row .money', '.xp-bar'], done: { read: true } },
+      { id: 'rewards', text: 'Fights pay: cash in your pocket, and XP towards your next level.', why: 'Cash on you can be taken if you get battered, mugged or nicked. Put it in the tin at home, or a bank once you’ve got one.', focus: ['.story-row .money', '.xp-bar'], done: { read: true } },
+      { id: 'run-off', text: 'Losing badly? PUSSY OUT runs you off, but you drop some cash and they won’t forget it.', why: 'Never against a boss or the police. Every fight Mo didn’t start is real: lose and someone goes through your pockets.', done: { read: true } },
     ],
   },
   {
@@ -168,7 +172,7 @@ export const CHAPTERS: readonly ChapterDef[] = [
     steps: [
       { id: 'me', text: 'Open your fighter’s page: Me.', keys: ['me'], why: 'Your attributes, styles, injuries and training points.', done: { on: 'screen', test: (e) => e.type === 'screen' && e.name === 'me' } },
       { id: 'points', text: (c) => (c.progress.save.trainingPoints > 0 ? `You’ve ${c.progress.save.trainingPoints} training point${c.progress.save.trainingPoints === 1 ? '' : 's'} to spend.` : 'Every level up gives you a training point.'), why: 'Spend them on ranks at a fighting gym’s coach. Kit in your home gym trains your body for nothing.', done: { read: true } },
-      { id: 'end', text: 'That’s the basics. The rest, you’ll pick up as you go.', why: 'Pause → Tutorials has every lesson, if you want one again.', done: { read: true } },
+      { id: 'end', text: 'That’s the basics. The rest is shown to you the first time you meet it.', why: 'Jobs, money, the Metro, the grow and more each get a short guide when they come up. Pause → Tutorials has every lesson again.', done: { read: true } },
     ],
   },
 ];
@@ -224,6 +228,41 @@ export const GUIDES: readonly ChapterDef[] = [
       { id: 'refill', text: 'When one runs out, the next suitable thing in your pockets takes its place.', why: 'Change what’s in a slot in Pockets & bag: tap its row to cycle, or “Put on the hotbar”.', keys: ['bag'], done: { read: true } },
     ],
   },
+  {
+    id: 'money', num: '09', title: 'Money', category: 'Money and survival',
+    blurb: 'Pocket, tin and bank: where your money is safe and how you get at it.',
+    // The first time you go to put money away or get some out: the tin, a cash machine or a bank counter.
+    start: { on: 'station', test: (e) => e.type === 'station' && (e.id === 'tin' || e.id === 'atm' || e.id === 'bank_counter') },
+    steps: [
+      { id: 'pocket', text: 'Cash on you is the only money anyone can take.', why: 'Lose a fight, get mugged or nicked, and it goes. Don’t walk about with more than you need.', focus: ['.story-row .money'], done: { read: true } },
+      { id: 'tin', text: 'The tin at home is a stash nobody touches.', why: 'You can only pay in or take out at home, standing at the tin.', done: { read: true } },
+      { id: 'account', text: 'Open a bank account: CaliStore on your phone, pick Califax or Lloyd’s THC.', keys: ['phone'], why: 'Money in the bank is safe anywhere, and your card pays when your pocket’s short.', focus: ['.phone-btn'], done: { poll: (c) => !!c.progress.save.bank } },
+      { id: 'branch', text: 'Pay in and take out at your bank’s branch counter.', why: 'Califax is on the High Street, Lloyd’s THC on Market Square. Cash machines only give cash out; the phone app only shows your balance.', done: { read: true } },
+      { id: 'paying', text: 'Shops take your cash first, then the tin if you’re home, then your card.', why: 'Rent and the business pay into your account. Dealers and bungs are cash only.', done: { read: true } },
+    ],
+  },
+  {
+    id: 'metro', num: '10', title: 'The Metro', category: 'Exploration',
+    blurb: 'The Brack Metro: stations, trains that are in or not, and paying as you board.',
+    start: { poll: (_p, w) => w.level.id.startsWith('metro_') },
+    steps: [
+      { id: 'line', text: 'The Brack Metro: one line across town.', why: 'A district’s station opens once its boss is down. Shut ones say who you need to beat.', done: { read: true } },
+      { id: 'platform', text: 'Walk through the hall to the platform.', keys: ['move'], why: 'No barriers: you pay when you get on.', done: { poll: (c) => c.player.pos.x >= PLATFORM_X0 } },
+      { id: 'train', text: 'If a train’s in, its doors are open. If not, the board says how long.', why: 'Trains don’t wait for you: go back up the stairs and come down again to see if one’s in.', done: { read: true } },
+      { id: 'board', text: 'Use the train’s doors (or the board) to pick where to go.', keys: ['use'], why: 'The fare comes off your cash, then your card. You get off on that station’s platform.', done: { on: 'station', test: (e) => e.type === 'station' && (e.id === 'metro_train' || e.id === 'metro_board') } },
+    ],
+  },
+  {
+    id: 'grow', num: '11', title: 'The grow', category: 'Advanced',
+    blurb: 'The basement grow: tents, lights, extraction, heat and seeds.',
+    start: { poll: (_p, w) => w.level.id === 'basement' },
+    steps: [
+      { id: 'kit', text: 'Grow kit comes from B&THC Hydroponics on the trading estate.', why: 'You need a tent, a light and an extractor with a carbon filter before anything grows.', done: { read: true } },
+      { id: 'tents', text: 'A tent’s size sets how many plants it holds: a 2×2 takes 2, a 4×4 takes 6.', why: 'Each plant needs about 100 W of light. LED is efficient, HPS cheap and hot; each strain prefers some lamps.', done: { read: true } },
+      { id: 'air', text: 'Every tent needs its air changed: the extractor’s CFM has to keep up.', why: 'A clip fan in each tent stops rot. Lamp heat has to go somewhere: bigger fans or air con.', done: { read: true } },
+      { id: 'terminal', text: 'Run it all from the terminal: install kit, pick seeds, sell the crop.', keys: ['use'], why: 'It only grows while you play. A loud strain or high heat brings raids: get security in.', done: { on: 'station', test: (e) => e.type === 'station' && e.id === 'terminal' } },
+    ],
+  },
 ];
 
 /** One-off cards the first time you meet something (Settings → Tutorial hints turns them off). */
@@ -242,7 +281,7 @@ export interface HintDef {
 export const HINTS: readonly HintDef[] = [
   { id: 'pockets', title: 'Pockets and bag', category: 'Inventory', text: 'You picked something up. It’s in your pockets: four slots, more with a bag.', why: 'Open your bag to use, wear or drop things. JD Streets sells bags.', keys: ['bag'], focus: ['.bag-btn'], when: { on: 'picked' } },
   { id: 'weapons', title: 'Weapons', category: 'Inventory', text: 'You’ve picked up a weapon. Your attacks use it until it breaks.', why: 'Press grab to throw it (or drop it, if it won’t throw). The bar under its name is how much it’s got left.', keys: ['grab'], when: { on: 'held' } },
-  { id: 'streets', title: 'Getting about', category: 'Exploration', text: 'The streets run on into each other. Doors with a board over them go somewhere worth going.', why: 'Maps on your phone shows where everything is. Duber take you anywhere you’ve been.', keys: ['map'], when: { poll: (_p, w) => !w.level.deep && w.level.id !== 'home' && w.level.id !== 'estate' } },
+  { id: 'streets', title: 'Getting about', category: 'Exploration', text: 'The streets run on into each other. A shop’s sign says what’s inside: walk up to its door and USE.', why: 'Maps on your phone: pick a place and Run there, Drive your own car, or get a Duber cab. Once its boss is down, a district’s Metro station opens too.', keys: ['map'], when: { poll: (_p, w) => !w.level.deep && w.level.id !== 'home' && w.level.id !== 'estate' } },
   { id: 'shops', title: 'Shops and the pawn', category: 'Money and survival', text: 'Shops buy and sell. Cash Degenerator, on Market Square, gives the best money for valuables.', why: 'Stolen goods fetch less, and the police take them if you’re nicked.', when: { on: 'station', test: (e) => e.type === 'station' && ['clothes_counter', 'pawn_counter', 'cash_hatch', 'bar', 'jeweller_counter', 'furniture_counter', 'bike_counter', 'car_counter'].includes(e.id) } },
   { id: 'gyms', title: 'Gyms and coaches', category: 'Gyms', text: 'Coaches teach styles and sell new moves. Drill on the pads for drill XP, then see the coach for the next rank.', why: 'Ranks cost drill XP, training points and a fee. Tired from training? Rest at home.', when: { on: 'station', test: (e) => e.type === 'station' && ['style_coach', 'style_drill', 'gym_counter'].includes(e.id) } },
   { id: 'home', title: 'Home', category: 'Money and survival', text: 'Home is where you bank your cash in the tin, eat, wash, sleep and store things.', why: 'Sleep and rest heal you and ease injuries. Cash in the tin can’t be lost.', when: { poll: (p, w) => w.level.id === 'home' && p.has('cleared:estate:lads') } },
@@ -253,7 +292,7 @@ export const HINTS: readonly HintDef[] = [
   { id: 'finishers', title: 'Finishers', category: 'Combat', text: 'You’ve learned finishers. When someone’s beaten and reeling, special and hard punch ends it.', why: 'The prompt shows when one’s ready. They recharge between uses.', keys: ['special', 'hp'], when: { poll: (p) => p.save.moves.includes('finishers') } },
   { id: 'swap', title: 'Swapping styles', category: 'Fighting styles', text: 'You know two styles now. Swap between them in a fight.', why: 'Each has its own moves and its own strengths: swap when one isn’t working.', keys: ['swap'], when: { poll: (p) => p.save.styles.learned.length > 1 } },
   { id: 'heat', title: 'Heat', category: 'Police and crime', text: 'The police know about you here. That’s heat.', why: 'High enough, they’re waiting when you arrive, and losing any fight gets you nicked. It cools as you move about. The Heat app shows it all.', focus: ['.status-chip.heat'], when: { poll: (p) => p.save.heat > 0 } },
-  { id: 'police', title: 'The Old Bill', category: 'Police and crime', text: 'Get nicked and you’re booked in at the station: bail, or a night in the cells.', why: 'Some coppers can be bought. GraftWiki on your phone has the lot.', when: { on: 'police' } },
+  { id: 'police', title: 'The Old Bill', category: 'Police and crime', text: 'Get nicked and you’re booked in at the station. You leave by paying bail, or doing your time in a cell if you can’t.', why: 'The worse your record, the longer the time. Some coppers can be bought; going quietly beats fighting them. GraftWiki has the lot.', when: { on: 'police' } },
   // Jobs (src/jobs): the Jobs guide covers contacts; these are the bits you meet on your own.
   { id: 'street-job', title: 'Someone needs a hand', category: 'Money and survival', text: 'A yellow ! over someone: they’ve got a one-off job for you.', why: 'Walk up and USE. They pay when it’s done, wherever that is.', keys: ['use'], when: { poll: (_p, w) => !!w.jobGiver && Math.abs(w.jobGiver.f.pos.x - w.player.pos.x) < 8 } },
   { id: 'job-failed', title: 'A job gone wrong', category: 'Money and survival', text: 'The job’s off. Too slow, or what you were carrying is gone.', why: 'It costs standing with whoever gave it. Their board has more work: just don’t make a habit of it.', when: { on: 'job', test: (e) => e.type === 'job' && e.stage === 'failed' } },
@@ -269,13 +308,14 @@ export const HINTS: readonly HintDef[] = [
   // Ink & Iron on Hollins Estate (tattoo/tattoo.ts).
   { id: 'tattoo', title: 'Tattoos', category: 'Money and survival', text: 'Shaz does tattoos on your arms, chest and neck, and lasers them off. Sit down with her to try one on first.', why: 'It’s your own skin: the ink shows wherever your clothes don’t cover it.', when: { poll: (_p, w) => w.level.id === 'tattoo_studio' } },
   // Cashpoints on the streets (money/atm.ts).
-  { id: 'atm', title: 'Cashpoints', category: 'Money and survival', text: 'Pay your cash in here and it’s safe if you get battered. Take some out when you need it on you.', why: 'Califax and Lloyd’s THC machines are rare: the High Street, the City Centre, Kingsway and the Riverside Centre. Free in town, £2 a go elsewhere.', when: { on: 'station', test: (e) => e.type === 'station' && e.id === 'atm' } },
+  { id: 'atm', title: 'Cashpoints', category: 'Money and survival', text: 'A cash machine: check your balance and take cash out. It doesn’t take deposits.', why: 'Pay in at your bank’s branch counter. Your own bank’s machines are free; the other bank’s charge a fee.', when: { on: 'station', test: (e) => e.type === 'station' && e.id === 'atm' } },
   // Street dealers once you're dealing (business/streetDealers.ts).
   { id: 'dealer', title: 'The competition', category: 'Advanced', text: 'Purple £: someone else is dealing on this street. While he’s here your deals fetch less.', why: 'Buy off him at trade, tax him, or run him off: put him down and the corner’s yours for a while.', when: { poll: (_p, w) => !!w.rival && !w.rival.hostile } },
   { id: 'crew', title: 'Your crew', category: 'Crew', text: 'You’ve someone on your side now. They follow you and fight with you.', why: 'Crew on your phone: who follows you, who rests at home, and their kit.', when: { poll: (p) => p.save.companions.recruited.length > 0 } },
   { id: 'property', title: 'Property', category: 'Advanced', text: 'Wrongmove sell property: live in it, let it out for rent, or sell when prices rise.', why: 'Rent comes in while you’re out. Your bank’s app on the phone shows it.', when: { on: 'station', test: (e) => e.type === 'station' && (e.id === 'agent_desk' || e.id === 'agent_window') } },
   { id: 'bikes', title: 'Bikes', category: 'Advanced', text: 'You’re on a bike. Quicker than walking, but you’re off it if you take a hit.', why: 'Halfrauds sells your own; hire bikes and scooters wait at the kerb.', when: { poll: (p) => !!p.save.property.riding } },
-  { id: 'basement', title: 'The basement', category: 'Advanced', text: 'The basement’s yours to run a business from.', why: 'It pays while you’re out, but it draws the police if your heat gets high.', when: { poll: (_p, w) => w.level.id === 'basement' } },
+  { id: 'mug', title: 'Mugging', category: 'Police and crime', text: 'Out of a fight, USE on a passer-by mugs them for what they’re wearing and their wallet.', why: 'Some hand it over, some square up. Witnesses mean heat and maybe a 999 call, and it goes on your record.', keys: ['use'], when: { poll: (_p, w) => w.interactable?.kind === 'mug' } },
+  { id: 'branch', title: 'Your bank', category: 'Money and survival', text: 'Your bank’s branch: pay cash in and take it out over the counter.', why: 'Money in the bank is safe and pays for things on your card when you’re short of cash.', when: { on: 'station', test: (e) => e.type === 'station' && e.id === 'bank_counter' } },
 ];
 
 export const HINT_IDS: readonly string[] = HINTS.map((h) => h.id);

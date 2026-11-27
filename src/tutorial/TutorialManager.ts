@@ -37,6 +37,11 @@ export interface TutorialHost {
 const HINT_SECONDS = 14;
 /** A step you read stays up at least this long before Next does anything (no skipping it by mashing). */
 const READ_MIN = 0.4;
+/** A step you read moves on by itself after time enough to read it (tap Next to go sooner). */
+export function readSeconds(text: string, why = ''): number {
+  const words = `${text} ${why}`.trim().split(/\s+/).length;
+  return Math.max(4.5, Math.min(12, 2.6 + words * 0.24));
+}
 
 export class TutorialManager {
   private overlay: LessonOverlay;
@@ -48,6 +53,8 @@ export class TutorialManager {
   private ran = 0;
   private last: { x: number; z: number } | null = null;
   private time = 0;
+  /** Seconds a read step has been on screen while you're playing (pauses with the game). */
+  private readClock = 0;
   private hint: { def: HintDef; until: number } | null = null;
   private hintQueue: HintDef[] = [];
   private pollAt = 0;
@@ -172,8 +179,18 @@ export class TutorialManager {
     if (c) {
       this.direct(c, ctx);
       if (playing && 'poll' in c.step.done && this.ready(c.step, ctx) && c.step.done.poll({ ...ctx, walked: this.walked, stepped: this.stepped, ran: this.ran })) this.complete();
+      // A step you read moves on by itself once there's been time to read it (not the cards that ask a choice).
+      else if (playing && 'read' in c.step.done && !this.asksChoice(c)) {
+        this.readClock += dt;
+        const text = typeof c.step.text === 'function' ? c.step.text(ctx) : c.step.text;
+        const why = typeof c.step.why === 'function' ? c.step.why(ctx) : c.step.why;
+        const need = readSeconds(text, why);
+        this.overlay.setAuto(this.readClock / need);
+        if (this.readClock >= need) this.complete();
+      }
     } else if (playing) {
       this.pollHints(ctx);
+      if (this.hint) this.overlay.setAuto(1 - (this.hint.until - this.time) / HINT_SECONDS);
     }
     // The card keeps off your fighter: on the right while you're on the left of the screen.
     const sx = this.host.playerScreenX();
@@ -339,8 +356,15 @@ export class TutorialManager {
     if (def) this.hint = { def, until: this.time + HINT_SECONDS };
   }
 
+  /** The first card of the tutorial (Start or skip it all) and a guide's first card (Not now) wait for you. */
+  private asksChoice(c: { chapter: ChapterDef; index: number }): boolean {
+    if (this.replay) return false;
+    return (c.chapter.id === 'first-steps' && c.index === 0) || (this.save?.guide?.chapter === c.chapter.id && c.index === 0);
+  }
+
   private resetStep(): void {
     this.stepStarted = this.time;
+    this.readClock = 0;
     this.walked = 0;
     this.stepped = 0;
     this.ran = 0;
@@ -406,6 +430,8 @@ export class TutorialManager {
       return {
         kind: 'step',
         head: `${c.chapter.num} · ${c.chapter.title}${this.replay ? ' (replay)' : ''}`,
+        badge: c.chapter.num,
+        title: `${c.chapter.title}${this.replay ? ' · replay' : ''}`,
         text,
         why,
         keys: this.keys(s.keys, device),
@@ -418,7 +444,7 @@ export class TutorialManager {
     }
     if (this.hint) {
       const d = this.hint.def;
-      return { kind: 'hint', head: d.title, text: d.text, why: d.why, keys: this.keys(d.keys, device), next: 'Got it', skip: null, focus: [...(d.focus ?? []), ...this.targets(d.keys, device)] };
+      return { kind: 'hint', head: d.title, badge: 'Tip', title: d.title, text: d.text, why: d.why, keys: this.keys(d.keys, device), next: 'Got it', skip: null, focus: [...(d.focus ?? []), ...this.targets(d.keys, device)] };
     }
     return null;
   }
