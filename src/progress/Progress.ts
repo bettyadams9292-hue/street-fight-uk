@@ -512,21 +512,23 @@ export class Progress {
     return n;
   }
 
-  /** Money paid to you by transfer (rent, a sale, the business): into your account, or the tin with no account. */
+  /** Money paid to you (rent, a sale, the business): into your account, or into your hand with no account. Never the tin. */
   credit(amount: number): void {
     const n = Math.max(0, Math.round(amount));
+    // Into the account, or into your hand with no account. Never into the tin: that's yours to fill (toTin).
     if (this.save.bank) this.save.cash.bank += n;
-    else this.save.cash.tin += n;
+    else this.save.cash.pocket += n;
   }
 
   /**
-   * What you can pay with here: cash on you, then the tin if you're in the house, then your card if you've an
-   * account. `cash` counts only what's on you (bungs, dealers, buy-ins: nobody takes a card).
+   * What you can pay with: cash on you, then your card if you've an account. Never the tin: it's the emergency
+   * fund, and only you put money in or take it out (toTin / fromTin, at home). `cash` counts only what's on you
+   * (bungs, dealers, buy-ins: nobody takes a card).
    */
   spendable(how: PayHow = 'any'): number {
     const c = this.save.cash;
     if (how === 'cash') return c.pocket;
-    return c.pocket + (this.inHouse ? c.tin : 0) + (this.save.bank ? c.bank : 0);
+    return c.pocket + (this.save.bank ? c.bank : 0);
   }
 
   canAfford(amount: number, how: PayHow = 'any'): boolean {
@@ -863,7 +865,7 @@ export class Progress {
     return { ok: true };
   }
 
-  /** Pay: cash on you first, then the tin (in the house), then your card. `cash`: only what's on you. */
+  /** Pay: cash on you first, then your card. Never the tin (the emergency fund). `cash`: only what's on you. */
   pay(amount: number, how: PayHow = 'any'): boolean {
     const c = this.save.cash;
     const n = Math.max(0, Math.round(amount));
@@ -875,7 +877,6 @@ export class Progress {
       return t;
     };
     c.pocket -= take(c.pocket);
-    if (how === 'any' && this.inHouse) c.tin -= take(c.tin);
     if (how === 'any' && this.save.bank) c.bank -= take(c.bank);
     return true;
   }

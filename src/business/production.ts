@@ -331,7 +331,7 @@ export function sellStock(p: Progress): { ok: true; units: number; value: number
   return { ok: true, units, value };
 }
 
-/** Take the business's money: cash into your pocket, or paid into your account (the tin with no account). */
+/** Take the business's money: cash into your pocket, or paid into your account (your pocket with no account). */
 export function withdraw(p: Progress, to: 'pocket' | 'bank'): { ok: true; amount: number } | { ok: false; reason: string } {
   const b = p.save.basement;
   tickBusiness(b, p.save.playTime, p.wanted);

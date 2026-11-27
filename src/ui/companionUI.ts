@@ -44,7 +44,7 @@ export function recruitScreen(progress: Progress, id: string, close: () => void,
         armed = false;
         result(hireCompanion(progress, id), `${c.nickname} is with you. They’ll follow you out.`, msg, saved);
         rebuild();
-      }, armed ? 'Click again to confirm' : 'One-off fee, from your pocket then the tin'));
+      }, armed ? 'Click again to confirm' : 'One-off fee, from your pocket then your card'));
     }
     return rows;
   }, close);

@@ -302,7 +302,7 @@ test('Kerrigan cools a district and gets your gear back; if he\u2019s caught, th
   assert(!kerriganCool(p, 'Back Alleys', 0.9).ok, 'favour after being caught');
 });
 
-test('ring your crew: they pay, you owe them a quarter on top from the tin, and they won\u2019t follow you till then', () => {
+test('ring your crew: they pay, you owe them a quarter on top from your pockets (never the tin), and they won\u2019t follow you till then', () => {
   const p = fresh(0, 0);
   const id = Object.keys(COMPANIONS)[0];
   p.save.companions.recruited.push(id);
@@ -313,10 +313,11 @@ test('ring your crew: they pay, you owe them a quarter on top from the tin, and 
   assert(!p.save.record.length && p.save.police.owed?.left === owedFor(b.bail) && owedFor(b.bail) > b.bail, 'owed');
   assert(!p.save.companions.following.includes(id) && !followMe(p, id).ok, 'still following');
   assert(!crewToRing(p).length, 'can ring again while owing');
-  p.save.cash.tin = 100;
+  p.save.cash.tin = 900;
+  p.save.cash.pocket = 100;
   repayCrew(p);
-  assert(p.save.cash.tin === 0 && p.save.police.owed!.left === owedFor(b.bail) - 100, 'part paid');
-  p.save.cash.tin = 5000;
+  assert(p.save.cash.pocket === 0 && p.save.cash.tin === 900 && p.save.police.owed!.left === owedFor(b.bail) - 100, 'part paid, tin untouched');
+  p.save.cash.pocket = 5000;
   repayCrew(p);
   assert(!p.save.police.owed && followMe(p, id).ok, 'square again');
 });

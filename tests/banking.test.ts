@@ -59,7 +59,7 @@ ok('the choice survives a save; junk doesn’t', () => {
   assert.equal(sanitiseSave({ ...JSON.parse(JSON.stringify(p.save)), bank: 'barclays' }).bank, undefined);
 });
 
-ok('the tin: money in and out only in the house, and it pays only there', () => {
+ok('the tin: the emergency fund, money in and out only in the house and only by hand; it never pays', () => {
   const p = fresh();
   p.save.cash.tin = 0;
   p.save.cash.pocket = 100;
@@ -74,8 +74,9 @@ ok('the tin: money in and out only in the house, and it pays only there', () => 
   p.inHouse = false;
   assert.equal(p.canAfford(50), false, 'the tin is at home');
   p.inHouse = true;
-  assert.ok(p.pay(50), 'at home it pays');
-  assert.equal(p.save.cash.tin, 50);
+  assert.equal(p.canAfford(50), false, 'not even at home: take it out first');
+  assert.equal(p.pay(50), false);
+  assert.equal(p.save.cash.tin, 100, 'untouched');
 });
 
 ok('paying: cash first, then the card; some things are cash only', () => {
@@ -93,11 +94,13 @@ ok('paying: cash first, then the card; some things are cash only', () => {
   assert.equal(p.save.cash.bank, 430, 'cash only never touches the card');
 });
 
-ok('nothing floats: the phone app moves nothing; rent and sales go to the account (the tin with none)', () => {
+ok('nothing floats: the phone app moves nothing; rent and sales go to the account (your pocket with none, never the tin)', () => {
   const p = fresh();
   p.save.cash.tin = 0;
+  p.save.cash.pocket = 0;
   p.credit(100);
-  assert.equal(p.save.cash.tin, 100, 'no account: the tin');
+  assert.equal(p.save.cash.tin, 0, 'never the tin');
+  assert.equal(p.save.cash.pocket, 100, 'no account: in your hand');
   chooseBank(p, 'lloyds');
   p.credit(250);
   assert.equal(p.save.cash.bank, 250);

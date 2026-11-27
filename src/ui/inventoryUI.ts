@@ -710,7 +710,7 @@ export function clothesShopScreen(progress: Progress, ui: UIManager, a: ShopActi
         bad = false;
         a.changed();
         build();
-      }, lock ? `${SHOP_TIER_NAMES[itemShopTier(d)]}: ${lock}` : canAfford ? 'Pays from your pocket, then the tin' : 'Not enough money', canAfford && !lock ? 'primary' : ''),
+      }, lock ? `${SHOP_TIER_NAMES[itemShopTier(d)]}: ${lock}` : canAfford ? 'Pays from your pocket, then your card' : 'Not enough money', canAfford && !lock ? 'primary' : ''),
     ];
     if (d.wear && owned(selected)) {
       const carriedSt = s.inventory.find((x) => x.id === selected) ?? s.storage.find((x) => x.id === selected);

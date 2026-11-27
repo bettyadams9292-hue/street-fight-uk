@@ -126,7 +126,7 @@ export function isAllocationValid(allocated: Attributes): boolean {
 
 export function cleanName(raw: string): string {
   const name = raw.replace(/[^\p{L}\p{N} '\-.]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 16);
-  return name || 'Unknown';
+  return name || 'Grafter';
 }
 
 export function createCharacter(opts: { name: string; appearance: CharacterAppearance; background: BackgroundId; allocated: Attributes }): PlayerCharacter {

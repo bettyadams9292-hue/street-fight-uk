@@ -66,7 +66,7 @@ export function storeScreen(which: 'fridge' | 'cupboard', p: Progress, close: ()
     );
     if (shopping) {
       rows.push(
-        h('p', { class: 'hint', text: 'Paid from your pocket first, then the tin. It comes straight to the kitchen and goes in the fridge or the cupboards.' }),
+        h('p', { class: 'hint', text: 'Paid from your pocket first, then your card. It comes straight to the kitchen and goes in the fridge or the cupboards.' }),
         shopRow('Weekly shop', 'Bread, milk, eggs, butter, cheese, ham, bacon, sausages, beans, cereal, potatoes, veg, chicken, snacks.', `£${WEEKLY_SHOP_COST}`, () => {
           if (!p.pay(WEEKLY_SHOP_COST)) return msg('Not enough money', true);
           p.stockKitchen(STARTER_GROCERIES);

@@ -2,11 +2,11 @@
  * Money, and where it can move (`save.cash`, `Progress.pay`):
  * - Cash on you (`pocket`) pays anywhere and is what gets mugged, dropped and seized.
  * - The biscuit tin (`tin`) is a stash in the house: nobody can touch it, and money goes in or out only while
- *   you're in the house (`Progress.toTin` / `fromTin`, the tin screen). It also pays for anything bought at home.
+ *   you're in the house (`Progress.toTin` / `fromTin`, the tin screen). It is the emergency fund: nothing ever pays from it.
  * - The bank account (`bank`): the phone's bank app only shows the balance. Cash goes in at your bank's branch
  *   counter (`branchDeposit`) and comes out there or at a cash machine (`branchWithdraw`, money/atm.ts
  *   `withdraw`). Your card spends it anywhere once your cash runs out. Rent, sales and the businesses pay into it
- *   (`Progress.credit`; into the tin with no account yet).
+ *   (`Progress.credit`; into your pocket with no account yet).
  * Nothing moves between them any other way.
  *
  * Your bank (`save.bank`): Califax or Lloyd's THC, picked in the phone's CaliStore. The bank app on the phone is that
@@ -69,11 +69,10 @@ export function branchWithdraw(p: Progress, amount: number, branch: BankId): Bra
   return { ok: true, amount: n };
 }
 
-/** One line for a shop's header: what you can pay with here. */
+/** One line for a shop's header: what you can pay with (never the tin, which only you move money in and out of). */
 export function walletLine(p: Progress): string {
   const c = p.save.cash;
   const parts = [`£${c.pocket.toLocaleString('en-GB')} on you`];
-  if (p.inHouse) parts.push(`£${c.tin.toLocaleString('en-GB')} in the tin`);
   if (p.save.bank) parts.push(`£${c.bank.toLocaleString('en-GB')} on your card`);
   return parts.join(' · ');
 }

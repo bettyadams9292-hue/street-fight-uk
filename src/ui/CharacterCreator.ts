@@ -188,7 +188,7 @@ export function characterCreator(
       status.classList.add('warn');
       return;
     }
-    const character = createCharacter({ name: name || 'Unknown', appearance, background, allocated });
+    const character = createCharacter({ name: name || 'Grafter', appearance, background, allocated });
     cb.done({ character, appearance: character.appearance });
   }
 

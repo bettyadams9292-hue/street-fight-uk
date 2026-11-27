@@ -3,7 +3,8 @@
  * KERB_Z, and nobody walks out over it.
  */
 import { LEVELS } from '../src/world/levels';
-import { kerbFor, KERB_Z, kitStreet, planStreet } from '../src/city/street';
+import { BUILD_OUT, kerbFor, KERB_Z, kitStreet, planStreet } from '../src/city/street';
+import { stripNeighbours } from '../src/world/strip';
 import { CIVILIAN_DENSITY } from '../src/world/civilians';
 import { World } from '../src/world/World';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
@@ -70,6 +71,27 @@ test('vehicles parked in front of the fight are built on their own (so they can 
     }
   }
   assert(own > 0, 'no vehicles to fade anywhere');
+});
+
+console.log('District joins');
+test('where a street meets a district with its kerb at the front, the pavement builds out to meet it', () => {
+  let joins = 0;
+  for (const l of Object.values(LEVELS)) {
+    if (!kitStreet(l) || kerbFor(l) === null) continue;
+    const near = stripNeighbours(l.id);
+    const plan = planStreet(l);
+    for (const [side, id] of [['left', near.left], ['right', near.right]] as const) {
+      if (!id || kerbFor(LEVELS[id]) !== null) continue;
+      const other = planStreet(LEVELS[id]);
+      const theirKerb = other.surfaces.find((s) => s.kind === 'kerb')!.z0;
+      const end = side === 'left' ? plan.x0 : plan.x1;
+      const out = plan.surfaces.find((s) => s.kind === 'pavement' && s.z1 >= theirKerb - 0.01 && s.x0 <= end + 0.01 && s.x1 >= end - 0.01 && s.x1 - s.x0 >= BUILD_OUT - 0.05);
+      assert(out, `${l.id} → ${id}: the pavement stops short of the next district's kerb (z ${theirKerb})`);
+      assert(plan.surfaces.some((s) => s.kind === 'kerb' && Math.abs(s.z0 - theirKerb) < 0.01 && s.x0 <= end + 0.01 && s.x1 >= end - 0.01), `${l.id} → ${id}: no kerb along the build-out`);
+      joins++;
+    }
+  }
+  assert(joins >= 2, `only ${joins} joins checked`);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

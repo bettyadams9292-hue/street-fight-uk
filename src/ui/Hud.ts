@@ -56,7 +56,7 @@ function bars(side: 'left' | 'right'): BarSet {
  * training-ground controls.
  */
 /** The word on each hotbar slot's tag. */
-const HOTBAR_TAGS: Record<HotbarSlot, string> = { medic: 'MED', food: 'FOOD', drink: 'DRINK', weapon: 'WEAPON' };
+const HOTBAR_TAGS: Record<HotbarSlot, string> = { medic: 'MED', food: 'FOOD/DRINK', stamina: 'STAMINA', weapon: 'WEAPON' };
 
 export class Hud {
   readonly el: HTMLElement;
@@ -270,10 +270,27 @@ export class Hud {
    * condition and whether it's in your hands, and the wait after a use (a sweep over every slot, 0..1 left).
    * Hidden while a screen is open and outside the story.
    */
-  setHotbar(views: HotbarView[] | null, wait: number): void {
+  setHotbar(views: HotbarView[] | null, wait: number, boost: { wait: number; left: number | null } = { wait: 0, left: null }): void {
     this.hotbar.classList.toggle('off', !views);
     this.hotbar.style.setProperty('--hb-wait', String(Math.max(0, Math.min(1, wait))));
     this.hotbar.classList.toggle('waiting', wait > 0);
+    // The stamina slot has its own, longer wait and a cap a fight: its sweep is whichever wait is longer, and a
+    // pip count of what's left this fight; spent, it greys out.
+    const sb = this.hotbarSlots.get('stamina');
+    if (sb) {
+      const own = Math.max(Math.max(0, Math.min(1, boost.wait)), wait);
+      sb.btn.style.setProperty('--hb-wait', String(own));
+      sb.btn.classList.toggle('boost-wait', own > 0);
+      sb.btn.classList.toggle('capped', boost.left === 0);
+      const left = boost.left === null ? '' : String(boost.left);
+      if (sb.btn.dataset.left !== left) {
+        sb.btn.dataset.left = left;
+        let pill = sb.btn.querySelector<HTMLElement>('.hb-left');
+        if (!pill) sb.btn.append((pill = h('span', { class: 'hb-left' })));
+        pill.textContent = boost.left === null ? '' : boost.left === 0 ? 'MAX' : `${boost.left} left`;
+        pill.classList.toggle('off', boost.left === null);
+      }
+    }
     if (!views) return;
     const key = views.map((v) => `${v.stack?.uid ?? ''}:${v.stack?.id ?? ''}:${v.count}:${v.stack?.hits ?? ''}:${v.inHand?.uid ?? ''}:${v.inHand?.hits ?? ''}`).join('|');
     if (key === this.hotbarKey) return;
@@ -750,7 +767,7 @@ export class Hud {
       if (b.trailHold > 0.45) b.trail = Math.max(hp, b.trail - dt * 0.6);
     }
 
-    setText(b.name, f.name.toUpperCase());
+    setText(b.name, b === this.player ? playerLabel(f.name) : f.name.toUpperCase());
     const second = f.secondaryStyle ? ` \u00b7 swap: ${(f.usingSecondary ? f.primaryStyle : f.secondaryStyle).name}` : '';
     // Named grunts show what they are ("Street Thug") where everyone else shows their style.
     const styleText = (f.tag ?? f.style.name) + second;
@@ -768,4 +785,13 @@ export class Hud {
     b.root.classList.toggle('ko', f.isKO);
     setText(b.fatigue, f.isKO ? 'K.O.' : v.fatigue === 'exhausted' ? 'EXHAUSTED' : v.fatigue === 'tired' ? 'TIRED' : '');
   }
+}
+
+/**
+ * The player's name on the fight HUD. A creator left blank used to save "Unknown", which read as an unidentified
+ * fighter on your own bar: those (and any blank) show YOU.
+ */
+export function playerLabel(name: string): string {
+  const n = (name ?? '').trim();
+  return !n || /^unknown$/i.test(n) ? 'YOU' : n.toUpperCase();
 }

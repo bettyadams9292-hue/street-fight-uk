@@ -101,7 +101,7 @@ export function quote(now: Cut, wanted: Cut): { lines: QuoteLine[]; total: numbe
 export type CutResult = { ok: true; total: number } | { ok: false; reason: string };
 
 /**
- * Pay and have it done: pocket money first, then the tin (as every shop). The change is to your own look
+ * Pay and have it done: pocket money first, then the card (as every shop). The change is to your own look
  * (`save.character.appearance`), so it lasts, under whatever you're wearing.
  */
 export function getCut(p: Progress, wanted: Cut): CutResult {

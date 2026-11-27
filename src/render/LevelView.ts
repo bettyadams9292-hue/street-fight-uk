@@ -82,6 +82,9 @@ const STREET_THEMES: Theme[] = ['estate', 'high_street', 'city', 'residential', 
  * street furniture (sized from the same table as collision), lights, doors,
  * gates, levers, and the live pickups and weapons lying about.
  */
+/** How tall each searchable thing stands (m), for the sparkle over it. */
+const CONTAINER_TOP: Partial<Record<ContainerDef['kind'], number>> = { bin: 1.05, skip: 0.95, car: 1.4, drawers: 0.9, cupboard: 1.9, wardrobe: 2.0, crate: 0.7, locker: 1.85, bag: 0.4, dumpster: 1.3, till: 1.1 };
+
 export class LevelView {
   readonly group = new THREE.Group();
   readonly shadowLights: THREE.DirectionalLight[] = [];
@@ -183,6 +186,7 @@ export class LevelView {
     this.group.add(this.lightRig);
     this.rnd = seeded(hash(level.id));
     this.group.add(this.marker.root);
+    this.marker.measure = (x, z) => this.topAt(x, z);
     this.sun = new THREE.DirectionalLight(0x9fb0e0, 0.55);
     this.buildSteps = this.build();
     if (!deferBuild) this.finishBuild();
@@ -4204,7 +4208,8 @@ export class LevelView {
     const tile = this.mat('#e3dccb', 0.45);
     const tileBand = this.mat('#1f4fd1', 0.45);
     const dark = this.mat('#07080b', 1);
-    const rail = this.mat('#1d3a2a', 0.45, 0.4);
+    // Black railings, as on a British street (the green was the New York kit's subway look).
+    const rail = this.mat('#17191c', 0.45, 0.5);
     const light = this.mat('#fff4d6', 0.4, 0, { emissive: 0xfff0cc, emissiveIntensity: 1.1 });
     const paving = this.mat('#8d8a84', 0.9);
     // The steps, each a block down to the floor of the one below.
@@ -4343,6 +4348,8 @@ export class LevelView {
 
   private buildExitInner(ex: ExitDef): void {
     if (ex.seam) return this.buildSeam(ex);
+    // A Metro station's way out is its own tiled stairway (render/metroStation.ts): an open way up, never a door.
+    if (this.level.theme === 'metro') return;
     if (ex.kind === 'door') {
       const z = this.back + 0.05;
       // Stairs down to the subway: a stairwell in a gap in the buildings, not a door in a garage.
@@ -4604,12 +4611,12 @@ export class LevelView {
     if (!it) this.marker.hide();
     else {
       const bad = (it.kind === 'exit' && it.locked) || (it.kind === 'lever' && it.done) || (it.kind === 'container' && it.empty);
-      if (it.kind === 'exit') this.marker.show(it.x, this.back + 0.3, 0.5, 0.24, bad);
+      if (it.kind === 'exit') this.marker.show(it.x, this.back + 0.3, 0.5, 0.24, bad, 'door');
       else if (it.kind === 'item') this.marker.hide();
       // Someone you could mug: a ring round their feet, red (it's a crime).
-      else if (it.kind === 'mug') this.marker.show(it.x, it.z, 0.32, 0.26, true);
+      else if (it.kind === 'mug') this.marker.show(it.x, it.z, 0.32, 0.26, true, 'person');
       // Someone with a job, or at the far end of yours: a ring round their feet.
-      else if (it.kind === 'job' || it.kind === 'deal') this.marker.show(it.x, it.z, 0.32, 0.26, false);
+      else if (it.kind === 'job' || it.kind === 'deal') this.marker.show(it.x, it.z, 0.32, 0.26, false, 'person');
       else {
         const p = this.nearestProp(it.x, it.z);
         if (p) {
@@ -4619,6 +4626,29 @@ export class LevelView {
       }
     }
     this.marker.update(time);
+  }
+
+  /** How high whatever stands at (x, z) reaches: a ray down from just under a ceiling, skipping the marker. */
+  private topRay = new THREE.Raycaster();
+  private topAt(x: number, z: number): number | null {
+    this.topRay.set(new THREE.Vector3(x, 2.3, z), new THREE.Vector3(0, -1, 0));
+    this.topRay.far = 2.3;
+    // Plain meshes near the point only: sprites need a camera to be hit, people move, and the marker is ours.
+    const near: THREE.Object3D[] = [];
+    const box = new THREE.Box3();
+    this.group.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || !m.visible || o === this.marker.root) return;
+      if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+      box.copy(m.geometry.boundingBox!).applyMatrix4(m.matrixWorld);
+      if (x >= box.min.x - 0.01 && x <= box.max.x + 0.01 && z >= box.min.z - 0.01 && z <= box.max.z + 0.01) near.push(m);
+    });
+    try {
+      for (const h of this.topRay.intersectObjects(near, false)) if (h.point.y > 0.08) return h.point.y;
+    } catch {
+      /* a mesh that can't be hit: fall back to the default height */
+    }
+    return null;
   }
 
   /** The furniture or fitting a use spot belongs to: the nearest solid thing to it, within reach. */
@@ -4758,7 +4788,9 @@ export class LevelView {
       const searched = world.isSearched(c);
       m.visible = !searched;
       if (!searched) {
-        m.position.set(c.x, 1.45 + Math.sin(time * 2.5 + c.x) * 0.08, c.z);
+        // Just over the thing itself (a skip's lip, a bin's lid, a wardrobe's top) and a hand's width in front of
+        // it, never at a fixed chest height where a low skip left it hanging in the air against the wall.
+        m.position.set(c.x, (CONTAINER_TOP[c.kind] ?? 1.0) + 0.18 + Math.sin(time * 2.5 + c.x) * 0.05, c.z + 0.25);
         m.rotation.y = time * 2;
         ((m as THREE.Mesh).material as THREE.MeshBasicMaterial).opacity = 0.35 + 0.35 * Math.max(0, Math.sin(time * 3 + c.x * 1.7));
       }

@@ -1,5 +1,6 @@
 /**
- * The hotbar: four quick slots, one for something medical, one for food, one for a drink, one for a weapon. Each
+ * The hotbar: four quick slots, one for something medical, one for food and drink, one for a stamina booster (an
+ * energy drink, a gel, a shot), one for a weapon. Each
  * slot remembers an item (by id) and uses the next of it from your pockets; when you've none of that left it
  * pulls in the next suitable thing you're carrying, so a fight never stops for a trip to the bag. Change
  * what's in a slot from Pockets & bag.
@@ -9,19 +10,28 @@
 import type { ItemStack } from './Inventory';
 import { ITEMS, type ItemDef } from './items';
 
-export type HotbarSlot = 'medic' | 'food' | 'drink' | 'weapon';
-/** In key order: 1 medical, 2 food, 3 drink, 4 weapon (what you use up together, then the weapon). */
-export const HOTBAR_SLOTS: readonly HotbarSlot[] = ['medic', 'food', 'drink', 'weapon'];
-export const HOTBAR_LABELS: Record<HotbarSlot, string> = { medic: 'Medical', food: 'Food', drink: 'Drink', weapon: 'Weapon' };
+export type HotbarSlot = 'medic' | 'food' | 'stamina' | 'weapon';
+/** In key order: 1 medical, 2 food and drink, 3 stamina, 4 weapon (what you use up together, then the weapon). */
+export const HOTBAR_SLOTS: readonly HotbarSlot[] = ['medic', 'food', 'stamina', 'weapon'];
+export const HOTBAR_LABELS: Record<HotbarSlot, string> = { medic: 'Medical', food: 'Food and drink', stamina: 'Stamina', weapon: 'Weapon' };
 /** What an empty slot shows, faded: a painted icon (public/icons/hg), or `item:<id>` for that item's own icon. */
-export const HOTBAR_EMPTY_ICON: Record<HotbarSlot, string> = { medic: 'first_aid', food: 'food', drink: 'item:can_of_pop', weapon: 'bat' };
+export const HOTBAR_EMPTY_ICON: Record<HotbarSlot, string> = { medic: 'first_aid', food: 'food', stamina: 'item:energy_drink', weapon: 'bat' };
 
 /** Seconds between medical, food or drink uses from the hotbar (World.useHotbar): a choice in a fight, not a button to mash. Weapons don't wait. */
 export const HOTBAR_COOLDOWN = 1.5;
 
+/**
+ * Stamina boosters are capped so they can't carry a fight: `BOOST_COOLDOWN` seconds between any two (in or out of a
+ * fight), and at most `BOOSTS_PER_FIGHT` in one fight (`BOOSTS_PER_BOSS` against a boss). The count starts again
+ * once the fight's over (World.useItem).
+ */
+export const BOOST_COOLDOWN = 12;
+export const BOOSTS_PER_FIGHT = 3;
+export const BOOSTS_PER_BOSS = 2;
+
 /** What each slot is set to (item ids); null: pick for me. */
 export type HotbarSave = Record<HotbarSlot, string | null>;
-export const newHotbar = (): HotbarSave => ({ medic: null, food: null, drink: null, weapon: null });
+export const newHotbar = (): HotbarSave => ({ medic: null, food: null, stamina: null, weapon: null });
 
 export function sanitiseHotbar(v: unknown): HotbarSave {
   const out = newHotbar();
@@ -29,6 +39,13 @@ export function sanitiseHotbar(v: unknown): HotbarSave {
   for (const s of HOTBAR_SLOTS) {
     const id = r[s];
     if (typeof id === 'string' && ITEMS[id] && fitsSlot(s, ITEMS[id])) out[s] = id;
+  }
+  // Old saves had a drinks slot: what was in it goes where it belongs now (an energy drink to stamina, a can of
+  // pop or a flask of tea in with the food).
+  const old = r.drink;
+  if (typeof old === 'string' && ITEMS[old]) {
+    const to = slotFor(ITEMS[old]);
+    if (to && !out[to]) out[to] = old;
   }
   return out;
 }
@@ -38,10 +55,10 @@ export function fitsSlot(slot: HotbarSlot, d: ItemDef): boolean {
   if (slot === 'weapon') return !!d.weapon;
   if (!d.use || d.ingredient) return false;
   if (slot === 'medic') return d.icon === 'medkit';
-  // Drinks: cans, bottles and flasks (mostly stamina: handy mid-fight).
-  if (slot === 'drink') return d.icon === 'drink';
-  // Food: anything else you eat that does something for you.
-  return d.icon !== 'medkit' && d.icon !== 'drink' && !!((d.use.heal ?? 0) > 0 || (d.use.healPct ?? 0) > 0 || (d.use.stamina ?? 0) > 0 || (d.use.needs?.fill ?? 0) > 0);
+  // Stamina: boosters (energy drink, gel, shot, electrolyte drink), for getting your legs back mid-fight.
+  if (slot === 'stamina') return !!d.boost;
+  // Food and drink: anything else you eat or drink that does something for you.
+  return d.icon !== 'medkit' && !d.boost && !!((d.use.heal ?? 0) > 0 || (d.use.healPct ?? 0) > 0 || (d.use.stamina ?? 0) > 0 || (d.use.needs?.fill ?? 0) > 0 || (d.use.needs?.diet ?? 0) > 0);
 }
 
 /** The slot an item goes in, if any. */

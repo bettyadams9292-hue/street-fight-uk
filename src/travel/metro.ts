@@ -77,8 +77,27 @@ export function destinations(p: Progress, here: StationId): StationId[] {
   return STATIONS.filter((s) => s.id !== here && p.has(s.opens)).map((s) => s.id);
 }
 
+/**
+ * Why a ride from `from` to `to` can't happen, or null if it can. The travel layer's own check, so nothing gets
+ * round it: not the train screen, a direct call, a stale choice left from before a reload, or another entrance.
+ * Both stations must exist and be open (their district's boss down), they must differ, and a train must be in at
+ * `from` this visit.
+ */
+export function rideRefusal(p: Progress, from: StationId, to: StationId, v: MetroVisit | null = visit): string | null {
+  const a = STATIONS.find((s) => s.id === from);
+  const b = STATIONS.find((s) => s.id === to);
+  if (!a || !b) return 'That isn’t a station on the line.';
+  if (from === to) return `You’re already at ${a.name}.`;
+  if (!p.has(a.opens)) return `${a.name} station is shut.`;
+  if (!p.has(b.opens)) return `${b.name} is shuttered. It opens once its district is yours.`;
+  if (!v || v.station !== from || !v.train) return 'No train in. Go back up and come down again to see if one’s in.';
+  return null;
+}
+
 /** Pay for a ride on the train (cash, then your card). No barriers: you pay as you board. */
-export function payRide(p: Progress, from: StationId, to: StationId): { ok: true; paid: number } | { ok: false; reason: string } {
+export function payRide(p: Progress, from: StationId, to: StationId, v: MetroVisit | null = visit): { ok: true; paid: number } | { ok: false; reason: string } {
+  const why = rideRefusal(p, from, to, v);
+  if (why) return { ok: false, reason: why };
   const paid = Math.ceil(fare(from, to));
   if (!p.canAfford(paid)) return { ok: false, reason: `It's £${paid} to ${stationOf(to).name}: not enough cash on you or on your card.` };
   p.pay(paid);

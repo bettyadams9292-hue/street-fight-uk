@@ -139,8 +139,55 @@ function model(id: string): Partial<Record<PartName, Part>> | null {
     fixNormals(pos, nrm, idx);
     out[name] = { pos, nrm, col, idx };
   }
+  if (FIRE_ESCAPES.has(id) && out.solid && info.wall !== undefined) out.solid = withoutFireEscape(out.solid, info.wall);
   decoded.set(id, out);
   return out;
+}
+
+/**
+ * The New York kit's tenements, brownstones and lofts carry an iron fire escape and its drop ladder on the front,
+ * which no British street has. They are the near-black pieces standing out in front of the façade above the
+ * ground floor (landings, rails, stairs and the ladder, which stops about 2.35 m up); everything else stays,
+ * including the low railings and plinths at pavement level. Measured from the kit (tools: the models' dark parts
+ * in front of `wall`).
+ */
+const FIRE_ESCAPES = new Set(['nyc/bldg-brownstone', 'nyc/bldg-corner-tenement', 'nyc/bldg-loft-warehouse', 'nyc/bldg-tenement', 'nyc/bldg-walkup-infill']);
+function withoutFireEscape(part: Part, wall: number): Part {
+  const n = part.pos.length / 3;
+  const parent = new Int32Array(n).map((_, i) => i);
+  const find = (i: number): number => {
+    while (parent[i] !== i) i = parent[i] = parent[parent[i]];
+    return i;
+  };
+  for (let t = 0; t < part.idx.length; t += 3) {
+    const a = find(part.idx[t]);
+    parent[find(part.idx[t + 1])] = a;
+    parent[find(part.idx[t + 2])] = a;
+  }
+  const front = wall >= 0 ? 1 : -1;
+  const stats = new Map<number, { dark: boolean; out: boolean; minY: number; maxY: number }>();
+  for (let i = 0; i < n; i++) {
+    const r = find(i);
+    let s = stats.get(r);
+    if (!s) stats.set(r, (s = { dark: true, out: true, minY: Infinity, maxY: -Infinity }));
+    const c = Math.max(part.col[i * 3], part.col[i * 3 + 1], part.col[i * 3 + 2]);
+    if (c > 0.03) s.dark = false; // about 45/255 in sRGB
+    if ((part.pos[i * 3 + 2] - wall) * front < 0.05) s.out = false;
+    const y = part.pos[i * 3 + 1];
+    if (y < s.minY) s.minY = y;
+    if (y > s.maxY) s.maxY = y;
+  }
+  const drop = (v: number): boolean => {
+    const s = stats.get(find(v))!;
+    return s.dark && s.out && (s.minY > 2 || s.maxY > 2.6);
+  };
+  const keep: number[] = [];
+  for (let t = 0; t < part.idx.length; t += 3) {
+    if (drop(part.idx[t])) continue;
+    keep.push(part.idx[t], part.idx[t + 1], part.idx[t + 2]);
+  }
+  const idx = part.idx instanceof Uint32Array ? Uint32Array.from(keep) : Uint16Array.from(keep);
+  return { ...part, idx };
 }
 
 /**
@@ -514,8 +561,9 @@ export function* buildKitStreetSteps(plan: StreetPlan, o: { night?: boolean } = 
   const street = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 });
   // Asphalt, concrete and brick from the texture library, laid by world position (materials/streetDetail.ts).
   streetDetail(street, [...plan.area].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7), plan.ground);
-  // Windows and lamp heads glow; their own colour is ignored at night so every pane reads as warm light.
-  const litMat = new THREE.MeshStandardMaterial({ color: '#2a2018', emissive: new THREE.Color('#ffc880'), emissiveIntensity: o.night === false ? 0.3 : 0.6, roughness: 0.5 });
+  // Windows and lamp heads glow; their own colour is ignored at night so every pane reads as warm light. Kept low
+  // (0.4, was 0.6) and a third of rooms dark: at 0.6 under the bloom every frontage read as a wall of lamps.
+  const litMat = new THREE.MeshStandardMaterial({ color: '#2a2018', emissive: new THREE.Color('#ffc880'), emissiveIntensity: o.night === false ? 0.2 : 0.4, roughness: 0.5 });
   roomLight(litMat);
   const glassMat = new THREE.MeshStandardMaterial({ color: '#9fc0d0', roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.22, depthWrite: false });
   disposables.push(street, litMat, glassMat);
@@ -643,7 +691,7 @@ void main() {`,
     float r = vWin.z;
     float r2 = fract(r * 7.13);
     float r3 = fract(r * 13.7);
-    float on = step(0.22, r);
+    float on = step(0.32, r);
     vec3 tint = r3 > 0.86 ? vec3(0.55, 0.72, 1.2) : (r3 < 0.3 ? vec3(1.1, 0.82, 0.58) : vec3(1.0));
     float lamp = exp(-((uv.x - 0.5) * (uv.x - 0.5) * 5.0 + (uv.y - 0.95) * (uv.y - 0.95) * 6.0));
     vec3 room = tint * (0.28 + 0.8 * lamp) * mix(0.45, 1.0, smoothstep(0.0, 0.8, uv.y));
@@ -669,7 +717,7 @@ void main() {`,
   }`,
       );
   };
-  mat.customProgramCacheKey = () => 'room-light-2';
+  mat.customProgramCacheKey = () => 'room-light-3';
 }
 
 function signBoard(s: Sign): THREE.Mesh {

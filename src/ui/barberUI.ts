@@ -99,7 +99,7 @@ export function barberScreen(progress: Progress, ui: UIManager, a: BarberActions
         a.preview(wanted);
         build();
       },
-      q.lines.length ? (canAfford ? 'Pocket money first, then the tin' : 'Not enough money') : 'Tap a cut, a beard or a colour to try it',
+      q.lines.length ? (canAfford ? 'Pocket money first, then your card' : 'Not enough money') : 'Tap a cut, a beard or a colour to try it',
       q.lines.length && canAfford ? 'primary' : '',
     );
     const reset = menuButton('Keep my look', () => choose(cutOf(progress.save.character.appearance)), 'Back to how you came in');

@@ -120,7 +120,7 @@ export const CHAPTERS: readonly ChapterDef[] = [
       { id: 'stamina', text: 'Stamina: the blue bar. Attacking, blocking and running use it.', why: 'Let it come back between flurries, or you’ll be too tired to fight.', focus: ['.hud-top .fighter-panel.left .bar.stamina'], done: { read: true } },
       { id: 'level', text: 'Your level, the cash on you, and the XP bar under them.', why: 'Fights pay cash and XP. A full bar is a level up, and a level up is a training point.', focus: ['.story-row .lvl', '.story-row .money', '.xp-bar'], done: { read: true } },
       { id: 'objective', text: 'What to do next is always here. Tap it to read all of it.', why: 'Badges beside your money are needs, like hunger: tap one to see what it wants.', focus: ['.objective', '.needs-chips'], done: { read: true } },
-      { id: 'hotbar', text: 'Your hotbar: 1 medical, 2 food, 3 drink, 4 weapon.', keys: ['hotbar'], why: 'Each slot uses the next one in your pockets, in a fight too. Nothing on it yet: it fills as you pick things up.', focus: ['.hotbar'], done: { read: true } },
+      { id: 'hotbar', text: 'Your hotbar: 1 medical, 2 food and drink, 3 stamina, 4 weapon.', keys: ['hotbar'], why: 'Each slot uses the next one in your pockets, in a fight too. Nothing on it yet: it fills as you pick things up.', focus: ['.hotbar'], done: { read: true } },
       { id: 'bag', text: 'Open your pockets and bag.', keys: ['bag'], why: 'Four pockets to start; a bag from JD Streets adds more. Use, wear and drop things here.', focus: ['.bag-btn'], done: { poll: (c) => c.device === 'gamepad' || !!c.progress.save.flags['seen:bag'] } },
       { id: 'phone', text: 'Get your phone out.', keys: ['phone'], why: 'Messages, Maps (with Run there, your car and Duber cabs), Jobs, Heat, your bank’s app and GraftWiki, which explains everything.', focus: ['.phone-btn'], done: { on: 'phone', test: (e) => e.type === 'phone' && e.open } },
       { id: 'phone-away', text: 'Have a look round, then put it away.', keys: ['phone'], done: { on: 'phone', test: (e) => e.type === 'phone' && !e.open } },
@@ -179,8 +179,8 @@ export const CHAPTERS: readonly ChapterDef[] = [
 
 export const ESSENTIAL: readonly string[] = CHAPTERS.map((c) => c.id);
 
-/** Something to heal with in your pockets (the hotbar's medical, food or drink slots would take it). */
-const canHeal = (p: Progress) => p.save.inventory.some((st) => { const d = ITEMS[st.id]; const s = d ? slotFor(d) : null; return s === 'medic' || s === 'food' || s === 'drink'; });
+/** Something to heal with in your pockets (the hotbar's medical, food and drink, or stamina slots would take it). */
+const canHeal = (p: Progress) => p.save.inventory.some((st) => { const d = ITEMS[st.id]; const s = d ? slotFor(d) : null; return s === 'medic' || s === 'food' || s === 'stamina'; });
 
 /**
  * Guides: short lessons for things you meet later, run on real events like the chapters. Each starts itself the
@@ -223,8 +223,8 @@ export const GUIDES: readonly ChapterDef[] = [
     blurb: 'Four slots ready to use, in a fight too: medical, food, a drink and a weapon.',
     start: { poll: (p, w) => w.player.vitals.health < w.player.vitals.maxHealth * 0.6 && canHeal(p) },
     steps: [
-      { id: 'slots', text: 'Your hotbar: 1 medical, 2 food, 3 drink, 4 weapon.', keys: ['hotbar'], why: 'Each slot uses what’s in your pockets, so you don’t have to open your bag in a fight.', focus: ['.hotbar'], done: { read: true } },
-      { id: 'use', text: 'You’re hurt. Use your medical, food or drink slot.', keys: ['hotbar'], why: 'There’s a short wait between heals. Weapons never wait.', focus: ['.hotbar'], done: { on: 'hotbar' } },
+      { id: 'slots', text: 'Your hotbar: 1 medical, 2 food and drink, 3 stamina, 4 weapon.', keys: ['hotbar'], why: 'Each slot uses what’s in your pockets, so you don’t have to open your bag in a fight.', focus: ['.hotbar'], done: { read: true } },
+      { id: 'use', text: 'You’re hurt. Use your medical, or food and drink slot.', keys: ['hotbar'], why: 'There’s a short wait between heals. Weapons never wait.', focus: ['.hotbar'], done: { on: 'hotbar' } },
       { id: 'refill', text: 'When one runs out, the next suitable thing in your pockets takes its place.', why: 'Change what’s in a slot in Pockets & bag: tap its row to cycle, or “Put on the hotbar”.', keys: ['bag'], done: { read: true } },
     ],
   },
@@ -235,10 +235,10 @@ export const GUIDES: readonly ChapterDef[] = [
     start: { on: 'station', test: (e) => e.type === 'station' && (e.id === 'tin' || e.id === 'atm' || e.id === 'bank_counter') },
     steps: [
       { id: 'pocket', text: 'Cash on you is the only money anyone can take.', why: 'Lose a fight, get mugged or nicked, and it goes. Don’t walk about with more than you need.', focus: ['.story-row .money'], done: { read: true } },
-      { id: 'tin', text: 'The tin at home is a stash nobody touches.', why: 'You can only pay in or take out at home, standing at the tin.', done: { read: true } },
+      { id: 'tin', text: 'The tin at home is your emergency fund: nobody touches it, and nothing pays from it.', why: 'Only you put money in or take it out, standing at the tin.', done: { read: true } },
       { id: 'account', text: 'Open a bank account: CaliStore on your phone, pick Califax or Lloyd’s THC.', keys: ['phone'], why: 'Money in the bank is safe anywhere, and your card pays when your pocket’s short.', focus: ['.phone-btn'], done: { poll: (c) => !!c.progress.save.bank } },
       { id: 'branch', text: 'Pay in and take out at your bank’s branch counter.', why: 'Califax is on the High Street, Lloyd’s THC on Market Square. Cash machines only give cash out; the phone app only shows your balance.', done: { read: true } },
-      { id: 'paying', text: 'Shops take your cash first, then the tin if you’re home, then your card.', why: 'Rent and the business pay into your account. Dealers and bungs are cash only.', done: { read: true } },
+      { id: 'paying', text: 'Shops take your cash first, then your card. Never the tin: that’s your emergency fund, in and out by hand.', why: 'Rent and the business pay into your account. Dealers and bungs are cash only.', done: { read: true } },
     ],
   },
   {
