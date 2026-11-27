@@ -2717,6 +2717,8 @@ export class Game {
     const w = this.world;
     const p = this.progress;
     if (!w || !p) return;
+    this.tutorial.feed({ type: 'screen', name: 'bag' });
+    p.set('seen:bag');
     this.state = 'paused';
     this.touch.release();
     this.input.flush();
