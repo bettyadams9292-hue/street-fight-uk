@@ -49,7 +49,7 @@ import { DRUG_DEFS, DRUGS, dealingOpen, dealsOnYou, recordSale, SALE_HEAT, stree
 import { stripAreaOf } from '../jobs/jobs';
 import { checkJob, completeJob, jobStep, objectiveOf, spotIn, streetJob, STREET_CHANCE, TARGET_ARCH, timeLeft, type ActiveJob, type Job, type JobPaid } from '../jobs/jobs';
 import { isSubwayStairs, onStrip, stripIndex } from './strip';
-import { HOTBAR_COOLDOWN, hotbarView, refillHotbar, type HotbarSlot } from '../items/hotbar';
+import { BOOST_COOLDOWN, BOOSTS_PER_BOSS, BOOSTS_PER_FIGHT, HOTBAR_COOLDOWN, hotbarView, refillHotbar, type HotbarSlot } from '../items/hotbar';
 import { bossDropValue, lootTableFor, rollLoot } from '../items/loot';
 import type { AreaId, Progress } from '../progress/Progress';
 import { defaultAttributes } from '../stats/Stats';
@@ -3213,8 +3213,44 @@ export class World {
   }
 
   /** Use a consumable from the inventory screen, applying it to the fighter. */
+  /** Sim frame of the last stamina booster, and how many this fight (see BOOSTS_PER_FIGHT). */
+  private boostAt = -Infinity;
+  private boostsThisFight = 0;
+  private boostFighting = false;
+
+  /** The booster cap for the fight you're in: how many more you can take (null out of a fight). */
+  get boostsLeft(): number | null {
+    this.syncBoostFight();
+    if (!this.boostFighting) return null;
+    const cap = this.activeBoss || this.encounters.some((e) => e.status === 'active' && e.boss) ? BOOSTS_PER_BOSS : BOOSTS_PER_FIGHT;
+    return Math.max(0, cap - this.boostsThisFight);
+  }
+
+  /** The wait after a booster, 1 just taken .. 0 ready. */
+  get boostWait(): number {
+    return Math.max(0, 1 - (this.sim.frame - this.boostAt) / (BOOST_COOLDOWN * SIM_HZ));
+  }
+
+  /** A new fight starts the count again. */
+  private syncBoostFight(): void {
+    const now = this.inFight;
+    if (now && !this.boostFighting) this.boostsThisFight = 0;
+    this.boostFighting = now;
+  }
+
   useItem(uid: string): { ok: boolean; text: string } {
+    const st = this.progress.save.inventory.find((x) => x.uid === uid);
+    const boost = !!(st && ITEMS[st.id]?.boost);
+    if (boost) {
+      const left = this.boostsLeft;
+      if (left === 0) return { ok: false, text: this.activeBoss ? `No more boosters this fight (${BOOSTS_PER_BOSS} against a boss)` : `No more boosters this fight (${BOOSTS_PER_FIGHT} a fight)` };
+      if (this.boostWait > 0) return { ok: false, text: `Booster in ${Math.ceil((this.boostWait * BOOST_COOLDOWN))} s` };
+    }
     const r = this.progress.use(uid);
+    if (r.ok && boost) {
+      this.boostAt = this.sim.frame;
+      if (this.boostFighting) this.boostsThisFight++;
+    }
     if (!r.ok) return { ok: false, text: r.reason };
     if (r.treated) this.progress.applyModifiers(this.player, this.difficulty);
     const v = this.player.vitals;

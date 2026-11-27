@@ -3,6 +3,7 @@
  * next of its item from your pockets, works in a fight, and when its item runs out pulls in the next suitable
  * thing you carry. Changed from Pockets & bag; kept in the save; old saves start with "pick for me".
  */
+import { BOOST_COOLDOWN, BOOSTS_PER_BOSS, BOOSTS_PER_FIGHT } from '../src/items/hotbar';
 import { buySupply, packStamina, STAMINA_PER_POUND, SUPPLIES } from '../src/home/supplies';
 import { defaultAppearance } from '../src/character/Appearance';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
@@ -165,8 +166,30 @@ test('food and drink share slot 2; stamina boosters have slot 3, refilled from y
   assert(r.next === 'stamina_gel' && hotbarView(p.save, 'stamina').stack?.id === 'stamina_gel', `gel next: ${r.next}`);
   // Shares the wait with heals and food, so it can't be mashed either.
   assert(!w.useHotbar('stamina').ok && !w.useHotbar('food').ok, 'waits');
+  // A booster has its own, longer wait.
   wait(w, HOTBAR_COOLDOWN + 0.1);
+  assert(!w.useHotbar('stamina').ok, 'booster wait');
+  wait(w, BOOST_COOLDOWN);
   assert(w.useHotbar('stamina').ok, 'gel');
+});
+
+test('boosters are capped: a long wait between them, three a fight, two against a boss', () => {
+  const p = progress();
+  p.save.inventory = [];
+  p.giveItem('stamina_gel', 10);
+  const w = new World(street, p, { entry: street.entries[0].id, seed: 4, civilians: false });
+  w.spawnEnemy('thug', w.player.pos.x + 2.5, w.player.pos.z);
+  w.step(emptyCommand());
+  assert(w.boostsLeft === BOOSTS_PER_FIGHT, `in a fight: ${w.boostsLeft}`);
+  let used = 0;
+  for (let i = 0; i < 6; i++) {
+    w.player.vitals.stamina = 10;
+    if (w.useHotbar('stamina').ok) used++;
+    wait(w, BOOST_COOLDOWN + 0.1);
+  }
+  assert(used === BOOSTS_PER_FIGHT, `used ${used} in one fight`);
+  assert(w.boostsLeft === 0 && /No more boosters/.test(w.useHotbar('stamina').text), 'capped');
+  assert(BOOSTS_PER_BOSS < BOOSTS_PER_FIGHT, 'fewer against a boss');
 });
 
 test('an old save\'s drinks slot moves to where its item belongs', () => {

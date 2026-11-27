@@ -48,7 +48,7 @@ export function buySupply(p: Progress, id: string): { ok: boolean; text: string 
 /** The home computer's Supplements tab: one row per booster, what it does, the pack and the price. */
 export function suppliesBody(p: Progress, saved: () => void) {
   return (msg: (t: string, bad?: boolean) => void, rebuild: () => void): HTMLElement[] => [
-    h('p', { class: 'hint', text: 'Stamina boosters, delivered to the door at once. You pay for stamina: the stronger the booster, the more each one does. They go on your hotbar’s stamina slot (3).' }),
+    h('p', { class: 'hint', text: 'Stamina boosters, delivered to the door at once. You pay for stamina: the stronger the booster, the more each one does. They go on your hotbar’s stamina slot (3): 12 s between them, three a fight, two against a boss.' }),
     h('div', { class: 'sup-list' }, ...SUPPLIES.map((s) => {
       const d = ITEMS[s.id];
       const have = p.save.inventory.filter((x) => x.id === s.id).reduce((n, x) => n + x.qty, 0);

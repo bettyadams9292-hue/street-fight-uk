@@ -3138,3 +3138,9 @@ body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) *
 .hb-slot.food .hb-tag, .hb-slot.stamina .hb-tag { letter-spacing: 0; }
 .hb-slot.food .hb-tag { font-size: 8.5px; }
 .touch-ui .hb-slot.food .hb-tag { font-size: 7px; }
+/* The stamina slot: its own wait after a booster, how many are left this fight, greyed once you've had your lot. */
+.hotbar .hb-slot.stamina.boost-wait .hb-cd { opacity: 1; }
+.hb-slot.stamina.capped img { filter: grayscale(1) brightness(0.55); }
+.hb-left { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); z-index: 3; padding: 0 4px; font: 800 8px/1.25 var(--head); letter-spacing: 0.03em; color: #fff; background: #111317; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35); white-space: nowrap; pointer-events: none; }
+.hb-left.off { display: none; }
+.hb-slot.stamina.capped .hb-left { background: var(--accent-deep); }

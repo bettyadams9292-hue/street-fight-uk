@@ -1105,7 +1105,7 @@ export class Game {
       if (v.inHand && w.player.weapon) v.inHand = { ...v.inHand, hits: w.player.weapon.hits };
       return v;
     });
-    this.hud.setHotbar(views, w.hotbarWait);
+    this.hud.setHotbar(views, w.hotbarWait, { wait: w.boostWait, left: w.boostsLeft });
   }
 
   private goHome(fullHealth: boolean): void {

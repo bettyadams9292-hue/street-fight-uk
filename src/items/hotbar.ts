@@ -20,6 +20,15 @@ export const HOTBAR_EMPTY_ICON: Record<HotbarSlot, string> = { medic: 'first_aid
 /** Seconds between medical, food or drink uses from the hotbar (World.useHotbar): a choice in a fight, not a button to mash. Weapons don't wait. */
 export const HOTBAR_COOLDOWN = 1.5;
 
+/**
+ * Stamina boosters are capped so they can't carry a fight: `BOOST_COOLDOWN` seconds between any two (in or out of a
+ * fight), and at most `BOOSTS_PER_FIGHT` in one fight (`BOOSTS_PER_BOSS` against a boss). The count starts again
+ * once the fight's over (World.useItem).
+ */
+export const BOOST_COOLDOWN = 12;
+export const BOOSTS_PER_FIGHT = 3;
+export const BOOSTS_PER_BOSS = 2;
+
 /** What each slot is set to (item ids); null: pick for me. */
 export type HotbarSave = Record<HotbarSlot, string | null>;
 export const newHotbar = (): HotbarSave => ({ medic: null, food: null, stamina: null, weapon: null });
