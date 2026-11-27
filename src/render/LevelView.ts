@@ -82,6 +82,9 @@ const STREET_THEMES: Theme[] = ['estate', 'high_street', 'city', 'residential', 
  * street furniture (sized from the same table as collision), lights, doors,
  * gates, levers, and the live pickups and weapons lying about.
  */
+/** How tall each searchable thing stands (m), for the sparkle over it. */
+const CONTAINER_TOP: Partial<Record<ContainerDef['kind'], number>> = { bin: 1.05, skip: 0.95, car: 1.4, drawers: 0.9, cupboard: 1.9, wardrobe: 2.0, crate: 0.7, locker: 1.85, bag: 0.4, dumpster: 1.3, till: 1.1 };
+
 export class LevelView {
   readonly group = new THREE.Group();
   readonly shadowLights: THREE.DirectionalLight[] = [];
@@ -4204,7 +4207,8 @@ export class LevelView {
     const tile = this.mat('#e3dccb', 0.45);
     const tileBand = this.mat('#1f4fd1', 0.45);
     const dark = this.mat('#07080b', 1);
-    const rail = this.mat('#1d3a2a', 0.45, 0.4);
+    // Black railings, as on a British street (the green was the New York kit's subway look).
+    const rail = this.mat('#17191c', 0.45, 0.5);
     const light = this.mat('#fff4d6', 0.4, 0, { emissive: 0xfff0cc, emissiveIntensity: 1.1 });
     const paving = this.mat('#8d8a84', 0.9);
     // The steps, each a block down to the floor of the one below.
@@ -4343,6 +4347,8 @@ export class LevelView {
 
   private buildExitInner(ex: ExitDef): void {
     if (ex.seam) return this.buildSeam(ex);
+    // A Metro station's way out is its own tiled stairway (render/metroStation.ts): an open way up, never a door.
+    if (this.level.theme === 'metro') return;
     if (ex.kind === 'door') {
       const z = this.back + 0.05;
       // Stairs down to the subway: a stairwell in a gap in the buildings, not a door in a garage.
@@ -4758,7 +4764,9 @@ export class LevelView {
       const searched = world.isSearched(c);
       m.visible = !searched;
       if (!searched) {
-        m.position.set(c.x, 1.45 + Math.sin(time * 2.5 + c.x) * 0.08, c.z);
+        // Just over the thing itself (a skip's lip, a bin's lid, a wardrobe's top) and a hand's width in front of
+        // it, never at a fixed chest height where a low skip left it hanging in the air against the wall.
+        m.position.set(c.x, (CONTAINER_TOP[c.kind] ?? 1.0) + 0.18 + Math.sin(time * 2.5 + c.x) * 0.05, c.z + 0.25);
         m.rotation.y = time * 2;
         ((m as THREE.Mesh).material as THREE.MeshBasicMaterial).opacity = 0.35 + 0.35 * Math.max(0, Math.sin(time * 3 + c.x * 1.7));
       }

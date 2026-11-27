@@ -3,7 +3,7 @@ import { Rng } from '../core/Rng';
 import type { AreaId } from '../progress/Progress';
 import type { FacadeDef, FacadeKind, LevelDef, PropKind } from '../world/LevelTypes';
 import { propBox, propHalf } from '../world/LevelTypes';
-import { onStrip, stripNeighbours, isSubwayStairs, SUBWAY_GAP } from '../world/strip';
+import { onStrip, stripNeighbours, isSubwayStairs, SUBWAY_GAP, STRIP_BOUNDS } from '../world/strip';
 import { LOCKUP_HALF, LOCKUP_ID } from '../world/lockup';
 import { KIT_METRICS } from './polyKitMetrics';
 
@@ -233,6 +233,8 @@ export const KERB_Z = 0.45;
 /** Street lamps stand just behind the kerb, on the pavement's road edge. */
 export const LAMP_Z = KERB_Z - 0.16;
 const KERB_DEPTH = 0.3;
+/** How far a pavement builds out along the street where it meets a district with no road of its own. */
+export const BUILD_OUT = 3.2;
 const SHELL = 'cafe/cafe-storefront-unit';
 const SHELL_W = 8;
 const SHELL_DEPTH = 8;
@@ -698,6 +700,18 @@ export function kitStreet(level: LevelDef): boolean {
   return onStrip(level.id) && !!DISTRICTS[level.id];
 }
 
+/** Which ends of a street build the pavement out to meet a neighbour with no road of its own (see planStreet). */
+export function buildOutEnds(level: LevelDef): { left: boolean; right: boolean } {
+  const d = DISTRICTS[level.id];
+  if (!d || !(d.ground === 'street' || d.ground === 'suburb') || !kitStreet(level)) return { left: false, right: false };
+  const near = stripNeighbours(level.id);
+  const noRoad = (id: AreaId | null) => {
+    const g = id ? DISTRICTS[id]?.ground : undefined;
+    return !!g && g !== 'street' && g !== 'suburb';
+  };
+  return { left: noRoad(near.left), right: noRoad(near.right) };
+}
+
 /** Where the kerb is on this district's street (z), or null where there's no road. For pedestrians. */
 export function kerbFor(level: LevelDef): number | null {
   if (!kitStreet(level)) return null;
@@ -781,6 +795,33 @@ export function planStreet(level: LevelDef): StreetPlan {
     // Drains in the gutter and covers in the road.
     // UK utility covers (approved), sat into the road with just their rim proud.
     for (let x = x0 + 9 + rng.next() * 6; x < x1 - 4; x += 22 + rng.next() * 8) plan.approved.push({ id: 'manholeCover', x, y: -0.075, z: KERB_Z + KERB_DEPTH + 1.9 + rng.next(), ry: 0 });
+    // Joining a district whose ground runs out to the front (a plaza, lane, yard or quay keeps its kerb there), the
+    // pavement builds out to meet that kerb at the join, like a build-out at a junction: the kerb turns the corner
+    // and the double yellows follow it round. Before, the pavement stopped dead against the next district's paving
+    // and the kerb and lines jumped 1.5 m (districtJoin in tests/city.test.ts).
+    for (const [side, id] of [['left', near.left], ['right', near.right]] as const) {
+      const nd = id ? DISTRICTS[id] : null;
+      if (!nd || nd.ground === 'street' || nd.ground === 'suburb') continue;
+      const reach = BUILD_OUT;
+      // Their kerb is at their own front (their walkable depth plus the same 0.4 m).
+      const front = (STRIP_BOUNDS[id!]?.maxZ ?? level.bounds.maxZ) + 0.4;
+      const bx0 = side === 'left' ? x0 : x1 - reach;
+      const bx1 = side === 'left' ? x0 + reach : x1;
+      const inner = side === 'left' ? bx1 : bx0;
+      tile('pavement', paving, bx0, bx1, KERB_Z - 0.02, front, { y: size(paving).h > 0.01 ? -size(paving).h + 0.012 : 0.012 });
+      const s = size('nyc/curb-strip');
+      // Along the front, flush with the next district's kerb, and round the corner back to this street's kerb.
+      put('nyc/curb-strip', (bx0 + bx1) / 2 + (side === 'left' ? KERB_DEPTH / 2 : -KERB_DEPTH / 2), 0.012, front + KERB_DEPTH / 2, { sx: (bx1 - bx0 + KERB_DEPTH) / s.w, sy: 0.6 });
+      put('nyc/curb-strip', inner + (side === 'left' ? KERB_DEPTH / 2 : -KERB_DEPTH / 2), 0.012, (KERB_Z + front) / 2 + KERB_DEPTH / 2, { ry: HALF_PI, sx: (front - KERB_Z) / s.w, sy: 0.6 });
+      plan.surfaces.push({ kind: 'kerb', x0: Math.min(bx0, inner - KERB_DEPTH), x1: Math.max(bx1, inner + KERB_DEPTH), z0: front, z1: front + KERB_DEPTH });
+      plan.surfaces.push({ kind: 'kerb', x0: inner - KERB_DEPTH, x1: inner + KERB_DEPTH, z0: KERB_Z, z1: front });
+      // Double yellows: along the build-out's front and down its end, meeting the street's own.
+      const out = side === 'left' ? 1 : -1;
+      for (const off of [0.14, 0.29]) {
+        plan.blocks.push({ x: (bx0 + bx1) / 2 + (out * (KERB_DEPTH + off)) / 2, y: 0.014, z: front + KERB_DEPTH + off, w: bx1 - bx0 + KERB_DEPTH + off, h: 0.012, d: 0.07, colour: '#d9b521' });
+        plan.blocks.push({ x: inner + out * (KERB_DEPTH + off), y: 0.014, z: (KERB_Z + KERB_DEPTH + off + front + KERB_DEPTH + off) / 2, w: 0.07, h: 0.012, d: front - KERB_Z, colour: '#d9b521' });
+      }
+    }
   } else {
     // Districts with no pavement and kerb of their own (a precinct, a lane, a yard, a quay) keep
     // their ground where you walk, then a kerb and the road carry on in front, so the road runs
@@ -789,7 +830,9 @@ export function planStreet(level: LevelDef): StreetPlan {
     if (d.ground === 'plaza') {
       tile('plaza', d.pavement ?? 'nyc/tile-plaza', x0, x1, back, edge, { y: d.pavement && size(d.pavement).h > 0.01 ? -size(d.pavement).h : 0 });
     } else if (d.ground === 'lane') {
-      tile('cobbles', 'nyc/tile-plaza', x0, x1, back, edge, { tint: '#8c8780', scale: 0.5 });
+      // Plain slabs under the setts texture: the kit's plaza tile is a light and dark checkerboard, and tinted down for
+      // a lane its dark squares fell under the shader's asphalt threshold and drew as black squares (Back Alleys).
+      tile('cobbles', 'nyc/tile-sidewalk', x0, x1, back, edge, { tint: '#a29d95' });
     } else if (d.ground === 'yard') {
       tile('yard', 'hood/driveway-slab-tile', x0, x1, back, edge, { y: -0.05, tint: '#b9b6ae' });
     } else {

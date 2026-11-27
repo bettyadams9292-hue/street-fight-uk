@@ -750,7 +750,7 @@ export class Hud {
       if (b.trailHold > 0.45) b.trail = Math.max(hp, b.trail - dt * 0.6);
     }
 
-    setText(b.name, f.name.toUpperCase());
+    setText(b.name, b === this.player ? playerLabel(f.name) : f.name.toUpperCase());
     const second = f.secondaryStyle ? ` \u00b7 swap: ${(f.usingSecondary ? f.primaryStyle : f.secondaryStyle).name}` : '';
     // Named grunts show what they are ("Street Thug") where everyone else shows their style.
     const styleText = (f.tag ?? f.style.name) + second;
@@ -768,4 +768,13 @@ export class Hud {
     b.root.classList.toggle('ko', f.isKO);
     setText(b.fatigue, f.isKO ? 'K.O.' : v.fatigue === 'exhausted' ? 'EXHAUSTED' : v.fatigue === 'tired' ? 'TIRED' : '');
   }
+}
+
+/**
+ * The player's name on the fight HUD. A creator left blank used to save "Unknown", which read as an unidentified
+ * fighter on your own bar: those (and any blank) show YOU.
+ */
+export function playerLabel(name: string): string {
+  const n = (name ?? '').trim();
+  return !n || /^unknown$/i.test(n) ? 'YOU' : n.toUpperCase();
 }

@@ -1,6 +1,7 @@
 import { decorate, venueFor } from './ui/venueTheme';
 import { arriveBy, metroArea, metroVisit, payRide, rollTrain, setMetroVisit, stationAt } from './travel/metro';
 import { stationOf, stopsBetween, type StationId as MetroStop } from './travel/subway';
+import { safeResume } from './progress/resume';
 import { trainScreen } from './ui/metroUI';
 import { bankPrompt } from './ui/bankPrompt';
 import { custodyRecord, frontCounter, policeStop } from './ui/policeUI';
@@ -67,7 +68,8 @@ import { profileScreen } from './ui/profileUI';
 import { cabStop, nextExit, type TravelOption } from './map/worldMap';
 import type { ParkingSpot } from './property/parking';
 import { Phone } from './ui/phone/Phone';
-import { barScreen, rewardScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
+import { barScreen, sofaScreen, storyPauseMenu, tinScreen } from './ui/hub';
+import { outcomeScreen, type OutcomeRow } from './ui/outcome';
 import type { StationDef, StationId } from './world/LevelTypes';
 import { h } from './ui/dom';
 import { loadCharacterModels } from './render/characterModels';
@@ -827,7 +829,8 @@ export class Game {
     }
     // Still doing time: back in the cell, whatever the save says.
     if (p.save.police.serving) return this.enterArea('police_station' as AreaId, 'cell');
-    this.enterArea(p.save.area, p.save.entry);
+    const { area, entry } = safeResume(p);
+    this.enterArea(area, entry);
   }
 
   /** Build an area and drop the player in. Saves where you are so a closed tab resumes here. */
@@ -1262,36 +1265,36 @@ export class Game {
             this.state = 'paused';
             this.touch.release();
             this.updateTouchVisibility();
-            const lines = [
-              { text: `${boss.name} — ${boss.title} — beaten`, big: true },
-              { text: `“${boss.defeat}”` },
-              { text: `+£${cash} (in your pocket: bank it at home)` },
-              { text: `+${xp} XP · level ${this.progress!.save.level}` },
+            const rows: OutcomeRow[] = [
+              { label: 'Purse', value: `+£${cash.toLocaleString('en-GB')} in your pocket`, mood: 'gain' },
+              { label: 'Experience', value: `+${xp} XP, level ${this.progress!.save.level}`, mood: 'gain' },
             ];
-            if (items.length) lines.push({ text: `Took: ${items.join(', ')}` });
-            if (worth > 0) lines.push({ text: `What you took would sell for about \u00a3${worth.toLocaleString('en-GB')} (the jeweller, or Mr Kaur at the pawn shop)` });
-            if (left.length) lines.push({ text: `Pockets full. On the ground by ${boss.name}: ${left.join(', ')}. It stays there until you pick it up.` });
-            if (next) lines.push({ text: `Unlocked: ${next}`, big: true });
-            if (boss.flag === 'boss_dunc') lines.push({ text: 'Dunc\u2019s phone has one contact: THE BOSS. He\u2019s at Hale House, past the Pit.' });
-            if (gate && !gate.needs.length) lines.push({ text: `Unlocked: ${gate.name}`, big: true });
-            else if (gate) {
-              lines.push({ text: `${gate.name} is still locked. To open it:`, big: true });
-              for (const n of gate.needs) lines.push({ text: `\u2022 ${n.label}${n.where ? ` (${n.where})` : ''}` });
-            }
-            if (boss.flag === 'boss_final') lines.push({ text: 'That\u2019s the lot. The whole town is yours.', big: true });
-            for (const c of challenges) lines.push({ text: `${c.done ? '\u2713' : '\u2717'} ${c.name}: ${c.text}${c.paid ? ` (+\u00a3${CHALLENGE_PAY})` : c.done ? ' (done before)' : ''}` });
+            if (items.length) rows.push({ label: 'Took', value: items.join(', '), mood: 'gain' });
+            if (worth > 0) rows.push({ label: 'Worth about', value: `£${worth.toLocaleString('en-GB')} at the jeweller or the pawn shop` });
+            if (left.length) rows.push({ label: 'Left on the ground', value: `${left.join(', ')} (pockets full)`, mood: 'lost' });
+            if (next) rows.push({ label: 'Unlocked', value: next, mood: 'gain' });
+            if (gate && !gate.needs.length) rows.push({ label: 'Unlocked', value: gate.name, mood: 'gain' });
+            else if (gate) for (const n of gate.needs) rows.push({ label: `${gate.name} still needs`, value: `${n.label}${n.where ? ` (${n.where})` : ''}` });
+            for (const c of challenges) rows.push({ label: c.name, value: c.done ? (c.paid ? `Done, +£${CHALLENGE_PAY}` : 'Done before') : 'Missed', mood: c.done ? 'gain' : 'lost' });
+            const notes: string[] = [];
+            if (boss.flag === 'boss_dunc') notes.push('Dunc’s phone has one contact: THE BOSS. He’s at Hale House, past the Pit.');
+            if (boss.flag === 'boss_final') notes.push('That’s the lot. The whole town is yours.');
+            notes.push('Bank the cash at home or a branch: what’s in your pocket can be taken.');
             const shot = this.koShot;
             this.ui.replaceAll(
-              rewardScreen(
-                'VICTORY',
-                lines,
-                [
+              outcomeScreen({
+                tone: 'win',
+                kicker: `${boss.title} beaten on ${w.level.district}`,
+                title: `${boss.name} is done`,
+                lead: `“${boss.defeat}”`,
+                rows,
+                note: notes.join(' '),
+                actions: [
                   { label: 'Head home', sub: 'Bank your cash, train up, save', go: () => this.goHome(false) },
                   { label: 'Stay and explore', go: () => this.resume() },
                   ...(shot ? [{ label: 'Share KO photo', sub: 'Save or send the knockout', go: () => void shareKoPhoto(shot, boss.name) }] : []),
                 ],
-                ['you-win', 'level-complete'],
-              ),
+              }),
             );
           },
         };
@@ -1427,10 +1430,14 @@ export class Game {
           this.nicked(0.4);
           return;
         }
+        const had = p.save.cash.pocket;
         const lost = p.losePocket(0.25);
         p.save.stats.deaths++;
         p.save.mealBuff = false;
         this.saveGame();
+        const w = this.world;
+        const by = (w?.enemies ?? []).filter((e) => !e.isKO).map((e) => e.name);
+        const jobLost = job && (job.kind === 'deliver' || job.kind === 'deal' || job.stage === 'back');
         this.pending = {
           at: this.time + 0.4,
           show: () => {
@@ -1438,7 +1445,21 @@ export class Game {
             this.touch.release();
             this.updateTouchVisibility();
             this.ui.replaceAll(
-              rewardScreen('BATTERED', [{ text: 'You got done in.', big: true }, { text: lost > 0 ? `Someone went through your pockets: −£${lost}` : 'Nothing on you worth taking, at least.' }, { text: 'Anything you’ve already beaten stays beaten.' }], [{ label: 'Wake up at home', go: () => this.goHome(true) }], ['game-over', 'mission-failed']),
+              outcomeScreen({
+                tone: 'loss',
+                kicker: w ? `Knocked out on ${w.level.district}` : 'Knocked out',
+                title: 'Battered',
+                lead: by.length === 1 ? `${by[0]} left you on the pavement.` : by.length > 1 ? `${by[0]} and ${by.length - 1 === 1 ? by[1] : `${by.length - 1} others`} left you on the pavement.` : 'You got done in and left on the pavement.',
+                rows: [
+                  { label: 'Taken from your pockets', value: lost > 0 ? `−£${lost} of £${had}` : had > 0 ? 'Nothing' : 'Nothing on you', mood: lost > 0 ? 'lost' : 'kept' },
+                  ...(jobLost ? [{ label: 'Job', value: `Failed: ${job!.giver.split(' ')[0]} lost out`, mood: 'lost' as const }] : []),
+                  { label: 'Bank and tin', value: 'Untouched', mood: 'kept' },
+                  { label: 'Bag, clothes and jewellery', value: 'Still yours', mood: 'kept' },
+                  { label: 'Level and story', value: `Level ${p.save.level}, bosses stay beaten`, mood: 'kept' },
+                ],
+                note: 'Keep less cash on you: the tin at home and the bank are safe.',
+                actions: [{ label: 'Wake up at home', sub: 'Back on your feet, fully healed', go: () => this.goHome(true) }],
+              }),
             );
           },
         };
@@ -1626,6 +1647,11 @@ export class Game {
       case 'metro_train': {
         const here = stationAt(w.level.id);
         if (!here) return this.backToPlay();
+        const v = metroVisit();
+        if (!v || v.station !== here || !v.train) {
+          this.backToPlay();
+          return this.hud.toast(`No train in. The board says ${v?.minutes ?? 4} min. Go back up and come down again to see if one's in.`, 'info');
+        }
         screen = trainScreen(p, here, (to) => this.metroRide(here, to), close);
         break;
       }
@@ -3976,3 +4002,4 @@ function characterCreatorDefault(): CharacterAppearance {
   // A fresh random look each time you start a new fighter.
   return randomAppearance();
 }
+

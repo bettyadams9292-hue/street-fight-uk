@@ -345,7 +345,9 @@ kbd, .key {
 .bar.stamina { height: 7px; margin-top: 5px; }
 .fill.hp { background: linear-gradient(180deg, #e04b3d, var(--health) 50%, #8f1f19); }
 /* Ten notches painted on the health slot, like a kerb's segments. */
-.bar.health::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), rgba(14, 15, 12, 0.55) calc(10% - 2px) 10%); pointer-events: none; }
+/* Drawn as one tile repeated ten times, not a repeating gradient: Safari rounds a repeating gradient's stops at
+   small sizes and painted the bar in wide black bands at full health. Notches sit only between segments. */
+.bar.health::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent calc(100% - 1.5px), rgba(14, 15, 12, 0.45) calc(100% - 1.5px)) 0 0 / 10% 100% repeat-x; pointer-events: none; clip-path: inset(0 1.5px 0 0); }
 .fill.trail { background: var(--concrete-2); opacity: 0.9; }
 .fill.recover { background: repeating-linear-gradient(-45deg, #7a3a30 0 4px, #5a2a24 4px 8px); }
 .fill.st { background: linear-gradient(180deg, #6aa4ff, var(--neon-blue)); }
@@ -2591,7 +2593,12 @@ body.tut-up:not(.tut-obj) .hud .objective { display: none; }
 /* ==== Touch controls, v2 (TouchControls.ts): a thumb arc round a big PUNCH, glyph buttons, a USE pill ========= */
 .tc2 .stick-zone { left: 0; bottom: 0; width: 44%; height: 62%; }
 .tc2 .stick-base { width: 128px; height: 128px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02) 70%); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.22); }
-.tc2 .stick-knob { width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.95), rgba(220, 220, 228, 0.82)); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); }
+.tc2 .stick-knob { width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.62), rgba(220, 220, 228, 0.42)); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 0 0 1.5px rgba(255, 255, 255, 0.5); transition: background 0.12s; }
+/* Held: the knob firms up so you can see it under your thumb; let go and it goes back to glass. The base never
+   fills: iOS painted it as a solid white disc when a long press started a selection or a tap highlight on it. */
+.tc2 .stick-base.live .stick-knob { background: radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.92), rgba(220, 220, 228, 0.78)); }
+.tc2 .stick-base.live { background: radial-gradient(circle, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03) 70%); }
+.touch-controls, .touch-controls * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .tc2 .tc-cluster { position: absolute; width: 0; height: 0; right: calc(var(--safe-r) + 22px + var(--tb-big, 84px) / 2); bottom: calc(var(--safe-b) + 18px + var(--tb-big, 84px) / 2); pointer-events: none; }
 .tc2 .touch-btn {
   position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
@@ -3059,4 +3066,60 @@ body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) *
   .tut-key { min-height: 22px; font-size: 12px; }
   .tut-actions { margin-top: 8px; }
   .tut-next { min-height: 30px; }
+}
+
+/* ---- Result card (ui/outcome.ts): knocked out, nicked, jobs, bosses -------------------------------------------
+   One layout for every "how did it go" moment: a strip of tape in the outcome's colour, a kicker saying where,
+   the title, one line saying what happened, a receipt-style ledger of what was lost and what was kept, and one
+   way on. Squared plates, no pills, no floating black slab: the card sits on a smoked view of the street. */
+.screen.oc-screen { display: flex; align-items: center; justify-content: center; padding: calc(18px + var(--safe-t, 0px)) 18px calc(18px + var(--safe-b, 0px)); background: radial-gradient(120% 90% at 50% 40%, rgba(8, 9, 12, 0.55), rgba(8, 9, 12, 0.9)); overflow-y: auto; }
+.oc-card { position: relative; width: min(520px, 100%); padding: 30px 28px 24px; background: linear-gradient(180deg, rgba(24, 26, 30, 0.97), rgba(15, 16, 19, 0.97)); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 24px 60px rgba(0, 0, 0, 0.55); color: #f2f0ea; text-align: left; animation: oc-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.oc-tape { position: absolute; left: -8px; right: 46%; top: -12px; height: 22px; background: var(--accent); transform: rotate(-1.6deg); clip-path: polygon(0 12%, 3% 0, 97% 6%, 100% 30%, 98% 100%, 2% 88%); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35); }
+.oc-win .oc-tape { background: #f2f0ea; }
+.oc-info .oc-tape { background: var(--neon-blue); }
+.oc-kicker { margin: 0 0 4px; font: 600 13px/1.3 var(--ui2); color: var(--muted); }
+.oc-title { margin: 0; font: 900 clamp(46px, 9vw, 72px)/0.92 var(--display); text-transform: uppercase; letter-spacing: 0.01em; color: #fff; border: 0; padding: 0; background: none; }
+.oc-loss .oc-title { color: var(--accent); }
+.oc-lead { margin: 10px 0 18px; font: 500 17px/1.4 var(--ui2); color: #e6e3db; max-width: 40ch; }
+.oc-ledger { border-top: 2px solid rgba(255, 255, 255, 0.85); }
+.oc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: baseline; padding: 9px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.16); }
+.oc-label { font: 500 14px/1.3 var(--ui2); color: var(--muted); }
+.oc-value { font: 700 18px/1.2 var(--head); text-align: right; color: #f2f0ea; }
+.oc-row.lost .oc-value { color: #ff6a6f; }
+.oc-row.gain .oc-value { color: #8fd18a; }
+.oc-row.kept .oc-value::before { content: '✓ '; color: #8fd18a; font-weight: 900; }
+.oc-note { margin: 14px 0 0; font: 500 14px/1.4 var(--ui2); color: var(--muted); }
+.oc-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+.oc-act { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 13px 18px 12px; border: 0; border-radius: 0; background: rgba(255, 255, 255, 0.08); color: #f2f0ea; text-align: left; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
+.oc-act.primary { background: var(--accent); color: #fff; box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); }
+.oc-win .oc-act.primary { background: #f2f0ea; color: var(--ink); }
+.oc-act-label { font: 800 24px/1 var(--head); text-transform: uppercase; letter-spacing: 0.02em; }
+.oc-act-sub { font: 500 13px/1.3 var(--ui2); opacity: 0.85; }
+.oc-act:hover, .oc-act.focused, .oc-act:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.oc-act.primary:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6); }
+@keyframes oc-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .oc-card { animation: none; } }
+/* Phone held sideways: little height, so the ledger goes two columns and the button sits beside the title. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .oc-card { width: min(760px, 100%); padding: 20px 22px 16px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 26px; }
+  .oc-kicker, .oc-title, .oc-lead { grid-column: 1; }
+  .oc-title { font-size: 44px; }
+  .oc-lead { margin: 6px 0 0; font-size: 15px; }
+  .oc-ledger { grid-column: 2; grid-row: 1 / span 4; align-self: start; }
+  .oc-row { padding: 6px 0; grid-template-columns: max-content minmax(0, 1fr); }
+  .oc-value { font-size: 16px; }
+  .oc-note { grid-column: 2; font-size: 13px; margin-top: 8px; }
+  .oc-actions { grid-column: 1; grid-row: 4; margin-top: 12px; }
+}
+@media (orientation: portrait) and (max-width: 700px) {
+  .oc-card { padding: 26px 20px 20px; }
+  .oc-lead { font-size: 16px; margin-bottom: 14px; }
+  .oc-row { grid-template-columns: 1fr; gap: 2px; }
+  .oc-value { text-align: left; }
+}
+/* Compact fight HUD on an upright phone: name and bar only. The style lines ran under the other fighter's bar and
+   the buttons ("Hooded Fighter · swap: Boxing" over the bag); sideways phones already hid them (max-height 460). */
+@media (orientation: portrait) and (max-width: 700px) {
+  .hud .style-row { display: none; }
+  .hud .fighter-panel .name-row { font-size: 15px; }
 }

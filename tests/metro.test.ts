@@ -11,9 +11,10 @@ import { newSave, Progress, type AreaId } from '../src/progress/Progress';
 import { LEVELS } from '../src/world/levels';
 import { World } from '../src/world/World';
 import { ENTRANCE, PLATFORM_X0 } from '../src/world/metroLevels';
+import { safeResume } from '../src/progress/resume';
 import { exitLocked } from '../src/world/World';
 import { STATIONS, fare } from '../src/travel/subway';
-import { arriveBy, destinations, metroArea, payRide, rollTrain, setMetroVisit } from '../src/travel/metro';
+import { arriveBy, destinations, metroArea, payRide, rideRefusal, rollTrain, setMetroVisit } from '../src/travel/metro';
 
 let passed = 0;
 const ok = (name: string, fn: () => void) => {
@@ -67,10 +68,11 @@ ok('no barriers: from the stairs you walk straight down the hall onto the platfo
 
 ok('you pay as you board: cash, then card; not enough and you stay', () => {
   const p = fresh();
+  const v = { station: 'tanner_road' as const, train: true, minutes: 0, arrived: false };
   p.save.cash.pocket = 1;
-  assert.equal(payRide(p, 'tanner_road', 'riverside').ok, false);
+  assert.equal(payRide(p, 'tanner_road', 'riverside', v).ok, false);
   p.save.cash.pocket = 20;
-  const r = payRide(p, 'tanner_road', 'market_square');
+  const r = payRide(p, 'tanner_road', 'market_square', v);
   assert.ok(r.ok && r.paid === Math.ceil(fare('tanner_road', 'market_square')));
   assert.equal(p.save.cash.pocket, 20 - Math.ceil(fare('tanner_road', 'market_square')));
 });
@@ -115,4 +117,36 @@ ok('on a street with a station, passers-by turn in at the stairs and walk down o
   assert.ok(before.size > 0);
 });
 
+
+ok('the travel layer refuses every ride the screen would: locked, same station, no train, stale choices', () => {
+  const p = new Progress(newSave(createCharacter({ name: 'B', appearance: defaultAppearance('male'), background: 'estate_scrapper', allocated: emptyAllocation() })));
+  p.save.cash.pocket = 500;
+  const v = (station: 'tanner_road' | 'high_street', train = true) => ({ station, train, minutes: 0, arrived: false });
+  // Nothing open yet: not even a ride from a station you somehow stand in.
+  assert.ok(rideRefusal(p, 'tanner_road', 'high_street', v('tanner_road')));
+  p.save.flags.boss_gaffer = true;
+  assert.equal(rideRefusal(p, 'tanner_road', 'high_street', v('tanner_road')), null, 'both open, train in');
+  assert.ok(rideRefusal(p, 'tanner_road', 'market_square', v('tanner_road'))?.includes('shuttered'), 'a locked destination');
+  assert.ok(rideRefusal(p, 'tanner_road', 'tanner_road', v('tanner_road')), 'same station');
+  assert.ok(rideRefusal(p, 'tanner_road', 'high_street', v('tanner_road', false)), 'no train in');
+  assert.ok(rideRefusal(p, 'tanner_road', 'high_street', v('high_street')), 'a visit to another station');
+  assert.ok(rideRefusal(p, 'tanner_road', 'high_street', null), 'no visit at all (a reload)');
+  assert.ok(rideRefusal(p, 'tanner_road', 'nowhere' as never, v('tanner_road')), 'not a station');
+  const before = p.save.cash.pocket;
+  assert.equal(payRide(p, 'tanner_road', 'market_square', v('tanner_road')).ok, false);
+  assert.equal(p.save.cash.pocket, before, 'a refused ride costs nothing');
+  assert.equal(p.save.metro.rides, 0);
+});
+ok('an old save left in a shut station comes back up to the street; a lost arrival spot falls back', async () => {
+  const { safeResume } = await import('../src/progress/resume');
+  const p = new Progress(newSave(createCharacter({ name: 'C', appearance: defaultAppearance('male'), background: 'estate_scrapper', allocated: emptyAllocation() })));
+  p.save.area = 'metro_market_square' as AreaId;
+  p.save.entry = 'platform';
+  assert.deepEqual(safeResume(p), { area: ENTRANCE.market_square.area, entry: 'metro_market_square' });
+  p.save.flags.boss_ratcatcher = true;
+  assert.deepEqual(safeResume(p), { area: 'metro_market_square', entry: 'platform' }, 'open: stays');
+  p.save.area = 'high_street' as AreaId;
+  p.save.entry = 'cab_home_gone';
+  assert.equal(safeResume(p).entry, LEVELS.high_street.entries[0].id);
+});
 console.log(`metro: ${passed} passed, 0 failed`);

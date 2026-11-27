@@ -115,7 +115,11 @@ export function isSeam(ex: ExitDef): boolean {
  * after, drops the side doors that used to lead from one street to another,
  * and makes sure every district has a 'left' and a 'right' entry.
  */
+/** Each district's bounds as joined, so a street can match its neighbour at the join (kerb, build-out). */
+export const STRIP_BOUNDS: Partial<Record<AreaId, LevelDef['bounds']>> = {};
+
 export function joinStrip(levels: Record<AreaId, LevelDef>): void {
+  for (const id of STRIP) STRIP_BOUNDS[id] = levels[id].bounds;
   STRIP.forEach((id, i) => {
     const lvl = levels[id];
     const { minX, maxX } = lvl.bounds;

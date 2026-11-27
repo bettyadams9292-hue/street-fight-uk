@@ -125,6 +125,16 @@ function lineMapTexture(here: StationId): THREE.CanvasTexture {
   return tex(c);
 }
 
+/** Set the largest font, up to `max` px, at which `text` fits `width` (never clipped at the board's edge). */
+function fitFont(g: CanvasRenderingContext2D, text: string, width: number, max: number, font: string): void {
+  let px = max;
+  g.font = font.replace('{px}', String(px));
+  while (px > 18 && g.measureText(text).width > width) {
+    px -= 2;
+    g.font = font.replace('{px}', String(px));
+  }
+}
+
 /** WAY OUT, and other wayfinding: black on yellow, or white on the line's charcoal. */
 function signTex(text: string, bg: string, fg: string, arrow: '' | '←' | '→' | '↑' = ''): THREE.CanvasTexture {
   const [c, g] = canvas(768, 160);
@@ -135,6 +145,7 @@ function signTex(text: string, bg: string, fg: string, arrow: '' | '←' | '→'
   g.textBaseline = 'middle';
   g.textAlign = 'left';
   const t = arrow ? `${arrow}  ${text}` : text;
+  fitFont(g, t, 768 - 80, 78, `800 {px}px ${FONT}`);
   g.fillText(t, 40, 84);
   return tex(c);
 }
@@ -145,8 +156,9 @@ function boardTexture(lines: string[]): THREE.CanvasTexture {
   g.fillStyle = '#060606';
   g.fillRect(0, 0, 1024, 256);
   g.fillStyle = '#ffa31a';
-  g.font = `700 64px 'Courier New', monospace`;
   g.textBaseline = 'middle';
+  const longest = lines.slice(0, 2).reduce((a, b) => (b.length > a.length ? b : a), '');
+  fitFont(g, longest, 1024 - 72, 64, `700 {px}px 'Courier New', monospace`);
   lines.slice(0, 2).forEach((l, i) => g.fillText(l, 36, 72 + i * 112));
   // The dot grid over the top.
   g.fillStyle = 'rgba(0,0,0,0.55)';
@@ -233,23 +245,25 @@ export function buildMetroStation(id: StationId, back: number): MetroView {
   const lit = (t: THREE.Texture, glow = 0.35) => new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: glow, roughness: 0.5, transparent: true });
 
   const front = 2.6;
+  /** Floors and ceilings carry on past the front of the room, so the camera never sees their cut edge. */
+  const apron = front + 3;
   const tile = look.tile;
 
   // ---- floors -------------------------------------------------------------------------------------------------
   // Ticket hall and passage: granite.
-  plane(PLATFORM_X0 - 0.1, front - back, (PLATFORM_X0 - 0.1) / 2, 0.001, (front + back) / 2, lib('Tiles050', PLATFORM_X0, front - back, '#8f8a80'), 0, -Math.PI / 2);
+  plane(PLATFORM_X0 + 0.1, apron - back, PLATFORM_X0 / 2 + 0.05, 0.001, (apron + back) / 2, lib('Tiles050', PLATFORM_X0, apron - back, '#8f8a80'), 0, -Math.PI / 2);
   // Platform: sealed concrete, to the edge.
-  plane(METRO_LENGTH - PLATFORM_X0 + 0.1, front - EDGE_Z, (PLATFORM_X0 + METRO_LENGTH) / 2, 0.001, (front + EDGE_Z) / 2, lib('Concrete042A', METRO_LENGTH - PLATFORM_X0, front - EDGE_Z, '#77756f'), 0, -Math.PI / 2);
+  plane(METRO_LENGTH - PLATFORM_X0, apron - EDGE_Z, (PLATFORM_X0 + METRO_LENGTH) / 2, 0.002, (apron + EDGE_Z) / 2, lib('Concrete042A', METRO_LENGTH - PLATFORM_X0, apron - EDGE_Z, '#77756f'), 0, -Math.PI / 2);
   // Edge coping (pale), the yellow line, and MIND THE GAP between them.
   const coping = flat('#d9d4c6', 0.7);
-  box(PLATFORM_X1 - PLATFORM_X0, 0.06, 0.32, (PLATFORM_X0 + PLATFORM_X1) / 2, 0.0, EDGE_Z + 0.16, coping);
-  box(PLATFORM_X1 - PLATFORM_X0, 0.01, 0.09, (PLATFORM_X0 + PLATFORM_X1) / 2, 0.034, EDGE_Z + 0.46, flat('#f2c200', 0.5));
+  box(METRO_LENGTH - PLATFORM_X0, 0.06, 0.32, (PLATFORM_X0 + METRO_LENGTH) / 2, 0.0, EDGE_Z + 0.16, coping);
+  box(METRO_LENGTH - PLATFORM_X0, 0.01, 0.09, (PLATFORM_X0 + METRO_LENGTH) / 2, 0.034, EDGE_Z + 0.46, flat('#f2c200', 0.5));
   const gap = new THREE.MeshStandardMaterial({ map: gapTexture(), transparent: true, roughness: 0.6 });
   for (let x = PLATFORM_X0 + 4; x < PLATFORM_X1 - 2; x += 9) plane(2.2, 0.28, x, 0.036, EDGE_Z + 0.27, gap, 0, -Math.PI / 2);
 
   // ---- the track ----------------------------------------------------------------------------------------------
   const pitX0 = PLATFORM_X0 - 2;
-  const pitX1 = METRO_LENGTH + 2;
+  const pitX1 = METRO_LENGTH + 1.5;
   const pitW = pitX1 - pitX0;
   const pitCx = (pitX0 + pitX1) / 2;
   // The platform wall down to the track, and the track bed.
@@ -291,7 +305,7 @@ export function buildMetroStation(id: StationId, back: number): MetroView {
     plane(2.0, 1.32, x + 2.2, 0.89, FAR_Z + 0.08, new THREE.MeshStandardMaterial({ map: posterTexture(ad++), roughness: 0.6 }));
   }
   // Tunnel mouths at both ends of the platform: a dark ring in the end wall over the track.
-  for (const [x, dir] of [[PLATFORM_X0 - 1.6, 1], [PLATFORM_X1 + 1.4, -1]] as const) {
+  for (const [x, dir] of [[PLATFORM_X0 - 1.6, 1], [METRO_LENGTH, -1]] as const) {
     const wall = lib('Tiles011', 4, 6, tile, 0.6);
     const wallW = EDGE_Z - FAR_Z;
     box(0.3, VAULT_TOP - PIT_Y + 1, wallW, x, (VAULT_TOP + PIT_Y) / 2, (EDGE_Z + FAR_Z) / 2, wall);
@@ -348,11 +362,23 @@ export function buildMetroStation(id: StationId, back: number): MetroView {
   box(1.2, 0.9, 0.04, 13.6, 1.55, back + 0.91, flat('#0c1218', 0.1, 0.5, 0x223344, 0.4));
   plane(1.2, 0.26, 13.6, 2.15, back + 0.92, lit(signTex('Help', '#1d2230', '#ffffff'), 0.3));
   // No gate line: the hall is open through to the platform (you pay as you board).
-  plane(3.0, 0.42, GATE_X, 2.95, -2.0 + 0.4, lit(signTex('Way out', '#f2c200', '#111111', '←'), 0.08), 0);
-  plane(3.0, 0.42, GATE_X + 3.1, 2.95, -2.0 + 0.4, lit(signTex(`Trains  →  ${eastOf(id)}`, '#1d2230', '#ffffff'), 0.1), 0);
+  // Hung clear of the pier where the hall meets the platform (it stood in front of the Trains sign).
+  plane(2.6, 0.4, GATE_X - 8, 2.95, -2.0 + 0.4, lit(signTex('Way out', '#f2c200', '#111111', '←'), 0.08), 0);
+  plane(3.2, 0.4, GATE_X + 1.1, 2.95, -2.0 + 0.4, lit(signTex(`Trains  →  ${eastOf(id)}`, '#1d2230', '#ffffff'), 0.1), 0);
+  for (const sx of [GATE_X - 8, GATE_X + 1.1]) for (const dx of [-0.9, 0.9]) box(0.025, HALL_CEIL - 3.15, 0.025, sx + dx, (HALL_CEIL + 3.15) / 2, -1.6, flat('#2a2c30', 0.5, 0.5));
   // The passage to the platform: the hall wall ends in a tiled pier.
   box(0.5, HALL_CEIL, 0.6, PLATFORM_X0 - 1.2, HALL_CEIL / 2, back + 0.1, hallTile);
   box(0.5, VAULT_TOP + 0.4, front - back, PLATFORM_X0 - 1.2, VAULT_TOP + 0.2 + HALL_CEIL / 2 - 1.7, (front + back) / 2 - 0.2, flat('#cfcac0', 0.9));
+
+  // ---- the ends of the station ----------------------------------------------------------------------------------
+  // A tiled end wall beside the street stairs, and one at the far end of the platform, the full depth of the room:
+  // the camera never looks past either into the dark.
+  const endTile = lib('Tiles011', 8, 6, tile, 0.6);
+  box(0.3, HALL_CEIL + 0.2, apron - back + 3, -0.15, (HALL_CEIL + 0.2) / 2, (apron + back - 3) / 2, endTile);
+  box(0.3, 0.22, apron - back, 0.02, 1.2, (apron + back) / 2, flat(look.band, 0.5));
+  box(0.3, VAULT_TOP + 0.5, apron - EDGE_Z, METRO_LENGTH + 0.15, (VAULT_TOP + 0.5) / 2, (apron + EDGE_Z) / 2, endTile);
+  box(0.3, 0.22, apron - EDGE_Z, METRO_LENGTH - 0.02, 1.2, (apron + EDGE_Z) / 2, flat(look.band, 0.5));
+  plane(2.2, 0.4, METRO_LENGTH - 0.18, 2.4, 0.2, lit(signTex('No entry', '#c8102e', '#ffffff'), 0.1), -Math.PI / 2);
 
   // ---- platform fittings ---------------------------------------------------------------------------------------
   // Strip lights down the platform, under the crown.
@@ -417,74 +443,184 @@ type Flat = (colour: string, rough?: number, metal?: number, emissive?: number, 
 type Lib = (name: Parameters<typeof surface>[0], w: number, h: number, tint?: string, rough?: number) => THREE.MeshStandardMaterial;
 
 /**
- * Three tube cars along the platform, doors at `TRAIN_DOORS`, open: silver bodies with a rounded roof, red doors
- * slid back, windows lit, and inside, seats in moquette and yellow poles. The cab's at the east end.
+ * The train: three cars coupled into one unit, built as a vehicle rather than a stack of boxes.
+ *
+ * - Each car's side is one panel with its door openings and windows cut out of it (a shape with holes), so the
+ *   body reads as one skin: silver, a blue skirt band, red doors, a roof that rounds over from the cantrail.
+ * - Doors are pairs of leaves that slide inside the body. Open, they're tucked behind the panel either side of the
+ *   opening; shut, they fill it. `leaves` carries each one's open and shut x for the station's animation.
+ * - Underneath: two bogies a car (frame, springs, wheels on the rails) and the underframe boxes between them.
+ * - Between cars a dark gangway bellows; at both ends a cab: red front, windscreen, destination blind, head and
+ *   tail lights.
+ * - Inside, seen through the doors and windows: floor, lengthwise moquette seats along the far side, yellow
+ *   poles and grab rails, the far windows (black tunnel), and a lit ceiling.
  */
 function buildTrain(trackZ: number, pitY: number, box: Box, plane: Plane, flat: Flat, _lib: Lib, leaves: THREE.Mesh[]): THREE.Group {
   const g = new THREE.Group();
-  const floorY = 0.05;
-  const bodyBottom = pitY + 0.55;
-  const roof = 2.55;
-  const W = 2.5;
+  const floorY = 0.06; // just above the platform: level boarding
+  const sill = pitY + 0.62; // bottom of the body side
+  const eave = 2.3; // where the side meets the roof
+  const crown = 2.78;
+  const W = 2.6;
   const nearZ = trackZ + W / 2;
-  const silver = flat('#c3c7cc', 0.35, 0.35);
-  const red = flat('#c8102e', 0.45, 0.2);
-  const glass = flat('#3a4048', 0.08, 0.3, 0xfff1d2, 0.55);
-  const inside = flat('#e8e2d2', 0.7, 0, 0xfff1d0, 0.55);
-  const seat = flat('#2a3f8a', 0.95);
-  const pole = flat('#f2c200', 0.4, 0.5);
-  const cars: [number, number][] = [[21.4, 32.4], [32.9, 43.9], [44.4, 55.6]];
+  const farZ = trackZ - W / 2;
+  const doorW = 1.5;
+  const doorH = 1.95;
+  const silver = flat('#c9cdd2', 0.32, 0.45);
+  const roofMat = flat('#9ea3a9', 0.55, 0.35);
+  const red = flat('#c8102e', 0.42, 0.15);
+  const blue = flat('#0f2b6b', 0.45, 0.1);
+  const black = flat('#111317', 0.7, 0.2);
+  const glass = new THREE.MeshStandardMaterial({ color: '#1b2026', roughness: 0.06, metalness: 0.4, transparent: true, opacity: 0.38 });
+  const ceiling = flat('#f4f1e8', 0.6, 0, 0xfff6e2, 0.9);
+  const wallIn = flat('#e6e2d6', 0.7, 0, 0xfff1d8, 0.25);
+  const floorIn = flat('#4d5157', 0.9);
+  const seat = flat('#24418f', 0.95);
+  const seatFrame = flat('#7d828a', 0.4, 0.6);
+  const pole = flat('#f2c200', 0.35, 0.5);
+  const tunnel = flat('#050608', 1);
+
+  const cars: [number, number][] = [[21.2, 32.5], [32.8, 44.1], [44.4, 55.7]];
   for (const [x0, x1] of cars) {
     const L = x1 - x0;
     const cx = (x0 + x1) / 2;
     const doors = TRAIN_DOORS.filter((d) => d > x0 && d < x1);
-    // The body below and above the doors, the far side, the floor and the roof.
-    box(L, floorY - bodyBottom, W, cx, (floorY + bodyBottom) / 2, trackZ, silver, g, true);
-    box(L, 0.05, W - 0.1, cx, floorY, trackZ, flat('#5b5f66', 0.9), g);
-    box(L, roof - floorY, 0.06, cx, (roof + floorY) / 2, trackZ - W / 2 + 0.03, silver, g);
-    box(L, roof - floorY, 0.04, cx, (roof + floorY) / 2, trackZ - W / 2 + 0.1, inside, g);
-    const top = new THREE.Mesh(new THREE.CylinderGeometry(W / 2, W / 2, L, 24, 1, false, -Math.PI / 2, Math.PI), silver);
-    top.rotation.z = Math.PI / 2;
-    top.scale.set(1, 1, 0.34);
-    top.position.set(cx, roof, trackZ);
-    g.add(top);
-    // The near side: panels between the doors with a lit window in each, and the door openings.
-    const edges = [x0, ...doors.flatMap((d) => [d - 0.75, d + 0.75]), x1];
+    // ---- the near side: one panel, door openings and windows cut out ----
+    const shape = new THREE.Shape();
+    shape.moveTo(-L / 2, sill);
+    shape.lineTo(L / 2, sill);
+    shape.lineTo(L / 2, eave);
+    shape.lineTo(-L / 2, eave);
+    shape.closePath();
+    const hole = (a: number, b: number, y0: number, y1: number, r = 0.08) => {
+      const h = new THREE.Path();
+      h.moveTo(a + r, y0);
+      h.lineTo(b - r, y0);
+      h.quadraticCurveTo(b, y0, b, y0 + r);
+      h.lineTo(b, y1 - r);
+      h.quadraticCurveTo(b, y1, b - r, y1);
+      h.lineTo(a + r, y1);
+      h.quadraticCurveTo(a, y1, a, y1 - r);
+      h.lineTo(a, y0 + r);
+      h.quadraticCurveTo(a, y0, a + r, y0);
+      shape.holes.push(h);
+    };
+    const winY0 = floorY + 0.85;
+    const winY1 = eave - 0.28;
+    const edges = [x0 + 0.35, ...doors.flatMap((d) => [d - doorW / 2 - 0.25, d + doorW / 2 + 0.25]), x1 - 0.35];
+    const windows: [number, number][] = [];
+    for (const d of doors) hole(d - doorW / 2 - cx, d + doorW / 2 - cx, floorY, floorY + doorH, 0.04);
     for (let i = 0; i < edges.length; i += 2) {
       const a = edges[i];
       const b = edges[i + 1];
-      if (b - a < 0.05) continue;
-      const m = (a + b) / 2;
-      box(b - a, 0.85, 0.06, m, floorY + 0.42, nearZ, silver, g);
-      box(b - a, 0.42, 0.06, m, roof - 0.2, nearZ, silver, g);
-      if (b - a > 0.5) {
-        box(b - a - 0.3, roof - floorY - 1.27, 0.03, m, floorY + 0.85 + (roof - floorY - 1.27) / 2, nearZ + 0.02, glass, g);
-        // Inside behind the window: a long seat and the lit wall.
-        box(b - a - 0.2, 0.45, 0.5, m, floorY + 0.25, trackZ - W / 2 + 0.42, seat, g);
-        box(b - a - 0.2, 0.5, 0.12, m, floorY + 0.72, trackZ - W / 2 + 0.2, seat, g);
+      if (b - a < 0.6) continue;
+      // Long bays get two windows with a pillar between.
+      const n = b - a > 2.6 ? 2 : 1;
+      const step = (b - a) / n;
+      for (let k = 0; k < n; k++) {
+        const wa = a + k * step + (k ? 0.08 : 0);
+        const wb = a + (k + 1) * step - (k < n - 1 ? 0.08 : 0);
+        hole(wa - cx, wb - cx, winY0, winY1);
+        windows.push([wa, wb]);
       }
     }
+    const side = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.07, bevelEnabled: false, curveSegments: 3 }), silver);
+    side.position.set(cx, 0, nearZ - 0.07);
+    side.castShadow = true;
+    g.add(side);
+    // Glazing in the window holes, and the blue skirt band and a thin red line along the body.
+    for (const [a, b] of windows) plane(b - a, winY1 - winY0, (a + b) / 2, (winY0 + winY1) / 2, nearZ - 0.04, glass, 0, 0, g);
+    box(L, 0.16, 0.02, cx, sill + 0.12, nearZ + 0.005, blue, g);
+    box(L, 0.04, 0.02, cx, eave - 0.1, nearZ + 0.005, red, g);
+    // ---- roof: rounds over from the eave to the crown ----
+    const roofShape = new THREE.Shape();
+    roofShape.moveTo(-W / 2, 0);
+    roofShape.quadraticCurveTo(-W / 2, crown - eave, 0, crown - eave);
+    roofShape.quadraticCurveTo(W / 2, crown - eave, W / 2, 0);
+    roofShape.closePath();
+    const roof = new THREE.Mesh(new THREE.ExtrudeGeometry(roofShape, { depth: L, bevelEnabled: false, curveSegments: 10 }), roofMat);
+    roof.rotation.y = Math.PI / 2;
+    roof.position.set(x0, eave, trackZ);
+    g.add(roof);
+    // ---- the far side, ends, underframe ----
+    box(L, eave - sill, 0.06, cx, (eave + sill) / 2, farZ + 0.03, silver, g);
+    for (const ex of [x0 + 0.03, x1 - 0.03]) box(0.06, eave - sill, W, ex, (eave + sill) / 2, trackZ, silver, g);
+    box(L - 0.6, 0.32, W - 0.5, cx, sill - 0.16, trackZ, black, g);
+    for (const bx of [x0 + 2.1, x1 - 2.1]) {
+      box(2.4, 0.22, W - 0.7, bx, pitY + 0.42, trackZ, black, g);
+      for (const wx of [-0.75, 0.75]) {
+        for (const wz of [-0.72, 0.72]) {
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.1, 18), flat('#2b2c2f', 0.5, 0.7));
+          wheel.rotation.x = Math.PI / 2;
+          wheel.position.set(bx + wx, pitY + 0.55, trackZ + wz);
+          g.add(wheel);
+        }
+      }
+      for (const sx of [-0.45, 0.45]) box(0.14, 0.3, 0.14, bx + sx, pitY + 0.68, trackZ + 0.85, flat('#585b60', 0.5, 0.6), g);
+    }
+    // ---- inside ----
+    box(L - 0.12, 0.05, W - 0.14, cx, floorY - 0.025, trackZ, floorIn, g);
+    box(L - 0.12, 0.04, W - 0.14, cx, eave - 0.02, trackZ, ceiling, g);
+    box(L - 0.12, eave - floorY, 0.03, cx, (eave + floorY) / 2, farZ + 0.08, wallIn, g);
+    // The far windows look out on the tunnel wall.
+    for (const [a, b] of windows) plane(b - a, winY1 - winY0, (a + b) / 2, (winY0 + winY1) / 2, farZ + 0.1, tunnel, 0, 0, g);
+    // Seats run along the far side between the doorways.
+    for (let i = 0; i < edges.length; i += 2) {
+      const a = edges[i] + 0.1;
+      const b = edges[i + 1] - 0.1;
+      if (b - a < 0.5) continue;
+      box(b - a, 0.1, 0.5, (a + b) / 2, floorY + 0.45, farZ + 0.38, seat, g);
+      box(b - a, 0.55, 0.1, (a + b) / 2, floorY + 0.78, farZ + 0.16, seat, g);
+      box(b - a, 0.4, 0.04, (a + b) / 2, floorY + 0.2, farZ + 0.6, seatFrame, g);
+    }
+    // A grab rail the length of the car, and poles at every doorway.
+    box(L - 0.4, 0.035, 0.035, cx, eave - 0.32, trackZ + 0.35, pole, g);
     for (const d of doors) {
-      // The opening: lit inside, a pole either side, the door leaves slid back over the body.
-      box(1.5, roof - floorY - 0.35, 0.02, d, floorY + (roof - floorY - 0.35) / 2, trackZ - W / 2 + 0.15, inside, g);
-      for (const s of [-1, 1]) box(0.05, roof - floorY - 0.3, 0.05, d + s * 0.55, floorY + (roof - floorY - 0.3) / 2, trackZ + 0.2, pole, g);
+      for (const s of [-1, 1]) box(0.04, eave - floorY, 0.04, d + s * 0.55, (eave + floorY) / 2, trackZ + 0.3, pole, g);
+      // The doors: two leaves sliding inside the body.
       for (const s of [-1, 1]) {
-        const leaf = box(0.72, roof - floorY - 0.42, 0.05, d + s * 1.12, floorY + (roof - floorY - 0.42) / 2, nearZ + 0.05, red, g);
-        box(0.36, 0.7, 0.02, 0, 0.35, 0.03, glass, leaf);
-        leaf.userData.openX = d + s * 1.12;
-        leaf.userData.shutX = d + s * 0.37;
+        const shutX = d + (s * doorW) / 4;
+        const openX = d + s * (doorW / 4 + doorW / 2 + 0.04);
+        const leaf = box(doorW / 2 - 0.02, doorH - 0.02, 0.04, openX, floorY + doorH / 2, nearZ - 0.12, red, g);
+        box(doorW / 2 - 0.26, 0.85, 0.01, 0, 0.32, 0.025, glass, leaf);
+        box(0.02, doorH - 0.1, 0.012, (-s * (doorW / 2 - 0.02)) / 2, 0, 0.026, black, leaf);
+        leaf.userData.openX = openX;
+        leaf.userData.shutX = shutX;
         leaves.push(leaf);
       }
-      box(1.6, 0.06, 0.08, d, roof - 0.42, nearZ + 0.04, red, g);
+      // Door surround: the red frame round the opening on the outside.
+      box(doorW + 0.12, 0.06, 0.02, d, floorY + doorH + 0.03, nearZ + 0.01, red, g);
+      for (const s of [-1, 1]) box(0.06, doorH, 0.02, d + s * (doorW / 2 + 0.03), floorY + doorH / 2, nearZ + 0.01, red, g);
     }
-    // The red band along the bottom and the car number.
-    box(L, 0.18, 0.07, cx, floorY - 0.12, nearZ + 0.01, red, g);
+    // Car number by the first door.
+    plane(0.5, 0.14, x0 + 1.0, floorY + 1.75, nearZ + 0.012, new THREE.MeshStandardMaterial({ map: carNumber(cars.findIndex((c) => c[0] === x0)), transparent: true }), 0, 0, g);
   }
-  // The cab at the east end: red front, windscreen, lights and the destination.
-  const ex = 55.6;
-  box(0.4, roof - bodyBottom + 0.2, W, ex + 0.2, (roof + bodyBottom) / 2, trackZ, red, g, true);
-  box(0.05, 0.7, W - 0.6, ex + 0.42, 1.65, trackZ, flat('#101418', 0.1, 0.6), g);
-  for (const dz of [-0.8, 0.8]) box(0.05, 0.12, 0.2, ex + 0.42, 0.3, trackZ + dz, flat('#ffffff', 0.3, 0, 0xfff6e0, 2), g);
-  plane(1.3, 0.22, ex + 0.43, 2.25, trackZ, new THREE.MeshStandardMaterial({ map: boardTexture(['Brack Metro']), emissive: 0xffffff, emissiveMap: boardTexture(['Brack Metro']), emissiveIntensity: 0.8 }), Math.PI / 2, 0, g);
+  // Gangways between the cars.
+  for (let i = 0; i < cars.length - 1; i++) {
+    const gx = (cars[i][1] + cars[i + 1][0]) / 2;
+    box(cars[i + 1][0] - cars[i][1] + 0.08, eave - floorY - 0.1, W - 0.5, gx, (eave + floorY) / 2, trackZ, black, g);
+  }
+  // A cab at each end: the red front with a windscreen, the destination blind, and head and tail lights.
+  for (const [ex, dir] of [[cars[0][0], -1], [cars[cars.length - 1][1], 1]] as const) {
+    const fx = ex + dir * 0.2;
+    box(0.4, crown - sill, W, fx, (crown + sill) / 2, trackZ, red, g, true);
+    box(0.02, 0.75, W - 0.7, fx + dir * 0.21, 1.6, trackZ, flat('#0d1116', 0.08, 0.6), g);
+    box(0.02, 0.18, 1.3, fx + dir * 0.21, 2.18, trackZ, flat('#0b0b0b', 0.5), g);
+    plane(1.2, 0.15, fx + dir * 0.225, 2.18, trackZ, new THREE.MeshStandardMaterial({ map: boardTexture(['Brack Metro']), emissive: 0xffffff, emissiveMap: boardTexture(['Brack Metro']), emissiveIntensity: 0.8 }), (Math.PI / 2) * dir, 0, g);
+    const lamp = dir > 0 ? flat('#ffffff', 0.3, 0, 0xfff6e0, 2) : flat('#ff3030', 0.3, 0, 0xff2020, 1.6);
+    for (const dz of [-0.85, 0.85]) box(0.03, 0.12, 0.22, fx + dir * 0.21, 0.45, trackZ + dz, lamp, g);
+    box(0.06, 0.2, W - 0.3, fx + dir * 0.18, sill + 0.05, trackZ, black, g);
+  }
   return g;
+}
+
+/** The car's number, small, by its first door. */
+function carNumber(i: number): THREE.CanvasTexture {
+  const [c, g] = canvas(256, 72);
+  g.clearRect(0, 0, 256, 72);
+  g.fillStyle = '#20252c';
+  g.font = `700 44px ${FONT}`;
+  g.textBaseline = 'middle';
+  g.fillText(`3${(4 + i * 7) % 10}${(i * 3 + 1) % 10}${i + 2}`, 8, 38);
+  return tex(c);
 }

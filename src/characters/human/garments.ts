@@ -828,7 +828,7 @@ export function cutGarment(data: BodyData, pos: Float32Array, normals: Float32Ar
   const C = new Float32Array(m * 3);
   const main = colours.main;
   const lum = 0.2126 * main[0] + 0.7152 * main[1] + 0.0722 * main[2];
-  const trimC = colours.trim ?? (st.stripe ? (lum > 0.45 ? [0.05, 0.05, 0.06] : [0.92, 0.92, 0.9]) : shade(main, 0.72));
+  const trimC = colours.trim ?? (st.stripe ? (lum > 0.45 ? [0.05, 0.05, 0.06] : [0.8, 0.8, 0.78]) : shade(main, 0.72));
   const zipC: [number, number, number] = shade(main, 0.55);
   const bandC: [number, number, number] = [0.78, 0.8, 0.8];
   for (let l = 0; l < m; l++) {

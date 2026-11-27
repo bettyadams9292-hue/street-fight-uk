@@ -6,7 +6,7 @@
  *   along the wall to the nearest spot clear of every door and of the other furniture.
  * Run once over the levels when they're built (world/levels.ts), so drawing and collision both see the same place.
  */
-import { KERB_Z, kerbFor, kitStreet, planStreet } from '../city/street';
+import { BUILD_OUT, KERB_Z, buildOutEnds, kerbFor, kitStreet, planStreet } from '../city/street';
 import type { LevelDef, PropDef } from './LevelTypes';
 import { propHalf } from './LevelTypes';
 
@@ -56,6 +56,16 @@ export function tidyStreet(level: LevelDef): void {
       const road = KERB_Z + 0.3 + 0.08;
       if (p.z - hz < road && p.z > KERB_Z - 0.5) p.z = Math.round((road + hz) * 100) / 100;
     }
+  // Nothing parked on a build-out at a join (the pavement meeting a plaza's or yard's kerb at the street's end).
+  const ends = buildOutEnds(level);
+  for (const p of level.props) {
+    if (!VEHICLES.has(p.kind)) continue;
+    const [hx] = propHalf(p);
+    const lo = level.bounds.minX + BUILD_OUT + 0.5;
+    const hi = level.bounds.maxX - BUILD_OUT - 0.5;
+    if (ends.left && p.x - hx < lo) p.x = Math.round((lo + hx) * 100) / 100;
+    if (ends.right && p.x + hx > hi) p.x = Math.round((hi - hx) * 100) / 100;
+  }
   const wall = level.bounds.minZ - WALL_BEHIND;
   for (const p of level.props) {
     if (!AGAINST_WALL.has(p.kind) || p.item) continue;
