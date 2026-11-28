@@ -55,6 +55,8 @@ function press(game: Game, g: Internals, b: GameButton, frames: number): void {
 
 function story(game: Game, g: Internals, area: AreaId, entry: string, frames = 120): void {
   g.progress = new Progress(newSave(hero(g)));
+  // &calm=1: the area's fights already done, so a picture can be taken anywhere along it without a fight's lock.
+  if (new URLSearchParams(location.search).get('calm')) for (const e of LEVELS[area].encounters) g.progress.save.flags[`cleared:${area}:${e.id}`] = true;
   g.enterArea(area, entry);
   game.advance(frames);
 }

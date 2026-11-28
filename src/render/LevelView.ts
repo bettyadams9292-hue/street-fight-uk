@@ -45,6 +45,8 @@ import { bakeStatic } from './bakeStatic';
 import { buildKitStreetSteps, hasKitPiece, kitFloor, kitPiece, kitWall, polyKitReady, type KitFloor, type KitStreetView } from './kit/PolyKit';
 import { exitLocked, type World } from '../world/World';
 import { isSubwayStairs, SUBWAY_GAP } from '../world/strip';
+import { isJunction, JUNCTION_GAP } from '../world/sideStreets';
+import { LEVELS } from '../world/levels';
 import {
   concreteTexture,
   corrugatedTexture,
@@ -4358,6 +4360,11 @@ export class LevelView {
         this.exitSign(ex, ex.x, 3.35, this.back + 0.4);
         return;
       }
+      // A turning into a side street: the street's mouth in a gap in the frontage (world/sideStreets.ts).
+      if (isJunction(ex)) {
+        this.laneMouth(ex);
+        return;
+      }
       // The building already has a real doorway here: just sign it.
       const kitDoor = this.kitDoors.find((d) => Math.abs(d - ex.x) <= 1.2);
       // The frontage drew its own door (or a mansion its gates) here: sign that one, add no second door.
@@ -4416,6 +4423,55 @@ export class LevelView {
       c.position.set(x + (ex.side === 'left' ? -1 : 1) * (i * 0.5 - 0.6), 0.01, 0);
       this.group.add(c);
     }
+  }
+
+  /**
+   * The mouth of a side street, in the gap the street plan leaves at a junction: the lane's own setts running
+   * back between brick end walls to the backs of the houses behind, a lamp on a bracket, and the street's name on
+   * a white plate on the corner, the British way. You see the way through before you turn into it.
+   */
+  private laneMouth(ex: ExitDef): void {
+    const name = LEVELS[ex.to]?.name ?? ex.label;
+    const g = JUNCTION_GAP;
+    const z0 = this.back;
+    const depth = 7.5;
+    const prev = this.building;
+    this.building = 'lane';
+    const setts = this.mat('#6c6862', 0.95);
+    dress(setts, 'PavingStones036', { tint: '#6c6862' });
+    const brick = this.mat('#7b4737', 0.92);
+    dress(brick, 'Bricks005', { tint: '#7b4737' });
+    const coping = this.mat('#8d8a84', 0.9);
+    const glow = this.mat('#ffe2a8', 0.4, 0, { emissive: 0xffd590, emissiveIntensity: 0.9 });
+    const iron = this.mat('#17191c', 0.45, 0.5);
+    // The lane's floor, a touch below the pavement, back to the far wall.
+    this.box(g * 2, 0.06, depth, ex.x, -0.04, z0 - depth / 2, setts, false);
+    // Gable ends either side: the buildings' own side walls, carried back the length of the lane.
+    for (const side of [-1, 1]) {
+      const wx = ex.x + side * (g - 0.16);
+      this.box(0.32, 5.2, depth, wx, 2.6, z0 - depth / 2, brick, true);
+      this.box(0.36, 0.12, depth, wx, 5.26, z0 - depth / 2, coping, false);
+    }
+    // The backs of the houses at the far end: a wall, a yard door and a lit back window.
+    const zb = z0 - depth;
+    this.box(g * 2, 6, 0.3, ex.x, 3, zb - 0.15, brick, true);
+    this.box(0.9, 2.0, 0.06, ex.x - 0.6, 1.0, zb + 0.02, this.mat('#2d3b2f', 0.7), false);
+    this.box(0.8, 0.9, 0.05, ex.x + 0.7, 2.9, zb + 0.02, glow, false);
+    // A lamp on a bracket halfway down, lit (emissive only: no extra light for the shaders to be built for).
+    const ly = 3.6;
+    const lz = z0 - depth * 0.45;
+    this.box(0.5, 0.05, 0.05, ex.x - g + 0.55, ly + 0.25, lz, iron, false);
+    this.box(0.22, 0.18, 0.22, ex.x - g + 0.75, ly, lz, glow, false);
+    // The street name on a plate on two short posts at the lane's corner, where no shopfront can stand in front of it.
+    const t = signTexture(name.replace(/^The /, '').toUpperCase(), '#f7f5ee', '#16181c', { w: 640, h: 128 });
+    const px = ex.x - g + 0.95;
+    const pz = z0 + 0.22;
+    for (const dx of [-0.66, 0.66]) this.box(0.05, 1.9, 0.05, px + dx, 0.95, pz - 0.03, iron, false);
+    this.box(1.5, 0.36, 0.04, px, 1.72, pz - 0.03, this.mat('#16181c', 0.5), false);
+    const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.42, 0.28), new THREE.MeshStandardMaterial({ map: t, roughness: 0.6 }));
+    plate.position.set(px, 1.72, pz);
+    this.group.add(plate);
+    this.building = prev;
   }
 
   private exitSign(ex: ExitDef, x: number, y: number, z: number): void {

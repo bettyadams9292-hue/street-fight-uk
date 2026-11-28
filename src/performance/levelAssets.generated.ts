@@ -61,6 +61,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "wall_dome"
   ]
  },
+ "canal_towpath": {},
  "car_dealer": {
   "doors": [
    "door_panel"
@@ -279,6 +280,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  "metro_neon_mile": {},
  "metro_riverside": {},
  "metro_tanner_road": {},
+ "mill_lane": {},
  "nightlife": {},
  "pawn_shop": {
   "doors": [
