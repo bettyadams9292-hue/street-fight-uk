@@ -19,6 +19,7 @@ import {
   type CompanionDef,
 } from '../companions/companions';
 import { companionFighter, companionLook } from '../companions/crewFighter';
+import { owesCrew, repayCrew } from '../world/custody';
 import { FIGHT_STYLES, PERSONALITIES } from '../companions/personality';
 import {
   CONDITION_INFO,
@@ -250,6 +251,8 @@ export function profileScreen(o: ProfileOptions): Screen {
     const st = crewState(p, def.id);
     const ok = companionAvailable(st);
     if (!ok.ok) return { text: 'Recovering', cls: 'down' };
+    const owes = owesCrew(p, def.id);
+    if (owes) return { text: `Owed £${owes}`, cls: 'hurt' };
     const following = s.following.includes(def.id);
     if (st.condition.injuries.some((i) => i.part !== 'bruising') || st.health < 0.6) return { text: following ? 'With you, hurt' : 'Injured', cls: 'hurt' };
     if (following) return { text: atHomeNow() ? 'With you (home)' : 'Following you', cls: 'active' };
@@ -273,12 +276,14 @@ export function profileScreen(o: ProfileOptions): Screen {
     const recruited = s.recruited.map((id) => COMPANIONS[id]).filter(Boolean);
     if (crewId && !s.recruited.includes(crewId)) crewId = recruited[0]?.id ?? null;
     const slots = activeSlots(p);
+    const owed = p.save.police.owed;
 
     // Active crew: everyone following you, and how many places there are.
     const followers = s.following.map((id) => COMPANIONS[id]).filter(Boolean);
     const activeStrip = h('div', { class: 'pf-active' },
       h('div', { class: 'pf-active-head' }, h('b', { text: 'Active crew' }), h('span', { text: `${followers.length} / ${slots} following${slots < 2 ? ' · 2nd place after Sully Kane' : ''}` })),
       ...(followers.length ? followers.map((d) => activeCard(d)) : [h('p', { class: 'pf-none', text: recruited.length ? 'Nobody with you. Pick someone below and tap “Follow me”.' : 'No crew yet. Fighters for hire in The Firm at Weatherspoons (High Street).' })]),
+      owed && COMPANIONS[owed.id] ? h('p', { class: 'pf-hint pf-owed', text: `You owe ${COMPANIONS[owed.id].nickname} £${owed.left} for your bail. They won’t come out with you till it’s paid: pay it here, or it comes out of your pockets next time you’re home.` }) : null,
       followers.length ? h('p', { class: 'pf-hint', text: `${followers.every((d) => companionAvailable(crewState(p, d.id)).ok && crewState(p, d.id).fatigue < 50) ? 'Everyone’s fit to go.' : 'Someone needs rest before a big fight.'} G: quick orders (follow / wait / ready).` }) : null,
     );
 
@@ -369,6 +374,14 @@ export function profileScreen(o: ProfileOptions): Screen {
     if (m && atHomeNow()) {
       actions.push(actBtn('Come with me', 'walk', () => giveOrder(def.id, 'callover'), '', 'Gets up and follows you round the house'));
       actions.push(actBtn('Make yourself at home', 'home', () => giveOrder(def.id, 'relax'), 'quiet', 'Back to the sofa'));
+    }
+    const owes = owesCrew(p, def.id);
+    if (owes) {
+      const can = p.save.cash.pocket + (p.save.bank ? p.save.cash.bank : 0);
+      actions.unshift(actBtn('Pay back the bail', 'coin', () => {
+        const paid = repayCrew(p);
+        say({ ok: paid > 0, reason: 'Nothing on you or in your account to pay with' }, p.save.police.owed ? `Paid £${paid}. Still owe £${p.save.police.owed.left}.` : `Paid ${def.nickname} the £${paid}. Square again.`);
+      }, 'primary', `You owe £${owes}: from your pockets, then your account (never the tin)`, can <= 0));
     }
     const kits = p.save.inventory.filter((x) => x.id === 'first_aid').reduce((n, x) => n + x.qty, 0);
     if (st.health < 1 || st.condition.injuries.length) actions.push(actBtn('Patch them up', 'consumable', () => { say(firstAidCompanion(p, def.id), `${def.nickname} patched up`); if (isLive && !atHomeNow()) o.crewChanged(); }, '', kits ? `Uses a first aid kit (${kits} on you)` : 'Needs a first aid kit from your pockets', !kits));

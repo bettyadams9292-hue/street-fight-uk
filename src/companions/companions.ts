@@ -269,9 +269,9 @@ export function followMe(p: Progress, id: string): PurchaseResult {
   const s = p.save.companions;
   if (!s.recruited.includes(id)) return { ok: false, reason: 'Not hired' };
   if (s.following.includes(id)) return { ok: true };
-  // They paid your bail: they're not coming out with you till you've paid them back (at home, from the tin).
+  // They paid your bail: they're not coming out with you till you've paid them back (the Crew screen, or from your pockets and account when you get home; never the tin).
   const owed = p.save.police?.owed;
-  if (owed && owed.id === id) return { ok: false, reason: `Not till you pay back the \u00a3${owed.left} bail money (it comes out of your pockets and account when you get home)` };
+  if (owed && owed.id === id) return { ok: false, reason: `Not till you pay back the \u00a3${owed.left} bail money: pay it here, or it comes out of your pockets and account when you get home` };
   const ok = companionAvailable(crewState(p, id));
   if (!ok.ok) return ok;
   const slots = activeSlots(p);
