@@ -365,7 +365,8 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 
 **28 Nov 2026**
 - #128: production overhaul, first pass (`docs/PRODUCTION_OVERHAUL.md` has every phase's status): the Metro on a timetable with passengers on and off (see The Brack Metro) and `MetroController`; saves in three slots with backups, snapshots, checksums, recovery, download and bring-back (see Saves); two GPU leaks fixed (lights' shadow maps and material textures on every area change); `window.__perf`; background build budget by time to the seam; CI `npm ci`, lockfile job, no auto-approved screenshots, WebKit phone job; Hard Graft name in the page title, description and README.
-- Production overhaul, second pass (to merge): police screens out of `Game.ts` into `PoliceController`; the old `arrest()` and `arrestFine` gone (tests use `book` and `payBail`); bail, court fines and bungs in the economy model and test; `tests/audioFiles.test.ts` (every sound set and song on disk); the custody record's red choice readable when chosen, and sideways its property line sits under the offences; the Crew screen shows bail money you owe (a note, Owed £N on their card) with Pay back the bail.
+- #129: production overhaul, second pass: police screens out of `Game.ts` into `PoliceController`; the old `arrest()` and `arrestFine` gone (tests use `book` and `payBail`); bail, court fines and bungs in the economy model and test; `tests/audioFiles.test.ts` (every sound set and song on disk); the custody record's red choice readable when chosen, and sideways its property line sits under the offences; the Crew screen shows bail money you owe (a note, Owed £N on their card) with Pay back the bail.
+- Phone (to merge): the bank app shows bail money you owe a crew member; once Kerrigan's your contact he has a thread in Messages that opens the Heat app.
 
 ## Open questions and next steps
 
@@ -376,8 +377,6 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   4. **The High Street pawn shop** (the plan's item 5): there's only the Cash 4 U hatch, in Hollins (#75), at 60% of Pawn & Gold. The plan wanted a pawnbroker on the High Street with a door and an interior. Ask Leeko if the hatch is enough.
   5. **Small things:**
      - the front counter's "Settle up: <district>" buttons are plain lettering (one per district, with a price);
-     - what you owe a crew member for bail shows in the Crew screen (with Pay back the bail) but not yet in the bank app;
-     - Kerrigan only appears in the Heat app: maybe a Messages thread, or the landline;
      - the single cell you wake up in is drawn cut away (no front wall, `CUTAWAY` in `render/approved/prototype.ts`); a cell door that opens would let it keep its front;
 
 - **Performance, still to do:** background people use the lighter body since #96; fighters are still about 36–40k triangles each (body about 27k). New looks are built in a worker since #97. The approved bikes are 10–20k triangles each. Agreed plan (19 Nov), all from the models we already have, no new art:
@@ -392,6 +391,6 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
   - section 11 onwards of the jewellery and property brief;
   - one-of-a-kind interiors for each property;
   - real upstairs floors;
-  - the hoodie's jagged collar.
+  - the hoodie's jagged collar (left for the new character models: Leeko, 28 Nov).
 - The owner tests on an iPhone in portrait. Check every UI change at 390×700 as well as in landscape.
 - The London place names and `arch-*` archetype graphics in `public/art/titles` aren't used yet.
