@@ -52,6 +52,9 @@ const start = (assets: { ready: Promise<unknown>; progress: () => number }): voi
     if (query.get('assets') !== 'builtin') void import('./audio/recorded').then((m) => m.loadRecordedSounds(game.audio));
     // ?debug exposes the game to the console for testing.
     if (query.has('debug') || shot) (window as unknown as { sfuk: Game }).sfuk = game;
+    // Development numbers in the console (frame times, draw calls, memory: performance/perfStats.ts), on a local
+    // server and ?perf / ?debug pages only. Nothing is drawn in the game.
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || query.has('perf') || query.has('debug') || shot) (window as unknown as { __perf: () => unknown }).__perf = () => game.perfReport();
     // ?debug also offers the end-of-fight screens, for checking them without playing a fight out.
     if (query.has('debug')) void Promise.all([import('./ui/hub'), import('./ui/jewelleryUI')]).then(([m, j]) => ((window as unknown as { sfukUi: unknown }).sfukUi = { rewardScreen: m.rewardScreen, jewellerScreen: j.jewellerScreen }));
     hideBoot();

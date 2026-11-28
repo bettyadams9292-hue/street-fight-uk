@@ -1,8 +1,8 @@
-# STREET FIGHT UK
+# Hard Graft
 
-A gritty 2.5D street-fighting action RPG set in modern Britain. Browser game built with TypeScript and Three.js, playable on PC and iPhone.
+A gritty 2.5D street-fighting action RPG set in modern Britain, by Leeko (Cali Labs). Browser game built with TypeScript and Three.js, playable on desktop, iPhone and iPad. The repository and package keep their original name, `street-fight-uk`, which some save keys and URLs still use.
 
-**Current build: Stage 5 (expanded campaign, items and shops)**: 24 areas, 13 bosses, an inventory and stash, a clothes shop with try-on, a pawn shop, robbery with police consequences, and 36 melee and improvised weapons (no firearms). The training ground is still on the main menu.
+**Current build: advanced alpha.** Seven fighting styles, a long British high street of districts and bosses, jobs, police and custody, property, banking, the Brack Metro, a phone, a tutorial and much more. `CLAUDE.md` is the developer guide and work log; `docs/PRODUCTION_OVERHAUL.md` is the latest overhaul report.
 
 ## World rebuild (branch `world-rebuild`, pull request #1)
 

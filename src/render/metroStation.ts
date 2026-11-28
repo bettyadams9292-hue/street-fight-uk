@@ -16,9 +16,10 @@
  */
 import * as THREE from 'three';
 import { surface } from './materials/library';
+import { mergeParts } from './mergeParts';
 import { STATION_LOOK, GATE_X, PLATFORM_X0, PLATFORM_X1, STAIRS_X, TRAIN_CARS, TRAIN_DOORS, METRO_LENGTH } from '../world/metroLevels';
 import { STATIONS, stationOf, type StationId } from '../travel/subway';
-import { metroVisit } from '../travel/metro';
+import { boardWhen, HEADWAY, metroVisit, trainAt } from '../travel/metro';
 
 const EDGE_Z = -1.95;
 const FAR_Z = -5.0;
@@ -213,8 +214,6 @@ export function buildMetroStation(id: StationId, back: number): MetroView {
   const group = new THREE.Group();
   const look = STATION_LOOK[id];
   const name = stationOf(id).name;
-  const visit = metroVisit();
-  const trainIn = !!visit?.train && visit.station === id;
 
   const mats = new Map<string, THREE.MeshStandardMaterial>();
   const flat = (colour: string, rough = 0.6, metal = 0, emissive?: number, ei = 1): THREE.MeshStandardMaterial => {
@@ -383,61 +382,76 @@ export function buildMetroStation(id: StationId, back: number): MetroView {
   // ---- platform fittings ---------------------------------------------------------------------------------------
   // Strip lights down the platform, under the crown.
   for (let x = PLATFORM_X0 + 2; x < PLATFORM_X1; x += 4) box(1.6, 0.05, 0.14, x, 2.3 + R - 0.06, -1.2, flat('#ffffff', 0.4, 0, 0xf4f8ff, 0.8));
-  // The departure board, hung from the crown.
-  const lines = trainIn
-    ? [`1 ${eastOf(id)}`.padEnd(18) + 'Now', 'Stand clear of the doors']
-    : [`1 ${eastOf(id)}`.padEnd(18) + `${visit?.minutes ?? 4} min`, `2 ${westOf(id)}`.padEnd(18) + `${(visit?.minutes ?? 4) + 5} min`];
+  // The departure board, hung from the crown: redrawn when what it says changes (once a second at most).
+  const boardLines = (): string[] => {
+    const st = trainAt(metroVisit());
+    const when = boardWhen(st);
+    const first = `1 ${eastOf(id)}`.padEnd(18) + when;
+    if (st.phase === 'in' || st.phase === 'opening' || st.phase === 'closing') return [first, 'Stand clear of the doors'];
+    const after = Math.ceil((st.eta + HEADWAY) / 60);
+    return [first, `2 ${eastOf(id)}`.padEnd(18) + `${after} min`];
+  };
   const boardZ = -1.0;
+  let shown = boardLines();
+  let boardMap = boardTexture(shown);
+  const boardMat = new THREE.MeshStandardMaterial({ map: boardMap, emissive: 0xffffff, emissiveMap: boardMap, emissiveIntensity: 0.9 });
   box(2.7, 0.62, 0.16, 34.8, 2.95, boardZ, flat('#15171b', 0.5, 0.3));
-  plane(2.55, 0.5, 34.8, 2.95, boardZ + 0.09, new THREE.MeshStandardMaterial({ map: boardTexture(lines), emissive: 0xffffff, emissiveMap: boardTexture(lines), emissiveIntensity: 0.9 }));
+  plane(2.55, 0.5, 34.8, 2.95, boardZ + 0.09, boardMat);
   for (const dx of [-1.1, 1.1]) box(0.03, 2.3 + R - 3.26, 0.03, 34.8 + dx, (2.3 + R + 3.26) / 2, boardZ, flat('#2a2c30', 0.5, 0.5));
 
   // ---- the train -----------------------------------------------------------------------------------------------
-  let train: THREE.Group | null = null;
+  // Always built, drawn only while it's at or near the platform; moved and its doors worked from the timetable
+  // (travel/metro.ts trainAt) each frame, so what you see is what boarding checks.
   const leaves: THREE.Mesh[] = [];
-  if (trainIn) {
-    train = buildTrain(trackZ, PIT_Y, box, plane, flat, lib, leaves);
-    group.add(train);
-  }
+  const train = buildTrain(trackZ, PIT_Y, box, plane, flat, lib, leaves);
+  group.add(train);
+  const place = (): void => {
+    const st = trainAt(metroVisit());
+    train.visible = st.x !== null;
+    train.position.x = st.x ?? 0;
+    for (const l of leaves) {
+      const shut = 1 - st.doors;
+      l.visible = shut > 0.001;
+      l.position.x = l.userData.openX + (l.userData.shutX - l.userData.openX) * shut;
+    }
+  };
+  place();
+
+  // Merge the plain parts that share a parent and a material (the station's tiles, ribs and fittings; each car's
+  // body pieces in the train's group, so the train still moves as one): the station was a few hundred separate
+  // draws. The door leaves stay apart, as they slide.
+  for (const l of leaves) l.traverse((o) => (o.userData.keep = true));
+  const parts = new Set<THREE.Mesh>();
+  group.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh && !o.userData.keep && o.parent && !o.parent.userData.keep) parts.add(o as THREE.Mesh);
+  });
+  mergeParts(parts);
 
   // ---- behaviour ----------------------------------------------------------------------------------------------
-  let t = 0;
-  let speed = 0;
+  let since = 0;
   return {
     group,
     update(dt: number): void {
-      t += dt;
-      const v = metroVisit();
-      if (!train) return;
-      // Off a train: the doors close after a few seconds and it pulls out east into the tunnel.
-      if (v?.arrived) {
-        const shut = Math.min(1, Math.max(0, (t - 3.5) / 0.8));
-        for (const l of leaves) {
-          l.visible = shut > 0;
-          l.position.x = l.userData.openX + (l.userData.shutX - l.userData.openX) * shut;
-        }
-        if (t > 4.6) {
-          speed = Math.min(14, speed + dt * 2.4);
-          train.position.x += speed * dt;
-          if (train.position.x > 60) {
-            group.remove(train);
-            train = null;
-            if (v) v.train = false;
-          }
-        }
-      }
+      place();
+      since += dt;
+      if (since < 0.5) return;
+      since = 0;
+      const lines = boardLines();
+      if (lines.join('|') === shown.join('|')) return;
+      shown = lines;
+      boardMap.dispose();
+      boardMap = boardTexture(lines);
+      boardMat.map = boardMap;
+      boardMat.emissiveMap = boardMap;
+      boardMat.needsUpdate = true;
     },
   };
 }
 
-/** Where the trains from here are heading, east and west (the ends of the line). */
+/** Where the trains from here are heading (they run east, the length of the line). */
 function eastOf(id: StationId): string {
   const i = STATIONS.findIndex((s) => s.id === id);
   return i === STATIONS.length - 1 ? STATIONS[0].name : STATIONS[STATIONS.length - 1].name;
-}
-function westOf(id: StationId): string {
-  const i = STATIONS.findIndex((s) => s.id === id);
-  return i === 0 ? STATIONS[STATIONS.length - 1].name : STATIONS[0].name;
 }
 
 type Box = (w: number, h: number, d: number, x: number, y: number, z: number, m: THREE.Material, parent?: THREE.Object3D, cast?: boolean) => THREE.Mesh;

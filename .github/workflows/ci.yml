@@ -7,7 +7,11 @@ on:
   workflow_dispatch:
     inputs:
       update_baselines:
-        description: Accept the current pictures as the new visual baseline
+        description: Accept the current pictures as the new visual baseline (look at the visual-report first)
+        type: boolean
+        default: false
+      make_lockfile:
+        description: Make package-lock.json from package.json and open a pull request with it
         type: boolean
         default: false
 
@@ -24,7 +28,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+      - name: Install (exactly the locked versions once package-lock.json is in)
+        run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
       - name: Type check
         run: npx tsc --noEmit
       - name: Tests
@@ -48,7 +54,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+      - name: Install (exactly the locked versions once package-lock.json is in)
+        run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
       - uses: actions/download-artifact@v4
         with:
           name: dist
@@ -57,13 +65,16 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund @playwright/test@1.56.1
           npx playwright install chromium
-      - name: Record baselines (first run, or when asked)
+      # Pictures become the baseline only when someone asks, after looking at the report: a new scene with no
+      # baseline fails the comparison (its picture is in visual-report/out) instead of being accepted unseen.
+      - name: Record baselines (only when asked)
         id: record
-        if: ${{ inputs.update_baselines || hashFiles('tools/visual/baseline/*.png') == '' }}
+        if: ${{ inputs.update_baselines }}
         run: npx playwright test -c tools/visual/playwright.config.ts --update-snapshots=all
-      - name: Compare with the baselines (new scenes are recorded, not failed)
+      - name: Compare with the baselines
         id: compare
-        run: npx playwright test -c tools/visual/playwright.config.ts --update-snapshots=missing
+        if: ${{ !inputs.update_baselines }}
+        run: npx playwright test -c tools/visual/playwright.config.ts --update-snapshots=none
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -73,8 +84,8 @@ jobs:
             tools/visual/out
             tools/visual/baseline
           retention-days: 14
-      - name: Commit the recorded baselines
-        if: ${{ steps.compare.outcome == 'success' && github.event_name != 'pull_request' }}
+      - name: Commit the recorded baselines (only when asked)
+        if: ${{ inputs.update_baselines && steps.record.outcome == 'success' && github.event_name != 'pull_request' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -96,7 +107,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+      - name: Install (exactly the locked versions once package-lock.json is in)
+        run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
       - uses: actions/download-artifact@v4
         with:
           name: dist
@@ -115,3 +128,65 @@ jobs:
             tools/phone/report
             tools/phone/out
           retention-days: 14
+
+  phone-webkit:
+    name: Phone in WebKit (Safari's engine)
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    # Reported, not blocking, while WebKit's software WebGL on Linux is proven out: it is Safari's engine, not an
+    # iPhone, so it adds coverage without replacing the by-hand check on a device (docs/PHONE.md).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install (exactly the locked versions once package-lock.json is in)
+        run: |
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Install WebKit
+        run: |
+          npm install --no-save --no-audit --no-fund @playwright/test@1.56.1
+          npx playwright install --with-deps webkit
+      - name: Every phone app in WebKit
+        run: PW_BROWSER=webkit npx playwright test -c tools/phone/playwright.config.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phone-webkit-report
+          path: |
+            tools/phone/report-webkit
+            tools/phone/out-webkit
+          retention-days: 14
+
+  lockfile:
+    name: Make the lockfile
+    if: ${{ inputs.make_lockfile }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Resolve package.json into package-lock.json (nothing installed)
+        run: npm install --package-lock-only --no-audit --no-fund
+      - name: Open a pull request with it
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          branch="chore/lockfile-${{ github.run_id }}"
+          git checkout -b "$branch"
+          git add package-lock.json
+          git commit -m "Add package-lock.json so installs are reproducible (npm ci)"
+          git push origin "$branch"
+          gh pr create --base "${{ github.ref_name }}" --head "$branch" --title "Add package-lock.json" --body "Made by CI from package.json with npm install --package-lock-only. Once merged, every CI job installs with npm ci (exactly these versions)."

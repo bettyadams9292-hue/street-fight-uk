@@ -72,8 +72,13 @@ export function runBackground(budgetMs = BACKGROUND_BUDGET_MS, now: () => number
     first = false;
     const e = next()!;
     let over = false;
+    const t0 = now();
     try {
       over = e.job.step(deadline);
+      // How far a step ran past its deadline (a job whose single step is too big for the budget shows here).
+      const ran = now() - t0;
+      if (ran > longestStep) longestStep = ran;
+      overrun = Math.max(overrun, now() - deadline);
     } catch (err) {
       // A job that throws is dropped, not retried every frame.
       console.warn('[background] job failed', err);
@@ -91,6 +96,17 @@ export function runBackground(budgetMs = BACKGROUND_BUDGET_MS, now: () => number
     }
   }
   return finished;
+}
+
+let longestStep = 0;
+let overrun = 0;
+
+/** The longest single job step and the furthest past a deadline since the last call (ms), then reset. */
+export function takeStepStats(): { longestStep: number; overrun: number } {
+  const r = { longestStep, overrun };
+  longestStep = 0;
+  overrun = 0;
+  return r;
 }
 
 /** Jobs waiting (tests). */

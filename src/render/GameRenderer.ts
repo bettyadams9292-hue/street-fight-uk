@@ -2,6 +2,7 @@ import { BACKGROUND_POSE_DISTANCE } from '../performance/FrameBudget';
 import { levelReady, prepareLevel } from '../performance/levelAssets';
 import { PRIORITY } from '../performance/requests';
 import { addJob, BACKGROUND_BUDGET_MS, runBackground, type JobHandle } from '../performance/scheduler';
+import { PerfStats } from '../performance/perfStats';
 import { humanSpecFor, humansOn } from './human/HumanRig';
 import { buildHumanLater, humanBuilt } from './human/HumanBuilder';
 import * as THREE from 'three';
@@ -24,12 +25,21 @@ import { stripNeighbours } from '../world/strip';
 import { resolveLook, type Look } from './look/looks';
 import { PostFX } from './look/PostFX';
 
-/** Background milliseconds a frame while the district you're walking towards isn't built yet. */
-const URGENT_BUDGET_MS = 8;
-/** How near an end of the street counts as walking towards the next district (about a screen's width). */
-const URGENT_SEAM_M = 14;
+/**
+ * Background milliseconds a frame while the district you're heading for isn't built yet, by how soon you'll be
+ * there (seconds at the speed you're going, `districtBudget`): the budget rises in steps as you near the end, so
+ * the build is spread over many frames instead of finished in one long one. Only when you're about to see past
+ * the end with it still unbuilt (inside FINISH_SEAM_M) is it finished at once.
+ */
+const BUDGET_BY_ETA: [number, number][] = [
+  [1.5, 12],
+  [3, 8],
+  [6, 5],
+];
+/** How near an end of the street counts as heading for the next district, standing still (about a screen). */
+const URGENT_SEAM_M = 20;
 /** Nearer than this to an end whose district isn't built yet, it's finished at once. */
-const FINISH_SEAM_M = 5;
+const FINISH_SEAM_M = 4;
 
 const BG = 0x0a0c12;
 
@@ -67,6 +77,9 @@ export class GameRenderer {
     this.quality = quality;
     this.renderer = new THREE.WebGLRenderer({ antialias: quality !== 'low', powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Counted across every pass of a frame (the scene, shadows, post-processing) and reset at the frame's start, so
+    // the development numbers (PerfStats) are the whole frame, not the last full-screen pass.
+    this.renderer.info.autoReset = false;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.3;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -612,6 +625,7 @@ export class GameRenderer {
 
   /** @param focus the player fighter (camera follows), or null for the menu drift */
   render(dt: number, time: number, focus: Fighter | null): void {
+    this.renderer.info.reset();
     const start = performance.now();
     if (this.sim) {
       if (this.world || this.views.size !== this.sim.fighters.length) this.syncFighters();
@@ -658,8 +672,9 @@ export class GameRenderer {
     }
     // Background work (the districts next door): a few milliseconds a frame, more when you're close enough to
     // an end of the street to see past it, so the next district is never missing when you get there.
-    const urgency = this.districtUrgency(focus);
-    runBackground(urgency === 2 ? Infinity : urgency === 1 ? URGENT_BUDGET_MS : BACKGROUND_BUDGET_MS);
+    const bgStart = performance.now();
+    runBackground(this.districtBudget(focus));
+    this.perf.frame(dt, performance.now() - bgStart, this.renderer.info, this.sim?.fighters.length ?? 0);
     this.cpuAvg += (this.frameCpuMs + (performance.now() - start) - this.cpuAvg) * 0.05;
     this.frameCpuMs = 0;
     this.adaptResolution(dt);
@@ -671,15 +686,27 @@ export class GameRenderer {
   private readonly tierSphere = new THREE.Sphere(new THREE.Vector3(), 4);
 
   /**
-   * A district next door is still being built: 1 while you're within sight of that end of the street, 2 when
-   * you're about to see past it (it's finished at once: one longer frame is better than walking into nothing).
+   * The background budget this frame. A district next door still being built gets more as you head for it: by how
+   * many seconds away its end is at the speed you're moving towards it (or, standing, by distance), in steps
+   * (BUDGET_BY_ETA), so the work is spread out ahead of you. Inside FINISH_SEAM_M with it unbuilt it's finished at
+   * once: one longer frame is better than walking into nothing.
    */
-  private districtUrgency(focus: Fighter | null): 0 | 1 | 2 {
-    if (!this.pendingDistricts.size || !this.world || !focus) return 0;
+  private districtBudget(focus: Fighter | null): number {
+    if (!this.pendingDistricts.size || !this.world || !focus) return BACKGROUND_BUDGET_MS;
     const b = this.world.level.bounds;
-    const d = Math.min(focus.pos.x - b.minX, b.maxX - focus.pos.x);
-    return d < FINISH_SEAM_M ? 2 : d < URGENT_SEAM_M ? 1 : 0;
+    const toLeft = focus.pos.x - b.minX;
+    const toRight = b.maxX - focus.pos.x;
+    const d = Math.min(toLeft, toRight);
+    if (d < FINISH_SEAM_M) return Infinity;
+    // Speed towards the nearer end.
+    const v = toLeft < toRight ? -focus.vel.x : focus.vel.x;
+    const eta = v > 0.3 ? d / v : d < URGENT_SEAM_M ? 6 : Infinity;
+    for (const [t, ms] of BUDGET_BY_ETA) if (eta <= t) return ms;
+    return BACKGROUND_BUDGET_MS;
   }
+
+  /** Development numbers (performance/perfStats.ts): read from the console as `__perf()`, never drawn in game. */
+  readonly perf = new PerfStats();
 
   /** Milliseconds the game spent on this frame before drawing it (Game.frame: input, simulation, HUD). */
   frameCpuMs = 0;

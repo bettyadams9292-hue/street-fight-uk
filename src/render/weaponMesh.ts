@@ -270,6 +270,9 @@ export function buildWeaponMesh(w: WeaponData): THREE.Group {
 
 export function disposeGroup(g: THREE.Object3D): void {
   g.traverse((o: THREE.Object3D) => {
+    // A light's shadow map is a render target on the GPU: a level's sun or lamp left one behind on every area change.
+    const lit = o as THREE.Light;
+    if (lit.isLight && lit.shadow) lit.shadow.dispose();
     // Shared prop geometry and cached materials (propModels.ts) outlive any one level.
     if (o instanceof THREE.Mesh && o.userData.shared) {
       const mats = Array.isArray(o.material) ? o.material : [o.material];
@@ -277,20 +280,30 @@ export function disposeGroup(g: THREE.Object3D): void {
         if (m.userData.instanceOwned && !m.userData.shared) m.dispose();
       }
     }
-    if (o instanceof THREE.Mesh && !o.userData.shared) {
-      o.geometry.dispose();
-      const mats = Array.isArray(o.material) ? o.material : [o.material];
+    // Sprites and point clouds (halos, sparkles, labels) own their materials and textures too: they were missed,
+    // and a level's worth of their textures stayed on the GPU after every area change.
+    const own = (o instanceof THREE.Mesh && !o.userData.shared) || ((o instanceof THREE.Sprite || o instanceof THREE.Points) && !o.userData.shared);
+    if (own) {
+      const obj = o as THREE.Mesh;
+      if (!(o instanceof THREE.Sprite)) obj.geometry.dispose();
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
       for (const m of mats) {
+        if (!m || m.userData.shared) continue;
         // Library textures (materials/library.ts) are shared by every level: leave them loaded.
         if (m.userData.lib) {
-          if (!m.userData.shared) m.dispose();
+          m.dispose();
           continue;
         }
-        (m as THREE.MeshStandardMaterial).map?.dispose();
-        (m as THREE.MeshStandardMaterial).emissiveMap?.dispose();
-        (m as THREE.MeshStandardMaterial).normalMap?.dispose();
+        disposeMaps(m);
         m.dispose();
       }
     }
   });
+}
+
+/** Every texture a material holds (colour, glow, normal, roughness, alpha and the rest), unless marked shared. */
+function disposeMaps(m: THREE.Material): void {
+  for (const v of Object.values(m)) {
+    if (v instanceof THREE.Texture && !(v as THREE.Texture).userData?.shared) (v as THREE.Texture).dispose();
+  }
 }

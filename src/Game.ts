@@ -1,9 +1,7 @@
 import { decorate, venueFor } from './ui/venueTheme';
-import { arriveBy, metroArea, metroVisit, payRide, rollTrain, setMetroVisit, stationAt } from './travel/metro';
-import { stationOf, stopsBetween, type StationId as MetroStop } from './travel/subway';
+import { MetroController } from './controllers/MetroController';
 import { safeResume } from './progress/resume';
 import { suppliesBody } from './home/supplies';
-import { trainScreen } from './ui/metroUI';
 import { bankPrompt } from './ui/bankPrompt';
 import { custodyRecord, frontCounter, policeStop } from './ui/policeUI';
 import { setHumansEnabled } from './render/human/HumanRig';
@@ -46,7 +44,8 @@ import { defaultAttributes } from './stats/Stats';
 import { emptyCommand, type AttackButton, type CommandFrame } from './input/Commands';
 import { ambushSize, jumped } from './travel/onFoot';
 import type { StudioFraming } from './render/StudioView';
-import { SaveStore } from './save/SaveStore';
+import { parseImport, SaveStore, type Slot } from './save/SaveStore';
+import { downloadText, pickTextFile, savesScreen } from './ui/savesUI';
 import { newSave, Progress, type AreaId } from './progress/Progress';
 import { xpForNextLevel } from './progress/catalogue';
 import { STARTER_ACCESSORIES, STARTER_BOTTOMS, STARTER_SHOES, STARTER_TOPS } from './character/Appearance';
@@ -189,6 +188,17 @@ export class Game {
   /** The house's activities: cooking, eating, washing, sleeping. */
   private house!: HouseController;
   private state: GameState = 'menu';
+  /** The Metro's wiring (controllers/MetroController.ts). */
+  private readonly metro = new MetroController({
+    progress: () => this.progress,
+    backToPlay: () => this.backToPlay(),
+    play: () => {
+      this.ui.replaceAll(null);
+      this.state = 'playing';
+    },
+    toast: (t, k) => this.hud.toast(t, k),
+    goTo: (area, entry) => this.changeArea(area, entry, this.world?.carry() ?? null),
+  });
   private unsubscribe: (() => void)[] = [];
   private accumulator = 0;
   /** Slow motion: how fast game time runs (1 = normal), and how many real seconds of slowness are left. */
@@ -369,7 +379,7 @@ export class Game {
     }
     window.addEventListener('resize', () => this.updateStudioPanel());
     this.showMainMenu();
-    if (loaded?.recovered) this.hud.notify('Save restored from backup', 'warn');
+    if (loaded?.recovered) this.hud.notify(`Your last save was damaged: loaded from its ${loaded.from ?? 'backup'}`, 'warn');
 
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.state === 'playing') this.pause();
@@ -410,6 +420,7 @@ export class Game {
         character: () => this.whenLoaded(() => this.openSheet()),
         settings: () => this.ui.push(settingsScreen(this.settings, this.ui)),
         controls: () => this.ui.push(controlsScreen(this.ui)),
+        saves: () => this.whenLoaded(() => this.openSaves(false)),
       }),
     );
   }
@@ -644,10 +655,7 @@ export class Game {
           },
           home: atHome || w.locked || w.player.isKO || this.progress?.save.police.serving ? null : () => this.goHome(false),
           homeWhy: this.progress?.save.police.serving ? 'Not while you\u2019re doing your time' : atHome ? '' : 'Can\u2019t head home in the middle of a fight',
-          save: () => {
-            this.hud.notify(this.saveGame() ? 'SAVED' : 'COULDN\u2019T SAVE', 'info');
-            this.resume();
-          },
+          save: () => this.openSaves(true),
           settings: () => this.ui.push(settingsScreen(this.settings, this.ui)),
           // Controls and Moves are GraftWiki articles on the phone: the pause menu goes, the phone comes up on them.
           controls: () => this.wikiFromPause('controls'),
@@ -811,7 +819,92 @@ export class Game {
     if (!this.progress) return false;
     this.world?.syncCompanion();
     this.progress.save.savedAt = new Date().toISOString();
-    return this.store.write(this.progress.save);
+    const ok = this.store.write(this.progress.save);
+    // Say so when a save doesn't take (at most once a minute), and why: storage full or blocked, or the game
+    // refusing to save something it couldn't load back (the last good save is kept either way).
+    if (!ok && performance.now() - this.saveWarnedAt > 60_000) {
+      this.saveWarnedAt = performance.now();
+      this.hud.notify(
+        this.store.lastError === 'invalid'
+          ? 'Couldn’t save: something in this game wouldn’t load back, so your last save is kept.'
+          : 'Couldn’t save: the browser’s storage is full or blocked. Pause → Save → Download keeps a copy.',
+        'warn',
+      );
+    }
+    return ok;
+  }
+
+  private saveWarnedAt = -Infinity;
+
+  /** Development performance numbers (main.ts exposes them as `__perf()` on dev and ?perf pages). */
+  perfReport(): unknown {
+    return this.renderer.perf.report();
+  }
+
+  /** The saves screen: slots, save, load, download and bring in a backup, empty a slot (ui/savesUI.ts). */
+  private openSaves(inGame: boolean): void {
+    const store = this.store;
+    const close = () => this.ui.pop();
+    const fromFile = (slot: Slot, done: (msg: string, bad: boolean) => void) =>
+      pickTextFile((text) => {
+        if (text === null) return done('No file read.', true);
+        const r = parseImport(text);
+        if (!r.ok) return done(r.why, true);
+        if (!store.importInto(r.save, slot)) return done('Couldn’t write it: storage is full or blocked.', true);
+        // Brought into the slot you're playing: the game you're in is that save now.
+        if (store.slot === slot && this.progress) {
+          this.progress = new Progress(r.save);
+          this.character = r.save.character;
+          this.ui.replaceAll(null);
+          this.continueStory();
+          return;
+        }
+        done(`${r.save.character.name} (level ${r.save.level}) is in slot ${slot}.`, false);
+      });
+    const loadSlot = (slot: Slot) => {
+      if (inGame) this.saveGame();
+      const got = store.load(slot);
+      if (!got) return;
+      store.slot = slot;
+      this.progress = new Progress(got.save);
+      this.character = got.save.character;
+      this.ui.replaceAll(null);
+      this.continueStory();
+      if (got.recovered) this.hud.notify(`Loaded from the slot’s ${got.from ?? 'backup'}: its last save was damaged`, 'warn');
+    };
+    this.ui.push(
+      savesScreen({
+        slots: () => store.slots(),
+        current: () => (this.progress ? store.slot : null),
+        saveNow: inGame ? () => this.saveGame() : null,
+        saveTo: inGame
+          ? (slot) => {
+              const was = store.slot;
+              store.slot = slot;
+              const ok = this.saveGame();
+              if (!ok) store.slot = was;
+              return ok;
+            }
+          : null,
+        load: loadSlot,
+        fresh: (slot) => {
+          if (inGame) this.saveGame();
+          store.slot = slot;
+          this.progress = null;
+          this.character = null;
+          this.ui.replaceAll(null);
+          this.openCreator('new');
+        },
+        exportSlot: (slot) => {
+          const text = store.exportSlot(slot);
+          const name = store.slots().find((x) => x.slot === slot)?.name || 'fighter';
+          return !!text && downloadText(`hard-graft-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-slot${slot}-${new Date().toISOString().slice(0, 10)}.hgsave`, text);
+        },
+        importFile: fromFile,
+        remove: (slot) => store.clearSlot(slot),
+        close,
+      }),
+    );
   }
 
   private continueStory(): void {
@@ -920,11 +1013,10 @@ export class Game {
       p.save.portfolio.inside = null;
       p.save.portfolio.viaAgent = false;
     }
-    // A Metro station: off a train you're on the platform with it still there; down the stairs, a train's in or
-    // it isn't (rolled once a visit, travel/metro.ts).
+    // A Metro station: off a train you're on the platform with it still there; down the stairs, the timetable is
+    // wherever it is (travel/metro.ts).
     this.placeId = area;
-    const metroHere = stationAt(area);
-    setMetroVisit(metroHere ? (entry === 'platform' ? arriveBy(metroHere) : rollTrain(p, metroHere)) : null);
+    this.metro.arrive(area, entry, p);
     const level = resolveLevel(area, p.save);
     this.unwire();
     this.leaveWorld();
@@ -1640,20 +1732,12 @@ export class Game {
           this.hud.toast('Savings moved into the new tin', 'item');
         });
         break;
-      case 'metro_board': {
-        const v = metroVisit();
-        this.backToPlay();
-        return this.hud.toast(v && !v.train ? `No train in. The board says ${v.minutes} min. Go back up and come down again to see if one's in.` : 'The train’s in. Mind the gap.', 'info');
-      }
+      case 'metro_board':
+        return this.metro.board();
       case 'metro_train': {
-        const here = stationAt(w.level.id);
-        if (!here) return this.backToPlay();
-        const v = metroVisit();
-        if (!v || v.station !== here || !v.train) {
-          this.backToPlay();
-          return this.hud.toast(`No train in. The board says ${v?.minutes ?? 4} min. Go back up and come down again to see if one's in.`, 'info');
-        }
-        screen = trainScreen(p, here, (to) => this.metroRide(here, to), close);
+        const sc = this.metro.doors(w.level.id, close);
+        if (!sc) return;
+        screen = sc;
         break;
       }
       case 'bank_counter':
@@ -2407,20 +2491,6 @@ export class Game {
 
   /** Go somewhere by cab, or head home: from the map or the phone. */
   /** On the train to `to`: the doors close, the ride passes in the dark, and you're on the platform there. */
-  private metroRide(from: MetroStop, to: MetroStop): string | null {
-    const w = this.world;
-    const p = this.progress;
-    if (!w || !p) return null;
-    const r = payRide(p, from, to);
-    if (!r.ok) return r.reason;
-    this.ui.replaceAll(null);
-    this.state = 'playing';
-    const stops = stopsBetween(from, to).length - 1;
-    this.hud.toast(`${stops} stop${stops === 1 ? '' : 's'} to ${stationOf(to).name}. £${r.paid} fare.`, 'cash');
-    this.changeArea(metroArea(to), 'platform', w.carry());
-    return null;
-  }
-
   private travelTo(area: AreaId, opt: TravelOption): void {
     this.autoRun = null;
     const w = this.world;

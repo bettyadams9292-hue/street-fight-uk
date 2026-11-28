@@ -5,7 +5,8 @@
  *
  *   npm run build && npm run phone
  *
- * Emulated in Chromium: this checks layout, hit areas and input handling at each size, not Safari itself
+ * Emulated in Chromium by default; `PW_BROWSER=webkit` runs the same suite in WebKit, Safari's engine (CI runs
+ * both). Neither is Safari on an iPhone: toolbars, safe areas and the real GPU still need the device
  * (docs/PHONE.md has the by-hand checklist for real devices).
  */
 import { fileURLToPath } from 'node:url';
@@ -13,23 +14,26 @@ import { defineConfig } from '@playwright/test';
 
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const base = process.env.PHONE_BASE_URL || 'http://127.0.0.1:4173';
+const webkit = process.env.PW_BROWSER === 'webkit';
 
 export default defineConfig({
   testDir: '.',
-  outputDir: './out',
+  outputDir: webkit ? './out-webkit' : './out',
   fullyParallel: false,
   workers: 1,
   retries: 0,
   // A new game through the creator, then every app, in software WebGL.
   timeout: 900_000,
-  reporter: [['list'], ['html', { outputFolder: './report', open: 'never' }]],
+  reporter: [['list'], ['html', { outputFolder: webkit ? './report-webkit' : './report', open: 'never' }]],
   expect: { timeout: 20_000 },
   use: {
     baseURL: base,
     deviceScaleFactor: 1,
     colorScheme: 'dark',
-    channel: process.env.PW_CHANNEL || undefined,
-    launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl', '--mute-audio'] },
+    browserName: webkit ? 'webkit' : 'chromium',
+    channel: webkit ? undefined : process.env.PW_CHANNEL || undefined,
+    // Chromium's software-WebGL switches; WebKit takes none.
+    launchOptions: webkit ? {} : { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl', '--mute-audio'] },
   },
   webServer: process.env.PHONE_BASE_URL
     ? undefined

@@ -248,7 +248,7 @@ export const GUIDES: readonly ChapterDef[] = [
     steps: [
       { id: 'line', text: 'The Brack Metro: one line across town.', why: 'A district’s station opens once its boss is down. Shut ones say who you need to beat.', done: { read: true } },
       { id: 'platform', text: 'Walk through the hall to the platform.', keys: ['move'], why: 'No barriers: you pay when you get on.', done: { poll: (c) => c.player.pos.x >= PLATFORM_X0 } },
-      { id: 'train', text: 'If a train’s in, its doors are open. If not, the board says how long.', why: 'Trains don’t wait for you: go back up the stairs and come down again to see if one’s in.', done: { read: true } },
+      { id: 'train', text: 'The board counts down to the next train. Wait on the platform: it pulls in and opens its doors.', why: 'They don’t wait long: get on while the doors are open, or catch the next one in a minute or so.', done: { read: true } },
       { id: 'board', text: 'Use the train’s doors (or the board) to pick where to go.', keys: ['use'], why: 'The fare comes off your cash, then your card. You get off on that station’s platform.', done: { on: 'station', test: (e) => e.type === 'station' && (e.id === 'metro_train' || e.id === 'metro_board') } },
     ],
   },

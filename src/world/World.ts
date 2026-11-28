@@ -1,6 +1,6 @@
 import { CELL } from './interiors';
-import { metroVisit } from '../travel/metro';
-import { STAIRS_X } from './metroLevels';
+import { metroVisit, tickMetro, trainAt } from '../travel/metro';
+import { PLATFORM_X0, PLATFORM_X1, STAIRS_X, TRAIN_DOORS } from './metroLevels';
 import { streetSolids } from '../city/street';
 import { atmOpen, bankOf } from '../money/atm';
 import { doorX } from '../city/doorSpots';
@@ -1164,6 +1164,49 @@ export class World {
     }
   }
 
+  /** The last train phase seen, so passengers get off and on once a stop. */
+  private trainPhase = '';
+
+  /**
+   * A train stopping: when its doors open a few people step off onto the platform and walk on, and a few waiting on
+   * the platform get on (walked to the nearest door and inside, then gone with the train). Carried like the stair
+   * goers (anchored, moved by hand), so nobody walks through the carriage side.
+   */
+  private updatePassengers(): void {
+    const st = trainAt(metroVisit());
+    const was = this.trainPhase;
+    this.trainPhase = st.phase;
+    if (st.phase !== 'in' || was === 'in' || !this.civCap || this.activeEncounter) return;
+    const rng = this.lootRng;
+    const inside = -3.2;
+    const edge = -1.55;
+    // Off.
+    const off = 1 + Math.floor(rng.next() * 2);
+    for (let i = 0; i < off && this.civilians.length < this.civCap; i++) {
+      this.spawnCivilian();
+      const c = this.civilians[this.civilians.length - 1];
+      if (!c || this.stairGoers.some((g) => g.f === c.f)) continue;
+      const brain = c.brain;
+      this.brains.delete(c.f);
+      c.f.anchored = true;
+      const d = TRAIN_DOORS[Math.floor(rng.next() * TRAIN_DOORS.length)];
+      c.f.pos.x = d;
+      c.f.pos.y = 0;
+      c.f.pos.z = inside;
+      this.stairGoers.push({ f: c.f, path: [{ x: d, y: 0, z: inside }, { x: d, y: 0, z: edge }, { x: d + (rng.next() < 0.5 ? -1 : 1), y: 0, z: -0.6 }], leg: 0, at: 0, gone: false, brain });
+    }
+    // On.
+    const waiting = this.civilians.filter((c) => this.brains.has(c.f) && !c.f.isKO && c.f.team === 'neutral' && c.f.pos.x > PLATFORM_X0 && c.f.pos.x < PLATFORM_X1);
+    for (const c of waiting.slice(0, 2)) {
+      if (rng.next() < 0.4) continue;
+      this.brains.delete(c.f);
+      c.brain.release();
+      c.f.anchored = true;
+      const d = TRAIN_DOORS.reduce((a, b) => (Math.abs(b - c.f.pos.x) < Math.abs(a - c.f.pos.x) ? b : a));
+      this.stairGoers.push({ f: c.f, path: [{ ...c.f.pos }, { x: d, y: 0, z: edge }, { x: d, y: 0, z: inside }], leg: 0, at: 0, gone: false });
+    }
+  }
+
   private removeCivilian(i: number): void {
     const c = this.civilians[i];
     c.brain.release();
@@ -1932,6 +1975,10 @@ export class World {
     this.endScramble(frame);
     this.sim.step(commands);
     this.holdInCell();
+    if (this.level.theme === 'metro') {
+      tickMetro(1 / 60);
+      this.updatePassengers();
+    }
     this.updateStairGoers();
 
     this.syncHeld();
@@ -2820,8 +2867,7 @@ export class World {
       if (s.id === 'recruit' && this.duel) continue;
       // The Metro: the train's doors only while one's in; the board otherwise.
       if (s.id === 'metro_train' || s.id === 'metro_board') {
-        const v = metroVisit();
-        const train = !!v?.train && !v.arrived;
+        const train = trainAt(metroVisit()).boardable;
         if (s.id === 'metro_train' && !train) continue;
         if (s.id === 'metro_board' && train) continue;
       }

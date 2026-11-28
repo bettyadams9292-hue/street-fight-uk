@@ -409,7 +409,13 @@ test('save/load round trip, backup recovery and legacy migration', () => {
   kv.setItem('sfuk.save.v3', '{not json');
   const rec = store.load()!;
   assert(rec && rec.recovered && rec.save.flags.boss_gaffer, 'did not recover from backup');
-  // Garbage fields get repaired, not crash.
+  // A main save that doesn't match its checksum (damaged after writing) is passed over for the backup.
+  store.write(p.save);
+  kv.setItem('sfuk.save.v3', JSON.stringify({ ...p.save, area: 'city' }));
+  const dmg = store.load()!;
+  assert(dmg.recovered && dmg.save.area === 'alleys', 'a save that fails its checksum was trusted');
+  // Garbage fields in a save with no checksum (an older version's) get repaired, not crash.
+  kv.removeItem('sfuk.save.v3.sum');
   kv.setItem('sfuk.save.v3', JSON.stringify({ ...p.save, cash: { pocket: -50, bank: 'lots' }, area: 'narnia', flags: { x: 'yes', y: true } }));
   const fixed = store.load()!;
   assert(fixed.save.cash.pocket >= 0 && typeof fixed.save.cash.bank === 'number' && fixed.save.area === 'home' && !fixed.save.flags.x && fixed.save.flags.y, 'sanitise failed');
