@@ -18,6 +18,7 @@ import { mapApp } from './mapApp';
 import { GANG_GRUDGE, GANG_HUNT, HEAT_KINDS, heatWord, KNOWN_FACE_HEAT, type HeatKind } from '../../progress/heat';
 import { ARREST_HEAT } from '../../world/robbery';
 import { coolPrice, gearBackPrice } from '../../progress/cops';
+import { COMPANIONS } from '../../companions/companions';
 import { kerriganCool, kerriganGearBack, seizedValue, type Favour } from '../../world/custody';
 import { wikiApp, type WikiDeps, type WikiPage } from './wikiApp';
 import { CONTACT_IDS, CONTACTS, contactOpen, failJob, objectiveOf, standingWith, tierOf, timeLeft, type ActiveJob } from '../../jobs/jobs';
@@ -451,6 +452,12 @@ export class Phone {
         h('div', { class: 'ph-bubble' }, h('b', { text: 'Mo' }), h('p', { text: moHint(p) })),
       ),
     ];
+    // Bent Kerrigan, once he's your contact: his favours are in the Heat app, so his thread points there.
+    if (p.save.police.contact && !p.save.police.burned)
+      out.push(h('button', { class: 'ph-thread ph-thread-btn', 'data-nav': true, onclick: () => ((this.kerriganSaid = ''), this.go('heat')) },
+        h('div', { class: 'ph-avatar kerrigan', text: 'K' }),
+        h('div', { class: 'ph-bubble' }, h('b', { text: 'Sgt Kerrigan' }), h('p', { text: 'Need a street cooled off, your gear out of the property store, or a word on who’s looking for you? Open Heat. And not on this phone again.' })),
+      ));
     if (needs.length) {
       out.push(h('div', { class: 'ph-sec', text: 'You' }));
       for (const n of needs) out.push(h('div', { class: `ph-note need u${n.urgency}` }, h('img', { src: ICON(n.key === 'hunger' ? 'food' : n.key === 'hygiene' ? 'shower' : n.key === 'bladder' ? 'toilet' : n.key === 'teeth' ? 'tooth' : n.key === 'energy' ? 'sleep' : 'info'), alt: '' }), h('span', { text: n.tip })));
@@ -619,6 +626,11 @@ export class Phone {
       card,
       h('p', { class: 'ph-small', text: `Pay in and take out at the ${b.name} branch (${BRANCH_OF[b.id]}). ${b.name} cash machines are free; other banks’ charge £${OTHER_BANK_FEE}. Shops take your card when your cash runs out.` }),
     ];
+    const owed = s.police.owed;
+    if (owed) {
+      const who = COMPANIONS[owed.id]?.nickname ?? 'Your crew';
+      out.push(h('div', { class: 'ph-row' }, h('div', { class: 'ph-what' }, h('b', { text: `Owed to ${who}` }), h('span', { text: 'Your bail money. Pay it in the Crew screen, or it comes out of your pockets, then this account, when you get home.' })), h('b', { class: 'ph-out', text: money(owed.left) })));
+    }
     if (rent) out.push(h('div', { class: 'ph-row' }, h('div', { class: 'ph-what' }, h('b', { text: 'Rent in so far' }), h('span', { text: 'From the places you let out' })), h('b', { class: 'ph-in', text: money(rent) })));
     const lines = f.ledger.slice(-8).reverse();
     if (lines.length) {

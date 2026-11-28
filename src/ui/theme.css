@@ -3196,3 +3196,6 @@ body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) *
 .sv-card { flex-shrink: 0; margin: 0 auto auto; }
 /* Crew screen: bail money you owe one of them. */
 .pf-hint.pf-owed { padding: 8px 10px; color: #ffe27a; background: rgba(255, 210, 0, 0.08); box-shadow: inset 3px 0 0 #ffd200; }
+/* Phone messages: a thread you can tap (Kerrigan's opens the Heat app). */
+.ph-thread-btn { width: 100%; text-align: left; border: 0; background: none; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.ph-avatar.kerrigan { background: #1d2a52; color: #ffd200; }
