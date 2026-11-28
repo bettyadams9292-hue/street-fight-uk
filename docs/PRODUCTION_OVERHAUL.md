@@ -82,3 +82,11 @@ Measured with `?shot=` pages over eight area changes (home, pub and street):
 2. **The lockfile:** run CI with `make_lockfile`, then merge its PR.
 3. **Visual baselines:** refresh with `update_baselines` once this is on `dev`.
 4. Phases 5, 6, 7, 11 and 13 are untouched here and are separate pieces of work.
+
+## Second pass (28 Nov 2026)
+
+- **Phase 1:** the police screens (stop, custody record, sentence clock, front counter) moved to `src/controllers/PoliceController.ts`. `Game.ts` 4,076 → 3,905 lines.
+- **Phase 9:** the custody record's "Lose the paperwork" was white on pale pink when chosen; now solid red. Sideways, the property line sat at the bottom of the form; now under the offences. Checked at 844×390 and 390×700.
+- **Phase 11:** bail, court fines and bungs are in the economy model (`policeCosts`) with targets in `docs/ECONOMY.md` and `tests/economy.test.ts`: first bail £150 (under the Gaffer's £400), bail cap £1,050 at level 1 to £5,400 at 30 (under a tenth of what the game pays), the court fine always under bail, the dearest bung £580.
+- **Phase 13:** `tests/audioFiles.test.ts`: every recorded sound set has its takes, numbered from 0, and the three songs are there (a missing file would otherwise fall back to synthesis without anyone noticing).
+- **Clean-up:** the old `arrest()` and `arrestFine` (used only by tests) are gone; the tests book you in and pay bail as the game does.

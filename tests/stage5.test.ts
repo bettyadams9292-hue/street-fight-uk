@@ -16,7 +16,8 @@ import { buyItem, pawnOffer, SHOP_STOCK, shopPrice } from '../src/items/shops';
 import { AREA_IDS, BASE_INVENTORY_SLOTS, BASE_STORAGE_SLOTS, newSave, Progress, sanitiseSave, STORAGE_UPGRADE } from '../src/progress/Progress';
 import { SaveStore } from '../src/save/SaveStore';
 import { LEVELS } from '../src/world/levels';
-import { arrest, arrestFine, ARREST_HEAT, robShop, ROBBERY_CLOSED_TRIPS } from '../src/world/robbery';
+import { ARREST_HEAT, robShop, ROBBERY_CLOSED_TRIPS } from '../src/world/robbery';
+import { book, payBail } from '../src/world/custody';
 import { exitLocked, World } from '../src/world/World';
 import { TOWN_AREA_IDS } from '../src/world/townIds';
 /** Tests here pay as a player with a bank account would (money/banking.ts): card after cash. */
@@ -354,21 +355,22 @@ test('Weatherspoons can be robbed: takings grabbed, Ray fights, the pub shuts', 
   assert(LEVELS.pub.containers!.some((c) => c.requires === 'pub_robbable'), 'no till to empty');
 });
 
-test('arrest: stolen goods seized (pockets, worn, hands), fine paid, heat wiped', () => {
+test('nicked: stolen goods seized (pockets, worn, hands), bail paid, heat wiped', () => {
   const p = fresh();
   p.giveItem('puffer_red', 1, { stolen: true });
   p.giveItem('camera');
   p.wear(p.save.inventory.find((s) => s.id === 'puffer_red')!.uid);
   p.giveItem('runners', 1, { stolen: true });
-  p.save.cash.pocket = 100;
-  p.save.cash.bank = 100;
+  p.save.cash.pocket = 5000;
   p.save.heat = 90;
-  const r = arrest(p);
-  assert(r.seized === 2 && !p.owns('puffer_red') && !p.owns('runners') && p.owns('camera'), `seized ${r.seized}`);
-  assert(r.fine === 25 && p.save.cash.pocket + p.save.cash.bank === 175, `fine ${r.fine}`);
-  // Rich: capped by level, not a share of everything.
-  assert(arrestFine(2000, 500000, 10) === 1500 && arrestFine(40, 0, 1) === 25 && arrestFine(10, 0, 1) === 10, 'fine rules');
-  assert(p.save.heat === 0 && p.save.stats.arrests === 1, 'heat or stats');
+  p.setHeat('police', 90);
+  const b = book(p);
+  assert(b.seized === 2 && !p.owns('puffer_red') && !p.owns('runners') && p.owns('camera'), `seized ${b.seized}`);
+  assert(b.bail > 0 && p.save.stats.arrests === 1, `bail ${b.bail}`);
+  const before = p.save.cash.pocket;
+  assert(payBail(p, b), 'paid');
+  assert(p.save.cash.pocket === before - b.bail, 'bail comes off the pocket');
+  assert(p.save.heat === 0, `heat ${p.save.heat}`);
   assert(ARREST_HEAT > 0, '');
 });
 

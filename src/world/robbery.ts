@@ -102,26 +102,3 @@ export function robShop(p: Progress, w: World, shopId: string, keeper: Fighter |
   return { grabbed, resisted: resists && !!keeper, guard, till, heat, police, alarmIn };
 }
 
-/**
- * The fine for being nicked: 15% of the cash on you and 5% of what's in the bank, at least £25, never more than
- * you have, and capped by your level (£600 at level 1, rising £100 a level). A flat 15% of everything used to
- * cost a player with £500,000 in the bank £75,000 for one arrest.
- */
-export function arrestFine(pocket: number, bank: number, level: number): number {
-  const cap = FINE_CAP_BASE + FINE_CAP_PER_LEVEL * Math.max(1, level);
-  return Math.min(pocket + bank, Math.max(25, Math.min(cap, Math.round(pocket * 0.15 + bank * 0.05))));
-}
-export const FINE_CAP_BASE = 500;
-export const FINE_CAP_PER_LEVEL = 100;
-
-/** Caught: stolen goods seized, a fine (arrestFine), heat wiped. */
-export function arrest(p: Progress): { fine: number; seized: number } {
-  const seized = p.confiscateStolen();
-  const fine = arrestFine(p.save.cash.pocket, p.save.bank ? p.save.cash.bank : 0, p.save.level);
-  p.pay(fine);
-  // The police where you were nicked have had their man; elsewhere they still remember.
-  p.setHeat('police', 0);
-  p.save.heat = 0;
-  p.save.stats.arrests++;
-  return { fine, seized };
-}

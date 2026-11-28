@@ -2734,9 +2734,12 @@ body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) *
 .pz-note { margin: 6px 0; font: 400 13px/1.45 var(--ui2); color: #3a3d44; font-style: italic; }
 .pz-sheet .pz-choices { margin-top: 14px; }
 .pz-sheet .menu-btn.pz-choice { background: #fff; color: #1b1d22; border: 1.5px solid #1b1d22; }
-.pz-sheet .menu-btn.pz-choice .sub { opacity: 0.68; }
+.pz-sheet .menu-btn.pz-choice .sub { opacity: 0.75; color: inherit; }
 .pz-sheet .menu-btn.pz-choice.danger { border-color: #be1818; background: #fff5f4; }
 .pz-sheet .menu-btn.pz-choice.focused, .pz-sheet .menu-btn.pz-choice:hover { background: #1b1d22; color: #fff; }
+/* On the paper form the dark card's pink wash left white lettering on near-white: chosen, the red choice is solid red. */
+.pz-sheet .menu-btn.pz-choice.danger.focused, .pz-sheet .menu-btn.pz-choice.danger:hover { background: #be1818; border-color: #be1818; color: #fff; }
+.pz-sheet .menu-btn.pz-choice.cost { border-color: #1b1d22; }
 @media (max-height: 520px) and (orientation: landscape) {
   .pz-card, .pz-sheet { max-height: calc(100vh - 16px); padding-bottom: 12px; }
   .pz-said { font-size: 18px; } .pz-stamp { top: 58px; font-size: 18px; }
@@ -2751,9 +2754,10 @@ body.roam .tc2 .tc-use { bottom: calc(var(--safe-b) + 44px + var(--tc-unit, 1) *
   .pz-sheet > .pz-figures, .pz-sheet > .pz-notes, .pz-sheet > .pz-choices { grid-column: 2; }
   .pz-sheet > .pz-figures { grid-row: 2; margin: 10px 0 6px; }
   .pz-sheet > .pz-notes { grid-row: 3; } .pz-note { margin: 0 0 4px; font-size: 12px; }
-  .pz-sheet > .pz-choices { grid-row: 4 / span 3; margin-top: 4px; }
-  .pz-sheet > .pz-table { grid-row: 2 / span 3; margin: 8px 0 6px; font-size: 13px; }
-  .pz-sheet > .pz-row { grid-row: 5; font-size: 12.5px; }
+  .pz-sheet > .pz-choices { grid-row: 4; margin-top: 4px; }
+  /* Offences then property straight under them, not pushed down past the choices. */
+  .pz-sheet > .pz-table { grid-row: 2; align-self: start; margin: 8px 0 6px; font-size: 13px; }
+  .pz-sheet > .pz-row { grid-row: 3; align-self: start; font-size: 12.5px; }
   .pz-table td { padding: 5px 0; }
   .pz-stamp { top: 14px; right: 50%; font-size: 15px; }
   .pz-card { padding: 0 18px 12px; }
