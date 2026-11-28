@@ -40,7 +40,6 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 | Training, styles, techniques | `src/progress/catalogue.ts`, `src/training/styleGyms.ts` |
 | Business | `src/business/catalogue.ts`, `src/business/production.ts` |
 | Property market and rent | `src/realty/catalogue.ts`, `src/realty/portfolio.ts` |
-| Fines | `arrestFine` in `src/world/robbery.ts` |
 | Bail, court fines, settling up at the front counter | `src/progress/record.ts` |
 | Bungs, Kerrigan's paperwork and favours, what you owe crew who bail you out | `src/progress/cops.ts` |
 | Casino | `src/property/casino.ts` |
@@ -49,3 +48,12 @@ Today's model (19 Nov 2026) gives about £28k for the story and £66k for the to
 | Jobs: pay, heat, standing, boards and chains | `jobPay`, `jobHeat`, `TIERS` in `src/jobs/jobs.ts`; chains in `src/jobs/contacts.ts` |
 | The Arches fight club: ladder purses £150–£800 (buy-in 20%), title £3,000 and the belt, defences £1,000 + £400 each up to £5,000 every 3 nights (a night is 10 minutes of play) | `LADDER`, `CHAMPION`, `DEFENCE_*`, `NIGHT_SECONDS` in `src/fightclub/club.ts` |
 | Cab fares (on the meter: £3.60 flag fall, £2.40 a mile, £5 minimum; about £5–£19 across town) | `CAB_FLAG`, `CAB_PER_MILE`, `CAB_MIN` in `src/ui/hub.ts`; distance `cabMiles` (`MAP_PER_MILE`, `ROAD_FACTOR`) in `src/map/worldMap.ts` |
+
+## Police
+
+`policeCosts` in `tools/economy/model.ts`, checked by `tests/economy.test.ts`:
+
+- a first slip (one mugging, first arrest, level 1) costs less in bail than the Gaffer pays;
+- the bail cap at any level is under a tenth of what the story and the towns pay;
+- the court fine for a night in the cells is always less money than the bail;
+- a bung at full heat with three officers is no dearer than the level-1 bail cap.

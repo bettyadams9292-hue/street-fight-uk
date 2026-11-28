@@ -21,6 +21,9 @@ import { EQUIPMENT, BUSINESS_UPGRADES, IMPROVEMENT, TIERS, STARTUP_FEE } from '.
 import { CAR_LIST as CARS, BIKE_LIST as BIKES } from '../../src/property/catalogue';
 import { JEWEL_LIST, jewelPrice, jewelBuyback } from '../../src/items/jewellery';
 import { bossDropValue } from '../../src/items/loot';
+import { bailPrice, courtFine, BAIL_BASE, type CrimeEntry, type Crime as CrimeKind } from '../../src/progress/record';
+import { bungPrice } from '../../src/progress/cops';
+import { LEVEL_CAP } from '../../src/progress/catalogue';
 
 const gbp = (n: number) => `£${Math.round(n).toLocaleString('en-GB')}`;
 
@@ -31,6 +34,32 @@ export interface EconomyReport {
   business: { name: string; spend: number; perHour: number; payback: number }[];
   rentPerHour: { name: string; price: number; perHour: number; payback: number }[];
   hoursTo: Record<string, number>;
+  police: PoliceCosts;
+}
+
+/** What getting nicked or paying off the police costs, at the bottom and the top of the game. */
+export interface PoliceCosts {
+  /** One mugging, first arrest, nothing seized, level 1. */
+  firstBail: number;
+  /** The most bail can ever be, by level (the cap). */
+  maxBail: Record<number, number>;
+  /** A worst case at the top level: assaulting police plus three more charges, five past arrests, £5,000 seized. */
+  worstBail: number;
+  worstCourtFine: number;
+  /** A bung with the district at full police heat and three officers on you. */
+  worstBung: number;
+}
+
+function charge(crime: CrimeKind): CrimeEntry {
+  return { crime, district: 'High Street', trip: 0 } as CrimeEntry;
+}
+
+export function policeCosts(): PoliceCosts {
+  const maxBail: Record<number, number> = {};
+  const heavy = [charge('assault_police'), charge('robbery'), charge('dealing'), charge('assault')];
+  for (let l = 1; l <= LEVEL_CAP; l++) maxBail[l] = bailPrice(heavy, 20, 1e6, l);
+  const worstBail = bailPrice(heavy, 5, 5000, LEVEL_CAP);
+  return { firstBail: bailPrice([charge('mugging')], 0, 0, 1), maxBail, worstBail, worstCourtFine: courtFine(worstBail), worstBung: bungPrice(100, 3) };
 }
 
 /** Cash from a level's encounters, the first time through (optional ones count once, at their full reward). */
@@ -147,7 +176,7 @@ export function economyReport(): EconomyReport {
   });
 
   const hoursTo = playAfterTowns(story.total + towns.total - (training + styles + techniques) * 0.6, business);
-  return { story, towns, costs: { training, styles, techniques }, business, rentPerHour, hoursTo };
+  return { story, towns, costs: { training, styles, techniques }, business, rentPerHour, hoursTo, police: policeCosts() };
 }
 
 if (process.argv[1]?.endsWith('model.ts')) {
@@ -164,6 +193,9 @@ if (process.argv[1]?.endsWith('model.ts')) {
   for (const p of r.rentPerHour) console.log(`  ${p.name.padEnd(36)} ${gbp(p.price).padStart(11)} · ${gbp(p.perHour)}/h · pays back in ${p.payback.toFixed(0)} h`);
   console.log('HOURS AFTER THE TOWNS (market prices on the day; lettings bought in price order and let)');
   for (const [k, v] of Object.entries(r.hoursTo)) console.log(`  ${k.padEnd(36)} ${v.toFixed(1)} h`);
+  console.log('POLICE');
+  console.log(`  first bail ${gbp(r.police.firstBail)} · bail cap ${gbp(r.police.maxBail[1])} at level 1, ${gbp(r.police.maxBail[LEVEL_CAP])} at ${LEVEL_CAP} · worst case ${gbp(r.police.worstBail)} (court fine ${gbp(r.police.worstCourtFine)}) · bung at full heat, three officers ${gbp(r.police.worstBung)}`);
+  void BAIL_BASE;
   console.log('CARS', CARS.map((c) => `${c.name} ${gbp(c.price)}`).join(' · '));
   console.log('BIKES', BIKES.map((c) => `${c.name} ${gbp(c.price)}`).join(' · '));
   const jp = JEWEL_LIST.map((j) => jewelPrice(j, 'gold9'));

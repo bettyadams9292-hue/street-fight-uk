@@ -10,7 +10,7 @@ import { ITEMS } from '../src/items/items';
 import { LEVELS } from '../src/world/levels';
 import { ASSAULT_HEAT, BAIL_MAX, BAIL_MIN, heroChance, MUG_HEAT, MUG_WITNESS_HEAT, mugHaul, mugResistChance, policeCallChance, valuablesOf, World } from '../src/world/World';
 import { coolHeat, GANG_GRUDGE, gangMods, HEAT, huntChance, KNOWN_FACE_HEAT } from '../src/progress/heat';
-import { arrest } from '../src/world/robbery';
+import { book, payBail } from '../src/world/custody';
 import { ARREST_HEAT } from '../src/world/robbery';
 import { ago } from '../src/ui/phone/Phone';
 
@@ -199,7 +199,8 @@ test('heat is kept district by district, and save.heat is the police reading whe
   assert(p.save.heat === 0 && p.heatIn('High Street').police === 30, 'not wanted at the docks; still wanted on the High Street');
   p.addHeat(70);
   assert(p.wanted === 70, 'the basement sees the worst of it');
-  arrest(p);
+  p.save.cash.pocket = 5000;
+  assert(payBail(p, book(p)), 'bailed');
   assert(p.heatIn('Canal Docks').police === 0 && p.heatIn('High Street').police === 30, 'nicked at the docks: only their police are done with you');
   p.tick();
   assert(p.heatIn('High Street').police === 30 - 8 && p.heatIn('High Street').street === 20 - 4 && p.heatIn('High Street').gang === 10 - 3, 'cools away from it');

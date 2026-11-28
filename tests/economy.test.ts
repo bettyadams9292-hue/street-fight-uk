@@ -8,7 +8,7 @@ import { bossDropValue } from '../src/items/loot';
 import { ITEMS } from '../src/items/items';
 import { JEWEL_ITEMS, JEWELS, jewelPrice } from '../src/items/jewellery';
 import { SHOP_STOCK } from '../src/items/shops';
-import { arrestFine, FINE_CAP_BASE, FINE_CAP_PER_LEVEL } from '../src/world/robbery';
+import { BOSSES as ALL_BOSSES } from '../src/ai/bosses';
 import { LEVEL_CAP } from '../src/progress/catalogue';
 import { marketIndex } from '../src/realty/catalogue';
 import { COMP_PRIZES, COMP_TICKET, DRAW_PRIZES, DRAW_TICKET, SLOT_PAYS, SLOT_SYMBOLS, SLOT_WEIGHTS, compOdds, prizeValue, rouletteReturn } from '../src/property/casino';
@@ -78,9 +78,18 @@ test('loot jewellery is a real jeweller piece, priced the same both ways, and JD
   for (const id of SHOP_STOCK) assert(!['chain_silver', 'chain_gold', 'watch_basic', 'ring_signet'].includes(id) && !JEWEL_ITEMS[id], `JD Streets sells ${id}`);
 });
 
-test('the arrest fine is capped by level and never more than you have', () => {
-  for (let lvl = 1; lvl <= LEVEL_CAP; lvl++) assert(arrestFine(1e6, 1e7, lvl) === FINE_CAP_BASE + FINE_CAP_PER_LEVEL * lvl, `level ${lvl}`);
-  assert(arrestFine(12, 0, 5) === 12, 'fined more than you had');
+test('the police stay payable: bail, court fines and bungs at every stage', () => {
+  const p = r.police;
+  // A first slip costs less than the first boss pays.
+  assert(p.firstBail > 0 && p.firstBail <= ALL_BOSSES.gaffer.reward.cash, `first bail ${p.firstBail}`);
+  // However bad it gets, bail never costs more than a tenth of what the story and the towns pay.
+  const earned = r.story.total + r.towns.total;
+  for (let l = 1; l <= LEVEL_CAP; l++) assert(p.maxBail[l] <= earned * 0.1, `level ${l} bail cap ${p.maxBail[l]}`);
+  assert(p.maxBail[LEVEL_CAP] >= p.maxBail[1], 'the cap rises with level');
+  // A night in the cells always costs less money than bail, so it's a real choice when you're short.
+  assert(p.worstCourtFine < p.worstBail, `court fine ${p.worstCourtFine} vs bail ${p.worstBail}`);
+  // A bung at its dearest is still cheaper than the most bail can be at level 1.
+  assert(p.worstBung <= p.maxBail[1], `bung ${p.worstBung} vs level-1 bail cap ${p.maxBail[1]}`);
 });
 
 test('medicine heals more per pound than any food, so it is worth buying', () => {
