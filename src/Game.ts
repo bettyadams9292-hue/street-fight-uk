@@ -1,6 +1,7 @@
 import { decorate, venueFor } from './ui/venueTheme';
 import { MetroController } from './controllers/MetroController';
 import { PoliceController } from './controllers/PoliceController';
+import { isSideStreet } from './world/sideStreets';
 import { safeResume } from './progress/resume';
 import { suppliesBody } from './home/supplies';
 import { bankPrompt } from './ui/bankPrompt';
@@ -1108,6 +1109,8 @@ export class Game {
       p.save.visited.push(area);
       const doors = level.exits.filter((e) => e.kind === 'door' && e.to !== 'home' && LEVELS[e.to] && !LEVELS[e.to].exits.some((x) => x.kind === 'edge'));
       if (doors.length) this.hud.toast(`On this street: ${doors.map((e) => LEVELS[e.to].name).join(', ')}. M for the map.`, 'item');
+      // A side street found: it goes on the map, and it's another way between the two streets it joins.
+      if (isSideStreet(area)) this.hud.notify(`New street: ${level.name}. Another way through, on your map now.`, 'info');
     }
     // Arrived where the map's route was going.
     if (p.save.destination && (p.save.destination === area || (p.save.destination === 'basement' && area === 'home'))) {

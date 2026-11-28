@@ -3,6 +3,7 @@ import { Rng } from '../core/Rng';
 import type { AreaId } from '../progress/Progress';
 import type { FacadeDef, FacadeKind, LevelDef, PropKind } from '../world/LevelTypes';
 import { propBox, propHalf } from '../world/LevelTypes';
+import { isJunction, isSideStreet, JUNCTION_GAP } from '../world/sideStreets';
 import { onStrip, stripNeighbours, isSubwayStairs, SUBWAY_GAP, STRIP_BOUNDS } from '../world/strip';
 import { LOCKUP_HALF, LOCKUP_ID } from '../world/lockup';
 import { KIT_METRICS } from './polyKitMetrics';
@@ -224,6 +225,9 @@ export const DISTRICTS: Partial<Record<AreaId, District>> = {
   underground: { ground: 'street', tints: DARK, skyline: 'city', lamp: 'nyc/prop-street-lamp', trees: false },
   territory: { ground: 'yard', tints: DARK, skyline: 'low', lamp: 'hood/cobra-head-street-light', trees: false },
   hq: { ground: 'plaza', tints: COOL, skyline: 'city', lamp: 'nyc/prop-globe-lamp', trees: true },
+  // Side streets (world/sideStreets.ts): a back lane, and the towpath along the canal.
+  mill_lane: { ground: 'lane', tints: GRIT, skyline: 'low', lamp: 'nyc/prop-globe-lamp', trees: false },
+  canal_towpath: { ground: 'quay', tints: GRIT, skyline: 'none', lamp: 'hood/cobra-head-street-light', trees: false },
 };
 
 /** How far the scenery carries on past an end of the street that has no neighbour. */
@@ -697,7 +701,7 @@ const PAVEMENT_PROPS: ReadonlySet<PropKind> = new Set([
 
 /** True where the kits draw this district (the outdoor districts of the long street). */
 export function kitStreet(level: LevelDef): boolean {
-  return onStrip(level.id) && !!DISTRICTS[level.id];
+  return (onStrip(level.id) || isSideStreet(level.id)) && !!DISTRICTS[level.id];
 }
 
 /** Which ends of a street build the pavement out to meet a neighbour with no road of its own (see planStreet). */
@@ -925,6 +929,8 @@ export function planStreet(level: LevelDef): StreetPlan {
     // Gaps in the frontage where stairs go down to the subway (LevelView draws the stairwell there).
     const gaps = [
       ...level.exits.filter((e) => isSubwayStairs(level, e)).map((e) => [e.x - SUBWAY_GAP, e.x + SUBWAY_GAP] as const),
+      // Junctions: a side street turns off here (world/sideStreets.ts; LevelView draws its mouth).
+      ...level.exits.filter(isJunction).map((e) => [e.x - JUNCTION_GAP, e.x + JUNCTION_GAP] as const),
       // The boss-reward lock-up is a garage of its own (world/lockup.ts, built by LevelView).
       ...(level.containers ?? []).filter((c) => c.id === LOCKUP_ID).map((c) => [c.x - LOCKUP_HALF, c.x + LOCKUP_HALF] as const),
     ];

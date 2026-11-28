@@ -1,3 +1,4 @@
+import { addSideStreets } from './sideStreets';
 import { METRO_LEVELS, addMetroEntrances } from './metroLevels';
 import { tidyStreet } from './streetTidy';
 import { contactStation } from '../jobs/contacts';
@@ -672,6 +673,8 @@ for (const town of GENERATED_TOWNS) {
 }
 // The outdoor districts are one long street: join them end to end.
 joinStrip(LEVELS);
+// Side streets leave the main road at junctions and come back onto it somewhere else (world/sideStreets.ts).
+addSideStreets(LEVELS);
 // Street furniture where it belongs: phone boxes against the building, nothing in front of a door (world/streetTidy.ts).
 for (const lv of Object.values(LEVELS)) tidyStreet(lv);
 

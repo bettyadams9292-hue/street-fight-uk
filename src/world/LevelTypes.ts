@@ -142,6 +142,8 @@ export interface ExitDef {
   lockedText?: string;
   /** Shut while you're doing time in the cells (the police station's way out). */
   custody?: boolean;
+  /** A junction: a gap in the frontage you turn into another street through (world/sideStreets.ts), not a door. */
+  junction?: boolean;
   label: string;
 }
 

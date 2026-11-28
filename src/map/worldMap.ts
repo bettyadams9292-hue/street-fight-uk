@@ -1,3 +1,4 @@
+import { SIDE_STREETS } from '../world/sideStreets';
 import { BOSSES } from '../ai/bosses';
 import { CONTACT_IDS, CONTACTS, contactOpen, objectiveOf, type ContactId } from '../jobs/jobs';
 import { COMPANION_LIST } from '../companions/companions';
@@ -46,6 +47,8 @@ const TINTS: Partial<Record<AreaId, { tint: string; road: RoadLayout['road'] }>>
   estate: { tint: '#7a5a40', road: 'main' },
   high_street: { tint: '#8a4a3a', road: 'main' },
   alleys: { tint: '#5a5048', road: 'side' },
+  mill_lane: { tint: '#5a5048', road: 'side' },
+  canal_towpath: { tint: '#3e5a66', road: 'side' },
   industrial: { tint: '#5a5f66', road: 'main' },
   ind_estate: { tint: '#5a6068', road: 'main' },
   market: { tint: '#7a6a3a', road: 'side' },
@@ -367,6 +370,8 @@ const BLURB: Record<AreaId, string> = {
   stadium: 'Kirkgate Ground and Firm Direct, the club shop. The firm runs the terraces.',
   high_street: 'LadsBroke, The Codfather, Weatherspoons, Puff & Connect, JD Streets, Sofa So Good, Abra Kebabra, Peaky Barbers and The Dodgy Arms.',
   alleys: 'Bins, back doors and shortcuts between the High Street and the canal.',
+  mill_lane: 'The back lane behind the terraces: Hollins to the Back Alleys without the High Street.',
+  canal_towpath: 'Along the water from Canal Side Works to the Canal Docks. Quiet, mostly.',
   market: 'Covered stalls and lock-ups. Maureen Doyle collects the rents.',
   industrial: 'Canal Side Works: Bodgit & Sons, the yards and Hard Knocks, Sully’s gym.',
   docks: 'Cranes, containers, Ship Happens and Big Lenny’s crew.',
@@ -1013,3 +1018,68 @@ export function onMap(id: AreaId): boolean {
 export function blurb(id: AreaId): string {
   return blurbOf(id);
 }
+
+// ---- side streets --------------------------------------------------------------------------------
+
+/**
+ * Side streets (world/sideStreets.ts) go on the map as roads from one junction to the other, bowed out to one side
+ * the way a back lane or a towpath runs behind the main road. Of the two sides, the one that crosses no other road
+ * is used (the map is a street plan: tests/stage9.test.ts). Added once every main road is laid out.
+ */
+(() => {
+  type Seg = [Pt, Pt];
+  const crosses = (p: Pt, q: Pt, r: Pt, s: Pt) => {
+    const d = (q.x - p.x) * (s.y - r.y) - (q.y - p.y) * (s.x - r.x);
+    if (Math.abs(d) < 1e-9) return false;
+    const t = ((r.x - p.x) * (s.y - r.y) - (r.y - p.y) * (s.x - r.x)) / d;
+    const u = ((r.x - p.x) * (q.y - p.y) - (r.y - p.y) * (q.x - p.x)) / d;
+    return t > 0.001 && t < 0.999 && u > 0.001 && u < 0.999;
+  };
+  for (const [id, s] of Object.entries(SIDE_STREETS)) {
+    const a = streetPoint(s.left.street, s.left.x);
+    const b = streetPoint(s.right.street, s.right.x);
+    if (!a || !b) continue;
+    const segs: Seg[] = [];
+    for (const k of Object.keys(LAYOUT) as AreaId[]) {
+      const pts = roadPoints(k)!;
+      for (let i = 1; i < pts.length; i++) segs.push([pts[i - 1], pts[i]]);
+    }
+    // The main road between the two junctions, sampled, so the side street can run alongside it.
+    const ia = STRIP.indexOf(s.left.street);
+    const ib = STRIP.indexOf(s.right.street);
+    const along: Pt[] = [];
+    const dir = ib >= ia ? 1 : -1;
+    for (let i = ia; dir > 0 ? i <= ib : i >= ib; i += dir) {
+      const id2 = STRIP[i];
+      const bd = LEVELS[id2].bounds;
+      const from = i === ia ? s.left.x : dir > 0 ? bd.minX : bd.maxX;
+      const to = i === ib ? s.right.x : dir > 0 ? bd.maxX : bd.minX;
+      for (let k = 0; k <= 6; k++) {
+        const p = streetPoint(id2, from + ((to - from) * k) / 6);
+        if (p && !(along.length && Math.hypot(p.x - along[along.length - 1].x, p.y - along[along.length - 1].y) < 4)) along.push(p);
+      }
+    }
+    let best: Pt[] | null = null;
+    for (const off of [40, -40, 60, -60, 28, -28, 85, -85]) {
+      const side = along.map((p, i) => {
+        const q = along[Math.min(along.length - 1, i + 1)];
+        const o = along[Math.max(0, i - 1)];
+        const l = Math.hypot(q.x - o.x, q.y - o.y) || 1;
+        // The same offset all along: it leaves each junction at a right angle and runs parallel behind the road.
+        const k = 1;
+        return { x: p.x - ((q.y - o.y) / l) * off * k, y: p.y + ((q.x - o.x) / l) * off * k };
+      });
+      const pts = [a, ...side, b];
+      let clear = true;
+      for (let i = 1; i < pts.length && clear; i++) for (const [p, q] of segs) if (crosses(pts[i - 1], pts[i], p, q)) { clear = false; break; }
+      if (clear) {
+        best = pts;
+        break;
+      }
+    }
+    if (!best) continue;
+    // These points are already on the drawn map (through the warp), so they go straight into the road cache.
+    LAYOUT[id as AreaId] = { pts: best, ...(TINTS[id as AreaId] ?? { tint: '#5a5048', road: 'side' as const }) };
+    roadCache.set(id as AreaId, best);
+  }
+})();
