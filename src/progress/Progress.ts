@@ -73,7 +73,8 @@ export const CORE_AREA_IDS = [
   // Stage 5: districts
   'residential', 'leisure', 'stadium', 'market', 'docks', 'ind_estate', 'factory', 'precinct', 'mall', 'car_park', 'nightlife', 'underground', 'hq',
   // Side streets off the main road (world/sideStreets.ts)
-  'mill_lane', 'canal_towpath',
+  'mill_lane', 'canal_towpath', 'tanner_footpath', 'terrace_walk', 'gasworks_road', 'railway_arches', 'chandlers_lane', 'coopers_yard',
+  'neon_alley', 'harrow_cut',
 ] as const;
 /** Every area: the hand-built ones, then the districts of the generated towns east of Hale House. */
 export type AreaId = (typeof CORE_AREA_IDS)[number] | TownAreaId;

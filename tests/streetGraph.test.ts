@@ -26,6 +26,11 @@ function test(name: string, fn: () => void): void {
 function assert(c: unknown, msg: string): asserts c {
   if (!c) throw new Error(msg);
 }
+/** Every flag any exit asks for: the whole town open. */
+function openAll(p: Progress): void {
+  for (const d of DISTRICT_ORDER) p.save.flags[d.flag] = true;
+  for (const id of AREA_IDS) for (const ex of LEVELS[id].exits) for (const f of [ex.requires, ...(ex.requiresAll ?? [])]) if (f) p.save.flags[f] = true;
+}
 function fresh(): Progress {
   const c = createCharacter({ name: 'Tester', appearance: defaultAppearance(), background: 'estate_scrapper', allocated: emptyAllocation() });
   return new Progress(newSave(c));
@@ -91,6 +96,13 @@ test('a junction is a gap you turn into, with an arrival spot in front of it, cl
         const half = isSubwayStairs(host, o) ? SUBWAY_GAP : isJunction(o) ? JUNCTION_GAP : 0.8;
         assert(Math.abs(o.x - j.x) > JUNCTION_GAP + half, `${host.id}: the ${sid} junction (x ${j.x}) overlaps ${o.id} (x ${o.x})`);
       }
+      // The gap cuts the buildings either side cleanly: no sliver of a building left between it and the next.
+      for (const f of host.facades) {
+        const g0 = j.x - JUNCTION_GAP;
+        const g1 = j.x + JUNCTION_GAP;
+        if (g1 <= f.x0 || g0 >= f.x1) continue;
+        for (const piece of [g0 - f.x0, f.x1 - g1]) assert(piece < 1.2 || piece >= 4, `${host.id}: the ${sid} junction leaves a ${piece.toFixed(1)} m sliver of ${f.kind} ${f.label ?? ''}`);
+      }
       // Its own end comes out at that junction.
       const end = s.level.exits.find((e) => e.kind === 'edge' && e.side === side);
       assert(end && end.to === host.id && end.toEntry === junctionEntry(sid), `${sid}'s ${side} end doesn't come out at its junction`);
@@ -100,7 +112,7 @@ test('a junction is a gap you turn into, with an arrival spot in front of it, cl
 
 test('side streets make loops: each joins two streets that the main road joins too, so there are two ways round', () => {
   const p = fresh();
-  for (const d of DISTRICT_ORDER) p.save.flags[d.flag] = true;
+  openAll(p);
   for (const [sid, s] of Object.entries(SIDE_STREETS)) {
     const a = s.left.street;
     const b = s.right.street;
@@ -123,6 +135,10 @@ test('no side street is a way round the story: at every stage, the same places a
   const p = fresh();
   const stages: string[][] = [[]];
   for (const d of DISTRICT_ORDER) stages.push([...stages[stages.length - 1], d.flag]);
+  // And each stage again with every key, pass and shortcut found (they open seams too: the stadium key, the VIP pass).
+  const items = new Set<string>();
+  for (const id of AREA_IDS) for (const ex of LEVELS[id].exits) for (const f of [ex.requires, ...(ex.requiresAll ?? [])]) if (f && !DISTRICT_ORDER.some((d) => d.flag === f)) items.add(f);
+  for (const st of [...stages]) stages.push([...st, ...items]);
   for (const flags of stages) {
     p.save.flags = {};
     for (const f of flags) p.save.flags[f] = true;
@@ -139,7 +155,7 @@ test('the map shows every side street as a road, and the route finder uses them'
   const ids = new Set(roads().map((r) => r.id));
   for (const sid of Object.keys(SIDE_STREETS)) assert(ids.has(sid as AreaId), `${sid} isn't on the map`);
   const p = fresh();
-  for (const d of DISTRICT_ORDER) p.save.flags[d.flag] = true;
+  openAll(p);
   // Hollins to the Back Alleys: through Mill Lane is one street between them; the main road is two.
   const r = route(p, 'residential', 'alleys');
   assert(r && r.length === 2 && r[0] === 'mill_lane', `route ${JSON.stringify(r)}`);

@@ -14,7 +14,7 @@ This file is the audit, the plan and the checklist. Each line is marked **done**
 | Areas in all | 75 | `progress/Progress.ts` `AREA_IDS` |
 | Main road, hand-built districts | 20 (20 district names) | `world/strip.ts` `STRIP`, `world/levels.ts`, `world/districts.ts` |
 | Main road, generated towns east of Hale House | 24 (6 towns × 4) | `world/towns.ts` |
-| Side streets | 2 (new in Stage A) | `world/sideStreets.ts` |
+| Side streets | 10 (Stages A and B) | `world/sideStreets.ts` |
 | Metro stations | 7 | `world/metroLevels.ts`, `travel/` |
 | Interiors you walk into | 22 (shops, gyms, pub, casino, police, home, basement, properties, Ashcombe Park) | `world/interiors.ts`, `realty/`, `property/` |
 | Hidden stashes | 23 | `pickups` of kind `secret` |
@@ -51,9 +51,35 @@ Systems that are already there and are reused, not rebuilt:
 | Save compatibility | done | New ids only. Old saves are untouched. A save on a side street loads there (test). |
 | Shot pages | done | `&calm=1` takes a picture with the area's fights done, so any spot can be framed. |
 
-## Stages still to come
+## Stage B: the connected town
 
-**B: the connected town.** More side streets, so each district has two to four (estate footpaths, a service road behind the High Street, an arcade through the City Centre, the retail park's car park road). Prepare a junction's street in the background as you approach. Cab and drive stops on side streets. Map filters for routes and shortcuts.
+| Item | Status | Notes |
+|---|---|---|
+| More side streets | done | Ten in all, sixteen of the twenty hand-built districts with a junction (see the table below) |
+| Every one a loop with the main road | done | `tests/streetGraph.test.ts` |
+| No way round the story, keys and passes included | done | The stage test now runs every boss stage again with every key, pass and shortcut found, as the stadium key and the VIP pass open seams too |
+| Clean cuts in the frontage | done | A junction leaves either nothing or at least 4 m of building either side (test), so no sliver of shopfront is stretched |
+| Each street its own place | done | Its own frontage, props, a stash, things to search and an optional fight with regulars who fit it (kids on bikes, away fans, the night shift, a chop shop, Lenny's lookouts, shoplifters, door staff, Dunc's lads) |
+| On the map, in the route finder, Run there | done | Drawn behind the main road between its junctions, crossing nothing |
+| Preparing a junction's street before you get there | done (models) | `Game.prepareAround` already loads the models of everything an area's exits lead to, so a side street's kit and props are in before you turn in. Building its scene still happens behind the short fade, like any door. |
+| Cab and drive stops on side streets | not started | Cabs and the car still stop on the main road; side streets are walked |
+| Map filters for shortcuts | not started | |
+| Districts with no junction yet | partial | High Street, Old Market, Market Square, the Deep Line and Hale House: their frontages are full of doors and shops (high street, city) or one long piece of scenery (market, platform, fortress) |
+
+| Side street | Joins | Opens |
+|---|---|---|
+| Mill Lane | Hollins Estate x 60 ↔ Back Alleys x 52 | alleys end after the Gaffer |
+| The Canal Towpath | Canal Side Works x 30 ↔ Canal Docks x 43 | docks end after the Ratcatcher |
+| Tanner Footpath | Leisure Park x 73 ↔ Tanner Road x 3 | open |
+| Terrace Walk | Kirkgate Ground x 30 ↔ Hollins Estate x 10 | ground end with the stadium key |
+| Gasworks Road | Back Alleys x 33 ↔ Trading Estate x 54 | trading estate end after Sully |
+| The Railway Arches | Trading Estate x 24 ↔ Ring Road Subway x 18.5 | open (both ends are past Sully) |
+| Chandler’s Lane | Ring Road Subway x 51.5 ↔ Canal Docks x 24.4 | docks end after the Ratcatcher |
+| Cooper’s Yard | Kingsway Precinct x 41.5 ↔ Multi-storey x 17 | open |
+| Neon Alley | Riverside Centre x 42 ↔ Neon Mile x 78 | Neon Mile end with the VIP pass |
+| Harrow Cut | Old Factory x 10 ↔ The Pit x 20 | open |
+
+## Stages still to come
 
 **C: the living world.** A clock (morning, afternoon, evening, night) that drives lighting, opening hours (shutters, lit signs, hours on the map card), who's about, and police patterns. NPC schedules computed cheaply for unloaded streets. Recurring characters who remember you. A data-driven event system (street fights, shifts, markets, sales, broken-down vans) with cooldowns and no repeats on the same spot.
 

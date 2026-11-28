@@ -228,6 +228,14 @@ export const DISTRICTS: Partial<Record<AreaId, District>> = {
   // Side streets (world/sideStreets.ts): a back lane, and the towpath along the canal.
   mill_lane: { ground: 'lane', tints: GRIT, skyline: 'low', lamp: 'nyc/prop-globe-lamp', trees: false },
   canal_towpath: { ground: 'quay', tints: GRIT, skyline: 'none', lamp: 'hood/cobra-head-street-light', trees: false },
+  tanner_footpath: { ground: 'lane', tints: WARM, skyline: 'low', lamp: 'hood/cobra-head-street-light', trees: true },
+  terrace_walk: { ground: 'lane', tints: GRIT, skyline: 'low', lamp: 'nyc/prop-globe-lamp', trees: false },
+  gasworks_road: { ground: 'yard', tints: GRIT, skyline: 'none', lamp: 'hood/cobra-head-street-light', trees: false },
+  railway_arches: { ground: 'yard', tints: DARK, skyline: 'city', lamp: 'nyc/prop-globe-lamp', trees: false },
+  chandlers_lane: { ground: 'lane', tints: GRIT, skyline: 'low', lamp: 'nyc/prop-globe-lamp', trees: false },
+  coopers_yard: { ground: 'yard', tints: COOL, skyline: 'city', lamp: 'hood/cobra-head-street-light', trees: false },
+  neon_alley: { ground: 'lane', tints: DARK, skyline: 'city', lamp: 'nyc/prop-globe-lamp', trees: false },
+  harrow_cut: { ground: 'yard', tints: DARK, skyline: 'low', lamp: 'hood/cobra-head-street-light', trees: false },
 };
 
 /** How far the scenery carries on past an end of the street that has no neighbour. */
