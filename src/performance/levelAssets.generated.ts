@@ -90,6 +90,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "roulette_table"
   ]
  },
+ "chandlers_lane": {},
  "city": {
   "security": [
    "post_high",
@@ -117,6 +118,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "mannequin_red"
   ]
  },
+ "coopers_yard": {},
  "docks": {},
  "estate": {
   "gym": [
@@ -151,6 +153,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "wall_dome"
   ]
  },
+ "gasworks_road": {},
  "grow_shop": {
   "doors": [
    "door_wooden"
@@ -186,6 +189,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "wall_dome"
   ]
  },
+ "harrow_cut": {},
  "high_street": {
   "shop": [
    "changing_booth",
@@ -281,6 +285,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  "metro_riverside": {},
  "metro_tanner_road": {},
  "mill_lane": {},
+ "neon_alley": {},
  "nightlife": {},
  "pawn_shop": {
   "doors": [
@@ -322,6 +327,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "wall_dome"
   ]
  },
+ "railway_arches": {},
  "residential": {
   "shop": [
    "display_cabinet"
@@ -426,6 +432,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
  "t6d2": {},
  "t6d3": {},
  "t6d4": {},
+ "tanner_footpath": {},
  "tattoo_studio": {
   "doors": [
    "door_panel"
@@ -434,6 +441,7 @@ export const LEVEL_MODELS: Record<string, Record<string, readonly string[]>> = {
    "wall_dome"
   ]
  },
+ "terrace_walk": {},
  "territory": {},
  "underground": {},
  "wrestling_club": {

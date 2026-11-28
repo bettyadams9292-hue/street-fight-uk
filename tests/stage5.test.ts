@@ -568,8 +568,8 @@ console.log('Stage 5: the campaign');
 test('every area (24 + Stage 6 and 7 buildings), every exit resolves, every new district has a boss or is an interior', () => {
   // 36 hand-built areas (the police station since the police work, the Scrap Yard fight club since #95), plus the
   // jeweller, the estate agent, Ashcombe Park and the inside of a property, and Peaky Barbers the barber.
-  // And the side streets off the main road (world/sideStreets.ts): Mill Lane and the Canal Towpath.
-  assert(AREA_IDS.length === 51 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
+  // And the ten side streets off the main road (world/sideStreets.ts).
+  assert(AREA_IDS.length === 59 + TOWN_AREA_IDS.length, `${AREA_IDS.length} areas`);
   for (const id of AREA_IDS) {
     const l = LEVELS[id];
     assert(l, `no level ${id}`);

@@ -3,6 +3,7 @@
  * and the kit plan that draws it (pavement under the pavement, road under the
  * road, the right things inside each shop).
  */
+import { isJunction, JUNCTION_GAP } from '../src/world/sideStreets';
 import { readFileSync } from 'node:fs';
 import { createCharacter, emptyAllocation } from '../src/character/Character';
 import { defaultAppearance } from '../src/character/Appearance';
@@ -200,6 +201,8 @@ test('buildings fill the frontage edge to edge without overlapping', () => {
     }
     // Stairs down to the subway leave a gap in the frontage on purpose (LevelView draws the stairwell there).
     const gaps = L[id].exits.filter((e) => isSubwayStairs(L[id], e)).map((e) => [e.x - SUBWAY_GAP, e.x + SUBWAY_GAP]);
+    // So do junctions into side streets (world/sideStreets.ts; LevelView draws the lane's mouth there).
+    gaps.push(...L[id].exits.filter(isJunction).map((e) => [e.x - JUNCTION_GAP, e.x + JUNCTION_GAP]));
     for (const f of L[id].facades) {
       if (f.kind === 'fence' || f.kind === 'hoarding' || f.x1 - f.x0 < 3) continue;
       const mid = (f.x0 + f.x1) / 2;
