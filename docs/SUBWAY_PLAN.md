@@ -77,7 +77,7 @@ Rows are in `docs/ASSETS_NEEDED.*` (Area "Metro"):
 
 Step 1 is built (`travel/metro.ts`, `world/metroLevels.ts`, `render/metroStation.ts`, `ui/metroUI.ts`, `tests/metro.test.ts`):
 every stairwell leads to its own station; ticket hall, gates (tap in, tap out, or hop), platform; a train that's either
-in with its doors open or not (the board says how long; go back up and down to check again); riding to any station.
+in with its doors open or not (the board says how long; go back up and down to check again; replaced 28 Nov by a timetable: a train every 90 s of play, board counting down, `trainAt` in travel/metro.ts); riding to any station.
 Passers-by go down and come up the stairs. Still to do: the scraps on the platform and in the carriage, riding inside
 the carriage, and the Metro asset rows (train, roundels, gates) to replace the code-built pieces.
 

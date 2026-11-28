@@ -8,3 +8,5 @@ tools/visual/report/
 __pycache__/
 tools/phone/out/
 tools/phone/report/
+tools/phone/out-webkit/
+tools/phone/report-webkit/

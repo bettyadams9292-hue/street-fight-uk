@@ -251,6 +251,8 @@ interface ShotState {
 function exposePicker(game: Game): void {
   (window as unknown as { __game: Game }).__game = game;
   void import('../items/jewellery').then((m) => ((window as unknown as { __jewels: unknown }).__jewels = m.JEWEL_LIST));
+  // The Metro's timetable, for shots of a train coming in, standing and leaving.
+  void import('../travel/metro').then((m) => ((window as unknown as { __metro: unknown }).__metro = m));
   (window as unknown as { __pick: (x: number, y: number) => string[] }).__pick = (x, y) => {
     const r = (game as unknown as { renderer: { cameraRig: { camera: THREE.Camera }; scene: THREE.Scene } }).renderer;
     const rc = new THREE.Raycaster();

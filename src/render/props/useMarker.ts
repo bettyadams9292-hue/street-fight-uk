@@ -21,6 +21,8 @@ function canvasTex(size: number, draw: (g: CanvasRenderingContext2D) => void): T
   draw(c.getContext('2d')!);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
+  // Drawn once and kept for every level (disposeGroup leaves shared textures alone).
+  t.userData.shared = true;
   return t;
 }
 
@@ -94,6 +96,7 @@ export class UseMarker {
 
   constructor() {
     this.root.name = 'useMarker';
+    // Built once a level; its textures are the module's own, kept between levels.
     const sprite = (map: THREE.Texture) =>
       new THREE.Sprite(new THREE.SpriteMaterial({ map, color: OK, transparent: true, depthTest: false, depthWrite: false, toneMapped: false, sizeAttenuation: false }));
     this.pip = sprite(pip());

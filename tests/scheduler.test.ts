@@ -78,3 +78,17 @@ assert.equal(backgroundJobs(), 0);
 // Nothing to do: nothing happens.
 assert.equal(runBackground(3, now), 0);
 console.log('scheduler: shared budget, priority, cancel, failures ok');
+
+// A step that runs past its deadline is measured, for the development numbers (performance/perfStats.ts).
+{
+  const { takeStepStats } = await import('../src/performance/scheduler');
+  clearBackground();
+  let t = 0;
+  const clock = () => t;
+  takeStepStats();
+  addJob({ priority: 1, step: () => { t += 9; return true; } });
+  runBackground(3, clock);
+  const s = takeStepStats();
+  if (!(s.longestStep >= 9 && s.overrun >= 6)) throw new Error(`step stats ${JSON.stringify(s)}`);
+  console.log('  ok   a step that runs past the budget is measured');
+}

@@ -18,7 +18,7 @@ export function screenLogo(): HTMLImageElement {
 export function mainMenu(
   hasCharacter: boolean,
   continueText: string | null,
-  actions: { newGame: () => void; continue: () => void; training: () => void; character: () => void; settings: () => void; controls: () => void },
+  actions: { newGame: () => void; continue: () => void; training: () => void; character: () => void; settings: () => void; controls: () => void; saves: () => void },
 ): Screen {
   // The menu: plain lettering, quiet until chosen. Only the item you're on gets the red (a bar, an underline,
   // its line of detail). The painted title buttons stay in public/art/titles for the rest of the game.
@@ -34,6 +34,7 @@ export function mainMenu(
     item('New game', actions.newGame, 'Create a new fighter and start the story', continueText ? '' : 'primary'),
     hasCharacter ? item('Training ground', actions.training, 'Spar, drill combos, try every style') : null,
     hasCharacter ? item('Character', actions.character, 'Stats and look') : null,
+    item('Saves', actions.saves, 'Three slots, backups to download and bring back'),
     item('Settings', actions.settings, 'Sound, picture, difficulty'),
     item('Controls', actions.controls, 'Every button, on every pad'),
   );
