@@ -370,7 +370,30 @@ When the owner adds an asset that covers a row, wire it in and tick the row.
 - #129: production overhaul, second pass: police screens out of `Game.ts` into `PoliceController`; the old `arrest()` and `arrestFine` gone (tests use `book` and `payBail`); bail, court fines and bungs in the economy model and test; `tests/audioFiles.test.ts` (every sound set and song on disk); the custody record's red choice readable when chosen, and sideways its property line sits under the offences; the Crew screen shows bail money you owe (a note, Owed £N on their card) with Pay back the bail.
 - #130: phone: the bank app shows bail money you owe a crew member; once Kerrigan's your contact he has a thread in Messages that opens the Heat app.
 - #131: Living World, Stage A ( `docs/LIVING_WORLD.md` has the audit and the checklist): side streets off the main road at junctions (see Side streets): Mill Lane and the Canal Towpath, each with stashes, things to search, an optional fight and a lock that matches the main road's; on the map and in the route finder; "New street" on discovery; a `junction` hint; `tests/streetGraph.test.ts`.
-- Living World, Stage B (to merge): eight more side streets, ten in all, each its own place (Tanner Footpath, Terrace Walk, Gasworks Road, the Railway Arches, Chandler’s Lane, Cooper’s Yard, Neon Alley, Harrow Cut); sixteen of the twenty districts have a junction; the graph test checks every boss stage with every key and pass, and clean cuts in the frontage.
+- #132: Living World, Stage B: eight more side streets, ten in all, each its own place (Tanner Footpath, Terrace Walk, Gasworks Road, the Railway Arches, Chandler’s Lane, Cooper’s Yard, Neon Alley, Harrow Cut); sixteen of the twenty districts have a junction; the graph test checks every boss stage with every key and pass, and clean cuts in the frontage.
+
+## Handover (28 Nov 2026): where Leeko's work stopped
+
+For the friend (and your Claude) picking this up. Everything below is merged into `dev`; nothing is half-done on a branch.
+
+**Merged today, in order:** #128 and #129 (production overhaul: Metro timetable, save slots, GPU leak fixes, police controller, police costs in the economy test), #130 (bail owed in the bank app, Kerrigan's Messages thread), #131 and #132 (Living World stages A and B: ten side streets).
+
+**What Leeko is working towards:** his "Living World Overhaul" brief, turning the long street into a connected British town (side streets, a day/night clock, routines, events, jobs and lifestyles). He chose to keep the long street as the main road and add side streets off it, and to ship it one stage per PR. `docs/LIVING_WORLD.md` is the plan and checklist: the audit of what the town holds, stages A to F, and what's done, partial or not started in each. Read it first.
+
+**Next up is Stage C, the living world.** Suggested order, each its own PR:
+1. **A clock.** There isn't one: the fight club's "night" is 600 s of play time (`fightclub/club.ts` `NIGHT_SECONDS`) and `save.trips` counts area changes. Add a game clock in the save (morning, afternoon, evening, night), moved on by play time, sleeping and travel, with old saves starting at morning. Then make the club's nights read it, so there's only one idea of a night.
+2. **Lighting and streets by time of day**: the look's sky and window lights (`render/look/`, `LevelView`), and fewer passers-by late (`world/civilians.ts`).
+3. **Opening hours**: per kind of place, shut doors with shutters down (`LevelView.rollerShutter` exists), and hours on the map's place card (`ui/phone/mapApp.ts`). Keep essentials open (home, police, the Metro).
+4. **Events**: a data-driven list (where, when, chance, cooldown, outcome) that uses what's there: optional fights, street jobs (`jobs/jobs.ts` `streetJob`), shop prices.
+
+**Rules Leeko cares about** (also in How we work): branch and PR into `dev`, merge only when he says "merge"; check UI at 844×390 and 390×700; no FPS counter or debug overlay; British, not American; real textures from the library, not flat colours. He has asked us to **leave characters alone** (bodies, clothes, hair): better models are coming, so the hoodie's jagged collar and the "people cost less" performance plan wait for them.
+
+**Things you can't do from a cloud session, still open:**
+- No `package-lock.json` yet: run CI by hand with `make_lockfile` ticked, then merge the PR it opens.
+- The visual baselines are out of date: Actions → CI → Run workflow → `update_baselines` (Leeko does this).
+- Nothing in the overhauls has been tried on a real iPhone or iPad yet. Worth a play of: a Metro ride, the Saves screen (download, bring back), and walking a side street.
+
+**Useful while working:** `?shot=area&id=<area>&x=<metres>&calm=1` (a picture anywhere along a street, its fights done); `window.__perf.report()` on localhost or `?perf`; `npx tsx tools/assets/levelDeps.ts` after changing what a level draws; `npx tsx tools/economy/model.ts` after changing a price. Adding a side street is one entry in `SIDE_STREETS` plus its id in `CORE_AREA_IDS`, its build in `DISTRICTS` (`city/street.ts`) and its line in the map's `BLURB` and `TINTS`; `tests/streetGraph.test.ts` tells you if the junction spot is wrong.
 
 ## Open questions and next steps
 
